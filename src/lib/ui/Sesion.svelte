@@ -1,5 +1,13 @@
 <script lang="ts">
 	import { onMount, type Snippet } from 'svelte';
+	import { page } from '$app/state';
+	import {
+		borrarAnotacion,
+		cambiarTextoDeAnotacion,
+		guardarAnotacion,
+		limpiarAnotacionesHuerfanas,
+		observarAnotaciones
+	} from '#lib/adapters/anotaciones.ts';
 	import { nuevoId } from '#lib/adapters/ids.ts';
 	import { ahora as horaActual, observarReloj } from '#lib/adapters/reloj.ts';
 	import {
@@ -18,7 +26,8 @@
 		observarTareas
 	} from '#lib/adapters/repositorio.ts';
 	import { avisoAlCompletar, avisoVisible, completadoADeshacer, msHastaQueVence, type Aviso } from '#lib/core/aviso.ts';
-	import { borrado, completadosHuerfanos, existeTarea } from '#lib/core/borrado.ts';
+	import { anotar, type Anotacion, type PantallaActual, type Sentido } from '#lib/core/anotacion.ts';
+	import { anotacionesHuerfanas, borrado, completadosHuerfanos, existeTarea } from '#lib/core/borrado.ts';
 	import { borradoDeEtiqueta, referenciasRotas } from '#lib/core/borrado-de-etiqueta.ts';
 	import { accionDelCheckbox } from '#lib/core/checkbox.ts';
 	import { completar } from '#lib/core/completados.ts';
@@ -36,6 +45,7 @@
 	import { ultimaVez } from '#lib/core/ultima-vez.ts';
 	import AvisoDeshacer from './AvisoDeshacer.svelte';
 	import FranjaSinConexion from './FranjaSinConexion.svelte';
+	import Anotar from './Anotar.svelte';
 	import Navegacion from './Navegacion.svelte';
 	import PanelTarea from './PanelTarea.svelte';
 	import type { DatosRespondieron } from './PantallaDeCarga.svelte';
@@ -50,6 +60,12 @@
 	let tareas = $state<Tarea[]>([]);
 	let completados = $state<Completado[]>([]);
 	let etiquetas = $state<Etiqueta[]>([]);
+	let anotaciones = $state<Anotacion[]>([]);
+	let anotacionesCargadas = $state(false);
+	/** El recuadro de Anotar (§5.10) y el panel de edición abierto, si lo hay (con su tarea al editar). */
+	let anotando = $state(false);
+	let panel = $state.raw<{ tareaId?: string } | undefined>(undefined);
+	const anotacionesEnLimpieza = new Set<string>();
 	/** Hasta que las colecciones respondieron, faltar una tarea o una etiqueta no significa que se borró. */
 	let tareasCargadas = $state(false);
 	let completadosCargados = $state(false);
@@ -104,6 +120,15 @@
 		if (nuevos.length === 0) return;
 		nuevos.forEach(({ id }) => huerfanosEnLimpieza.add(id));
 		void limpiarHuerfanos(uid, nuevos);
+	});
+
+	// Spec §7: las anotaciones huérfanas se ignoran y se limpian.
+	$effect(() => {
+		if (!tareasCargadas || !anotacionesCargadas) return;
+		const nuevas = anotacionesHuerfanas(tareas, anotaciones).filter(({ id }) => !anotacionesEnLimpieza.has(id));
+		if (nuevas.length === 0) return;
+		nuevas.forEach(({ id }) => anotacionesEnLimpieza.add(id));
+		void limpiarAnotacionesHuerfanas(uid, nuevas);
 	});
 
 	// Spec §7: las referencias a etiquetas borradas se ignoran y se limpian.
@@ -184,10 +209,44 @@
 
 	function borrarEditada(tarea: Tarea) {
 		editada = undefined;
-		void borrarTarea(uid, borrado(tarea.id, completados));
+		void borrarTarea(uid, borrado(tarea.id, completados, anotaciones));
+	}
+
+	const PANTALLAS: Record<string, PantallaActual> = { '/historial': 'Historial', '/etiquetas': 'Etiquetas', '/anotaciones': 'Anotaciones' };
+
+	/** Segundo toque (§5.10): el core toma el contexto de la pantalla, el panel y el aviso. */
+	function anotarAhora(sentido: Sentido, texto: string) {
+		ahora = horaActual();
+		const pantalla = PANTALLAS[page.url.pathname] ?? 'Pendientes';
+		const anotacion = anotar(nuevoId(), sentido, ahora, { pantalla, ...(panel && { panel }), ...(aviso && { aviso }) }, texto);
+		anotando = false;
+		void guardarAnotacion(uid, anotacion);
+	}
+
+	function panelAbierto(tareaId: string | undefined) {
+		const este = tareaId === undefined ? {} : { tareaId };
+		panel = este;
+		return () => {
+			if (panel === este) panel = undefined;
+		};
 	}
 
 	compartirSesion({
+		get anotaciones() {
+			return anotaciones;
+		},
+		get hayPanel() {
+			return panel !== undefined;
+		},
+		get anotando() {
+			return anotando;
+		},
+		abrirAnotar: () => (anotando = true),
+		cerrarAnotar: () => (anotando = false),
+		anotar: anotarAhora,
+		panelAbierto,
+		editarTextoDeAnotacion: (anotacion, texto) => void cambiarTextoDeAnotacion(uid, anotacion.id, texto),
+		borrarAnotacion: (anotacion) => void borrarAnotacion(uid, anotacion.id),
 		get tareas() {
 			return tareas;
 		},
@@ -220,6 +279,7 @@
 
 <FranjaSinConexion />
 <Navegacion />
+<Anotar />
 
 {@render children()}
 

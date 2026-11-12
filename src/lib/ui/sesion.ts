@@ -2,6 +2,7 @@
 // observa y las acciones sobre ellos. Las pantallas le preguntan al core qué
 // mostrar con esos datos.
 import { getContext, setContext } from 'svelte';
+import type { Anotacion, Sentido } from '#lib/core/anotacion.ts';
 import type { ErroresDeCreacion } from '#lib/core/creacion.ts';
 import type { FormularioDelPanel } from '#lib/core/cambios-sin-guardar.ts';
 import type { Color, Etiqueta } from '#lib/core/etiqueta.ts';
@@ -12,6 +13,21 @@ export interface Sesion {
 	readonly tareas: Tarea[];
 	readonly completados: Completado[];
 	readonly etiquetas: Etiqueta[];
+	readonly anotaciones: Anotacion[];
+	/** El recuadro de Anotar (§5.10) está abierto. */
+	readonly anotando: boolean;
+	/** Hay un panel de edición abierto (al crear o al editar). */
+	readonly hayPanel: boolean;
+	abrirAnotar(): void;
+	cerrarAnotar(): void;
+	/** Segundo toque de Anotar: guarda la anotación con el contexto que toma el core. */
+	anotar(sentido: Sentido, texto: string): void;
+	/** Un panel de edición se abre (con la tarea, al editar); devuelve cómo avisar que se cerró. */
+	panelAbierto(tareaId: string | undefined): () => void;
+	/** Editar texto de una anotación (§6.7). */
+	editarTextoDeAnotacion(anotacion: Anotacion, texto: string): void;
+	/** Borra una anotación, ya confirmado. */
+	borrarAnotacion(anotacion: Anotacion): void;
 	/** La hora actual; se actualiza sola. */
 	readonly ahora: Date;
 	/** El id de la etiqueta elegida en el filtro de Pendientes; sin él, "Todas". */

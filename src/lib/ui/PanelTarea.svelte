@@ -265,6 +265,7 @@
 	}
 
 	function loDeArriba(): LoDeArriba {
+		if (sesion.anotando) return 'recuadro de Anotar';
 		if (avisoDeCierre) return 'aviso de cierre';
 		if (accionAbierta) return 'aviso de acción';
 		if (confirmandoBorrado) return 'confirmación de Borrar tarea';
@@ -275,6 +276,7 @@
 	function alTocarAtras(): boolean {
 		const efecto = queHaceAtras({ encima: loDeArriba(), hayCambios: hayCambiosAhora(), tecladoAbierto: teclado.abierto });
 		if (efecto === 'cierra el teclado') (document.activeElement as HTMLElement | null)?.blur();
+		else if (efecto === 'cierra lo de arriba' && sesion.anotando) sesion.cerrarAnotar();
 		else if (efecto === 'cierra lo de arriba') {
 			avisoDeCierre = false;
 			accionAbierta = undefined;
@@ -291,7 +293,9 @@
 	onMount(() => {
 		const capa = tomarAtras(alTocarAtras);
 		const dejarDePedir = confirmarAlSalir(hayCambiosAhora);
+		const soltarPanel = sesion.panelAbierto(tarea?.id);
 		return () => {
+			soltarPanel();
 			capa.soltar();
 			dejarDePedir();
 		};

@@ -1,6 +1,6 @@
 // Traduce entre el modelo del core y Firestore (spec §7):
 // users/{uid}/tareas/{tareaId}, users/{uid}/completados/{completadoId} y
-// users/{uid}/etiquetas/{etiquetaId}.
+// users/{uid}/etiquetas/{etiquetaId} (las anotaciones, en anotaciones.ts).
 // Los documentos tienen su propia forma: ningún tipo de Firestore sale de acá.
 import {
 	arrayRemove,
@@ -300,11 +300,12 @@ export async function fusionarEtiquetas(uid: string, { borradas, referencias }: 
 	await Promise.all(borradas.map((etiquetaId) => deleteDoc(etiquetaRef(uid, etiquetaId))));
 }
 
-/** Spec §7: la tarea y sus completados se borran en un solo writeBatch. */
-export async function borrarTarea(uid: string, { tareaId, completadoIds }: Borrado): Promise<void> {
+/** Spec §7: la tarea, sus completados y sus anotaciones se borran en un solo writeBatch. */
+export async function borrarTarea(uid: string, { tareaId, completadoIds, anotacionIds }: Borrado): Promise<void> {
 	const lote = writeBatch(db);
 	lote.delete(tareaRef(uid, tareaId));
 	for (const completadoId of completadoIds) lote.delete(completadoRef(uid, completadoId));
+	for (const anotacionId of anotacionIds) lote.delete(doc(db, 'users', uid, 'anotaciones', anotacionId));
 	await lote.commit();
 }
 

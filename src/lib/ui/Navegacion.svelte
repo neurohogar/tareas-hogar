@@ -4,7 +4,8 @@
 	const PESTANAS = [
 		{ ruta: '/', nombre: 'Pendientes' },
 		{ ruta: '/historial', nombre: 'Historial' },
-		{ ruta: '/etiquetas', nombre: 'Etiquetas' }
+		{ ruta: '/etiquetas', nombre: 'Etiquetas' },
+		{ ruta: '/anotaciones', nombre: 'Anotaciones' }
 	];
 </script>
 
