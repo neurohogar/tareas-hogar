@@ -64,7 +64,7 @@ Un gesto de dos toques, siempre en el mismo lugar, para anotar «me sirvió» o 
 
 ## Artefactos
 
-- Gherkin: `features/anotar.feature` (S2, S3, S4, S5, S6, S7, S9, S10, S11, S12, S29), `features/anotaciones.feature` (S5, S21, S22, S23, S29), `features/copiar-anotaciones.feature` (S27), `features/editar-anotacion.feature` (S6, S7, S25, S29), `features/borrar-anotacion.feature` (S26), `features/anotaciones-de-tarea-borrada.feature` (S16, S18, S23, S30); cubiertos solo por QA: S1, S8, S13, S14, S15, S17, S19, S20, S24, S28
+- Gherkin: `features/anotar.feature` (S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S19, S20, S28, S29), `features/anotaciones.feature` (S5, S17, S21, S22, S23, S24, S29), `features/copiar-anotaciones.feature` (S27), `features/editar-anotacion.feature` (S6, S7, S25, S29), `features/borrar-anotacion.feature` (S26), `features/anotaciones-de-tarea-borrada.feature` (S16, S18, S23, S30); QA-only (en esos features lo anota su cabecera): S1, S8, S13, S14, S15, S17, S19, S20, S24, S28
 - QA: `qa/anotacion.md`
 
 ## core
