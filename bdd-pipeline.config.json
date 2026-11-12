@@ -42,6 +42,12 @@
 				"docs/pipeline/pendientes.txt"
 			]
 		},
+		"skippable": {
+			"core": { "emptySurface": true },
+			"ui": { "emptySurface": true },
+			"cleaner": { "untouched": ["src/lib/core/"] },
+			"architect": { "untouched": ["src/lib/core/"] }
+		},
 		"mergesIntegration": "core",
 		"handoff": {
 			"acceptance": [

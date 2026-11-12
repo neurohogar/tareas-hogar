@@ -14,6 +14,8 @@ Los tres roles de especificación (analyst, spec-writer, gherkin-writer) trabaja
 
 Un rol es dueño solo de lo que su archivo dice que posee; lo demás lo hace otro rol más adelante en la cadena.
 
+Un rol sin trabajo en la feature se saltea sin lanzarlo (`bdd-pipeline skip <rol>`, reglas en `roles.skippable` de `bdd-pipeline.config.json`): queda un commit vacío `By <rol>.` con el motivo y su gate tiene que pasar igual. Lo decide la herramienta, nunca un rol ni el orquestador.
+
 ## Arquitectura
 
 | Capa | Ruta | Contenido | Herramientas de test |
