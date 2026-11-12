@@ -64,7 +64,7 @@ Especificaciones de APS (formato Gherkin, IR, generador, runner adapter): `~/Wor
 Reglas de uso:
 
 - Una herramienta a la vez, en secuencia.
-- Mutación: un archivo por vez, siempre diferencial (el default). Los snapshots en `.metrics/` son el manifest: se commitean y solo los modifican las herramientas.
+- Mutación: un archivo por vez, siempre diferencial (el default). Los snapshots en `.metrics/` son el manifest: se commitean y solo los modifican las herramientas. La mutación del Gherkin guarda su manifest dentro del propio `.feature`: ese archivo se commitea después de mutarlo. El gate del hardener falla si a un feature del paquete le quedaban mutaciones por correr, porque eso indica que el manifest no está commiteado o quedó viejo.
 - Workers: `--max-workers 4` / `--workers 4`.
 - **CRAP**: un único `switch` que responde una sola pregunta puede quedar sobre 10. Funciones anidadas o de doble propósito sobre 10 se dividen, y cada función extraída es dueña de sus entradas (nada de pasarle booleanos que el llamador ya conocía).
 - Mutación del Gherkin: `--level soft` decide qué remutar solo por el contenido del `.feature`. Si cambian step handlers, el runtime de `acceptance/` o el filtro de equivalentes, se usa `--level full` solo en los features con al menos un paso atendido por un handler cambiado, o con un Then que pasa por una regla cambiada del oráculo; el resto queda en `--level soft`. El rol acceptance lista en su reporte qué handlers y reglas del oráculo cambió.
