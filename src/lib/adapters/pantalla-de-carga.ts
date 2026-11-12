@@ -1,6 +1,6 @@
 // Spec §6.6: lo que la pantalla de carga necesita del navegador. Se dibuja en src/app.html,
 // antes de que corra el JavaScript. Lo recordado vive solo en el dispositivo (§7).
-import { recuerdoAlArrancar } from '$lib/core/pantalla-de-carga';
+import { recuerdoAlArrancar } from '#lib/core/pantalla-de-carga.ts';
 import { huellaDeNoto } from './fuentes';
 
 const CLAVE = 'tareas-hogar:tope-de-noto';

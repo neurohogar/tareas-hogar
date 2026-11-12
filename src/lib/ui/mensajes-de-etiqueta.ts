@@ -1,5 +1,5 @@
 // Spec §6.2 y §6.4: los textos de los errores de nombre de etiqueta, los mismos en el panel y en la pantalla Etiquetas.
-import type { ErrorDeRenombrado } from '$lib/core/gestion-de-etiquetas';
+import type { ErrorDeRenombrado } from '#lib/core/gestion-de-etiquetas.ts';
 
 export const MENSAJES_DE_NOMBRE: Record<ErrorDeRenombrado, string> = {
 	vacio: 'El nombre no puede estar vacío',

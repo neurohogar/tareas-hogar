@@ -1,7 +1,3 @@
-/// <reference types="@sveltejs/kit" />
-/// <reference no-default-lib="true"/>
-/// <reference lib="esnext" />
-/// <reference lib="webworker" />
 // Spec §8: precachea el build estático para abrir sin conexión en cualquier
 // ruta. La versión nueva se instala en segundo plano y espera: activa (y borra
 // la caché vieja) cuando no queda ninguna página de la versión anterior, o sea
@@ -10,13 +6,19 @@
 // Las fuentes no entran en la precarga: si un archivo falla, `addAll` cancela la
 // instalación entera (§8). Las baja y las guarda la página (adapters/fuentes.ts)
 // en su propia caché, que sobrevive a las versiones que no las cambian (§6.6).
-import { build, files, version } from '$service-worker';
-import { CACHE_DE_FUENTES, esArchivoDeFuente } from '$lib/core/fuentes-empaquetadas';
+import { version } from '$app/env';
+import { immutable, assets } from '$app/manifest';
+import { asset } from '$app/paths';
+import { CACHE_DE_FUENTES, esArchivoDeFuente } from '#lib/core/fuentes-empaquetadas.ts';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 const CACHE = `tareas-hogar-${version}`;
 /** El fallback de adapter-static: la app que atiende cualquier ruta. */
 const APP = '/';
+/** Los archivos de Vite: el manifest los da relativos a la base, que en esta app es la raíz. */
+const build = immutable.map(({ path }) => `/${path}`);
+/** Los archivos de `static/`. */
+const files = assets.map(({ path }) => asset(path));
 
 sw.addEventListener('install', (evento) => {
 	evento.waitUntil(

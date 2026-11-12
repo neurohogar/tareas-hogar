@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, type Snippet } from 'svelte';
-	import { nuevoId } from '$lib/adapters/ids';
-	import { ahora as horaActual, observarReloj } from '$lib/adapters/reloj';
+	import { nuevoId } from '#lib/adapters/ids.ts';
+	import { ahora as horaActual, observarReloj } from '#lib/adapters/reloj.ts';
 	import {
 		borrarCompletado,
 		borrarEtiqueta,
@@ -16,24 +16,24 @@
 		observarCompletados,
 		observarEtiquetas,
 		observarTareas
-	} from '$lib/adapters/repositorio';
-	import { avisoAlCompletar, avisoVisible, completadoADeshacer, msHastaQueVence, type Aviso } from '$lib/core/aviso';
-	import { borrado, completadosHuerfanos, existeTarea } from '$lib/core/borrado';
-	import { borradoDeEtiqueta, referenciasRotas } from '$lib/core/borrado-de-etiqueta';
-	import { accionDelCheckbox } from '$lib/core/checkbox';
-	import { completar } from '$lib/core/completados';
-	import { accionDePausa } from '$lib/core/pausa';
-	import { accionDePosponer, textoDePosposicion } from '$lib/core/posposicion-en-panel';
-	import { datosDeTarea } from '$lib/core/datos-de-tarea';
-	import type { FormularioDelPanel } from '$lib/core/cambios-sin-guardar';
-	import { crearDesdePanel, editarDesdePanel } from '$lib/core/cambios-sin-guardar-guardado';
-	import type { Etiqueta } from '$lib/core/etiqueta';
-	import { etiquetasDeTarea } from '$lib/core/etiquetas-de-tarea';
-	import { fusionDeDuplicadas } from '$lib/core/fusion-de-etiquetas';
-	import { renombrar } from '$lib/core/gestion-de-etiquetas';
-	import type { CambioDeTarea } from '$lib/core/documento-de-tarea';
-	import type { Completado, Tarea } from '$lib/core/tarea';
-	import { ultimaVez } from '$lib/core/ultima-vez';
+	} from '#lib/adapters/repositorio.ts';
+	import { avisoAlCompletar, avisoVisible, completadoADeshacer, msHastaQueVence, type Aviso } from '#lib/core/aviso.ts';
+	import { borrado, completadosHuerfanos, existeTarea } from '#lib/core/borrado.ts';
+	import { borradoDeEtiqueta, referenciasRotas } from '#lib/core/borrado-de-etiqueta.ts';
+	import { accionDelCheckbox } from '#lib/core/checkbox.ts';
+	import { completar } from '#lib/core/completados.ts';
+	import { accionDePausa } from '#lib/core/pausa.ts';
+	import { accionDePosponer, textoDePosposicion } from '#lib/core/posposicion-en-panel.ts';
+	import { datosDeTarea } from '#lib/core/datos-de-tarea.ts';
+	import type { FormularioDelPanel } from '#lib/core/cambios-sin-guardar.ts';
+	import { crearDesdePanel, editarDesdePanel } from '#lib/core/cambios-sin-guardar-guardado.ts';
+	import type { Etiqueta } from '#lib/core/etiqueta.ts';
+	import { etiquetasDeTarea } from '#lib/core/etiquetas-de-tarea.ts';
+	import { fusionDeDuplicadas } from '#lib/core/fusion-de-etiquetas.ts';
+	import { renombrar } from '#lib/core/gestion-de-etiquetas.ts';
+	import type { CambioDeTarea } from '#lib/core/documento-de-tarea.ts';
+	import type { Completado, Tarea } from '#lib/core/tarea.ts';
+	import { ultimaVez } from '#lib/core/ultima-vez.ts';
 	import AvisoDeshacer from './AvisoDeshacer.svelte';
 	import FranjaSinConexion from './FranjaSinConexion.svelte';
 	import Navegacion from './Navegacion.svelte';

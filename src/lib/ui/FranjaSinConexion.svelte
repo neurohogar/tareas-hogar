@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { franjaDeConexion } from '$lib/core/conexion';
+	import { franjaDeConexion } from '#lib/core/conexion.ts';
 	import { enLineaReactivo } from './en-linea.svelte';
 
 	const enLinea = enLineaReactivo();

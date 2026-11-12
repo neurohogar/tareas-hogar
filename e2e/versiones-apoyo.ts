@@ -39,11 +39,17 @@ export const cachesDe = (p: Page) =>
 export const hayVersionEsperando = (p: Page) =>
 	p.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => !!r?.waiting));
 
-const CARPETA_DE_FUENTES = '"/fuentes/"';
+const CARPETA_DE_FUENTES = '/fuentes/';
 const ARCHIVO_DE_NOTO = 'noto-color-emoji-emoji-400-normal.woff2';
 
 const archivosJs = (dir: string): string[] =>
 	(readdirSync(dir, { recursive: true }) as string[]).filter((a) => a.endsWith('.js')).map((a) => join(dir, a));
+
+/** Un string del código minificado con sus comillas, que según el minificador son ", ' o `. */
+const COMILLA = '(["\'`])';
+
+const codigoDe = (destino: string): string =>
+	archivosJs(join(destino, '_app/immutable')).map((a) => readFileSync(a, 'utf8')).join();
 
 /** Reemplaza un texto en el código de la app. Falla si no estaba: así un cambio en el build no pasa inadvertido. */
 function reemplazarEnElCodigo(destino: string, viejo: string, nuevo: string): void {
@@ -68,7 +74,9 @@ function cambiarVersion(origen: string, destino: string, sufijo: string): void {
 export function versionSinFuentes(origen: string, destino: string): void {
 	cpSync(origen, destino, { recursive: true });
 	rmSync(join(destino, 'fuentes'), { recursive: true });
-	reemplazarEnElCodigo(destino, CARPETA_DE_FUENTES, '"/sin-fuentes/"');
+	const carpeta = codigoDe(destino).match(new RegExp(`${COMILLA}${CARPETA_DE_FUENTES}\\1`))?.[0];
+	if (carpeta === undefined) throw new Error(`el build no contiene ${CARPETA_DE_FUENTES}`);
+	reemplazarEnElCodigo(destino, carpeta, carpeta.replace(CARPETA_DE_FUENTES, '/sin-fuentes/'));
 	cambiarVersion(origen, destino, '0');
 }
 
@@ -81,8 +89,7 @@ export function versionConLasMismasFuentes(origen: string, destino: string): voi
 /** Una versión nueva cuyo juego de emoji cambió: lo que cambia es la huella de su contenido (vite.config.ts). */
 export function versionConOtroJuego(origen: string, destino: string): void {
 	cpSync(origen, destino, { recursive: true });
-	const codigo = archivosJs(join(destino, '_app/immutable')).map((a) => readFileSync(a, 'utf8')).join();
-	const huella = codigo.match(new RegExp(`"${ARCHIVO_DE_NOTO}":"(\\w+)"`))?.[1];
+	const huella = codigoDe(destino).match(new RegExp(`${COMILLA}${ARCHIVO_DE_NOTO}\\1:${COMILLA}(\\w+)\\2`))?.[3];
 	if (huella === undefined) throw new Error('el build no declara la huella de Noto');
 	reemplazarEnElCodigo(destino, huella, huella.replace(/^./, (c) => (c === '0' ? '1' : '0')));
 	cambiarVersion(origen, destino, '2');

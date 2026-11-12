@@ -1,21 +1,21 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import type { ErroresDeCreacion } from '$lib/core/creacion';
-	import { DATOS_AL_CREAR, type DatosDeTarea } from '$lib/core/datos-de-tarea';
-	import { avisoDeAccion, descartarYActuar, guardarYActuar, type AccionEnAviso } from '$lib/core/aviso-de-accion';
-	import { cambioDeAccion, queHaceLaAccion, type AccionDelPanel } from '$lib/core/accion-del-panel';
-	import { queHaceAtras, type LoDeArriba } from '$lib/core/atras-del-panel';
-	import { hayCambios, type FormularioDelPanel, type ValoresDelPanel } from '$lib/core/cambios-sin-guardar';
-	import { alCerrarElPanel, AVISO_DE_CIERRE, type BotonDelAviso } from '$lib/core/cambios-sin-guardar-aviso';
-	import type { CambioDeTarea } from '$lib/core/documento-de-tarea';
-	import type { Etiqueta } from '$lib/core/etiqueta';
-	import { nombreDeTarea } from '$lib/core/nombre-de-tarea';
-	import type { DiaSemana, Esfuerzo, Tarea, Unidad } from '$lib/core/tarea';
-	import { tomarAtras } from '$lib/adapters/atras';
-	import { confirmarAlSalir } from '$lib/adapters/confirmacion-al-salir';
-	import { nuevoId } from '$lib/adapters/ids';
-	import { leerRecientes, recordarReciente } from '$lib/adapters/recientes';
-	import { ahora as horaActual } from '$lib/adapters/reloj';
+	import type { ErroresDeCreacion } from '#lib/core/creacion.ts';
+	import { DATOS_AL_CREAR, type DatosDeTarea } from '#lib/core/datos-de-tarea.ts';
+	import { avisoDeAccion, descartarYActuar, guardarYActuar, type AccionEnAviso } from '#lib/core/aviso-de-accion.ts';
+	import { cambioDeAccion, queHaceLaAccion, type AccionDelPanel } from '#lib/core/accion-del-panel.ts';
+	import { queHaceAtras, type LoDeArriba } from '#lib/core/atras-del-panel.ts';
+	import { hayCambios, type FormularioDelPanel, type ValoresDelPanel } from '#lib/core/cambios-sin-guardar.ts';
+	import { alCerrarElPanel, AVISO_DE_CIERRE, type BotonDelAviso } from '#lib/core/cambios-sin-guardar-aviso.ts';
+	import type { CambioDeTarea } from '#lib/core/documento-de-tarea.ts';
+	import type { Etiqueta } from '#lib/core/etiqueta.ts';
+	import { nombreDeTarea } from '#lib/core/nombre-de-tarea.ts';
+	import type { DiaSemana, Esfuerzo, Tarea, Unidad } from '#lib/core/tarea.ts';
+	import { tomarAtras } from '#lib/adapters/atras.ts';
+	import { confirmarAlSalir } from '#lib/adapters/confirmacion-al-salir.ts';
+	import { nuevoId } from '#lib/adapters/ids.ts';
+	import { leerRecientes, recordarReciente } from '#lib/adapters/recientes.ts';
+	import { ahora as horaActual } from '#lib/adapters/reloj.ts';
 	import AvisoDeCambios from './AvisoDeCambios.svelte';
 	import BarraDePestanas from './BarraDePestanas.svelte';
 	import { MENSAJES_DE_NOMBRE } from './mensajes-de-etiqueta';
@@ -25,7 +25,7 @@
 	import SelectorEmoji from './SelectorEmoji.svelte';
 	import Icono from './iconos/Icono.svelte';
 	import { laSesion } from './sesion';
-	import { observarTeclado, type EstadoDelTeclado } from '$lib/adapters/teclado';
+	import { observarTeclado, type EstadoDelTeclado } from '#lib/adapters/teclado.ts';
 	import {
 		barraDeGuardarVisible,
 		camposConError,
@@ -38,7 +38,7 @@
 		type DestinoDelError,
 		type OpcionDeRepeticion,
 		type SeccionDelPanel
-	} from '$lib/core/panel-en-pestanas';
+	} from '#lib/core/panel-en-pestanas.ts';
 
 	let {
 		encabezado,

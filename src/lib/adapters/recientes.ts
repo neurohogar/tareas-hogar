@@ -1,7 +1,7 @@
 // Los emojis recientes del selector (spec §6.2, §7): preferencia local del
 // dispositivo, en el almacenamiento local del navegador. Si no está disponible
 // (modo privado, datos bloqueados, valor dañado), la app sigue sin recientes.
-import { agregarReciente, MAXIMO_DE_RECIENTES } from '$lib/core/emojis-recientes';
+import { agregarReciente, MAXIMO_DE_RECIENTES } from '#lib/core/emojis-recientes.ts';
 
 const CLAVE = 'tareas-hogar:emojis-recientes';
 

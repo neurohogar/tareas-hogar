@@ -1,5 +1,5 @@
 {
-	"extends": "./.svelte-kit/tsconfig.json",
+	"extends": "$app/tsconfig",
 	"compilerOptions": {
 		"allowJs": true,
 		"checkJs": true,
@@ -13,14 +13,14 @@
 		"allowImportingTsExtensions": true
 	},
 	"include": [
-		".svelte-kit/ambient.d.ts",
-		".svelte-kit/non-ambient.d.ts",
-		".svelte-kit/types/**/$types.d.ts",
 		"vite.config.ts",
 		"vitest.config.ts",
 		"src/**/*.ts",
 		"src/**/*.svelte",
 		"acceptance/**/*.ts"
 	],
-	"exclude": ["acceptance/generated/**"]
+	"exclude": [
+		"acceptance/generated/**",
+		"src/service-worker"
+	]
 }

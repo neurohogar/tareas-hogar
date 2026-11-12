@@ -20,17 +20,17 @@ import {
 	type QueryDocumentSnapshot,
 	type WriteBatch
 } from 'firebase/firestore';
-import type { Borrado } from '$lib/core/borrado';
-import type { BorradoDeEtiqueta } from '$lib/core/borrado-de-etiqueta';
-import { camposDeTexto } from '$lib/core/campos-de-texto';
-import { diaDesdeIso, diaIso } from '$lib/core/dias';
-import { tareaDesdeDocumento, type CambioDeTarea } from '$lib/core/documento-de-tarea';
-import type { Color, Etiqueta } from '$lib/core/etiqueta';
-import type { FusionDeEtiquetas } from '$lib/core/fusion-de-etiquetas';
-import type { CambioDeEtiqueta } from '$lib/core/gestion-de-etiquetas';
-import { ocurrenciaDesdeTexto, ocurrenciaEnTexto } from '$lib/core/ocurrencia-en-texto';
-import type { CambioDeReferencias } from '$lib/core/referencias-a-etiquetas';
-import type { Completado, DiaSemana, Esfuerzo, Horario, Tarea, Unidad, Ventana } from '$lib/core/tarea';
+import type { Borrado } from '#lib/core/borrado.ts';
+import type { BorradoDeEtiqueta } from '#lib/core/borrado-de-etiqueta.ts';
+import { camposDeTexto } from '#lib/core/campos-de-texto.ts';
+import { diaDesdeIso, diaIso } from '#lib/core/dias.ts';
+import { tareaDesdeDocumento, type CambioDeTarea } from '#lib/core/documento-de-tarea.ts';
+import type { Color, Etiqueta } from '#lib/core/etiqueta.ts';
+import type { FusionDeEtiquetas } from '#lib/core/fusion-de-etiquetas.ts';
+import type { CambioDeEtiqueta } from '#lib/core/gestion-de-etiquetas.ts';
+import { ocurrenciaDesdeTexto, ocurrenciaEnTexto } from '#lib/core/ocurrencia-en-texto.ts';
+import type { CambioDeReferencias } from '#lib/core/referencias-a-etiquetas.ts';
+import type { Completado, DiaSemana, Esfuerzo, Horario, Tarea, Unidad, Ventana } from '#lib/core/tarea.ts';
 import { db } from './firebase';
 
 type Cancelar = () => void;

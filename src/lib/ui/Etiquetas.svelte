@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { PALETA, type Color, type Etiqueta } from '$lib/core/etiqueta';
-	import { ordenarEtiquetas } from '$lib/core/orden-de-etiquetas';
+	import { PALETA, type Color, type Etiqueta } from '#lib/core/etiqueta.ts';
+	import { ordenarEtiquetas } from '#lib/core/orden-de-etiquetas.ts';
 	import ChipEtiqueta from './ChipEtiqueta.svelte';
 	import { MENSAJES_DE_NOMBRE } from './mensajes-de-etiqueta';
 	import { laSesion } from './sesion';

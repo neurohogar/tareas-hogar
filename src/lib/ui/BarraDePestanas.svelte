@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SeccionDelPanel } from '$lib/core/panel-en-pestanas';
+	import type { SeccionDelPanel } from '#lib/core/panel-en-pestanas.ts';
 	import Icono from './iconos/Icono.svelte';
 
 	const ICONOS_DE_SECCION = { Tarea: 'tarea', Cuándo: 'cuando', Acciones: 'acciones' } as const;

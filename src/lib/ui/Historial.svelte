@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { historial, type EntradaDelHistorial } from '$lib/core/historial';
-	import { nombreDeTarea } from '$lib/core/nombre-de-tarea';
+	import { historial, type EntradaDelHistorial } from '#lib/core/historial.ts';
+	import { nombreDeTarea } from '#lib/core/nombre-de-tarea.ts';
 	import { laSesion } from './sesion';
 
 	const sesion = laSesion();

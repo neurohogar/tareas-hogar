@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { porcentajeDeProgreso, type Estado } from '$lib/core/estado';
-	import type { Etiqueta } from '$lib/core/etiqueta';
-	import { textoDeEsfuerzo } from '$lib/core/esfuerzo';
-	import { textoDelHorario } from '$lib/core/horario';
-	import { nombreDeTarea } from '$lib/core/nombre-de-tarea';
-	import type { Tarea } from '$lib/core/tarea';
+	import { porcentajeDeProgreso, type Estado } from '#lib/core/estado.ts';
+	import type { Etiqueta } from '#lib/core/etiqueta.ts';
+	import { textoDeEsfuerzo } from '#lib/core/esfuerzo.ts';
+	import { textoDelHorario } from '#lib/core/horario.ts';
+	import { nombreDeTarea } from '#lib/core/nombre-de-tarea.ts';
+	import type { Tarea } from '#lib/core/tarea.ts';
 	import ChipEtiqueta from './ChipEtiqueta.svelte';
 
 	let {

@@ -6,6 +6,7 @@ Trabajo ya decidido para la v3 que no sale de la investigación de `docs/researc
 
 ### Migrar a SvelteKit 3
 
+- **Estado:** hecha (rama `chore/sveltekit-3`). Además de las versiones, SvelteKit 3 obligó a: pasar la config de `svelte.config.js` al plugin `sveltekit(...)` de `vite.config.ts`; cambiar `$lib` por `#lib` (subpath import de `package.json`, con extensión); reemplazar `$service-worker` por `$app/manifest`, `$app/env` y `$app/paths`, con el service worker en `src/service-worker/` y su propio `tsconfig.json`. Vite 8 minifica los strings con backticks, y el helper de QA `e2e/versiones-apoyo.ts` ya no asume comillas dobles. Audit: quedan solo los 4 avisos de `deepmerge`.
 - **Por qué:** `npm audit` reporta 6 avisos bajos que solo se corrigen en SvelteKit 3:
   - SvelteKit: [GHSA-pfhg-q3qv-9q6r](https://github.com/advisories/GHSA-pfhg-q3qv-9q6r) (redirección con formularios `use:enhance`) y [GHSA-27mw-82g8-phjj](https://github.com/advisories/GHSA-27mw-82g8-phjj) (XSS en páginas prerenderizadas). Afecta a `kit`, `adapter-static`, `vite-plugin-svelte` y `vite-plugin-svelte-inspector`.
   - `cookie` < 0.7.0: [GHSA-pxg6-pf52-xh8x](https://github.com/advisories/GHSA-pxg6-pf52-xh8x), que llega a través de SvelteKit 2.

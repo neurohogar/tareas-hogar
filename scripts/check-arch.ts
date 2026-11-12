@@ -72,7 +72,7 @@ function especificadores(archivo: string): string[] {
 /** Ruta absoluta de un import interno, o null si es un paquete externo. */
 function resolverInterno(desde: string, especificador: string): string | null {
 	let base: string;
-	if (especificador.startsWith('$lib/')) base = join(LIB, especificador.slice('$lib/'.length));
+	if (especificador.startsWith('#lib/')) base = join(LIB, especificador.slice('#lib/'.length));
 	else if (especificador.startsWith('.')) base = resolve(dirname(desde), especificador);
 	else return null;
 	const candidatos = [base, ...EXTENSIONES.map((ext) => base + ext), join(base, 'index.ts')];

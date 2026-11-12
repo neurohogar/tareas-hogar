@@ -9,8 +9,8 @@ import {
 	clavesReemplazadas,
 	rutaDeFuente,
 	siguienteEspera
-} from '$lib/core/fuentes-empaquetadas';
-import { resumenDeFuentes, type EstadoDeFuente } from '$lib/core/pantalla-de-carga';
+} from '#lib/core/fuentes-empaquetadas.ts';
+import { resumenDeFuentes, type EstadoDeFuente } from '#lib/core/pantalla-de-carga.ts';
 
 /** Por archivo de fuente, la huella de su contenido (vite.config.ts). */
 declare const __HUELLAS_DE_FUENTES__: Record<string, string>;

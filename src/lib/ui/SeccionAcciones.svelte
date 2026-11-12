@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { accionDeLaOpcion, type AccionDelPanel } from '$lib/core/accion-del-panel';
-	import { OPCIONES_DE_POSPONER } from '$lib/core/posposicion';
-	import type { PresentacionDelPanel, SeccionDelPanel } from '$lib/core/panel-en-pestanas';
+	import { accionDeLaOpcion, type AccionDelPanel } from '#lib/core/accion-del-panel.ts';
+	import { OPCIONES_DE_POSPONER } from '#lib/core/posposicion.ts';
+	import type { PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-en-pestanas.ts';
 	import Icono from './iconos/Icono.svelte';
 	import MarcoDeSeccion from './MarcoDeSeccion.svelte';
 

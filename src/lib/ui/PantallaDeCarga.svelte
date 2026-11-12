@@ -10,21 +10,21 @@
 	// Spec §6.6: la pantalla se dibuja en src/app.html, antes de que corra el JavaScript. Este
 	// componente le cuenta al core cómo va la espera y la quita cuando el core dice que se va.
 	import { onMount } from 'svelte';
-	import { observarConexion } from '$lib/adapters/conexion';
-	import { cargarFuentes, type EstadoDeLasFuentes } from '$lib/adapters/fuentes';
+	import { observarConexion } from '#lib/adapters/conexion.ts';
+	import { cargarFuentes, type EstadoDeLasFuentes } from '#lib/adapters/fuentes.ts';
 	import {
 		guardarRecuerdoDeTopeDeNoto,
 		leerRecuerdoDeTopeDeNoto,
 		quitarPantallaDeCarga,
 		segundosDesdeElArranque
-	} from '$lib/adapters/pantalla-de-carga';
+	} from '#lib/adapters/pantalla-de-carga.ts';
 	import {
 		pantallaDeCargaSeVa,
 		proximoLimiteDeLaPantalla,
 		recuerdoDeTopeDeNoto,
 		type EstadoDeLaEspera,
 		type RespuestaDeAuth
-	} from '$lib/core/pantalla-de-carga';
+	} from '#lib/core/pantalla-de-carga.ts';
 
 	let { auth, datos, alIrse }: { auth: RespuestaDeAuth; datos: DatosRespondieron; alIrse: () => void } = $props();
 

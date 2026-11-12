@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { entrarConGoogle } from '$lib/adapters/auth';
-	import { pantallaDeEntrada } from '$lib/core/conexion';
+	import { entrarConGoogle } from '#lib/adapters/auth.ts';
+	import { pantallaDeEntrada } from '#lib/core/conexion.ts';
 	import { enLineaReactivo } from './en-linea.svelte';
 
 	let error = $state('');

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { MENSAJE_DE_CAMBIOS, type AvisoDeCambios, type BotonDelAviso } from '$lib/core/cambios-sin-guardar-aviso';
+	import { MENSAJE_DE_CAMBIOS, type AvisoDeCambios, type BotonDelAviso } from '#lib/core/cambios-sin-guardar-aviso.ts';
 
 	// Spec §6.2: el aviso de cierre o de una acción, sobre el panel. El texto y los botones los decide el core.
 	let { aviso, alElegir }: { aviso: AvisoDeCambios; alElegir: (efecto: BotonDelAviso['efecto']) => void } = $props();

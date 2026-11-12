@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
+import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig } from 'vite';
 
 const FUENTES = 'static/fuentes';
@@ -13,6 +15,6 @@ const huellasDeFuentes = Object.fromEntries(
 );
 
 export default defineConfig({
-	plugins: [sveltekit()],
+	plugins: [sveltekit({ preprocess: vitePreprocess(), adapter: adapter({ fallback: 'index.html' }) })],
 	define: { __HUELLAS_DE_FUENTES__: JSON.stringify(huellasDeFuentes) }
 });

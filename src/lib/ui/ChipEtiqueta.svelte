@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import type { EtiquetaNueva } from '$lib/core/etiqueta';
+	import type { EtiquetaNueva } from '#lib/core/etiqueta.ts';
 
 	// Un chip es un elemento de lista: su nombre accesible es el de la etiqueta y su descripción, el color
 	// (title: el texto del chip queda solo con el nombre).

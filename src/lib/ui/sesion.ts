@@ -2,11 +2,11 @@
 // observa y las acciones sobre ellos. Las pantallas le preguntan al core qué
 // mostrar con esos datos.
 import { getContext, setContext } from 'svelte';
-import type { ErroresDeCreacion } from '$lib/core/creacion';
-import type { FormularioDelPanel } from '$lib/core/cambios-sin-guardar';
-import type { Color, Etiqueta } from '$lib/core/etiqueta';
-import type { ErrorDeRenombrado } from '$lib/core/gestion-de-etiquetas';
-import type { Completado, Tarea } from '$lib/core/tarea';
+import type { ErroresDeCreacion } from '#lib/core/creacion.ts';
+import type { FormularioDelPanel } from '#lib/core/cambios-sin-guardar.ts';
+import type { Color, Etiqueta } from '#lib/core/etiqueta.ts';
+import type { ErrorDeRenombrado } from '#lib/core/gestion-de-etiquetas.ts';
+import type { Completado, Tarea } from '#lib/core/tarea.ts';
 
 export interface Sesion {
 	readonly tareas: Tarea[];
