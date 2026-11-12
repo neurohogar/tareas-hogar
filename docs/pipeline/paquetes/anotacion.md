@@ -64,13 +64,54 @@ Un gesto de dos toques, siempre en el mismo lugar, para anotar «me sirvió» o 
 
 ## Artefactos
 
+- Gherkin: `features/anotar.feature` (S2, S3, S4, S5, S6, S7, S9, S10, S11, S12, S29), `features/anotaciones.feature` (S5, S21, S22, S23, S29), `features/copiar-anotaciones.feature` (S27), `features/editar-anotacion.feature` (S6, S7, S25, S29), `features/borrar-anotacion.feature` (S26), `features/anotaciones-de-tarea-borrada.feature` (S16, S18, S23, S30); cubiertos solo por QA: S1, S8, S13, S14, S15, S17, S19, S20, S24, S28
+- QA: `qa/anotacion.md`
+
 ## core
+
+- **Puede editar**: `src/lib/core/anotacion*.ts` (archivos nuevos: la anotación, el contexto al anotar, la lista agrupada y el texto copiado), `src/lib/core/*.test.ts` (todos los tests del core), `src/lib/core/borrado.ts`, `src/lib/core/fechas-en-texto.ts`, `src/lib/core/atras-del-panel.ts`
+- **Reglas**: S2, S3, S4, S5, S6, S7, S9, S10, S11, S16, S18, S21, S22, S23, S25, S27, S29, S30 (S12: anotar no es un cambio del panel; S13, S19, S20: `atras-del-panel.ts` suma el recuadro de Anotar a lo que Atrás cierra solo, sin tocar el panel)
+- **Reusa**:
+  - `encabezadoDelDia` y `horaEnTexto` (`fechas-en-texto.ts`) para los encabezados «Hoy», «Ayer» y la fecha y la hora `HH:MM`, y `compararIds` (`comparar-ids.ts`) para el desempate por `id`; el texto copiado necesita además la fecha `AAAA-MM-DD HH:MM`, que se agrega en `fechas-en-texto.ts`.
+  - `nombreDeTarea` (`nombre-de-tarea.ts`) para el nombre actual (emoji y título) de la tarea.
+  - `avisoVisible` (`aviso.ts`) para saber si el aviso de deshacer se ve al anotar (`completadoEn <= ahora < completadoEn + 5 s`); la anotación toma `tareaId` del aviso solo si se ve.
+  - `normalizarNota` (`nota.ts`) tiene la misma regla de recorte; una sola línea sin saltos y sin largo máximo.
+  - `borrado` y `completadosHuerfanos` (`borrado.ts`) son el modelo: `Borrado` suma los ids de las anotaciones de la tarea, y las anotaciones huérfanas se detectan con `existeTarea`, como los completados huérfanos.
+  - `historial` (`historial.ts`) es el modelo de agrupar por día local; no se modifica.
+- **Notas**: las firmas exportadas que ya usan `acceptance/` y la UI (`borrado`, `completadosHuerfanos`, `existeTarea`, `queHaceAtras`, `encabezadoDelDia`, `horaEnTexto`) siguen compatibles: solo campos o parámetros nuevos opcionales, porque el gate del core corre la aceptación ya implementada.
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate core`
 
 ## acceptance
 
+- **Puede editar**: `acceptance/steps/anotacion*.ts` (archivos nuevos), `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `acceptance/steps/edicion.ts` (`borro la tarea` tiene que borrar también las anotaciones de la tarea), `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `scripts/check-arch.ts` (la lista manual de oráculos, si se agrega `acceptance/oracle-anotaciones.ts`), `docs/pipeline/pendientes.txt`
+- **Features a conectar**: `features/anotar.feature`, `features/anotaciones.feature`, `features/copiar-anotaciones.feature`, `features/editar-anotacion.feature`, `features/borrar-anotacion.feature`, `features/anotaciones-de-tarea-borrada.feature`
+- **Pasos nuevos**: (los pasos que ya existen y se reusan: `una tarea puntual <titulo> sin fecha límite`, `... con fecha límite <limite>`, `... sin fecha límite con emoji <emoji>`, `completo la tarea <titulo> el <momento>`, `la tarea <titulo> fue completada el <momento>`, `edito el título a <titulo>`, `borro la tarea <titulo>`, `no existe la tarea <titulo>`, `no queda ningún completado de <titulo>`, `la tarea <titulo> conserva un solo completado, del <momento>`)
+  - `estoy en <pantalla>` (Pendientes, Historial, Etiquetas o Anotaciones)
+  - `el panel de edición está abierto al editar la tarea <titulo>` y `el panel de edición está abierto al crear una tarea`
+  - `anoto <sentido> el <ahora>`, `anoto <sentido> el <ahora> con el texto <texto>`, `anoto <sentido> el <ahora> con el texto <texto> entre <espacios> espacios`, `anoto <sentido> el <ahora> con <espacios> espacios como texto` y `anoto <sentido> el <ahora> con un texto de <largo> caracteres` (el contexto lo toma el core de dónde está la persona, el panel y el aviso de deshacer)
+  - `otro dispositivo, sin ver ese cambio, anota <sentido> en <pantalla> el <ahora>` y `otro dispositivo, sin ver ese cambio, anota <sentido> en <pantalla> el <ahora> sobre la tarea <titulo>`
+  - `una anotación <sentido> en <pantalla> del <anotada>`, y los que describen la última anotación declarada: `la anotación se refiere a la tarea <titulo>`, `la anotación dice <texto>` y `la anotación se registró con id <id>`
+  - `queda una sola anotación`, `quedan <cantidad> anotaciones`, `no queda ninguna anotación` y `no existe la anotación del <anotada>`
+  - `la anotación del <anotada> tiene sentido <sentido> en <pantalla>`, `la anotación del <anotada> es de la tarea <titulo>`, `la anotación del <anotada> no es de ninguna tarea`, `la anotación del <anotada> dice <texto>`, `la anotación del <anotada> dice un texto de <largo> caracteres` y `la anotación del <anotada> no tiene texto`
+  - `el panel sigue abierto sin cambios sin guardar`
+  - `consulto Anotaciones el <ahora>`, `Anotaciones muestra <anotaciones>` (grupos separados por "; " como `<encabezado>: <anotaciones>`, anotaciones separadas por ", ", partes separadas por " · ") y `Anotaciones está vacía`
+  - `copio las anotaciones`, `el texto copiado tiene las líneas <lineas>` (líneas separadas por "; ") y `no hay nada para copiar`
+  - `edito el texto de la anotación del <anotada> a <texto>`, `edito el texto de la anotación del <anotada> a <texto> entre <espacios> espacios`, `edito el texto de la anotación del <anotada> a <espacios> espacios` y `otro dispositivo, sin ver ese cambio, edita el texto de la anotación del <anotada> a <texto>`
+  - `borro la anotación del <anotada>` y `otro dispositivo, sin ver ese cambio, borra la anotación del <anotada>`
+  - `las anotaciones huérfanas a limpiar son solo la del <anotada>`
+- **Notas**: una anotación se identifica en los pasos por el instante `anotadaEn` (distinto en cada anotación de un escenario, salvo en los escenarios de empate, que las identifican por `id`); el texto de `<espacios>` son `<espacios>` caracteres de espacio, y `<largo>` caracteres es un texto de ese largo; las Examples de `Anotaciones muestra` y `el texto copiado` salen del spec (§6.7). Un paso `borro la tarea` ya existe: tiene que borrar también las anotaciones de esa tarea, y solo las suyas.
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate acceptance`
+
 ## ui
 
+- **Puede editar**: `src/lib/ui/Anotar*.svelte` y `src/lib/ui/Anotaciones*.svelte` (archivos nuevos: el botón con su recuadro y la pantalla), `src/routes/anotaciones/+page.svelte` (nuevo), `src/lib/ui/Navegacion.svelte`, `src/lib/ui/Sesion.svelte`, `src/lib/ui/sesion.ts`, `src/lib/ui/PanelTarea.svelte`, `src/lib/ui/Pendientes.svelte`, `src/lib/ui/estilos.css`, `src/lib/adapters/repositorio.ts`, `src/lib/adapters/atras.ts`, `src/lib/adapters/anotaciones*.ts` y `src/lib/adapters/portapapeles*.ts` (archivos nuevos)
+- **Comportamiento visible**: `qa/anotacion.md`
+- **Notas**: las anotaciones viven en `users/{uid}/anotaciones/{anotacionId}` (S28) con id generado en el cliente; `firestore.rules` ya cubre `users/{uid}/**` y no cambia. Borrar una tarea borra sus anotaciones en el mismo `writeBatch` (`borrarTarea` en `repositorio.ts`); las anotaciones huérfanas se limpian como los completados huérfanos en `Sesion.svelte`. El botón **Anotar** se monta dentro de la sesión (no existe en la pantalla de entrada ni en la de carga) y queda en el mismo lugar de todas las pantallas.
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate ui`
+
 ## cleaner · architect · hardener · qa
+
+Trabajan sobre todo lo que cambió la feature (`git diff <base de la feature>`, anotada en `tmp/base-de-feature`); no necesitan sección propia salvo que el gherkin-writer anote algo para ellos acá.
 
 ## Log
 
