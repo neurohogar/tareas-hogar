@@ -142,6 +142,11 @@
 				"name": "acceptance:mutate {{file}}",
 				"command": "npm run acceptance:mutate --silent -- {{file}} --level soft"
 			},
+			"acceptance:mutate:paquete": {
+				"kind": "perPackageFeature",
+				"name": "acceptance:mutate {{file}} (del paquete)",
+				"command": "npm run acceptance:mutate --silent -- {{file}} --level soft"
+			},
 			"gherkin-parser": {
 				"kind": "perPackageFeature",
 				"name": "gherkin-parser {{file}}",
@@ -226,7 +231,8 @@
 					"test:unit",
 					"acceptance",
 					"mutator",
-					"acceptance:mutate"
+					"acceptance:mutate",
+					"acceptance:mutate:paquete"
 				]
 			},
 			"qa": {
