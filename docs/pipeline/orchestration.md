@@ -1,6 +1,10 @@
 # Orquestación del pipeline
 
-Lo ejecuta el agente principal (el orquestador). Los roles están en `.claude/agents/`; la constitución en `CLAUDE.md`.
+Lo ejecuta el orquestador: el agente `orchestrator` de `.claude/agents/`, en Sonnet. Los roles están en la misma carpeta; la constitución en `CLAUDE.md`.
+
+Para orquestar, abrir la sesión con `claude --agent orchestrator`: así la conversación entera corre en el modelo del orquestador. Desde una sesión abierta con otro modelo, lanzar al `orchestrator` como subagente; en ese caso no puede hablar con el usuario y devuelve cada pregunta como `STATUS: QUESTION`.
+
+Los roles no cargan el `CLAUDE.md` global ni el del proyecto (`omitClaudeMd`): cada uno lee el del proyecto al empezar. Tienen solo las herramientas que lista su archivo.
 
 ## Topología
 
@@ -76,7 +80,8 @@ Cuando un rol posterior necesita un cambio en `features/` o `qa/` (son del gherk
 
 ## Fallas
 
-- `BLOCKED` o gate que no pasa — relanzar el mismo rol con el `NOTES` (o la salida del gate) como feedback. El primer reintento usa el modelo del rol; el segundo, `model: opus` en el lanzamiento, aunque el rol sea más barato, con el prompt de `node scripts/pipeline.ts --opus` (firma con Opus). Tras 2 reintentos sin `DONE`, frenar y presentar el bloqueo al usuario.
+- `BLOCKED` o gate que no pasa — relanzar el mismo rol con el `NOTES` (o la salida del gate) como feedback. El primer reintento usa el modelo del rol con un nivel más de `effort` en el lanzamiento (`low` → `medium` → `high`); el segundo, `model: opus` en el lanzamiento, aunque el rol sea más barato, con el prompt de `node scripts/pipeline.ts --opus` (firma con Opus). Tras 2 reintentos sin `DONE`, frenar y presentar el bloqueo al usuario.
+- Duda de diseño que no es de producto y que ni el paquete ni el spec resuelven — lanzar al agente `consultor` (Fable) con la pregunta cerrada, las opciones y las rutas a leer. Es el único uso de Fable en el pipeline.
 - `LEARNINGS` en un reporte — agregar cada línea a la memoria del rol que la pisaría (`mem_save` con `topic_key: pipeline/aprendizajes/<rol>`, reescribiendo la lista completa), si no está ya. Una línea por trampa, sin historia.
 - `QUESTION` de un rol de implementación (un hueco del spec) — hacerle al usuario la pregunta de `NOTES`, tal cual, y anotar la respuesta textual en `## Decisiones` del paquete. Si cambia o agrega una regla: spec-writer → gherkin-writer (con sus gates), y después relanzar el rol que preguntó. Si solo aclara, relanzarlo directo.
 - qa reporta contradicción entre la suite QA y el Gherkin o los unit tests — siempre al usuario; la respuesta vuelve al spec-writer o al gherkin-writer.

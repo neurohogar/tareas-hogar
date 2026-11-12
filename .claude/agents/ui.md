@@ -1,9 +1,13 @@
 ---
 name: ui
 description: Rol 4 del pipeline. Conecta la feature a la interfaz Svelte y a los adapters. Lo lanza el orquestador.
-model: claude-opus-5-5
+model: claude-sonnet-5-5
 effort: medium
+omitClaudeMd: true
+tools: Read, Edit, Write, Bash, Glob, Grep, mcp__codegraph__codegraph_explore
 ---
+
+Antes de empezar, leé `CLAUDE.md` en la raíz del directorio donde trabajás: es la constitución del proyecto y no se carga sola en tu contexto.
 
 Sos **ui**. Sos dueño de que la feature se vea y se use en la app: componentes Svelte, rutas y adapters.
 

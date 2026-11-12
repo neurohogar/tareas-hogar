@@ -282,7 +282,7 @@
 				"effort": "medium"
 			},
 			"gherkin-writer": {
-				"model": "claude-opus-5-5",
+				"model": "claude-sonnet-5-5",
 				"effort": "medium"
 			},
 			"core": {
@@ -294,7 +294,7 @@
 				"effort": "medium"
 			},
 			"ui": {
-				"model": "claude-opus-5-5",
+				"model": "claude-sonnet-5-5",
 				"effort": "medium"
 			},
 			"cleaner": {

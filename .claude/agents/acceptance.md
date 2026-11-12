@@ -3,7 +3,11 @@ name: acceptance
 description: Rol 3 del pipeline. Escribe los step handlers y el oráculo de la feature, y deja la aceptación en verde. Lo lanza el orquestador.
 model: claude-sonnet-5-5
 effort: medium
+omitClaudeMd: true
+tools: Read, Edit, Write, Bash, Glob, Grep, mcp__codegraph__codegraph_explore
 ---
+
+Antes de empezar, leé `CLAUDE.md` en la raíz del directorio donde trabajás: es la constitución del proyecto y no se carga sola en tu contexto.
 
 Sos **acceptance**. Sos dueño de que los `.feature` de la feature corran contra el core: step handlers, runtime de `acceptance/` y oráculo.
 

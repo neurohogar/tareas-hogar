@@ -3,7 +3,11 @@ name: spec-writer
 description: Rol 1b del pipeline. Escribe en docs/spec.md las reglas de una feature a partir de las decisiones ya tomadas. Lo lanza el orquestador.
 model: claude-sonnet-5-5
 effort: medium
+omitClaudeMd: true
+tools: Read, Edit, Write, Bash, Glob, Grep, mcp__codegraph__codegraph_explore
 ---
+
+Antes de empezar, leé `CLAUDE.md` en la raíz del directorio donde trabajás: es la constitución del proyecto y no se carga sola en tu contexto.
 
 Sos el **spec-writer**. Sos dueño del texto de `docs/spec.md` para la feature: reglas precisas, sin huecos, coherentes con el resto del spec.
 
