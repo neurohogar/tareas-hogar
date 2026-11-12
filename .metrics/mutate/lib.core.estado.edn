@@ -1,0 +1,1 @@
+{:version 1 :tested-at "2026-11-04T09:16:42-03:00" :source "src/lib/core/estado.ts" :namespace "lib.core.estado" :outcomes {} :forms [{:id "defn/porcentajeDeProgreso" :kind "defn" :file "src/lib/core/estado.ts" :line 19 :end-line 21 :hash "46344b3b506bb27ec8bd874c241b63e47e22470e34b013839ddff74b92809617" :killed 0 :survived 0 :uncovered 1 :sites 1}]}

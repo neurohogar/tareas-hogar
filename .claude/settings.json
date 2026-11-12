@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/Work/bdd-pipeline/bdd-pipeline hook",
+            "timeout": 1800,
+            "statusMessage": "Corriendo el gate del rol..."
+          }
+        ]
+      }
+    ]
+  }
+}

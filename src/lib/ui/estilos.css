@@ -1,0 +1,114 @@
+/* Fuente y emoji empaquetados (spec §6, OFL 1.1; licencias en static/fuentes). Los registra adapters/fuentes.ts. */
+:root {
+	color-scheme: light dark;
+	--fondo: #f7f5f0;
+	--superficie: #ffffff;
+	--texto: #1f2421;
+	--texto-suave: #5d655f;
+	--acento: #3f6f5a;
+	--atraso: #a2453a;
+	--error: #a2453a;
+	--borde: #d9d6cf;
+	--borde-control: #9c978e;
+	--alto-navegacion: 56px;
+	/* Paleta de etiquetas (spec §4.3), tenue. */
+	--etiqueta-gris: #e3e3e0;
+	--etiqueta-rojo: #f5d5d0;
+	--etiqueta-naranja: #f7dfc4;
+	--etiqueta-amarillo: #f4eab8;
+	--etiqueta-verde: #d3ead5;
+	--etiqueta-celeste: #cfe8f0;
+	--etiqueta-azul: #d3dcf3;
+	--etiqueta-violeta: #e3d6f0;
+	font-family: 'Atkinson Hyperlegible Next', 'Noto Color Emoji', system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--fondo: #161917;
+		--superficie: #1f2421;
+		--texto: #e8ebe8;
+		--texto-suave: #a3aba5;
+		--acento: #7fb79c;
+		--atraso: #e08a7e;
+		--error: #e08a7e;
+		--borde: #343a36;
+		--borde-control: #5e6661;
+		--etiqueta-gris: #3b3d3c;
+		--etiqueta-rojo: #4f3230;
+		--etiqueta-naranja: #523b28;
+		--etiqueta-amarillo: #4b4426;
+		--etiqueta-verde: #2f4633;
+		--etiqueta-celeste: #2b4450;
+		--etiqueta-azul: #2f3a55;
+		--etiqueta-violeta: #42344f;
+	}
+}
+
+body {
+	margin: 0;
+	background: var(--fondo);
+	color: var(--texto);
+}
+
+main {
+	max-width: 40rem;
+	margin: 0 auto;
+	padding: 1rem 1rem calc(var(--alto-navegacion) + 6rem);
+}
+
+button {
+	font: inherit;
+}
+
+/* Controles compartidos por las secciones del panel de edición (ven al panel como ancestro `.hoja`). */
+.hoja .campo-formulario {
+	display: grid;
+	gap: 0.35rem;
+	min-width: 0;
+}
+
+.hoja input,
+.hoja select,
+.hoja textarea {
+	min-height: 44px;
+	max-width: 100%;
+	box-sizing: border-box;
+	font: inherit;
+	padding: 0 0.5rem;
+	border: 1px solid var(--borde);
+	border-radius: 0.4rem;
+	background: var(--fondo);
+	color: var(--texto);
+}
+
+.hoja textarea {
+	padding: 0.5rem;
+	resize: vertical;
+}
+
+.hoja .texto {
+	justify-self: start;
+	min-height: 44px;
+	padding: 0 1rem;
+	border: 1px solid var(--borde);
+	border-radius: 0.4rem;
+	background: transparent;
+	color: var(--texto);
+	cursor: pointer;
+}
+
+.hoja .error {
+	flex-basis: 100%;
+	margin: 0;
+	color: var(--error);
+	font-size: 0.9rem;
+}
+
+.hoja .oculto {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+}

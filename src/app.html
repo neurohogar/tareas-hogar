@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="light dark" />
+		<meta name="theme-color" content="#3f6f5a" />
+		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
+		<link rel="icon" href="%sveltekit.assets%/icon.svg" type="image/svg+xml" />
+		<title>Tareas Hogar</title>
+		<script>
+			// Spec §6.6: el tope de la pantalla de carga cuenta desde acá, no desde que llega el JavaScript.
+			window.arranqueDeLaApp = performance.now();
+		</script>
+		<style>
+			/* Spec §6.6: se ve antes de que llegue el CSS de la app; los colores son --fondo de estilos.css. */
+			html,
+			#pantalla-de-carga {
+				background: #f7f5f0;
+			}
+			@media (prefers-color-scheme: dark) {
+				html,
+				#pantalla-de-carga {
+					background: #161917;
+				}
+			}
+			#pantalla-de-carga {
+				position: fixed;
+				inset: 0;
+				z-index: 2147483647;
+				display: grid;
+				place-items: center;
+			}
+			#pantalla-de-carga svg {
+				width: 96px;
+				height: 96px;
+			}
+			@media (prefers-reduced-motion: no-preference) {
+				#pantalla-de-carga svg {
+					animation: pulso-de-carga 2s ease-in-out infinite alternate;
+				}
+			}
+			@keyframes pulso-de-carga {
+				from {
+					opacity: 0.6;
+					transform: scale(0.96);
+				}
+				to {
+					opacity: 1;
+					transform: scale(1);
+				}
+			}
+		</style>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div id="pantalla-de-carga">
+			<svg role="img" aria-label="Cargando" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#3f6f5a" /><path d="M150 262l70 70 142-152" fill="none" stroke="#f7f5f0" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" /></svg>
+		</div>
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

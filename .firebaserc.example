@@ -1,0 +1,6 @@
+{
+	"projects": {
+		"default": "demo-tareas-hogar",
+		"prod": "<your-project-id>"
+	}
+}

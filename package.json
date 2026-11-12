@@ -1,0 +1,46 @@
+{
+  "name": "tareas-hogar",
+  "version": "2.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "build:qa": "vite build --mode qa",
+    "preview": "vite preview",
+    "deploy": "vite build && firebase deploy --project prod --only hosting,firestore:rules",
+    "emulators": "firebase emulators:start --only auth,firestore --project demo-tareas-hogar",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "acceptance:mutate": "~/Work/bdd-pipeline/bdd-pipeline acceptance-mutate",
+    "acceptance:generate": "~/Work/bdd-pipeline/bdd-pipeline generate",
+    "test": "npm run acceptance:generate && vitest run --project unit --project acceptance",
+    "test:unit": "vitest run --project unit",
+    "acceptance": "npm run acceptance:generate && vitest run --project acceptance",
+    "coverage": "npm run acceptance:generate && vitest run --project unit --project acceptance --coverage",
+    "test:props": "vitest run --project props",
+    "check:arch": "node scripts/check-arch.ts",
+    "prepare": "svelte-kit sync || echo ''",
+    "qa": "firebase emulators:exec --only auth,firestore --project demo-tareas-hogar \"playwright test\""
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.64.1",
+    "@sveltejs/adapter-static": "^3.0.10",
+    "@sveltejs/kit": "^2.70.3",
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^4.1.12",
+    "fast-check": "^4.10.2",
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.7.7",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.7",
+    "vitest": "^4.1.12"
+  },
+  "dependencies": {
+    "emoji-picker-element": "^1.29.1",
+    "emoji-picker-element-data": "^1.8.0",
+    "firebase": "^12.19.0"
+  }
+}

@@ -1,0 +1,324 @@
+{
+	"paths": {
+		"mainCheckout": "~/Work/tareas-hogar",
+		"worktree": "~/Work/tareas-hogar-worktrees/pipeline",
+		"tmp": "tmp",
+		"spec": "docs/spec.md",
+		"pending": "docs/pipeline/pendientes.txt",
+		"agents": ".claude/agents"
+	},
+	"branches": {
+		"integration": "v3",
+		"worktree": "wt/pipeline"
+	},
+	"roles": {
+		"specification": [
+			"analyst",
+			"spec-writer",
+			"gherkin-writer"
+		],
+		"implementation": [
+			"core",
+			"acceptance",
+			"ui",
+			"cleaner",
+			"architect",
+			"hardener",
+			"qa"
+		],
+		"withSurface": [
+			"core",
+			"acceptance",
+			"ui"
+		],
+		"fixedSurfaces": {
+			"analyst": [],
+			"spec-writer": [
+				"docs/spec.md"
+			],
+			"gherkin-writer": [
+				"features/",
+				"qa/",
+				"docs/pipeline/pendientes.txt"
+			]
+		},
+		"mergesIntegration": "core",
+		"handoff": {
+			"acceptance": [
+				"core"
+			],
+			"ui": [
+				"core"
+			],
+			"hardener": [
+				"acceptance"
+			]
+		}
+	},
+	"tools": {
+		"mutator": "~/Work/vendor/mutator/mutator",
+		"crapper": "~/Work/vendor/crapper/crapper",
+		"dryer": "~/Work/vendor/dryer/dryer",
+		"apsBbEdn": "~/Work/vendor/Acceptance-Pipeline-Specification/bb.edn"
+	},
+	"acceptance": {
+		"featuresDir": "features",
+		"generatedDir": "acceptance/generated",
+		"generatedSuffix": ".acceptance.test.ts",
+		"stepsModule": "acceptance/steps/index.ts",
+		"generateCommand": [
+			"npm",
+			"run",
+			"--silent",
+			"acceptance:generate"
+		],
+		"runCommand": [
+			"npx",
+			"vitest",
+			"run",
+			"--project",
+			"acceptance"
+		],
+		"equivalenceModule": "acceptance/equivalence.ts",
+		"mutationWorkDir": "tmp/acceptance-mutation"
+	},
+	"gate": {
+		"manifests": [
+			".metrics",
+			"features"
+		],
+		"toolOwned": [
+			".metrics/"
+		],
+		"trailer": "^Co-Authored-By: (Claude .+ <noreply@anthropic\\.com>|Google Gemini .+ <noreply@google\\.com>)$",
+		"failureLines": 60,
+		"vars": {
+			"testCommand": "~/Work/bdd-pipeline/bdd-pipeline generate --silent && npx vitest run --project unit --project acceptance src/ tests/hardening/ {{implementedTests}}",
+			"coverageCommand": "{{testCommand}} --coverage"
+		},
+		"steps": {
+			"test:unit": {
+				"command": "npm run test:unit --silent"
+			},
+			"acceptance": {
+				"command": "~/Work/bdd-pipeline/bdd-pipeline generate --silent && npx vitest run --project acceptance {{implementedTests}}"
+			},
+			"check:arch": {
+				"command": "npm run check:arch --silent"
+			},
+			"svelte-check": {
+				"command": "npm run check --silent"
+			},
+			"build": {
+				"command": "npm run build --silent"
+			},
+			"test:props": {
+				"command": "npm run test:props --silent"
+			},
+			"crapper": {
+				"command": "{{tools.crapper}} --threshold 10 --coverage-command '{{coverageCommand}}' src/lib/core"
+			},
+			"dryer": {
+				"command": "{{tools.dryer}} src/lib/core"
+			},
+			"mutator": {
+				"kind": "perChangedFile",
+				"match": "^src/lib/core/[^/]+\\.ts$",
+				"exclude": "\\.test\\.ts$",
+				"name": "mutator {{file}}",
+				"command": "{{tools.mutator}} --max-workers 4 --coverage-command '{{coverageCommand}}' --test-command '{{testCommand}}' {{file}}",
+				"check": "mutantsMeasured"
+			},
+			"acceptance:mutate": {
+				"kind": "perChangedFile",
+				"match": "^features/[^/]+\\.feature$",
+				"skipPending": true,
+				"name": "acceptance:mutate {{file}}",
+				"command": "npm run acceptance:mutate --silent -- {{file}} --level soft"
+			},
+			"gherkin-parser": {
+				"kind": "perPackageFeature",
+				"name": "gherkin-parser {{file}}",
+				"command": "mkdir -p tmp && bb --config {{tools.apsBbEdn}} gherkin-parser {{file}} ./tmp/gate.json"
+			},
+			"playwright": {
+				"kind": "playwright",
+				"match": "^e2e/.+\\.spec\\.ts$",
+				"wrapper": "npx firebase emulators:exec --only auth,firestore --project demo-tareas-hogar",
+				"projects": [
+					"--project=ui",
+					"--project=pwa --no-deps"
+				]
+			}
+		},
+		"roles": {
+			"analyst": {
+				"checks": [
+					"log"
+				],
+				"steps": []
+			},
+			"spec-writer": {
+				"checks": [
+					"log",
+					"specsQuoted"
+				],
+				"steps": []
+			},
+			"gherkin-writer": {
+				"checks": [
+					"log",
+					"specsQuoted",
+					"gherkinComplete"
+				],
+				"steps": [
+					"gherkin-parser"
+				]
+			},
+			"core": {
+				"steps": [
+					"test:unit",
+					"acceptance",
+					"check:arch"
+				]
+			},
+			"acceptance": {
+				"steps": [
+					"test:unit",
+					"acceptance",
+					"check:arch"
+				]
+			},
+			"ui": {
+				"steps": [
+					"test:unit",
+					"acceptance",
+					"check:arch",
+					"svelte-check"
+				]
+			},
+			"cleaner": {
+				"steps": [
+					"test:unit",
+					"acceptance",
+					"crapper",
+					"dryer",
+					"build"
+				]
+			},
+			"architect": {
+				"steps": [
+					"test:unit",
+					"acceptance",
+					"check:arch",
+					"test:props",
+					"build"
+				]
+			},
+			"hardener": {
+				"steps": [
+					"test:unit",
+					"acceptance",
+					"mutator",
+					"acceptance:mutate"
+				]
+			},
+			"qa": {
+				"steps": [
+					"test:unit",
+					"acceptance",
+					"playwright"
+				]
+			}
+		}
+	},
+	"models": {
+		"default": "claude-opus-5-5",
+		"escalated": "opus",
+		"claudeNames": {
+			"opus": "Opus 5.5",
+			"sonnet": "Sonnet 5.5",
+			"haiku": "Haiku 5.5",
+			"opus-5-5": "Opus 5.5",
+			"sonnet-5-5": "Sonnet 5.5",
+			"haiku-5-5": "Haiku 5.5"
+		},
+		"geminiNames": {
+			"gemini-3.8-flash": "3.8 Flash"
+		}
+	},
+	"commands": {
+		"gate": "~/Work/bdd-pipeline/bdd-pipeline gate",
+		"hookGate": "~/Work/bdd-pipeline/bdd-pipeline gate",
+		"follow": "~/Work/bdd-pipeline/bdd-pipeline follow",
+		"acceptanceMutate": "~/Work/bdd-pipeline/bdd-pipeline acceptance-mutate"
+	},
+	"prompts": {
+		"learnings": "(Agreg\u00e1 al final del prompt la secci\u00f3n \u00abAprendizajes del rol\u00bb con la memoria pipeline/aprendizajes/{{role}}: ver docs/pipeline/orchestration.md.)",
+		"closing": "cierre y deploy si el usuario lo aprueba"
+	},
+	"follow": {
+		"suiteLogs": {
+			"qa": "tmp/qa.log"
+		}
+	},
+	"hook": {
+		"maxBlocks": 3,
+		"timeout": 1800,
+		"statusMessage": "Corriendo el gate del rol...",
+		"replaces": [
+			"\"$CLAUDE_PROJECT_DIR\"/scripts/gate-hook.sh"
+		]
+	},
+	"agents": {
+		"overlayDir": "bdd-pipeline/agents",
+		"roles": {
+			"analyst": {
+				"model": "claude-opus-5-5",
+				"effort": "medium"
+			},
+			"spec-writer": {
+				"model": "claude-sonnet-5-5",
+				"effort": "medium"
+			},
+			"gherkin-writer": {
+				"model": "claude-opus-5-5",
+				"effort": "medium"
+			},
+			"core": {
+				"model": "claude-opus-5-5",
+				"effort": "medium"
+			},
+			"acceptance": {
+				"model": "gemini-3.8-flash",
+				"effort": "medium"
+			},
+			"ui": {
+				"model": "claude-opus-5-5",
+				"effort": "medium"
+			},
+			"cleaner": {
+				"model": "gemini-3.8-flash",
+				"effort": "low"
+			},
+			"architect": {
+				"model": "gemini-3.8-flash",
+				"effort": "medium"
+			},
+			"hardener": {
+				"model": "gemini-3.8-flash",
+				"effort": "low"
+			},
+			"qa": {
+				"model": "claude-sonnet-5-5",
+				"effort": "medium"
+			}
+		},
+		"vars": {
+			"coreDir": "src/lib/core",
+			"uiDir": "src/lib/ui",
+			"routesDir": "src/routes",
+			"adaptersDir": "src/lib/adapters"
+		}
+	}
+}

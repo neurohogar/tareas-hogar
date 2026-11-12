@@ -1,0 +1,17 @@
+node_modules/
+.svelte-kit/
+build/
+dist/
+coverage/
+tmp/
+acceptance/generated/
+playwright-report/
+test-results/
+.firebase/
+*-debug.log
+.codegraph/
+.atl/
+
+# Personal deploy config: copy from the *.example files.
+.env.production
+.firebaserc
