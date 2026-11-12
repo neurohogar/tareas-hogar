@@ -1,3 +1,4 @@
+import { anotacionSteps } from './anotacion';
 import { cambiosSinGuardarSteps } from './cambios-sin-guardar';
 import { checkboxSteps } from './checkbox';
 import { crearSteps } from './crear';
@@ -24,4 +25,4 @@ import type { StepDefinition } from './world';
 
 export { createWorld, type StepDefinition, type World } from './world';
 
-export const steps: StepDefinition[] = [...crearSteps, ...periodicaRelativaSteps, ...periodicaCalendarioSteps, ...puntualSteps, ...pendientesSteps, ...edicionSteps, ...historialSteps, ...deshacerSteps, ...etiquetasSteps, ...emojiYNotaSteps, ...emojisRecientesSteps, ...checkboxSteps, ...horarioSteps, ...ultimaVezSteps, ...pausarSteps, ...posponerSteps, ...esfuerzoSteps, ...panelPestanasSteps, ...cambiosSinGuardarSteps, ...fuenteSteps, ...pantallaDeCargaSteps, ...orientacionVerticalSteps];
+export const steps: StepDefinition[] = [...crearSteps, ...periodicaRelativaSteps, ...periodicaCalendarioSteps, ...puntualSteps, ...pendientesSteps, ...edicionSteps, ...historialSteps, ...deshacerSteps, ...etiquetasSteps, ...emojiYNotaSteps, ...emojisRecientesSteps, ...checkboxSteps, ...horarioSteps, ...ultimaVezSteps, ...pausarSteps, ...posponerSteps, ...esfuerzoSteps, ...panelPestanasSteps, ...cambiosSinGuardarSteps, ...fuenteSteps, ...pantallaDeCargaSteps, ...orientacionVerticalSteps, ...anotacionSteps];

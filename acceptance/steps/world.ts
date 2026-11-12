@@ -1,5 +1,7 @@
 import type { AccionDelPanel } from '../../src/lib/core/accion-del-panel';
 import type { LoDeArriba } from '../../src/lib/core/atras-del-panel';
+import type { Anotacion, PantallaActual } from '../../src/lib/core/anotacion';
+import type { GrupoDeAnotaciones } from '../../src/lib/core/anotaciones';
 import type { Aviso } from '../../src/lib/core/aviso';
 import type { FormularioDelPanel, ValoresDelPanel } from '../../src/lib/core/cambios-sin-guardar';
 import type { ErroresDeCreacion } from '../../src/lib/core/creacion';
@@ -73,6 +75,19 @@ export interface World extends Guardado {
 	emojiMasViejo?: string;
 	/** Cuándo llega cada cosa en esta apertura de la app (§6.6). */
 	apertura?: AperturaDeLaApp;
+	/** Las anotaciones guardadas (§4.5, §7) y las que se borraron, para nombrarlas después. */
+	anotaciones: Anotacion[];
+	anotacionesBorradas: Anotacion[];
+	/** La pantalla donde está la persona (§5.10). */
+	pantallaActual?: PantallaActual;
+	/** El panel de edición abierto desde la mirada de Anotar (§5.10): su tarea, si la hay, y lo que tenía al abrirse. */
+	panelDeAnotar?: { tareaId?: string; cambios: CambiosDelPanel; documentosAlAbrir: DocumentoDeTarea[] };
+	/** La última anotación declarada: los pasos "la anotación ..." la describen. */
+	ultimaAnotacionId?: string;
+	/** La pantalla Anotaciones en el último momento consultado. */
+	anotacionesConsultadas?: GrupoDeAnotaciones[];
+	/** Ya se copió: el texto (o nada para copiar). */
+	copiado?: { texto: string | undefined };
 }
 
 /** Una fuente en la apertura: en qué segundo queda lista o falla, y si podría venir del dispositivo sin conexión. */
@@ -148,6 +163,8 @@ export function createWorld(): World {
 		completados: [],
 		etiquetas: [],
 		siguienteId: 1,
+		anotaciones: [],
+		anotacionesBorradas: [],
 		estados: [],
 		momentosDelEstado: [],
 		consultasDePendientes: [],
@@ -218,8 +235,10 @@ export function registrarDelOtro(world: World, aplicar: (guardado: Guardado) => 
 	if (world.antesDeMiCambio) world.antesDeMiCambio = aplicar(world.antesDeMiCambio);
 }
 
-/** Saca de lo guardado los documentos y completados con esos ids, y recuerda lo que se borró. */
-export function borrarGuardado(world: World, documentoIds: readonly string[], completadoIds: readonly string[]): void {
+/** Saca de lo guardado los documentos, completados y anotaciones con esos ids, y recuerda lo que se borró. */
+export function borrarGuardado(world: World, documentoIds: readonly string[], completadoIds: readonly string[], anotacionIds: readonly string[] = []): void {
+	world.anotacionesBorradas = [...world.anotacionesBorradas, ...world.anotaciones.filter(({ id }) => anotacionIds.includes(id))];
+	world.anotaciones = world.anotaciones.filter(({ id }) => !anotacionIds.includes(id));
 	const seBorra = ({ id }: { id: string }, ids: readonly string[]) => ids.includes(id);
 	world.borrado = {
 		documentos: [...world.borrado.documentos, ...world.documentos.filter((d) => seBorra(d, documentoIds))],

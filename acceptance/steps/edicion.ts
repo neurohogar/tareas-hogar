@@ -56,10 +56,10 @@ export function editaElOtro(world: World, datos: DatosNuevos): void {
 	editarYGuardar(world, laTarea(loQueVioElOtro(world)), datos);
 }
 
-/** Borra la tarea y los completados suyos que conoce quien borra. */
+/** Borra la tarea y los completados y anotaciones suyos que conoce quien borra (§6.2, §7). */
 function borrar(world: World, tarea: Tarea, completadosConocidos: Guardado['completados']): void {
-	const { tareaId, completadoIds } = borrado(tarea.id, completadosConocidos);
-	borrarGuardado(world, [tareaId], completadoIds);
+	const { tareaId, completadoIds, anotacionIds } = borrado(tarea.id, completadosConocidos, world.anotaciones);
+	borrarGuardado(world, [tareaId], completadoIds, anotacionIds);
 }
 
 const EDITORES: Editor[] = [

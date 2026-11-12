@@ -1,9 +1,3 @@
 # Features especificados que todavía no se implementaron: el gate no los cuenta
 # en la aceptación. El gherkin-writer agrega acá los suyos al commitearlos; el rol
 # acceptance quita los de la feature que implementa.
-anotar
-anotaciones
-copiar-anotaciones
-editar-anotacion
-borrar-anotacion
-anotaciones-de-tarea-borrada
