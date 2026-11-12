@@ -17,7 +17,7 @@ describe('borrado', () => {
 	it('borra la tarea y todos sus completados, y solo los suyos', () => {
 		const completados = [completado('c1', 'regar'), completado('c2', 'pagar'), completado('c3', 'regar')];
 
-		expect(borrado('regar', completados)).toStrictEqual({ tareaId: 'regar', completadoIds: ['c1', 'c3'], anotacionIds: [] });
+		expect(borrado('regar', completados, [])).toStrictEqual({ tareaId: 'regar', completadoIds: ['c1', 'c3'], anotacionIds: [] });
 	});
 
 	it('borra también todas sus anotaciones, y solo las suyas: no las de otra tarea ni las sin tarea', () => {
@@ -27,7 +27,7 @@ describe('borrado', () => {
 	});
 
 	it('una tarea nunca completada se borra sola', () => {
-		expect(borrado('regar', [completado('c2', 'pagar')])).toStrictEqual({ tareaId: 'regar', completadoIds: [], anotacionIds: [] });
+		expect(borrado('regar', [completado('c2', 'pagar')], [])).toStrictEqual({ tareaId: 'regar', completadoIds: [], anotacionIds: [] });
 	});
 });
 

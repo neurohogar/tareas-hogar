@@ -2,7 +2,6 @@
 // users/{uid}/anotaciones/{anotacionId}.
 import { collection, deleteDoc, deleteField, doc, FirestoreError, getDocFromServer, onSnapshot, setDoc, Timestamp, updateDoc, type DocumentData, type QueryDocumentSnapshot } from 'firebase/firestore';
 import type { Anotacion, PantallaDeAnotacion, Sentido } from '#lib/core/anotacion.ts';
-import { normalizarTextoDeAnotacion } from '#lib/core/anotacion.ts';
 import { db } from './firebase';
 
 interface AnotacionDoc {
@@ -49,13 +48,13 @@ export async function guardarAnotacion(uid: string, anotacion: Anotacion): Promi
 }
 
 /**
- * Spec §6.7 y §7: cambia solo el texto (vacío lo quita). update falla si la
- * anotación ya no existe: gana el borrado, la edición se descarta.
+ * Spec §6.7 y §7: cambia solo el texto, ya normalizado por el core (sin texto
+ * lo quita). update falla si la anotación ya no existe: gana el borrado, la
+ * edición se descarta.
  */
-export async function cambiarTextoDeAnotacion(uid: string, anotacionId: string, texto: string): Promise<void> {
-	const normalizado = normalizarTextoDeAnotacion(texto);
+export async function cambiarTextoDeAnotacion(uid: string, anotacionId: string, texto: string | undefined): Promise<void> {
 	try {
-		await updateDoc(anotacionRef(uid, anotacionId), { texto: normalizado === undefined ? deleteField() : normalizado });
+		await updateDoc(anotacionRef(uid, anotacionId), { texto: texto === undefined ? deleteField() : texto });
 	} catch (error) {
 		if (!(error instanceof FirestoreError && error.code === 'not-found')) throw error;
 	}

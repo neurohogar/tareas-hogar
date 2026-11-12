@@ -21,7 +21,7 @@ describe('borrado (propiedades)', () => {
 	it('borra todos los completados de la tarea y solo esos', () => {
 		fc.assert(
 			fc.property(tareaId, completados, (id, cs) => {
-				const { tareaId: borrada, completadoIds } = borrado(id, cs);
+				const { tareaId: borrada, completadoIds } = borrado(id, cs, []);
 				expect(borrada).toBe(id);
 				expect(completadoIds).toEqual(ids(cs.filter((c) => c.tareaId === id)));
 			})
@@ -33,7 +33,7 @@ describe('borrado (propiedades)', () => {
 			fc.property(tareas, completados, (ts, cs) => {
 				fc.pre(ts.length > 0);
 				const [borrada, ...restantes] = ts;
-				const { completadoIds } = borrado(borrada.id, cs);
+				const { completadoIds } = borrado(borrada.id, cs, []);
 				const antes = ids(completadosHuerfanos(ts, cs));
 				const despues = ids(completadosHuerfanos(restantes, cs));
 				expect(completadoIds.filter((id) => antes.includes(id))).toEqual([]);
@@ -47,7 +47,7 @@ describe('borrado (propiedades)', () => {
 			fc.property(tareas, completados, (ts, cs) => {
 				fc.pre(ts.length > 0);
 				const [borrada, ...restantes] = ts;
-				const { completadoIds } = borrado(borrada.id, cs);
+				const { completadoIds } = borrado(borrada.id, cs, []);
 				const quedan = cs.filter(({ id }) => !completadoIds.includes(id));
 				expect(completadosHuerfanos(restantes, quedan)).toStrictEqual(completadosHuerfanos(ts, cs));
 			})

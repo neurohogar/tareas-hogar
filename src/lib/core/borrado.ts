@@ -16,7 +16,7 @@ const ids = (de: readonly { id: string }[]) => de.map(({ id }) => id);
  * Borrar una tarea borra también todos sus completados y todas sus
  * anotaciones, y solo los suyos.
  */
-export function borrado(tareaId: string, completados: readonly Completado[], anotaciones: readonly Anotacion[] = []): Borrado {
+export function borrado(tareaId: string, completados: readonly Completado[], anotaciones: readonly Anotacion[]): Borrado {
 	return {
 		tareaId,
 		completadoIds: ids(completadosDeTarea(completados, tareaId)),

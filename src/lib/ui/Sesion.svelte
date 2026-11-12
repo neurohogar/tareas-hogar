@@ -26,7 +26,7 @@
 		observarTareas
 	} from '#lib/adapters/repositorio.ts';
 	import { avisoAlCompletar, avisoVisible, completadoADeshacer, msHastaQueVence, type Aviso } from '#lib/core/aviso.ts';
-	import { anotar, type Anotacion, type PantallaActual, type Sentido } from '#lib/core/anotacion.ts';
+	import { anotar, editarTexto, type Anotacion, type PantallaActual, type Sentido } from '#lib/core/anotacion.ts';
 	import { anotacionesHuerfanas, borrado, completadosHuerfanos, existeTarea } from '#lib/core/borrado.ts';
 	import { borradoDeEtiqueta, referenciasRotas } from '#lib/core/borrado-de-etiqueta.ts';
 	import { accionDelCheckbox } from '#lib/core/checkbox.ts';
@@ -223,6 +223,12 @@
 		void guardarAnotacion(uid, anotacion);
 	}
 
+	/** Editar texto (§6.7): el core decide cómo queda el texto; la anotación que ya no está no se revive. */
+	function editarTextoDeAnotacion(anotacion: Anotacion, texto: string) {
+		const editada = editarTexto(anotaciones, anotacion.id, texto).find(({ id }) => id === anotacion.id);
+		if (editada) void cambiarTextoDeAnotacion(uid, editada.id, editada.texto);
+	}
+
 	function panelAbierto(tareaId: string | undefined) {
 		const este = tareaId === undefined ? {} : { tareaId };
 		panel = este;
@@ -245,7 +251,7 @@
 		cerrarAnotar: () => (anotando = false),
 		anotar: anotarAhora,
 		panelAbierto,
-		editarTextoDeAnotacion: (anotacion, texto) => void cambiarTextoDeAnotacion(uid, anotacion.id, texto),
+		editarTextoDeAnotacion,
 		borrarAnotacion: (anotacion) => void borrarAnotacion(uid, anotacion.id),
 		get tareas() {
 			return tareas;
