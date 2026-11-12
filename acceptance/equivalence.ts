@@ -147,19 +147,19 @@ function esEquivalenteSegun(observar: Observador, feature: Feature, scenario: Sc
 }
 
 /**
- * Escenario de cambios sin guardar, sus avisos o Atrás (§6.2, §7): una mutación es equivalente cuando el oráculo
+ * Escenario de anotaciones (§4.5, §5.10, §6.7) o de cambios sin guardar, sus avisos o Atrás (§6.2, §7): una mutación es equivalente cuando el oráculo
  * reproduce lo que el escenario afirma con la fila original y también con el valor mutado. Una columna que un Then
  * nombra y un paso de entrada también da llega mutada a los dos lados: lo que se escribe y un Then repite, o el nombre
  * de una tarea que otro dispositivo borró (§7, gana el borrado), no deciden nada. Si solo la nombra el Then, lo que
  * afirma deja de coincidir con lo observado y no se filtra.
  */
-function esEquivalenteDeCambios(feature: Feature, scenario: Scenario, candidata: Candidata): boolean {
+function esEquivalenteSiSigueCumpliendo(observar: Observador, feature: Feature, scenario: Scenario, candidata: Candidata): boolean {
 	const pasos = pasosDe(feature, scenario);
 	const entradas = pasos.filter(({ enThen }) => !enThen).map(({ step }) => step);
 	const thens = pasos.filter(({ enThen }) => enThen).map(({ step }) => step);
 	const original = scenario.examples[candidata.example];
 	const reproduce = (fila: FilaOraculo) => {
-		const observacion = observarCambios(entradas, thens, fila);
+		const observacion = observar(entradas, thens, fila);
 		return observacion !== undefined && JSON.stringify(observacion.observado) === JSON.stringify(observacion.afirmado);
 	};
 	return reproduce(original) && reproduce({ ...original, [candidata.key]: candidata.mutated });
@@ -168,7 +168,7 @@ function esEquivalenteDeCambios(feature: Feature, scenario: Scenario, candidata:
 export function esEquivalente(feature: Feature, candidata: Candidata): boolean {
 	const scenario = feature.scenarios[candidata.scenario];
 	if (esEscenarioDeAnotaciones(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteSegun(observarAnotaciones, feature, scenario, candidata);
+		return esEquivalenteSiSigueCumpliendo(observarAnotaciones, feature, scenario, candidata);
 	}
 	if (esEscenarioDeFuente(pasosDe(feature, scenario).map(({ step }) => step.text))) {
 		return esEquivalenteSegun(observarFuente, feature, scenario, candidata);
@@ -177,7 +177,7 @@ export function esEquivalente(feature: Feature, candidata: Candidata): boolean {
 		return esEquivalenteSegun(observarPantallaDeCarga, feature, scenario, candidata);
 	}
 	if (esEscenarioDeCambios(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteDeCambios(feature, scenario, candidata);
+		return esEquivalenteSiSigueCumpliendo(observarCambios, feature, scenario, candidata);
 	}
 	if (esEscenarioDelPanel(pasosDe(feature, scenario).map(({ step }) => step.text))) {
 		return esEquivalenteSegun(observarPanel, feature, scenario, candidata);

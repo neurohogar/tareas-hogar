@@ -1,3 +1,8 @@
+# mutation-stamp: sha256=a6d05361d36c13f272214f81661b35072b6d1b52b203d64c2db6501449180b5f
+# acceptance-mutation-manifest-begin
+# {"version":1,"tested_at":"2026-11-12T23:59:06.367743144Z","feature_name":"Borrar anotación","feature_path":"features/borrar-anotacion.feature","background_hash":"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b","implementation_hash":"sha256:ca96e2f42154eab89a0329747a8502c9d8ac1cf3aad81a17af0569571a59d70a","scenarios":[{"index":0,"name":"Borrar anotación 1","scenario_hash":"04209a16a97458f0620638ae5951a8b5dff19860335f8e18edd4ee30ca6a7045","mutation_count":11,"result":{"Total":11,"Killed":11,"Survived":0,"Errors":0},"tested_at":"2026-11-12T23:53:34.892831808Z"},{"index":1,"name":"Borrar anotación 2","scenario_hash":"1e098e552484b796eeb6369753a6abe55cc5765db69aff97b3d169a2a9222c69","mutation_count":2,"result":{"Total":2,"Killed":2,"Survived":0,"Errors":0},"tested_at":"2026-11-12T23:53:34.892831808Z"},{"index":2,"name":"Borrar anotación 3","scenario_hash":"c7b419cf250395128ec659131b803459fe80f7ffcd1363dc16894e2a836e45a1","mutation_count":10,"result":{"Total":10,"Killed":10,"Survived":0,"Errors":0},"tested_at":"2026-11-12T23:53:34.892831808Z"}]}
+# acceptance-mutation-manifest-end
+
 # Spec §6.7 (Borrar). Borrar una anotación la saca de la pantalla Anotaciones
 # y de lo que copia Copiar, y solo a ella. La confirmación (diálogo con Borrar y
 # Cancelar; Cancelar no cambia nada) se verifica en la suite QA

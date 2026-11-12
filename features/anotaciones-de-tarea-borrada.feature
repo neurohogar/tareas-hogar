@@ -1,3 +1,8 @@
+# mutation-stamp: sha256=c1056e15a34f837a1d1364237abbb8307754a212edbd12e4c5be616c3e7284b0
+# acceptance-mutation-manifest-begin
+# {"version":1,"tested_at":"2026-11-12T23:59:09.612734097Z","feature_name":"Anotaciones de una tarea borrada","feature_path":"features/anotaciones-de-tarea-borrada.feature","background_hash":"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b","implementation_hash":"sha256:3adbf53193bdd218e53ef98af0cb84de5b1b326044401f613f3941760bc590e3","scenarios":[{"index":0,"name":"Anotaciones de tarea borrada 1","scenario_hash":"c608c20268a206e4e07b6b96216362d6dba52f51a6b47449a0038ee6ee2a43a5","mutation_count":18,"result":{"Total":18,"Killed":18,"Survived":0,"Errors":0},"tested_at":"2026-11-12T23:53:55.262795979Z"},{"index":1,"name":"Anotaciones de tarea borrada 2","scenario_hash":"6a4018e222b1c71daa24ce133a268f41fca12e635f2176f78458aa5f85763aeb","mutation_count":9,"result":{"Total":9,"Killed":9,"Survived":0,"Errors":0},"tested_at":"2026-11-12T23:53:55.262795979Z"},{"index":2,"name":"Anotaciones de tarea borrada 3","scenario_hash":"f0be2567d9ccd945ec01598a760ccfc4932a48184a4095ab5e019c8481f3ffac","mutation_count":16,"result":{"Total":16,"Killed":16,"Survived":0,"Errors":0},"tested_at":"2026-11-12T23:53:55.262795979Z"}]}
+# acceptance-mutation-manifest-end
+
 # Spec §5.10 (Borrar una tarea), §6.2 y §7. Borrar una tarea borra también todas
 # sus anotaciones, y solo las suyas (en el mismo writeBatch que sus
 # completados); las anotaciones sin tarea no se ven afectadas. Una anotación
