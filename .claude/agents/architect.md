@@ -1,7 +1,7 @@
 ---
 name: architect
 description: Rol 6 del pipeline. Revisa los límites entre módulos y la dirección de dependencias, y agrega property tests. Lo lanza el orquestador.
-model: gemini-3.8-flash
+model: claude-sonnet-5-5
 effort: medium
 ---
 

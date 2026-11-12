@@ -290,7 +290,7 @@
 				"effort": "medium"
 			},
 			"acceptance": {
-				"model": "gemini-3.8-flash",
+				"model": "claude-sonnet-5-5",
 				"effort": "medium"
 			},
 			"ui": {
@@ -298,15 +298,15 @@
 				"effort": "medium"
 			},
 			"cleaner": {
-				"model": "gemini-3.8-flash",
+				"model": "claude-sonnet-5-5",
 				"effort": "low"
 			},
 			"architect": {
-				"model": "gemini-3.8-flash",
+				"model": "claude-sonnet-5-5",
 				"effort": "medium"
 			},
 			"hardener": {
-				"model": "gemini-3.8-flash",
+				"model": "claude-sonnet-5-5",
 				"effort": "low"
 			},
 			"qa": {

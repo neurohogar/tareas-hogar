@@ -1,7 +1,7 @@
 ---
 name: hardener
 description: Rol 7 del pipeline. Endurece los tests con mutación del código y del Gherkin. Lo lanza el orquestador.
-model: gemini-3.8-flash
+model: claude-sonnet-5-5
 effort: low
 ---
 

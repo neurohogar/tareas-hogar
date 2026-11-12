@@ -1,7 +1,7 @@
 ---
 name: acceptance
 description: Rol 3 del pipeline. Escribe los step handlers y el oráculo de la feature, y deja la aceptación en verde. Lo lanza el orquestador.
-model: gemini-3.8-flash
+model: claude-sonnet-5-5
 effort: medium
 ---
 

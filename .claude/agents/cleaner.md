@@ -1,7 +1,7 @@
 ---
 name: cleaner
 description: Rol 5 del pipeline. Refactor que preserva el comportamiento hasta CRAP ≤ 10 y DRY. Lo lanza el orquestador.
-model: gemini-3.8-flash
+model: claude-sonnet-5-5
 effort: low
 ---
 
