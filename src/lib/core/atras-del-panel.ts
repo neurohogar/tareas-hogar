@@ -1,8 +1,11 @@
 // Spec §6.2 (Atrás): qué hace Atrás con el panel abierto.
 import { alCerrarElPanel, type EfectoDeCerrar } from './cambios-sin-guardar-aviso';
 
-/** Lo que puede estar abierto sobre el panel; las sugerencias y el aviso de deshacer no cuentan. */
-export type LoDeArriba = 'nada' | 'aviso de cierre' | 'aviso de acción' | 'confirmación de Borrar tarea' | 'selector de emoji' | 'sugerencias de Etiquetas' | 'aviso de deshacer';
+/**
+ * Lo que puede estar abierto sobre el panel; las sugerencias y el aviso de
+ * deshacer no cuentan. El recuadro de Anotar (§5.10) se cierra sin anotar.
+ */
+export type LoDeArriba = 'nada' | 'aviso de cierre' | 'aviso de acción' | 'confirmación de Borrar tarea' | 'selector de emoji' | 'recuadro de Anotar' | 'sugerencias de Etiquetas' | 'aviso de deshacer';
 
 export type EfectoDeAtras = 'cierra el teclado' | 'cierra lo de arriba' | EfectoDeCerrar;
 

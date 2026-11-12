@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { queHaceAtras, type LoDeArriba } from './atras-del-panel';
 import { alCerrarElPanel } from './cambios-sin-guardar-aviso';
 
-const encima = fc.constantFrom<LoDeArriba>('nada', 'aviso de cierre', 'aviso de acción', 'confirmación de Borrar tarea', 'selector de emoji', 'sugerencias de Etiquetas', 'aviso de deshacer');
-const CAPAS: readonly LoDeArriba[] = ['aviso de cierre', 'aviso de acción', 'confirmación de Borrar tarea', 'selector de emoji'];
+const encima = fc.constantFrom<LoDeArriba>('nada', 'aviso de cierre', 'aviso de acción', 'confirmación de Borrar tarea', 'selector de emoji', 'recuadro de Anotar', 'sugerencias de Etiquetas', 'aviso de deshacer');
+const CAPAS: readonly LoDeArriba[] = ['aviso de cierre', 'aviso de acción', 'confirmación de Borrar tarea', 'selector de emoji', 'recuadro de Anotar'];
 
 describe('queHaceAtras: propiedades (spec §6.2)', () => {
 	it('con el teclado abierto solo lo cierra el sistema, pase lo que pase', () => {

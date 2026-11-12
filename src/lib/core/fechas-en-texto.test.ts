@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { encabezadoDelDia, horaEnTexto } from './fechas-en-texto';
+import { encabezadoDelDia, fechaYHoraEnTexto, horaEnTexto } from './fechas-en-texto';
 
 const ahora = new Date(2026, 6, 15, 12, 0, 0);
 
@@ -58,5 +58,13 @@ describe('horaEnTexto', () => {
 		expect(horaEnTexto(new Date(2026, 6, 15, 8, 5, 0))).toBe('08:05');
 		expect(horaEnTexto(new Date(2026, 6, 14, 23, 59, 59))).toBe('23:59');
 		expect(horaEnTexto(new Date(2026, 6, 15, 0, 0, 0))).toBe('00:00');
+	});
+});
+
+describe('fechaYHoraEnTexto', () => {
+	it('es la fecha y la hora locales, AAAA-MM-DD HH:MM, con ceros a la izquierda y sin segundos', () => {
+		expect(fechaYHoraEnTexto(new Date(2026, 6, 15, 8, 5, 0))).toBe('2026-07-15 08:05');
+		expect(fechaYHoraEnTexto(new Date(2026, 6, 5, 0, 9, 59))).toBe('2026-07-05 00:09');
+		expect(fechaYHoraEnTexto(new Date(2025, 11, 31, 23, 59, 59))).toBe('2025-12-31 23:59');
 	});
 });

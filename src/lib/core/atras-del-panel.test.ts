@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { queHaceAtras, type LoDeArriba } from './atras-del-panel';
 
-const CAPAS: LoDeArriba[] = ['aviso de cierre', 'aviso de acción', 'confirmación de Borrar tarea', 'selector de emoji'];
+const CAPAS: LoDeArriba[] = ['aviso de cierre', 'aviso de acción', 'confirmación de Borrar tarea', 'selector de emoji', 'recuadro de Anotar'];
 const SIN_CAPA: LoDeArriba[] = ['nada', 'sugerencias de Etiquetas', 'aviso de deshacer'];
 
 describe('queHaceAtras (spec §6.2)', () => {

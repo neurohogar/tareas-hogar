@@ -1,6 +1,6 @@
 // Spec §6.3: cómo se nombran los días y las horas del Historial. Tablas
 // propias en español: no depende del locale del sistema.
-import { anioDe, diaDeLaSemana, diaDelMes, dosDigitos, horaYMinuto, inicioDelDia, mesDe, sumarDias } from './dias';
+import { anioDe, diaDeLaSemana, diaDelMes, diaIso, dosDigitos, horaYMinuto, inicioDelDia, mesDe, sumarDias } from './dias';
 
 const MESES = [
 	'enero',
@@ -34,4 +34,9 @@ export function encabezadoDelDia(dia: Date, ahora: Date): string {
 export function horaEnTexto(momento: Date): string {
 	const { hora, minuto } = horaYMinuto(momento);
 	return `${dosDigitos(hora)}:${dosDigitos(minuto)}`;
+}
+
+/** Spec §6.7 (Copiar): la fecha y la hora locales, "AAAA-MM-DD HH:MM". */
+export function fechaYHoraEnTexto(momento: Date): string {
+	return `${diaIso(momento)} ${horaEnTexto(momento)}`;
 }
