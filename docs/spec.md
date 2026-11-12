@@ -18,6 +18,7 @@ Un solo usuario, que la usa desde el celular (en el momento, por la casa) y desd
 - Tareas puntuales y periódicas (modo relativo y modo calendario).
 - Etiquetas con color, usadas como filtro.
 - Historial de todo lo completado, con deshacer.
+- Anotaciones «me sirvió / me molestó» con un gesto de dos toques, y una pantalla para releerlas, corregir su texto, borrarlas y copiarlas (§5.10, §6.7).
 - Funcionamiento sin conexión y sincronización entre dispositivos.
 - Login con Google.
 - Fuente y emoji empaquetados con la app (§6).
@@ -43,6 +44,7 @@ Un solo usuario, que la usa desde el celular (en el momento, por la casa) y desd
 | **Ocurrencia** | En modo calendario, cada día en que la tarea "toca" (ej. cada martes). |
 | **Completado** | Registro inmutable de que una tarea se hizo, con fecha y hora. |
 | **Estado** | `pendiente`, `atrasada` o `en espera`. Se calcula; nunca se guarda. |
+| **Anotación** | Registro de «me sirvió» o «me molestó» con su contexto y una línea de texto opcional (§4.5). No es la **nota** de una tarea (§4.1). |
 
 ## 4. Modelo de dominio
 
@@ -112,6 +114,21 @@ Una recurrencia de calendario es semanal **o** mensual; no se combinan.
 | `ocurrenciaCubierta` | fecha (`2026-07-14`), o fecha y hora (`2026-07-14T07:00`): formatos distintos, para que una ventana que empieza a las 00:00 no se confunda con una fecha | En modo calendario (5.3, 5.6) y en relativas con varias ventanas (5.7). Sin horario, un día a las 00:00; con horario, el día a la hora `desde` de la ventana que cubre. |
 
 Los completados **solo se agregan**: nunca se modifican. La única operación destructiva es borrar uno explícitamente (deshacer).
+
+### 4.5 Anotación
+
+| Campo | Tipo | Obligatorio | Notas |
+|---|---|---|---|
+| `id` | string | sí | Generado en el cliente. |
+| `sentido` | `Me sirvió` \| `Me molestó` | sí | Con ese texto literal. |
+| `anotadaEn` | timestamp | sí | Fecha y hora de la anotación, como `completadoEn`. |
+| `pantalla` | `Pendientes` \| `Historial` \| `Etiquetas` \| `Anotaciones` \| `Panel de edición` | sí | Dónde estaba la persona (§5.10). |
+| `tareaId` | id | no | Referencia a la tarea, si la hay (§5.10). No se copia su nombre: se muestra el nombre actual. |
+| `texto` | string | no | Una sola línea (ver más abajo). |
+
+**Texto**: una sola línea, sin saltos de línea y sin largo máximo. Al guardar se recortan los espacios del inicio y del final. Vacío o solo espacios significa **sin texto** (el campo no se guarda). Un texto nunca es inválido.
+
+Una anotación no guarda ni los filtros activos, ni la pestaña del panel, ni escalas de ánimo. Solo el texto se puede cambiar después (§6.7); el sentido, `anotadaEn`, la pantalla y la tarea quedan fijos.
 
 ## 5. Reglas de estado
 
@@ -269,11 +286,29 @@ Posponer saca una tarea `pendiente` o `atrasada` de la urgencia por un rato, sin
 - **Quitar posponer** borra `pospuesta`. Completar, deshacer o editar no la borran; vence sola.
 - Una tarea pausada (§5.8) no se puede posponer.
 
+### 5.10 Anotar
+
+Una anotación se hace con un gesto de dos toques, disponible siempre en el mismo lugar.
+
+- **Dónde**: un botón chico **Anotar**, arriba, siempre en el mismo lugar, en Pendientes, Historial, Etiquetas, Anotaciones y el panel de edición (al crear y al editar), en celular y en pantallas anchas. Con sesión iniciada; no está en la pantalla de entrada (§6.5) ni en la de carga (§6.6). No hay ajuste para ocultarlo.
+- **Los dos toques**: el primero abre un recuadro con el campo de texto (una línea, opcional) y los dos botones de sentido, **Me sirvió** y **Me molestó**; el segundo, tocar un sentido, guarda la anotación con el texto escrito (§4.5) y cierra el recuadro. La persona no elige ni corrige el contexto.
+- **Contexto**: se toma al tocar el sentido.
+  - `anotadaEn` = ese momento.
+  - `pantalla` = el **Panel de edición** si el panel está abierto (al crear o al editar), sobre cualquier pantalla; si no, la pantalla donde está: Pendientes, Historial, Etiquetas o Anotaciones.
+  - `tareaId`: si el panel está abierto al **editar** una tarea, esa tarea; si no, si el aviso de deshacer (§5.4) está visible, la tarea que nombra; si no, ninguna. Con el panel abierto al **crear** no hay tarea, y con el panel abierto manda la tarea del panel aunque haya un aviso de deshacer visible.
+- **No toca la tarea ni el panel**: anotar no es un cambio para **Cambios sin guardar** (§6.2), no cierra el panel, no cambia de pestaña ni abre ningún aviso de acción.
+- **Cerrar sin anotar**: **Atrás** cierra el recuadro (§6.2, Atrás); cerrarlo sin elegir un sentido descarta el texto escrito sin preguntar, y no guarda nada.
+- **Confirmación**: al guardarse, un texto breve e informativo, «Anotación guardada», sin botones, que se va solo y no tapa el aviso de deshacer (§5.4).
+- **Nunca se pide**: no hay avisos, recordatorios, contadores ni marcas de «sin anotar», y el gesto no cambia de aspecto según cuántas anotaciones haya.
+- **Borrar una tarea** borra también sus anotaciones, en el mismo borrado que sus completados (§6.2, §7). Una anotación cuya tarea ya no existe no se muestra ni se copia y la app la limpia al detectarla (§7). Las anotaciones sin tarea no se ven afectadas.
+
+Ejemplo: el `2026-07-15T08:05:00`, con el panel de edición de «🌱 Regar» abierto, se toca **Anotar**, se escribe «  quedó lindo  » y se toca **Me sirvió**: se guarda `sentido` = Me sirvió, `anotadaEn` = `2026-07-15T08:05:00`, `pantalla` = Panel de edición, la tarea «🌱 Regar» y `texto` = «quedó lindo»; el panel sigue abierto y sin cambios sin guardar.
+
 ## 6. Pantallas
 
 La interfaz está en **español** y el tema claro u oscuro sigue al sistema.
 
-**Navegación**: una barra fija con tres pestañas, **Pendientes** (ruta `/`), **Historial** (ruta `/historial`) y **Etiquetas** (ruta `/etiquetas`). La pestaña de la pantalla actual se ve elegida.
+**Navegación**: una barra fija con cuatro pestañas, en este orden: **Pendientes** (ruta `/`), **Historial** (ruta `/historial`), **Etiquetas** (ruta `/etiquetas`) y **Anotaciones** (ruta `/anotaciones`), sin contador ni marca de anotaciones nuevas. La pestaña de la pantalla actual se ve elegida.
 
 **Fuente y emoji empaquetados**: la app se ve igual en todas las máquinas. Todo el texto usa la fuente **Atkinson Hyperlegible Next** y todo emoji se dibuja con **Noto Color Emoji**; ambas viajan con la app (§2, §7) y no hay opción para cambiarlas.
 
@@ -408,15 +443,16 @@ El mismo panel sirve para crear (botón **+**) y para editar (tocar la fila). Al
 - **Atrás** (botón Atrás de Android, o el gesto equivalente del navegador), con el panel abierto, cierra el panel y no sale de la pantalla donde está (Pendientes, o Historial si el panel se abrió desde ahí), en cualquier navegador y ancho. Cierra solo lo que esté más arriba, como si se tocara su salida, y deja el panel como estaba:
   - el aviso de cierre o de acción equivale a **Seguir editando**;
   - la confirmación de **Borrar tarea** equivale a cancelar;
-  - el selector de emoji se cierra sin elegir.
+  - el selector de emoji se cierra sin elegir;
+  - el recuadro de **Anotar** (§5.10) se cierra sin anotar.
 
   Un nuevo **Atrás** cierra el panel; si el panel queda con cambios, abre el aviso de cierre, y sin cambios cierra directo. El aviso de deshacer (§5.4) no cuenta: no se abre encima de nada, **Atrás** lo ignora y sigue sus 5 segundos. Las sugerencias de Etiquetas tampoco cuentan como algo abierto. Con el teclado en pantalla abierto, el primer **Atrás** lo cierra el sistema y el panel sigue igual; el siguiente aplica estas reglas.
-  - Con el panel cerrado, **Atrás** hace lo de hoy: cerrar el panel con la **X**, con **Guardar** o con una acción no deja un **Atrás** de más que no haga nada, y **Adelante** no reabre un panel. Los diálogos de Historial y de Etiquetas (§6.3, §6.4) no cambian con esta feature.
+  - Con el panel cerrado, **Atrás** hace lo de hoy: cerrar el panel con la **X**, con **Guardar** o con una acción no deja un **Atrás** de más que no haga nada, y **Adelante** no reabre un panel. Los diálogos de Historial y de Etiquetas (§6.3, §6.4) no cambian con esta feature. Con el panel cerrado y el recuadro de **Anotar** abierto, **Atrás** lo cierra y no sale de la pantalla donde está.
 - **Recargar o cerrar la app** con cambios sin guardar muestra la confirmación del navegador. Aparece solo si hay cambios, con un aviso abierto o sin él, y nunca por **Atrás** con el panel abierto. Su texto es el del navegador y, donde el sistema no la ofrece, se pierde lo escrito. Al recargar, el panel no se reabre. Un **Atrás** posterior a una recarga puede volver a la misma pantalla sin efecto visible.
 
 **Borrar tarea**: acción disponible solo al editar. Pide confirmación; si se cancela, no cambia nada. No suma el aviso de **Cambios sin guardar**.
 
-Al borrar una tarea **se borran también todos sus completados** (y solo los suyos), así que desaparecen del historial.
+Al borrar una tarea **se borran también todos sus completados** (y solo los suyos), así que desaparecen del historial, y **todas sus anotaciones** (y solo las suyas, §5.10), que desaparecen de la pantalla Anotaciones.
 
 **Presentación del panel**: el contenido de los campos y acciones de arriba se organiza en tres secciones, **Tarea**, **Cuándo** y **Acciones**. "Celular" significa una pantalla de hasta **40rem** de ancho (inclusive); por encima, pantallas anchas. Las reglas de cada campo no cambian, solo dónde se ven.
 
@@ -480,6 +516,16 @@ Al iniciar, la app muestra una **pantalla de carga** en lugar de la página en b
 
 Ejemplos (con sesión): todo listo a los 0,2 s: se va a los 0,5 s. Los datos llegan a los 3 s y Noto a los 6 s: se va a los 6 s. Noto no llegó a los 10 s: entra a los 10 s con el emoji del dispositivo y las próximas aperturas no esperan a Noto hasta que quede guardado.
 
+### 6.7 Anotaciones
+
+- Lista de todas las anotaciones con tarea existente o sin tarea, de la más reciente a la más antigua por `anotadaEn` (si dos tienen el mismo, primero la de `id` menor), agrupadas por **día local** con los mismos encabezados del Historial (§6.3: **Hoy**, **Ayer**, «martes 14 de julio»).
+- Cada anotación muestra la hora `HH:MM`, el sentido, la pantalla, el **nombre actual** de la tarea si la hay (emoji y título, §4.1; la anotación no guarda el nombre) y el texto si lo hay.
+- No muestra las anotaciones huérfanas (§7) ni las de tareas borradas (§6.2).
+- Sin anotaciones, muestra el texto "Todavía no hay anotaciones".
+- **Editar texto**: cada anotación tiene la acción **Editar texto**, que cambia solo el texto con las reglas de §4.5 (vaciarlo la deja sin texto). El sentido, `anotadaEn`, la pantalla y la tarea no cambian.
+- **Borrar**: cada anotación tiene la acción **Borrar**. Pide confirmación en un diálogo con **Borrar** y **Cancelar**; Cancelar no cambia nada.
+- **Copiar**: un único botón **Copiar** copia como texto todas las anotaciones que la pantalla muestra, y funciona sin conexión. El texto tiene una línea por anotación, de la más antigua a la más reciente (si empatan, primero la de `id` menor), con fecha y hora, sentido, pantalla, nombre actual de la tarea y texto, separados por « · »; el nombre de la tarea y el texto solo si los hay. Ejemplo: `2026-07-15 08:05 · Me sirvió · Pendientes · 🌱 Regar · quedó lindo`, y sin tarea ni texto: `2026-07-15 09:10 · Me molestó · Historial`. Sin anotaciones no hay nada para copiar. Al copiar, un texto breve e informativo («Anotaciones copiadas»), sin botones, que se va solo.
+
 ## 7. Datos, sincronización y offline
 
 - **Firestore** con caché persistente local (`persistentLocalCache`, multi-pestaña). La app funciona sin conexión y sincroniza sola al reconectar.
@@ -488,6 +534,7 @@ Ejemplos (con sesión): todo listo a los 0,2 s: se va a los 0,5 s. Los datos lle
   - `users/{uid}/tareas/{tareaId}`
   - `users/{uid}/etiquetas/{etiquetaId}`
   - `users/{uid}/completados/{completadoId}`
+  - `users/{uid}/anotaciones/{anotacionId}`
 - **Conflictos**:
   - Tareas y etiquetas: **gana el último cambio, por campo** (`emoji` y `nota` son campos independientes, como `titulo`; `horario` es un solo campo: sus ventanas, con `desde` y `hasta`, se escriben juntas; pausar y reanudar escriben `pausada` y `reanudadaEn` juntos; `pospuesta` es un solo campo). Las ediciones son actualizaciones parciales (`update` / `set` con `merge`), nunca reemplazos del documento entero. Una edición escribe solo los campos que cambiaron.
   - La unidad de conflicto es cada campo de la §4.1. `recurrencia` se reemplaza **entera**, nunca se mezcla por subcampo (así no puede quedar una recurrencia que combine modos). Un campo que no corresponde al tipo de la tarea (`fechaLimite` en una periódica, `recurrencia` en una puntual) se ignora al derivar el estado; al cambiar de tipo, la tarea queda solo con los campos de tipo que muestra el panel: la edición quita el campo que deja de corresponder y escribe el del tipo nuevo aunque quede vacío (una puntual sin fecha límite), así un valor residual que dejó una edición concurrente en ese campo no sobrevive.
@@ -496,8 +543,10 @@ Ejemplos (con sesión): todo listo a los 0,2 s: se va a los 0,5 s. Los datos lle
   - **Etiquetas duplicadas**: si dos dispositivos sin conexión crean etiquetas con el mismo nombre (sin distinguir mayúsculas), o renombran dos etiquetas a un mismo nombre, al detectarlo la app las **fusiona**: sobrevive la de `id` menor, con su nombre y su color; las tareas que tenían la otra pasan a tener la sobreviviente (sin repetirla), y la otra se borra.
   - **Etiqueta borrada**: una tarea que referencia una etiqueta que ya no existe (por ejemplo, otro dispositivo sin conexión se la asignó después de que se borró) ignora esa referencia: no muestra el chip ni aparece en ese filtro, y la app la quita al detectarla. Una edición de una etiqueta borrada no la revive.
   - **Edición contra borrado: gana el borrado.** Una edición de una tarea que ya no existe (porque otro dispositivo la borró, por ejemplo sin conexión) no la revive: se descarta. Si el panel de edición de esa tarea estaba abierto, se cierra, también con un aviso de **Cambios sin guardar** abierto y sin pedir nada (§6.2).
+  - Anotaciones: son documentos independientes con id generado en el cliente, así que **una anotación nunca se pierde** aunque dos dispositivos anoten sin conexión. Funcionan sin conexión y se sincronizan como los completados. El texto es un campo como los de una tarea: si dos dispositivos lo editan, **gana el último cambio**. **Borrar gana sobre editar**: una edición de una anotación ya borrada no la revive.
   - Completados: son documentos independientes con id generado en el cliente, así que **un completado nunca se pierde**. Si dos dispositivos completan la misma tarea sin conexión, quedan las dos entradas en el historial, y el estado usa el más reciente / la mayor `ocurrenciaCubierta`.
 - **Borrado de tareas**: la tarea y sus completados se borran en un solo `writeBatch`. Puede pasar que otro dispositivo, sin conexión, complete una tarea que ya se borró. En ese caso queda un completado huérfano: el historial ignora los completados cuya tarea no existe, y la app los limpia al detectarlos.
+- **Anotaciones de una tarea borrada**: se borran en ese mismo `writeBatch`. Si otro dispositivo, sin conexión, anota sobre una tarea que ya se borró, queda una anotación huérfana: la pantalla Anotaciones y **Copiar** la ignoran, y la app la limpia al detectarla, como un completado huérfano.
 - **Preferencias locales**: los emojis recientes del selector (§6.2) y el recuerdo de un tope de la pantalla de carga con Noto sin bajar (§6.6) viven solo en el dispositivo (almacenamiento local del navegador); no se escriben en Firestore ni se sincronizan.
 - **Fuente y emoji**: la fuente y el juego de emoji empaquetados (§6) forman parte de lo que la app guarda para funcionar sin conexión; se bajan aparte de la instalación de la app y con reintentos (§8): mientras la pantalla de carga está abierta se espera la descarga, y si llega el tope sigue en segundo plano (§6.6). Desde que se va la pantalla y hasta que están valen los del sistema y el dispositivo (§6). Si no se pueden bajar, la app igual se instala y queda disponible sin conexión.
 - **Reglas de seguridad**: cada usuario lee y escribe solo bajo `users/{su uid}`.

@@ -4,6 +4,37 @@ Un gesto de dos toques, siempre en el mismo lugar, para anotar «me sirvió» o 
 
 ## Specs
 
+- **S1** (§2): «Anotaciones «me sirvió / me molestó» con un gesto de dos toques, y una pantalla para releerlas, corregir su texto, borrarlas y copiarlas (§5.10, §6.7).»
+- **S2** (§3): «| **Anotación** | Registro de «me sirvió» o «me molestó» con su contexto y una línea de texto opcional (§4.5). No es la **nota** de una tarea (§4.1). |»
+- **S3** (§4.5): «| `sentido` | `Me sirvió` \| `Me molestó` | sí | Con ese texto literal. |»
+- **S4** (§4.5): «| `pantalla` | `Pendientes` \| `Historial` \| `Etiquetas` \| `Anotaciones` \| `Panel de edición` | sí | Dónde estaba la persona (§5.10). |»
+- **S5** (§4.5): «| `tareaId` | id | no | Referencia a la tarea, si la hay (§5.10). No se copia su nombre: se muestra el nombre actual. |»
+- **S6** (§4.5): «**Texto**: una sola línea, sin saltos de línea y sin largo máximo. Al guardar se recortan los espacios del inicio y del final. Vacío o solo espacios significa **sin texto** (el campo no se guarda). Un texto nunca es inválido.»
+- **S7** (§4.5): «Una anotación no guarda ni los filtros activos, ni la pestaña del panel, ni escalas de ánimo. Solo el texto se puede cambiar después (§6.7); el sentido, `anotadaEn`, la pantalla y la tarea quedan fijos.»
+- **S8** (§5.10): «**Dónde**: un botón chico **Anotar**, arriba, siempre en el mismo lugar, en Pendientes, Historial, Etiquetas, Anotaciones y el panel de edición (al crear y al editar), en celular y en pantallas anchas. Con sesión iniciada; no está en la pantalla de entrada (§6.5) ni en la de carga (§6.6). No hay ajuste para ocultarlo.»
+- **S9** (§5.10): «**Los dos toques**: el primero abre un recuadro con el campo de texto (una línea, opcional) y los dos botones de sentido, **Me sirvió** y **Me molestó**; el segundo, tocar un sentido, guarda la anotación con el texto escrito (§4.5) y cierra el recuadro. La persona no elige ni corrige el contexto.»
+- **S10** (§5.10): «`pantalla` = el **Panel de edición** si el panel está abierto (al crear o al editar), sobre cualquier pantalla; si no, la pantalla donde está: Pendientes, Historial, Etiquetas o Anotaciones.»
+- **S11** (§5.10): «`tareaId`: si el panel está abierto al **editar** una tarea, esa tarea; si no, si el aviso de deshacer (§5.4) está visible, la tarea que nombra; si no, ninguna. Con el panel abierto al **crear** no hay tarea, y con el panel abierto manda la tarea del panel aunque haya un aviso de deshacer visible.»
+- **S12** (§5.10): «**No toca la tarea ni el panel**: anotar no es un cambio para **Cambios sin guardar** (§6.2), no cierra el panel, no cambia de pestaña ni abre ningún aviso de acción.»
+- **S13** (§5.10): «**Cerrar sin anotar**: **Atrás** cierra el recuadro (§6.2, Atrás); cerrarlo sin elegir un sentido descarta el texto escrito sin preguntar, y no guarda nada.»
+- **S14** (§5.10): «**Confirmación**: al guardarse, un texto breve e informativo, «Anotación guardada», sin botones, que se va solo y no tapa el aviso de deshacer (§5.4).»
+- **S15** (§5.10): «**Nunca se pide**: no hay avisos, recordatorios, contadores ni marcas de «sin anotar», y el gesto no cambia de aspecto según cuántas anotaciones haya.»
+- **S16** (§5.10): «**Borrar una tarea** borra también sus anotaciones, en el mismo borrado que sus completados (§6.2, §7). Una anotación cuya tarea ya no existe no se muestra ni se copia y la app la limpia al detectarla (§7). Las anotaciones sin tarea no se ven afectadas.»
+- **S17** (§6): «**Navegación**: una barra fija con cuatro pestañas, en este orden: **Pendientes** (ruta `/`), **Historial** (ruta `/historial`), **Etiquetas** (ruta `/etiquetas`) y **Anotaciones** (ruta `/anotaciones`), sin contador ni marca de anotaciones nuevas. La pestaña de la pantalla actual se ve elegida.»
+- **S18** (§6.2): «Al borrar una tarea **se borran también todos sus completados** (y solo los suyos), así que desaparecen del historial, y **todas sus anotaciones** (y solo las suyas, §5.10), que desaparecen de la pantalla Anotaciones.»
+- **S19** (§6.2): «el recuadro de **Anotar** (§5.10) se cierra sin anotar.»
+- **S20** (§6.2): «Con el panel cerrado, **Atrás** hace lo de hoy: cerrar el panel con la **X**, con **Guardar** o con una acción no deja un **Atrás** de más que no haga nada, y **Adelante** no reabre un panel. Los diálogos de Historial y de Etiquetas (§6.3, §6.4) no cambian con esta feature. Con el panel cerrado y el recuadro de **Anotar** abierto, **Atrás** lo cierra y no sale de la pantalla donde está.»
+- **S21** (§6.7): «Lista de todas las anotaciones con tarea existente o sin tarea, de la más reciente a la más antigua por `anotadaEn` (si dos tienen el mismo, primero la de `id` menor), agrupadas por **día local** con los mismos encabezados del Historial (§6.3: **Hoy**, **Ayer**, «martes 14 de julio»).»
+- **S22** (§6.7): «Cada anotación muestra la hora `HH:MM`, el sentido, la pantalla, el **nombre actual** de la tarea si la hay (emoji y título, §4.1; la anotación no guarda el nombre) y el texto si lo hay.»
+- **S23** (§6.7): «No muestra las anotaciones huérfanas (§7) ni las de tareas borradas (§6.2).»
+- **S24** (§6.7): «Sin anotaciones, muestra el texto "Todavía no hay anotaciones".»
+- **S25** (§6.7): «**Editar texto**: cada anotación tiene la acción **Editar texto**, que cambia solo el texto con las reglas de §4.5 (vaciarlo la deja sin texto). El sentido, `anotadaEn`, la pantalla y la tarea no cambian.»
+- **S26** (§6.7): «**Borrar**: cada anotación tiene la acción **Borrar**. Pide confirmación en un diálogo con **Borrar** y **Cancelar**; Cancelar no cambia nada.»
+- **S27** (§6.7): «**Copiar**: un único botón **Copiar** copia como texto todas las anotaciones que la pantalla muestra, y funciona sin conexión. El texto tiene una línea por anotación, de la más antigua a la más reciente (si empatan, primero la de `id` menor), con fecha y hora, sentido, pantalla, nombre actual de la tarea y texto, separados por « · »; el nombre de la tarea y el texto solo si los hay. Ejemplo: `2026-07-15 08:05 · Me sirvió · Pendientes · 🌱 Regar · quedó lindo`, y sin tarea ni texto: `2026-07-15 09:10 · Me molestó · Historial`. Sin anotaciones no hay nada para copiar. Al copiar, un texto breve e informativo («Anotaciones copiadas»), sin botones, que se va solo.»
+- **S28** (§7): «`users/{uid}/anotaciones/{anotacionId}`»
+- **S29** (§7): «Anotaciones: son documentos independientes con id generado en el cliente, así que **una anotación nunca se pierde** aunque dos dispositivos anoten sin conexión. Funcionan sin conexión y se sincronizan como los completados. El texto es un campo como los de una tarea: si dos dispositivos lo editan, **gana el último cambio**. **Borrar gana sobre editar**: una edición de una anotación ya borrada no la revive.»
+- **S30** (§7): «**Anotaciones de una tarea borrada**: se borran en ese mismo `writeBatch`. Si otro dispositivo, sin conexión, anota sobre una tarea que ya se borró, queda una anotación huérfana: la pantalla Anotaciones y **Copiar** la ignoran, y la app la limpia al detectarla, como un completado huérfano.»
+
 ## Decisiones
 
 - D1 (2026-11-12, analyst): la entidad y la pantalla se llaman **anotación** / **Anotaciones**, no «nota». Porque «nota» ya es un campo de la tarea (§4.1, §6.2) y usar la misma palabra para dos cosas confunde en la UI y en el spec.
