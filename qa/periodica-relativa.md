@@ -44,7 +44,7 @@ tachado y peso normal se miden como en `qa/mostrar-completadas.md`.
   `aria-valuemax=100` y `aria-valuenow` = progreso × 100 (redondeado a entero).
 - Estilo atenuado: la fila en espera tiene opacidad computada menor que 1 y
   menor que la de una fila pendiente; su checkbox sigue habilitado.
-- Indicador de atraso: texto accesible "Atrasada" dentro de la fila.
+- Indicador de atraso: texto accesible "Atrasada" dentro de la fila. **Reemplazado** por el texto «Tocaba …» (`qa/estado-sin-culpa.md`): donde un procedimiento anterior espera "Atrasada", se espera ese texto.
 
 ## Flujo 1: entrar con Google
 

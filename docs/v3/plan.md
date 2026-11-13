@@ -45,6 +45,8 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 
 ### E1. Anotación «me sirvió / me molestó»
 
+- **Estado.** Implementada (features `anotacion` y `reintento-y-aviso-de-copia`, rama `v3`).
+
 - **Problema y persona.** Todas. El plan descansa en inferencias; sin un registro barato de qué funciona, se evalúa de memoria.
 - **Evidencia.** `aacc H1` (fuerte en que la base es escasa); `aacc H12` (moderada: la tecnología para TDAH se diseña sin sus usuarios); `tea`, pregunta abierta 7.
 - **Qué propone.** Un gesto de dos toques, siempre en el mismo lugar: sentido, contexto tomado solo (pantalla y, si la hay, tarea), fecha y una línea de texto opcional. Una pantalla para releer las notas propias y copiarlas como texto.
@@ -54,6 +56,8 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 
 ### E2. Estado sin culpa y reglas a la vista
 
+- **Estado.** Implementada (feature `estado-sin-culpa`): texto «Tocaba …» con fecha y distancia en lugar de «Atrasada», sin color de alarma.
+
 - **Problema y persona.** TDAH, TEA y altas capacidades. Antes de empezar hay que mirar la lista, y hoy la fila dice «Atrasada» en un color rojizo y pone primero lo que lleva más tiempo sin hacerse (spec §6.1). Eso sube el umbral emocional de inicio.
 - **Evidencia.** `aacc H6` (fuerte: el lenguaje controlador aumenta la motivación basada en culpa); `aacc H5` (fuerte: perfeccionismo y procrastinación); `tdah §1.2c` (moderada); `tea §2` (moderada); `tdah §2.2` (moderada, resultados mixtos); `tea §5` y `§9` (débil).
 - **Qué propone.** Redactar el atraso como un hecho con fecha («desde el martes 10»), sin color de alarma. Distancia relativa junto a la fecha exacta, también para el regreso de las tareas en espera. Un «por qué está aquí» consultable por tarea. Al completar, un cierre informativo breve con la próxima fecha.
@@ -62,6 +66,8 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 - **Depende de · Tamaño · Riesgos.** E1 · S a M · Muchos textos de la interfaz figuran en escenarios y scripts de QA.
 
 ### E3. Primer paso a la vista
+
+- **Estado.** Parcial. Implementado el campo opcional «primer paso» (feature `primer-paso`, visible solo en pendiente y atrasada). Pendiente: los pasos de a uno (`pasos-de-a-uno`).
 
 - **Problema y persona.** TDAH y TEA. El título de una tarea es abstracto («Ropa»); decidir por dónde empezar es parte del costo de empezar.
 - **Evidencia.** `tdah §1.3A` (moderada e indirecta: ningún ensayo aísla el primer paso); `tea §1` (moderada: no saber cuál es el primer paso paraliza); `tdah §1.2b` (débil: falla formar el plan, no recordarlo); `tdah §2.1` (anecdótica a moderada).
