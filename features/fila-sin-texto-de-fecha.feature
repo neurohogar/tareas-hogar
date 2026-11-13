@@ -120,14 +120,15 @@ Feature: Fila sin texto de fecha
   # Pausada que sin la pausa estaría atrasada: dice «Pausada», sin «Tocaba».
   Scenario Outline: Fila sin texto de fecha 9
     Given Mostrar pausadas está encendido
-    And una tarea puntual con fecha límite <limite>
+    And una tarea periódica relativa cada <cada> <unidad>
+    And la tarea fue completada el <completada>
     And la tarea fue pausada
     When consulto Pendientes el <ahora>
     Then la fila de la tarea no muestra texto de fecha
 
     Examples:
-      | limite     | ahora               |
-      | 2026-11-10 | 2026-11-13T10:00:00 |
+      | cada | unidad | completada          | ahora               |
+      | 1    | dias   | 2026-11-10T09:00:00 | 2026-11-13T10:00:00 |
 
   # Fila sin texto de fecha 10
   # Pausada que sin la pausa estaría en espera: dice «Pausada», sin «Vuelve».
