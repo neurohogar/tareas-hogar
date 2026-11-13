@@ -29,15 +29,70 @@ Primera feature de la épica E3 de `docs/v3/plan.md` («Primer paso a la vista»
 
 ## Artefactos
 
+- Gherkin: `features/primer-paso.feature` (S1, S2, S6), `features/primer-paso-en-la-fila.feature` (S2, S3), `features/primer-paso-cambios-sin-guardar.feature` (S4; S5 la cubre solo QA)
+- QA: `qa/primer-paso.md` (S1, S2, S3, S4, S5, S6; S5, el orden del campo en el panel, y la parte de S2 que dice que no se ve en el Historial, el aviso de deshacer, Anotaciones ni el texto copiado, las cubre solo QA)
+
 ## core
+
+- **Puede editar**: `src/lib/core/tarea.ts`, `src/lib/core/creacion.ts`, `src/lib/core/crear-periodica-calendario.ts`, `src/lib/core/datos-de-tarea.ts`, `src/lib/core/documento-de-tarea.ts`, `src/lib/core/edicion.ts`, `src/lib/core/cambios-sin-guardar.ts`, `src/lib/core/campos-de-texto.ts`, `src/lib/core/pendientes.ts`, `src/lib/core/primer-paso*.ts` (archivo nuevo), `src/lib/core/*.test.ts` (todos los tests del core: un cambio de tipo exportado puede tocarlos)
+- **Reglas**: S1 (campo opcional `primerPaso` en `Tarea` y en el documento, para todo tipo y esfuerzo), S2 (recortar, vacío o solo espacios es sin campo, nunca inválido, sin largo máximo, no tiene estado: no lo toca ninguna acción ni el cambio de tipo o de modo; no cambia estado ni orden; una edición lo escribe solo si cambió), S3 (cuándo la fila lo muestra: estado `pendiente` o `atrasada`, no `en espera`, no completada, no pausada; el prefijo «Primer paso: » y el texto completo), S4 (qué cuenta como cambio en **Cambios sin guardar**: se compara recortado, vacío igual a sin campo), S6 (campo independiente: cada campo viaja solo en el cambio si cambió, y null lo quita)
+- **Reusa**:
+  - `crearTarea` y `DatosComunes` (`creacion.ts`): el primer paso es un campo común a todo tipo, como emoji, nota y esfuerzo. `crearPeriodica` de calendario (`crear-periodica-calendario.ts`) es el único creador que no propaga los campos comunes con un spread: hay que pasarle `primerPaso` a mano. `crearSegunDatos` y `datosDeTarea` (`datos-de-tarea.ts`) siguen siendo inversas.
+  - `normalizarNota` (`nota.ts`) y `camposDeTexto` (`campos-de-texto.ts`): el primer paso sigue la misma regla de texto que la nota (recortar, vacío es sin campo); un módulo `primer-paso.ts` propio solo si la regla no cabe en el existente sin mezclar trabajos.
+  - `editar` (`edicion.ts`): el campo entra en el cambio solo si cambió, y null lo quita (`cambioDeValor`); cambiar el tipo no lo toca.
+  - `filasDePendientes` (`pendientes.ts`) y `clasificarEnPendientes` (`completada.ts`): el estado de cada fila ya está decidido ahí; el primer paso se muestra según ese estado, sin guardar nada ni reordenar.
+  - `hayCambios` y `claveDeNota` (`cambios-sin-guardar.ts`): la definición única de "hay cambios".
+- **Notas**: las firmas exportadas que ya usan `acceptance/` y la UI siguen compatibles (solo campos y parámetros nuevos opcionales). `nombreDeTarea` (`nombre-de-tarea.ts`) no cambia: el nombre sigue siendo emoji y título.
+- **Gate**: `node scripts/gate.ts core`
 
 ## acceptance
 
+- **Puede editar**: `acceptance/steps/primer-paso.ts` (archivo nuevo), `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `acceptance/steps/pendientes.ts`, `acceptance/steps/edicion.ts`, `acceptance/steps/cambios-sin-guardar.ts`, `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `docs/pipeline/pendientes.txt`
+- **Features a conectar**: `features/primer-paso.feature`, `features/primer-paso-en-la-fila.feature`, `features/primer-paso-cambios-sin-guardar.feature`
+- **Pasos nuevos** (ya existen y se reusan: `una tarea puntual sin fecha límite`, `una tarea puntual con fecha límite <limite>`, los de creada el, horario, completar, pausar, reanudar, posponer, `borro el completado del`, `consulto Pendientes el` y `en cualquier momento`, `consulto el estado el`, `el estado es <estado>`, `Pendientes muestra en orden`, `el checkbox de la tarea está deshabilitado`, `abro el panel para crear/editar`, `escribo ... en el campo`, `vacío el campo`, `toco la X del panel`, `queda abierto`, `otro dispositivo, sin ver ese cambio, edita el título/la nota` y `guarda la tarea sin cambios`):
+  - `creo una tarea puntual con título <titulo> y primer paso <primer_paso>`
+  - `creo una tarea periódica relativa con título <titulo> cada <cada> <unidad> y primer paso <primer_paso>`
+  - `creo una tarea periódica semanal con título <titulo> los <dias> y primer paso <primer_paso>`
+  - `creo una tarea puntual con título <titulo> y un primer paso de solo espacios`
+  - `el primer paso de la tarea es <primer_paso>` (Given: deja la tarea ya guardada con ese primer paso, sin pasar por "editar"; no marca un cambio "de mi lado")
+  - `el primer paso de la tarea <titulo> es <primer_paso>` (Given, para escenarios con dos tareas)
+  - `edito el primer paso a <primer_paso>`
+  - `edito el primer paso a <primer_paso> con espacios al inicio y al final`
+  - `edito el primer paso a uno de solo espacios`
+  - `edito el primer paso a uno de <largo> caracteres`
+  - `quito el primer paso`
+  - `otro dispositivo, sin ver ese cambio, edita el primer paso a <primer_paso>`
+  - `otro dispositivo, sin ver ese cambio, quita el primer paso`
+  - `la tarea tiene primer paso <primer_paso>`
+  - `la tarea no tiene primer paso` (el documento no tiene el campo)
+  - `la tarea tiene un primer paso de <largo> caracteres`
+  - `la fila de la tarea muestra el primer paso <texto>` (el texto exacto que se ve, con el prefijo «Primer paso: »; la lista consultada tiene una sola fila, como en `la fila de la tarea muestra el esfuerzo`)
+  - `la fila de la tarea no muestra primer paso`
+  - `abro el panel para editar la tarea <titulo> con primer paso <primer_paso>`
+  - el campo `Primer paso` en las tablas de campos de `escribo ... en el campo <campo>`, `escribo <valor> con espacios alrededor en el campo <campo>`, `vacío el campo <campo>` y `escribo solo espacios en el campo <campo>`
+- **Notas**:
+  - Cambiar el tipo en el panel conserva el primer paso: sumar `primerPaso` a `camposQueConserva` en `acceptance/steps/edicion.ts` (y al `Pick` de su tipo de retorno). También hay que sumarlo a las listas de campos comunes de `conCampos` y `comunesDe` en los steps que arman datos (`emoji-y-nota.ts`, `cambios-sin-guardar.ts`) si no usan un spread.
+  - `FilaConsultada` (`world.ts`) gana lo que la fila muestra del primer paso; `filasEn` (`pendientes.ts`) lo toma del core, y el oráculo (`oracle.ts`, `oracle-edicion.ts`, `oracle-panel.ts`) lo reescribe desde S3 (solo `pendiente` y `atrasada`) y S2/S4 sin importar el core ni los step handlers. Cada regla nueva que entra en un Then se agrega al oráculo. No crear un `acceptance/oracle-*.ts` nuevo: choca con la lista manual de `scripts/check-arch.ts`.
+  - Las tareas declaradas con título y sin `creada el` se crean en el mismo instante: un empate de urgencia se resuelve por título (`Primer paso 18`).
+  - Una `atrasada` lleva al menos 60 s de atraso (los escenarios no escriben bordes menores).
+- **Gate**: `node scripts/gate.ts acceptance`
+
 ## ui
+
+- **Puede editar**: `src/lib/ui/PanelTarea.svelte`, `src/lib/ui/SeccionTarea.svelte`, `src/lib/ui/FilaTarea.svelte`, `src/lib/ui/Pendientes.svelte`, `src/lib/adapters/repositorio.ts`
+- **Comportamiento visible**: `qa/primer-paso.md`
+- **Notas**:
+  - Campo **Primer paso** en la sección **Tarea** del panel: una línea, etiqueta «Primer paso», sin texto de ejemplo, justo debajo del título (con su emoji y **Quitar emoji**) y antes de la nota; arranca vacío al crear y con el valor actual al editar; Enter guarda como en **Título**.
+  - La fila muestra «Primer paso: …» en su propia línea debajo del título cuando el core lo indica (solo `pendiente` y `atrasada`), completo y en varias líneas, con el color y tamaño de texto secundario del esfuerzo y el horario, sin énfasis ni color propio, y sin control propio: tocarla es tocar la fila.
+  - `primerPaso` se lee y se escribe en `repositorio.ts` como un campo independiente (como `nota`): una edición lo escribe solo si cambió, y vaciarlo borra el campo.
+  - No se ve en el Historial, el aviso de deshacer, Anotaciones ni el texto copiado (no hay que tocar esos componentes).
+- **Gate**: `node scripts/gate.ts ui`
 
 ## cleaner · architect · hardener · qa
 
 Trabajan sobre todo lo que cambió la feature (`git diff <base de la feature>`, anotada en `tmp/base-de-feature`); no necesitan sección propia salvo que el gherkin-writer anote algo para ellos acá.
+
+- **Notas**: el primer paso repite la regla de texto de la nota (recortar, vacío es sin campo); si el core la duplica, el cleaner la unifica sin cambiar el comportamiento. El hardener corre `--level full` solo en los features con un paso atendido por un handler cambiado (p. ej. `camposQueConserva`, `FilaConsultada`) o con un Then que pasa por una regla nueva del oráculo.
 
 ## Log
 
