@@ -50,13 +50,15 @@ const contar = (cantidad: number, singular: string, plural: string) => `${cantid
 
 /**
  * Desde ahora, aunque cruce la medianoche: en horas o, a menos de una hora, en
- * minutos. Lo pasado se redondea hacia abajo y lo futuro hacia arriba.
+ * minutos. Lo pasado se redondea hacia abajo y lo futuro hacia arriba; lo
+ * pasado a menos de un minuto es «ahora» (lo futuro nunca llega a 0 minutos).
  */
 function distanciaEnHorasOMinutos(instante: Date, ahora: Date): string {
 	const ms = instante.getTime() - ahora.getTime();
 	const futuro = ms > 0;
 	const redondear = futuro ? Math.ceil : Math.floor;
 	const minutos = redondear(Math.abs(ms) / MS_POR_MINUTO);
+	if (minutos === 0) return 'ahora';
 	const cantidad =
 		minutos < MINUTOS_POR_HORA ? contar(minutos, 'minuto', 'minutos') : contar(redondear(minutos / MINUTOS_POR_HORA), 'hora', 'horas');
 	return futuro ? `en ${cantidad}` : `hace ${cantidad}`;

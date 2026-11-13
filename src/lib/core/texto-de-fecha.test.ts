@@ -75,6 +75,15 @@ describe('fraseDeFecha (spec §6.1, Fecha y distancia)', () => {
 			expect(tocaba(new Date(2026, 10, 13, 9, 59))).toBe('Tocaba hoy 09:59 · hace 1 minuto');
 		});
 
+		it('lo pasado a menos de un minuto es «ahora», no «hace 0 minutos»', () => {
+			expect(tocaba(new Date(2026, 10, 13, 10, 0))).toBe('Tocaba hoy 10:00 · ahora');
+			expect(tocaba(new Date(2026, 10, 13, 10, 0), new Date(2026, 10, 13, 10, 0, 30))).toBe('Tocaba hoy 10:00 · ahora');
+			expect(tocaba(new Date(2026, 10, 13, 10, 0), new Date(2026, 10, 13, 10, 0, 59))).toBe('Tocaba hoy 10:00 · ahora');
+			expect(tocaba(new Date(2026, 10, 13, 10, 0), new Date(2026, 10, 13, 10, 0, 59, 999))).toBe('Tocaba hoy 10:00 · ahora');
+			expect(tocaba(new Date(2026, 10, 13, 10, 0), new Date(2026, 10, 13, 10, 1, 0))).toBe('Tocaba hoy 10:00 · hace 1 minuto');
+			expect(tocaba(new Date(2026, 10, 12, 23, 59, 40), new Date(2026, 10, 13, 0, 0, 10))).toBe('Tocaba ayer 23:59 · ahora');
+		});
+
 		it('lo futuro, en horas redondeadas hacia arriba', () => {
 			expect(vuelve(new Date(2026, 10, 13, 18, 0))).toBe('Vuelve hoy 18:00 · en 8 horas');
 			expect(vuelve(new Date(2026, 10, 13, 18, 0), new Date(2026, 10, 13, 10, 0, 30))).toBe('Vuelve hoy 18:00 · en 8 horas');

@@ -19,7 +19,7 @@ describe('fraseDeFecha (propiedades)', () => {
 			fc.property(verbo, momento, momento, (v, instante, ahora) => {
 				const frase = fraseDeFecha(v, instante, ahora);
 				expect(frase.startsWith(`${v} `)).toBe(true);
-				expect(frase).not.toMatch(/ · en 0 /);
+				expect(frase).not.toMatch(/ · (en|hace) 0 /);
 				expect(fraseDeFecha(v, new Date(instante), new Date(ahora))).toBe(frase);
 			})
 		);
