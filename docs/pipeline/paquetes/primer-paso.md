@@ -15,6 +15,9 @@ Primera feature de la épica E3 de `docs/v3/plan.md` («Primer paso a la vista»
 - D7 (2026-11-13, analyst): el primer paso no se ve en el Historial (§6.3), en el aviso de deshacer (§5.4), en Anotaciones (§6.7) ni en el texto copiado. No cambia el estado (§5), el orden de la lista (§6.1), los filtros ni «Solo rápidas». Porque el plan lo pide «en la fila», y el nombre de la tarea (§4.1) sigue siendo emoji y título.
 - D8 (2026-11-13, analyst, sincronización): `primerPaso` es un campo independiente de la §4.1: gana el último cambio, por campo, como `nota` (§7). Una edición escribe solo si cambió. Porque es la regla de conflictos de los campos de texto de la tarea.
 - D9 (2026-11-13, analyst, tareas existentes): no hay migración. Una tarea guardada sin el campo no tiene primer paso, y su fila y su panel se ven como hoy. Porque «sin el campo» ya significa «sin valor» para los opcionales de la §4.1 (emoji, nota, esfuerzo) y el plan pide que todo lo nuevo arranque en calma.
+- D10 (2026-11-13, usuario, en qué filas se ve): P1 «Solo pendiente y atrasada (Recomendada)». Las filas en espera (también las pospuestas), las pausadas y las completadas no muestran el primer paso.
+- D11 (2026-11-13, usuario, cómo se lee): P2 «Con prefijo: «Primer paso: …» (Recomendada)», por ejemplo «Primer paso: Separar la ropa blanca», en su propia línea bajo el título y en texto secundario.
+- D12 (2026-11-13, usuario, primer paso largo): P3 «Sin máximo, se muestra entero (Recomendada)». La fila lo muestra completo, en varias líneas si hace falta; no hay máximo ni error al guardar (D2 sigue como está).
 
 ## Artefactos
 
