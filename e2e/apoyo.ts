@@ -151,7 +151,7 @@ export async function esperarEstado(
   expect(caja!.height).toBeGreaterThanOrEqual(48);
   await verificarContraste(f, completada);
   const progreso = f.getByRole("progressbar");
-  const atraso = f.getByText("Atrasada");
+  const atraso = f.getByText(/^Tocaba /);
   if (estado === "en espera") {
     await expect(progreso).toHaveCount(1);
     await expect(progreso).toHaveAttribute("aria-valuemin", "0");
@@ -159,6 +159,7 @@ export async function esperarEstado(
     if (barra !== undefined)
       await expect(progreso).toHaveAttribute("aria-valuenow", String(barra));
     await expect(atraso).toHaveCount(0);
+    await expect(f.getByText("Atrasada")).toHaveCount(0);
     expect(await atenuada(f)).toBe(true);
   } else {
     await expect(progreso).toHaveCount(0);

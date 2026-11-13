@@ -192,7 +192,7 @@ test('Flujo 4: completar antes de tiempo y ocurrencias perdidas', async ({ page 
 	await adelantar(page, '2026-07-17T10:00:00');
 	await esperarEstado(page, BASURA, 'atrasada');
 	await expect(page.getByRole('listitem')).toHaveCount(1);
-	await expect(page.getByText('Atrasada')).toHaveCount(1);
+	await expect(page.getByText(/^Tocaba /)).toHaveCount(1);
 	await completar(page, BASURA);
 	await esperarEstado(page, BASURA, 'en espera', 0);
 	await adelantar(page, '2026-07-19T05:00:00');

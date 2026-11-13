@@ -51,12 +51,12 @@ async function reanudar(page: Page, titulo: string) {
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
-/** Fila pausada: atenuada, con "Pausada", sin "Atrasada", sin barra y con el checkbox deshabilitado. */
+/** Fila pausada: atenuada, con "Pausada", sin "Tocaba", sin barra y con el checkbox deshabilitado. */
 async function verPausada(page: Page, titulo: string) {
 	const f = fila(page, titulo);
 	await expect(f).toBeVisible();
 	await expect(f.getByText('Pausada')).toHaveCount(1);
-	await expect(f.getByText('Atrasada')).toHaveCount(0);
+	await expect(f.getByText(/Tocaba /)).toHaveCount(0);
 	await expect(f.getByRole('progressbar')).toHaveCount(0);
 	const check = f.getByRole('checkbox');
 	await expect(check).toBeDisabled();

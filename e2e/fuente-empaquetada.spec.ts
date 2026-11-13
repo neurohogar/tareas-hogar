@@ -262,9 +262,10 @@ for (const c of combinaciones) {
     await completar(page, "Regar");
     const deshacer = page.getByRole("status");
     await expect(deshacer).toContainText("Completaste «🌱 Regar»");
+    // El texto del aviso vive en su propio nodo (junto a la línea «Vuelve …»).
     await repartoEs(
       page,
-      deshacer,
+      deshacer.getByText("Completaste «🌱 Regar»"),
       ([a, n, o]) => a > 10 && n === 1 && o === 0,
     );
     await conAtkinson(page, deshacer.getByRole("button", { name: "Deshacer" }));

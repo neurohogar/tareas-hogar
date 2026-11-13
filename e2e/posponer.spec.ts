@@ -66,7 +66,7 @@ async function panelPospuesta(page: Page, titulo: string, texto: string) {
 	await cerrar(page);
 }
 
-/** Fila pospuesta: en espera, no completada, sin "Atrasada", con la barra en `barra`. */
+/** Fila pospuesta: en espera, no completada, sin "Tocaba", con la barra en `barra`. */
 const verPospuesta = (page: Page, titulo: string, barra: number, habilitado = true) =>
 	esperarEstado(page, titulo, 'en espera', barra, false, habilitado);
 
