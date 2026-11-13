@@ -201,6 +201,7 @@ Cambiar la recurrencia de una tarea no borra sus completados. El estado se recal
 ### 5.4 Deshacer
 
 - Al completar una tarea aparece un **aviso** que nombra la tarea (emoji y título, §4.1: `Completaste «🌱 Regar»`, o `Completaste «Regar»` sin emoji) y tiene **Deshacer**. Dura **5 segundos**: se ve mientras `completadoEn` ≤ ahora < `completadoEn` + 5 s; después desaparece solo.
+- Si la tarea completada vuelve (periódica), debajo de «Completaste …» el aviso dice cuándo: «Vuelve el jueves 19 · en 6 días», con el instante de regreso calculado después del completado y el formato de **Fecha y distancia** (§6.1), el mismo texto que mostrará su fila `en espera`. Una puntual (que no vuelve) muestra solo «Completaste …». No hay otro cierre ni felicitaciones.
 - Hay un solo aviso a la vez: completar otra tarea (o la misma) con el aviso abierto lo **reemplaza** por el del completado nuevo. El completado anterior queda sin aviso y se puede borrar desde el Historial.
 - **Deshacer** en el aviso borra el completado que nombra el aviso (solo ese) y cierra el aviso.
 - El aviso sigue visible al cambiar de pantalla, hasta que expira.
@@ -359,7 +360,7 @@ La interfaz está en **español** y el tema claro u oscuro sigue al sistema.
   - Si la etiqueta elegida se borra (en este dispositivo o en otro), el filtro vuelve a "Todas".
   - El filtro aplica solo a Pendientes; el Historial no se filtra.
 - **Solo rápidas**: un botón conmutable "Solo rápidas" junto a los chips de etiqueta (se ve aunque no haya etiquetas). Encendido, la lista muestra solo las tareas con `esfuerzo` = `rapida`, en el mismo orden; se combina con el filtro por etiqueta (las dos condiciones a la vez) y aplica también a completadas y pausadas cuando se muestran. Si deja la lista vacía, se ve "No hay tareas rápidas" (con una etiqueta elegida, "No hay tareas con esta etiqueta"). Como el filtro por etiqueta: se mantiene al ir a otra pantalla y volver, y vuelve a apagado al recargar o al abrir la app.
-- **Mostrar pausadas**: un check junto a "Completadas", con el texto "Pausadas". Apagado (el valor inicial), las pausadas (§5.8) no se ven. Encendido, van al final de la lista (después de las completadas, si se muestran), por título en el orden alfabético de arriba; cada fila atenuada, con el texto "Pausada" en lugar del indicador de estado y el checkbox deshabilitado. El filtro por etiqueta aplica también a las pausadas. El valor se guarda en ese dispositivo, como "Mostrar completadas".
+- **Mostrar pausadas**: un check junto a "Completadas", con el texto "Pausadas". Apagado (el valor inicial), las pausadas (§5.8) no se ven. Encendido, van al final de la lista (después de las completadas, si se muestran), por título en el orden alfabético de arriba; cada fila atenuada, con el texto "Pausada" en lugar del texto de atraso o de regreso y el checkbox deshabilitado. El filtro por etiqueta aplica también a las pausadas. El valor se guarda en ese dispositivo, como "Mostrar completadas".
 - **Mostrar completadas**: un check arriba de la lista, con el texto "Completadas".
   - Una tarea está **completada** si es puntual con al menos un completado (§5.1), o periódica `en espera` con al menos un completado (§5.2, §5.3). Una periódica `en espera` sin completados (de calendario, antes de su primera ocurrencia) no está completada.
   - Apagado (el valor inicial): la lista muestra solo las tareas no completadas. Al completar una tarea, su fila desaparece de la lista.
@@ -371,10 +372,33 @@ La interfaz está en **español** y el tema claro u oscuro sigue al sistema.
   - Checkbox a la izquierda, con área táctil de al menos 48×48.
   - Emoji y título (§4.1: sin emoji, solo el título). La nota no se ve en la fila.
   - Chips de etiquetas (nombre y color, en el orden de la §4.3). No se pueden tocar como filtro: tocar el chip es tocar la fila.
-  - Indicador sutil de atraso, si corresponde.
+  - Si la tarea está `atrasada`, el texto de atraso «Tocaba …» (**Fecha y distancia**, abajo), que reemplaza a «Atrasada» como indicador de atraso. No lleva color de alarma: se ve en el mismo color y el mismo tamaño de texto secundario que el esfuerzo y el horario, sin rojo ni énfasis. No se ve en una pausada.
   - Si la tarea tiene esfuerzo, su nivel en texto chico: "Rápida", "Media" o "Larga". Sin esfuerzo, nada.
   - Si la tarea tiene horario, el horario en texto chico: "08:00–11:00"; con varios, en orden y separados por " · ": "07:00–10:00 · 18:00–21:00".
-  - En las tareas `en espera`: estilo atenuado y una barra de progreso fina con el tiempo hasta que vuelven.
+  - En las tareas `en espera`: estilo atenuado, una barra de progreso fina con el tiempo hasta que vuelven y el texto de regreso «Vuelve …» (**Fecha y distancia**, abajo). Vale también para las periódicas completadas que se ven con **Mostrar completadas** y para las pospuestas, sin nombrar la posposición en la fila.
+  - Las filas `pendiente`, las pausadas y las puntuales completadas no muestran texto de fecha ni de distancia.
+**Fecha y distancia** (texto de atraso y de regreso de la fila, y cierre del aviso de completar, §5.4): una sola regla arma el texto de las tres. Las tareas que no son `atrasada` ni `en espera` no lo llevan.
+
+- **Frase**: «Tocaba <fecha>[ · <distancia>]» en una `atrasada` y «Vuelve <fecha>[ · <distancia>]» en una `en espera`. «el» va solo delante de la fecha con día de la semana; con «hoy», «ayer» o «mañana» no. Ejemplos (ahora = viernes 13 de noviembre de 2026, 10:00): «Tocaba el martes 10 · hace 3 días», «Tocaba ayer», «Tocaba hoy 09:00 · hace 1 hora», «Vuelve mañana», «Vuelve hoy 18:00 · en 8 horas», «Vuelve hoy 10:40 · en 40 minutos», «Vuelve el jueves 19 · en 6 días». Sin felicitaciones ni otras palabras.
+- **Instante de «Tocaba»** (desde cuándo toca la tarea; nunca es un instante futuro):
+
+| Tipo | Instante |
+|---|---|
+| Puntual con fecha límite | el día `fechaLimite`, sin hora, tenga o no horario |
+| Relativa | `V` (con hora) |
+| Calendario | el día de `N`, sin hora |
+| Periódica con horario (§5.5) | `A`; con varios horarios (§5.6, §5.7), el inicio de `N` |
+
+  Si `A` todavía no llegó (la tarea se atrasó por el atraso sin horario de §5.5 antes de que abriera su ventana), se usa el instante sin horario: `V`, o 00:00 de `N`. Una puntual sin fecha límite nunca está `atrasada`, así que no lleva «Tocaba».
+- **Instante de «Vuelve»**: el mismo con el que esta sección ordena las `en espera` (cuándo vuelve a pendiente): relativa, `V`; calendario, 00:00 de `N`; con horario, `A` (§5.5; una puntual fuera de ventana, el `desde` de la próxima); pospuesta, `pospuesta.hasta` (§5.9). Si dos causas la tienen `en espera`, el instante en que deja de estarlo (el más tarde de los dos).
+- **Fecha**: «hoy», «ayer» o «mañana» si el instante cae en esos días locales (el día empieza a las 00:00); si no, el día de la semana y el número («martes 10»), con « de <mes>» en minúsculas si el mes no es el de ahora («martes 28 de octubre») y « de <año>» si el año no es el de ahora («miércoles 31 de diciembre de 2025»). Lleva la hora `HH:MM` en 24 h (cifras de ancho fijo) cuando el instante no es las 00:00 (horario, relativas, posposición): «hoy 18:00», «martes 10 19:30». Es el formato de **Última vez** (§6.2) y del Historial (§6.3).
+- **Distancia**, después de la fecha, separada por « · »:
+  - A 2 o más días locales: «hace N días» / «en N días» (diferencia en días locales, como **Última vez**), con o sin hora en la fecha.
+  - Con la fecha «hoy», «ayer» o «mañana» y con hora: en horas («hace 3 horas», «en 1 hora») o, a menos de una hora, en minutos («hace 40 minutos», «en 40 minutos»). Lo pasado se redondea hacia abajo y lo futuro hacia arriba, nunca «en 0 minutos». Se cuenta desde ahora, aunque cruce la medianoche («Tocaba ayer 23:00 · hace 2 horas» a la 01:00).
+  - Con la fecha «hoy», «ayer» o «mañana» y sin hora: no hay distancia, la palabra ya lo es («Tocaba ayer», «Vuelve mañana»).
+- **Se actualiza solo** con el paso del tiempo (al pasar la medianoche, la hora o el minuto que corresponda), como **Última vez** con el panel abierto. No cambia el estado ni el orden de la lista.
+- Solo son textos y color: los estados de §5 y el orden de esta sección no cambian.
+
 - Si tocar el checkbox completaría la tarea y ahora está fuera de su ventana (§5.5), el checkbox está deshabilitado. Si lo borraría, siempre está habilitado.
 - Tocar el checkbox de una tarea no completada la completa. Tocar el checkbox de una completada:
   - Puntual: borra su completado más reciente (como Deshacer, §5.4) y la tarea vuelve al estado que corresponda.
