@@ -1,6 +1,6 @@
 # Paquete: reintento-y-aviso-de-copia
 
-Dos arreglos a la feature `anotacion` ya terminada: la app reintenta limpiar los completados y las anotaciones huérfanas cuando un intento falla o no hay conexión, y avisa con un texto breve y neutro cuando el portapapeles rechaza **Copiar**.
+Dos arreglos a la feature `anotacion` ya terminada: la app reintenta las cuatro limpiezas de §7 (completados huérfanos, anotaciones huérfanas, referencias a etiquetas borradas y etiquetas duplicadas) cuando un intento falla o no hay conexión, y avisa con un texto breve y neutro cuando el portapapeles rechaza **Copiar**.
 
 ## Specs
 
@@ -13,6 +13,8 @@ Dos arreglos a la feature `anotacion` ya terminada: la app reintenta limpiar los
 - D5 (2026-11-13, analyst): el aviso de «no se pudo copiar» es como el de «Anotaciones copiadas» (§6.7): sin botones, se va solo, y un solo texto a la vez (el último reemplaza al anterior). No tapa el aviso de deshacer (§5.4). Porque es el mismo tipo de texto breve e informativo y debe comportarse igual.
 - D6 (2026-11-13, analyst): el texto exacto es «No se pudo copiar», el ejemplo del usuario en D2, sin más palabras. Porque la regla global es sin culpa y sin alarma, y ese texto lo cumple.
 - D7 (2026-11-13, analyst): si el portapapeles rechaza la copia no se copia nada y no se cambia nada más (la app no hace otra cosa sola); la persona puede volver a tocar **Copiar**. Porque la app no cambia nada sola (docs/v3/plan.md).
+- D8 (2026-11-13, usuario, alcance del reintento): «Sí, las cuatro limpiezas (Recomendada)». El reintento alcanza también a las referencias a etiquetas borradas y a la fusión de etiquetas duplicadas (§7). Reconciliado con D3 y D4: lo de D3 (cada elemento se intenta por separado, una falla no corta el lote) y lo de D4 (silencioso) rigen para las cuatro limpiezas, no solo para completados y anotaciones.
+- D9 (2026-11-13, usuario, cuándo se reintenta): «Al volver la conexión y al cambiar los datos (Recomendada)». Sin temporizadores. Reconciliado con D4: tampoco se avisa ni se cuenta cuándo se reintenta.
 
 ## Artefactos
 
