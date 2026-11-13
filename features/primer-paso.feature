@@ -290,17 +290,18 @@ Feature: Primer paso
       | Separar la ropa blanca | Juntar las llaves | Juntar las llaves    |
 
   # Primer paso 24
-  # Escribirlo en un dispositivo y quitarlo en el otro: gana el último en
-  # llegar (el quitado).
+  # Cambiarlo en un dispositivo y quitarlo en el otro, que ve un primer paso
+  # previo: gana el último en llegar (el quitado).
   Scenario Outline: Primer paso 24
     Given una tarea puntual sin fecha límite
+    And el primer paso de la tarea es <otro_primer_paso>
     When edito el primer paso a <primer_paso>
     And otro dispositivo, sin ver ese cambio, quita el primer paso
     Then la tarea no tiene primer paso
 
     Examples:
-      | primer_paso            |
-      | Separar la ropa blanca |
+      | otro_primer_paso  | primer_paso            |
+      | Juntar las llaves | Separar la ropa blanca |
 
   # Primer paso 25
   # Una edición escribe solo si cambió: otro dispositivo que guarda sin
