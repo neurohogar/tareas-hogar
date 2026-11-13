@@ -4,13 +4,13 @@ Dos arreglos a la feature `anotacion` ya terminada: la app reintenta las cuatro 
 
 ## Specs
 
-- S1 (§7, D1, D8): «las cuatro limpiezas de esta sección (completados huérfanos, anotaciones huérfanas, referencias a etiquetas borradas y etiquetas duplicadas) se reintentan si un intento falla o no hay conexión; no quedan sin limpiar hasta recargar la app.»
-- S2 (§7, D9): «Se reintenta al volver la conexión y cuando cambian los datos, sin temporizadores.»
-- S3 (§7, D3, D8): «Cada elemento se intenta por separado: que uno falle (o que no haya conexión) no impide intentar los demás del lote.»
-- S4 (§7, D4, D9): «Los reintentos son silenciosos: sin aviso, contador ni indicador de pendientes.»
-- S5 (§6.7, D2, D6): «Si el portapapeles rechaza la copia, el mismo tipo de texto con «No se pudo copiar», sin más palabras»
-- S6 (§6.7, D5): «sin botones, se va solo, no tapa el aviso de deshacer (§5.4), y solo se ve un texto a la vez (el último reemplaza al anterior).»
-- S7 (§6.7, D7): «No se copia nada y no cambia nada más; la app no hace otra cosa sola y la persona puede volver a tocar **Copiar**.»
+- **S1** (§7, D1, D8): «las cuatro limpiezas de esta sección (completados huérfanos, anotaciones huérfanas, referencias a etiquetas borradas y etiquetas duplicadas) se reintentan si un intento falla o no hay conexión; no quedan sin limpiar hasta recargar la app.»
+- **S2** (§7, D9): «Se reintenta al volver la conexión y cuando cambian los datos, sin temporizadores.»
+- **S3** (§7, D3, D8): «Cada elemento se intenta por separado: que uno falle (o que no haya conexión) no impide intentar los demás del lote.»
+- **S4** (§7, D4, D9): «Los reintentos son silenciosos: sin aviso, contador ni indicador de pendientes.»
+- **S5** (§6.7, D2, D6): «Si el portapapeles rechaza la copia, el mismo tipo de texto con «No se pudo copiar», sin más palabras»
+- **S6** (§6.7, D5): «sin botones, se va solo, no tapa el aviso de deshacer (§5.4), y solo se ve un texto a la vez (el último reemplaza al anterior).»
+- **S7** (§6.7, D7): «No se copia nada y no cambia nada más; la app no hace otra cosa sola y la persona puede volver a tocar **Copiar**.»
 
 ## Decisiones
 
