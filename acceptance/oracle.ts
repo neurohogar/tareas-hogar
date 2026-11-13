@@ -650,7 +650,7 @@ export function resolver(texto: string, fila: FilaOraculo): string | undefined {
 	return faltante ? undefined : resuelto;
 }
 
-function armar(pasos: PasoOraculo[], fila: FilaOraculo): Situacion | undefined {
+export function armar(pasos: PasoOraculo[], fila: FilaOraculo): Situacion | undefined {
 	const s: Situacion = { completados: [], cualquierMomento: false, cubiertas: [], sinCubierta: [] };
 	for (const paso of pasos) {
 		const texto = resolver(paso.text, fila);
@@ -739,7 +739,7 @@ export function clasificarFila(
  * §5.6 y §5.7: N de una de calendario con horario, o de una relativa por ventana; undefined si no se deduce. Los
  * completados de una relativa sin ocurrencia cubierta (sinCubierta) cubren el día entero de su completadoEn.
  */
-function proximaConHorario(s: Situacion, vs: Ventana[]): Ocurrencia | undefined {
+export function proximaConHorario(s: Situacion, vs: Ventana[]): Ocurrencia | undefined {
 	const p = pConHorario([...s.cubiertas, ...s.sinCubierta], s.cubiertasConHora ?? [], s.creada);
 	if (s.calendario) return p === undefined ? undefined : proximaDeCalendario(s.calendario, vs, p, s.reanudada);
 	if (s.completados.length === 0) return s.creada && primeraSinCerrar(vs, s.creada.getTime());
@@ -747,7 +747,7 @@ function proximaConHorario(s: Situacion, vs: Ventana[]): Ocurrencia | undefined 
 }
 
 /** §5.5–§5.7: el momento con horario de la tarea armada; undefined si falta algo que el spec necesita. */
-function conHorarioDe(s: Situacion, vs: Ventana[], ahora: number): ConHorario | undefined {
+export function conHorarioDe(s: Situacion, vs: Ventana[], ahora: number): ConHorario | undefined {
 	if (s.puntual) return s.puntual.cualquiera || !s.creada ? undefined : puntualConHorario(vs, s.creada.getTime(), s.puntual.limite, ahora);
 	const ultimo = s.completados.length > 0 ? Math.max(...s.completados) : undefined;
 	if (s.calendario || porVentana(s.unidad, vs)) {
@@ -771,15 +771,15 @@ function clasificarConHorario(s: Situacion, vs: Ventana[], observa: Observa): st
 }
 
 /** §5.1–§5.7: el estado por la regla de la tarea, sin la posposición. */
-function estadoSegunSuRegla(s: Situacion, observa: Observa): string | undefined {
+export function estadoSegunSuRegla(s: Situacion, observa: Observa): string | undefined {
 	if (s.horario) return clasificarConHorario(s, s.horario, observa);
 	if (s.puntual) return clasificarPuntual(s, s.puntual);
 	return s.calendario ? clasificarCalendario(s, s.calendario, observa) : clasificarEstado(s, observa);
 }
 
-const posposicionVigente = ({ pospuesta, ahora }: Situacion) => (pospuesta && ahora !== undefined && ahora < pospuesta.hasta ? pospuesta : undefined);
+export const posposicionVigente = ({ pospuesta, ahora }: Situacion) => (pospuesta && ahora !== undefined && ahora < pospuesta.hasta ? pospuesta : undefined);
 
-const SIN_PROGRESO: Observa = { progreso: false };
+export const SIN_PROGRESO: Observa = { progreso: false };
 const pendienteOAtrasada = (estado: string | undefined) => estado === 'pendiente' || estado === 'atrasada';
 
 /** §5.9: está en espera por la posposición: con ahora < hasta, estaría pendiente o atrasada por su regla. */

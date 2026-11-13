@@ -55,7 +55,8 @@ export const deshacerSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^consulto el aviso el ${P}$`),
 		run: (world, ahora) => {
-			world.avisoConsultado = { aviso: avisoVisible(world.aviso, fechaHora(ahora)) };
+			const momento = fechaHora(ahora);
+			world.avisoConsultado = { aviso: avisoVisible(world.aviso, momento), ahora: momento };
 		}
 	},
 	{

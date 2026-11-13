@@ -16,6 +16,7 @@ import { esEscenarioDeCambios, esEscenarioDelPanel, observarCambios, observarPan
 import { esEscenarioDeAnotaciones, esEscenarioDeLimpiezas, observarAnotaciones, observarLimpiezas } from './oracle-anotaciones';
 import { esEscenarioDeEdicion, observarEdicion } from './oracle-edicion';
 import { esEscenarioDeEtiquetas, observarEtiquetas } from './oracle-etiquetas';
+import { esEscenarioDeTextoDeFecha, observarTextoDeFecha } from './oracle-texto-de-fecha';
 import { esEscenarioDePantallaDeCarga, observarPantallaDeCarga } from './oracle-pantalla-de-carga';
 
 /** Pasos Then que solo observan la clasificación de la regla. */
@@ -179,6 +180,9 @@ export function esEquivalente(feature: Feature, candidata: Candidata): boolean {
 	}
 	if (esEscenarioDePantallaDeCarga(pasosDe(feature, scenario).map(({ step }) => step.text))) {
 		return esEquivalenteSegun(observarPantallaDeCarga, feature, scenario, candidata);
+	}
+	if (esEscenarioDeTextoDeFecha(pasosDe(feature, scenario).map(({ step }) => step.text))) {
+		return esEquivalenteSegun(observarTextoDeFecha, feature, scenario, candidata);
 	}
 	if (esEscenarioDeCambios(pasosDe(feature, scenario).map(({ step }) => step.text))) {
 		return esEquivalenteSiSigueCumpliendo(observarCambios, feature, scenario, candidata);

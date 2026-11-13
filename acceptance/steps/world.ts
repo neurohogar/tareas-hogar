@@ -57,7 +57,7 @@ export interface World extends Guardado {
 	/** El aviso del último completado de este dispositivo. */
 	aviso?: Aviso;
 	/** El aviso que se veía en el último momento consultado (aviso: undefined si no había). */
-	avisoConsultado?: { aviso?: Aviso };
+	avisoConsultado?: { aviso?: Aviso; ahora: Date };
 	/** El Historial en el último momento consultado. */
 	historial?: GrupoDelHistorial[];
 	/** El texto de "Última vez" en el último momento consultado. */
@@ -126,12 +126,14 @@ export interface CambiosDelPanel {
 	tecladoAbierto: boolean;
 }
 
-/** Lo que se ve de una fila de Pendientes: el título, si se ve completada o pausada, y el texto del esfuerzo. */
+/** Lo que se ve de una fila de Pendientes: el título, si se ve completada o pausada, el texto del esfuerzo y el de fecha. */
 export interface FilaConsultada {
 	titulo: string;
 	completada: boolean;
 	pausada: boolean;
 	esfuerzo: string | undefined;
+	/** El texto de fecha y distancia («Tocaba …», «Vuelve …», §6.1); sin él, la fila no lo muestra. */
+	textoDeFecha: string | undefined;
 }
 
 /** El sujeto de los pasos del otro dispositivo: actúa sobre lo guardado antes de mi último cambio. */
