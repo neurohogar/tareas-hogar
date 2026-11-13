@@ -8,7 +8,7 @@ import type { Tarea } from '../../src/lib/core/tarea';
 import { AHORA, crearEnWorld, registrarCreacion } from './crear';
 import { editaElOtro, editoYo } from './edicion';
 import { diasDe, formaDe } from './periodica-calendario';
-import { P, TITULO, numero, unidad } from './valores';
+import { P, TITULO, numero } from './valores';
 import { OTRO, elDocumento, laTarea, laTareaTitulada, type StepDefinition, type World } from './world';
 
 const ESTADOS = ['pendiente', 'en espera', 'atrasada'];
@@ -71,9 +71,9 @@ export const primerPasoSteps: StepDefinition[] = [
 		run: (world, titulo, primerPaso) => crearPuntualConPrimerPaso(world, { titulo, primerPaso })
 	},
 	{
-		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} cada ${P} ${P} y primer paso ${P}$`),
-		run: (world, titulo, cada, u, primerPaso) => {
-			crearEnWorld(world, { titulo, cada: numero(cada), unidad: unidad(u), primerPaso });
+		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} cada 2 dias y primer paso ${P}$`),
+		run: (world, titulo, primerPaso) => {
+			crearEnWorld(world, { titulo, cada: 2, unidad: 'dias', primerPaso });
 			sinRechazo(world);
 		}
 	},

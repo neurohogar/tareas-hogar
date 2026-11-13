@@ -4,6 +4,7 @@
 // spec no decide devuelve undefined: no se filtra.
 import {
 	armar,
+	clasificarSituacion,
 	conHorarioDe,
 	DIAS_DE_LA_SEMANA,
 	disponibleYCierre,
@@ -158,6 +159,9 @@ const THEN_DE_FILA = /^la fila de la tarea (?:muestra el texto (.*)|no muestra t
 const THEN_DE_FILA_DE_TITULO = /^la fila de ([A-ZÁÉÍÓÚÑ]\w*) muestra el texto (.*)$/su;
 const THEN_DE_PRIMER_PASO = /^la fila de la tarea (?:muestra el primer paso (.*)|no muestra primer paso)$/su;
 const PRIMER_PASO_GUARDADO = /^el primer paso de la tarea es (.*)$/su;
+const THEN_DE_CHECKBOX = /^el checkbox de la tarea está (habilitado|deshabilitado)$/;
+/** Pasos que el oráculo de edición modela mejor (el checkbox tocado, el completado borrado): lo decide ese oráculo. */
+const PASO_DE_EDICION = /^(?:toco el checkbox de la tarea |borro el completado del )/;
 const THEN_DE_ORDEN = /^Pendientes muestra en orden (.*)$/su;
 const THEN_DE_AVISO = /^el aviso del completado (?:muestra el regreso (.*)|no muestra regreso)$/su;
 const CONSULTA_DEL_AVISO = /^consulto el aviso el (\S+)$/;
@@ -166,6 +170,7 @@ const TITULO_EN_EL_PASO = /\b(tarea(?: puntual| periódica (?:relativa|semanal|m
 const tituloDelPaso = (texto: string) => TITULO_EN_EL_PASO.exec(texto)?.[2];
 
 export const esEscenarioDeTextoDeFecha = (textos: string[]) =>
+	!(textos.some((texto) => THEN_DE_PRIMER_PASO.test(texto)) && textos.some((texto) => PASO_DE_EDICION.test(texto))) &&
 	textos.some((texto) => THEN_DE_FILA.test(texto) || THEN_DE_PRIMER_PASO.test(texto) || THEN_DE_FILA_DE_TITULO.test(texto) || THEN_DE_AVISO.test(texto));
 
 /**
@@ -223,6 +228,12 @@ function regresoVisible(s: Situacion, ahora: number | undefined): string | undef
 /** §6.1: lo que el oráculo observa en un Then de la lista o del aviso, con lo que el Then afirma; undefined si no se decide. */
 function observarThen(entradas: PasoOraculo[], texto: string, fila: FilaOraculo): { visto: string | undefined; escrito: string } {
 	const orden = THEN_DE_ORDEN.exec(texto);
+	const deCheckbox = THEN_DE_CHECKBOX.exec(texto);
+	if (deCheckbox) {
+		const situacion = situacionDe(entradas, fila);
+		const visto = situacion && clasificarSituacion(situacion.s, { progreso: false, checkbox: true, soloCheckbox: true });
+		return { visto: visto?.replace('checkbox ', ''), escrito: deCheckbox[1] };
+	}
 	if (orden) return { visto: ordenDePendientes(entradas, fila)?.orden, escrito: elementos(orden[1])?.join(', ') ?? orden[1] };
 	const deTitulo = THEN_DE_FILA_DE_TITULO.exec(texto);
 	const deFila = deTitulo ?? THEN_DE_FILA.exec(texto);

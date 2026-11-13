@@ -116,6 +116,8 @@ interface Mundo extends Guardado {
 	consultadoEn?: number;
 	tocadoEn?: number;
 	orden?: string;
+	/** El momento en que se consultó Pendientes (§6.1). */
+	pendientesEn?: number;
 	/** El check "Mostrar completadas" (§6.1); sin él, apagado. */
 	mostrarCompletadas?: boolean;
 	nuevo?: Completado;
@@ -977,7 +979,10 @@ const CONSULTAS: Paso[] = [
 		}
 	],
 	[/^consulto el estado en cualquier momento$/, (m) => void (m.estado = clasificar(m, undefined))],
-	[/^consulto Pendientes el (\S+)$/, (m, [t]) => void (m.orden = ordenEn(m, momento(t)))],
+	[/^consulto Pendientes el (\S+)$/, (m, [t]) => {
+			m.pendientesEn = momento(t);
+			m.orden = ordenEn(m, m.pendientesEn);
+		}],
 	[/^consulto Pendientes en cualquier momento$/, (m) => void (m.orden = ordenEn(m, undefined))],
 	[new RegExp(`^${MOSTRAR_COMPLETADAS}$`), (m) => void (m.mostrarCompletadas = true)]
 ];
@@ -1009,6 +1014,19 @@ const elNuevo = (m: Mundo) => m.nuevo ?? indeciso('no se completó');
 const unSoloCompletadoDe = (m: Mundo, d: Documento) =>
 	JSON.stringify(completadosDe(m, d.id).map((c) => [c.en, c.cubierta !== undefined || c.inicioCubierto !== undefined]));
 
+/**
+ * §6.1: la fila muestra «Primer paso: » y el texto solo si la tarea lo tiene y, en el momento consultado, no está
+ * pausada y está pendiente o atrasada (no en espera, ni completada, ni pospuesta).
+ */
+function primerPasoDeLaFila(m: Mundo): string {
+	const en = m.pendientesEn ?? indeciso('sin consulta de Pendientes');
+	const tarea = unica(m);
+	if (!tarea.primerPaso || (tarea.tipo === 'periodica' && tarea.pausada)) return 'sin texto';
+	const s = situacionDe(m, tarea, en);
+	const estado = enEsperaPorPosposicion(s) ? 'en espera' : (clasificarSituacion(s, { progreso: false }) ?? indeciso('estado'));
+	return estado === 'pendiente' || estado === 'atrasada' ? `Primer paso: ${tarea.primerPaso}` : 'sin texto';
+}
+
 type Observacion = [RegExp, (m: Mundo, c: string[]) => string];
 
 const OBSERVACIONES: Observacion[] = [
@@ -1037,6 +1055,7 @@ const OBSERVACIONES: Observacion[] = [
 	[/^la tarea tiene nota (.*)$/, (m) => unica(m).nota ?? '-'],
 	[/^la tarea no tiene nota$/, (m) => String(unica(m).nota === undefined)],
 	[/^la tarea tiene primer paso (.*)$/, (m) => unica(m).primerPaso ?? '-'],
+	[/^la fila de la tarea (?:muestra el primer paso .*|no muestra primer paso)$/, (m) => primerPasoDeLaFila(m)],
 	[/^la tarea no tiene primer paso$/, (m) => String(unica(m).primerPaso === undefined)],
 	[/^la tarea tiene un primer paso de (\S+) caracteres$/, (m) => String(unica(m).primerPaso?.length)],
 	[/^su esfuerzo es (.+)$/, (m) => unica(m).esfuerzo ?? 'sin estimar'],
