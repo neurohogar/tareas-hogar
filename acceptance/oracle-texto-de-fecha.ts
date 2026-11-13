@@ -68,8 +68,8 @@ function distanciaCorta(instante: number, ahora: number): string | undefined {
 	}
 	const pasado = -diferencia;
 	if (pasado >= MS_DE_HORA) return `hace ${plural(Math.floor(pasado / MS_DE_HORA), 'hora')}`;
-	// Con menos de un minuto de pasado el spec no dice nada («hace 0 minutos» no se nombra).
-	return pasado >= MS_DE_MINUTO ? `hace ${plural(Math.floor(pasado / MS_DE_MINUTO), 'minuto')}` : undefined;
+	// §6.1: a menos de un minuto en el pasado la distancia es «ahora», no «hace 0 minutos».
+	return pasado >= MS_DE_MINUTO ? `hace ${plural(Math.floor(pasado / MS_DE_MINUTO), 'minuto')}` : 'ahora';
 }
 
 /** §6.1 Frase: «<Tocaba|Vuelve> <fecha>[ · <distancia>]». */
