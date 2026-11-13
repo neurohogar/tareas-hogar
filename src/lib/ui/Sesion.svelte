@@ -104,6 +104,10 @@
 				etiquetas = actuales;
 				etiquetasCargadas = true;
 			}),
+			observarAnotaciones(uid, (actuales) => {
+				anotaciones = actuales;
+				anotacionesCargadas = true;
+			}),
 			observarReloj((actual) => (ahora = actual))
 		];
 		return () => cancelar.forEach((cancelarUno) => cancelarUno());
