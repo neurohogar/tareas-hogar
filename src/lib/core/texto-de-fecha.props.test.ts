@@ -36,6 +36,30 @@ describe('fraseDeFecha (propiedades)', () => {
 		);
 	});
 
+	it('S16: lo pasado a menos de un minuto con hora termina en « · ahora»', () => {
+		fc.assert(
+			fc.property(verbo, momento, fc.integer({ min: 0, max: MINUTO - 1 }), (v, ahora, ms) => {
+				const instante = new Date(ahora.getTime() - ms);
+				fc.pre(instante.getTime() !== new Date(instante.getFullYear(), instante.getMonth(), instante.getDate()).getTime());
+				const frase = fraseDeFecha(v, instante, ahora);
+				expect(frase.endsWith(' · ahora')).toBe(true);
+				expect(frase).not.toMatch(/hace 0/);
+			})
+		);
+	});
+
+	it('S16: lo futuro a menos de un minuto nunca dice «en 0» y redondea a «en 1 minuto»', () => {
+		fc.assert(
+			fc.property(verbo, momento, fc.integer({ min: 1, max: MINUTO }), (v, ahora, ms) => {
+				const instante = new Date(ahora.getTime() + ms);
+				fc.pre(instante.getTime() !== new Date(instante.getFullYear(), instante.getMonth(), instante.getDate()).getTime());
+				const frase = fraseDeFecha(v, instante, ahora);
+				expect(frase).not.toMatch(/en 0/);
+				expect(frase.endsWith(' · en 1 minuto')).toBe(true);
+			})
+		);
+	});
+
 	it('«el» va solo delante de la fecha con día de la semana', () => {
 		fc.assert(
 			fc.property(verbo, momento, momento, (v, instante, ahora) => {
