@@ -79,7 +79,9 @@ const escenario = fc.record({
 	despues: fc.integer({ min: 0, max: 40 * DIA })
 });
 
-function armar(e: fc.Value<typeof escenario>) {
+type Escenario = typeof escenario extends fc.Arbitrary<infer T> ? T : never;
+
+function armar(e: Escenario) {
 	const base = { id: 't', titulo: 'T', creadaEn: e.creada, ...(e.horario && { horario: e.horario }) };
 	const { recurrencia: r, limite } = e.tipo;
 	const tarea: Tarea = r
