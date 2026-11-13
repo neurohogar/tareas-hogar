@@ -69,7 +69,7 @@ Semana de referencia: miércoles 2026-07-15 (hoy), martes 14 (ayer).
 
 1. Crear la tarea `Regar`. Tocar su fila para abrir el panel de edición y, con el panel abierto, tocar **Anotar**, tocar **Me sirvió**: la anotación, en **Anotaciones**, dice **Panel de edición** y nombra `Regar`.
 2. Abrir el panel de creación (**+**) y anotar: dice **Panel de edición** y no tiene tarea.
-3. Con el panel abierto sobre Historial, y también sobre Etiquetas, anotar: siempre **Panel de edición**.
+3. Con el panel abierto desde Historial (tocar el título de una entrada), anotar: **Panel de edición**. El panel cubre la barra y solo se abre desde Pendientes o Historial, así que no existe sobre Etiquetas.
 4. Cerrar el panel. A las 08:00 completar `Regar` (aparece el aviso con **Deshacer**); a las 08:00:04 anotar en Pendientes: la anotación dice **Pendientes** y nombra `Regar`. Anotar a las 08:00:05 con el aviso ya cerrado: sin tarea.
 5. Completar otra tarea `Pagar` y, con su aviso visible, abrir el panel de edición de `Regar` y anotar: la anotación nombra `Regar` (manda el panel). Con el panel de creación abierto y el aviso visible, anotar: sin tarea.
 6. Con el aviso de deshacer visible, anotar: al guardar se ve **Anotación guardada** y el aviso con **Deshacer** sigue visible (no lo tapa).
@@ -78,7 +78,7 @@ Semana de referencia: miércoles 2026-07-15 (hoy), martes 14 (ayer).
 
 1. Abrir el panel de edición de `Regar`, sin cambiar nada. Anotar con texto: el panel sigue abierto en la misma pestaña, con los mismos valores, y no aparece ningún aviso de cambios ni de acción.
 2. Cerrar el panel con la **X**: se cierra sin avisar (no había cambios sin guardar, anotar no cuenta).
-3. Abrir el panel, cambiar el título (cambio sin guardar), anotar: el panel sigue abierto con el título cambiado. Tocar la **X**: aparece el aviso de cambios sin guardar como siempre (hay un solo cambio: el título).
+3. Abrir el panel, cambiar el título (cambio sin guardar), anotar: el panel sigue abierto con el título cambiado. Tocar la **X**: aparece el aviso de cambios sin guardar como siempre («Tenés cambios sin guardar»; el aviso no lista los campos cambiados).
 4. Anotar no cambia de pestaña de pantalla: en Historial, anotar deja la pantalla en Historial. Con el panel abierto en la pestaña **Cuándo**, anotar deja la pestaña **Cuándo**.
 
 ### Flujo 5: Atrás y cerrar sin anotar
