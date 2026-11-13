@@ -124,7 +124,7 @@ const noHayOpcion = (page: Page, nombre: string | RegExp) => expect(page.getByRo
 test('Flujo 1: navegación y estado sin etiquetas', async ({ page }) => {
 	await sesionConReloj(page, HOY);
 	const nav = page.getByRole('navigation');
-	await expect(nav.getByRole('link')).toHaveText(['Pendientes', 'Historial', 'Etiquetas']);
+	await expect(nav.getByRole('link')).toHaveText(['Pendientes', 'Historial', 'Etiquetas', 'Anotaciones']);
 	await expect(nav.getByRole('link', { name: 'Pendientes' })).toHaveAttribute('aria-current', 'page');
 	await expect(nav.getByRole('link', { name: 'Historial' })).not.toHaveAttribute('aria-current', /.*/);
 	await expect(nav.getByRole('link', { name: 'Etiquetas' })).not.toHaveAttribute('aria-current', /.*/);
@@ -139,7 +139,7 @@ test('Flujo 1: navegación y estado sin etiquetas', async ({ page }) => {
 	await expect(page.getByText(SIN_ETIQUETAS)).toBeVisible();
 	await expect(nav.getByRole('link', { name: 'Etiquetas' })).toHaveAttribute('aria-current', 'page');
 	await expect(nav.getByRole('link', { name: 'Pendientes' })).not.toHaveAttribute('aria-current', /.*/);
-	await expect(page.getByRole('button')).toHaveCount(0);
+	await expect(page.getByRole('button').filter({ hasNotText: /^Anotar$/ })).toHaveCount(0);
 
 	await page.reload();
 	await expect(page.getByRole('heading', { name: 'Etiquetas', level: 1 })).toBeVisible();
