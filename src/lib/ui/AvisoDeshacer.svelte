@@ -1,9 +1,14 @@
 <script lang="ts">
-	let { nombre, alDeshacer }: { nombre: string; alDeshacer: () => void } = $props();
+	let { nombre, regreso, alDeshacer }: { nombre: string; regreso?: string; alDeshacer: () => void } = $props();
 </script>
 
 <div class="aviso" role="status">
-	<span>Completaste «{nombre}»</span>
+	<div class="textos">
+		<span>Completaste «{nombre}»</span>
+		{#if regreso}
+			<span class="regreso">{regreso}</span>
+		{/if}
+	</div>
 	<button type="button" onclick={alDeshacer}>Deshacer</button>
 </div>
 
@@ -23,6 +28,16 @@
 		border-radius: 8px;
 		background: var(--texto);
 		color: var(--fondo);
+	}
+
+	.textos {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.regreso {
+		font-size: 0.8rem;
+		font-variant-numeric: tabular-nums;
 	}
 
 	button {

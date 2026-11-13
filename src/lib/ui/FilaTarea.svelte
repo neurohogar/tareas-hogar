@@ -11,6 +11,7 @@
 		tarea,
 		estado,
 		completada,
+		textoDeFecha,
 		habilitado,
 		etiquetas,
 		alTocarCheckbox,
@@ -20,6 +21,8 @@
 		estado: Estado;
 		/** Spec §6.1 (Contraste): tachada, en peso normal y atenuada, con el checkbox marcado. */
 		completada: boolean;
+		/** «Tocaba …» o «Vuelve …» (§6.1), ya armado por el core; sin él, la fila no lleva texto de fecha. */
+		textoDeFecha?: string;
 		/** Spec §6.1 y §5.5: deshabilitado si tocarlo completaría fuera de la ventana del horario. */
 		habilitado: boolean;
 		/** Las etiquetas de la tarea, ya en orden (§4.3). */
@@ -62,8 +65,8 @@
 		{#if estado.tipo === 'pausada'}
 			<span class="estado-pausada">Pausada</span>
 		{/if}
-		{#if estado.tipo === 'atrasada'}
-			<span class="atraso">Atrasada</span>
+		{#if textoDeFecha}
+			<span class="texto-de-fecha">{textoDeFecha}</span>
 		{/if}
 		{#if estado.tipo === 'en espera'}
 			{@const porcentaje = porcentajeDeProgreso(estado.progreso)}
@@ -182,9 +185,10 @@
 		font-variant-numeric: tabular-nums;
 	}
 
-	.atraso {
+	.texto-de-fecha {
 		font-size: 0.8rem;
-		color: var(--atraso);
+		color: var(--texto-suave);
+		font-variant-numeric: tabular-nums;
 	}
 
 	/* Fuera del flujo, en el padding inferior de la fila: no corre el título respecto del checkbox. */

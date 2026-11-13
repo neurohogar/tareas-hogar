@@ -25,7 +25,7 @@
 		observarEtiquetas,
 		observarTareas
 	} from '#lib/adapters/repositorio.ts';
-	import { avisoAlCompletar, avisoVisible, completadoADeshacer, msHastaQueVence, type Aviso } from '#lib/core/aviso.ts';
+	import { avisoAlCompletar, avisoVisible, completadoADeshacer, msHastaQueVence, regresoDelAviso, type Aviso } from '#lib/core/aviso.ts';
 	import { anotar, editarTexto, type Anotacion, type PantallaActual, type Sentido } from '#lib/core/anotacion.ts';
 	import { anotacionesHuerfanas, borrado, completadosHuerfanos, existeTarea } from '#lib/core/borrado.ts';
 	import { borradoDeEtiqueta, referenciasRotas } from '#lib/core/borrado-de-etiqueta.ts';
@@ -190,7 +190,7 @@
 	function completarTarea(tarea: Tarea) {
 		ahora = horaActual();
 		const completado = completar(tarea, completados, nuevoId(), ahora);
-		aviso = avisoAlCompletar(tarea, completado);
+		aviso = avisoAlCompletar(tarea, completado, completados);
 		void guardarCompletado(uid, completado);
 	}
 
@@ -318,7 +318,7 @@
 {@render children()}
 
 {#if avisoQueSeVe}
-	<AvisoDeshacer nombre={avisoQueSeVe.nombre} alDeshacer={deshacer} />
+	<AvisoDeshacer nombre={avisoQueSeVe.nombre} regreso={regresoDelAviso(avisoQueSeVe, ahora)} alDeshacer={deshacer} />
 {/if}
 
 {#if editada && editadaExiste}
