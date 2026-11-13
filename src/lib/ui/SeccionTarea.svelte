@@ -85,6 +85,11 @@
 	</div>
 
 	<div class="campo-formulario">
+		<label for="campo-primer-paso">Primer paso</label>
+		<input id="campo-primer-paso" name="primerPaso" autocomplete="off" value={valores?.primerPaso ?? ''} />
+	</div>
+
+	<div class="campo-formulario">
 		<label for="campo-nota">Nota</label>
 		<textarea id="campo-nota" name="nota" rows="2" value={valores?.nota ?? ''}></textarea>
 	</div>

@@ -12,6 +12,7 @@
 		estado,
 		completada,
 		textoDeFecha,
+		textoDePrimerPaso,
 		habilitado,
 		etiquetas,
 		alTocarCheckbox,
@@ -23,6 +24,8 @@
 		completada: boolean;
 		/** «Tocaba …» o «Vuelve …» (§6.1), ya armado por el core; sin él, la fila no lleva texto de fecha. */
 		textoDeFecha?: string;
+		/** «Primer paso: …» (§6.1), ya armado por el core; sin él, la fila no lleva esa línea. */
+		textoDePrimerPaso?: string;
 		/** Spec §6.1 y §5.5: deshabilitado si tocarlo completaría fuera de la ventana del horario. */
 		habilitado: boolean;
 		/** Las etiquetas de la tarea, ya en orden (§4.3). */
@@ -48,6 +51,9 @@
 	<div class="contenido">
 		<!-- El botón cubre toda la fila fuera del checkbox: tocarla abre la edición. -->
 		<button type="button" class="titulo" onclick={alAbrir}>{nombre}</button>
+		{#if textoDePrimerPaso}
+			<p class="primer-paso">{textoDePrimerPaso}</p>
+		{/if}
 		{#if etiquetas.length > 0}
 			<!-- Debajo del botón de la fila: tocar un chip es tocar la fila, no filtra. -->
 			<ul class="chips" aria-label="Etiquetas">
@@ -95,6 +101,15 @@
 	}
 
 
+
+	/* Línea propia, entera y en varias líneas si hace falta; no intercepta el toque de la fila. */
+	.primer-paso {
+		flex-basis: 100%;
+		margin: 0;
+		font-size: 0.8rem;
+		color: var(--texto-suave);
+		overflow-wrap: anywhere;
+	}
 
 	.esfuerzo {
 		font-size: 0.8rem;

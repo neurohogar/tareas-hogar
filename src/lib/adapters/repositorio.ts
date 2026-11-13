@@ -50,6 +50,8 @@ interface TareaDoc {
 	emoji?: string;
 	/** Sin el campo, la tarea no tiene nota. */
 	nota?: string;
+	/** Sin el campo, la tarea no tiene primer paso. */
+	primerPaso?: string;
 	/** Sin el campo, la tarea está sin estimar. */
 	esfuerzo?: Esfuerzo;
 	tipo: Tarea['tipo'];
@@ -114,6 +116,7 @@ function tareaADoc(tarea: Tarea): TareaDoc {
 		titulo: tarea.titulo,
 		...(tarea.emoji !== undefined && { emoji: tarea.emoji }),
 		...(tarea.nota !== undefined && { nota: tarea.nota }),
+		...(tarea.primerPaso !== undefined && { primerPaso: tarea.primerPaso }),
 		...(tarea.esfuerzo && { esfuerzo: tarea.esfuerzo }),
 		...(tarea.etiquetas && { etiquetas: [...tarea.etiquetas] }),
 		...(tarea.horario && { horario: copiarHorario(tarea.horario) }),
@@ -150,12 +153,13 @@ function etiquetaDesde(snapshot: QueryDocumentSnapshot<DocumentData>): Etiqueta 
 }
 
 /** Los campos del cambio como los escribe updateDoc: null quita el campo. */
-function camposDelCambio({ titulo, emoji, nota, esfuerzo, tipo, fechaLimite, recurrencia, horario, etiquetas, pausada, reanudadaEn, pospuesta }: CambioDeTarea): DocumentData {
+function camposDelCambio({ titulo, emoji, nota, primerPaso, esfuerzo, tipo, fechaLimite, recurrencia, horario, etiquetas, pausada, reanudadaEn, pospuesta }: CambioDeTarea): DocumentData {
 	const campos: DocumentData = {};
 	if (etiquetas !== undefined) campos.etiquetas = [...etiquetas];
 	if (titulo !== undefined) campos.titulo = titulo;
 	if (emoji !== undefined) campos.emoji = emoji === null ? deleteField() : emoji;
 	if (nota !== undefined) campos.nota = nota === null ? deleteField() : nota;
+	if (primerPaso !== undefined) campos.primerPaso = primerPaso === null ? deleteField() : primerPaso;
 	if (esfuerzo !== undefined) campos.esfuerzo = esfuerzo === null ? deleteField() : esfuerzo;
 	if (tipo !== undefined) campos.tipo = tipo;
 	if (fechaLimite !== undefined) campos.fechaLimite = fechaLimite === null ? deleteField() : diaIso(fechaLimite);

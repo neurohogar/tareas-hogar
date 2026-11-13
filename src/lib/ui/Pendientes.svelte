@@ -63,12 +63,13 @@
 		</label>
 	</div>
 	<ul class="lista">
-		{#each filas as { tarea, estado, completada, textoDeFecha } (tarea.id)}
+		{#each filas as { tarea, estado, completada, textoDeFecha, textoDePrimerPaso } (tarea.id)}
 			<FilaTarea
 				{tarea}
 				{estado}
 				{completada}
 				{textoDeFecha}
+				{textoDePrimerPaso}
 				habilitado={checkboxHabilitado(tarea, sesion.completados, sesion.ahora)}
 				etiquetas={etiquetasDeTarea(tarea, sesion.etiquetas)}
 				alTocarCheckbox={() => sesion.tocarCheckbox(tarea)}
