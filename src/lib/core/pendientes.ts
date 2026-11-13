@@ -8,7 +8,7 @@ import {
 	type FilaPorOrdenar
 } from './orden-de-pendientes';
 import { comoRecienCreada } from './pausa';
-import { textoDePrimerPaso } from './primer-paso';
+import { botonesDePaso, textoDelPaso, type BotonesDePaso } from './paso-actual';
 import type { Completado, Tarea } from './tarea';
 import { textoDeFecha } from './texto-de-fecha-de-tarea';
 import { instanteDeUrgencia } from './urgencia';
@@ -16,9 +16,11 @@ import { instanteDeUrgencia } from './urgencia';
 /**
  * Una fila de Pendientes; si está completada, se ve tachada y con el checkbox
  * marcado. textoDeFecha: «Tocaba …» o «Vuelve …», si la fila lo lleva (§6.1).
- * textoDePrimerPaso: «Primer paso: …», solo en las filas pendiente o atrasada.
+ * textoDePrimerPaso: la línea del paso en que va la tarea, «Primer paso: …» o
+ * «Paso: …», y botonesDePaso, los de una tarea de dos pasos o más; los dos,
+ * solo en las filas pendiente o atrasada (§6.1).
  */
-export type FilaDePendientes = { tarea: Tarea; textoDeFecha?: string; textoDePrimerPaso?: string } & EnPendientes;
+export type FilaDePendientes = { tarea: Tarea; textoDeFecha?: string; textoDePrimerPaso?: string; botonesDePaso?: BotonesDePaso } & EnPendientes;
 
 /**
  * Spec §6.1: las filas de la lista Pendientes. Primero las no completadas,
@@ -44,13 +46,14 @@ export function filasDePendientes(
 		else noCompletadas.push({ tarea, estado: enPendientes.estado, instante: instanteDeUrgencia(tarea, completados, enPendientes.estado, ahora) });
 	}
 	const conTexto = (tarea: Tarea, estado: FilaDePendientes['estado']) => textoDeFecha(tarea, completados, estado, ahora);
-	const conPrimerPaso = (tarea: Tarea, estado: FilaDePendientes['estado']) => {
-		const texto = textoDePrimerPaso(tarea, estado);
-		return texto === undefined ? {} : { textoDePrimerPaso: texto };
+	const conPaso = (tarea: Tarea, estado: FilaDePendientes['estado']) => {
+		const texto = textoDelPaso(tarea, estado);
+		const botones = botonesDePaso(tarea, estado, completados, ahora);
+		return { ...(texto !== undefined && { textoDePrimerPaso: texto }), ...(botones && { botonesDePaso: botones }) };
 	};
 	const filas = noCompletadas
 		.sort(compararPorUrgencia)
-		.map(({ tarea, estado }): FilaDePendientes => ({ tarea, estado, completada: false, textoDeFecha: conTexto(tarea, estado), ...conPrimerPaso(tarea, estado) }));
+		.map(({ tarea, estado }): FilaDePendientes => ({ tarea, estado, completada: false, textoDeFecha: conTexto(tarea, estado), ...conPaso(tarea, estado) }));
 	const alFinal = mostrarCompletadas
 		? completadas
 				.sort(compararCompletadas)

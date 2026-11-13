@@ -5,7 +5,7 @@ import { crearPuntual } from './crear-puntual';
 import { datosDeTarea } from './datos-de-tarea';
 import { editar } from './edicion';
 import type { Estado } from './estado';
-import { textoDePrimerPaso } from './primer-paso';
+import { textoDelPaso } from './paso-actual';
 import type { Tarea } from './tarea';
 
 const CREADA = new Date(2026, 6, 1, 8, 0, 0);
@@ -28,14 +28,14 @@ describe('primer paso (propiedades)', () => {
 		);
 	});
 
-	it('textoDePrimerPaso solo devuelve texto en pendiente y atrasada, y solo con primer paso', () => {
+	it('textoDelPaso solo devuelve texto en pendiente y atrasada, y solo con primer paso', () => {
 		const estados: Estado[] = [{ tipo: 'pendiente' }, { tipo: 'atrasada' }, { tipo: 'espera' }, { tipo: 'completada' }, { tipo: 'pausada' }] as Estado[];
 		fc.assert(
 			fc.property(texto, fc.constantFrom(...estados), (primerPaso, estado) => {
 				const tarea = crear(primerPaso);
 				const visible = estado.tipo === 'pendiente' || estado.tipo === 'atrasada';
 				const esperado = visible && tarea.primerPaso ? `Primer paso: ${tarea.primerPaso}` : undefined;
-				expect(textoDePrimerPaso(tarea, estado)).toBe(esperado);
+				expect(textoDelPaso(tarea, estado)).toBe(esperado);
 			})
 		);
 	});

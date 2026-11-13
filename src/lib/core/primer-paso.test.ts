@@ -7,7 +7,7 @@ import { crearSegunDatos, datosDeTarea, type DatosDeTarea } from './datos-de-tar
 import { aplicarCambio, tareaDesdeDocumento, type DocumentoDeTarea } from './documento-de-tarea';
 import { editar } from './edicion';
 import { filasDePendientes } from './pendientes';
-import { textoDePrimerPaso } from './primer-paso';
+import { textoDelPaso } from './paso-actual';
 import type { Completado, TareaPeriodica, TareaPuntual } from './tarea';
 
 const CREADA = new Date(2026, 6, 1, 8, 0, 0);
@@ -137,25 +137,25 @@ describe('hayCambios con primer paso (spec §6.2)', () => {
 	});
 });
 
-describe('textoDePrimerPaso (spec §6.1)', () => {
+describe('textoDelPaso con un solo paso (spec §6.1)', () => {
 	it.each(['pendiente', 'atrasada'] as const)('una fila %s lo muestra con el prefijo y el texto completo', (tipo) => {
-		expect(textoDePrimerPaso(PUNTUAL, { tipo })).toBe(`Primer paso: ${PASO}`);
+		expect(textoDelPaso(PUNTUAL, { tipo })).toBe(`Primer paso: ${PASO}`);
 	});
 
 	it.each(['en espera', 'completada', 'pausada'] as const)('una fila %s no lo muestra', (tipo) => {
-		expect(textoDePrimerPaso(PUNTUAL, { tipo })).toBeUndefined();
+		expect(textoDelPaso(PUNTUAL, { tipo })).toBeUndefined();
 	});
 
 	it('una tarea sin primer paso no lo muestra', () => {
 		const { primerPaso: _, ...sinPaso } = PUNTUAL;
 
-		expect(textoDePrimerPaso(sinPaso, { tipo: 'pendiente' })).toBeUndefined();
+		expect(textoDelPaso(sinPaso, { tipo: 'pendiente' })).toBeUndefined();
 	});
 
 	it('no lo corta, aunque sea largo', () => {
 		const largo = 'x'.repeat(500);
 
-		expect(textoDePrimerPaso({ ...PUNTUAL, primerPaso: largo }, { tipo: 'pendiente' })).toBe(`Primer paso: ${largo}`);
+		expect(textoDelPaso({ ...PUNTUAL, primerPaso: largo }, { tipo: 'pendiente' })).toBe(`Primer paso: ${largo}`);
 	});
 });
 

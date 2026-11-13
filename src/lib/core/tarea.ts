@@ -59,6 +59,10 @@ export interface TareaPeriodica {
 	nota?: string;
 	/** Spec §4.1: una línea, ya recortada; sin el campo, la tarea no tiene primer paso. */
 	primerPaso?: string;
+	/** Spec §4.1 (Pasos): los pasos 2 en adelante, ya recortados y sin vacíos; sin el campo, no hay más pasos. */
+	pasos?: string[];
+	/** Spec §4.1 (Pasos): el número del paso en que va la tarea; sin el campo, el paso 1. */
+	pasoActual?: number;
 	/** Spec §4.1: sin el campo, sin estimar. */
 	esfuerzo?: Esfuerzo;
 	/** Spec §4.1: ids de etiqueta, sin repetir; sin el campo, ninguna. */
@@ -85,6 +89,10 @@ export interface TareaPuntual {
 	nota?: string;
 	/** Spec §4.1: una línea, ya recortada; sin el campo, la tarea no tiene primer paso. */
 	primerPaso?: string;
+	/** Spec §4.1 (Pasos): los pasos 2 en adelante, ya recortados y sin vacíos; sin el campo, no hay más pasos. */
+	pasos?: string[];
+	/** Spec §4.1 (Pasos): el número del paso en que va la tarea; sin el campo, el paso 1. */
+	pasoActual?: number;
 	/** Spec §4.1: sin el campo, sin estimar. */
 	esfuerzo?: Esfuerzo;
 	/** Spec §4.1: ids de etiqueta, sin repetir; sin el campo, ninguna. */
@@ -117,6 +125,8 @@ export interface Completado {
 	completadoEn: Date;
 	/** En modo calendario (§5.3, §5.6) y en relativas con varias ventanas (§5.7). */
 	ocurrenciaCubierta?: OcurrenciaCubierta;
+	/** Spec §4.4: el paso en que iba la tarea al completarla; solo en tareas de dos pasos o más. */
+	pasoAlCompletar?: number;
 }
 
 /** Spec §4.1: los ids de etiqueta de la tarea; sin el campo, ninguna. */

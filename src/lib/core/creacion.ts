@@ -3,6 +3,7 @@ import { leerEmoji, type LecturaDeEmoji } from './emoji';
 import type { ErrorDeNombre } from './etiqueta';
 import { leerHorario, type ErrorDeHorario, type HorarioEscrito, type LecturaDeHorario } from './horario';
 import { normalizarNota } from './nota';
+import { normalizarPasos } from './pasos';
 import type { Esfuerzo, Recurrencia, Tarea, TareaPeriodica } from './tarea';
 
 /** Un motivo de rechazo por regla de validación (spec §4.1 y §4.2). */
@@ -29,14 +30,14 @@ const camposDeEmoji = (lectura: LecturaDeEmoji) => (lectura.ok && lectura.emoji 
 
 const camposDeHorario = (lectura: LecturaDeHorario) => (lectura.ok && lectura.horario ? { horario: lectura.horario } : {});
 
-/** Spec §4.1: la nota y el primer paso se recortan; vacío o solo espacios es sin el campo. */
-const campoDeTexto = (campo: 'nota' | 'primerPaso', texto: string) => {
-	const normalizado = normalizarNota(texto);
-	return normalizado === undefined ? {} : { [campo]: normalizado };
+/** Spec §4.1: la nota se recorta; vacía o solo espacios es sin el campo. */
+const camposDeNota = (texto: string) => {
+	const nota = normalizarNota(texto);
+	return nota === undefined ? {} : { nota };
 };
 
 /** Lo que distingue a un tipo de tarea, sin lo común (id, título, creadaEn). */
-type DatosDelTipo<T extends Tarea> = Omit<T, 'id' | 'titulo' | 'emoji' | 'nota' | 'primerPaso' | 'esfuerzo' | 'horario' | 'creadaEn' | 'etiquetas'>;
+type DatosDelTipo<T extends Tarea> = Omit<T, 'id' | 'titulo' | 'emoji' | 'nota' | 'primerPaso' | 'pasos' | 'esfuerzo' | 'horario' | 'creadaEn' | 'etiquetas'>;
 
 export type ResultadoDeCreacion<T extends Tarea = Tarea> =
 	| { ok: true; tarea: T }
@@ -49,8 +50,10 @@ export interface DatosComunes {
 	emoji?: string;
 	/** Tal como se escribió: normalizarNota la recorta (§4.1). */
 	nota?: string;
-	/** Tal como se escribió: se recorta como la nota (§4.1). */
+	/** Tal como se escribió: normalizarPasos lo recorta junto con los pasos más (§4.1). */
 	primerPaso?: string;
+	/** Los pasos 2 en adelante, tal como se escribieron, vacíos incluidos (§4.1, Pasos). */
+	pasos?: readonly string[];
 	/** Tal como se escribió; sin él, la tarea no tiene horario. leerHorario lo valida (§4.1). */
 	horario?: HorarioEscrito;
 	/** Sin él, la tarea queda sin estimar (§4.1). */
@@ -69,7 +72,7 @@ interface Alta extends DatosComunes {
  * tarea con lo que arma `datosDelTipo`.
  */
 export function crearTarea<T extends Tarea>(
-	{ titulo, emoji = '', nota = '', primerPaso = '', horario, esfuerzo, id, ahora }: Alta,
+	{ titulo, emoji = '', nota = '', primerPaso, pasos, horario, esfuerzo, id, ahora }: Alta,
 	erroresDelTipo: ErroresDelTipo,
 	datosDelTipo: () => DatosDelTipo<T>
 ): ResultadoDeCreacion<T> {
@@ -83,7 +86,7 @@ export function crearTarea<T extends Tarea>(
 		...(!horarioLeido.ok && { horario: horarioLeido.error })
 	};
 	if (Object.keys(errores).length > 0) return { ok: false, errores };
-	const campos = { ...camposDeEmoji(lectura), ...campoDeTexto('nota', nota), ...campoDeTexto('primerPaso', primerPaso), ...camposDeHorario(horarioLeido), ...camposDeEsfuerzo(esfuerzo) };
+	const campos = { ...camposDeEmoji(lectura), ...camposDeNota(nota), ...normalizarPasos(primerPaso, pasos), ...camposDeHorario(horarioLeido), ...camposDeEsfuerzo(esfuerzo) };
 	// TypeScript no reconstruye T a partir de Omit<T, …> y las claves omitidas.
 	return { ok: true, tarea: { id, titulo: guardado, ...campos, ...datosDelTipo(), creadaEn: ahora } as T };
 }

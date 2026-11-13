@@ -1,5 +1,6 @@
 import { ocurrenciaQueCubre, ultimaOcurrenciaCubierta } from './ocurrencia-cubierta';
 import { ocurrenciaQueCubreCalendario, ocurrenciaQueCubrePorVentana, seCompletaPorVentana } from './ocurrencias-con-horario';
+import { pasoEnQueVa, tieneVariosPasos } from './pasos';
 import { comoRecienCreada } from './pausa';
 import type { Completado, OcurrenciaCubierta, Tarea, TareaPeriodica } from './tarea';
 
@@ -21,14 +22,20 @@ function ocurrenciaDe({ recurrencia, creadaEn, horario, reanudadaEn }: TareaPeri
  * Spec §4.4: completar agrega un registro nuevo; nunca modifica los anteriores.
  * Guarda la ocurrencia que cubre, si cubre una, según lo que ya cubrieron los
  * completados de la tarea (de entre todos los del usuario); de una reanudada,
- * como recién creada en reanudadaEn (§5.8).
+ * como recién creada en reanudadaEn (§5.8). De una tarea de dos pasos o más,
+ * guarda el paso en que iba (§4.1, Pasos: Completar).
  */
 export function completar(guardada: Tarea, completados: readonly Completado[], id: string, ahora: Date): Completado {
-	const completado: Completado = { id, tareaId: guardada.id, completadoEn: ahora };
+	const completado: Completado = { id, tareaId: guardada.id, completadoEn: ahora, ...pasoAlCompletar(guardada) };
 	const { tarea, propios } = comoRecienCreada(guardada, completadosDeTarea(completados, guardada.id));
 	if (tarea.tipo === 'puntual') return completado;
 	const ocurrenciaCubierta = ocurrenciaDe(tarea, propios, ahora);
 	return ocurrenciaCubierta ? { ...completado, ocurrenciaCubierta } : completado;
+}
+
+/** Spec §4.4: pasoAlCompletar, solo en tareas de dos pasos o más. */
+function pasoAlCompletar(tarea: Tarea) {
+	return tieneVariosPasos(tarea) ? { pasoAlCompletar: pasoEnQueVa(tarea) } : {};
 }
 
 /** El de completadoEn mayor (si empatan, el primero); los completados no pueden estar vacíos. */

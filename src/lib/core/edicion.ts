@@ -17,6 +17,8 @@ function claveDeRecurrencia(recurrencia: Recurrencia): string {
 
 const claveDeHorario = (horario: Horario) => horario.map(({ desde, hasta }) => `${desde}-${hasta}`).join(' ');
 
+const claveDePasos = (pasos: readonly string[]) => JSON.stringify(pasos);
+
 const recurrenciaDe = (tarea: Tarea) => (tarea.tipo === 'periodica' ? tarea.recurrencia : undefined);
 const fechaLimiteDe = (tarea: Tarea) => (tarea.tipo === 'puntual' ? tarea.fechaLimite : undefined);
 
@@ -60,7 +62,13 @@ function cambioDeHorario(antes: Tarea, despues: Tarea): CambioDeTarea {
 	return 'valor' in horario ? { horario: horario.valor } : {};
 }
 
-/** Los campos en que difieren las dos tareas. */
+/** Los pasos más son un solo campo: si cambiaron, se escriben enteros, o null si la tarea quedó sin ellos (§7). */
+function cambioDePasos(antes: Tarea, despues: Tarea): CambioDeTarea {
+	const pasos = cambioDeCampo(antes.pasos, despues.pasos, claveDePasos);
+	return 'valor' in pasos ? { pasos: pasos.valor } : {};
+}
+
+/** Los campos en que difieren las dos tareas; pasoActual no se edita en el panel (§6.2). */
 function cambioEntre(antes: Tarea, despues: Tarea): CambioDeTarea {
 	return {
 		...cambioDeHorario(antes, despues),
@@ -68,6 +76,7 @@ function cambioEntre(antes: Tarea, despues: Tarea): CambioDeTarea {
 		...cambioDeValor('emoji', antes.emoji, despues.emoji),
 		...cambioDeValor('nota', antes.nota, despues.nota),
 		...cambioDeValor('primerPaso', antes.primerPaso, despues.primerPaso),
+		...cambioDePasos(antes, despues),
 		...cambioDeValor('esfuerzo', antes.esfuerzo, despues.esfuerzo),
 		...(antes.tipo === despues.tipo ? cambioDeCampos(antes, despues) : cambioDeTipo(despues))
 	};
