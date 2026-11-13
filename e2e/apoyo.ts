@@ -233,6 +233,8 @@ export interface Definicion {
   dias?: string[];
   emoji?: string;
   nota?: string;
+  /** Primer paso: el campo Primer paso del panel (`""` lo vacía). */
+  primerPaso?: string;
   /** Esfuerzo: la opción del selector Esfuerzo, por su texto completo. */
   esfuerzo?: "Sin estimar" | "Rápida (≤ 5 min)" | "Media (≈ 15 min)" | "Larga";
   /** Etiquetas por agregar en el campo Etiquetas, en este orden (cada una: escribir y Enter). */
@@ -346,6 +348,8 @@ export async function completarPanel(page: Page, d: Definicion) {
     await page.getByRole("combobox", { name: "Esfuerzo" }).selectOption({ label: d.esfuerzo });
   if (d.emoji !== undefined) await elegirEmoji(page, d.emoji);
   if (d.nota !== undefined) await page.getByLabel("Nota").fill(d.nota);
+  if (d.primerPaso !== undefined)
+    await page.getByRole("textbox", { name: "Primer paso", exact: true }).fill(d.primerPaso);
   await abrirPestana(page, "Cuándo");
   if (d.tipo) await page.getByRole("radio", { name: d.tipo }).check();
   if (d.fecha !== undefined)
