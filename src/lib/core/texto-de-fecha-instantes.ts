@@ -44,5 +44,5 @@ export function instanteDeVuelve(tarea: Tarea, completados: readonly Completado[
 	// En espera siempre hay un instante: el de su regla o, si solo la posposición la tiene en espera, su hasta.
 	const porSuRegla = instanteDeUrgencia(tarea, completados, estado, ahora) as Date;
 	const hasta = posposicionVigente(tarea, ahora)?.hasta;
-	return hasta && hasta.getTime() > porSuRegla.getTime() ? hasta : porSuRegla;
+	return hasta ? new Date(Math.max(hasta.getTime(), porSuRegla.getTime())) : porSuRegla;
 }

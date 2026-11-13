@@ -38,8 +38,13 @@ function diaConNumero(dia: Date, ahora: Date): string {
 	return mesDe(dia) === mesDe(ahora) ? delMes : `${delMes} de ${nombreDelMes(dia)}`;
 }
 
+const PREFIJO_DE_LA_DISTANCIA = new Map([
+	[-1, 'hace'],
+	[1, 'en']
+]);
+
 /** A 2 o más días locales: «hace N días» / «en N días». */
-const distanciaEnDias = (dias: number) => (dias < 0 ? `hace ${-dias} días` : `en ${dias} días`);
+const distanciaEnDias = (dias: number) => `${PREFIJO_DE_LA_DISTANCIA.get(Math.sign(dias))} ${Math.abs(dias)} días`;
 
 const contar = (cantidad: number, singular: string, plural: string) => `${cantidad} ${cantidad === 1 ? singular : plural}`;
 
