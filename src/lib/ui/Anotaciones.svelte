@@ -12,9 +12,9 @@
 
 	let editando = $state<{ anotacion: Anotacion; texto: string } | undefined>(undefined);
 	let porBorrar = $state.raw<Anotacion | undefined>(undefined);
-	/** Cuántas veces se copió: cada una muestra su confirmación. */
-	let copiadas = $state(0);
-	let confirmando = $state(false);
+	/** El aviso de la última copia (un solo texto a la vez); cada copia reinicia su cuenta de 5 s. */
+	let aviso = $state<{ texto: string; numero: number } | undefined>(undefined);
+	let copias = 0;
 
 	function guardarTexto(evento: SubmitEvent) {
 		evento.preventDefault();
@@ -30,9 +30,9 @@
 
 	async function copiar() {
 		const texto = textoDeAnotaciones(sesion.tareas, sesion.anotaciones);
-		if (texto === undefined || !(await copiarAlPortapapeles(texto))) return;
-		confirmando = true;
-		copiadas++;
+		if (texto === undefined) return;
+		const copiado = await copiarAlPortapapeles(texto);
+		aviso = { texto: copiado ? 'Anotaciones copiadas' : 'No se pudo copiar', numero: ++copias };
 	}
 </script>
 
@@ -93,11 +93,11 @@
 	</div>
 {/if}
 
-{#key copiadas}
-	{#if confirmando}
-		<AnotarConfirmacion texto="Anotaciones copiadas" alIrse={() => (confirmando = false)} />
-	{/if}
-{/key}
+{#if aviso}
+	{#key aviso.numero}
+		<AnotarConfirmacion texto={aviso.texto} alIrse={() => (aviso = undefined)} />
+	{/key}
+{/if}
 
 <style>
 	h1 {

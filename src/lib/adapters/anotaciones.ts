@@ -65,17 +65,20 @@ export async function borrarAnotacion(uid: string, anotacionId: string): Promise
 }
 
 /**
- * Spec §7: borra las anotaciones huérfanas. Antes de borrar una confirma con el
- * servidor que su tarea no existe; sin conexión no limpia nada.
+ * Spec §7: borra las anotaciones huérfanas, cada una por separado. Antes de
+ * borrar una confirma con el servidor que su tarea no existe; sin conexión
+ * falla. Devuelve los ids de las que fallaron.
  */
-export async function limpiarAnotacionesHuerfanas(uid: string, huerfanas: readonly Anotacion[]): Promise<void> {
+export async function limpiarAnotacionesHuerfanas(uid: string, huerfanas: readonly Anotacion[]): Promise<string[]> {
+	const fallaron: string[] = [];
 	for (const anotacion of huerfanas) {
 		if (anotacion.tareaId === undefined) continue;
 		try {
 			const tarea = await getDocFromServer(tareaRef(uid, anotacion.tareaId));
 			if (!tarea.exists()) await deleteDoc(anotacionRef(uid, anotacion.id));
 		} catch {
-			return;
+			fallaron.push(anotacion.id);
 		}
 	}
+	return fallaron;
 }

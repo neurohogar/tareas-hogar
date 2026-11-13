@@ -38,11 +38,13 @@
 	import { crearDesdePanel, editarDesdePanel } from '#lib/core/cambios-sin-guardar-guardado.ts';
 	import type { Etiqueta } from '#lib/core/etiqueta.ts';
 	import { etiquetasDeTarea } from '#lib/core/etiquetas-de-tarea.ts';
+	import { elementosAIntentar } from '#lib/core/limpiezas.ts';
 	import { fusionDeDuplicadas } from '#lib/core/fusion-de-etiquetas.ts';
 	import { renombrar } from '#lib/core/gestion-de-etiquetas.ts';
 	import type { CambioDeTarea } from '#lib/core/documento-de-tarea.ts';
 	import type { Completado, Tarea } from '#lib/core/tarea.ts';
 	import { ultimaVez } from '#lib/core/ultima-vez.ts';
+	import { enLineaReactivo } from './en-linea.svelte.ts';
 	import AvisoDeshacer from './AvisoDeshacer.svelte';
 	import FranjaSinConexion from './FranjaSinConexion.svelte';
 	import Anotar from './Anotar.svelte';
@@ -118,42 +120,51 @@
 		alResponderDatos({ tareas: tareasCargadas, completados: completadosCargados, etiquetas: etiquetasCargadas });
 	});
 
+	/** Cambia al volver la conexión: los efectos de limpieza la leen para reintentar. */
+	const conexion = enLineaReactivo();
+
+	/**
+	 * §7: intenta los elementos sin intento en curso; al terminar (falle o no) los saca
+	 * del conjunto, así el efecto los reintenta al cambiar los datos o volver la conexión.
+	 */
+	function limpiar<T>(elementos: T[], clave: (elemento: T) => string, enCurso: Set<string>, intentar: (lote: T[]) => Promise<unknown>) {
+		const ids = new Set(elementosAIntentar(elementos.map(clave), enCurso));
+		const lote = elementos.filter((elemento) => ids.has(clave(elemento)));
+		if (lote.length === 0) return;
+		ids.forEach((id) => enCurso.add(id));
+		void intentar(lote)
+			.catch(() => undefined)
+			.finally(() => ids.forEach((id) => enCurso.delete(id)));
+	}
+
 	$effect(() => {
 		if (!tareasCargadas || !completadosCargados) return;
-		const nuevos = completadosHuerfanos(tareas, completados).filter(({ id }) => !huerfanosEnLimpieza.has(id));
-		if (nuevos.length === 0) return;
-		nuevos.forEach(({ id }) => huerfanosEnLimpieza.add(id));
-		void limpiarHuerfanos(uid, nuevos);
+		void conexion.valor;
+		limpiar(completadosHuerfanos(tareas, completados), ({ id }) => id, huerfanosEnLimpieza, (lote) => limpiarHuerfanos(uid, lote));
 	});
 
 	// Spec §7: las anotaciones huérfanas se ignoran y se limpian.
 	$effect(() => {
 		if (!tareasCargadas || !anotacionesCargadas) return;
-		const nuevas = anotacionesHuerfanas(tareas, anotaciones).filter(({ id }) => !anotacionesEnLimpieza.has(id));
-		if (nuevas.length === 0) return;
-		nuevas.forEach(({ id }) => anotacionesEnLimpieza.add(id));
-		void limpiarAnotacionesHuerfanas(uid, nuevas);
+		void conexion.valor;
+		limpiar(anotacionesHuerfanas(tareas, anotaciones), ({ id }) => id, anotacionesEnLimpieza, (lote) => limpiarAnotacionesHuerfanas(uid, lote));
 	});
 
 	// Spec §7: las referencias a etiquetas borradas se ignoran y se limpian.
 	$effect(() => {
 		if (!tareasCargadas || !etiquetasCargadas) return;
-		const clave = (tareaId: string, etiquetaId: string) => `${tareaId}/${etiquetaId}`;
-		const nuevas = referenciasRotas(tareas, etiquetas).filter(({ tareaId, quitar }) =>
-			quitar.some((id) => !referenciasEnLimpieza.has(clave(tareaId, id)))
-		);
-		if (nuevas.length === 0) return;
-		nuevas.forEach(({ tareaId, quitar }) => quitar.forEach((id) => referenciasEnLimpieza.add(clave(tareaId, id))));
-		void limpiarReferencias(uid, nuevas);
+		void conexion.valor;
+		limpiar(referenciasRotas(tareas, etiquetas), ({ tareaId }) => tareaId, referenciasEnLimpieza, (lote) => limpiarReferencias(uid, lote));
 	});
 
 	// Spec §7: las etiquetas duplicadas se fusionan al detectarlas.
 	$effect(() => {
 		if (!tareasCargadas || !etiquetasCargadas) return;
+		void conexion.valor;
 		const fusion = fusionDeDuplicadas(etiquetas, tareas);
-		if (fusion.borradas.every((id) => etiquetasEnFusion.has(id))) return;
-		fusion.borradas.forEach((id) => etiquetasEnFusion.add(id));
-		void fusionarEtiquetas(uid, fusion);
+		limpiar(fusion.borradas, (id) => id, etiquetasEnFusion, (borradas) =>
+			fusionarEtiquetas(uid, { borradas, referencias: fusion.referencias.filter(({ quitar }) => quitar.some((id) => borradas.includes(id))) })
+		);
 	});
 
 	// El aviso desaparece justo a los 5 segundos, sin esperar al próximo tic del reloj.

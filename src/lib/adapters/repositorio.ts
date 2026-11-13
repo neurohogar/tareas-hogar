@@ -281,23 +281,44 @@ async function borradaEnElServidor(uid: string, etiquetaId: string): Promise<boo
  * servidor que cada etiqueta no existe (las colecciones se sincronizan por
  * separado); sin conexión no limpia nada.
  */
-export async function limpiarReferencias(uid: string, rotas: readonly CambioDeReferencias[]): Promise<void> {
+export async function limpiarReferencias(uid: string, rotas: readonly CambioDeReferencias[]): Promise<string[]> {
+	const fallaron: string[] = [];
 	for (const cambio of rotas) {
 		try {
 			const borradas = await Promise.all(cambio.quitar.map((id) => borradaEnElServidor(uid, id)));
 			const quitar = cambio.quitar.filter((_, indice) => borradas[indice]);
 			if (quitar.length > 0) await cambiarReferencias(uid, { ...cambio, quitar });
 		} catch (error) {
-			if (error instanceof FirestoreError) return;
-			throw error;
+			if (!(error instanceof FirestoreError)) throw error;
+			fallaron.push(cambio.tareaId);
 		}
 	}
+	return fallaron;
 }
 
-/** Spec §7 (Etiquetas duplicadas): primero las tareas pasan a la sobreviviente, después se borran las otras. */
-export async function fusionarEtiquetas(uid: string, { borradas, referencias }: FusionDeEtiquetas): Promise<void> {
-	await Promise.all(referencias.map((cambio) => cambiarReferencias(uid, cambio)));
-	await Promise.all(borradas.map((etiquetaId) => deleteDoc(etiquetaRef(uid, etiquetaId))));
+/**
+ * Spec §7 (Etiquetas duplicadas): primero las tareas pasan a la sobreviviente,
+ * después se borran las otras. Cada una se intenta por separado; una etiqueta
+ * cuyas tareas no pasaron no se borra. Devuelve los ids de las que fallaron.
+ */
+export async function fusionarEtiquetas(uid: string, { borradas, referencias }: FusionDeEtiquetas): Promise<string[]> {
+	const sinPasar = new Set<string>();
+	for (const cambio of referencias) {
+		try {
+			await cambiarReferencias(uid, cambio);
+		} catch {
+			cambio.quitar.forEach((id) => sinPasar.add(id));
+		}
+	}
+	const fallaron = borradas.filter((id) => sinPasar.has(id));
+	for (const etiquetaId of borradas.filter((id) => !sinPasar.has(id))) {
+		try {
+			await deleteDoc(etiquetaRef(uid, etiquetaId));
+		} catch {
+			fallaron.push(etiquetaId);
+		}
+	}
+	return fallaron;
 }
 
 /** Spec §7: la tarea, sus completados y sus anotaciones se borran en un solo writeBatch. */
@@ -314,15 +335,17 @@ export async function borrarTarea(uid: string, { tareaId, completadoIds, anotaci
  * el servidor que su tarea no existe (las dos colecciones se sincronizan por
  * separado); sin conexión no limpia nada.
  */
-export async function limpiarHuerfanos(uid: string, huerfanos: readonly Completado[]): Promise<void> {
+export async function limpiarHuerfanos(uid: string, huerfanos: readonly Completado[]): Promise<string[]> {
+	const fallaron: string[] = [];
 	for (const completado of huerfanos) {
 		try {
 			const tarea = await getDocFromServer(tareaRef(uid, completado.tareaId));
 			if (!tarea.exists()) await deleteDoc(completadoRef(uid, completado.id));
 		} catch {
-			return;
+			fallaron.push(completado.id);
 		}
 	}
+	return fallaron;
 }
 
 /**
