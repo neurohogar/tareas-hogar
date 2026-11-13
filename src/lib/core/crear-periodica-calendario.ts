@@ -30,6 +30,6 @@ export function crearPeriodicaCalendario(
 	ahora: Date
 ): ResultadoDeCreacion<TareaPeriodica> {
 	const dias = errorDeDias(datos);
-	const { titulo, emoji, nota, horario, esfuerzo } = datos;
-	return crearPeriodica({ titulo, emoji, nota, horario, esfuerzo, id, ahora }, dias ? { dias } : {}, () => recurrenciaDe(datos));
+	const { titulo, emoji, nota, primerPaso, horario, esfuerzo } = datos;
+	return crearPeriodica({ titulo, emoji, nota, primerPaso, horario, esfuerzo, id, ahora }, dias ? { dias } : {}, () => recurrenciaDe(datos));
 }

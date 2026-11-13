@@ -26,8 +26,8 @@ export function crearSegunDatos(datos: DatosDeTarea, id: string, ahora: Date): R
 
 /** Los valores actuales de la tarea, como los carga el panel al editar: la inversa de crearSegunDatos. */
 export function datosDeTarea(tarea: Tarea): DatosDeTarea {
-	const { titulo, emoji, nota, horario, esfuerzo } = tarea;
-	const comunes = { titulo, ...camposDeTexto({ emoji, nota }), ...(horario && { horario: horario.map((ventana) => ({ ...ventana })) }), ...camposDeEsfuerzo(esfuerzo) };
+	const { titulo, emoji, nota, primerPaso, horario, esfuerzo } = tarea;
+	const comunes = { titulo, ...camposDeTexto({ emoji, nota, primerPaso }), ...(horario && { horario: horario.map((ventana) => ({ ...ventana })) }), ...camposDeEsfuerzo(esfuerzo) };
 	if (tarea.tipo === 'puntual')
 		return { forma: 'puntual', ...comunes, ...(tarea.fechaLimite && { fechaLimite: diaIso(tarea.fechaLimite) }) };
 	const { recurrencia } = tarea;

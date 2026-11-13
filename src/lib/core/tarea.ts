@@ -57,6 +57,8 @@ export interface TareaPeriodica {
 	emoji?: string;
 	/** Spec §4.1: texto libre, ya recortado; sin el campo, la tarea no tiene nota. */
 	nota?: string;
+	/** Spec §4.1: una línea, ya recortada; sin el campo, la tarea no tiene primer paso. */
+	primerPaso?: string;
 	/** Spec §4.1: sin el campo, sin estimar. */
 	esfuerzo?: Esfuerzo;
 	/** Spec §4.1: ids de etiqueta, sin repetir; sin el campo, ninguna. */
@@ -81,6 +83,8 @@ export interface TareaPuntual {
 	emoji?: string;
 	/** Spec §4.1: texto libre, ya recortado; sin el campo, la tarea no tiene nota. */
 	nota?: string;
+	/** Spec §4.1: una línea, ya recortada; sin el campo, la tarea no tiene primer paso. */
+	primerPaso?: string;
 	/** Spec §4.1: sin el campo, sin estimar. */
 	esfuerzo?: Esfuerzo;
 	/** Spec §4.1: ids de etiqueta, sin repetir; sin el campo, ninguna. */
