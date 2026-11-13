@@ -54,12 +54,12 @@ const contar = (cantidad: number, singular: string, plural: string) => `${cantid
  * pasado a menos de un minuto es «ahora» (lo futuro nunca llega a 0 minutos).
  */
 function distanciaEnHorasOMinutos(instante: Date, ahora: Date): string {
-	const ms = instante.getTime() - ahora.getTime();
-	const futuro = ms > 0;
-	const redondear = futuro ? Math.ceil : Math.floor;
-	const minutos = redondear(Math.abs(ms) / MS_POR_MINUTO);
+	// Con signo, ceil redondea lo futuro hacia arriba y lo pasado hacia abajo (en valor absoluto).
+	const minutos = Math.ceil((instante.getTime() - ahora.getTime()) / MS_POR_MINUTO);
 	if (minutos === 0) return 'ahora';
 	const cantidad =
-		minutos < MINUTOS_POR_HORA ? contar(minutos, 'minuto', 'minutos') : contar(redondear(minutos / MINUTOS_POR_HORA), 'hora', 'horas');
-	return futuro ? `en ${cantidad}` : `hace ${cantidad}`;
+		Math.abs(minutos) < MINUTOS_POR_HORA
+			? contar(Math.abs(minutos), 'minuto', 'minutos')
+			: contar(Math.abs(Math.ceil(minutos / MINUTOS_POR_HORA)), 'hora', 'horas');
+	return `${PREFIJO_DE_LA_DISTANCIA.get(Math.sign(minutos))} ${cantidad}`;
 }
