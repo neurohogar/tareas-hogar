@@ -48,15 +48,89 @@ Segunda feature de la épica E3 de `docs/v3/plan.md` («Primer paso a la vista»
 
 ## Artefactos
 
+- Gherkin: `features/pasos.feature` (S1, S3, S4, S5, S9, S16), `features/paso-actual.feature` (S2, S6, S7, S8, S10, S11, S16), `features/pasos-en-la-fila.feature` (S9, S12, S13), `features/pasos-cambios-sin-guardar.feature` (S14; S15 la cubre solo QA)
+- QA: `qa/pasos-de-a-uno.md` (S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16; S14 en lo visible: etiquetas «Paso 2», **Quitar**, **Agregar paso**, Enter guarda; S15, el orden de la sección; S12 y S13 en lo visible: estilo, botones de texto, tocar el texto abre el panel, tocar los botones no lo abre ni abre aviso; y la parte de S9 que dice que no se ve en el Historial, el aviso de deshacer, Anotaciones ni el texto copiado, además de filtros y Solo rápidas, las cubre solo QA)
+
 ## core
+
+- **Puede editar**: `src/lib/core/tarea.ts`, `src/lib/core/creacion.ts`, `src/lib/core/crear-periodica-calendario.ts`, `src/lib/core/datos-de-tarea.ts`, `src/lib/core/documento-de-tarea.ts`, `src/lib/core/edicion.ts`, `src/lib/core/cambios-sin-guardar.ts`, `src/lib/core/campos-de-texto.ts`, `src/lib/core/pendientes.ts`, `src/lib/core/completados.ts`, `src/lib/core/checkbox.ts`, `src/lib/core/primer-paso*.ts`, `src/lib/core/paso*.ts` (archivos nuevos: `pasos.ts`, `paso-actual.ts`), `src/lib/core/*.test.ts` (todos los tests del core: un cambio de tipo exportado puede tocarlos)
+- **Reglas**: S1 (campo opcional `pasos` en `Tarea` y en el documento, para todo tipo y esfuerzo; un campo, que se reemplaza entero), S2 (campo opcional `pasoActual`; sin él, el paso 1; campo independiente), S3 (el primer paso es el paso 1 de la lista: un solo paso es primer paso sin `pasos`), S4 (un solo paso o dos o más), S5 (recortar cada paso, descartar los vacíos o de solo espacios, los de abajo suben, si el primer paso queda vacío y el paso 2 no, el paso 2 pasa a ser el primer paso; nunca inválido, sin largo ni cantidad máximos; sin pasos más, el campo no se guarda), S6 («Hecho» y «Paso anterior» mueven un paso y ninguno pasa del primero ni del último; editar los pasos no cambia `pasoActual`; si quedan menos pasos que `pasoActual`, la tarea va en el último), S7 («Hecho» en el último paso completa como el checkbox, y completar por checkbox o por «Hecho» vuelve `pasoActual` al paso 1 y guarda `pasoAlCompletar` en el completado; «Hecho» del último paso deshabilitado si el checkbox lo está, el de los otros no), S8 y S11 (borrar el completado más reciente de una tarea de dos pasos o más devuelve `pasoActual` a su `pasoAlCompletar`, con el tope del último paso; borrar un completado que no es el más reciente no lo cambia), S9 (ninguna otra acción toca los pasos ni `pasoActual`; no cambian estado ni orden), S10 (`pasoAlCompletar` solo en tareas de dos pasos o más), S12 (la línea de la fila: «Primer paso: » en el paso 1, «Paso: » en otro, texto completo, solo `pendiente` y `atrasada`), S13 (qué botones tiene la fila: ninguno con un solo paso; «Paso anterior» no en el paso 1; «Hecho» deshabilitado en el último paso si el checkbox lo está), S14 (qué cuenta como cambio en **Cambios sin guardar** con los pasos: se compara recortado y sin vacíos; agregar, quitar o cambiar un paso cuenta), S16 (cada campo viaja solo en el cambio si cambió: `pasos` entero, `pasoActual` aparte; dos «Hecho» desde el mismo paso escriben el mismo paso siguiente, no dos más)
+- **Reusa**:
+  - `crearTarea` y `DatosComunes` (`creacion.ts`): `pasos` es un campo común a todo tipo, como emoji, nota y primer paso. `crearPeriodica` de calendario (`crear-periodica-calendario.ts`) es el único creador que no propaga los campos comunes con un spread: hay que pasarle `pasos` a mano. `crearSegunDatos` y `datosDeTarea` (`datos-de-tarea.ts`) siguen siendo inversas.
+  - `normalizarPrimerPaso` / `primer-paso.ts` y `camposDeTexto` (`campos-de-texto.ts`): cada paso sigue la misma regla de texto que el primer paso; la normalización de la lista (recortar, descartar vacíos, subir, que el primer paso quede vacío y suba el paso 2) vive en un módulo nuevo `pasos.ts`, y la del avance (siguiente, anterior, tope, qué paso se ve, qué botones) en `paso-actual.ts`, para no mezclar trabajos.
+  - `editar` (`edicion.ts`): `pasos` entra en el cambio solo si cambió y se reemplaza entero, y `pasoActual` es otro campo; cambiar el tipo no los toca.
+  - `completar` (`completados.ts`): agrega el `pasoAlCompletar` al completado de una tarea de dos pasos o más, según el `pasoActual` del momento (con el tope). `accionDelCheckbox` y `checkboxHabilitado` (`checkbox.ts`): el «Hecho» del último paso se habilita igual que el checkbox; no hay otra regla de ventana.
+  - `filasDePendientes` (`pendientes.ts`) y `clasificarEnPendientes` (`completada.ts`): el estado de cada fila ya está decidido ahí; la línea del paso y los botones se muestran según ese estado, sin guardar nada ni reordenar.
+  - `hayCambios` y las claves de comparación (`cambios-sin-guardar.ts`): la definición única de "hay cambios".
+  - El borrado de un completado (`borrado.ts`, `historial.ts`, `aviso.ts`): la función nueva del core que dice qué `pasoActual` escribir al borrar un completado se usa desde los tres caminos (aviso, Historial, checkbox); hoy el core no tiene un solo lugar que borre un completado: lo agrega `paso-actual.ts` sin duplicar la regla.
+- **Notas**:
+  - Las firmas exportadas que ya usan `acceptance/` y la UI siguen compatibles (solo campos y parámetros nuevos opcionales). `nombreDeTarea` (`nombre-de-tarea.ts`) no cambia: el nombre sigue siendo emoji y título.
+  - Un completado de una tarea de dos pasos o más sin `pasoAlCompletar` (no pasa en datos nuevos) no cambia `pasoActual` al borrarlo.
+  - Bordes que no se pueden escribir como Gherkin y van a unit y property tests del core: `pasoActual` mayor que la cantidad de pasos (se usa el último) en cada operación (mostrar, «Hecho», «Paso anterior», guardar `pasoAlCompletar`), `pasoAlCompletar` mayor que los pasos que quedan al deshacer (tope), y el paso 0 o negativo si algún dato viejo lo trajera.
+- **Gate**: `node scripts/gate.ts core`
 
 ## acceptance
 
+- **Puede editar**: `acceptance/steps/pasos.ts` (archivo nuevo), `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `acceptance/steps/pendientes.ts`, `acceptance/steps/edicion.ts`, `acceptance/steps/cambios-sin-guardar.ts`, `acceptance/steps/emoji-y-nota.ts`, `acceptance/steps/primer-paso.ts`, `acceptance/steps/checkbox.ts`, `acceptance/steps/deshacer.ts`, `acceptance/steps/periodica-relativa.ts`, `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `docs/pipeline/pendientes.txt`
+- **Features a conectar**: `features/pasos.feature`, `features/paso-actual.feature`, `features/pasos-en-la-fila.feature`, `features/pasos-cambios-sin-guardar.feature`
+- **Pasos nuevos** (ya existen y se reusan, entre otros: `una tarea puntual sin fecha límite`, `una tarea puntual con fecha límite <limite>` (con y sin `creada el`), `una tarea puntual <titulo> sin fecha límite` y `... con emoji <emoji>`, `una tarea periódica relativa cada <cada> <unidad>` y con título, `una tarea periódica semanal los <dias> creada el <creada>`, `la tarea fue completada el <completada>`, `la tarea fue pospuesta con la opción ...`, `la tarea fue pausada`, `la tarea se puede completar de <desde> a <hasta>`, `Mostrar completadas/pausadas está encendido`, `toco el checkbox de la tarea el <toque>`, `toco Deshacer en el aviso el <toque>`, `borro el completado del <completada>`, `pospongo la tarea ...`, `pauso la tarea`, `reanudo la tarea el <reanudada>`, `edito la tarea a ...`, `edito el primer paso a <primer_paso>`, `edito el título a <titulo>`, `el primer paso de la tarea es <primer_paso>`, `la tarea tiene primer paso <primer_paso>`, `la tarea tiene título <titulo>`, `la tarea está completada`, `la tarea no tiene completados`, `consulto el estado el <ahora>`, `consulto el aviso el <ahora>`, `el aviso ofrece deshacer el completado de ...`, `no hay aviso`, `consulto Pendientes el <ahora>` y `en cualquier momento`, `Pendientes muestra en orden <orden>`, `el checkbox de la tarea está habilitado/deshabilitado`, `la fila de la tarea no muestra primer paso`, `el nombre de la tarea es <nombre>`, `otro dispositivo, sin ver ese cambio, guarda la tarea sin cambios`, `abro el panel para crear/editar`, `escribo ... en el campo`, `vacío el campo`, `escribo solo espacios en el campo`, `toco la X del panel` y `queda abierto`):
+  - `creo una tarea puntual con título <titulo> y pasos <pasos>` (`<pasos>` es la lista completa separada por «, »: el primer paso y los pasos más)
+  - `creo una tarea periódica relativa con título <titulo> cada 2 dias y pasos <pasos>`
+  - `creo una tarea periódica semanal con título <titulo> los <dias> y pasos <pasos>`
+  - `creo una tarea puntual con título <titulo> y pasos <pasos> y un paso más de solo espacios`
+  - `los pasos de la tarea son <pasos>` (Given: deja la tarea ya guardada con el primer paso y los pasos más de la lista, sin pasar por "editar")
+  - `los pasos de la tarea <titulo> son <pasos>` (Given, para escenarios con dos tareas; también con `<avanza>` en `toco Hecho en la tarea <titulo> el <toque>`)
+  - `el paso actual de la tarea es <actual>` (Given: deja `pasoActual` guardado, sin pasar por «Hecho»; no marca un cambio "de mi lado")
+  - `la tarea fue completada el <completada> en el paso <paso_completado>` (Given: un completado con `pasoAlCompletar`, sin cambiar el `pasoActual` guardado). Choca con el patrón existente `la tarea fue completada el ${P}$` en `periodica-relativa.ts`: el patrón nuevo va antes o el existente se ancla.
+  - `edito el paso <numero> a <paso>` (el paso 1 es el primer paso; un número igual a la cantidad de pasos más uno agrega el paso al final)
+  - `edito el paso <numero> a <paso> con espacios al inicio y al final`
+  - `edito el paso <numero> a uno de solo espacios`
+  - `edito el paso <numero> a uno de <largo> caracteres`
+  - `vacío el paso <numero>` (guarda la tarea con ese paso vacío: se descarta y los de abajo suben)
+  - `edito la tarea con <cantidad> pasos`
+  - `otro dispositivo, sin ver ese cambio, edita el paso <numero> a <paso>` (guarda la lista de pasos entera que ese dispositivo veía, con ese paso cambiado)
+  - `toco Hecho el <toque>` y `toco Hecho en la tarea <titulo> el <toque>` (con la tarea en el último paso o con menos pasos que `pasoActual`, completa como `toco el checkbox de la tarea el <toque>`)
+  - `toco Paso anterior`
+  - `otro dispositivo, sin ver ese cambio, toca Hecho el <toque>` (escribe el paso siguiente al que ese dispositivo veía)
+  - `la tarea tiene los pasos <pasos>` (la lista completa: primer paso y pasos más)
+  - `la tarea no tiene más pasos` (el documento no tiene el campo `pasos`)
+  - `la tarea tiene <cantidad> pasos`
+  - `el paso <numero> de la tarea tiene <largo> caracteres`
+  - `la tarea va en el paso <paso>` (el paso en que la tarea va, con el tope del último paso)
+  - `el último completado de la tarea guarda el paso <paso>` y `el último completado de la tarea no guarda paso`
+  - `la fila de la tarea muestra el paso <texto>` (el texto exacto de la línea, con su prefijo «Primer paso: » o «Paso: »; la lista consultada tiene una sola fila)
+  - `la fila de la tarea muestra los botones <botones>` (`Hecho` o `Paso anterior y Hecho`)
+  - `la fila de la tarea no muestra botones de paso`
+  - `el botón Hecho de la tarea está <estado>` (`habilitado` o `deshabilitado`)
+  - `abro el panel para editar la tarea <titulo> con los pasos <pasos>`
+  - `toco Agregar paso` (suma un campo vacío al final: «Paso 2» si no hay más pasos, «Paso 3»…)
+  - `toco Quitar en el campo <campo>`
+  - los campos `Paso 2`, `Paso 3` en las tablas de campos de `escribo ... en el campo <campo>`, `escribo <valor> con espacios alrededor en el campo <campo>`, `vacío el campo <campo>` y `escribo solo espacios en el campo <campo>`
+- **Notas**:
+  - `la fila de la tarea no muestra primer paso` (existente) ahora también vale para la línea «Paso: …»: el oráculo y el handler comparan la línea entera, sea cual sea su prefijo.
+  - Cambiar el tipo en el panel conserva `pasos` y `pasoActual`: sumarlos a `camposQueConserva` en `acceptance/steps/edicion.ts` (y al `Pick` de su tipo de retorno). También hay que sumarlos a las listas de campos comunes de `conCampos` y `comunesDe` en los steps que arman datos (`emoji-y-nota.ts`, `cambios-sin-guardar.ts`) si no usan un spread.
+  - `FilaConsultada` (`world.ts`) gana lo que la fila muestra del paso (texto con su prefijo y los botones, con si «Hecho» está habilitado); `filasEn` (`pendientes.ts`) lo toma del core, y el oráculo (`oracle.ts`, `oracle-edicion.ts`, `oracle-panel.ts`) lo reescribe desde S12 y S13 (solo `pendiente` y `atrasada`; botones solo con dos pasos o más; «Paso anterior» no en el paso 1; «Hecho» del último paso deshabilitado si el checkbox lo está), S5 (normalización de la lista), S6, S7, S8 y S11 sin importar el core ni los step handlers. Cada regla nueva que entra en un Then se agrega al oráculo. No crear un `acceptance/oracle-*.ts` nuevo: choca con la lista manual de `scripts/check-arch.ts`; se usan los existentes (o, si hace falta uno nuevo, `scripts/check-arch.ts` se suma a esta superficie, que hoy no la incluye).
+  - Para las tareas con título y sin `creada el` (se crean en el mismo instante), un empate de urgencia se resuelve por título (`Pasos 21`, `Paso actual 19`).
+  - Una `atrasada` lleva al menos 60 s de atraso (los escenarios no escriben bordes menores).
+  - Dos dispositivos: el Given `los pasos de la tarea son` fija el estado que ven los dos; `otro dispositivo ... edita el paso N` y `... toca Hecho` parten de esa vista, no de lo que acaba de escribir "mi lado".
+- **Gate**: `node scripts/gate.ts acceptance`
+
 ## ui
+
+- **Puede editar**: `src/lib/ui/PanelTarea.svelte`, `src/lib/ui/SeccionTarea.svelte`, `src/lib/ui/FilaTarea.svelte`, `src/lib/ui/Pendientes.svelte`, `src/lib/ui/Sesion.svelte`, `src/lib/ui/sesion.ts`, `src/lib/ui/Historial.svelte`, `src/lib/adapters/repositorio.ts`
+- **Comportamiento visible**: `qa/pasos-de-a-uno.md`
+- **Notas**:
+  - Panel, sección **Tarea**, en este orden: el título con su emoji y **Quitar emoji**, **Primer paso**, un campo de una línea por cada paso más con la etiqueta «Paso 2», «Paso 3»… y un botón **Quitar** cada uno, el botón **Agregar paso** (suma un campo vacío al final, como **Agregar horario**), la nota, el esfuerzo y las etiquetas. Enter en esos campos guarda como en **Título**. Arrancan sin pasos más al crear y con los guardados al editar. El panel no muestra ni elige el paso en que va la tarea.
+  - La fila muestra en su propia línea debajo del título el paso en que va la tarea («Primer paso: …» o «Paso: …») cuando el core lo indica (solo `pendiente` y `atrasada`), completo y en varias líneas, con el color y tamaño de texto secundario del esfuerzo y el horario, sin énfasis ni color propio. Tocar el texto es tocar la fila. En una tarea de dos pasos o más, la misma línea tiene dos botones de texto chicos sin color propio: **Paso anterior** (antes de **Hecho**; no en el paso 1) y **Hecho** (deshabilitado como el checkbox en el último paso). Tocarlos no abre el panel ni pasa por **Cambios sin guardar** y no abre aviso, salvo «Hecho» del último paso, que completa como el checkbox (mismo `completarTarea` de `Sesion.svelte`, mismo aviso).
+  - `pasos`, `pasoActual` y `pasoAlCompletar` se leen y se escriben en `repositorio.ts` como campos independientes (como `nota`): una edición escribe solo lo que cambió, `pasos` entero, y «Hecho» y «Paso anterior» escriben solo `pasoActual`. Completar escribe `pasoAlCompletar` en el completado y vuelve `pasoActual` al paso 1; borrar un completado (aviso, Historial, checkbox) escribe el `pasoActual` que dice el core.
+  - No se ve en el Historial, el aviso de deshacer, Anotaciones ni el texto copiado (no hay que tocar esos componentes más que para escribir el `pasoActual` al borrar un completado).
+- **Gate**: `node scripts/gate.ts ui`
 
 ## cleaner · architect · hardener · qa
 
 Trabajan sobre todo lo que cambió la feature (`git diff <base de la feature>`, anotada en `tmp/base-de-feature`); no necesitan sección propia salvo que el gherkin-writer anote algo para ellos acá.
+
+- **Notas**: cada paso repite la regla de texto del primer paso y la de la nota (recortar, vacío es sin campo); si el core la duplica, el cleaner la unifica sin cambiar el comportamiento. El hardener corre `--level full` solo en los features con un paso atendido por un handler cambiado (p. ej. `camposQueConserva`, `FilaConsultada`, `toco el checkbox de la tarea`, `borro el completado del`) o con un Then que pasa por una regla nueva del oráculo; los cuatro features nuevos son nuevos y corren completos. QA corre `qa/pasos-de-a-uno.md`.
 
 ## Log
 
