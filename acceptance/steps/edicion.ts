@@ -95,10 +95,10 @@ const DEFINICIONES: { texto: string; datos: (titulo: string, ...valores: string[
 	}
 ];
 
-/** Cambiar el tipo en el panel deja como estaban el emoji, la nota, el esfuerzo y el horario. */
-function camposQueConserva(tarea: Tarea): Pick<DatosDeTarea, 'emoji' | 'nota' | 'esfuerzo' | 'horario'> {
-	const { emoji, nota, esfuerzo, horario } = datosDeTarea(tarea);
-	return { ...(emoji && { emoji }), ...(nota && { nota }), ...(esfuerzo && { esfuerzo }), ...(horario && { horario }) };
+/** Cambiar el tipo en el panel deja como estaban el emoji, la nota, el primer paso, el esfuerzo y el horario. */
+function camposQueConserva(tarea: Tarea): Pick<DatosDeTarea, 'emoji' | 'nota' | 'primerPaso' | 'esfuerzo' | 'horario'> {
+	const { emoji, nota, primerPaso, esfuerzo, horario } = datosDeTarea(tarea);
+	return { ...(emoji && { emoji }), ...(nota && { nota }), ...(primerPaso && { primerPaso }), ...(esfuerzo && { esfuerzo }), ...(horario && { horario }) };
 }
 
 const pasosDeEditarA: StepDefinition[] = EDITORES.flatMap((editor) =>

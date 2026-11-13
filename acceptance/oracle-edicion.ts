@@ -66,6 +66,8 @@ interface Documento {
 	titulo: string;
 	emoji?: string;
 	nota?: string;
+	/** §4.1: una línea, recortada; sin el campo, sin primer paso. Un campo independiente (§7). */
+	primerPaso?: string;
 	/** §4.1: rapida, media o larga; sin el campo, sin estimar. Un campo independiente (§7). */
 	esfuerzo?: string;
 	tipo: 'puntual' | 'periodica';
@@ -134,6 +136,7 @@ interface Datos {
 	/** Lo que quedaría guardado: ya sin espacios; sin valor, la tarea queda sin el campo (§4.1). */
 	emoji?: string;
 	nota?: string;
+	primerPaso?: string;
 	esfuerzo?: string;
 	tipo: 'puntual' | 'periodica';
 	limite?: Date;
@@ -160,7 +163,7 @@ function claveDeRecurrencia(r: Recurrencia | undefined): string {
 const claveDeHorario = (h: Ventana[] | undefined) => (h === undefined ? '-' : h.map((v) => `${v.desde}-${v.hasta}`).join(' '));
 
 const claveDeDocumento = (d: Documento) =>
-	JSON.stringify([d.id, d.titulo, d.emoji, d.nota, d.esfuerzo, d.tipo, d.limite?.getTime(), claveDeRecurrencia(d.recurrencia), claveDeHorario(d.horario), d.creada, d.pausada, d.reanudada, d.pospuesta]);
+	JSON.stringify([d.id, d.titulo, d.emoji, d.nota, d.primerPaso, d.esfuerzo, d.tipo, d.limite?.getTime(), claveDeRecurrencia(d.recurrencia), claveDeHorario(d.horario), d.creada, d.pausada, d.reanudada, d.pospuesta]);
 
 const momento = (valor: string) => fecha(valor) ?? indeciso(`fecha y hora ${valor}`);
 const diaDe = (valor: string) => dia(valor) ?? indeciso(`fecha ${valor}`);
@@ -217,17 +220,19 @@ const DEFINICIONES: Definicion[] = [
 	]
 ];
 
-/** Los campos de texto escritos en el panel (§4.1): emoji y nota recortados, vacío es sin campo; un emoji que no es uno solo es inválido. */
+/** Los campos de texto escritos en el panel (§4.1): emoji, nota y primer paso recortados, vacío es sin campo; un emoji que no es uno solo es inválido; un primer paso nunca es inválido. */
 interface Escritos {
 	emoji?: string;
 	nota?: string;
+	primerPaso?: string;
 }
 
-function conEscritos(datos: Datos, { emoji, nota }: Escritos): Datos {
+function conEscritos(datos: Datos, { emoji, nota, primerPaso }: Escritos): Datos {
 	return {
 		...datos,
 		emoji: emoji?.trim() || undefined,
 		nota: nota?.trim() || undefined,
+		primerPaso: primerPaso?.trim() || undefined,
 		motivos: [...motivosEmoji(emoji ?? ''), ...datos.motivos]
 	};
 }
@@ -239,7 +244,7 @@ function conValidacion(datos: Datos): Datos {
 
 /** Los campos de texto, el esfuerzo y el horario de la tarea que se edita siguen igual salvo los que la edición escribe. */
 const conservando = (base: Documento, datos: Datos, escritos: Escritos = {}): Datos => ({
-	...conEscritos(datos, { emoji: base.emoji, nota: base.nota, ...escritos }),
+	...conEscritos(datos, { emoji: base.emoji, nota: base.nota, primerPaso: base.primerPaso, ...escritos }),
 	esfuerzo: base.esfuerzo,
 	horario: base.horario,
 	ventanasEscritas: base.horario?.length ?? 0
@@ -281,7 +286,7 @@ function datosDe(texto: string, titulo: string): Datos {
 
 /** Los valores actuales de una tarea, como los carga el panel al editar. */
 function datosDeDocumento(d: Documento): Datos {
-	const campos = { titulo: d.titulo, emoji: d.emoji, nota: d.nota, esfuerzo: d.esfuerzo, horario: d.horario, ventanasEscritas: d.horario?.length ?? 0, motivos: [] };
+	const campos = { titulo: d.titulo, emoji: d.emoji, nota: d.nota, primerPaso: d.primerPaso, esfuerzo: d.esfuerzo, horario: d.horario, ventanasEscritas: d.horario?.length ?? 0, motivos: [] };
 	if (d.tipo === 'puntual') return { ...campos, tipo: 'puntual', limite: d.limite };
 	return { ...campos, tipo: 'periodica', recurrencia: d.recurrencia };
 }
@@ -325,6 +330,7 @@ function crear(m: Mundo, datos: Datos, creada: number | undefined): void {
 			titulo: datos.titulo,
 			emoji: datos.emoji,
 			nota: datos.nota,
+			primerPaso: datos.primerPaso,
 			esfuerzo: datos.esfuerzo,
 			tipo: datos.tipo,
 			limite: datos.limite,
@@ -348,6 +354,7 @@ function cambioDe(base: Documento, nuevo: Datos): Record<string, unknown> {
 	if (base.titulo !== nuevo.titulo) cambio.titulo = nuevo.titulo;
 	if (base.emoji !== nuevo.emoji) cambio.emoji = nuevo.emoji ?? null;
 	if (base.nota !== nuevo.nota) cambio.nota = nuevo.nota ?? null;
+	if (base.primerPaso !== nuevo.primerPaso) cambio.primerPaso = nuevo.primerPaso ?? null;
 	if (base.esfuerzo !== nuevo.esfuerzo) cambio.esfuerzo = nuevo.esfuerzo ?? null;
 	if (claveDeHorario(base.horario) !== claveDeHorario(nuevo.horario)) cambio.horario = nuevo.horario ?? null;
 	if (base.tipo !== nuevo.tipo) {
@@ -660,6 +667,9 @@ const CREACIONES: Paso[] = [
 		/^una tarea puntual sin fecha límite con nota (.*)$/,
 		(m, [n]) => crear(m, conEscritos(datosDe('puntual sin fecha límite', 'Tarea'), { nota: n }), undefined)
 	],
+	// §4.1: un primer paso ya guardado (no es un cambio de este dispositivo); se guarda recortado.
+	[/^el primer paso de la tarea es (.*)$/, (m, [p]) => void (unica(m).primerPaso = p.trim() || undefined)],
+	[/^el primer paso de la tarea (\S+) es (.*)$/, (m, [t, p]) => void (conTitulo(m, t).primerPaso = p.trim() || undefined)],
 	[
 		/^una tarea puntual (\S+) sin fecha límite$/,
 		(m, [t]) => crear(m, datosDe('puntual sin fecha límite', t), ANTES_DEL_ESCENARIO)
@@ -746,6 +756,23 @@ const CAMBIOS_DE_NOTA: [string, (c: string[]) => Escritos][] = [
 	['la nota a (.*)', ([n]) => ({ nota: n })]
 ];
 
+/** Cambios del primer paso (§4.1, §6.2): lo escrito en el campo; quitarlo es vaciarlo. */
+const CAMBIOS_DE_PRIMER_PASO: [string, (c: string[]) => Escritos][] = [
+	['el primer paso a (.*) con espacios al inicio y al final', ([p]) => ({ primerPaso: `  ${p}  ` })],
+	['el primer paso a uno de solo espacios', () => ({ primerPaso: SOLO_ESPACIOS })],
+	['el primer paso a uno de (\\S+) caracteres', ([l]) => ({ primerPaso: 'x'.repeat(numero(l)) })],
+	['el primer paso a (.*)', ([p]) => ({ primerPaso: p })]
+];
+
+const edicionesDePrimerPaso = (): Paso[] => [
+	...CAMBIOS_DE_PRIMER_PASO.flatMap(([texto, escritos]): Paso[] => [
+		[new RegExp(`^edito ${texto}$`), (m, c) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), escritos(c)))],
+		[new RegExp(`^${OTRO} edita ${texto}$`), (m, c) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), escritos(c)))]
+	]),
+	[/^quito el primer paso$/, (m) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), { primerPaso: '' }))],
+	[new RegExp(`^${OTRO} quita el primer paso$`), (m) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), { primerPaso: '' }))]
+];
+
 /** Elegir un emoji en el selector o quitarlo (§6.2): quien edita elige o quita; quitar es dejar el campo vacío. */
 const CAMBIOS_DE_EMOJI: [RegExp, string, (c: string[]) => Escritos][] = [
 	[/^elijo el emoji (.*) y edito la nota a (.*)$/, 'yo', ([e, n]) => ({ emoji: e, nota: n })],
@@ -828,7 +855,8 @@ const EDICIONES: Paso[] = [
 		(m, [t, l]) => editoYo(m, undefined, (base) => conservando(base, conValidacion(datosDe(`puntual con fecha límite ${l}`, t))))
 	],
 	[new RegExp(`^${OTRO} guarda la tarea sin cambios$`), (m) => editaElOtro(m, datosDeDocumento)],
-	...edicionesDeEmojiYNota()
+	...edicionesDeEmojiYNota(),
+	...edicionesDePrimerPaso()
 ];
 
 /** Pausar y reanudar (§5.8, §6.2): el botón del panel actúa en el momento; solo las periódicas se pausan. */
@@ -1008,6 +1036,9 @@ const OBSERVACIONES: Observacion[] = [
 	[/^la tarea no tiene emoji$/, (m) => String(unica(m).emoji === undefined)],
 	[/^la tarea tiene nota (.*)$/, (m) => unica(m).nota ?? '-'],
 	[/^la tarea no tiene nota$/, (m) => String(unica(m).nota === undefined)],
+	[/^la tarea tiene primer paso (.*)$/, (m) => unica(m).primerPaso ?? '-'],
+	[/^la tarea no tiene primer paso$/, (m) => String(unica(m).primerPaso === undefined)],
+	[/^la tarea tiene un primer paso de (\S+) caracteres$/, (m) => String(unica(m).primerPaso?.length)],
 	[/^su esfuerzo es (.+)$/, (m) => unica(m).esfuerzo ?? 'sin estimar'],
 	[/^la nota de la tarea tiene dos líneas: .*$/, (m) => JSON.stringify(unica(m).nota?.split('\n'))],
 	[/^la tarea tiene una nota de (\S+) caracteres$/, (m) => String(unica(m).nota?.length)],
@@ -1060,7 +1091,7 @@ const OBSERVACIONES: Observacion[] = [
 
 /** Los pasos propios de este oráculo: escenarios que editan, borran o modifican concurrentemente. */
 const ES_DE_EDICION =
-	/^(?:edito |elijo |quito el emoji$|quito el horario$|pongo |borro |toco Deshacer |toco el checkbox |consulto el aviso |consulto el Historial |consulto la última vez |otro dispositivo, sin ver ese cambio,)/;
+	/^(?:edito |elijo |quito el emoji$|quito el horario$|quito el primer paso$|el primer paso de la tarea |pongo |borro |toco Deshacer |toco el checkbox |consulto el aviso |consulto el Historial |consulto la última vez |otro dispositivo, sin ver ese cambio,)/;
 
 export const esEscenarioDeEdicion = (textos: string[]) => textos.some((texto) => ES_DE_EDICION.test(texto));
 

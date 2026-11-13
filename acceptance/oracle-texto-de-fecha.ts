@@ -156,6 +156,8 @@ export function regresoDelAvisoDe(s: Situacion, ahora: number): string | undefin
 
 const THEN_DE_FILA = /^la fila de la tarea (?:muestra el texto (.*)|no muestra texto de fecha)$/su;
 const THEN_DE_FILA_DE_TITULO = /^la fila de ([A-ZÁÉÍÓÚÑ]\w*) muestra el texto (.*)$/su;
+const THEN_DE_PRIMER_PASO = /^la fila de la tarea (?:muestra el primer paso (.*)|no muestra primer paso)$/su;
+const PRIMER_PASO_GUARDADO = /^el primer paso de la tarea es (.*)$/su;
 const THEN_DE_ORDEN = /^Pendientes muestra en orden (.*)$/su;
 const THEN_DE_AVISO = /^el aviso del completado (?:muestra el regreso (.*)|no muestra regreso)$/su;
 const CONSULTA_DEL_AVISO = /^consulto el aviso el (\S+)$/;
@@ -164,7 +166,7 @@ const TITULO_EN_EL_PASO = /\b(tarea(?: puntual| periódica (?:relativa|semanal|m
 const tituloDelPaso = (texto: string) => TITULO_EN_EL_PASO.exec(texto)?.[2];
 
 export const esEscenarioDeTextoDeFecha = (textos: string[]) =>
-	textos.some((texto) => THEN_DE_FILA.test(texto) || THEN_DE_FILA_DE_TITULO.test(texto) || THEN_DE_AVISO.test(texto));
+	textos.some((texto) => THEN_DE_FILA.test(texto) || THEN_DE_PRIMER_PASO.test(texto) || THEN_DE_FILA_DE_TITULO.test(texto) || THEN_DE_AVISO.test(texto));
 
 /**
  * Los pasos de la tarea `titulo`: los que la nombran y los que no nombran a ninguna (la consulta, los checks). Con una
@@ -192,6 +194,26 @@ function situacionDe(entradas: PasoOraculo[], fila: FilaOraculo, titulo?: string
 	return s && (consulta === undefined || ahoraDelAviso !== undefined) ? { s, ahoraDelAviso } : undefined;
 }
 
+/**
+ * §6.1: la fila muestra «Primer paso: » y el texto, recortado, solo si la tarea tiene primer paso y está pendiente o
+ * atrasada; en espera (también pospuesta o completada) o pausada no lo muestra. Se decide con el estado de ese momento.
+ */
+function primerPasoDeLaFila(s: Situacion, guardado: string | undefined): string | undefined {
+	const ahora = s.ahora;
+	if (ahora === undefined || s.puntual?.cualquiera) return undefined;
+	const primerPaso = guardado?.trim();
+	if (s.pausada || !primerPaso) return SIN_TEXTO;
+	const estado = posposicionVigente(s) !== undefined && enEsperaPorPosposicion(s) ? 'en espera' : estadoSegunSuRegla(s, SIN_PROGRESO);
+	if (estado === 'pendiente' || estado === 'atrasada') return `Primer paso: ${primerPaso}`;
+	return estado === 'en espera' || estado === 'no aparece en Pendientes' ? SIN_TEXTO : undefined;
+}
+
+/** El primer paso que deja guardado el escenario; el último paso que lo declara. */
+function primerPasoDeclarado(entradas: PasoOraculo[], fila: FilaOraculo): string | undefined {
+	const textos = entradas.map(({ text }) => resolver(text, fila) ?? '');
+	return textos.map((texto) => PRIMER_PASO_GUARDADO.exec(texto)?.[1]).filter((valor) => valor !== undefined).at(-1);
+}
+
 /** El aviso se ve entre el completado y 5 s después (§5.4); fuera, no hay aviso que consultar. */
 function regresoVisible(s: Situacion, ahora: number | undefined): string | undefined {
 	if (ahora === undefined || s.completados.length === 0) return undefined;
@@ -205,9 +227,11 @@ function observarThen(entradas: PasoOraculo[], texto: string, fila: FilaOraculo)
 	const deTitulo = THEN_DE_FILA_DE_TITULO.exec(texto);
 	const deFila = deTitulo ?? THEN_DE_FILA.exec(texto);
 	const deAviso = THEN_DE_AVISO.exec(texto);
+	const dePrimerPaso = THEN_DE_PRIMER_PASO.exec(texto);
 	const situacion = situacionDe(entradas, fila, deTitulo?.[1]);
-	const escrito = (deTitulo ? deTitulo[2] : (deFila ?? deAviso)?.[1]) ?? SIN_TEXTO;
+	const escrito = (deTitulo ? deTitulo[2] : (deFila ?? deAviso ?? dePrimerPaso)?.[1]) ?? SIN_TEXTO;
 	if (!situacion) return { visto: undefined, escrito };
+	if (dePrimerPaso) return { visto: primerPasoDeLaFila(situacion.s, primerPasoDeclarado(entradas, fila)), escrito };
 	const visto = deFila ? textoDeLaFila(situacion.s) : deAviso ? regresoVisible(situacion.s, situacion.ahoraDelAviso) : undefined;
 	return { visto, escrito };
 }

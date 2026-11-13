@@ -135,6 +135,8 @@ const indeciso = (motivo: string): never => {
 interface Formulario {
 	titulo: string;
 	nota: string;
+	/** §4.1: una línea; Guardar la recorta y vacío es sin primer paso. */
+	primerPaso: string;
 	repite: string;
 	esfuerzo: string;
 	/** Las ventanas tal como se escribieron; '' es una fila vacía. */
@@ -168,7 +170,7 @@ interface MundoDeCambios {
 	eligioEmoji: boolean;
 }
 
-const FORMULARIO_AL_CREAR: Formulario = { titulo: '', nota: '', repite: 'No se repite', esfuerzo: 'Sin estimar', horarios: [], emoji: '', etiquetas: [], sinConfirmar: '' };
+const FORMULARIO_AL_CREAR: Formulario = { titulo: '', nota: '', primerPaso: '', repite: 'No se repite', esfuerzo: 'Sin estimar', horarios: [], emoji: '', etiquetas: [], sinConfirmar: '' };
 const LO_DE_ARRIBA = ['nada', 'el aviso de cierre', 'el aviso de acción', 'la confirmación de Borrar tarea', 'el selector de emoji', 'las sugerencias de Etiquetas'];
 /** §6.2 Atrás: lo que no cuenta como algo abierto encima del panel. */
 const NO_CUENTA_COMO_ABIERTO = ['nada', 'las sugerencias de Etiquetas'];
@@ -187,9 +189,9 @@ const elEscrito = (m: MundoDeCambios): Formulario => m.escrito ?? indeciso('pane
 
 const claveDeHorarios = (horarios: string[]) => [...horarios].sort().join(' ');
 
-/** §6.2: Guardar recorta el título y la nota y ordena las ventanas; las etiquetas no dependen del orden. */
+/** §6.2: Guardar recorta el título, la nota y el primer paso y ordena las ventanas; las etiquetas no dependen del orden. */
 const claveDeFormulario = (f: Formulario) =>
-	JSON.stringify([f.titulo.trim(), f.nota.trim(), f.repite, f.esfuerzo, claveDeHorarios(f.horarios), f.emoji, [...f.etiquetas].sort()]);
+	JSON.stringify([f.titulo.trim(), f.nota.trim(), f.primerPaso.trim(), f.repite, f.esfuerzo, claveDeHorarios(f.horarios), f.emoji, [...f.etiquetas].sort()]);
 
 /** §6.2: lo que Guardar cambiaría, más el texto sin confirmar de Etiquetas salvo solo espacios. */
 function hayCambios(m: MundoDeCambios): boolean {
@@ -361,6 +363,7 @@ function escribirEn(m: MundoDeCambios, campo: string, valor: string): void {
 	const f = elEscrito(m);
 	if (campo === 'Título') f.titulo = valor;
 	else if (campo === 'Nota') f.nota = valor;
+	else if (campo === 'Primer paso') f.primerPaso = valor;
 	else if (campo === 'Etiquetas sin confirmar') f.sinConfirmar = valor;
 	else indeciso(`campo ${campo}`);
 }
@@ -376,6 +379,7 @@ const laTareaDelOtro = (m: MundoDeCambios) => m.tarea ?? indeciso('otro disposit
 
 const PASOS_DE_CAMBIOS: [RegExp, (m: MundoDeCambios, ...grupos: string[]) => void][] = [
 	[/^abro el panel para editar la tarea (.+) con nota (.+)$/, (m, titulo, nota) => abrirParaEditar(m, { titulo, nota })],
+	[/^abro el panel para editar la tarea (.+) con primer paso (.+)$/, (m, titulo, primerPaso) => abrirParaEditar(m, { titulo, primerPaso })],
 	[/^abro el panel para editar la tarea (.+) con los horarios (.+) y (.+)$/, (m, titulo, a, b) => abrirParaEditar(m, { titulo, horarios: ventanasValidas(a, b) })],
 	[
 		/^abro el panel para crear una tarea$/,
@@ -480,7 +484,7 @@ function elAvisoAbierto(m: MundoDeCambios): { mensaje: string; botones: string[]
 	return (m.encima === 'el aviso de acción' ? avisoDeLaAccion(m) : undefined) ?? indeciso('no hay aviso');
 }
 
-const CAMPO_ESCRITO: Record<string, (f: Formulario) => string> = { Título: (f) => f.titulo, Nota: (f) => f.nota, 'Etiquetas sin confirmar': (f) => f.sinConfirmar };
+const CAMPO_ESCRITO: Record<string, (f: Formulario) => string> = { Título: (f) => f.titulo, Nota: (f) => f.nota, 'Primer paso': (f) => f.primerPaso, 'Etiquetas sin confirmar': (f) => f.sinConfirmar };
 
 const siHayTarea = (m: MundoDeCambios, ver: (t: TareaGuardada) => string) => (m.tarea ? ver(m.tarea) : 'sin tarea');
 const instante = (valor: string) => String(fecha(valor) ?? indeciso(`fecha ${valor}`));

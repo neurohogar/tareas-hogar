@@ -134,6 +134,8 @@ export interface FilaConsultada {
 	esfuerzo: string | undefined;
 	/** El texto de fecha y distancia («Tocaba …», «Vuelve …», §6.1); sin él, la fila no lo muestra. */
 	textoDeFecha: string | undefined;
+	/** El texto «Primer paso: …» de la fila (§6.1); sin él, la fila no lo muestra. */
+	textoDePrimerPaso: string | undefined;
 }
 
 /** El sujeto de los pasos del otro dispositivo: actúa sobre lo guardado antes de mi último cambio. */

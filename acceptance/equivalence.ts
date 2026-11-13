@@ -22,6 +22,7 @@ import { esEscenarioDePantallaDeCarga, observarPantallaDeCarga } from './oracle-
 /** Pasos Then que solo observan la clasificación de la regla. */
 const THEN_DE_CLASIFICACION = [
 	/^el estado es (pendiente|en espera|atrasada)$/,
+	/^el estado es <[A-Za-z0-9_]+>$/,
 	/^la creación se rechaza por (título vacío|intervalo inválido|falta de días|día del mes inválido|semanal y mensual combinados|fecha límite inválida|emoji inválido|horario incompleto|horarios superpuestos|varios horarios en una relativa en horas)$/,
 	/^la creación se rechaza porque la hora de fin no es posterior a la de inicio$/,
 	/^no se crea ninguna tarea$/,

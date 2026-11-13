@@ -575,6 +575,8 @@ const REGLAS: Regla[] = [
 	],
 	[/^una tarea periódica relativa cada (\S+) (\S+)$/, (s, [c, u]) => void Object.assign(s, { cada: c, unidad: u })],
 	[/^una tarea periódica relativa nunca completada$/, () => undefined],
+	// §4.1 y §5: el primer paso no tiene estado: no cambia el estado de la tarea.
+	[/^el primer paso de la tarea es (.*)$/, () => undefined],
 	[/^la tarea fue completada el (\S+)$/, (s, [t]) => registrar(s, t)],
 	[/^completo la tarea el (\S+)$/, (s, [t]) => completar(s, t)],
 	[/^consulto el estado el (\S+)$/, (s, [t]) => ((s.ahora = MOMENTO(t)), s.ahora !== undefined)],
@@ -1053,6 +1055,8 @@ export function esfuerzoEscrito(valor: string): { esfuerzo?: string } | undefine
 export const soloLasRapidas = (tareas: TareaDelOrden[]) => tareas.filter((t) => t.esfuerzo === 'rapida');
 
 export const REGLAS_DEL_ORDEN: ReglaDeOrden[] = [
+	// §4.1 y §6.1: el primer paso no cambia el orden de la lista; la tarea tiene que existir.
+	[/^el primer paso de la tarea (\S+) es (.*)$/, (ts, [t]) => conTitulo(ts, t) !== undefined],
 	[
 		/^la tarea (\S+) tiene esfuerzo (.+)$/,
 		(ts, [t, e]) => {

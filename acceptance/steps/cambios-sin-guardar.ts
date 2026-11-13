@@ -106,6 +106,7 @@ const LO_ABIERTO: Partial<Record<LoDeArriba, string>> = {
 const CAMPOS: Record<string, { lee: (f: FormularioDelPanel) => string | undefined; escribe: (f: FormularioDelPanel, valor: string) => FormularioDelPanel }> = {
 	Título: { lee: (f) => f.datos.titulo, escribe: (f, titulo) => ({ ...f, datos: { ...f.datos, titulo } }) },
 	Nota: { lee: (f) => f.datos.nota, escribe: (f, nota) => ({ ...f, datos: { ...f.datos, nota } }) },
+	'Primer paso': { lee: (f) => f.datos.primerPaso, escribe: (f, primerPaso) => ({ ...f, datos: { ...f.datos, primerPaso } }) },
 	'Etiquetas sin confirmar': { lee: (f) => f.sinConfirmar, escribe: (f, sinConfirmar) => ({ ...f, sinConfirmar }) }
 };
 
@@ -114,7 +115,7 @@ function escribo(world: World, campo: string, valor: string): void {
 	cambios.formulario = deLaTabla(CAMPOS, campo, 'Campo').escribe(cambios.formulario, valor);
 }
 
-const comunesDe = ({ titulo, emoji, nota, horario, esfuerzo }: DatosDeTarea): DatosComunes => ({ titulo, emoji, nota, horario, esfuerzo });
+const comunesDe = ({ titulo, emoji, nota, primerPaso, horario, esfuerzo }: DatosDeTarea): DatosComunes => ({ titulo, emoji, nota, primerPaso, horario, esfuerzo });
 
 /** Los campos de cada opción de "Se repite": los de la tarea si es de esa forma; si no, como al crear (§6.2). */
 const SE_REPITE: Record<string, { forma: DatosDeTarea['forma']; vacios: Partial<DatosDeTarea> }> = {
@@ -281,6 +282,10 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con nota ${P}$`),
 		run: (world, titulo, nota) => abroParaEditar(world, { titulo, nota })
+	},
+	{
+		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con primer paso ${P}$`),
+		run: (world, titulo, primerPaso) => abroParaEditar(world, { titulo, primerPaso })
 	},
 	{
 		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con los horarios ${P} y ${P}$`),
