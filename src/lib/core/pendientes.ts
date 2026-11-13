@@ -9,10 +9,14 @@ import {
 } from './orden-de-pendientes';
 import { comoRecienCreada } from './pausa';
 import type { Completado, Tarea } from './tarea';
+import { textoDeFecha } from './texto-de-fecha-de-tarea';
 import { instanteDeUrgencia } from './urgencia';
 
-/** Una fila de Pendientes; si está completada, se ve tachada y con el checkbox marcado (§6.1). */
-export type FilaDePendientes = { tarea: Tarea } & EnPendientes;
+/**
+ * Una fila de Pendientes; si está completada, se ve tachada y con el checkbox
+ * marcado. textoDeFecha: «Tocaba …» o «Vuelve …», si la fila lo lleva (§6.1).
+ */
+export type FilaDePendientes = { tarea: Tarea; textoDeFecha?: string } & EnPendientes;
 
 /**
  * Spec §6.1: las filas de la lista Pendientes. Primero las no completadas,
@@ -37,9 +41,14 @@ export function filasDePendientes(
 		else if (enPendientes.completada) completadas.push({ tarea, estado: enPendientes.estado, ultimoCompletadoEn: ultimoCompletadoEn(propios) });
 		else noCompletadas.push({ tarea, estado: enPendientes.estado, instante: instanteDeUrgencia(tarea, completados, enPendientes.estado, ahora) });
 	}
-	const filas = noCompletadas.sort(compararPorUrgencia).map(({ tarea, estado }): FilaDePendientes => ({ tarea, estado, completada: false }));
+	const conTexto = (tarea: Tarea, estado: FilaDePendientes['estado']) => textoDeFecha(tarea, completados, estado, ahora);
+	const filas = noCompletadas
+		.sort(compararPorUrgencia)
+		.map(({ tarea, estado }): FilaDePendientes => ({ tarea, estado, completada: false, textoDeFecha: conTexto(tarea, estado) }));
 	const alFinal = mostrarCompletadas
-		? completadas.sort(compararCompletadas).map(({ tarea, estado }): FilaDePendientes => ({ tarea, estado, completada: true }))
+		? completadas
+				.sort(compararCompletadas)
+				.map(({ tarea, estado }): FilaDePendientes => ({ tarea, estado, completada: true, textoDeFecha: conTexto(tarea, estado) }))
 		: [];
 	const pausadasAlFinal = mostrarPausadas
 		? pausadas.sort(compararPausadas).map((tarea): FilaDePendientes => ({ tarea, estado: { tipo: 'pausada' }, completada: false }))

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { filasDePendientes } from './pendientes';
-import type { Completado, DiaSemana, Tarea } from './tarea';
+import type { Completado, DiaSemana, Tarea, TareaPeriodica } from './tarea';
 
 const CREADA = new Date(2026, 6, 1);
 const AHORA = new Date(2026, 6, 15, 8, 0, 0);
@@ -41,9 +41,28 @@ describe('filasDePendientes (spec §6.1)', () => {
 		const enEspera = relativa('r');
 		const atrasada = puntual('a', new Date(2026, 6, 10));
 		expect(filasDePendientes([enEspera, atrasada], [completadoDe('r')], AHORA, true)).toEqual([
-			{ tarea: atrasada, estado: { tipo: 'atrasada' }, completada: false },
-			{ tarea: enEspera, estado: { tipo: 'en espera', progreso: 1 / 24 }, completada: true }
+			{ tarea: atrasada, estado: { tipo: 'atrasada' }, completada: false, textoDeFecha: 'Tocaba el viernes 10 · hace 5 días' },
+			{ tarea: enEspera, estado: { tipo: 'en espera', progreso: 1 / 24 }, completada: true, textoDeFecha: 'Vuelve mañana 07:00 · en 23 horas' }
 		]);
+	});
+
+	it('cada fila lleva su texto de fecha (§6.1): «Tocaba …» si está atrasada, «Vuelve …» si está en espera, ninguno si no', () => {
+		const pendiente = puntual('p', AHORA);
+		const pospuesta: Tarea = { ...puntual('e'), pospuesta: { desde: AHORA, hasta: new Date(2026, 6, 15, 9, 0, 0) } };
+		const pausada: Tarea = { ...(relativa('z') as TareaPeriodica), pausada: true };
+		const textos = filasDePendientes([pendiente, pospuesta, pausada], [], AHORA, true, true).map(({ tarea, textoDeFecha }) => [tarea.id, textoDeFecha]);
+		expect(textos).toEqual([
+			['p', undefined],
+			['e', 'Vuelve hoy 09:00 · en 1 hora'],
+			['z', undefined]
+		]);
+	});
+
+	it('el texto de fecha se deriva de ahora: se actualiza solo con el paso del tiempo (§6.1)', () => {
+		const atrasada = puntual('a', new Date(2026, 6, 14));
+		const texto = (ahora: Date) => filasDePendientes([atrasada], [], ahora)[0].textoDeFecha;
+		expect(texto(new Date(2026, 6, 15, 23, 59, 59))).toBe('Tocaba ayer');
+		expect(texto(new Date(2026, 6, 16, 0, 0, 0))).toBe('Tocaba el martes 14 · hace 2 días');
 	});
 
 	describe('Mostrar completadas apagado (el valor inicial)', () => {

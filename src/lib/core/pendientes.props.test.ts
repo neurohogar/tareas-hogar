@@ -47,7 +47,20 @@ describe('filasDePendientes (propiedades)', () => {
 					.map((tarea) => ({ tarea, estado: estadoDeTarea(tarea, hechos, ahora), completada: false }))
 					.filter(({ tarea, estado }) => !estaCompletada(tarea, hechos, ahora));
 				const porId = (a: { tarea: Tarea }, b: { tarea: Tarea }) => a.tarea.id.localeCompare(b.tarea.id);
-				expect([...filasDePendientes(lista, hechos, ahora)].sort(porId)).toEqual(esperadas.sort(porId));
+				const filas = filasDePendientes(lista, hechos, ahora).map(({ tarea, estado, completada }) => ({ tarea, estado, completada }));
+				expect(filas.sort(porId)).toEqual(esperadas.sort(porId));
+			})
+		);
+	});
+
+	it('el texto de fecha es «Tocaba …» en una atrasada, «Vuelve …» en una en espera y ninguno en las demás (§6.1)', () => {
+		fc.assert(
+			fc.property(tareas, completados, instante, (lista, hechos, ahora) => {
+				for (const { estado, textoDeFecha } of filasDePendientes(lista, hechos, ahora, true, true)) {
+					const verbo = { atrasada: 'Tocaba ', 'en espera': 'Vuelve ' }[estado.tipo as string];
+					if (verbo) expect(textoDeFecha?.startsWith(verbo)).toBe(true);
+					else expect(textoDeFecha).toBeUndefined();
+				}
 			})
 		);
 	});

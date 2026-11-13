@@ -17,6 +17,9 @@ const MESES = [
 	'diciembre'
 ] as const;
 
+/** El nombre del mes del día local, en minúsculas ("noviembre"). */
+export const nombreDelMes = (dia: Date) => MESES[mesDe(dia) - 1];
+
 const mismoDia = (a: Date, b: Date) => inicioDelDia(a).getTime() === inicioDelDia(b).getTime();
 
 /**
@@ -26,7 +29,7 @@ const mismoDia = (a: Date, b: Date) => inicioDelDia(a).getTime() === inicioDelDi
 export function encabezadoDelDia(dia: Date, ahora: Date): string {
 	if (mismoDia(dia, ahora)) return 'Hoy';
 	if (mismoDia(dia, sumarDias(ahora, -1))) return 'Ayer';
-	const fecha = `${diaDeLaSemana(dia)} ${diaDelMes(dia)} de ${MESES[mesDe(dia) - 1]}`;
+	const fecha = `${diaDeLaSemana(dia)} ${diaDelMes(dia)} de ${nombreDelMes(dia)}`;
 	return anioDe(dia) === anioDe(ahora) ? fecha : `${fecha} de ${anioDe(dia)}`;
 }
 
