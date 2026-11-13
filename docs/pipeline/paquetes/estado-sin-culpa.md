@@ -39,13 +39,48 @@ Primera feature de la épica E2 de `docs/v3/plan.md` («Estado sin culpa y regla
 
 ## Artefactos
 
+- Gherkin: `features/texto-de-atraso.feature` (S1, S4, S5, S6, S8, S9, S10, S11, S12, S13), `features/texto-de-regreso.feature` (S2, S4, S7, S8, S9, S10, S11, S12), `features/fila-sin-texto-de-fecha.feature` (S1, S3, S15), `features/aviso-con-regreso.feature` (S14); S13 (estado y orden no cambian) lo cubre el escenario 11 de texto-de-atraso, y S12 (se actualiza solo) las filas con otro ahora y `qa/estado-sin-culpa.md`
+- QA: `qa/estado-sin-culpa.md`
+
 ## core
+
+- **Puede editar**: `src/lib/core/texto-de-fecha*.ts` (archivo nuevo: el texto «Tocaba …»/«Vuelve …», la fecha y la distancia, y los instantes de «Tocaba» y de «Vuelve»), `src/lib/core/*.test.ts` (todos los tests del core: un cambio de tipo exportado puede tocarlos), `src/lib/core/pendientes.ts`, `src/lib/core/aviso.ts`, `src/lib/core/urgencia.ts`, `src/lib/core/estado-con-horario.ts`, `src/lib/core/plazos-con-horario.ts`, `src/lib/core/estado-periodica-relativa.ts`, `src/lib/core/estado-periodica-calendario.ts`, `src/lib/core/estado-de-tarea.ts`, `src/lib/core/fechas-en-texto.ts`, `src/lib/core/dias.ts`
+- **Reglas**: S1–S14 (S15 ya está implementado: la fila pausada no suma texto de fecha, y S3 lo exige)
+- **Reusa**:
+  - `clasificarEnPendientes` (`completada.ts`) y `estadoDeTarea`/`esperaPorPosposicion` (`estado-de-tarea.ts`) siguen siendo el único punto de entrada del estado: el texto se deriva del estado que ya dan, no lo recalcula (S13).
+  - `instanteDeUrgencia` (`urgencia.ts`) es el instante con el que se ordena una `en espera` (S7): el «Vuelve …» usa el mismo, salvo con dos causas (el más tarde de los dos, `hasta` de la posposición contra V o A). El de «Tocaba» (S5) es otro: para una atrasada, `instanteDeUrgencia` da desde cuándo está atrasada (el atraso, p. ej. C o V + intervalo), no desde cuándo toca; hace falta A, V, el día de N o el día de `fechaLimite`.
+  - `plazosConHorario` (`plazos-con-horario.ts`) y `estado-con-horario.ts` dan A, C y el atraso con horario (una y varias ventanas); `proximaOcurrencia` (`estado-periodica-calendario.ts`) da N; `instanteDeUrgenciaRelativa` (`estado-periodica-relativa.ts`) da V; `comoRecienCreada` (`pausa.ts`) para una reanudada.
+  - `diasEntre`, `inicioDelDia`, `sumarDias`, `diaDeLaSemana`, `diaDelMes`, `mesDe`, `anioDe` (`dias.ts`), `horaEnTexto` y la tabla de meses de `fechas-en-texto.ts`, y `ultimaVez` (`ultima-vez.ts`) como modelo del formato; los textos son función de `ahora`, que el core recibe como parámetro.
+  - `avisoAlCompletar` y `avisoVisible` (`aviso.ts`): el regreso del aviso se calcula con la tarea y los completados después del completado.
+- **Notas**: las firmas exportadas que ya usan `acceptance/` y la UI (`filasDePendientes`, `avisoAlCompletar`, `avisoVisible`, `instanteDeUrgencia`, `estadoDeTarea`) siguen compatibles: solo campos o parámetros nuevos opcionales, porque el gate del core corre la aceptación ya implementada y el orden no cambia (S13). Ambigüedades del spec que los escenarios evitan a propósito: año distinto con el mismo mes que ahora (S8 dice « de <mes>» solo si el mes no es el de ahora; en todas las filas, cuando cambia el año cambia también el mes), y en calendario el instante sin horario «00:00 de N» de S6 no se alcanza (con horario, A ≤ C).
+- **Gate**: `node scripts/gate.ts core`
 
 ## acceptance
 
+- **Puede editar**: `acceptance/steps/texto-de-fila.ts` (archivo nuevo), `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `acceptance/steps/pendientes.ts`, `acceptance/steps/deshacer.ts`, `acceptance/oracle*.ts`, `scripts/check-arch.ts` (la lista manual de oráculos: un `acceptance/oracle-*.ts` nuevo se agrega ahí), `acceptance/equivalence.ts`, `docs/pipeline/pendientes.txt`
+- **Features a conectar**: `features/texto-de-atraso.feature`, `features/texto-de-regreso.feature`, `features/fila-sin-texto-de-fecha.feature`, `features/aviso-con-regreso.feature`
+- **Pasos nuevos**:
+  - `la fila de la tarea muestra el texto <texto>`: la lista tiene una sola fila y su texto de fecha es `<texto>`; en cada momento consultado (`FilaConsultada` gana el texto)
+  - `la fila de <titulo> muestra el texto <texto>`: la fila de esa tarea en la lista consultada
+  - `la fila de la tarea no muestra texto de fecha`: una sola fila, sin texto de fecha ni de distancia
+  - `el aviso del completado muestra el regreso <texto>`: el aviso consultado nombra la tarea y su texto de regreso es `<texto>`
+  - `el aviso del completado no muestra regreso`: el aviso consultado no lleva texto de regreso
+  - Se reusan sin cambios: `Mostrar completadas está encendido`, `Mostrar pausadas está encendido`, `consulto Pendientes el <ahora>`, `consulto el aviso el <ahora>`, `completo la tarea <titulo> el <momento>`, `la tarea fue pospuesta con la opción <opcion> el <momento>`, `la tarea fue pausada`, `la tarea [<titulo>] fue completada el <momento>`, `la tarea tiene un completado del <momento> que cubre el <momento>` y los de crear tareas y horario.
+- **Notas**: el oráculo (texto de fecha y distancia, desde `docs/spec.md` §6.1, independiente del core) entra en el Then `muestra el texto`/`muestra el regreso`: cada regla de §6.1 nueva (fecha, distancia, instante de «Tocaba» y de «Vuelve») se agrega al oráculo; un filtrado se justifica con la regla del spec. Los títulos de los escenarios con dos tareas son `Pagar` y `Regar`.
+- **Gate**: `node scripts/gate.ts acceptance`
+
 ## ui
 
+- **Puede editar**: `src/lib/ui/FilaTarea.svelte`, `src/lib/ui/Pendientes.svelte`, `src/lib/ui/AvisoDeshacer.svelte`, `src/lib/ui/Sesion.svelte`, `src/lib/ui/estilos.css`
+- **Comportamiento visible**: `qa/estado-sin-culpa.md`
+- **Notas**: la fila ya recibe `sesion.ahora` (el reloj de `adapters/reloj.ts` avisa cada segundo), así que el texto se actualiza solo al derivarse de él; no hace falta tocar el adapter. El texto «Atrasada» y su color de alarma (`.atraso`, `--atraso`) se van: el texto de atraso va en el mismo color y tamaño que el esfuerzo y el horario (`.esfuerzo`, `.horario`).
+- **Gate**: `node scripts/gate.ts ui`
+
 ## cleaner · architect · hardener · qa
+
+Trabajan sobre todo lo que cambió la feature (`git diff <base de la feature>`, anotada en `tmp/base-de-feature`).
+
+Para qa: `qa/estado-sin-culpa.md` reemplaza el indicador «Atrasada» de los contratos anteriores. Donde estos `qa/*.md` esperan el texto accesible «Atrasada» dentro de la fila, se espera ahora el texto de atraso «Tocaba …» (y «Atrasada» ya no aparece en ninguna fila): `qa/puntual.md` (3), `qa/periodica-relativa.md` (2), `qa/periodica-calendario.md` (3), `qa/horario.md` (3), `qa/posponer.md` (6), `qa/pausar.md` (8), `qa/mostrar-completadas.md` (1), `qa/orden-pendientes.md` (1), `qa/editar-borrar.md` (2), `qa/esfuerzo.md` (1), `qa/etiquetas.md` (1). Las filas en espera pasan a llevar además el texto «Vuelve …» (la barra no cambia) y el aviso de completar una periódica lleva una segunda línea.
 
 ## Log
 
