@@ -70,8 +70,8 @@ Precondición: lista vacía, reloj en `2026-11-13T10:00:00` (viernes).
 1. Crear `Barrer` con **No se repite** y sin fecha límite, `Pagar` con **No se repite** y fecha límite `2026-11-13`, y `Regar` con **Intervalo** cada `2` **días** (sin completarla). Las tres están `pendiente`: ninguna de sus filas contiene `Tocaba`, `Vuelve` ni una distancia.
 2. Avanzar el reloj a `2026-12-13T10:00:00`: **Barrer** y **Regar** siguen `pendiente`, sin texto de fecha (nunca se atrasan); **Pagar** pasó a `atrasada` y dice `Tocaba el viernes 13 de noviembre · hace 30 días`.
 3. Encender **Mostrar completadas** y tocar el checkbox de **Barrer**: su fila queda completada (tachada, checkbox marcado) y no muestra texto de fecha ni de distancia.
-4. Tocar la fila de **Regar** y elegir **Pausar**; tocar la fila de **Pagar** y elegir **Pausar**. Encender **Mostrar pausadas**: las dos filas dicen «Pausada» y ninguna contiene `Tocaba` ni `Vuelve`.
-5. Apagar **Mostrar pausadas**: las pausadas desaparecen.
+4. Tocar la fila de **Regar** (una periódica) y elegir **Pausar** (`qa/pausar.md`; una puntual como **Pagar** no ofrece **Pausar**). Encender **Mostrar pausadas**: la fila de **Regar** dice «Pausada» y no contiene `Tocaba` ni `Vuelve`. **Pagar** sigue `atrasada` y su fila dice `Tocaba el viernes 13 de noviembre · hace 30 días`.
+5. Apagar **Mostrar pausadas**: **Regar** desaparece; **Pagar** sigue en la lista con su texto `Tocaba …`.
 
 ## Flujo 4: se actualiza solo y no cambia el orden
 
