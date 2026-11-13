@@ -379,7 +379,7 @@ La interfaz está en **español** y el tema claro u oscuro sigue al sistema.
   - Las filas `pendiente`, las pausadas y las puntuales completadas no muestran texto de fecha ni de distancia.
 **Fecha y distancia** (texto de atraso y de regreso de la fila, y cierre del aviso de completar, §5.4): una sola regla arma el texto de las tres. Las tareas que no son `atrasada` ni `en espera` no lo llevan.
 
-- **Frase**: «Tocaba <fecha>[ · <distancia>]» en una `atrasada` y «Vuelve <fecha>[ · <distancia>]» en una `en espera`. «el» va solo delante de la fecha con día de la semana; con «hoy», «ayer» o «mañana» no. Ejemplos (ahora = viernes 13 de noviembre de 2026, 10:00): «Tocaba el martes 10 · hace 3 días», «Tocaba ayer», «Tocaba hoy 09:00 · hace 1 hora», «Vuelve mañana», «Vuelve hoy 18:00 · en 8 horas», «Vuelve hoy 10:40 · en 40 minutos», «Vuelve el jueves 19 · en 6 días». Sin felicitaciones ni otras palabras.
+- **Frase**: «Tocaba <fecha>[ · <distancia>]» en una `atrasada` y «Vuelve <fecha>[ · <distancia>]» en una `en espera`. «el» va solo delante de la fecha con día de la semana; con «hoy», «ayer» o «mañana» no. Ejemplos (ahora = viernes 13 de noviembre de 2026, 10:00): «Tocaba el martes 10 · hace 3 días», «Tocaba ayer», «Tocaba hoy 09:00 · hace 1 hora», «Tocaba hoy 10:00 · ahora», «Vuelve mañana», «Vuelve hoy 18:00 · en 8 horas», «Vuelve hoy 10:40 · en 40 minutos», «Vuelve el jueves 19 · en 6 días». Sin felicitaciones ni otras palabras.
 - **Instante de «Tocaba»** (desde cuándo toca la tarea; nunca es un instante futuro):
 
 | Tipo | Instante |
@@ -395,6 +395,7 @@ La interfaz está en **español** y el tema claro u oscuro sigue al sistema.
 - **Distancia**, después de la fecha, separada por « · »:
   - A 2 o más días locales: «hace N días» / «en N días» (diferencia en días locales, como **Última vez**), con o sin hora en la fecha.
   - Con la fecha «hoy», «ayer» o «mañana» y con hora: en horas («hace 3 horas», «en 1 hora») o, a menos de una hora, en minutos («hace 40 minutos», «en 40 minutos»). Lo pasado se redondea hacia abajo y lo futuro hacia arriba, nunca «en 0 minutos». Se cuenta desde ahora, aunque cruce la medianoche («Tocaba ayer 23:00 · hace 2 horas» a la 01:00).
+  - Con la fecha «hoy», «ayer» o «mañana» y con hora, si el instante cae a menos de un minuto en el pasado, la distancia es «ahora», no «hace 0 minutos» («Tocaba hoy 10:00 · ahora» a las 10:00:30). Lo futuro sigue hacia arriba: nunca «en 0 minutos».
   - Con la fecha «hoy», «ayer» o «mañana» y sin hora: no hay distancia, la palabra ya lo es («Tocaba ayer», «Vuelve mañana»).
 - **Se actualiza solo** con el paso del tiempo (al pasar la medianoche, la hora o el minuto que corresponda), como **Última vez** con el panel abierto. No cambia el estado ni el orden de la lista.
 - Solo son textos y color: los estados de §5 y el orden de esta sección no cambian.
