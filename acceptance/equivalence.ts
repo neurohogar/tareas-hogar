@@ -151,7 +151,8 @@ function esEquivalenteSegun(observar: Observador, feature: Feature, scenario: Sc
  * reproduce lo que el escenario afirma con la fila original y también con el valor mutado. Una columna que un Then
  * nombra y un paso de entrada también da llega mutada a los dos lados: lo que se escribe y un Then repite, o el nombre
  * de una tarea que otro dispositivo borró (§7, gana el borrado), no deciden nada. Si solo la nombra el Then, lo que
- * afirma deja de coincidir con lo observado y no se filtra.
+ * afirma deja de coincidir con lo observado y no se filtra. Los ids de limpieza (§7) son identificadores opacos:
+ * renombrar uno de forma consistente en el dado y en el Then que lo repite no cambia lo observado.
  */
 function esEquivalenteSiSigueCumpliendo(observar: Observador, feature: Feature, scenario: Scenario, candidata: Candidata): boolean {
 	const pasos = pasosDe(feature, scenario);
@@ -168,7 +169,7 @@ function esEquivalenteSiSigueCumpliendo(observar: Observador, feature: Feature, 
 export function esEquivalente(feature: Feature, candidata: Candidata): boolean {
 	const scenario = feature.scenarios[candidata.scenario];
 	if (esEscenarioDeLimpiezas(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteSegun(observarLimpiezas, feature, scenario, candidata);
+		return esEquivalenteSiSigueCumpliendo(observarLimpiezas, feature, scenario, candidata);
 	}
 	if (esEscenarioDeAnotaciones(pasosDe(feature, scenario).map(({ step }) => step.text))) {
 		return esEquivalenteSiSigueCumpliendo(observarAnotaciones, feature, scenario, candidata);
