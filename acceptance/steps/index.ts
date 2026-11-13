@@ -11,6 +11,7 @@ import { etiquetasSteps } from './etiquetas';
 import { fuenteSteps } from './fuente';
 import { historialSteps } from './historial';
 import { horarioSteps } from './horario';
+import { limpiezasSteps } from './limpiezas';
 import { orientacionVerticalSteps } from './orientacion-vertical';
 import { panelPestanasSteps } from './panel-pestanas';
 import { pantallaDeCargaSteps } from './pantalla-de-carga';
@@ -25,4 +26,4 @@ import type { StepDefinition } from './world';
 
 export { createWorld, type StepDefinition, type World } from './world';
 
-export const steps: StepDefinition[] = [...crearSteps, ...periodicaRelativaSteps, ...periodicaCalendarioSteps, ...puntualSteps, ...pendientesSteps, ...edicionSteps, ...historialSteps, ...deshacerSteps, ...etiquetasSteps, ...emojiYNotaSteps, ...emojisRecientesSteps, ...checkboxSteps, ...horarioSteps, ...ultimaVezSteps, ...pausarSteps, ...posponerSteps, ...esfuerzoSteps, ...panelPestanasSteps, ...cambiosSinGuardarSteps, ...fuenteSteps, ...pantallaDeCargaSteps, ...orientacionVerticalSteps, ...anotacionSteps];
+export const steps: StepDefinition[] = [...crearSteps, ...periodicaRelativaSteps, ...periodicaCalendarioSteps, ...puntualSteps, ...pendientesSteps, ...edicionSteps, ...historialSteps, ...deshacerSteps, ...etiquetasSteps, ...emojiYNotaSteps, ...emojisRecientesSteps, ...checkboxSteps, ...horarioSteps, ...ultimaVezSteps, ...pausarSteps, ...posponerSteps, ...esfuerzoSteps, ...panelPestanasSteps, ...cambiosSinGuardarSteps, ...fuenteSteps, ...pantallaDeCargaSteps, ...orientacionVerticalSteps, ...anotacionSteps, ...limpiezasSteps];

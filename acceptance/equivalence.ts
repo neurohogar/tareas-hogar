@@ -13,7 +13,7 @@
 import type { Example, Feature, Scenario } from './ir';
 import { clasificarFila, elementos, esCronologiaImposible, esEscenarioDeFuente, observarFuente, ordenDePendientes, type FilaOraculo, type PasoOraculo, type VistaDePendientes } from './oracle';
 import { esEscenarioDeCambios, esEscenarioDelPanel, observarCambios, observarPanel } from './oracle-panel';
-import { esEscenarioDeAnotaciones, observarAnotaciones } from './oracle-anotaciones';
+import { esEscenarioDeAnotaciones, esEscenarioDeLimpiezas, observarAnotaciones, observarLimpiezas } from './oracle-anotaciones';
 import { esEscenarioDeEdicion, observarEdicion } from './oracle-edicion';
 import { esEscenarioDeEtiquetas, observarEtiquetas } from './oracle-etiquetas';
 import { esEscenarioDePantallaDeCarga, observarPantallaDeCarga } from './oracle-pantalla-de-carga';
@@ -167,6 +167,9 @@ function esEquivalenteSiSigueCumpliendo(observar: Observador, feature: Feature, 
 
 export function esEquivalente(feature: Feature, candidata: Candidata): boolean {
 	const scenario = feature.scenarios[candidata.scenario];
+	if (esEscenarioDeLimpiezas(pasosDe(feature, scenario).map(({ step }) => step.text))) {
+		return esEquivalenteSegun(observarLimpiezas, feature, scenario, candidata);
+	}
 	if (esEscenarioDeAnotaciones(pasosDe(feature, scenario).map(({ step }) => step.text))) {
 		return esEquivalenteSiSigueCumpliendo(observarAnotaciones, feature, scenario, candidata);
 	}

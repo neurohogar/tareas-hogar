@@ -309,3 +309,71 @@ export function observarAnotaciones(entradas: PasoOraculo[], thens: PasoOraculo[
 		throw error;
 	}
 }
+
+// Limpiezas y reintentos (spec §7), escrito desde el spec. Las cuatro limpiezas se intentan elemento por
+// elemento: se limpia todo elemento cuyo intento no falla y quedan por limpiar solo los que fallaron. Se
+// reintenta al volver la conexión y cuando cambian los datos; el tiempo no cuenta (sin temporizadores).
+
+const LIMPIEZAS = ['completados huérfanos', 'anotaciones huérfanas', 'referencias a etiquetas borradas', 'etiquetas duplicadas'];
+const SUCESOS_QUE_REINTENTAN = ['vuelve la conexión', 'cambian los datos'];
+
+interface MundoDeLimpieza {
+	original: string[];
+	fallan: Set<string>;
+	limpios: Set<string>;
+	pendientes: string[];
+}
+
+export const esEscenarioDeLimpiezas = (textos: string[]) => textos.some((texto) => /^(?:hay por limpiar |la app intent(?:a|ó) las limpiezas$)/.test(texto));
+
+/** Lista de ids separada por ", "; "ninguno" es la lista vacía. */
+function idsDe(valor: string): string[] {
+	if (valor === 'ninguno') return [];
+	const partes = valor.split(', ');
+	return partes.some((parte) => parte === '' || parte !== parte.trim()) ? indeciso(`lista ${valor}`) : partes;
+}
+
+function intentarLimpiezas(m: MundoDeLimpieza): void {
+	for (const id of m.pendientes) if (!m.fallan.has(id)) m.limpios.add(id);
+	m.pendientes = m.pendientes.filter((id) => m.fallan.has(id));
+}
+
+function pasoDeLimpieza(m: MundoDeLimpieza, texto: string): void {
+	let c: RegExpExecArray | null;
+	if ((c = /^hay por limpiar (.+) de (.+)$/.exec(texto))) {
+		if (!LIMPIEZAS.includes(c[2])) indeciso(`limpieza ${c[2]}`);
+		m.original = idsDe(c[1]);
+		m.pendientes = [...m.original];
+	} else if ((c = /^falla el intento de limpiar (.+)$/.exec(texto))) {
+		for (const id of idsDe(c[1])) m.fallan.add(id);
+	} else if ((c = /^deja de fallar el intento de limpiar (.+)$/.exec(texto))) {
+		for (const id of idsDe(c[1])) m.fallan.delete(id);
+	} else if (/^la app intent(?:a|ó) las limpiezas$/.test(texto)) {
+		intentarLimpiezas(m);
+	} else if ((c = /^sucede que (.+)$/.exec(texto))) {
+		if (!SUCESOS_QUE_REINTENTAN.includes(c[1])) indeciso(`suceso ${c[1]}`);
+		intentarLimpiezas(m);
+	} else if ((c = /^pasan (.+) minutos sin que suceda nada más$/.exec(texto))) {
+		if (!/^\d+$/.test(c[1])) indeciso(`minutos ${c[1]}`);
+	} else indeciso(`paso ${texto}`);
+}
+
+export function observarLimpiezas(entradas: PasoOraculo[], thens: PasoOraculo[], fila: FilaOraculo): { observado: string[]; afirmado: string[] } | undefined {
+	try {
+		const m: MundoDeLimpieza = { original: [], fallan: new Set(), limpios: new Set(), pendientes: [] };
+		for (const paso of entradas) pasoDeLimpieza(m, conValores(paso.text, fila));
+		const lista = (ids: string[]) => (ids.length === 0 ? 'ninguno' : ids.join(', '));
+		const observado: string[] = [];
+		const afirmado: string[] = [];
+		for (const paso of thens) {
+			const texto = conValores(paso.text, fila);
+			const c = /^quedan (limpios|por limpiar) (.+)$/.exec(texto) ?? indeciso(`then ${texto}`);
+			observado.push(lista(c[1] === 'limpios' ? m.original.filter((id) => m.limpios.has(id)) : m.original.filter((id) => m.pendientes.includes(id))));
+			afirmado.push(lista(idsDe(c[2])));
+		}
+		return { observado, afirmado };
+	} catch (error) {
+		if (error instanceof Indeciso) return undefined;
+		throw error;
+	}
+}
