@@ -38,7 +38,7 @@
 	import { crearDesdePanel, editarDesdePanel } from '#lib/core/cambios-sin-guardar-guardado.ts';
 	import type { Etiqueta } from '#lib/core/etiqueta.ts';
 	import { etiquetasDeTarea } from '#lib/core/etiquetas-de-tarea.ts';
-	import { elementosAIntentar } from '#lib/core/limpiezas.ts';
+	import { elementosAIntentar, reintentaCon, resultadoDelIntento } from '#lib/core/limpiezas.ts';
 	import { fusionDeDuplicadas } from '#lib/core/fusion-de-etiquetas.ts';
 	import { renombrar } from '#lib/core/gestion-de-etiquetas.ts';
 	import type { CambioDeTarea } from '#lib/core/documento-de-tarea.ts';
@@ -134,17 +134,19 @@
 	 * Si el efecto corrió durante el intento (cambiaron los datos) y saltó elementos, al terminar
 	 * se reevalúa una vez; un fallo sin cambio de datos ni de conexión no reintenta (sin bucle).
 	 */
-	function limpiar<T>(elementos: T[], clave: (elemento: T) => string, enCurso: Set<string>, intentar: (lote: T[]) => Promise<unknown>) {
+	function limpiar<T>(elementos: T[], clave: (elemento: T) => string, enCurso: Set<string>, intentar: (lote: T[]) => Promise<readonly string[]>) {
 		const ids = new Set(elementosAIntentar(elementos.map(clave), enCurso));
 		const lote = elementos.filter((elemento) => ids.has(clave(elemento)));
 		if (lote.length < elementos.length) saltearon.add(enCurso);
 		if (lote.length === 0) return;
 		ids.forEach((id) => enCurso.add(id));
+		const intentados = [...ids];
 		void intentar(lote)
-			.catch(() => undefined)
-			.finally(() => {
-				ids.forEach((id) => enCurso.delete(id));
-				if (saltearon.delete(enCurso)) reevaluar++;
+			.catch(() => intentados)
+			.then((fallaron) => {
+				const { limpios, pendientes } = resultadoDelIntento(intentados, fallaron);
+				[...limpios, ...pendientes].forEach((id) => enCurso.delete(id));
+				if (saltearon.delete(enCurso) && reintentaCon('cambian los datos')) reevaluar++;
 			});
 	}
 
