@@ -123,44 +123,55 @@
 	/** Cambia al volver la conexión: los efectos de limpieza la leen para reintentar. */
 	const conexion = enLineaReactivo();
 
+	/** Sube cuando un intento termina habiendo cambiado los datos (o la conexión) durante él: los efectos de limpieza la leen y se reevalúan. */
+	let reevaluar = $state(0);
+	/** Conjuntos `…EnLimpieza` cuyo efecto corrió mientras había un intento en curso, saltando elementos. */
+	const saltearon = new WeakSet<Set<string>>();
+
 	/**
 	 * §7: intenta los elementos sin intento en curso; al terminar (falle o no) los saca
 	 * del conjunto, así el efecto los reintenta al cambiar los datos o volver la conexión.
+	 * Si el efecto corrió durante el intento (cambiaron los datos) y saltó elementos, al terminar
+	 * se reevalúa una vez; un fallo sin cambio de datos ni de conexión no reintenta (sin bucle).
 	 */
 	function limpiar<T>(elementos: T[], clave: (elemento: T) => string, enCurso: Set<string>, intentar: (lote: T[]) => Promise<unknown>) {
 		const ids = new Set(elementosAIntentar(elementos.map(clave), enCurso));
 		const lote = elementos.filter((elemento) => ids.has(clave(elemento)));
+		if (lote.length < elementos.length) saltearon.add(enCurso);
 		if (lote.length === 0) return;
 		ids.forEach((id) => enCurso.add(id));
 		void intentar(lote)
 			.catch(() => undefined)
-			.finally(() => ids.forEach((id) => enCurso.delete(id)));
+			.finally(() => {
+				ids.forEach((id) => enCurso.delete(id));
+				if (saltearon.delete(enCurso)) reevaluar++;
+			});
 	}
 
 	$effect(() => {
 		if (!tareasCargadas || !completadosCargados) return;
-		void conexion.valor;
+		void [conexion.valor, reevaluar];
 		limpiar(completadosHuerfanos(tareas, completados), ({ id }) => id, huerfanosEnLimpieza, (lote) => limpiarHuerfanos(uid, lote));
 	});
 
 	// Spec §7: las anotaciones huérfanas se ignoran y se limpian.
 	$effect(() => {
 		if (!tareasCargadas || !anotacionesCargadas) return;
-		void conexion.valor;
+		void [conexion.valor, reevaluar];
 		limpiar(anotacionesHuerfanas(tareas, anotaciones), ({ id }) => id, anotacionesEnLimpieza, (lote) => limpiarAnotacionesHuerfanas(uid, lote));
 	});
 
 	// Spec §7: las referencias a etiquetas borradas se ignoran y se limpian.
 	$effect(() => {
 		if (!tareasCargadas || !etiquetasCargadas) return;
-		void conexion.valor;
+		void [conexion.valor, reevaluar];
 		limpiar(referenciasRotas(tareas, etiquetas), ({ tareaId }) => tareaId, referenciasEnLimpieza, (lote) => limpiarReferencias(uid, lote));
 	});
 
 	// Spec §7: las etiquetas duplicadas se fusionan al detectarlas.
 	$effect(() => {
 		if (!tareasCargadas || !etiquetasCargadas) return;
-		void conexion.valor;
+		void [conexion.valor, reevaluar];
 		const fusion = fusionDeDuplicadas(etiquetas, tareas);
 		limpiar(fusion.borradas, (id) => id, etiquetasEnFusion, (borradas) =>
 			fusionarEtiquetas(uid, { borradas, referencias: fusion.referencias.filter(({ quitar }) => quitar.some((id) => borradas.includes(id))) })
