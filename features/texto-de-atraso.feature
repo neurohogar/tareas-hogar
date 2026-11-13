@@ -225,3 +225,21 @@ Feature: Texto de atraso
     Examples:
       | limite     | cada | unidad | completada          | ahora               | orden        | texto_pagar                       | texto_regar                             |
       | 2026-11-10 | 4    | dias   | 2026-11-04T09:00:00 | 2026-11-13T10:00:00 | Pagar, Regar | Tocaba el martes 10 · hace 3 días | Tocaba el domingo 8 09:00 · hace 5 días |
+
+  # Texto de atraso 12
+  # Menos de un minuto de pasado: «ahora», no «hace 0 minutos» (§6.1, S16).
+  # Con la ventana más corta (un minuto) la tarea se atrasa al cierre y ya
+  # pasaron 60 segundos desde A, así que el borde alcanzable es el minuto
+  # exacto (fila 1): «hace 1 minuto», singular; 59 segundos más siguen siendo
+  # ese minuto (fila 2) y a los 60 pasa a «hace 2 minutos» (fila 3).
+  Scenario Outline: Texto de atraso 12
+    Given una tarea periódica semanal los <dias> creada el <creada>
+    And la tarea se puede completar de <desde> a <hasta>
+    When consulto Pendientes el <ahora>
+    Then la fila de la tarea muestra el texto <texto>
+
+    Examples:
+      | dias    | creada              | desde | hasta | ahora               | texto                              |
+      | viernes | 2026-11-12T08:00:00 | 10:00 | 10:01 | 2026-11-13T10:01:00 | Tocaba hoy 10:00 · hace 1 minuto   |
+      | viernes | 2026-11-12T08:00:00 | 10:00 | 10:01 | 2026-11-13T10:01:59 | Tocaba hoy 10:00 · hace 1 minuto   |
+      | viernes | 2026-11-12T08:00:00 | 10:00 | 10:01 | 2026-11-13T10:02:00 | Tocaba hoy 10:00 · hace 2 minutos  |

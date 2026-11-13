@@ -41,13 +41,13 @@ Primera feature de la épica E2 de `docs/v3/plan.md` («Estado sin culpa y regla
 
 ## Artefactos
 
-- Gherkin: `features/texto-de-atraso.feature` (S1, S4, S5, S6, S8, S9, S10, S11, S12, S13), `features/texto-de-regreso.feature` (S2, S4, S7, S8, S9, S10, S11, S12), `features/fila-sin-texto-de-fecha.feature` (S1, S3, S15), `features/aviso-con-regreso.feature` (S14); S13 (estado y orden no cambian) lo cubre el escenario 11 de texto-de-atraso, y S12 (se actualiza solo) las filas con otro ahora y `qa/estado-sin-culpa.md`
+- Gherkin: `features/texto-de-atraso.feature` (S1, S4, S5, S6, S8, S9, S10, S11, S12, S13, S16), `features/texto-de-regreso.feature` (S2, S4, S7, S8, S9, S10, S11, S12), `features/fila-sin-texto-de-fecha.feature` (S1, S3, S15), `features/aviso-con-regreso.feature` (S14); S13 (estado y orden no cambian) lo cubre el escenario 11 de texto-de-atraso, y S16 (el texto «ahora») lo cubre el escenario 12 de texto-de-atraso en su borde alcanzable (una atrasada lleva al menos un minuto de atraso, porque la ventana más corta dura un minuto y la relativa se atrasa un intervalo después de V; 0 y 59 segundos de pasado no se alcanzan por estados y los cubren los unit tests del core), y S12 (se actualiza solo) las filas con otro ahora y `qa/estado-sin-culpa.md`
 - QA: `qa/estado-sin-culpa.md`
 
 ## core
 
 - **Puede editar**: `src/lib/core/texto-de-fecha*.ts` (archivo nuevo: el texto «Tocaba …»/«Vuelve …», la fecha y la distancia, y los instantes de «Tocaba» y de «Vuelve»), `src/lib/core/*.test.ts` (todos los tests del core: un cambio de tipo exportado puede tocarlos), `src/lib/core/pendientes.ts`, `src/lib/core/aviso.ts`, `src/lib/core/urgencia.ts`, `src/lib/core/estado-con-horario.ts`, `src/lib/core/plazos-con-horario.ts`, `src/lib/core/estado-periodica-relativa.ts`, `src/lib/core/estado-periodica-calendario.ts`, `src/lib/core/estado-de-tarea.ts`, `src/lib/core/fechas-en-texto.ts`, `src/lib/core/dias.ts`
-- **Reglas**: S1–S14 (S15 ya está implementado: la fila pausada no suma texto de fecha, y S3 lo exige)
+- **Reglas**: S1–S14 y S16 («ahora» a menos de un minuto en el pasado, con hoy/ayer/mañana y hora; lo futuro nunca «en 0 minutos») (S15 ya está implementado: la fila pausada no suma texto de fecha, y S3 lo exige)
 - **Reusa**:
   - `clasificarEnPendientes` (`completada.ts`) y `estadoDeTarea`/`esperaPorPosposicion` (`estado-de-tarea.ts`) siguen siendo el único punto de entrada del estado: el texto se deriva del estado que ya dan, no lo recalcula (S13).
   - `instanteDeUrgencia` (`urgencia.ts`) es el instante con el que se ordena una `en espera` (S7): el «Vuelve …» usa el mismo, salvo con dos causas (el más tarde de los dos, `hasta` de la posposición contra V o A). El de «Tocaba» (S5) es otro: para una atrasada, `instanteDeUrgencia` da desde cuándo está atrasada (el atraso, p. ej. C o V + intervalo), no desde cuándo toca; hace falta A, V, el día de N o el día de `fechaLimite`.
@@ -68,7 +68,7 @@ Primera feature de la épica E2 de `docs/v3/plan.md` («Estado sin culpa y regla
   - `el aviso del completado muestra el regreso <texto>`: el aviso consultado nombra la tarea y su texto de regreso es `<texto>`
   - `el aviso del completado no muestra regreso`: el aviso consultado no lleva texto de regreso
   - Se reusan sin cambios: `Mostrar completadas está encendido`, `Mostrar pausadas está encendido`, `consulto Pendientes el <ahora>`, `consulto el aviso el <ahora>`, `completo la tarea <titulo> el <momento>`, `la tarea fue pospuesta con la opción <opcion> el <momento>`, `la tarea fue pausada`, `la tarea [<titulo>] fue completada el <momento>`, `la tarea tiene un completado del <momento> que cubre el <momento>` y los de crear tareas y horario.
-- **Notas**: el oráculo (texto de fecha y distancia, desde `docs/spec.md` §6.1, independiente del core) entra en el Then `muestra el texto`/`muestra el regreso`: cada regla de §6.1 nueva (fecha, distancia, instante de «Tocaba» y de «Vuelve») se agrega al oráculo; un filtrado se justifica con la regla del spec. Los títulos de los escenarios con dos tareas son `Pagar` y `Regar`.
+- **Notas**: el oráculo (texto de fecha y distancia, desde `docs/spec.md` §6.1, independiente del core) entra en el Then `muestra el texto`/`muestra el regreso`: cada regla de §6.1 nueva (la distancia «ahora» de S16, fecha, distancia, instante de «Tocaba» y de «Vuelve») se agrega al oráculo; un filtrado se justifica con la regla del spec. Los títulos de los escenarios con dos tareas son `Pagar` y `Regar`.
 - **Gate**: `node scripts/gate.ts acceptance`
 
 ## ui
