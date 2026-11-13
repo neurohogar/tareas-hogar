@@ -26,11 +26,35 @@ Dos arreglos a la feature `anotacion` ya terminada: la app reintenta las cuatro 
 
 ## Artefactos
 
+- Gherkin: `features/reintento-de-limpiezas.feature` (S1, S2, S3, S4, S5, S6, S7); QA-only (en el feature lo anota su cabecera): S4, S5, S6, S7
+- QA: `qa/reintento-y-aviso-de-copia.md`
+
 ## core
+
+- **Puede editar**: `src/lib/core/limpiezas*.ts` (archivos nuevos: qué elementos de una limpieza se intentan, cuáles quedaron por reintentar y cuándo se reintenta), `src/lib/core/*.test.ts` (todos los tests del core)
+- **Reglas**: S1, S2, S3 (S4: el core no devuelve nada que la UI pueda mostrar como aviso o contador de pendientes)
+- **Reusa**: `completadosHuerfanos` y `anotacionesHuerfanas` (`borrado.ts`), `referenciasRotas` (`borrado-de-etiqueta.ts`) y `fusionDeDuplicadas` (`fusion-de-etiquetas.ts`) siguen siendo quienes detectan los elementos por limpiar; no se modifican sus firmas.
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate core`
 
 ## acceptance
 
+- **Puede editar**: `acceptance/steps/limpiezas*.ts` (archivos nuevos), `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `scripts/check-arch.ts` (la lista manual de oráculos, si se agrega uno), `docs/pipeline/pendientes.txt`
+- **Features a conectar**: `features/reintento-de-limpiezas.feature`
+- **Pasos nuevos**:
+  - `hay por limpiar <elementos> de <limpieza>` (`<limpieza>`: completados huérfanos, anotaciones huérfanas, referencias a etiquetas borradas o etiquetas duplicadas; `<elementos>`: ids separados por ", ")
+  - `falla el intento de limpiar <fallan>` y `deja de fallar el intento de limpiar <fallan>` (`<fallan>`: ids separados por ", "; todos los ids es "no hay conexión")
+  - `la app intenta las limpiezas` y `la app intentó las limpiezas`
+  - `sucede que <suceso>` (`vuelve la conexión` o `cambian los datos`) y `pasan <minutos> minutos sin que suceda nada más`
+  - `quedan limpios <limpios>` y `quedan por limpiar <pendientes>` (`ninguno` es la lista vacía)
+- **Notas**: el oráculo de `Then quedan limpios/quedan por limpiar` se escribe desde §7: se limpia todo elemento cuyo intento no falla, quedan por limpiar solo los que fallaron, y sin conexión nueva ni cambio de datos no hay nuevo intento (el tiempo no cuenta). Los pasos de las cuatro limpiezas comparten handler: la limpieza solo nombra de qué elementos se trata.
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate acceptance`
+
 ## ui
+
+- **Puede editar**: `src/lib/ui/Sesion.svelte`, `src/lib/ui/Anotaciones.svelte`, `src/lib/ui/AnotarConfirmacion.svelte`, `src/lib/ui/en-linea.svelte.ts`, `src/lib/adapters/repositorio.ts`, `src/lib/adapters/anotaciones.ts`, `src/lib/adapters/conexion.ts`, `src/lib/adapters/portapapeles.ts`
+- **Comportamiento visible**: `qa/reintento-y-aviso-de-copia.md`
+- **Notas**: hoy `Sesion.svelte` agrega los ids a `huerfanosEnLimpieza`, `anotacionesEnLimpieza`, `referenciasEnLimpieza` y `etiquetasEnFusion` y no los saca nunca, y los adapters `limpiarHuerfanos`, `limpiarAnotacionesHuerfanas` y `limpiarReferencias` cortan el lote (`return`) al primer fallo; `copiar()` en `Anotaciones.svelte` vuelve sin mostrar nada si `copiarAlPortapapeles` devuelve `false`. «No se pudo copiar» y «Anotaciones copiadas» comparten el mismo componente de aviso (un solo texto a la vez).
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate ui`
 
 ## cleaner · architect · hardener · qa
 
