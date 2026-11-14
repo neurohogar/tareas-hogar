@@ -40,5 +40,5 @@ export function pasoConTope(tarea: ConPasos, paso: number): number {
 
 /** Spec §4.1 (Pasos: Avance): el paso en que va la tarea; sin pasoActual, el 1; si quedan menos pasos, el último. */
 export function pasoEnQueVa(tarea: ConPasos & Pick<Tarea, 'pasoActual'>): number {
-	return pasoConTope(tarea, tarea.pasoActual ?? 1);
+	return tarea.pasoActual === undefined ? 1 : pasoConTope(tarea, tarea.pasoActual);
 }

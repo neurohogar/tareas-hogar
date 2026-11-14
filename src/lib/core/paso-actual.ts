@@ -22,8 +22,9 @@ const lineaVisible = ({ tipo }: Pick<Estado, 'tipo'>) => tipo === 'pendiente' ||
 
 /** Sin el campo es el paso 1 (§4.1): ir al 1 lo quita; si ya va en ese paso guardado, no se escribe nada. */
 function cambioAPaso({ pasoActual }: Tarea, paso: number): CambioDeTarea {
-	const nuevo = paso === 1 ? undefined : paso;
-	return pasoActual === nuevo ? {} : { pasoActual: nuevo ?? null };
+	const alUno = paso === 1;
+	if (alUno ? pasoActual === undefined : pasoActual === paso) return {};
+	return { pasoActual: alUno ? null : paso };
 }
 
 /** Spec §6.1: «Primer paso: …» si va en el paso 1, «Paso: …» si va en otro, completo; solo en filas pendiente o atrasada. */
