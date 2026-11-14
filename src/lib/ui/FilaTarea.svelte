@@ -4,6 +4,7 @@
 	import { textoDeEsfuerzo } from '#lib/core/esfuerzo.ts';
 	import { textoDelHorario } from '#lib/core/horario.ts';
 	import { nombreDeTarea } from '#lib/core/nombre-de-tarea.ts';
+	import type { BotonesDePaso } from '#lib/core/paso-actual.ts';
 	import type { Tarea } from '#lib/core/tarea.ts';
 	import ChipEtiqueta from './ChipEtiqueta.svelte';
 
@@ -13,9 +14,12 @@
 		completada,
 		textoDeFecha,
 		textoDePrimerPaso,
+		botonesDePaso,
 		habilitado,
 		etiquetas,
 		alTocarCheckbox,
+		alHecho,
+		alPasoAnterior,
 		alAbrir
 	}: {
 		tarea: Tarea;
@@ -26,11 +30,15 @@
 		textoDeFecha?: string;
 		/** «Primer paso: …» (§6.1), ya armado por el core; sin él, la fila no lleva esa línea. */
 		textoDePrimerPaso?: string;
+		/** «Paso anterior» y «Hecho» (§6.1), según el core; sin ellos, la línea no lleva botones. */
+		botonesDePaso?: BotonesDePaso;
 		/** Spec §6.1 y §5.5: deshabilitado si tocarlo completaría fuera de la ventana del horario. */
 		habilitado: boolean;
 		/** Las etiquetas de la tarea, ya en orden (§4.3). */
 		etiquetas: Etiqueta[];
 		alTocarCheckbox: () => void;
+		alHecho: () => void;
+		alPasoAnterior: () => void;
 		alAbrir: () => void;
 	} = $props();
 
@@ -52,7 +60,15 @@
 		<!-- El botón cubre toda la fila fuera del checkbox: tocarla abre la edición. -->
 		<button type="button" class="titulo" onclick={alAbrir}>{nombre}</button>
 		{#if textoDePrimerPaso}
-			<p class="primer-paso">{textoDePrimerPaso}</p>
+			<div class="linea-paso">
+				<p class="primer-paso">{textoDePrimerPaso}</p>
+				{#if botonesDePaso}
+					{#if botonesDePaso.pasoAnterior}
+						<button type="button" class="boton-paso" onclick={alPasoAnterior}>Paso anterior</button>
+					{/if}
+					<button type="button" class="boton-paso" disabled={!botonesDePaso.hechoHabilitado} onclick={alHecho}>Hecho</button>
+				{/if}
+			</div>
 		{/if}
 		{#if etiquetas.length > 0}
 			<!-- Debajo del botón de la fila: tocar un chip es tocar la fila, no filtra. -->
@@ -103,12 +119,42 @@
 
 
 	/* Línea propia, entera y en varias líneas si hace falta; no intercepta el toque de la fila. */
-	.primer-paso {
+	.linea-paso {
 		flex-basis: 100%;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.25rem 0.75rem;
+		font-size: 0.8rem;
+		color: var(--texto-suave);
+	}
+
+	.primer-paso {
 		margin: 0;
 		font-size: 0.8rem;
 		color: var(--texto-suave);
 		overflow-wrap: anywhere;
+	}
+
+	/* Por encima del ::after del título, que cubre la fila: los botones no abren el panel. */
+	.boton-paso {
+		position: relative;
+		z-index: 1;
+		min-height: 36px;
+		padding: 0 0.6rem;
+		border: 1px solid var(--borde-control);
+		border-radius: 0.4rem;
+		background: transparent;
+		color: inherit;
+		font: inherit;
+		font-weight: 400;
+		text-decoration: none;
+		cursor: pointer;
+	}
+
+	.boton-paso:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 
 	.esfuerzo {

@@ -38,6 +38,10 @@ export interface Sesion {
 	alternarSoloRapidas(): void;
 	/** Tocar el checkbox de la fila (§6.1): completa la tarea (con el aviso) o borra su último completado. */
 	tocarCheckbox(tarea: Tarea): void;
+	/** «Hecho» de la fila (§6.1): pasa al paso siguiente o, en el último, completa la tarea como el checkbox. */
+	tocarHecho(tarea: Tarea): void;
+	/** «Paso anterior» de la fila (§6.1). */
+	pasoAnterior(tarea: Tarea): void;
 	/** Crea una tarea con el formulario del panel; si algo es inválido devuelve los errores. */
 	crear(formulario: FormularioDelPanel): ErroresDeCreacion | undefined;
 	/** Abre el panel Editar tarea. */

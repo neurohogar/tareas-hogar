@@ -4,6 +4,7 @@
 	import { OPCIONES_DE_ESFUERZO } from '#lib/core/esfuerzo.ts';
 	import type { PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-en-pestanas.ts';
 	import type { Esfuerzo } from '#lib/core/tarea.ts';
+	import { tick } from 'svelte';
 	import CampoEtiquetas from './CampoEtiquetas.svelte';
 	import Icono from './iconos/Icono.svelte';
 	import MarcoDeSeccion from './MarcoDeSeccion.svelte';
@@ -20,6 +21,7 @@
 		limpiar,
 		emoji = $bindable(),
 		esfuerzo = $bindable(),
+		pasos = $bindable(),
 		etiquetas = $bindable(),
 		errorDeEtiquetas = $bindable(),
 		sinConfirmar = $bindable(),
@@ -37,6 +39,8 @@
 		limpiar: (campo: keyof ErroresDeCreacion) => void;
 		emoji: string;
 		esfuerzo: Esfuerzo | '';
+		/** Los pasos más (2, 3…), uno por campo (§6.2). */
+		pasos: string[];
 		etiquetas: string[];
 		errorDeEtiquetas: string | undefined;
 		/** El texto escrito en Etiquetas que todavía no se confirmó. */
@@ -45,6 +49,12 @@
 	} = $props();
 
 	const sesion = laSesion();
+
+	async function agregarPaso() {
+		pasos = [...pasos, ''];
+		await tick();
+		document.getElementById(`campo-paso-${pasos.length + 1}`)?.focus();
+	}
 </script>
 
 <MarcoDeSeccion nombre="Tarea" {presentacion} {abierta}>
@@ -89,6 +99,17 @@
 		<input id="campo-primer-paso" name="primerPaso" autocomplete="off" value={valores?.primerPaso ?? ''} />
 	</div>
 
+	{#each pasos as _paso, indice (indice)}
+		<div class="campo-formulario">
+			<label for={`campo-paso-${indice + 2}`}>Paso {indice + 2}</label>
+			<div class="paso">
+				<input id={`campo-paso-${indice + 2}`} autocomplete="off" bind:value={pasos[indice]} />
+				<button type="button" class="texto" onclick={() => (pasos = pasos.filter((_, i) => i !== indice))}>Quitar</button>
+			</div>
+		</div>
+	{/each}
+	<button type="button" class="texto" onclick={agregarPaso}>Agregar paso</button>
+
 	<div class="campo-formulario">
 		<label for="campo-nota">Nota</label>
 		<textarea id="campo-nota" name="nota" rows="2" value={valores?.nota ?? ''}></textarea>
@@ -118,6 +139,17 @@
 		flex: 1;
 		min-width: 0;
 		font-size: 1.25rem;
+	}
+
+	.paso {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+
+	.paso input {
+		flex: 1;
+		min-width: 0;
 	}
 
 	.emoji-boton {

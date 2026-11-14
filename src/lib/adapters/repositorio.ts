@@ -52,6 +52,10 @@ interface TareaDoc {
 	nota?: string;
 	/** Sin el campo, la tarea no tiene primer paso. */
 	primerPaso?: string;
+	/** Un solo campo (§7), los pasos 2 en adelante; sin él, no hay más pasos. */
+	pasos?: string[];
+	/** Otro campo, independiente de pasos (§7); sin él, la tarea va en el paso 1. */
+	pasoActual?: number;
 	/** Sin el campo, la tarea está sin estimar. */
 	esfuerzo?: Esfuerzo;
 	tipo: Tarea['tipo'];
@@ -97,6 +101,8 @@ interface CompletadoDoc {
 	completadoEn: Timestamp;
 	/** Fecha AAAA-MM-DD, o fecha y hora AAAA-MM-DDTHH:MM con horario (§4.4). */
 	ocurrenciaCubierta?: string;
+	/** Paso en que iba la tarea al completarla; solo en tareas de dos pasos o más (§4.4). */
+	pasoAlCompletar?: number;
 }
 
 const tareaRef = (uid: string, tareaId: string) => doc(db, 'users', uid, 'tareas', tareaId);
@@ -117,6 +123,8 @@ function tareaADoc(tarea: Tarea): TareaDoc {
 		...(tarea.emoji !== undefined && { emoji: tarea.emoji }),
 		...(tarea.nota !== undefined && { nota: tarea.nota }),
 		...(tarea.primerPaso !== undefined && { primerPaso: tarea.primerPaso }),
+		...(tarea.pasos && { pasos: [...tarea.pasos] }),
+		...(tarea.pasoActual !== undefined && { pasoActual: tarea.pasoActual }),
 		...(tarea.esfuerzo && { esfuerzo: tarea.esfuerzo }),
 		...(tarea.etiquetas && { etiquetas: [...tarea.etiquetas] }),
 		...(tarea.horario && { horario: copiarHorario(tarea.horario) }),
@@ -134,6 +142,8 @@ function tareaDesde(snapshot: QueryDocumentSnapshot<DocumentData>): Tarea {
 		id: snapshot.id,
 		titulo: datos.titulo,
 		...camposDeTexto(datos),
+		...(datos.pasos && { pasos: [...datos.pasos] }),
+		...(datos.pasoActual !== undefined && { pasoActual: datos.pasoActual }),
 		...(datos.esfuerzo && { esfuerzo: datos.esfuerzo }),
 		tipo: datos.tipo,
 		creadaEn: datos.creadaEn.toDate(),
@@ -153,13 +163,16 @@ function etiquetaDesde(snapshot: QueryDocumentSnapshot<DocumentData>): Etiqueta 
 }
 
 /** Los campos del cambio como los escribe updateDoc: null quita el campo. */
-function camposDelCambio({ titulo, emoji, nota, primerPaso, esfuerzo, tipo, fechaLimite, recurrencia, horario, etiquetas, pausada, reanudadaEn, pospuesta }: CambioDeTarea): DocumentData {
+function camposDelCambio({ titulo, emoji, nota, primerPaso, pasos, pasoActual, esfuerzo, tipo, fechaLimite, recurrencia, horario, etiquetas, pausada, reanudadaEn, pospuesta }: CambioDeTarea): DocumentData {
 	const campos: DocumentData = {};
 	if (etiquetas !== undefined) campos.etiquetas = [...etiquetas];
 	if (titulo !== undefined) campos.titulo = titulo;
 	if (emoji !== undefined) campos.emoji = emoji === null ? deleteField() : emoji;
 	if (nota !== undefined) campos.nota = nota === null ? deleteField() : nota;
 	if (primerPaso !== undefined) campos.primerPaso = primerPaso === null ? deleteField() : primerPaso;
+	// pasos se reemplaza entero y pasoActual es otro campo (§7); null quita el campo.
+	if (pasos !== undefined) campos.pasos = pasos === null ? deleteField() : [...pasos];
+	if (pasoActual !== undefined) campos.pasoActual = pasoActual === null ? deleteField() : pasoActual;
 	if (esfuerzo !== undefined) campos.esfuerzo = esfuerzo === null ? deleteField() : esfuerzo;
 	if (tipo !== undefined) campos.tipo = tipo;
 	if (fechaLimite !== undefined) campos.fechaLimite = fechaLimite === null ? deleteField() : diaIso(fechaLimite);
@@ -182,6 +195,7 @@ function completadoADoc(completado: Completado): CompletadoDoc {
 		completadoEn: Timestamp.fromDate(completado.completadoEn)
 	};
 	if (completado.ocurrenciaCubierta) documento.ocurrenciaCubierta = ocurrenciaEnTexto(completado.ocurrenciaCubierta);
+	if (completado.pasoAlCompletar !== undefined) documento.pasoAlCompletar = completado.pasoAlCompletar;
 	return documento;
 }
 
@@ -189,6 +203,7 @@ function completadoDesde(snapshot: QueryDocumentSnapshot<DocumentData>): Complet
 	const datos = snapshot.data() as CompletadoDoc;
 	const completado: Completado = { id: snapshot.id, tareaId: datos.tareaId, completadoEn: datos.completadoEn.toDate() };
 	if (datos.ocurrenciaCubierta) completado.ocurrenciaCubierta = ocurrenciaDesdeTexto(datos.ocurrenciaCubierta);
+	if (datos.pasoAlCompletar !== undefined) completado.pasoAlCompletar = datos.pasoAlCompletar;
 	return completado;
 }
 

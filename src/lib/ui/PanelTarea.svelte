@@ -100,6 +100,8 @@
 	let esfuerzo = $state<Esfuerzo | ''>(untrack(() => inicial?.esfuerzo ?? ''));
 	/** "Solo en un horario": apagado, la tarea no tiene horario (§6.2). */
 	let conHorario = $state(valores?.horario !== undefined);
+	/** Los pasos más (2, 3…), uno por campo; Agregar paso suma uno vacío (§6.2). */
+	let pasos = $state<string[]>(untrack(() => [...(inicial?.pasos ?? [])]));
 	/** Las filas Desde/Hasta: al menos una; Agregar horario suma una vacía (§6.2). */
 	let ventanas = $state<Ventana[]>(valores?.horario?.map(({ desde = '', hasta = '' }) => ({ desde, hasta })) ?? [{ desde: '', hasta: '' }]);
 
@@ -131,7 +133,7 @@
 		const nota = (formulario.elements.namedItem('nota') as HTMLTextAreaElement).value;
 		const primerPaso = String(campos.get('primerPaso') ?? '');
 		const horario = conHorario ? ventanas.map((ventana) => ({ ...ventana })) : undefined;
-		const comunes = { titulo: String(campos.get('titulo') ?? ''), emoji, nota, primerPaso, horario, ...(esfuerzo && { esfuerzo }) };
+		const comunes = { titulo: String(campos.get('titulo') ?? ''), emoji, nota, primerPaso, pasos: [...pasos], horario, ...(esfuerzo && { esfuerzo }) };
 		if (repeticion === 'puntual') {
 			const campoFecha = formulario.elements.namedItem('fechaLimite') as HTMLInputElement;
 			return { forma: 'puntual', ...comunes, fechaLimite: fechaLimiteDe(campoFecha) };
@@ -327,6 +329,7 @@
 				{limpiar}
 				bind:emoji
 				bind:esfuerzo
+				bind:pasos
 				bind:etiquetas
 				bind:errorDeEtiquetas
 				bind:sinConfirmar

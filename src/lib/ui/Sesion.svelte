@@ -31,6 +31,7 @@
 	import { borradoDeEtiqueta, referenciasRotas } from '#lib/core/borrado-de-etiqueta.ts';
 	import { accionDelCheckbox } from '#lib/core/checkbox.ts';
 	import { completar } from '#lib/core/completados.ts';
+	import { accionDeHecho, cambioAlBorrarCompletado, cambioAlCompletar, cambioDePasoAnterior } from '#lib/core/paso-actual.ts';
 	import { accionDePausa } from '#lib/core/pausa.ts';
 	import { accionDePosponer, textoDePosposicion } from '#lib/core/posposicion-en-panel.ts';
 	import { datosDeTarea } from '#lib/core/datos-de-tarea.ts';
@@ -192,19 +193,34 @@
 		const completado = completar(tarea, completados, nuevoId(), ahora);
 		aviso = avisoAlCompletar(tarea, completado, completados);
 		void guardarCompletado(uid, completado);
+		void guardarCambio(uid, tarea.id, cambioAlCompletar(tarea), []);
+	}
+
+	/** Borra el completado y devuelve el paso de la tarea que dice el core (§5.4, Pasos: Deshacer). */
+	function borrarYDevolverPaso(completado: Completado) {
+		const tarea = tareas.find(({ id }) => id === completado.tareaId);
+		void borrarCompletado(uid, completado.id);
+		if (tarea) void guardarCambio(uid, tarea.id, cambioAlBorrarCompletado(tarea, completados, completado), []);
+	}
+
+	/** «Hecho» de la fila (§6.1): pasa al paso siguiente o, en el último, completa como el checkbox. */
+	function tocarHecho(tarea: Tarea) {
+		const accion = accionDeHecho(tarea, completados, horaActual());
+		if (accion.tipo === 'avanzar') void guardarCambio(uid, tarea.id, accion.cambio, []);
+		else if (accion.tipo === 'completar') completarTarea(tarea);
 	}
 
 	/** Sin aviso al borrar: el checkbox ya deshace (§6.1). */
 	function tocarCheckbox(tarea: Tarea) {
 		const accion = accionDelCheckbox(tarea, completados, horaActual());
 		if (accion.tipo === 'completar') completarTarea(tarea);
-		else if (accion.tipo === 'borrar') void borrarCompletado(uid, accion.completado.id);
+		else if (accion.tipo === 'borrar') borrarYDevolverPaso(accion.completado);
 	}
 
 	function deshacer() {
 		const completado = completadoADeshacer(aviso, horaActual());
 		aviso = undefined;
-		if (completado) void borrarCompletado(uid, completado.id);
+		if (completado) borrarYDevolverPaso(completado);
 	}
 
 	/** Las etiquetas de ahora y cómo nombrar las nuevas, para guardar el panel. */
@@ -305,9 +321,11 @@
 		recolorearEtiqueta: (etiqueta, color) => void cambiarEtiqueta(uid, etiqueta.id, { color }),
 		borrarEtiqueta: (etiqueta) => void borrarEtiqueta(uid, borradoDeEtiqueta(etiqueta.id, tareas)),
 		tocarCheckbox,
+		tocarHecho,
+		pasoAnterior: (tarea) => void guardarCambio(uid, tarea.id, cambioDePasoAnterior(tarea), []),
 		crear,
 		abrir: (tarea) => (editada = tarea),
-		borrarCompletado: (completado) => void borrarCompletado(uid, completado.id)
+		borrarCompletado: borrarYDevolverPaso
 	});
 </script>
 
