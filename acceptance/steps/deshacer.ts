@@ -2,6 +2,8 @@
 // desde otro dispositivo.
 import { expect } from 'vitest';
 import { avisoVisible, completadoADeshacer } from '../../src/lib/core/aviso';
+import { aplicarCambio } from '../../src/lib/core/documento-de-tarea';
+import { cambioAlBorrarCompletado } from '../../src/lib/core/paso-actual';
 import type { Completado } from '../../src/lib/core/tarea';
 import { P, TITULO, fechaHora } from './valores';
 import {
@@ -10,6 +12,7 @@ import {
 	laTareaTitulada,
 	loQueHuboGuardado,
 	recordarAntesDeMiCambio,
+	tareasDe,
 	type StepDefinition,
 	type World
 } from './world';
@@ -22,9 +25,15 @@ function elCompletadoDel(world: World, momento: string): Completado {
 	return delMomento[0];
 }
 
-/** Como deleteDoc: borrar un completado que ya no existe no hace nada. */
-function borrarCompletado(world: World, completado: Completado | undefined): void {
-	if (completado) borrarGuardado(world, [], [completado.id]);
+/**
+ * Como deleteDoc: borrar un completado que ya no existe no hace nada. Si era el más reciente de una
+ * tarea de dos pasos o más, la tarea vuelve al paso en que iba al completarla (§4.1, Pasos: Deshacer).
+ */
+export function borrarCompletado(world: World, completado: Completado | undefined): void {
+	if (!completado) return;
+	const tarea = tareasDe(world).find(({ id }) => id === completado.tareaId);
+	if (tarea) world.documentos = aplicarCambio(world.documentos, tarea.id, cambioAlBorrarCompletado(tarea, world.completados, completado));
+	borrarGuardado(world, [], [completado.id]);
 }
 
 function elAvisoConsultado(world: World) {
@@ -65,7 +74,10 @@ export const deshacerSteps: StepDefinition[] = [
 			const tarea = laTareaTitulada(world, titulo);
 			const aviso = elAvisoConsultado(world);
 			expect(aviso?.nombre).toBe(titulo);
-			expect(aviso?.completado).toStrictEqual({ id: expect.any(String), tareaId: tarea.id, completadoEn: fechaHora(momento) });
+			// El paso en que iba la tarea (§4.4) lo afirman los pasos de los pasos; acá, ningún otro campo.
+			const { pasoAlCompletar, ...resto } = aviso?.completado ?? {};
+			expect(resto).toStrictEqual({ id: expect.any(String), tareaId: tarea.id, completadoEn: fechaHora(momento) });
+			if (pasoAlCompletar !== undefined) expect(pasoAlCompletar).toBeGreaterThanOrEqual(1);
 			expect(world.completados).toContainEqual(aviso?.completado);
 		}
 	},

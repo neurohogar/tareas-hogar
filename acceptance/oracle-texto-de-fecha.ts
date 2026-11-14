@@ -169,7 +169,11 @@ const DECLARA_UNA_TAREA = /^una tarea /;
 const TITULO_EN_EL_PASO = /\b(tarea(?: puntual| periódica (?:relativa|semanal|mensual))?) ([A-ZÁÉÍÓÚÑ]\w*)\b/u;
 const tituloDelPaso = (texto: string) => TITULO_EN_EL_PASO.exec(texto)?.[2];
 
+/** Los pasos de la tarea (§4.1, Pasos) los modela el oráculo de edición, que sigue el avance y los completados. */
+const PASO_DE_LOS_PASOS = /^(?:los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|vacío el paso |la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está )/;
+
 export const esEscenarioDeTextoDeFecha = (textos: string[]) =>
+	!textos.some((texto) => PASO_DE_LOS_PASOS.test(texto)) &&
 	!(textos.some((texto) => THEN_DE_PRIMER_PASO.test(texto)) && textos.some((texto) => PASO_DE_EDICION.test(texto))) &&
 	textos.some((texto) => THEN_DE_FILA.test(texto) || THEN_DE_PRIMER_PASO.test(texto) || THEN_DE_FILA_DE_TITULO.test(texto) || THEN_DE_AVISO.test(texto));
 

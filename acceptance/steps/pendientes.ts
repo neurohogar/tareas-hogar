@@ -11,13 +11,14 @@ import { tareasDe, type FilaConsultada, type StepDefinition, type World } from '
 function filasEn(world: World, ahora: Date): FilaConsultada[] {
 	const filas = filasDePendientes(tareasDe(world), world.completados, ahora, world.mostrarCompletadas, world.mostrarPausadas);
 	const porEtiqueta = filtrarPorEtiqueta(filas, filtroVigente(world.filtro, world.etiquetas));
-	return filtrarSoloRapidas(porEtiqueta, world.soloRapidas === true).map(({ tarea, completada, estado, textoDeFecha, textoDePrimerPaso }) => ({
+	return filtrarSoloRapidas(porEtiqueta, world.soloRapidas === true).map(({ tarea, completada, estado, textoDeFecha, textoDePrimerPaso, botonesDePaso }) => ({
 		titulo: tarea.titulo,
 		completada,
 		pausada: estado.tipo === 'pausada',
 		esfuerzo: textoDeEsfuerzo(tarea.esfuerzo),
 		textoDeFecha,
-		textoDePrimerPaso
+		textoDePrimerPaso,
+		botonesDePaso
 	}));
 }
 

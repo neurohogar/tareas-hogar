@@ -68,6 +68,10 @@ interface Documento {
 	nota?: string;
 	/** §4.1: una línea, recortada; sin el campo, sin primer paso. Un campo independiente (§7). */
 	primerPaso?: string;
+	/** §4.1 (Pasos): los pasos 2 en adelante, en orden; sin el campo, no hay más pasos. Un solo campo, se reemplaza entero (§7). */
+	pasos?: string[];
+	/** §4.1 (Pasos): el paso en que va la tarea; sin el campo, el paso 1. Otro campo independiente (§7). */
+	pasoActual?: number;
 	/** §4.1: rapida, media o larga; sin el campo, sin estimar. Un campo independiente (§7). */
 	esfuerzo?: string;
 	tipo: 'puntual' | 'periodica';
@@ -92,6 +96,8 @@ interface Completado {
 	inicioCubierto?: number;
 	/** El id que el escenario le fija ("con id c1"); sirve para desempatar en el Historial. */
 	ident?: string;
+	/** §4.4: el paso en que iba la tarea al completarla; solo en tareas de dos pasos o más. */
+	paso?: number;
 }
 
 /** El aviso del último completado de este dispositivo (§5.4): nombra la tarea como se llamaba al completarla. */
@@ -116,8 +122,11 @@ interface Mundo extends Guardado {
 	consultadoEn?: number;
 	tocadoEn?: number;
 	orden?: string;
-	/** El momento en que se consultó Pendientes (§6.1). */
+	/** El momento en que se consultó Pendientes (§6.1); sin él pero con `consultoPendientes`, en cualquier momento. */
 	pendientesEn?: number;
+	consultoPendientes?: boolean;
+	/** Por qué no se decide el orden de la última consulta de Pendientes: solo importa si un Then mira el orden. */
+	ordenIndeciso?: boolean;
 	/** El check "Mostrar completadas" (§6.1); sin él, apagado. */
 	mostrarCompletadas?: boolean;
 	nuevo?: Completado;
@@ -139,6 +148,7 @@ interface Datos {
 	emoji?: string;
 	nota?: string;
 	primerPaso?: string;
+	pasos?: string[];
 	esfuerzo?: string;
 	tipo: 'puntual' | 'periodica';
 	limite?: Date;
@@ -165,7 +175,7 @@ function claveDeRecurrencia(r: Recurrencia | undefined): string {
 const claveDeHorario = (h: Ventana[] | undefined) => (h === undefined ? '-' : h.map((v) => `${v.desde}-${v.hasta}`).join(' '));
 
 const claveDeDocumento = (d: Documento) =>
-	JSON.stringify([d.id, d.titulo, d.emoji, d.nota, d.primerPaso, d.esfuerzo, d.tipo, d.limite?.getTime(), claveDeRecurrencia(d.recurrencia), claveDeHorario(d.horario), d.creada, d.pausada, d.reanudada, d.pospuesta]);
+	JSON.stringify([d.id, d.titulo, d.emoji, d.nota, d.primerPaso, d.pasos, d.pasoActual, d.esfuerzo, d.tipo, d.limite?.getTime(), claveDeRecurrencia(d.recurrencia), claveDeHorario(d.horario), d.creada, d.pausada, d.reanudada, d.pospuesta]);
 
 const momento = (valor: string) => fecha(valor) ?? indeciso(`fecha y hora ${valor}`);
 const diaDe = (valor: string) => dia(valor) ?? indeciso(`fecha ${valor}`);
@@ -227,14 +237,25 @@ interface Escritos {
 	emoji?: string;
 	nota?: string;
 	primerPaso?: string;
+	/** Los pasos más, tal como se escribieron (§4.1, Pasos). */
+	pasos?: string[];
 }
 
-function conEscritos(datos: Datos, { emoji, nota, primerPaso }: Escritos): Datos {
+/**
+ * §4.1 (Pasos): el primer paso y los pasos más se recortan, los vacíos se descartan y los de abajo suben: si el
+ * primer paso queda vacío y el paso 2 no, el paso 2 pasa a ser el primer paso. Sin pasos más, el campo no se guarda.
+ */
+function pasosEscritos(primerPaso: string | undefined, pasos: string[] | undefined): Pick<Datos, 'primerPaso' | 'pasos'> {
+	const lista = [primerPaso ?? '', ...(pasos ?? [])].map((paso) => paso.trim()).filter((paso) => paso !== '');
+	return { primerPaso: lista[0], pasos: lista.length > 1 ? lista.slice(1) : undefined };
+}
+
+function conEscritos(datos: Datos, { emoji, nota, primerPaso, pasos }: Escritos): Datos {
 	return {
 		...datos,
 		emoji: emoji?.trim() || undefined,
 		nota: nota?.trim() || undefined,
-		primerPaso: primerPaso?.trim() || undefined,
+		...pasosEscritos(primerPaso, pasos),
 		motivos: [...motivosEmoji(emoji ?? ''), ...datos.motivos]
 	};
 }
@@ -246,7 +267,7 @@ function conValidacion(datos: Datos): Datos {
 
 /** Los campos de texto, el esfuerzo y el horario de la tarea que se edita siguen igual salvo los que la edición escribe. */
 const conservando = (base: Documento, datos: Datos, escritos: Escritos = {}): Datos => ({
-	...conEscritos(datos, { emoji: base.emoji, nota: base.nota, primerPaso: base.primerPaso, ...escritos }),
+	...conEscritos(datos, { emoji: base.emoji, nota: base.nota, primerPaso: base.primerPaso, pasos: base.pasos, ...escritos }),
 	esfuerzo: base.esfuerzo,
 	horario: base.horario,
 	ventanasEscritas: base.horario?.length ?? 0
@@ -288,7 +309,7 @@ function datosDe(texto: string, titulo: string): Datos {
 
 /** Los valores actuales de una tarea, como los carga el panel al editar. */
 function datosDeDocumento(d: Documento): Datos {
-	const campos = { titulo: d.titulo, emoji: d.emoji, nota: d.nota, primerPaso: d.primerPaso, esfuerzo: d.esfuerzo, horario: d.horario, ventanasEscritas: d.horario?.length ?? 0, motivos: [] };
+	const campos = { titulo: d.titulo, emoji: d.emoji, nota: d.nota, primerPaso: d.primerPaso, pasos: d.pasos, esfuerzo: d.esfuerzo, horario: d.horario, ventanasEscritas: d.horario?.length ?? 0, motivos: [] };
 	if (d.tipo === 'puntual') return { ...campos, tipo: 'puntual', limite: d.limite };
 	return { ...campos, tipo: 'periodica', recurrencia: d.recurrencia };
 }
@@ -333,6 +354,7 @@ function crear(m: Mundo, datos: Datos, creada: number | undefined): void {
 			emoji: datos.emoji,
 			nota: datos.nota,
 			primerPaso: datos.primerPaso,
+			pasos: datos.pasos,
 			esfuerzo: datos.esfuerzo,
 			tipo: datos.tipo,
 			limite: datos.limite,
@@ -357,6 +379,8 @@ function cambioDe(base: Documento, nuevo: Datos): Record<string, unknown> {
 	if (base.emoji !== nuevo.emoji) cambio.emoji = nuevo.emoji ?? null;
 	if (base.nota !== nuevo.nota) cambio.nota = nuevo.nota ?? null;
 	if (base.primerPaso !== nuevo.primerPaso) cambio.primerPaso = nuevo.primerPaso ?? null;
+	// §7: `pasos` es un solo campo que se reemplaza entero, solo si cambió; la edición nunca escribe `pasoActual`.
+	if (JSON.stringify(base.pasos) !== JSON.stringify(nuevo.pasos)) cambio.pasos = nuevo.pasos ?? null;
 	if (base.esfuerzo !== nuevo.esfuerzo) cambio.esfuerzo = nuevo.esfuerzo ?? null;
 	if (claveDeHorario(base.horario) !== claveDeHorario(nuevo.horario)) cambio.horario = nuevo.horario ?? null;
 	if (base.tipo !== nuevo.tipo) {
@@ -463,9 +487,30 @@ function cubiertaDelNuevo(tarea: Documento, conocidos: Completado[], en: number)
 
 function completar(m: Mundo, tarea: Documento, conocidos: Completado[], en: number, ident?: string): Completado {
 	const cubierta = cubiertaDelNuevo(tarea, conocidos, en);
-	const completado = { id: m.siguiente++, tareaId: tarea.id, en, ...cubierta, ...(ident && { ident }) };
+	// §4.4: el completado de una tarea de dos pasos o más guarda el paso en que iba.
+	const paso = variosPasos(tarea) ? { paso: pasoEnQueVa(tarea) } : {};
+	const completado = { id: m.siguiente++, tareaId: tarea.id, en, ...cubierta, ...paso, ...(ident && { ident }) };
 	m.completados = [...m.completados, completado];
 	return completado;
+}
+
+// ---- Pasos (§4.1, Pasos) ----
+
+/** El primer paso y los pasos más: la lista de pasos de la tarea. */
+const pasosDe = (d: Documento): string[] => [...(d.primerPaso === undefined ? [] : [d.primerPaso]), ...(d.pasos ?? [])];
+
+/** §4.1: dos pasos o más si tiene primer paso y al menos un paso más. */
+const variosPasos = (d: Documento) => pasosDe(d).length >= 2;
+
+/** §4.1: el paso en que va la tarea: sin el campo, el 1; si quedan menos pasos que el número, el último. */
+const pasoEnQueVa = (d: Documento) => Math.min(d.pasoActual ?? 1, Math.max(pasosDe(d).length, 1));
+
+/** Un número de paso es un entero desde 1. */
+const numeroDePaso = (valor: string) => (/^[1-9]\d*$/.test(valor) ? Number(valor) : indeciso(`paso ${valor}`));
+
+/** Escribe el paso en que va la tarea; el paso 1 es sin el campo. */
+function irAlPaso(m: Mundo, id: number, paso: number): void {
+	m.documentos = m.documentos.map((d) => (d.id === id ? { ...d, pasoActual: paso === 1 ? undefined : paso } : d));
 }
 
 /** Completo desde este dispositivo: es mi cambio (el otro dispositivo no lo ve) y abre el aviso (§5.4). */
@@ -473,6 +518,8 @@ function completoYo(m: Mundo, tarea: Documento, en: number): void {
 	m.antes = copiar(m);
 	m.nuevo = completar(m, tarea, m.completados, en);
 	m.aviso = { titulo: nombreDe(tarea), completado: m.nuevo };
+	// §4.1 (Pasos: Completar): completar, por el checkbox o por «Hecho», vuelve la tarea al paso 1.
+	irAlPaso(m, tarea.id, 1);
 }
 
 /** Spec §4.1: «emoji título», o solo el título sin emoji. */
@@ -493,8 +540,21 @@ function elCompletadoDel(m: Mundo, en: number): Completado {
 function tocoDeshacer(m: Mundo, ahora: number): void {
 	m.antes = copiar(m);
 	if (!m.aviso || !avisoSeVe(m.aviso.completado.en, ahora)) return;
-	borrarCompletados(m, [m.aviso.completado.id]);
+	deshacerCompletado(m, m.aviso.completado.id);
 	m.aviso = undefined;
+}
+
+/**
+ * Borrar un completado desde el aviso, el Historial o el checkbox (§5.4). Si era el más reciente de una tarea de dos
+ * pasos o más y guardaba su paso, la tarea vuelve a ese paso, con el tope del último (§4.1, Pasos: Deshacer).
+ */
+function deshacerCompletado(m: Mundo, id: number): void {
+	const completado = m.completados.find((c) => c.id === id);
+	const tarea = m.documentos.find((d) => d.id === completado?.tareaId);
+	if (completado?.paso !== undefined && tarea && variosPasos(tarea) && elMasReciente(completadosDe(m, tarea.id)) === completado) {
+		irAlPaso(m, tarea.id, Math.min(completado.paso, pasosDe(tarea).length));
+	}
+	borrarCompletados(m, [id]);
 }
 
 /** Lo que muestra el aviso en ese momento: la tarea y el completado que ofrece deshacer, o ninguno. */
@@ -623,7 +683,7 @@ function tocoElCheckbox(m: Mundo, en: number): void {
 	const masReciente = elMasReciente(completadosDe(m, tarea.id));
 	if (tarea.tipo === 'periodica' && masReciente.en < inicioDelDia(en).getTime()) return completoSiSePuede(m, tarea, en);
 	m.antes = copiar(m);
-	borrarCompletados(m, [masReciente.id]);
+	deshacerCompletado(m, masReciente.id);
 }
 
 // ---- Pasos ----
@@ -645,6 +705,13 @@ function guardarHorario(tarea: Documento, horas: string[]): void {
 
 /** §4.1 y §6.2: el esfuerzo elegido en el selector; "sin estimar" deja la tarea sin el campo. */
 const esfuerzoDe = (valor: string) => esfuerzoEscrito(valor) ?? indeciso(`esfuerzo ${valor}`);
+
+/** Deja la tarea ya guardada con esa lista de pasos: el primero es el primer paso. */
+function guardarPasos(tarea: Documento, texto: string): void {
+	const { primerPaso, pasos } = pasosEscritos(...(([primero, ...mas]) => [primero, mas] as const)(elementos(texto) ?? indeciso(`pasos ${texto}`)));
+	tarea.primerPaso = primerPaso;
+	tarea.pasos = pasos;
+}
 
 const CREACIONES: Paso[] = [
 	[
@@ -672,6 +739,10 @@ const CREACIONES: Paso[] = [
 	// §4.1: un primer paso ya guardado (no es un cambio de este dispositivo); se guarda recortado.
 	[/^el primer paso de la tarea es (.*)$/, (m, [p]) => void (unica(m).primerPaso = p.trim() || undefined)],
 	[/^el primer paso de la tarea (\S+) es (.*)$/, (m, [t, p]) => void (conTitulo(m, t).primerPaso = p.trim() || undefined)],
+	// §4.1 (Pasos): los pasos ya guardados (no es un cambio de este dispositivo), con el primer paso y los pasos más.
+	[/^los pasos de la tarea son (.*)$/, (m, [p]) => guardarPasos(unica(m), p)],
+	[/^los pasos de la tarea (\S+) son (.*)$/, (m, [t, p]) => guardarPasos(conTitulo(m, t), p)],
+	[/^el paso actual de la tarea es (\S+)$/, (m, [p]) => void (unica(m).pasoActual = numeroDePaso(p) === 1 ? undefined : numeroDePaso(p))],
 	[
 		/^una tarea puntual (\S+) sin fecha límite$/,
 		(m, [t]) => crear(m, datosDe('puntual sin fecha límite', t), ANTES_DEL_ESCENARIO)
@@ -723,6 +794,11 @@ function guardarCompletadoDel(m: Mundo, tarea: Documento, en: number, cubierta: 
 }
 
 const COMPLETADOS: Paso[] = [
+	// §4.4: un completado que guarda el paso en que iba la tarea, sin tocar el paso en que va hoy.
+	[
+		/^la tarea fue completada el (\S+) en el paso (\S+)$/,
+		(m, [t, paso]) => void (completar(m, unica(m), m.completados, momento(t)).paso = numeroDePaso(paso))
+	],
 	[/^la tarea fue completada el (\S+)$/, (m, [t]) => void completar(m, unica(m), m.completados, momento(t))],
 	[/^la tarea (\S+) fue completada el (\S+)$/, (m, [t, e]) => void completar(m, conTitulo(m, t), m.completados, momento(e))],
 	[/^completo la tarea el (\S+)$/, (m, [e]) => completoYo(m, unica(m), momento(e))],
@@ -773,6 +849,76 @@ const edicionesDePrimerPaso = (): Paso[] => [
 	]),
 	[/^quito el primer paso$/, (m) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), { primerPaso: '' }))],
 	[new RegExp(`^${OTRO} quita el primer paso$`), (m) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), { primerPaso: '' }))]
+];
+
+/** Cambios de un paso (§4.1, Pasos): lo escrito en su campo; vaciarlo lo descarta y los de abajo suben. */
+const CAMBIOS_DE_PASO: [string, (c: string[]) => string][] = [
+	['(.*) con espacios al inicio y al final', ([p]) => `  ${p}  `],
+	['uno de solo espacios', () => SOLO_ESPACIOS],
+	['uno de (\\S+) caracteres', ([l]) => 'x'.repeat(numero(l))],
+	['(.*)', ([p]) => p]
+];
+
+/** Los pasos de la tarea con el paso `n` escrito; uno más que la cantidad lo agrega al final. */
+function conElPaso(base: Documento, n: string, texto: string): Escritos {
+	const lista = pasosDe(base);
+	const lugar = numero(n);
+	if (!Number.isInteger(lugar) || lugar < 1 || lugar > lista.length + 1) indeciso(`paso ${n}`);
+	const nueva = lugar === lista.length + 1 ? [...lista, texto] : lista.map((paso, i) => (i === lugar - 1 ? texto : paso));
+	return { primerPaso: nueva[0], pasos: nueva.slice(1) };
+}
+
+const edicionesDePasos = (): Paso[] => [
+	...CAMBIOS_DE_PASO.flatMap(([texto, escrito]): Paso[] => [
+		[new RegExp(`^edito el paso (\\S+) a ${texto}$`), (m, [n, ...c]) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), conElPaso(base, n, escrito(c))))],
+		[new RegExp(`^${OTRO} edita el paso (\\S+) a ${texto}$`), (m, [n, ...c]) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), conElPaso(base, n, escrito(c))))]
+	]),
+	[/^vacío el paso (\S+)$/, (m, [n]) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), conElPaso(base, n, '')))],
+	[
+		/^edito la tarea con (\S+) pasos$/,
+		(m, [cantidad]) => {
+			const pasos = Array.from({ length: numero(cantidad) }, (_, i) => `Paso ${i + 1}`);
+			editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), { primerPaso: pasos[0], pasos: pasos.slice(1) }));
+		}
+	]
+];
+
+/** §4.1 (Pasos: Avance) y §6.1: «Hecho» pasa al paso siguiente; en el último completa la tarea como el checkbox. */
+function tocoHecho(m: Mundo, tarea: Documento, en: number): void {
+	m.tocadoEn ??= en;
+	const d = derivada(tarea);
+	if (!variosPasos(d) || !seVeLaLinea(estadoDeLaFila(m, d, en))) indeciso('«Hecho» no se ve');
+	const paso = pasoEnQueVa(d);
+	if (paso === pasosDe(d).length) return completoSiSePuede(m, d, en);
+	m.antes = copiar(m);
+	irAlPaso(m, d.id, paso + 1);
+}
+
+/** El otro dispositivo decide con la tarea que veía, y su cambio llega a lo guardado hoy (§7). */
+function tocaHechoElOtro(m: Mundo, en: number): void {
+	const visto = loQueVioElOtro(m);
+	const d = derivada(unica(visto));
+	if (!variosPasos(d)) indeciso('«Hecho» no se ve');
+	const paso = pasoEnQueVa(d);
+	if (paso < pasosDe(d).length) return irAlPaso(m, d.id, paso + 1);
+	if (d.horario && !dentroDeVentana(d.horario, en)) return;
+	completar(m, d, visto.completados, en);
+	irAlPaso(m, d.id, 1);
+}
+
+const PASOS_DE_LA_FILA: Paso[] = [
+	[/^toco Hecho el (\S+)$/, (m, [e]) => tocoHecho(m, unica(m), momento(e))],
+	[/^toco Hecho en la tarea (\S+) el (\S+)$/, (m, [t, e]) => tocoHecho(m, conTitulo(m, t), momento(e))],
+	[
+		/^toco Paso anterior$/,
+		(m) => {
+			const d = derivada(unica(m));
+			if (!variosPasos(d)) indeciso('«Paso anterior» no se ve');
+			m.antes = copiar(m);
+			irAlPaso(m, d.id, Math.max(1, pasoEnQueVa(d) - 1));
+		}
+	],
+	[new RegExp(`^${OTRO} toca Hecho el (\\S+)$`), (m, [e]) => tocaHechoElOtro(m, momento(e))]
 ];
 
 /** Elegir un emoji en el selector o quitarlo (§6.2): quien edita elige o quita; quitar es dejar el campo vacío. */
@@ -858,7 +1004,9 @@ const EDICIONES: Paso[] = [
 	],
 	[new RegExp(`^${OTRO} guarda la tarea sin cambios$`), (m) => editaElOtro(m, datosDeDocumento)],
 	...edicionesDeEmojiYNota(),
-	...edicionesDePrimerPaso()
+	...edicionesDePrimerPaso(),
+	...edicionesDePasos(),
+	...PASOS_DE_LA_FILA
 ];
 
 /** Pausar y reanudar (§5.8, §6.2): el botón del panel actúa en el momento; solo las periódicas se pausan. */
@@ -949,7 +1097,9 @@ const BORRADOS: Paso[] = [
 		new RegExp(`^${OTRO} completa la tarea (\\S+) el (\\S+)$`),
 		(m, [t, e]) => {
 			const visto = loQueVioElOtro(m);
-			completar(m, conTitulo(visto, t), visto.completados, momento(e));
+			const tarea = conTitulo(visto, t);
+			completar(m, tarea, visto.completados, momento(e));
+			irAlPaso(m, tarea.id, 1);
 		}
 	]
 ];
@@ -959,13 +1109,27 @@ const DESHACERES: Paso[] = [
 		/^borro el completado del (\S+)$/,
 		(m, [e]) => {
 			m.antes = copiar(m);
-			borrarCompletados(m, [elCompletadoDel(m, momento(e)).id]);
+			deshacerCompletado(m, elCompletadoDel(m, momento(e)).id);
 		}
 	],
-	[new RegExp(`^${OTRO} borra el completado del (\\S+)$`), (m, [e]) => borrarCompletados(m, [elCompletadoDel(m, momento(e)).id])],
+	[new RegExp(`^${OTRO} borra el completado del (\\S+)$`), (m, [e]) => deshacerCompletado(m, elCompletadoDel(m, momento(e)).id)],
 	[/^toco Deshacer en el aviso el (\S+)$/, (m, [e]) => tocoDeshacer(m, momento(e))],
 	[/^toco el checkbox de la tarea el (\S+)$/, (m, [e]) => tocoElCheckbox(m, momento(e))]
 ];
+
+/** El orden de la lista no se decide a veces: solo importa si un Then lo mira; la fila de los pasos no lo necesita. */
+function consultarPendientes(m: Mundo, ahora: number | undefined): void {
+	m.pendientesEn = ahora;
+	m.consultoPendientes = true;
+	try {
+		m.orden = ordenEn(m, ahora);
+		m.ordenIndeciso = false;
+	} catch (error) {
+		if (!(error instanceof Indeciso)) throw error;
+		m.orden = undefined;
+		m.ordenIndeciso = true;
+	}
+}
 
 const CONSULTAS: Paso[] = [
 	[/^consulto el aviso el (\S+)$/, (m, [t]) => void (m.avisoVisto = consultarAviso(m, momento(t)))],
@@ -979,12 +1143,11 @@ const CONSULTAS: Paso[] = [
 		}
 	],
 	[/^consulto el estado en cualquier momento$/, (m) => void (m.estado = clasificar(m, undefined))],
-	[/^consulto Pendientes el (\S+)$/, (m, [t]) => {
-			m.pendientesEn = momento(t);
-			m.orden = ordenEn(m, m.pendientesEn);
-		}],
-	[/^consulto Pendientes en cualquier momento$/, (m) => void (m.orden = ordenEn(m, undefined))],
-	[new RegExp(`^${MOSTRAR_COMPLETADAS}$`), (m) => void (m.mostrarCompletadas = true)]
+	[/^consulto Pendientes el (\S+)$/, (m, [t]) => consultarPendientes(m, momento(t))],
+	[/^consulto Pendientes en cualquier momento$/, (m) => consultarPendientes(m, undefined)],
+	[new RegExp(`^${MOSTRAR_COMPLETADAS}$`), (m) => void (m.mostrarCompletadas = true)],
+	// §6.1: las pausadas se ven con este check; la línea del paso no se ve en ellas.
+	[/^Mostrar pausadas está encendido$/, () => undefined]
 ];
 
 const PASOS: Paso[] = [...CREACIONES, ...COMPLETADOS, ...PAUSAS, ...POSPOSICIONES, ...EDICIONES, ...BORRADOS, ...DESHACERES, ...CONSULTAS];
@@ -1014,18 +1177,46 @@ const elNuevo = (m: Mundo) => m.nuevo ?? indeciso('no se completó');
 const unSoloCompletadoDe = (m: Mundo, d: Documento) =>
 	JSON.stringify(completadosDe(m, d.id).map((c) => [c.en, c.cubierta !== undefined || c.inicioCubierto !== undefined]));
 
-/**
- * §6.1: la fila muestra «Primer paso: » y el texto solo si la tarea lo tiene y, en el momento consultado, no está
- * pausada y está pendiente o atrasada (no en espera, ni completada, ni pospuesta).
- */
-function primerPasoDeLaFila(m: Mundo): string {
-	const en = m.pendientesEn ?? indeciso('sin consulta de Pendientes');
-	const tarea = unica(m);
-	if (!tarea.primerPaso || (tarea.tipo === 'periodica' && tarea.pausada)) return 'sin texto';
+/** §6.1: la fila de la tarea en ese momento (o en cualquiera): pausada, en espera por la posposición o el estado de §5. */
+function estadoDeLaFila(m: Mundo, tarea: Documento, en: number | undefined): string {
+	if (tarea.tipo === 'periodica' && tarea.pausada) return 'pausada';
+	if (en === undefined && tarea.pospuesta) indeciso('posposición en cualquier momento');
 	const s = situacionDe(m, tarea, en);
-	const estado = enEsperaPorPosposicion(s) ? 'en espera' : (clasificarSituacion(s, { progreso: false }) ?? indeciso('estado'));
-	return estado === 'pendiente' || estado === 'atrasada' ? `Primer paso: ${tarea.primerPaso}` : 'sin texto';
+	return en !== undefined && enEsperaPorPosposicion(s) ? 'en espera' : (clasificarSituacion(s, { progreso: false }) ?? indeciso('estado'));
 }
+
+/** §6.1: la línea del paso (y sus botones) solo se ve en las filas pendiente y atrasada; no en `en espera` ni pausadas. */
+const seVeLaLinea = (estado: string) => estado === 'pendiente' || estado === 'atrasada';
+
+/** Lo que la fila muestra de los pasos en la última consulta de Pendientes (§6.1). */
+interface FilaDeLosPasos {
+	linea: string;
+	botones: string;
+	/** Si «Hecho» está habilitado; solo se decide cuando un Then lo mira (el checkbox puede no decidirse). */
+	hecho: () => string;
+}
+
+const SIN_BOTONES = 'sin botones';
+
+/**
+ * §6.1: la línea del paso en que va la tarea, «Primer paso: …» en el paso 1 y «Paso: …» en otro; con dos pasos o más,
+ * «Paso anterior» (no en el paso 1) y «Hecho», habilitado salvo en el último paso si el checkbox está deshabilitado.
+ */
+function laFilaDeLosPasos(m: Mundo): FilaDeLosPasos {
+	if (!m.consultoPendientes) indeciso('sin consulta de Pendientes');
+	const tarea = unica(m);
+	const pasos = pasosDe(tarea);
+	const sinBotones = () => SIN_BOTONES;
+	const sinLinea = { linea: 'sin texto', botones: SIN_BOTONES, hecho: sinBotones };
+	if (pasos.length === 0 || !seVeLaLinea(estadoDeLaFila(m, tarea, m.pendientesEn))) return sinLinea;
+	const paso = pasoEnQueVa(tarea);
+	const linea = `${paso === 1 ? 'Primer paso' : 'Paso'}: ${pasos[paso - 1]}`;
+	if (pasos.length < 2) return { linea, botones: SIN_BOTONES, hecho: sinBotones };
+	const checkbox = () => clasificarSituacion(situacionDe(m, tarea, m.pendientesEn), { progreso: false, checkbox: true, soloCheckbox: true })?.replace('checkbox ', '') ?? indeciso('checkbox');
+	return { linea, botones: paso > 1 ? 'Paso anterior y Hecho' : 'Hecho', hecho: () => (paso < pasos.length ? 'habilitado' : checkbox()) };
+}
+
+const DE_LA_FILA_DE_LOS_PASOS = /^(?:la fila de la tarea (?:muestra el paso |muestra los botones |no muestra botones de paso$|no muestra primer paso$)|el botón Hecho de la tarea está |el checkbox de la tarea está )/;
 
 type Observacion = [RegExp, (m: Mundo, c: string[]) => string];
 
@@ -1055,7 +1246,23 @@ const OBSERVACIONES: Observacion[] = [
 	[/^la tarea tiene nota (.*)$/, (m) => unica(m).nota ?? '-'],
 	[/^la tarea no tiene nota$/, (m) => String(unica(m).nota === undefined)],
 	[/^la tarea tiene primer paso (.*)$/, (m) => unica(m).primerPaso ?? '-'],
-	[/^la fila de la tarea (?:muestra el primer paso .*|no muestra primer paso)$/, (m) => primerPasoDeLaFila(m)],
+	[/^la fila de la tarea (?:muestra el primer paso .*|muestra el paso .*|no muestra primer paso)$/, (m) => laFilaDeLosPasos(m).linea],
+	[/^la fila de la tarea (?:muestra los botones .*|no muestra botones de paso)$/, (m) => laFilaDeLosPasos(m).botones],
+	[/^el botón Hecho de la tarea está (?:habilitado|deshabilitado)$/, (m) => laFilaDeLosPasos(m).hecho()],
+	[
+		/^el checkbox de la tarea está (?:habilitado|deshabilitado)$/,
+		(m) => {
+			const en = m.pendientesEn ?? m.consultadoEn ?? m.tocadoEn ?? indeciso('sin momento');
+			return clasificarSituacion(situacionDe(m, derivada(unica(m)), en), { progreso: false, checkbox: true, soloCheckbox: true }) ?? indeciso('checkbox');
+		}
+	],
+	[/^la tarea va en el paso (\S+)$/, (m) => String(pasoEnQueVa(derivada(unica(m))))],
+	[/^la tarea tiene los pasos (.*)$/, (m) => pasosDe(unica(m)).join(', ')],
+	[/^la tarea no tiene más pasos$/, (m) => String(unica(m).pasos === undefined)],
+	[/^la tarea tiene (\S+) pasos$/, (m) => String(pasosDe(unica(m)).length)],
+	[/^el paso (\S+) de la tarea tiene (\S+) caracteres$/, (m, [n]) => String(pasosDe(unica(m))[numeroDePaso(n) - 1]?.length)],
+	[/^el último completado de la tarea guarda el paso (\S+)$/, (m) => String(elMasReciente(completadosDe(m, unica(m).id)).paso)],
+	[/^el último completado de la tarea no guarda paso$/, (m) => String(elMasReciente(completadosDe(m, unica(m).id)).paso === undefined)],
 	[/^la tarea no tiene primer paso$/, (m) => String(unica(m).primerPaso === undefined)],
 	[/^la tarea tiene un primer paso de (\S+) caracteres$/, (m) => String(unica(m).primerPaso?.length)],
 	[/^su esfuerzo es (.+)$/, (m) => unica(m).esfuerzo ?? 'sin estimar'],
@@ -1110,7 +1317,7 @@ const OBSERVACIONES: Observacion[] = [
 
 /** Los pasos propios de este oráculo: escenarios que editan, borran o modifican concurrentemente. */
 const ES_DE_EDICION =
-	/^(?:edito |elijo |quito el emoji$|quito el horario$|quito el primer paso$|el primer paso de la tarea |pongo |borro |toco Deshacer |toco el checkbox |consulto el aviso |consulto el Historial |consulto la última vez |otro dispositivo, sin ver ese cambio,)/;
+	/^(?:edito |vacío el paso |los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está |elijo |quito el emoji$|quito el horario$|quito el primer paso$|el primer paso de la tarea |pongo |borro |toco Deshacer |toco el checkbox |consulto el aviso |consulto el Historial |consulto la última vez |otro dispositivo, sin ver ese cambio,)/;
 
 export const esEscenarioDeEdicion = (textos: string[]) => textos.some((texto) => ES_DE_EDICION.test(texto));
 
@@ -1126,8 +1333,10 @@ function ejecutar(pasos: PasoOraculo[], fila: FilaOraculo, m: Mundo): void {
 function observar(entradas: PasoOraculo[], thens: PasoOraculo[], fila: FilaOraculo): string[] {
 	const m: Mundo = { documentos: [], completados: [], siguiente: 1, borradasDocs: [], borradosCompletados: [] };
 	ejecutar(entradas, fila, m);
-	return thens.map((paso) => {
-		const texto = resolver(paso.text, fila) ?? indeciso(`columna faltante en ${paso.text}`);
+	const textos = thens.map((paso) => resolver(paso.text, fila) ?? indeciso(`columna faltante en ${paso.text}`));
+	// Sin orden decidido, solo los Then de la fila de los pasos se pueden observar.
+	if (m.ordenIndeciso && !textos.every((texto) => DE_LA_FILA_DE_LOS_PASOS.test(texto))) indeciso('orden de Pendientes');
+	return textos.map((texto) => {
 		const regla = OBSERVACIONES.map(([patron, ver]) => ({ coincide: patron.exec(texto), ver })).find((r) => r.coincide);
 		return regla?.coincide ? regla.ver(m, regla.coincide.slice(1)) : indeciso(`Then ${texto}`);
 	});

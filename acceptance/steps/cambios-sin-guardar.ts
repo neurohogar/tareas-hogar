@@ -110,12 +110,37 @@ const CAMPOS: Record<string, { lee: (f: FormularioDelPanel) => string | undefine
 	'Etiquetas sin confirmar': { lee: (f) => f.sinConfirmar, escribe: (f, sinConfirmar) => ({ ...f, sinConfirmar }) }
 };
 
-function escribo(world: World, campo: string, valor: string): void {
-	const cambios = elPanelAbierto(world);
-	cambios.formulario = deLaTabla(CAMPOS, campo, 'Campo').escribe(cambios.formulario, valor);
+/** Los pasos más del panel: el campo «Paso N» (N ≥ 2) es el lugar N - 2 de `pasos` (§6.2). */
+const LUGAR_DE_PASO = /^Paso (\d+)$/;
+
+function lugarDelPaso(formulario: FormularioDelPanel, campo: string): number {
+	const lugar = Number(LUGAR_DE_PASO.exec(campo)?.[1]) - 2;
+	if (!(lugar >= 0 && lugar < (formulario.datos.pasos ?? []).length)) throw new Error(`Campo inválido: "${campo}"`);
+	return lugar;
 }
 
-const comunesDe = ({ titulo, emoji, nota, primerPaso, horario, esfuerzo }: DatosDeTarea): DatosComunes => ({ titulo, emoji, nota, primerPaso, horario, esfuerzo });
+function campoDe(campo: string): (typeof CAMPOS)[string] {
+	if (!LUGAR_DE_PASO.test(campo)) return deLaTabla(CAMPOS, campo, 'Campo');
+	const conPasos = (f: FormularioDelPanel, pasos: string[]): FormularioDelPanel => ({ ...f, datos: { ...f.datos, pasos } });
+	return {
+		lee: (f) => f.datos.pasos?.[lugarDelPaso(f, campo)],
+		escribe: (f, valor) => conPasos(f, (f.datos.pasos ?? []).map((paso, lugar) => (lugar === lugarDelPaso(f, campo) ? valor : paso)))
+	};
+}
+
+function escribo(world: World, campo: string, valor: string): void {
+	const cambios = elPanelAbierto(world);
+	cambios.formulario = campoDe(campo).escribe(cambios.formulario, valor);
+}
+
+/** «Agregar paso» suma un campo vacío al final; «Quitar» saca el del campo (§6.2). */
+function cambioLosPasos(world: World, cambiar: (pasos: readonly string[], formulario: FormularioDelPanel) => string[]): void {
+	const cambios = elPanelAbierto(world);
+	const { formulario } = cambios;
+	cambios.formulario = { ...formulario, datos: { ...formulario.datos, pasos: cambiar(formulario.datos.pasos ?? [], formulario) } };
+}
+
+const comunesDe = ({ titulo, emoji, nota, primerPaso, pasos, horario, esfuerzo }: DatosDeTarea): DatosComunes => ({ titulo, emoji, nota, primerPaso, pasos, horario, esfuerzo });
 
 /** Los campos de cada opción de "Se repite": los de la tarea si es de esa forma; si no, como al crear (§6.2). */
 const SE_REPITE: Record<string, { forma: DatosDeTarea['forma']; vacios: Partial<DatosDeTarea> }> = {
@@ -288,6 +313,23 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 		run: (world, titulo, primerPaso) => abroParaEditar(world, { titulo, primerPaso })
 	},
 	{
+		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con los pasos ${P}$`),
+		run: (world, titulo, pasos) => {
+			const [primerPaso, ...mas] = lista(pasos);
+			abroParaEditar(world, { titulo, primerPaso, pasos: mas });
+		}
+	},
+	{
+		pattern: /^toco Agregar paso$/,
+		run: (world) => cambioLosPasos(world, (pasos) => [...pasos, ''])
+	},
+	{
+		pattern: new RegExp(`^toco Quitar en el campo ${P}$`),
+		run: (world, campo) => {
+			cambioLosPasos(world, (pasos, formulario) => pasos.filter((_, lugar) => lugar !== lugarDelPaso(formulario, campo)));
+		}
+	},
+	{
 		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con los horarios ${P} y ${P}$`),
 		run: (world, titulo, primero, segundo) => abroParaEditar(world, { titulo, horario: [ventana(primero), ventana(segundo)] })
 	},
@@ -415,7 +457,7 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 	},
 	{
 		pattern: new RegExp(`^el campo ${P} sigue con ${P}$`),
-		run: (world, campo, valor) => expect(deLaTabla(CAMPOS, campo, 'Campo').lee(elPanelAbierto(world).formulario)).toBe(valor)
+		run: (world, campo, valor) => expect(campoDe(campo).lee(elPanelAbierto(world).formulario)).toBe(valor)
 	},
 	{
 		pattern: new RegExp(`^al recargar la app el navegador ${P}$`),

@@ -7,6 +7,7 @@ import { completadosDeTarea, completar } from '../../src/lib/core/completados';
 import { datosDeTarea, type DatosDeTarea } from '../../src/lib/core/datos-de-tarea';
 import { aplicarCambio } from '../../src/lib/core/documento-de-tarea';
 import { editar } from '../../src/lib/core/edicion';
+import { cambioAlCompletar } from '../../src/lib/core/paso-actual';
 import type { Tarea } from '../../src/lib/core/tarea';
 import { DIAS_VALIDOS, FORMA_Y_DIAS, SIN_DIAS, diasDe, formaDe } from './periodica-calendario';
 import { P, TITULO, fechaHora, numero, unidad } from './valores';
@@ -95,10 +96,10 @@ const DEFINICIONES: { texto: string; datos: (titulo: string, ...valores: string[
 	}
 ];
 
-/** Cambiar el tipo en el panel deja como estaban el emoji, la nota, el primer paso, el esfuerzo y el horario. */
-function camposQueConserva(tarea: Tarea): Pick<DatosDeTarea, 'emoji' | 'nota' | 'primerPaso' | 'esfuerzo' | 'horario'> {
-	const { emoji, nota, primerPaso, esfuerzo, horario } = datosDeTarea(tarea);
-	return { ...(emoji && { emoji }), ...(nota && { nota }), ...(primerPaso && { primerPaso }), ...(esfuerzo && { esfuerzo }), ...(horario && { horario }) };
+/** Cambiar el tipo en el panel deja como estaban el emoji, la nota, los pasos, el esfuerzo y el horario. */
+function camposQueConserva(tarea: Tarea): Pick<DatosDeTarea, 'emoji' | 'nota' | 'primerPaso' | 'pasos' | 'esfuerzo' | 'horario'> {
+	const { emoji, nota, primerPaso, pasos, esfuerzo, horario } = datosDeTarea(tarea);
+	return { ...(emoji && { emoji }), ...(nota && { nota }), ...(primerPaso && { primerPaso }), ...(pasos && { pasos }), ...(esfuerzo && { esfuerzo }), ...(horario && { horario }) };
 }
 
 const pasosDeEditarA: StepDefinition[] = EDITORES.flatMap((editor) =>
@@ -187,6 +188,8 @@ export const edicionSteps: StepDefinition[] = [
 			const tarea = laTareaTitulada(visto, titulo);
 			const completado = completar(tarea, visto.completados, nuevoId(world, 'completado'), fechaHora(momento));
 			world.completados = [...world.completados, completado];
+			// Completar, desde cualquier dispositivo, vuelve la tarea al paso 1 (§4.1, Pasos).
+			world.documentos = aplicarCambio(world.documentos, tarea.id, cambioAlCompletar(tarea));
 		}
 	},
 	{

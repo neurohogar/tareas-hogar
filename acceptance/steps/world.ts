@@ -7,6 +7,7 @@ import type { FormularioDelPanel, ValoresDelPanel } from '../../src/lib/core/cam
 import type { ErroresDeCreacion } from '../../src/lib/core/creacion';
 import { tareaDesdeDocumento, type DocumentoDeTarea } from '../../src/lib/core/documento-de-tarea';
 import type { Estado } from '../../src/lib/core/estado';
+import type { BotonesDePaso } from '../../src/lib/core/paso-actual';
 import type { Etiqueta } from '../../src/lib/core/etiqueta';
 import type { ErrorDeRenombrado } from '../../src/lib/core/gestion-de-etiquetas';
 import type { GrupoDelHistorial } from '../../src/lib/core/historial';
@@ -134,8 +135,10 @@ export interface FilaConsultada {
 	esfuerzo: string | undefined;
 	/** El texto de fecha y distancia («Tocaba …», «Vuelve …», §6.1); sin él, la fila no lo muestra. */
 	textoDeFecha: string | undefined;
-	/** El texto «Primer paso: …» de la fila (§6.1); sin él, la fila no lo muestra. */
+	/** La línea del paso de la fila, «Primer paso: …» o «Paso: …» (§6.1); sin ella, la fila no la muestra. */
 	textoDePrimerPaso: string | undefined;
+	/** Los botones «Paso anterior» y «Hecho» de la línea del paso (§6.1); sin ellos, la fila no los muestra. */
+	botonesDePaso: BotonesDePaso | undefined;
 }
 
 /** El sujeto de los pasos del otro dispositivo: actúa sobre lo guardado antes de mi último cambio. */

@@ -5,9 +5,10 @@ import { accionDelCheckbox, checkboxHabilitado } from '../../src/lib/core/checkb
 import { estaCompletada } from '../../src/lib/core/completada';
 import { estadoDeTarea } from '../../src/lib/core/estado-de-tarea';
 import { filasDePendientes } from '../../src/lib/core/pendientes';
+import { borrarCompletado } from './deshacer';
 import { completoYo } from './periodica-relativa';
 import { P, fechaHora } from './valores';
-import { borrarGuardado, laTarea, recordarAntesDeMiCambio, type StepDefinition, type World } from './world';
+import { laTarea, recordarAntesDeMiCambio, type StepDefinition, type World } from './world';
 
 function tocarCheckbox(world: World, momento: Date): void {
 	const tarea = laTarea(world);
@@ -18,7 +19,7 @@ function tocarCheckbox(world: World, momento: Date): void {
 	if (accion.tipo === 'ninguna') return;
 	if (accion.tipo === 'completar') return completoYo(world, momento, tarea);
 	recordarAntesDeMiCambio(world);
-	borrarGuardado(world, [], [accion.completado.id]);
+	borrarCompletado(world, accion.completado);
 }
 
 /** Cada momento en que se consultó el estado o Pendientes, con lo guardado ahora. */

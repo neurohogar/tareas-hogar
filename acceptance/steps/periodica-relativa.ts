@@ -1,6 +1,8 @@
 import { expect } from 'vitest';
 import { avisoAlCompletar } from '../../src/lib/core/aviso';
 import { completar } from '../../src/lib/core/completados';
+import { aplicarCambio } from '../../src/lib/core/documento-de-tarea';
+import { cambioAlCompletar } from '../../src/lib/core/paso-actual';
 import { estadoDeTarea } from '../../src/lib/core/estado-de-tarea';
 import type { Tarea } from '../../src/lib/core/tarea';
 import { ANTES_DEL_ESCENARIO, crearEnWorld } from './crear';
@@ -34,6 +36,8 @@ export function completoYo(world: World, momento: Date, tarea: Tarea): void {
 	world.momentoDelNuevoCompletado = momento;
 	world.nuevoCompletado = registrarCompletado(world, momento, tarea);
 	world.aviso = avisoAlCompletar(tarea, world.nuevoCompletado);
+	// Completar, por el checkbox o por «Hecho», vuelve la tarea al paso 1 (§4.1, Pasos).
+	world.documentos = aplicarCambio(world.documentos, tarea.id, cambioAlCompletar(tarea));
 }
 
 function consultarEstado(world: World, momentos: Date[]): void {

@@ -137,6 +137,8 @@ interface Formulario {
 	nota: string;
 	/** §4.1: una línea; Guardar la recorta y vacío es sin primer paso. */
 	primerPaso: string;
+	/** §4.1 (Pasos): los pasos más, uno por campo «Paso 2», «Paso 3»…; Guardar los recorta y descarta los vacíos. */
+	pasos: string[];
 	repite: string;
 	esfuerzo: string;
 	/** Las ventanas tal como se escribieron; '' es una fila vacía. */
@@ -170,7 +172,7 @@ interface MundoDeCambios {
 	eligioEmoji: boolean;
 }
 
-const FORMULARIO_AL_CREAR: Formulario = { titulo: '', nota: '', primerPaso: '', repite: 'No se repite', esfuerzo: 'Sin estimar', horarios: [], emoji: '', etiquetas: [], sinConfirmar: '' };
+const FORMULARIO_AL_CREAR: Formulario = { titulo: '', nota: '', primerPaso: '', pasos: [], repite: 'No se repite', esfuerzo: 'Sin estimar', horarios: [], emoji: '', etiquetas: [], sinConfirmar: '' };
 const LO_DE_ARRIBA = ['nada', 'el aviso de cierre', 'el aviso de acción', 'la confirmación de Borrar tarea', 'el selector de emoji', 'las sugerencias de Etiquetas'];
 /** §6.2 Atrás: lo que no cuenta como algo abierto encima del panel. */
 const NO_CUENTA_COMO_ABIERTO = ['nada', 'las sugerencias de Etiquetas'];
@@ -189,9 +191,12 @@ const elEscrito = (m: MundoDeCambios): Formulario => m.escrito ?? indeciso('pane
 
 const claveDeHorarios = (horarios: string[]) => [...horarios].sort().join(' ');
 
-/** §6.2: Guardar recorta el título, la nota y el primer paso y ordena las ventanas; las etiquetas no dependen del orden. */
+/** §4.1 (Pasos): Guardar recorta cada paso, descarta los vacíos y los de abajo suben. */
+const pasosGuardados = (f: Formulario) => [f.primerPaso, ...f.pasos].map((paso) => paso.trim()).filter((paso) => paso !== '');
+
+/** §6.2: Guardar recorta el título, la nota y los pasos y ordena las ventanas; las etiquetas no dependen del orden. */
 const claveDeFormulario = (f: Formulario) =>
-	JSON.stringify([f.titulo.trim(), f.nota.trim(), f.primerPaso.trim(), f.repite, f.esfuerzo, claveDeHorarios(f.horarios), f.emoji, [...f.etiquetas].sort()]);
+	JSON.stringify([f.titulo.trim(), f.nota.trim(), pasosGuardados(f), f.repite, f.esfuerzo, claveDeHorarios(f.horarios), f.emoji, [...f.etiquetas].sort()]);
 
 /** §6.2: lo que Guardar cambiaría, más el texto sin confirmar de Etiquetas salvo solo espacios. */
 function hayCambios(m: MundoDeCambios): boolean {
@@ -350,7 +355,7 @@ function abrirConLaTarea(m: MundoDeCambios, valores: Partial<Formulario> & { tit
 /** El formulario arranca con los valores al abrir; lo que se escribe no cambia esos valores. */
 function abrirCon(m: MundoDeCambios, alAbrir: Formulario): void {
 	m.alAbrir = alAbrir;
-	m.escrito = { ...alAbrir, horarios: [...alAbrir.horarios], etiquetas: [...alAbrir.etiquetas] };
+	m.escrito = { ...alAbrir, pasos: [...alAbrir.pasos], horarios: [...alAbrir.horarios], etiquetas: [...alAbrir.etiquetas] };
 }
 
 function ventanasValidas(primera: string, segunda: string): string[] {
@@ -359,11 +364,20 @@ function ventanasValidas(primera: string, segunda: string): string[] {
 	return [primera, segunda];
 }
 
+/** §6.2: el campo «Paso N» (N ≥ 2) es el lugar N - 2 de los pasos más; tiene que existir. */
+const LUGAR_DE_PASO = /^Paso (\d+)$/;
+
+function lugarDelPaso(f: Formulario, campo: string): number {
+	const lugar = Number(LUGAR_DE_PASO.exec(campo)?.[1]) - 2;
+	return lugar >= 0 && lugar < f.pasos.length ? lugar : indeciso(`campo ${campo}`);
+}
+
 function escribirEn(m: MundoDeCambios, campo: string, valor: string): void {
 	const f = elEscrito(m);
 	if (campo === 'Título') f.titulo = valor;
 	else if (campo === 'Nota') f.nota = valor;
 	else if (campo === 'Primer paso') f.primerPaso = valor;
+	else if (LUGAR_DE_PASO.test(campo)) f.pasos[lugarDelPaso(f, campo)] = valor;
 	else if (campo === 'Etiquetas sin confirmar') f.sinConfirmar = valor;
 	else indeciso(`campo ${campo}`);
 }
@@ -380,6 +394,21 @@ const laTareaDelOtro = (m: MundoDeCambios) => m.tarea ?? indeciso('otro disposit
 const PASOS_DE_CAMBIOS: [RegExp, (m: MundoDeCambios, ...grupos: string[]) => void][] = [
 	[/^abro el panel para editar la tarea (.+) con nota (.+)$/, (m, titulo, nota) => abrirParaEditar(m, { titulo, nota })],
 	[/^abro el panel para editar la tarea (.+) con primer paso (.+)$/, (m, titulo, primerPaso) => abrirParaEditar(m, { titulo, primerPaso })],
+	[
+		/^abro el panel para editar la tarea (.+) con los pasos (.+)$/,
+		(m, titulo, pasos) => {
+			const [primerPaso, ...mas] = elementos(pasos) ?? indeciso(`pasos ${pasos}`);
+			abrirParaEditar(m, { titulo, primerPaso, pasos: mas });
+		}
+	],
+	[/^toco Agregar paso$/, (m) => void elEscrito(m).pasos.push('')],
+	[
+		/^toco Quitar en el campo (.+)$/,
+		(m, campo) => {
+			const f = elEscrito(m);
+			f.pasos.splice(lugarDelPaso(f, campo), 1);
+		}
+	],
 	[/^abro el panel para editar la tarea (.+) con los horarios (.+) y (.+)$/, (m, titulo, a, b) => abrirParaEditar(m, { titulo, horarios: ventanasValidas(a, b) })],
 	[
 		/^abro el panel para crear una tarea$/,
