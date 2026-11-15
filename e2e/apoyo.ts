@@ -235,6 +235,8 @@ export interface Definicion {
   nota?: string;
   /** Primer paso: el campo Primer paso del panel (`""` lo vacía). */
   primerPaso?: string;
+  /** Pasos más: por cada uno, Agregar paso y escribir en el campo Paso N que sigue. */
+  pasos?: string[];
   /** Esfuerzo: la opción del selector Esfuerzo, por su texto completo. */
   esfuerzo?: "Sin estimar" | "Rápida (≤ 5 min)" | "Media (≈ 15 min)" | "Larga";
   /** Etiquetas por agregar en el campo Etiquetas, en este orden (cada una: escribir y Enter). */
@@ -350,6 +352,11 @@ export async function completarPanel(page: Page, d: Definicion) {
   if (d.nota !== undefined) await page.getByLabel("Nota").fill(d.nota);
   if (d.primerPaso !== undefined)
     await page.getByRole("textbox", { name: "Primer paso", exact: true }).fill(d.primerPaso);
+  for (const texto of d.pasos ?? []) {
+    const n = (await page.getByRole("textbox", { name: /^Paso \d+$/ }).count()) + 2;
+    await page.getByRole("button", { name: "Agregar paso", exact: true }).click();
+    await page.getByRole("textbox", { name: `Paso ${n}`, exact: true }).fill(texto);
+  }
   await abrirPestana(page, "Cuándo");
   if (d.tipo) await page.getByRole("radio", { name: d.tipo }).check();
   if (d.fecha !== undefined)
