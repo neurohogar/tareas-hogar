@@ -200,7 +200,10 @@
 	function borrarYDevolverPaso(completado: Completado) {
 		const tarea = tareas.find(({ id }) => id === completado.tareaId);
 		void borrarCompletado(uid, completado.id);
-		if (tarea) void guardarCambio(uid, tarea.id, cambioAlBorrarCompletado(tarea, completados, completado), []);
+		// La tarea que se ve puede no reflejar todavía el reinicio al paso 1 de completarla (esa escritura
+		// sigue en camino): se la toma sin paso guardado conocido (0 no es ningún paso), así el core
+		// siempre da el paso a escribir en lugar de creer que la tarea ya está en él.
+		if (tarea) void guardarCambio(uid, tarea.id, cambioAlBorrarCompletado({ ...tarea, pasoActual: 0 }, completados, completado), []);
 	}
 
 	/** «Hecho» de la fila (§6.1): pasa al paso siguiente o, en el último, completa como el checkbox. */
