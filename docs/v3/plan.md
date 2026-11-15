@@ -67,7 +67,7 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 
 ### E3. Primer paso a la vista
 
-- **Estado.** Parcial. Implementado el campo opcional «primer paso» (feature `primer-paso`, visible solo en pendiente y atrasada). Pendiente: los pasos de a uno (`pasos-de-a-uno`).
+- **Estado.** Implementada (features `primer-paso` y `pasos-de-a-uno`): el campo opcional «primer paso» y los pasos de a uno. La fila muestra un solo paso, con «Paso anterior» y «Hecho» cuando hay dos o más.
 
 - **Problema y persona.** TDAH y TEA. El título de una tarea es abstracto («Ropa»); decidir por dónde empezar es parte del costo de empezar.
 - **Evidencia.** `tdah §1.3A` (moderada e indirecta: ningún ensayo aísla el primer paso); `tea §1` (moderada: no saber cuál es el primer paso paraliza); `tdah §1.2b` (débil: falla formar el plan, no recordarlo); `tdah §2.1` (anecdótica a moderada).
