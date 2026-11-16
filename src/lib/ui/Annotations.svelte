@@ -38,42 +38,42 @@
 
 <section>
 	<h1>Anotaciones</h1>
-	<button type="button" class="copiar" onclick={copy}>Copiar</button>
+	<button type="button" class="copy" onclick={copy}>Copiar</button>
 	{#each groups as { header, entries } (header)}
 		<h2>{header}</h2>
-		<ul class="lista">
+		<ul class="list">
 			{#each entries as { annotation, hour, taskName } (annotation.id)}
-				<li class="entrada">
-					<div class="datos">
-						<span class="hora">{hour}</span>
-						<span class="sentido">{annotation.sense}</span>
-						<span class="pantalla">{annotation.screen}</span>
-						{#if taskName}<span class="tarea">{taskName}</span>{/if}
-						{#if annotation.text}<span class="texto">{annotation.text}</span>{/if}
+				<li class="entry">
+					<div class="data">
+						<span class="hour">{hour}</span>
+						<span class="sense">{annotation.sense}</span>
+						<span class="screen">{annotation.screen}</span>
+						{#if taskName}<span class="task">{taskName}</span>{/if}
+						{#if annotation.text}<span class="text">{annotation.text}</span>{/if}
 					</div>
-					<div class="acciones-entrada">
+					<div class="entry-actions">
 						<button type="button" onclick={() => (editing = { annotation, text: annotation.text ?? '' })}>Editar texto</button>
-						<button type="button" class="borrar" onclick={() => (toDelete = annotation)}>Borrar</button>
+						<button type="button" class="delete" onclick={() => (toDelete = annotation)}>Borrar</button>
 					</div>
 				</li>
 			{/each}
 		</ul>
 	{:else}
-		<p class="vacio">Todavía no hay anotaciones</p>
+		<p class="empty">Todavía no hay anotaciones</p>
 	{/each}
 </section>
 
 {#if editing}
-	<div class="fondo">
-		<div class="caja" role="dialog" aria-modal="true" aria-label="Editar texto">
+	<div class="backdrop">
+		<div class="box" role="dialog" aria-modal="true" aria-label="Editar texto">
 			<form onsubmit={saveText}>
-				<label class="campo">
+				<label class="field">
 					Texto
 					<input type="text" bind:value={editing.text} />
 				</label>
-				<div class="acciones">
+				<div class="actions">
 					<button type="button" onclick={() => (editing = undefined)}>Cancelar</button>
-					<button type="submit" class="principal">Guardar</button>
+					<button type="submit" class="primary">Guardar</button>
 				</div>
 			</form>
 		</div>
@@ -82,12 +82,12 @@
 
 {#if toDelete}
 	{@const annotation = toDelete}
-	<div class="fondo" role="alertdialog" aria-modal="true" aria-labelledby="titulo-borrar-anotacion">
-		<div class="caja">
-			<p id="titulo-borrar-anotacion">¿Borrar la anotación «{annotation.sense}»?</p>
-			<div class="acciones">
+	<div class="backdrop" role="alertdialog" aria-modal="true" aria-labelledby="title-delete-annotation">
+		<div class="box">
+			<p id="title-delete-annotation">¿Borrar la anotación «{annotation.sense}»?</p>
+			<div class="actions">
 				<button type="button" onclick={() => (toDelete = undefined)}>Cancelar</button>
-				<button type="button" class="principal" onclick={() => deleteAnnotation(annotation)}>Borrar</button>
+				<button type="button" class="primary" onclick={() => deleteAnnotation(annotation)}>Borrar</button>
 			</div>
 		</div>
 	</div>
@@ -108,38 +108,38 @@
 	h2 {
 		font-size: 1rem;
 		margin: 1.25rem 0 0.25rem;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 	}
 
-	.copiar,
-	.acciones-entrada button,
-	.acciones button {
+	.copy,
+	.entry-actions button,
+	.actions button {
 		min-height: 44px;
 		padding: 0 0.75rem;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
 		background: transparent;
-		color: var(--texto);
+		color: var(--text);
 		cursor: pointer;
 	}
 
-	.lista {
+	.list {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 	}
 
-	.entrada {
+	.entry {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.75rem;
 		min-height: 48px;
 		padding: 0.5rem 0;
-		border-bottom: 1px solid var(--borde);
+		border-bottom: 1px solid var(--border);
 	}
 
-	.datos {
+	.data {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.25rem 0.75rem;
@@ -147,30 +147,30 @@
 		overflow-wrap: anywhere;
 	}
 
-	.hora {
-		color: var(--texto-suave);
+	.hour {
+		color: var(--text-muted);
 		font-variant-numeric: tabular-nums;
 	}
 
-	.pantalla {
-		color: var(--texto-suave);
+	.screen {
+		color: var(--text-muted);
 	}
 
-	.acciones-entrada {
+	.entry-actions {
 		display: flex;
 		flex: none;
 		gap: 0.25rem;
 	}
 
-	.acciones-entrada .borrar {
+	.entry-actions .delete {
 		color: var(--error);
 	}
 
-	.vacio {
-		color: var(--texto-suave);
+	.empty {
+		color: var(--text-muted);
 	}
 
-	.fondo {
+	.backdrop {
 		position: fixed;
 		inset: 0;
 		/* Above the navigation bar (z-index 1) and the Anotar button (z-index 3). */
@@ -180,19 +180,19 @@
 		background: color-mix(in srgb, black 35%, transparent);
 	}
 
-	.caja {
+	.box {
 		width: min(24rem, calc(100% - 2rem));
 		box-sizing: border-box;
 		padding: 1rem;
 		border-radius: 0.75rem;
-		background: var(--superficie);
+		background: var(--surface);
 	}
 
-	.caja p {
+	.box p {
 		margin: 0;
 	}
 
-	.campo {
+	.field {
 		display: grid;
 		gap: 0.35rem;
 	}
@@ -201,23 +201,23 @@
 		min-height: 44px;
 		box-sizing: border-box;
 		padding: 0 0.5rem;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
-		background: var(--fondo);
-		color: var(--texto);
+		background: var(--page-background);
+		color: var(--text);
 		font: inherit;
 	}
 
-	.acciones {
+	.actions {
 		display: flex;
 		justify-content: flex-end;
 		gap: 0.5rem;
 		margin-top: 0.75rem;
 	}
 
-	.acciones .principal {
-		border-color: var(--acento);
-		background: var(--acento);
-		color: var(--superficie);
+	.actions .primary {
+		border-color: var(--accent);
+		background: var(--accent);
+		color: var(--surface);
 	}
 </style>

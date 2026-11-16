@@ -39,30 +39,30 @@
 <section>
 	<h1>Pendientes</h1>
 	{#if labels.length > 0}
-		<div class="filtro" role="group" aria-label="Filtrar por etiqueta">
+		<div class="filter" role="group" aria-label="Filtrar por etiqueta">
 			<button type="button" aria-pressed={filter === undefined} onclick={() => session.chooseFilter(undefined)}>Todas</button>
 			{#each labels as label (label.id)}
 				<button
 					type="button"
 					aria-pressed={filter === label.id}
-					style:--color-chip={`var(--etiqueta-${label.color})`}
+					style:--color-chip={`var(--label-${label.color})`}
 					onclick={() => session.chooseFilter(label.id)}>{label.name}</button
 				>
 			{/each}
 		</div>
 	{/if}
-	<div class="controles">
-		<button type="button" class="solo-rapidas" aria-pressed={session.quickOnly} onclick={() => session.toggleQuickOnly()}>Solo rápidas</button>
-		<label class="mostrar-completadas">
+	<div class="controls">
+		<button type="button" class="quick-only" aria-pressed={session.quickOnly} onclick={() => session.toggleQuickOnly()}>Solo rápidas</button>
+		<label class="show-completed">
 			<input type="checkbox" bind:checked={showCompleted} onchange={(event) => saveShowCompleted(event.currentTarget.checked)} />
 			Completadas
 		</label>
-		<label class="mostrar-completadas">
+		<label class="show-completed">
 			<input type="checkbox" bind:checked={showPaused} onchange={(event) => saveShowPaused(event.currentTarget.checked)} />
 			Pausadas
 		</label>
 	</div>
-	<ul class="lista">
+	<ul class="list">
 		{#each rows as { task, status, completed, dateText, firstStepText, stepButtons, minimal } (task.id)}
 			<TaskRow
 				{task}
@@ -83,9 +83,9 @@
 		{/each}
 	</ul>
 	{#if emptyText}
-		<p class="vacio">{emptyText}</p>
+		<p class="empty">{emptyText}</p>
 	{/if}
-	<button type="button" class="nueva" title="Nueva tarea" onclick={() => (creating = true)}>+</button>
+	<button type="button" class="new" title="Nueva tarea" onclick={() => (creating = true)}>+</button>
 </section>
 
 {#if creating}
@@ -98,7 +98,7 @@
 		margin: 0.5rem 0 1rem;
 	}
 
-	.filtro {
+	.filter {
 		display: flex;
 		gap: 0.4rem;
 		margin-bottom: 0.75rem;
@@ -106,7 +106,7 @@
 		padding-bottom: 0.25rem;
 	}
 
-	.controles {
+	.controls {
 		display: flex;
 		gap: 0.5rem;
 		align-items: center;
@@ -114,77 +114,77 @@
 		margin-bottom: 0.5rem;
 	}
 
-	.solo-rapidas {
+	.quick-only {
 		min-height: 36px;
 		padding: 0 0.85rem;
-		border: 1px solid var(--borde-control);
+		border: 1px solid var(--control-border);
 		border-radius: 999px;
 		background: transparent;
-		color: var(--texto);
+		color: var(--text);
 		cursor: pointer;
 	}
 
-	.filtro button {
+	.filter button {
 		flex: none;
 		min-height: 36px;
 		padding: 0 0.85rem;
-		border: 1px solid var(--borde-control);
+		border: 1px solid var(--control-border);
 		border-radius: 999px;
 		background: var(--color-chip, transparent);
-		color: var(--texto);
+		color: var(--text);
 		cursor: pointer;
 	}
 
-	.filtro button[aria-pressed='true'],
-	.solo-rapidas[aria-pressed='true'] {
-		border-color: var(--acento);
-		box-shadow: inset 0 0 0 2px var(--acento);
+	.filter button[aria-pressed='true'],
+	.quick-only[aria-pressed='true'] {
+		border-color: var(--accent);
+		box-shadow: inset 0 0 0 2px var(--accent);
 		font-weight: 600;
 	}
 
-	.mostrar-completadas {
+	.show-completed {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
 		min-height: 48px;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 		cursor: pointer;
 	}
 
-	.mostrar-completadas input {
+	.show-completed input {
 		width: 1.2rem;
 		height: 1.2rem;
 		margin: 0;
-		accent-color: var(--acento);
+		accent-color: var(--accent);
 	}
 
-	.vacio {
-		color: var(--texto-suave);
+	.empty {
+		color: var(--text-muted);
 	}
 
-	.lista {
+	.list {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 	}
 
-	.nueva {
+	.new {
 		position: fixed;
 		right: 1.25rem;
-		bottom: calc(var(--alto-navegacion) + 1.25rem);
+		bottom: calc(var(--navigation-height) + 1.25rem);
 		width: 56px;
 		height: 56px;
 		border: 0;
 		border-radius: 50%;
-		background: var(--acento);
-		color: var(--superficie);
+		background: var(--accent);
+		color: var(--surface);
 		font-size: 1.75rem;
 		line-height: 1;
 		cursor: pointer;
 	}
 
 	@media (min-width: 42.5rem) {
-		.nueva {
+		.new {
 			right: calc(50% - 20rem + 1.25rem);
 		}
 	}

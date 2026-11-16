@@ -2,22 +2,22 @@
 	let { text, returnText, onUndo }: { text: string; returnText?: string; onUndo: () => void } = $props();
 </script>
 
-<div class="aviso" role="status">
-	<div class="textos">
+<div class="notice" role="status">
+	<div class="texts">
 		<span>{text}</span>
 		{#if returnText}
-			<span class="regreso">{returnText}</span>
+			<span class="return-text">{returnText}</span>
 		{/if}
 	</div>
 	<button type="button" onclick={onUndo}>Deshacer</button>
 </div>
 
 <style>
-	.aviso {
+	.notice {
 		position: fixed;
 		left: 1rem;
 		right: calc(56px + 2.5rem);
-		bottom: var(--base-aviso, calc(var(--alto-navegacion) + 1.25rem));
+		bottom: var(--notice-base, calc(var(--navigation-height) + 1.25rem));
 		z-index: 20;
 		display: flex;
 		align-items: center;
@@ -26,16 +26,16 @@
 		max-width: 28rem;
 		padding: 0.5rem 0.5rem 0.5rem 1rem;
 		border-radius: 8px;
-		background: var(--texto);
-		color: var(--fondo);
+		background: var(--text);
+		color: var(--page-background);
 	}
 
-	.textos {
+	.texts {
 		display: flex;
 		flex-direction: column;
 	}
 
-	.regreso {
+	.return-text {
 		font-size: 0.8rem;
 		font-variant-numeric: tabular-nums;
 	}

@@ -9,12 +9,12 @@
 	onMount(() => box.querySelector('button')?.focus());
 </script>
 
-<div class="panel" role="alertdialog" aria-modal="true" aria-label={CHANGES_MESSAGE} aria-describedby="mensaje-de-cambios">
-	<div class="caja" bind:this={box}>
-		<p id="mensaje-de-cambios">{notice.message}</p>
-		<div class="acciones">
+<div class="panel" role="alertdialog" aria-modal="true" aria-label={CHANGES_MESSAGE} aria-describedby="changes-message">
+	<div class="box" bind:this={box}>
+		<p id="changes-message">{notice.message}</p>
+		<div class="actions">
 			{#each notice.buttons as button, index (button.text)}
-				<button type="button" class:principal={index === notice.buttons.length - 1 && button.effect === 'guardar'} onclick={() => onChoose(button.effect)}>{button.text}</button>
+				<button type="button" class:primary={index === notice.buttons.length - 1 && button.effect === 'guardar'} onclick={() => onChoose(button.effect)}>{button.text}</button>
 			{/each}
 		</div>
 	</div>
@@ -24,26 +24,26 @@
 	.panel {
 		position: fixed;
 		inset: 0;
-		top: var(--alto-franja, 0px);
+		top: var(--strip-height, 0px);
 		z-index: 10;
 		display: grid;
 		place-items: center;
 		background: color-mix(in srgb, black 35%, transparent);
 	}
 
-	.caja {
+	.box {
 		width: min(24rem, calc(100% - 2rem));
 		box-sizing: border-box;
 		padding: 1rem;
 		border-radius: 0.75rem;
-		background: var(--superficie);
+		background: var(--surface);
 	}
 
 	p {
 		margin: 0;
 	}
 
-	.acciones {
+	.actions {
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: flex-end;
@@ -57,16 +57,16 @@
 		justify-content: center;
 		min-height: 44px;
 		padding: 0 1rem;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
 		background: transparent;
-		color: var(--texto);
+		color: var(--text);
 		cursor: pointer;
 	}
 
-	button.principal {
-		border-color: var(--acento);
-		background: var(--acento);
-		color: var(--superficie);
+	button.primary {
+		border-color: var(--accent);
+		background: var(--accent);
+		color: var(--surface);
 	}
 </style>

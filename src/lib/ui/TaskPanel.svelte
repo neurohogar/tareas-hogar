@@ -130,18 +130,18 @@
 	function taskDataFromForm(form: HTMLFormElement): TaskData {
 		const fields = new FormData(form);
 		// La nota se lee del control, no de FormData, que cambia los saltos de línea por CRLF.
-		const note = (form.elements.namedItem('nota') as HTMLTextAreaElement).value;
-		const firstStep = String(fields.get('primerPaso') ?? '');
-		const minimalVersion = String(fields.get('versionMinima') ?? '');
+		const note = (form.elements.namedItem('note') as HTMLTextAreaElement).value;
+		const firstStep = String(fields.get('firstStep') ?? '');
+		const minimalVersion = String(fields.get('minimalVersion') ?? '');
 		const schedule = withSchedule ? windowRows.map(({ from, to }) => ({ from, to })) : undefined;
-		const common = { title: String(fields.get('titulo') ?? ''), emoji, note, firstStep, minimalVersion, steps: [...steps], schedule, ...(effort && { effort }) };
+		const common = { title: String(fields.get('title') ?? ''), emoji, note, firstStep, minimalVersion, steps: [...steps], schedule, ...(effort && { effort }) };
 		if (repetition === 'puntual') {
-			const dateField = form.elements.namedItem('fechaLimite') as HTMLInputElement;
+			const dateField = form.elements.namedItem('dueDate') as HTMLInputElement;
 			return { shape: 'puntual', ...common, dueDate: dueDateOf(dateField) };
 		}
 		if (repetition === 'relativo') {
-			const every = Number(fields.get('cada') || Number.NaN);
-			return { shape: 'relativa', ...common, every, unit: fields.get('unidad') as Unit };
+			const every = Number(fields.get('every') || Number.NaN);
+			return { shape: 'relativa', ...common, every, unit: fields.get('unit') as Unit };
 		}
 		const days = repetition === 'semanal' ? { weekdays, monthDays: [] } : { weekdays: [], monthDays };
 		return { shape: 'calendario', ...common, ...days };
@@ -164,8 +164,8 @@
 	// El aviso de deshacer se ve sobre la barra de Guardar o, sin barra, sobre el teclado.
 	$effect(() => {
 		const root = document.documentElement.style;
-		root.setProperty('--base-aviso', keyboard.open ? `calc(${keyboard.overlap}px + 1rem)` : '5.5rem');
-		return () => root.removeProperty('--base-aviso');
+		root.setProperty('--notice-base', keyboard.open ? `calc(${keyboard.overlap}px + 1rem)` : '5.5rem');
+		return () => root.removeProperty('--notice-base');
 	});
 
 	async function chooseTab(section: PanelSection) {
@@ -177,7 +177,7 @@
 	async function goToField({ tab, field }: ErrorDestination) {
 		if (tab) openSection = tab;
 		await tick();
-		content.querySelector(`[data-campo="${field}"]`)?.scrollIntoView({ block: 'center' });
+		content.querySelector(`[data-field="${field}"]`)?.scrollIntoView({ block: 'center' });
 	}
 
 	/** El error de un campo dura lo que dura su mensaje: al corregirlo se va. */
@@ -308,17 +308,17 @@
 
 <svelte:window bind:innerWidth={windowWidth} />
 
-<div class="panel panel-principal" inert={closeNoticeOpen || openAction !== undefined || confirmingDelete} style:bottom={keyboard.overlap > 0 ? `${keyboard.overlap}px` : undefined} role="dialog" aria-modal="true" aria-labelledby="titulo-panel">
-	<form class="hoja" bind:this={form} class:completa={presentation === 'pestanas'} novalidate onsubmit={submit}>
+<div class="panel main-panel" inert={closeNoticeOpen || openAction !== undefined || confirmingDelete} style:bottom={keyboard.overlap > 0 ? `${keyboard.overlap}px` : undefined} role="dialog" aria-modal="true" aria-labelledby="title-panel">
+	<form class="sheet" bind:this={form} class:full={presentation === 'pestanas'} novalidate onsubmit={submit}>
 		<header>
-			<h2 id="titulo-panel">{header}</h2>
-			<button type="button" class="cerrar" aria-label="Cerrar" onclick={close}><Icon name="close" /></button>
+			<h2 id="title-panel">{header}</h2>
+			<button type="button" class="close" aria-label="Cerrar" onclick={close}><Icon name="close" /></button>
 		</header>
 		{#if presentation === 'pestanas'}
 			<TabBar {sections} {openSection} {marked} onChoose={chooseTab} />
 		{/if}
 
-		<div class="contenido" bind:this={content}>
+		<div class="content" bind:this={content}>
 			<TaskSection
 				{presentation}
 				{openSection}
@@ -355,8 +355,8 @@
 			{/if}
 		</div>
 
-		<div class="barra-guardar" hidden={!barVisible}>
-			<button type="submit" class="principal-boton">Guardar</button>
+		<div class="save-bar" hidden={!barVisible}>
+			<button type="submit" class="primary-button">Guardar</button>
 		</div>
 	</form>
 </div>
@@ -374,12 +374,12 @@
 {/if}
 
 {#if onDelete && confirmingDelete}
-	<div class="panel confirmacion" role="alertdialog" aria-modal="true" aria-labelledby="titulo-confirmacion">
-		<div class="caja">
-			<p id="titulo-confirmacion">¿Borrar «{name}»? También se borra su historial.</p>
-			<div class="acciones confirmar">
+	<div class="panel confirmation" role="alertdialog" aria-modal="true" aria-labelledby="title-confirmation">
+		<div class="box">
+			<p id="title-confirmation">¿Borrar «{name}»? También se borra su historial.</p>
+			<div class="actions confirm">
 				<button type="button" onclick={() => (confirmingDelete = false)}>Cancelar</button>
-				<button type="button" class="principal" onclick={onDelete}>Borrar</button>
+				<button type="button" class="primary" onclick={onDelete}>Borrar</button>
 			</div>
 		</div>
 	</div>
@@ -396,11 +396,11 @@
 		background: color-mix(in srgb, black 35%, transparent);
 	}
 
-	.panel-principal {
-		top: var(--alto-franja, 0px);
+	.main-panel {
+		top: var(--strip-height, 0px);
 	}
 
-	.hoja {
+	.sheet {
 		display: flex;
 		flex-direction: column;
 		width: min(40rem, 100%);
@@ -408,10 +408,10 @@
 		box-sizing: border-box;
 		overflow: hidden;
 		border-radius: 0.75rem 0.75rem 0 0;
-		background: var(--superficie);
+		background: var(--surface);
 	}
 
-	.hoja.completa {
+	.sheet.full {
 		width: 100%;
 		height: 100%;
 		border-radius: 0;
@@ -424,7 +424,7 @@
 		justify-content: space-between;
 		gap: 0.5rem;
 		padding: 0.5rem 0.5rem 0.5rem 1rem;
-		border-bottom: 1px solid var(--borde);
+		border-bottom: 1px solid var(--border);
 	}
 
 	h2 {
@@ -432,7 +432,7 @@
 		font-size: 1.1rem;
 	}
 
-	.cerrar {
+	.close {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -442,11 +442,11 @@
 		border: 1px solid transparent;
 		border-radius: 0.4rem;
 		background: transparent;
-		color: var(--texto);
+		color: var(--text);
 		cursor: pointer;
 	}
 
-	.contenido {
+	.content {
 		display: grid;
 		flex: 1;
 		align-content: start;
@@ -456,69 +456,69 @@
 		padding: 1rem;
 	}
 
-	.barra-guardar[hidden] {
+	.save-bar[hidden] {
 		display: none;
 	}
 
-	.barra-guardar {
+	.save-bar {
 		display: flex;
 		flex: none;
 		padding: 0.75rem 1rem;
-		border-top: 1px solid var(--borde);
-		background: var(--superficie);
+		border-top: 1px solid var(--border);
+		background: var(--surface);
 	}
 
-	.principal-boton {
+	.primary-button {
 		flex: 1;
 		min-height: 44px;
-		border: 1px solid var(--acento);
+		border: 1px solid var(--accent);
 		border-radius: 0.4rem;
-		background: var(--acento);
-		color: var(--superficie);
+		background: var(--accent);
+		color: var(--surface);
 		font-weight: 600;
 		cursor: pointer;
 	}
 
-	.confirmacion {
+	.confirmation {
 		place-items: center;
 	}
 
-	.caja {
+	.box {
 		width: min(24rem, calc(100% - 2rem));
 		box-sizing: border-box;
 		padding: 1rem;
 		border-radius: 0.75rem;
-		background: var(--superficie);
+		background: var(--surface);
 	}
 
-	.caja p {
+	.box p {
 		margin: 0;
 	}
 
-	.acciones {
+	.actions {
 		display: flex;
 		justify-content: flex-end;
 		gap: 0.5rem;
 		margin-top: 0.75rem;
 	}
 
-	.acciones button {
+	.actions button {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
 		min-height: 44px;
 		padding: 0 1rem;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
 		background: transparent;
-		color: var(--texto);
+		color: var(--text);
 		cursor: pointer;
 	}
 
-	.acciones .principal {
-		border-color: var(--acento);
-		background: var(--acento);
-		color: var(--superficie);
+	.actions .primary {
+		border-color: var(--accent);
+		background: var(--accent);
+		color: var(--surface);
 	}
 </style>

@@ -58,28 +58,28 @@
 	}
 </script>
 
-<li class="fila" class:en-espera={status.kind === 'en espera'} class:pausada={status.kind === 'pausada'} class:completed>
-	<label class="area-checkbox">
+<li class="row" class:waiting={status.kind === 'en espera'} class:paused={status.kind === 'pausada'} class:completed>
+	<label class="checkbox-area">
 		<input type="checkbox" checked={completed} disabled={!enabled} aria-label={`Completar ${name}`} onchange={tap} />
 	</label>
-	<div class="contenido">
+	<div class="content">
 		<!-- El botón cubre toda la fila fuera del checkbox: tocarla abre la edición. -->
-		<button type="button" class="titulo" onclick={onOpen}>{name}</button>
+		<button type="button" class="title" onclick={onOpen}>{name}</button>
 		{#if firstStepText}
-			<div class="linea-paso">
-				<p class="primer-paso">{firstStepText}</p>
+			<div class="step-line">
+				<p class="first-step">{firstStepText}</p>
 				{#if stepButtons}
 					{#if stepButtons.previousStep}
-						<button type="button" class="boton-paso" onclick={onPreviousStep}>Paso anterior</button>
+						<button type="button" class="step-button" onclick={onPreviousStep}>Paso anterior</button>
 					{/if}
-					<button type="button" class="boton-paso" disabled={!stepButtons.doneEnabled} onclick={onDone}>Hecho</button>
+					<button type="button" class="step-button" disabled={!stepButtons.doneEnabled} onclick={onDone}>Hecho</button>
 				{/if}
 			</div>
 		{/if}
 		{#if minimal}
-			<div class="linea-paso">
-				<p class="primer-paso">{minimal.text}</p>
-				<button type="button" class="boton-paso" disabled={!minimal.enabled} onclick={onMinimal}>Hice la mínima</button>
+			<div class="step-line">
+				<p class="first-step">{minimal.text}</p>
+				<button type="button" class="step-button" disabled={!minimal.enabled} onclick={onMinimal}>Hice la mínima</button>
 			</div>
 		{/if}
 		{#if labels.length > 0}
@@ -91,70 +91,70 @@
 			</ul>
 		{/if}
 		{#if level}
-			<span class="esfuerzo">{level}</span>
+			<span class="effort">{level}</span>
 		{/if}
 		{#if task.schedule}
-			<span class="horario">{scheduleText(task.schedule)}</span>
+			<span class="schedule">{scheduleText(task.schedule)}</span>
 		{/if}
 		{#if status.kind === 'pausada'}
-			<span class="estado-pausada">Pausada</span>
+			<span class="paused-status">Pausada</span>
 		{/if}
 		{#if dateText}
-			<span class="texto-de-fecha">{dateText}</span>
+			<span class="date-text">{dateText}</span>
 		{/if}
 		{#if status.kind === 'en espera'}
 			{@const percentage = progressPercentage(status.progress)}
 			<div
-				class="barra"
+				class="bar"
 				role="progressbar"
 				aria-label={`Tiempo hasta que vuelve ${name}`}
 				aria-valuemin={0}
 				aria-valuemax={100}
 				aria-valuenow={percentage}
 			>
-				<div class="relleno" style:width={`${percentage}%`}></div>
+				<div class="fill" style:width={`${percentage}%`}></div>
 			</div>
 		{/if}
 	</div>
 </li>
 
 <style>
-	.fila {
+	.row {
 		display: flex;
 		align-items: center;
 		gap: 0.25rem;
 		padding: 0.25rem 0.5rem 0.25rem 0;
-		border-bottom: 1px solid var(--borde);
+		border-bottom: 1px solid var(--border);
 		opacity: 1;
 	}
 
 
 
 	/* Línea propia, entera y en varias líneas si hace falta; no intercepta el toque de la fila. */
-	.linea-paso {
+	.step-line {
 		flex-basis: 100%;
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 0.25rem 0.75rem;
 		font-size: 0.8rem;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 	}
 
-	.primer-paso {
+	.first-step {
 		margin: 0;
 		font-size: 0.8rem;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 		overflow-wrap: anywhere;
 	}
 
 	/* Por encima del ::after del título, que cubre la fila: los botones no abren el panel. */
-	.boton-paso {
+	.step-button {
 		position: relative;
 		z-index: 1;
 		min-height: 36px;
 		padding: 0 0.6rem;
-		border: 1px solid var(--borde-control);
+		border: 1px solid var(--control-border);
 		border-radius: 0.4rem;
 		background: transparent;
 		color: inherit;
@@ -164,22 +164,22 @@
 		cursor: pointer;
 	}
 
-	.boton-paso:disabled {
+	.step-button:disabled {
 		opacity: 0.4;
 		cursor: not-allowed;
 	}
 
-	.esfuerzo {
+	.effort {
 		font-size: 0.8rem;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 	}
 
-	.estado-pausada {
+	.paused-status {
 		font-size: 0.8rem;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 	}
 
-	.area-checkbox {
+	.checkbox-area {
 		display: grid;
 		place-items: center;
 		min-width: 48px;
@@ -187,15 +187,15 @@
 		cursor: pointer;
 	}
 
-	.area-checkbox input {
+	.checkbox-area input {
 		width: 1.4rem;
 		height: 1.4rem;
 		margin: 0;
-		accent-color: var(--acento);
+		accent-color: var(--accent);
 		cursor: pointer;
 	}
 
-	.contenido {
+	.content {
 		position: relative;
 		flex: 1;
 		min-height: 48px;
@@ -205,7 +205,7 @@
 		gap: 0.25rem 0.75rem;
 	}
 
-	.titulo {
+	.title {
 		padding: 0;
 		border: 0;
 		background: transparent;
@@ -216,18 +216,18 @@
 		cursor: pointer;
 	}
 
-	.completed .titulo {
+	.completed .title {
 		font-weight: 400;
 		text-decoration-line: line-through;
 		opacity: 0.6;
 	}
 
-	.en-espera .titulo,
-	.pausada .titulo {
-		color: var(--texto-suave);
+	.waiting .title,
+	.paused .title {
+		color: var(--text-muted);
 	}
 
-	.titulo::after {
+	.title::after {
 		content: '';
 		position: absolute;
 		inset: 0;
@@ -242,42 +242,42 @@
 		list-style: none;
 	}
 
-	.area-checkbox:has(input:disabled),
-	.area-checkbox input:disabled {
+	.checkbox-area:has(input:disabled),
+	.checkbox-area input:disabled {
 		cursor: not-allowed;
 	}
 
-	.area-checkbox input:disabled {
+	.checkbox-area input:disabled {
 		opacity: 0.4;
 	}
 
-	.horario {
+	.schedule {
 		font-size: 0.8rem;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 		opacity: 1;
 		font-variant-numeric: tabular-nums;
 	}
 
-	.texto-de-fecha {
+	.date-text {
 		font-size: 0.8rem;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 		font-variant-numeric: tabular-nums;
 	}
 
 	/* Fuera del flujo, en el padding inferior de la fila: no corre el título respecto del checkbox. */
-	.barra {
+	.bar {
 		position: absolute;
 		left: 0;
 		right: 0;
 		bottom: -0.2rem;
 		height: 3px;
 		border-radius: 2px;
-		background: var(--borde);
+		background: var(--border);
 		overflow: hidden;
 	}
 
-	.relleno {
+	.fill {
 		height: 100%;
-		background: var(--acento);
+		background: var(--accent);
 	}
 </style>

@@ -38,16 +38,16 @@
 
 <svelte:window onkeydown={(event) => event.key === 'Escape' && session.annotating && session.closeAnnotate()} />
 
-<button type="button" class="anotar" onclick={openBox}>Anotar</button>
+<button type="button" class="annotate" onclick={openBox}>Anotar</button>
 
 {#if session.annotating}
-	<div class="fondo">
-		<div class="caja" role="dialog" aria-modal="true" aria-label="Anotar">
-			<label class="campo">
+	<div class="backdrop">
+		<div class="box" role="dialog" aria-modal="true" aria-label="Anotar">
+			<label class="field">
 				Texto
 				<input type="text" bind:this={field} bind:value={text} onkeydown={(event) => event.key === 'Enter' && event.preventDefault()} />
 			</label>
-			<div class="acciones">
+			<div class="actions">
 				<button type="button" onclick={() => choose('Me sirvió')}>Me sirvió</button>
 				<button type="button" onclick={() => choose('Me molestó')}>Me molestó</button>
 			</div>
@@ -62,23 +62,23 @@
 {/key}
 
 <style>
-	.anotar {
+	.annotate {
 		position: fixed;
 		/* Al lado de la X del panel (que está a 0.5rem del borde): mismas coordenadas en todas las pantallas. */
-		top: calc(var(--alto-franja, 0px) + 0.5rem);
+		top: calc(var(--strip-height, 0px) + 0.5rem);
 		right: calc(max(0px, 50% - 20rem) + 4rem);
 		/* Above the panel (z-index 2), under its notices. */
 		z-index: 3;
 		min-height: 44px;
 		padding: 0 0.85rem;
-		border: 1px solid var(--borde-control);
+		border: 1px solid var(--control-border);
 		border-radius: 999px;
-		background: var(--superficie);
-		color: var(--texto);
+		background: var(--surface);
+		color: var(--text);
 		cursor: pointer;
 	}
 
-	.fondo {
+	.backdrop {
 		position: fixed;
 		inset: 0;
 		z-index: 15;
@@ -87,15 +87,15 @@
 		background: color-mix(in srgb, black 35%, transparent);
 	}
 
-	.caja {
+	.box {
 		width: min(24rem, calc(100% - 2rem));
 		box-sizing: border-box;
 		padding: 1rem;
 		border-radius: 0.75rem;
-		background: var(--superficie);
+		background: var(--surface);
 	}
 
-	.campo {
+	.field {
 		display: grid;
 		gap: 0.35rem;
 	}
@@ -104,27 +104,27 @@
 		min-height: 44px;
 		box-sizing: border-box;
 		padding: 0 0.5rem;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
-		background: var(--fondo);
-		color: var(--texto);
+		background: var(--page-background);
+		color: var(--text);
 		font: inherit;
 	}
 
-	.acciones {
+	.actions {
 		display: flex;
 		justify-content: flex-end;
 		gap: 0.5rem;
 		margin-top: 0.75rem;
 	}
 
-	.acciones button {
+	.actions button {
 		min-height: 44px;
 		padding: 0 1rem;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
 		background: transparent;
-		color: var(--texto);
+		color: var(--text);
 		cursor: pointer;
 	}
 </style>

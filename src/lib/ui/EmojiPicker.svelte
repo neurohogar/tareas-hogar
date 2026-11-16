@@ -56,14 +56,14 @@
 <svelte:window onkeydown={onType} />
 
 <div class="panel" role="dialog" aria-modal="true" aria-label="Elegir emoji" tabindex="-1" bind:this={panel}>
-	<div class="caja">
-		<div class="encabezado">
+	<div class="box">
+		<div class="header">
 			<h2>Elegir emoji</h2>
-			<button type="button" class="cerrar" onclick={onClose}>Cerrar</button>
+			<button type="button" class="close" onclick={onClose}>Cerrar</button>
 		</div>
 		{#if recents.length > 0}
-			<section aria-labelledby="titulo-recientes">
-				<h3 id="titulo-recientes">Recientes</h3>
+			<section aria-labelledby="title-recents">
+				<h3 id="title-recents">Recientes</h3>
 				<ul>
 					{#each recents as emoji (emoji)}
 						<li><button type="button" aria-label={emoji} onclick={() => onChoose(emoji)}>{emoji}</button></li>
@@ -72,11 +72,11 @@
 			</section>
 		{/if}
 		{#if loading}
-			<p class="cargando">Cargando…</p>
+			<p class="loading">Cargando…</p>
 		{/if}
-		<div class="catalogo" bind:this={container}></div>
+		<div class="catalog" bind:this={container}></div>
 		{#if noResults}
-			<p class="cargando" role="status">No se encontró ningún emoji.</p>
+			<p class="loading" role="status">No se encontró ningún emoji.</p>
 		{/if}
 	</div>
 </div>
@@ -95,7 +95,7 @@
 		outline: none;
 	}
 
-	.caja {
+	.box {
 		display: grid;
 		gap: 0.5rem;
 		width: min(40rem, 100%);
@@ -104,10 +104,10 @@
 		box-sizing: border-box;
 		padding: 1rem;
 		border-radius: 0.75rem 0.75rem 0 0;
-		background: var(--superficie);
+		background: var(--surface);
 	}
 
-	.encabezado {
+	.header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -121,16 +121,16 @@
 	h3 {
 		margin: 0 0 0.25rem;
 		font-size: 0.9rem;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 	}
 
-	.cerrar {
+	.close {
 		min-height: 44px;
 		padding: 0 1rem;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
 		background: transparent;
-		color: var(--texto);
+		color: var(--text);
 		cursor: pointer;
 	}
 
@@ -146,29 +146,29 @@
 	li button {
 		width: 44px;
 		height: 44px;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
 		background: transparent;
 		font-size: 1.5rem;
 		cursor: pointer;
 	}
 
-	.cargando {
+	.loading {
 		margin: 0;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 	}
 
-	.catalogo :global(emoji-picker) {
+	.catalog :global(emoji-picker) {
 		width: 100%;
 		height: min(24rem, 55dvh);
-		--background: var(--superficie);
-		--border-color: var(--borde);
-		--indicator-color: var(--acento);
-		--input-border-color: var(--borde);
-		--input-font-color: var(--texto);
-		--input-placeholder-color: var(--texto-suave);
-		--category-font-color: var(--texto-suave);
-		--outline-color: var(--acento);
+		--background: var(--surface);
+		--border-color: var(--border);
+		--indicator-color: var(--accent);
+		--input-border-color: var(--border);
+		--input-font-color: var(--text);
+		--input-placeholder-color: var(--text-muted);
+		--category-font-color: var(--text-muted);
+		--outline-color: var(--accent);
 		/* Spec §6: el selector dibuja con Noto; el del dispositivo solo si Noto no lo tiene. */
 		--emoji-font-family: 'Noto Color Emoji', system-ui, sans-serif;
 		font-family: 'Atkinson Hyperlegible Next', 'Noto Color Emoji', system-ui, sans-serif;

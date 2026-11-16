@@ -155,7 +155,7 @@ for (const c of COMBINACIONES) {
     await expect(pantalla(page)).toBeVisible();
     const fondo = (selector: string) =>
       page.evaluate((s) => getComputedStyle(document.querySelector(s)!).backgroundColor, selector);
-    expect(await fondo("#pantalla-de-carga")).toBe(c.fondo);
+    expect(await fondo("#loading-screen")).toBe(c.fondo);
     expect(await fondo("html")).toBe(c.fondo);
     const caja = (await pantalla(page).boundingBox())!;
     expect(Math.abs(caja.x + caja.width / 2 - c.ancho / 2)).toBeLessThan(2);

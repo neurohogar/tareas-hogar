@@ -34,7 +34,7 @@ const panel = (page: Page) => page.getByRole('dialog').first();
 const pestana = (page: Page, nombre: string) => page.getByRole('tab', { name: new RegExp(`^${nombre}`) });
 const marca = (page: Page, nombre: string) => pestana(page, nombre).getByRole('img', { name: 'con errores' });
 const guardar = (page: Page) => page.getByRole('button', { name: 'Guardar', exact: true });
-const contenido = (page: Page) => panel(page).locator('.contenido');
+const contenido = (page: Page) => panel(page).locator('.content');
 const encabezado = (page: Page) => panel(page).locator('header');
 const titulo = (page: Page) => page.getByLabel('Título');
 const nuevaTarea = (page: Page) => page.getByRole('button', { name: '+' }).click();
@@ -69,7 +69,7 @@ const scroll = (l: Locator) => l.evaluate((e) => e.scrollTop);
 async function sinDesborde(page: Page) {
 	const medidas = await page.evaluate(() => {
 		const f = document.querySelector('form')!;
-		const c = document.querySelector('.contenido')!;
+		const c = document.querySelector('.content')!;
 		return { f: [f.scrollWidth, f.clientWidth], c: [c.scrollWidth, c.clientWidth], d: [document.documentElement.scrollWidth, document.documentElement.clientWidth] };
 	});
 	expect(medidas.f[0]).toBeLessThanOrEqual(medidas.f[1]);
@@ -478,7 +478,7 @@ test('Flujo 5: errores', async ({ page }) => {
 	// 4
 	await guardar(page).click();
 	await expect(pestana(page, 'Cuándo')).toHaveAttribute('aria-selected', 'true');
-	await expect(page.locator('#error-cada')).toBeVisible();
+	await expect(page.locator('#error-every')).toBeVisible();
 	const cada = await caja(page.getByRole('spinbutton', { name: 'Cada' }));
 	const cc = await caja(contenido(page));
 	expect(cada.y).toBeGreaterThanOrEqual(cc.y);
@@ -517,7 +517,7 @@ test('Flujo 5: errores', async ({ page }) => {
 	await campoDesde(page).fill('10:00');
 	await campoHasta(page).fill('09:00');
 	await guardar(page).click();
-	await expect(page.locator('#error-horario')).toBeVisible();
+	await expect(page.locator('#error-schedule')).toBeVisible();
 	await expect.poll(async () => {
 		const c = await caja(campoHasta(page));
 		const cc = await caja(contenido(page));

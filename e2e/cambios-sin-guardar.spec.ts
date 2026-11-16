@@ -1108,6 +1108,6 @@ test('Flujo 9: Descartar no quita un emoji de Recientes', async ({ page }) => {
 	await tocar(page, '+');
 	await page.getByRole('button', { name: 'Elegir emoji' }).click();
 	await expect(selectorEmoji(page)).toBeVisible();
-	const recientes = selectorEmoji(page).locator('section[aria-labelledby="titulo-recientes"]').getByRole('button');
+	const recientes = selectorEmoji(page).locator('section[aria-labelledby="title-recents"]').getByRole('button');
 	await expect(recientes.first()).toHaveText('🌱');
 });

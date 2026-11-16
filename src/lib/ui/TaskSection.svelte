@@ -53,136 +53,136 @@
 	async function addStep() {
 		steps = [...steps, ''];
 		await tick();
-		document.getElementById(`campo-paso-${steps.length + 1}`)?.focus();
+		document.getElementById(`field-step-${steps.length + 1}`)?.focus();
 	}
 </script>
 
 <SectionFrame name="Tarea" {presentation} {openSection}>
 	{#if pause === 'reanudar'}
-		<p class="pausada">Pausada</p>
+		<p class="paused">Pausada</p>
 	{/if}
 	{#if postponedText}
-		<p class="pausada">{postponedText}</p>
+		<p class="paused">{postponedText}</p>
 	{/if}
 	{#if lastTime !== undefined}
-		<p class="ultima-vez">Última vez: {lastTime}</p>
+		<p class="last-time">Última vez: {lastTime}</p>
 	{/if}
 
-	<div class="campo-formulario" data-campo="Título">
-		<label for="campo-titulo">Título</label>
-		<div class="titulo">
+	<div class="form-field" data-field="Título">
+		<label for="field-title">Título</label>
+		<div class="title">
 			<input
-				id="campo-titulo"
-				name="titulo"
+				id="field-title"
+				name="title"
 				autocomplete="off"
 				value={values?.title ?? ''}
 				oninput={() => clearError('title')}
 				aria-invalid={errors.title ? 'true' : undefined}
-				aria-describedby={errors.title ? 'error-titulo' : undefined}
+				aria-describedby={errors.title ? 'error-title' : undefined}
 			/>
 			{#if emoji}
-				<button type="button" class="emoji-boton elegido" aria-label="Cambiar emoji {emoji}" onclick={onOpenPicker}>{emoji}</button>
+				<button type="button" class="emoji-button chosen" aria-label="Cambiar emoji {emoji}" onclick={onOpenPicker}>{emoji}</button>
 			{:else}
-				<button type="button" class="emoji-boton" aria-label="Elegir emoji" onclick={onOpenPicker}><Icon name="emoji" /></button>
+				<button type="button" class="emoji-button" aria-label="Elegir emoji" onclick={onOpenPicker}><Icon name="emoji" /></button>
 			{/if}
 		</div>
 		{#if errors.title}
-			<p id="error-titulo" class="error">Escribí un título.</p>
+			<p id="error-title" class="error">Escribí un título.</p>
 		{/if}
 		{#if emoji}
-			<button type="button" class="texto" onclick={() => (emoji = '')}>Quitar emoji</button>
+			<button type="button" class="text" onclick={() => (emoji = '')}>Quitar emoji</button>
 		{/if}
 	</div>
 
-	<div class="campo-formulario">
-		<label for="campo-primer-paso">Primer paso</label>
-		<input id="campo-primer-paso" name="primerPaso" autocomplete="off" value={values?.firstStep ?? ''} />
+	<div class="form-field">
+		<label for="field-first-step">Primer paso</label>
+		<input id="field-first-step" name="firstStep" autocomplete="off" value={values?.firstStep ?? ''} />
 	</div>
 
 	{#each steps as _step, index (index)}
-		<div class="campo-formulario">
-			<label for={`campo-paso-${index + 2}`}>Paso {index + 2}</label>
-			<div class="paso">
-				<input id={`campo-paso-${index + 2}`} autocomplete="off" bind:value={steps[index]} />
-				<button type="button" class="texto" onclick={() => (steps = steps.filter((_, i) => i !== index))}>Quitar</button>
+		<div class="form-field">
+			<label for={`field-step-${index + 2}`}>Paso {index + 2}</label>
+			<div class="step">
+				<input id={`field-step-${index + 2}`} autocomplete="off" bind:value={steps[index]} />
+				<button type="button" class="text" onclick={() => (steps = steps.filter((_, i) => i !== index))}>Quitar</button>
 			</div>
 		</div>
 	{/each}
-	<button type="button" class="texto" onclick={addStep}>Agregar paso</button>
+	<button type="button" class="text" onclick={addStep}>Agregar paso</button>
 
-	<div class="campo-formulario">
-		<label for="campo-version-minima">Versión mínima</label>
-		<input id="campo-version-minima" name="versionMinima" autocomplete="off" value={values?.minimalVersion ?? ''} />
+	<div class="form-field">
+		<label for="field-minimal-version">Versión mínima</label>
+		<input id="field-minimal-version" name="minimalVersion" autocomplete="off" value={values?.minimalVersion ?? ''} />
 	</div>
 
-	<div class="campo-formulario">
-		<label for="campo-nota">Nota</label>
-		<textarea id="campo-nota" name="nota" rows="2" value={values?.note ?? ''}></textarea>
+	<div class="form-field">
+		<label for="field-note">Nota</label>
+		<textarea id="field-note" name="note" rows="2" value={values?.note ?? ''}></textarea>
 	</div>
 
-	<div class="campo-formulario">
-		<label for="campo-esfuerzo">Esfuerzo</label>
-		<select id="campo-esfuerzo" bind:value={effort}>
+	<div class="form-field">
+		<label for="field-effort">Esfuerzo</label>
+		<select id="field-effort" bind:value={effort}>
 			{#each EFFORT_OPTIONS as option (option.text)}
 				<option value={option.value ?? ''}>{option.text}</option>
 			{/each}
 		</select>
 	</div>
 
-	<div data-campo="Etiquetas">
+	<div data-field="Etiquetas">
 		<LabelsField bind:names={labels} bind:error={labelsError} bind:typed={unconfirmed} existing={session.labels} />
 	</div>
 </SectionFrame>
 
 <style>
-	.titulo {
+	.title {
 		display: flex;
 		gap: 0.5rem;
 	}
 
-	.titulo input {
+	.title input {
 		flex: 1;
 		min-width: 0;
 		font-size: 1.25rem;
 	}
 
-	.paso {
+	.step {
 		display: flex;
 		gap: 0.5rem;
 		align-items: center;
 	}
 
-	.paso input {
+	.step input {
 		flex: 1;
 		min-width: 0;
 	}
 
-	.emoji-boton {
+	.emoji-button {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		min-width: 44px;
 		min-height: 44px;
 		padding: 0;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
 		background: transparent;
-		color: var(--texto);
+		color: var(--text);
 		cursor: pointer;
 	}
 
-	.emoji-boton.elegido {
+	.emoji-button.chosen {
 		padding: 0 0.5rem;
 		font-size: 1.5rem;
 	}
 
-	.pausada {
+	.paused {
 		margin: 0;
 		font-weight: 600;
 	}
 
-	.ultima-vez {
+	.last-time {
 		margin: 0;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 	}
 </style>

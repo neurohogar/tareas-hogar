@@ -17,16 +17,16 @@
 	} = $props();
 </script>
 
-<li class="elemento" aria-label={label.name} title={label.color}>
-	<span class="chip" style:--color-chip={`var(--etiqueta-${label.color})`}>
-		<span class="nombre">{label.name}</span>
+<li class="item" aria-label={label.name} title={label.color}>
+	<span class="chip" style:--color-chip={`var(--label-${label.color})`}>
+		<span class="name">{label.name}</span>
 		{@render children?.()}
 	</span>
 	{@render actions?.()}
 </li>
 
 <style>
-	.elemento {
+	.item {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
@@ -42,12 +42,12 @@
 		padding: 0.1rem 0.6rem;
 		border-radius: 999px;
 		background: var(--color-chip);
-		color: var(--texto);
+		color: var(--text);
 		font-size: 0.8rem;
 		line-height: 1.5;
 	}
 
-	.nombre {
+	.name {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;

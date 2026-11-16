@@ -10,37 +10,37 @@
 		<title>Tareas Hogar</title>
 		<script>
 			// Spec §6.6: el tope de la pantalla de carga cuenta desde acá, no desde que llega el JavaScript.
-			window.arranqueDeLaApp = performance.now();
+			window.appStartTime = performance.now();
 		</script>
 		<style>
-			/* Spec §6.6: se ve antes de que llegue el CSS de la app; los colores son --fondo de styles.css. */
+			/* Spec §6.6: se ve antes de que llegue el CSS de la app; los colores son --page-background de styles.css. */
 			html,
-			#pantalla-de-carga {
+			#loading-screen {
 				background: #f7f5f0;
 			}
 			@media (prefers-color-scheme: dark) {
 				html,
-				#pantalla-de-carga {
+				#loading-screen {
 					background: #161917;
 				}
 			}
-			#pantalla-de-carga {
+			#loading-screen {
 				position: fixed;
 				inset: 0;
 				z-index: 2147483647;
 				display: grid;
 				place-items: center;
 			}
-			#pantalla-de-carga svg {
+			#loading-screen svg {
 				width: 96px;
 				height: 96px;
 			}
 			@media (prefers-reduced-motion: no-preference) {
-				#pantalla-de-carga svg {
-					animation: pulso-de-carga 2s ease-in-out infinite alternate;
+				#loading-screen svg {
+					animation: loading-pulse 2s ease-in-out infinite alternate;
 				}
 			}
-			@keyframes pulso-de-carga {
+			@keyframes loading-pulse {
 				from {
 					opacity: 0.6;
 					transform: scale(0.96);
@@ -54,7 +54,7 @@
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
-		<div id="pantalla-de-carga">
+		<div id="loading-screen">
 			<svg role="img" aria-label="Cargando" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#3f6f5a" /><path d="M150 262l70 70 142-152" fill="none" stroke="#f7f5f0" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" /></svg>
 		</div>
 		<div style="display: contents">%sveltekit.body%</div>

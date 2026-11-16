@@ -249,7 +249,7 @@ export interface Definicion {
   horarios?: { desde: string; hasta: string }[];
 }
 
-/** Campos Desde/Hasta de la fila `i` del panel (la primera conserva los ids campo-desde/campo-hasta). */
+/** Campos Desde/Hasta de la fila `i` del panel (la primera conserva los ids field-from/field-to). */
 export const campoDesde = (page: Page, i = 0) =>
   page.getByLabel("Desde", { exact: true }).nth(i);
 export const campoHasta = (page: Page, i = 0) =>

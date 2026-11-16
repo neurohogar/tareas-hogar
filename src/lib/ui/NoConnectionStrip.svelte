@@ -8,15 +8,15 @@
 	// Mientras se ve, el panel a pantalla completa empieza debajo de ella.
 	$effect(() => {
 		if (!text) return;
-		document.documentElement.style.setProperty('--alto-franja', '1.5rem');
-		return () => document.documentElement.style.removeProperty('--alto-franja');
+		document.documentElement.style.setProperty('--strip-height', '1.5rem');
+		return () => document.documentElement.style.removeProperty('--strip-height');
 	});
 </script>
 
-{#if text}<div class="franja" role="status">{text}</div>{/if}
+{#if text}<div class="strip" role="status">{text}</div>{/if}
 
 <style>
-	.franja {
+	.strip {
 		position: fixed;
 		top: 0;
 		left: 0;
@@ -25,8 +25,8 @@
 		box-sizing: border-box;
 		height: 1.5rem;
 		padding: 0.25rem 1rem;
-		background: var(--texto-suave);
-		color: var(--fondo);
+		background: var(--text-muted);
+		color: var(--page-background);
 		font-size: 0.8rem;
 		line-height: 1rem;
 		text-align: center;

@@ -28,32 +28,32 @@
 
 <SectionFrame name="Acciones" {presentation} {openSection}>
 	{#if postpone === 'posponer'}
-		<div class="grupo" role="group" aria-label="Posponer">
+		<div class="group" role="group" aria-label="Posponer">
 			{#each POSTPONE_OPTIONS as { option, label } (option)}
-				<button type="button" class="accion" onclick={() => onChoose(optionAction(option))}>
+				<button type="button" class="action" onclick={() => onChoose(optionAction(option))}>
 					<Icon name={POSTPONE_ICONS[option]} />{label}
 				</button>
 			{/each}
 		</div>
 	{:else if postpone === 'quitar'}
-		<button type="button" class="accion" onclick={() => onChoose('quitar posponer')}><Icon name="unpostpone" />Quitar posponer</button>
+		<button type="button" class="action" onclick={() => onChoose('quitar posponer')}><Icon name="unpostpone" />Quitar posponer</button>
 	{/if}
 	{#if pause}
-		<button type="button" class="accion" onclick={() => onChoose(pause)}>
+		<button type="button" class="action" onclick={() => onChoose(pause)}>
 			<Icon name={pause === 'pausar' ? 'pause' : 'resume'} />{pause === 'pausar' ? 'Pausar' : 'Reanudar'}
 		</button>
 	{/if}
-	<button type="button" class="accion borrar" onclick={onRequestDelete}><Icon name="delete" />Borrar tarea</button>
+	<button type="button" class="action delete" onclick={onRequestDelete}><Icon name="delete" />Borrar tarea</button>
 </SectionFrame>
 
 <style>
-	.grupo {
+	.group {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
 	}
 
-	.accion {
+	.action {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -61,14 +61,14 @@
 		justify-self: start;
 		min-height: 44px;
 		padding: 0 1rem;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
 		background: transparent;
-		color: var(--texto);
+		color: var(--text);
 		cursor: pointer;
 	}
 
-	.accion.borrar {
+	.action.delete {
 		margin-top: 1rem;
 		border-color: var(--error);
 		color: var(--error);

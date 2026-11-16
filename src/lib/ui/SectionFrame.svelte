@@ -14,24 +14,24 @@
 </script>
 
 <section
-	class="seccion"
-	id="seccion-{name}"
+	class="section"
+	id="section-{name}"
 	role={inTabs ? 'tabpanel' : undefined}
-	aria-labelledby={inTabs ? `pestana-${name}` : `titulo-${name}`}
+	aria-labelledby={inTabs ? `tab-${name}` : `title-${name}`}
 	hidden={inTabs && openSection !== name}
 >
-	{#if !inTabs}<h3 id="titulo-{name}">{name}</h3>{/if}
+	{#if !inTabs}<h3 id="title-{name}">{name}</h3>{/if}
 	{@render children()}
 </section>
 
 <style>
-	.seccion {
+	.section {
 		display: grid;
 		gap: 0.75rem;
 		min-width: 0;
 	}
 
-	.seccion[hidden] {
+	.section[hidden] {
 		display: none;
 	}
 

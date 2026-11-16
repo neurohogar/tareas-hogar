@@ -68,7 +68,7 @@ async function verPanel(page: Page, emoji: string, nota: string) {
 async function recientes(page: Page): Promise<string[]> {
   await abrirSelector(page);
   const botones = selectorEmoji(page)
-    .locator('section[aria-labelledby="titulo-recientes"]')
+    .locator('section[aria-labelledby="title-recents"]')
     .getByRole("button");
   const lista =
     (await botones.count()) === 0
@@ -329,7 +329,7 @@ test("Flujo 4: recientes", async ({ browser }) => {
   await abrirSelector(b);
   await expect(seccionRecientes(b)).toHaveCount(0);
   await expect(
-    selectorEmoji(b).locator('section[aria-labelledby="titulo-recientes"]'),
+    selectorEmoji(b).locator('section[aria-labelledby="title-recents"]'),
   ).toHaveCount(0);
   await fin();
 });

@@ -17,37 +17,37 @@
 		event.preventDefault();
 		const next = sections[(index + step + sections.length) % sections.length];
 		onChoose(next);
-		document.getElementById(`pestana-${next}`)?.focus();
+		document.getElementById(`tab-${next}`)?.focus();
 	}
 </script>
 
-<div class="pestanas" role="tablist" aria-label="Secciones">
+<div class="tabs" role="tablist" aria-label="Secciones">
 	{#each sections as section, index (section)}
 		<button
 			type="button"
 			role="tab"
-			id="pestana-{section}"
+			id="tab-{section}"
 			aria-selected={openSection === section}
-			aria-controls="seccion-{section}"
+			aria-controls="section-{section}"
 			tabindex={openSection === section ? 0 : -1}
 			onclick={() => onChoose(section)}
 			onkeydown={(event) => move(event, index)}
 		>
 			<Icon name={SECTION_ICONS[section]} />
 			{section}
-			{#if marked.includes(section)}<span class="marca" role="img" aria-label="con errores"></span>{/if}
+			{#if marked.includes(section)}<span class="mark" role="img" aria-label="con errores"></span>{/if}
 		</button>
 	{/each}
 </div>
 
 <style>
-	.pestanas {
+	.tabs {
 		display: flex;
 		flex: none;
-		border-bottom: 1px solid var(--borde);
+		border-bottom: 1px solid var(--border);
 	}
 
-	.pestanas button {
+	.tabs button {
 		position: relative;
 		display: flex;
 		flex: 1;
@@ -60,18 +60,18 @@
 		border: 0;
 		border-bottom: 3px solid transparent;
 		background: transparent;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 		cursor: pointer;
 	}
 
-	.pestanas button[aria-selected='true'] {
-		border-bottom-color: var(--acento);
-		color: var(--texto);
+	.tabs button[aria-selected='true'] {
+		border-bottom-color: var(--accent);
+		color: var(--text);
 		font-weight: 600;
 	}
 
 	/* La marca de error es un punto, distinto del icono de la pestaña. */
-	.marca {
+	.mark {
 		width: 0.6rem;
 		height: 0.6rem;
 		border-radius: 50%;

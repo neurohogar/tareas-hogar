@@ -12,19 +12,19 @@
 	});
 </script>
 
-<div class="confirmacion" role="status">{text}</div>
+<div class="confirmation" role="status">{text}</div>
 
 <style>
-	.confirmacion {
+	.confirmation {
 		position: fixed;
-		top: calc(var(--alto-franja, 0px) + 3.75rem);
+		top: calc(var(--strip-height, 0px) + 3.75rem);
 		left: 50%;
 		transform: translateX(-50%);
 		z-index: 25;
 		padding: 0.5rem 1rem;
 		border-radius: 8px;
-		background: var(--texto);
-		color: var(--fondo);
+		background: var(--text);
+		color: var(--page-background);
 		pointer-events: none;
 	}
 </style>

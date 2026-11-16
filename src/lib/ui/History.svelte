@@ -19,29 +19,29 @@
 	<h1>Historial</h1>
 	{#each groups as { header, entries } (header)}
 		<h2>{header}</h2>
-		<ul class="lista">
+		<ul class="list">
 			{#each entries as entry (entry.completion.id)}
-				<li class="entrada">
+				<li class="entry">
 					<!-- El botón cubre la entrada fuera de Borrar: tocarla abre la edición de la tarea. -->
-					<button type="button" class="titulo" onclick={() => session.openTask(entry.task)}>{taskName(entry.task)}</button>
-					<span class="hora">{entry.timeText}</span>
-					<button type="button" class="borrar" onclick={() => (toDelete = { entry, header })}>Borrar</button>
+					<button type="button" class="title" onclick={() => session.openTask(entry.task)}>{taskName(entry.task)}</button>
+					<span class="hour">{entry.timeText}</span>
+					<button type="button" class="delete" onclick={() => (toDelete = { entry, header })}>Borrar</button>
 				</li>
 			{/each}
 		</ul>
 	{:else}
-		<p class="vacio">Todavía no completaste nada</p>
+		<p class="empty">Todavía no completaste nada</p>
 	{/each}
 </section>
 
 {#if toDelete}
 	{@const { entry, header } = toDelete}
-	<div class="fondo" role="alertdialog" aria-modal="true" aria-labelledby="titulo-borrar-completado">
-		<div class="caja">
-			<p id="titulo-borrar-completado">¿Borrar «{taskName(entry.task)}» de {header}, {entry.timeText}?</p>
-			<div class="acciones">
+	<div class="backdrop" role="alertdialog" aria-modal="true" aria-labelledby="title-delete-completion">
+		<div class="box">
+			<p id="title-delete-completion">¿Borrar «{taskName(entry.task)}» de {header}, {entry.timeText}?</p>
+			<div class="actions">
 				<button type="button" onclick={() => (toDelete = undefined)}>Cancelar</button>
-				<button type="button" class="principal" onclick={() => deleteCompletion(entry)}>Borrar</button>
+				<button type="button" class="primary" onclick={() => deleteCompletion(entry)}>Borrar</button>
 			</div>
 		</div>
 	</div>
@@ -56,25 +56,25 @@
 	h2 {
 		font-size: 1rem;
 		margin: 1.25rem 0 0.25rem;
-		color: var(--texto-suave);
+		color: var(--text-muted);
 	}
 
-	.lista {
+	.list {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 	}
 
-	.entrada {
+	.entry {
 		position: relative;
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
 		min-height: 48px;
-		border-bottom: 1px solid var(--borde);
+		border-bottom: 1px solid var(--border);
 	}
 
-	.titulo {
+	.title {
 		flex: 1;
 		padding: 0;
 		border: 0;
@@ -85,18 +85,18 @@
 		cursor: pointer;
 	}
 
-	.titulo::after {
+	.title::after {
 		content: '';
 		position: absolute;
 		inset: 0;
 	}
 
-	.hora {
-		color: var(--texto-suave);
+	.hour {
+		color: var(--text-muted);
 		font-variant-numeric: tabular-nums;
 	}
 
-	.borrar {
+	.delete {
 		position: relative;
 		min-height: 44px;
 		padding: 0 0.75rem;
@@ -106,11 +106,11 @@
 		cursor: pointer;
 	}
 
-	.vacio {
-		color: var(--texto-suave);
+	.empty {
+		color: var(--text-muted);
 	}
 
-	.fondo {
+	.backdrop {
 		position: fixed;
 		inset: 0;
 		/* Above the navigation bar (z-index 1), whatever the DOM order. */
@@ -120,38 +120,38 @@
 		background: color-mix(in srgb, black 35%, transparent);
 	}
 
-	.caja {
+	.box {
 		width: min(24rem, calc(100% - 2rem));
 		box-sizing: border-box;
 		padding: 1rem;
 		border-radius: 0.75rem;
-		background: var(--superficie);
+		background: var(--surface);
 	}
 
-	.caja p {
+	.box p {
 		margin: 0;
 	}
 
-	.acciones {
+	.actions {
 		display: flex;
 		justify-content: flex-end;
 		gap: 0.5rem;
 		margin-top: 0.75rem;
 	}
 
-	.acciones button {
+	.actions button {
 		min-height: 44px;
 		padding: 0 1rem;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
 		background: transparent;
-		color: var(--texto);
+		color: var(--text);
 		cursor: pointer;
 	}
 
-	.acciones .principal {
-		border-color: var(--acento);
-		background: var(--acento);
-		color: var(--superficie);
+	.actions .primary {
+		border-color: var(--accent);
+		background: var(--accent);
+		color: var(--surface);
 	}
 </style>

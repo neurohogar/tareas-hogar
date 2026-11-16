@@ -39,15 +39,15 @@
 	}
 </script>
 
-<div class="campo">
-	<label for="campo-etiquetas">Etiquetas</label>
+<div class="field">
+	<label for="field-labels">Etiquetas</label>
 	{#if chosenLabels.length > 0}
 		<ul class="chips" aria-label="Etiquetas de la tarea">
 			{#each chosenLabels as label (label.name)}
 				<LabelChip {label}>
 					<button
 						type="button"
-						class="quitar"
+						class="remove"
 						aria-label={`Quitar «${label.name}»`}
 						onclick={() => (names = removeChosen(label.name, names))}>×</button
 					>
@@ -56,20 +56,20 @@
 		</ul>
 	{/if}
 	<input
-		id="campo-etiquetas"
+		id="field-labels"
 		role="combobox"
 		autocomplete="off"
 		aria-autocomplete="list"
 		aria-expanded={listOpen}
-		aria-controls="sugerencias-etiquetas"
+		aria-controls="label-suggestions"
 		aria-invalid={error ? 'true' : undefined}
-		aria-describedby={error ? 'error-etiquetas' : undefined}
+		aria-describedby={error ? 'error-labels' : undefined}
 		bind:value={typed}
 		oninput={() => (error = undefined)}
 		onkeydown={onType}
 	/>
 	{#if listOpen}
-		<ul id="sugerencias-etiquetas" class="sugerencias" role="listbox" aria-label="Sugerencias de etiquetas">
+		<ul id="label-suggestions" class="suggestions" role="listbox" aria-label="Sugerencias de etiquetas">
 			{#each options.labels as label (label.id)}
 				<!-- svelte-ignore a11y_click_events_have_key_events: Enter en el campo elige con el teclado -->
 				<li role="option" aria-selected="false" tabindex="-1" onclick={() => add(label.name)}>{label.name}</li>
@@ -82,12 +82,12 @@
 		</ul>
 	{/if}
 	{#if error}
-		<p id="error-etiquetas" class="error">{error}</p>
+		<p id="error-labels" class="error">{error}</p>
 	{/if}
 </div>
 
 <style>
-	.campo {
+	.field {
 		display: grid;
 		gap: 0.5rem;
 	}
@@ -101,7 +101,7 @@
 		list-style: none;
 	}
 
-	.quitar {
+	.remove {
 		min-width: 28px;
 		min-height: 28px;
 		padding: 0;
@@ -115,24 +115,24 @@
 		min-height: 44px;
 		font: inherit;
 		padding: 0 0.5rem;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
-		background: var(--fondo);
-		color: var(--texto);
+		background: var(--page-background);
+		color: var(--text);
 	}
 
-	.sugerencias {
+	.suggestions {
 		margin: 0;
 		padding: 0.25rem 0;
 		list-style: none;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.4rem;
-		background: var(--superficie);
+		background: var(--surface);
 		max-height: 12rem;
 		overflow-y: auto;
 	}
 
-	.sugerencias li {
+	.suggestions li {
 		display: flex;
 		align-items: center;
 		min-height: 44px;
@@ -140,8 +140,8 @@
 		cursor: pointer;
 	}
 
-	.sugerencias li:hover {
-		background: var(--fondo);
+	.suggestions li:hover {
+		background: var(--page-background);
 	}
 
 	.error {

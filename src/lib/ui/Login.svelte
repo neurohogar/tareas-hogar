@@ -35,10 +35,10 @@
 	button {
 		min-height: 48px;
 		padding: 0 1.5rem;
-		border: 1px solid var(--borde);
+		border: 1px solid var(--border);
 		border-radius: 0.5rem;
-		background: var(--superficie);
-		color: var(--texto);
+		background: var(--surface);
+		color: var(--text);
 		cursor: pointer;
 	}
 

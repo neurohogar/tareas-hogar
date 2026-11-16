@@ -12,7 +12,7 @@ export function secondsSinceStart(): number {
 }
 
 export function removeLoadingScreen(): void {
-	document.getElementById('pantalla-de-carga')?.remove();
+	document.getElementById('loading-screen')?.remove();
 }
 
 /** Lo recordado vale para la versión del juego con que se alcanzó el tope. Sin almacenamiento, no se recuerda nada. */
