@@ -1,10 +1,10 @@
 // Primer paso de la tarea (spec §4.1, §6.1, §6.2): se escribe en el panel y la fila lo muestra
 // solo en pendiente y atrasada. Una sola línea, recortada; vacío es sin campo; nunca inválido.
 import { expect } from 'vitest';
-import { crearPuntual, type DatosPuntual } from '../../src/lib/core/crear-puntual';
-import { crearPeriodicaCalendario } from '../../src/lib/core/crear-periodica-calendario';
-import { datosDeTarea } from '../../src/lib/core/datos-de-tarea';
-import type { Tarea } from '../../src/lib/core/tarea';
+import { crearPuntual, type DatosPuntual } from '../../src/lib/core/create-one-off';
+import { crearPeriodicaCalendario } from '../../src/lib/core/create-recurring-calendar';
+import { datosDeTarea } from '../../src/lib/core/task-data';
+import type { Tarea } from '../../src/lib/core/task';
 import { AHORA, crearEnWorld, registrarCreacion } from './crear';
 import { editaElOtro, editoYo } from './edicion';
 import { diasDe, formaDe } from './periodica-calendario';

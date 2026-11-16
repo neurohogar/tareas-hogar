@@ -2,7 +2,7 @@
 // nombra de qué elementos se trata. Los pasos declaran qué hay por limpiar y qué intentos fallan;
 // los Then preguntan qué quedó limpio y qué quedó por reintentar.
 import { expect } from 'vitest';
-import { elementosAIntentar, reintentaCon, resultadoDelIntento, type Suceso } from '../../src/lib/core/limpiezas';
+import { elementosAIntentar, reintentaCon, resultadoDelIntento, type Suceso } from '../../src/lib/core/cleanups';
 import type { StepDefinition, World } from './world';
 
 const LIMPIEZAS = ['completados huérfanos', 'anotaciones huérfanas', 'referencias a etiquetas borradas', 'etiquetas duplicadas'];

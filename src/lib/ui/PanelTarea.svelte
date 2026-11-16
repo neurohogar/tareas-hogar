@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import type { ErroresDeCreacion } from '#lib/core/creacion.ts';
-	import { DATOS_AL_CREAR, type DatosDeTarea } from '#lib/core/datos-de-tarea.ts';
-	import { avisoDeAccion, descartarYActuar, guardarYActuar, type AccionEnAviso } from '#lib/core/aviso-de-accion.ts';
-	import { cambioDeAccion, queHaceLaAccion, type AccionDelPanel } from '#lib/core/accion-del-panel.ts';
-	import { queHaceAtras, type LoDeArriba } from '#lib/core/atras-del-panel.ts';
-	import { hayCambios, type FormularioDelPanel, type ValoresDelPanel } from '#lib/core/cambios-sin-guardar.ts';
-	import { alCerrarElPanel, AVISO_DE_CIERRE, type BotonDelAviso } from '#lib/core/cambios-sin-guardar-aviso.ts';
-	import type { CambioDeTarea } from '#lib/core/documento-de-tarea.ts';
-	import type { Etiqueta } from '#lib/core/etiqueta.ts';
-	import { nombreDeTarea } from '#lib/core/nombre-de-tarea.ts';
-	import type { DiaSemana, Esfuerzo, Tarea, Unidad } from '#lib/core/tarea.ts';
+	import type { ErroresDeCreacion } from '#lib/core/creation.ts';
+	import { DATOS_AL_CREAR, type DatosDeTarea } from '#lib/core/task-data.ts';
+	import { avisoDeAccion, descartarYActuar, guardarYActuar, type AccionEnAviso } from '#lib/core/action-notice.ts';
+	import { cambioDeAccion, queHaceLaAccion, type AccionDelPanel } from '#lib/core/panel-action.ts';
+	import { queHaceAtras, type LoDeArriba } from '#lib/core/panel-back.ts';
+	import { hayCambios, type FormularioDelPanel, type ValoresDelPanel } from '#lib/core/unsaved-changes.ts';
+	import { alCerrarElPanel, AVISO_DE_CIERRE, type BotonDelAviso } from '#lib/core/unsaved-changes-notice.ts';
+	import type { CambioDeTarea } from '#lib/core/task-document.ts';
+	import type { Etiqueta } from '#lib/core/label.ts';
+	import { nombreDeTarea } from '#lib/core/task-name.ts';
+	import type { DiaSemana, Esfuerzo, Tarea, Unidad } from '#lib/core/task.ts';
 	import { tomarAtras } from '#lib/adapters/atras.ts';
 	import { confirmarAlSalir } from '#lib/adapters/confirmacion-al-salir.ts';
 	import { nuevoId } from '#lib/adapters/ids.ts';
@@ -38,7 +38,7 @@
 		type DestinoDelError,
 		type OpcionDeRepeticion,
 		type SeccionDelPanel
-	} from '#lib/core/panel-en-pestanas.ts';
+	} from '#lib/core/panel-tabs.ts';
 
 	let {
 		encabezado,

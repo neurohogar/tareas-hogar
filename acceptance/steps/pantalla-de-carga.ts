@@ -10,7 +10,7 @@ import {
 	recuerdoDeTopeDeNoto,
 	type EstadoDeFuente,
 	type EstadoDeLaEspera
-} from '../../src/lib/core/pantalla-de-carga';
+} from '../../src/lib/core/loading-screen';
 import { P } from './valores';
 import type { AperturaDeLaApp, FuenteDeLaApertura, StepDefinition, World } from './world';
 

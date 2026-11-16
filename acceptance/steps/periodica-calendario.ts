@@ -2,8 +2,8 @@ import { expect } from 'vitest';
 import {
 	crearPeriodicaCalendario,
 	type DatosPeriodicaCalendario
-} from '../../src/lib/core/crear-periodica-calendario';
-import type { Completado, OcurrenciaCubierta, Tarea } from '../../src/lib/core/tarea';
+} from '../../src/lib/core/create-recurring-calendar';
+import type { Completado, OcurrenciaCubierta, Tarea } from '../../src/lib/core/task';
 import { AHORA, ANTES_DEL_ESCENARIO, TITULO_VALIDO, registrarCreacion } from './crear';
 import { P, TITULO, diasMes, diasSemana, fecha, fechaHora, ocurrencia } from './valores';
 import { laTarea, laTareaDeTipo, laTareaTitulada, nuevoId, type StepDefinition, type World } from './world';

@@ -7,9 +7,9 @@
 </script>
 
 <script lang="ts">
-	import type { ErroresDeCreacion } from '#lib/core/creacion.ts';
-	import type { OpcionDeRepeticion, PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-en-pestanas.ts';
-	import { DIAS_DE_LA_SEMANA, DIAS_DEL_MES, type DiaSemana, type Unidad } from '#lib/core/tarea.ts';
+	import type { ErroresDeCreacion } from '#lib/core/creation.ts';
+	import type { OpcionDeRepeticion, PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-tabs.ts';
+	import { DIAS_DE_LA_SEMANA, DIAS_DEL_MES, type DiaSemana, type Unidad } from '#lib/core/task.ts';
 	import MarcoDeSeccion from './MarcoDeSeccion.svelte';
 
 	let {

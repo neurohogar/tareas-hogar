@@ -5,7 +5,7 @@
 // lista; después la verifican. Las acciones que dependen de una lista declarada
 // fallan si falta.
 import { expect } from 'vitest';
-import { agregarReciente } from '../../src/lib/core/emojis-recientes';
+import { agregarReciente } from '../../src/lib/core/recent-emojis';
 import { P, lista, numero } from './valores';
 import type { StepDefinition, World } from './world';
 

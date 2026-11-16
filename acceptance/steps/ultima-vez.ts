@@ -1,6 +1,6 @@
 // Última vez del panel de edición (spec §6.2).
 import { expect } from 'vitest';
-import { ultimaVez } from '../../src/lib/core/ultima-vez';
+import { ultimaVez } from '../../src/lib/core/last-time';
 import { P, fechaHora } from './valores';
 import { laTarea, type StepDefinition } from './world';
 

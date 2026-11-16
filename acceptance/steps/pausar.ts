@@ -1,9 +1,9 @@
 // Pausar y reanudar una periódica (spec §5.8, §6.2, §7): el botón del panel de
 // edición actúa en el momento, sin Guardar.
 import { expect } from 'vitest';
-import { aplicarCambio, type CambioDeTarea } from '../../src/lib/core/documento-de-tarea';
-import { accionDePausa, pausar, reanudar } from '../../src/lib/core/pausa';
-import type { Tarea } from '../../src/lib/core/tarea';
+import { aplicarCambio, type CambioDeTarea } from '../../src/lib/core/task-document';
+import { accionDePausa, pausar, reanudar } from '../../src/lib/core/pause';
+import type { Tarea } from '../../src/lib/core/task';
 import { P, TITULO, fechaHora } from './valores';
 import { OTRO, cambiosAlEditar, elDocumento, laTarea, laTareaTitulada, loQueVioElOtro, recordarAntesDeMiCambio, type StepDefinition, type World } from './world';
 

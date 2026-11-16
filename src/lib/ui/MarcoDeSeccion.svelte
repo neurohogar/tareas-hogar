@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import type { PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-en-pestanas.ts';
+	import type { PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-tabs.ts';
 
 	/** El contenedor de una sección del panel: tabpanel en pestañas, bloque con título en secciones seguidas. */
 	let {

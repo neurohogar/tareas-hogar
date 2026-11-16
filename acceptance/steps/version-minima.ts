@@ -2,15 +2,15 @@
 // la fila muestra en pendiente y atrasada con el botón «Hice la mínima», que completa como el checkbox y deja
 // `fueMinima` en el completado. Nunca inválida: vacío o solo espacios es sin versión mínima.
 import { expect } from 'vitest';
-import { textoDelAviso } from '../../src/lib/core/aviso';
-import { completadoMasReciente, completadosDeTarea } from '../../src/lib/core/completados';
-import { crearPeriodicaCalendario } from '../../src/lib/core/crear-periodica-calendario';
-import { crearPuntual, type DatosPuntual } from '../../src/lib/core/crear-puntual';
-import { datosDeTarea } from '../../src/lib/core/datos-de-tarea';
-import { aplicarCambio } from '../../src/lib/core/documento-de-tarea';
-import { cambioAlCompletar } from '../../src/lib/core/paso-actual';
-import type { Tarea } from '../../src/lib/core/tarea';
-import { hacerLaMinima } from '../../src/lib/core/version-minima';
+import { textoDelAviso } from '../../src/lib/core/notice';
+import { completadoMasReciente, completadosDeTarea } from '../../src/lib/core/completions';
+import { crearPeriodicaCalendario } from '../../src/lib/core/create-recurring-calendar';
+import { crearPuntual, type DatosPuntual } from '../../src/lib/core/create-one-off';
+import { datosDeTarea } from '../../src/lib/core/task-data';
+import { aplicarCambio } from '../../src/lib/core/task-document';
+import { cambioAlCompletar } from '../../src/lib/core/current-step';
+import type { Tarea } from '../../src/lib/core/task';
+import { hacerLaMinima } from '../../src/lib/core/minimal-version';
 import { AHORA, crearEnWorld, registrarCreacion } from './crear';
 import { editaElOtro, editoYo } from './edicion';
 import { diasDe, formaDe } from './periodica-calendario';

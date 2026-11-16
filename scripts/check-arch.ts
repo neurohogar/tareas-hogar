@@ -95,7 +95,7 @@ const IO_PROHIBIDO_EN_CORE: [RegExp, string][] = [
  * según la zona horaria del proceso. En el core vive solo en DIAS_LOCALES; el
  * resto compara instantes (getTime) o le pregunta a ese módulo.
  */
-const DIAS_LOCALES = join(LIB, 'core/dias.ts');
+const DIAS_LOCALES = join(LIB, 'core/days.ts');
 const CALENDARIO_LOCAL: [RegExp, string][] = [
 	[/\.(get|set)(FullYear|Month|Date|Day|Hours|Minutes|Seconds|Milliseconds)\(/, 'getters/setters locales de Date'],
 	[/\.getTimezoneOffset\(|\.toLocale\w*\(|\bIntl\./, 'zona horaria o formato local'],
@@ -110,7 +110,7 @@ const todos = [...archivos(join(RAIZ, 'src')), ...archivos(join(RAIZ, 'acceptanc
 for (const archivo of todos) {
 	const capa = capaDe(archivo);
 	if (capa === 'core') {
-		const sinComentarios = readFileSync(archivo, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+		const sinComentarios = readFileSync(archivo, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '').replace(/\bfrom\s*'[^'\n]*'/g, "from ''");
 		for (const [patron, que] of IO_PROHIBIDO_EN_CORE)
 			if (patron.test(sinComentarios)) errores.push(`${relative(RAIZ, archivo)}: el core no usa ${que}`);
 		if (archivo !== DIAS_LOCALES)

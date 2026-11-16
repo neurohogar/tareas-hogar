@@ -1,7 +1,7 @@
 // Historial (spec §6.3).
 import { expect } from 'vitest';
-import { completar } from '../../src/lib/core/completados';
-import { historial, type GrupoDelHistorial } from '../../src/lib/core/historial';
+import { completar } from '../../src/lib/core/completions';
+import { historial, type GrupoDelHistorial } from '../../src/lib/core/history';
 import { P, TITULO, fechaHora } from './valores';
 import { laTareaTitulada, tareasDe, type StepDefinition, type World } from './world';
 

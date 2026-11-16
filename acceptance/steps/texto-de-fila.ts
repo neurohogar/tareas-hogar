@@ -1,7 +1,7 @@
 // El texto de fecha de la fila de Pendientes («Tocaba …», «Vuelve …», spec §6.1) y el
 // regreso del aviso de completar (§5.4).
 import { expect } from 'vitest';
-import { regresoDelAviso } from '../../src/lib/core/aviso';
+import { regresoDelAviso } from '../../src/lib/core/notice';
 import { P, TITULO } from './valores';
 import { laTarea, type World, type StepDefinition } from './world';
 

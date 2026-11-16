@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { tomarAtras } from '#lib/adapters/atras.ts';
-	import type { Sentido } from '#lib/core/anotacion.ts';
+	import type { Sentido } from '#lib/core/annotation.ts';
 	import AnotarConfirmacion from './AnotarConfirmacion.svelte';
 	import { laSesion } from './sesion';
 

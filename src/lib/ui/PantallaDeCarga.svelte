@@ -24,7 +24,7 @@
 		recuerdoDeTopeDeNoto,
 		type EstadoDeLaEspera,
 		type RespuestaDeAuth
-	} from '#lib/core/pantalla-de-carga.ts';
+	} from '#lib/core/loading-screen.ts';
 
 	let { auth, datos, alIrse }: { auth: RespuestaDeAuth; datos: DatosRespondieron; alIrse: () => void } = $props();
 

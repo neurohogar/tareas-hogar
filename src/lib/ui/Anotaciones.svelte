@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { copiarAlPortapapeles } from '#lib/adapters/portapapeles.ts';
-	import type { Anotacion } from '#lib/core/anotacion.ts';
-	import { anotacionesEnPantalla } from '#lib/core/anotaciones.ts';
-	import { textoDeAnotaciones } from '#lib/core/anotaciones-copiadas.ts';
+	import type { Anotacion } from '#lib/core/annotation.ts';
+	import { anotacionesEnPantalla } from '#lib/core/annotations.ts';
+	import { textoDeAnotaciones } from '#lib/core/copied-annotations.ts';
 	import AnotarConfirmacion from './AnotarConfirmacion.svelte';
 	import { laSesion } from './sesion';
 

@@ -1,6 +1,6 @@
 import { expect } from 'vitest';
-import { crearPuntual, type DatosPuntual } from '../../src/lib/core/crear-puntual';
-import type { Tarea } from '../../src/lib/core/tarea';
+import { crearPuntual, type DatosPuntual } from '../../src/lib/core/create-one-off';
+import type { Tarea } from '../../src/lib/core/task';
 import { AHORA, ANTES_DEL_ESCENARIO, TITULO_VALIDO, registrarCreacion } from './crear';
 import { registrarCompletado } from './periodica-relativa';
 import { P, TITULO, fecha, fechaHora } from './valores';

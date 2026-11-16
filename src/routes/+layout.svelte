@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import '#lib/ui/estilos.css';
 	import { observarUsuario, type Usuario } from '#lib/adapters/auth.ts';
-	import type { RespuestaDeAuth } from '#lib/core/pantalla-de-carga.ts';
+	import type { RespuestaDeAuth } from '#lib/core/loading-screen.ts';
 	import Login from '#lib/ui/Login.svelte';
 	import PantallaDeCarga, { type DatosRespondieron } from '#lib/ui/PantallaDeCarga.svelte';
 	import Sesion from '#lib/ui/Sesion.svelte';

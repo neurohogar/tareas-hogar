@@ -1,10 +1,10 @@
 // Spec §6.1: qué hace tocar el checkbox de una fila de Pendientes.
-import { completadoMasReciente, completadosDeTarea } from './completados';
-import { estaCompletada } from './completada';
-import { inicioDelDia } from './dias';
-import { dentroDelHorario } from './horario';
-import { comoRecienCreada, estaPausada } from './pausa';
-import type { Completado, Tarea } from './tarea';
+import { completadoMasReciente, completadosDeTarea } from './completions';
+import { estaCompletada } from './completed';
+import { inicioDelDia } from './days';
+import { dentroDelHorario } from './schedule';
+import { comoRecienCreada, estaPausada } from './pause';
+import type { Completado, Tarea } from './task';
 
 /** "ninguna": el checkbox está deshabilitado (completaría fuera de la ventana, §5.5, o la tarea está pausada, §5.8). */
 export type AccionDelCheckbox = { tipo: 'completar' } | { tipo: 'borrar'; completado: Completado } | { tipo: 'ninguna' };

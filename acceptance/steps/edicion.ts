@@ -2,13 +2,13 @@
 // "otro dispositivo, sin ver ese cambio, ..." actúa sobre lo guardado antes
 // de mi último cambio, y su cambio llega después del mío.
 import { expect } from 'vitest';
-import { borrado, completadosHuerfanos } from '../../src/lib/core/borrado';
-import { completadosDeTarea, completar } from '../../src/lib/core/completados';
-import { datosDeTarea, type DatosDeTarea } from '../../src/lib/core/datos-de-tarea';
-import { aplicarCambio } from '../../src/lib/core/documento-de-tarea';
-import { editar } from '../../src/lib/core/edicion';
-import { cambioAlCompletar } from '../../src/lib/core/paso-actual';
-import type { Tarea } from '../../src/lib/core/tarea';
+import { borrado, completadosHuerfanos } from '../../src/lib/core/deletion';
+import { completadosDeTarea, completar } from '../../src/lib/core/completions';
+import { datosDeTarea, type DatosDeTarea } from '../../src/lib/core/task-data';
+import { aplicarCambio } from '../../src/lib/core/task-document';
+import { editar } from '../../src/lib/core/editing';
+import { cambioAlCompletar } from '../../src/lib/core/current-step';
+import type { Tarea } from '../../src/lib/core/task';
 import { DIAS_VALIDOS, FORMA_Y_DIAS, SIN_DIAS, diasDe, formaDe } from './periodica-calendario';
 import { P, TITULO, fechaHora, numero, unidad } from './valores';
 import {

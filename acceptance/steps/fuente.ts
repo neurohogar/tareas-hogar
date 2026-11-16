@@ -1,6 +1,6 @@
 // Qué fuente dibuja cada carácter (spec §6, "Qué se dibuja con qué").
 import { expect } from 'vitest';
-import { fuentesDelTexto } from '../../src/lib/core/fuente-de-caracter';
+import { fuentesDelTexto } from '../../src/lib/core/character-font';
 import { P } from './valores';
 import type { StepDefinition } from './world';
 

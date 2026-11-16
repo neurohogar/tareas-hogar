@@ -1,10 +1,10 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { accionDelCheckbox } from './checkbox';
-import { estaCompletada } from './completada';
-import { completadosDeTarea, completar, ultimoCompletadoEn } from './completados';
-import { inicioDelDia } from './dias';
-import type { Completado, RecurrenciaCalendario, RecurrenciaRelativa, Tarea } from './tarea';
+import { estaCompletada } from './completed';
+import { completadosDeTarea, completar, ultimoCompletadoEn } from './completions';
+import { inicioDelDia } from './days';
+import type { Completado, RecurrenciaCalendario, RecurrenciaRelativa, Tarea } from './task';
 
 const instante = fc.integer({ min: 0, max: 4_102_444_800_000 }).map((ms) => new Date(ms));
 const dia = fc.integer({ min: 0, max: 47_000 }).map((n) => new Date(1970, 0, 1 + n));

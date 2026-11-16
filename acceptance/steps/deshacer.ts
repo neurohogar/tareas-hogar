@@ -1,10 +1,10 @@
 // Deshacer un completado (spec §5.4): desde el Historial, desde el aviso y
 // desde otro dispositivo.
 import { expect } from 'vitest';
-import { avisoVisible, completadoADeshacer } from '../../src/lib/core/aviso';
-import { aplicarCambio } from '../../src/lib/core/documento-de-tarea';
-import { cambioAlBorrarCompletado } from '../../src/lib/core/paso-actual';
-import type { Completado } from '../../src/lib/core/tarea';
+import { avisoVisible, completadoADeshacer } from '../../src/lib/core/notice';
+import { aplicarCambio } from '../../src/lib/core/task-document';
+import { cambioAlBorrarCompletado } from '../../src/lib/core/current-step';
+import type { Completado } from '../../src/lib/core/task';
 import { P, TITULO, fechaHora } from './valores';
 import {
 	OTRO,

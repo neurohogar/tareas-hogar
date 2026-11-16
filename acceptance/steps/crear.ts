@@ -1,10 +1,10 @@
 import { expect } from 'vitest';
-import { completadosDeTarea } from '../../src/lib/core/completados';
-import type { ResultadoDeCreacion } from '../../src/lib/core/creacion';
+import { completadosDeTarea } from '../../src/lib/core/completions';
+import type { ResultadoDeCreacion } from '../../src/lib/core/creation';
 import {
 	crearPeriodicaRelativa,
 	type DatosPeriodicaRelativa
-} from '../../src/lib/core/crear-periodica-relativa';
+} from '../../src/lib/core/create-recurring-relative';
 import { P, numero, unidad } from './valores';
 import { laTarea, laTareaDeTipo, nuevoId, type StepDefinition, type World } from './world';
 

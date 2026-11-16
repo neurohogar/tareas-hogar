@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { accionDelCheckbox, checkboxHabilitado } from './checkbox';
-import type { Completado, Tarea } from './tarea';
+import type { Completado, Tarea } from './task';
 
 const CREADA = new Date(2026, 6, 1);
 const puntual: Tarea = { id: 'p', titulo: 'Pagar', tipo: 'puntual', creadaEn: CREADA };

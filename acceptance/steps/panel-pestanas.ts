@@ -13,7 +13,7 @@ import {
 	type ModoDelPanel,
 	type PresentacionDelPanel,
 	type SeccionDelPanel
-} from '../../src/lib/core/panel-en-pestanas';
+} from '../../src/lib/core/panel-tabs';
 import { P, numero } from './valores';
 import type { StepDefinition, World } from './world';
 

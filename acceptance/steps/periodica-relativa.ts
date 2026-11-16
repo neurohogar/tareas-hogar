@@ -1,10 +1,10 @@
 import { expect } from 'vitest';
-import { avisoAlCompletar } from '../../src/lib/core/aviso';
-import { completar } from '../../src/lib/core/completados';
-import { aplicarCambio } from '../../src/lib/core/documento-de-tarea';
-import { cambioAlCompletar } from '../../src/lib/core/paso-actual';
-import { estadoDeTarea } from '../../src/lib/core/estado-de-tarea';
-import type { Completado, Tarea } from '../../src/lib/core/tarea';
+import { avisoAlCompletar } from '../../src/lib/core/notice';
+import { completar } from '../../src/lib/core/completions';
+import { aplicarCambio } from '../../src/lib/core/task-document';
+import { cambioAlCompletar } from '../../src/lib/core/current-step';
+import { estadoDeTarea } from '../../src/lib/core/task-status';
+import type { Completado, Tarea } from '../../src/lib/core/task';
 import { ANTES_DEL_ESCENARIO, crearEnWorld } from './crear';
 import { P, TITULO, fechaHora, numero, unidad } from './valores';
 import {

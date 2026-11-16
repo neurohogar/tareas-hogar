@@ -1,10 +1,10 @@
 // Posponer y quitar posponer (spec §5.9, §6.2, §7): el botón del panel de
 // edición actúa en el momento, sin Guardar.
 import { expect } from 'vitest';
-import { accionDePausa } from '../../src/lib/core/pausa';
-import { accionDePosponer, textoDePosposicion } from '../../src/lib/core/posposicion-en-panel';
-import { OPCIONES_DE_POSPONER, posponer, quitarPosponer, type OpcionDePosponer } from '../../src/lib/core/posposicion';
-import type { Tarea } from '../../src/lib/core/tarea';
+import { accionDePausa } from '../../src/lib/core/pause';
+import { accionDePosponer, textoDePosposicion } from '../../src/lib/core/postponement-in-panel';
+import { OPCIONES_DE_POSPONER, posponer, quitarPosponer, type OpcionDePosponer } from '../../src/lib/core/postponement';
+import type { Tarea } from '../../src/lib/core/task';
 import { elPanel, guardarCambio } from './pausar';
 import { P, TITULO, fechaHora } from './valores';
 import { OTRO, cambiosAlEditar, elDocumento, laTarea, laTareaTitulada, loQueVioElOtro, recordarAntesDeMiCambio, type Guardado, type StepDefinition, type World } from './world';

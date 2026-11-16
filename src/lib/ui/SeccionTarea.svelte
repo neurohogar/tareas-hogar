@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { ErroresDeCreacion } from '#lib/core/creacion.ts';
-	import type { DatosDeTarea } from '#lib/core/datos-de-tarea.ts';
-	import { OPCIONES_DE_ESFUERZO } from '#lib/core/esfuerzo.ts';
-	import type { PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-en-pestanas.ts';
-	import type { Esfuerzo } from '#lib/core/tarea.ts';
+	import type { ErroresDeCreacion } from '#lib/core/creation.ts';
+	import type { DatosDeTarea } from '#lib/core/task-data.ts';
+	import { OPCIONES_DE_ESFUERZO } from '#lib/core/effort.ts';
+	import type { PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-tabs.ts';
+	import type { Esfuerzo } from '#lib/core/task.ts';
 	import { tick } from 'svelte';
 	import CampoEtiquetas from './CampoEtiquetas.svelte';
 	import Icono from './iconos/Icono.svelte';

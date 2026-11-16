@@ -1,9 +1,9 @@
 // Horario de la tarea (spec §4.1, §6.1, §6.2) y sus conflictos entre dispositivos (§7).
 // "la tarea se puede completar de D a H [y de D2 a H2]" es un horario ya guardado.
 import { expect } from 'vitest';
-import { crearSegunDatos, datosDeTarea, type DatosDeTarea } from '../../src/lib/core/datos-de-tarea';
-import { textoDelHorario, type HorarioEscrito } from '../../src/lib/core/horario';
-import type { Tarea } from '../../src/lib/core/tarea';
+import { crearSegunDatos, datosDeTarea, type DatosDeTarea } from '../../src/lib/core/task-data';
+import { textoDelHorario, type HorarioEscrito } from '../../src/lib/core/schedule';
+import type { Tarea } from '../../src/lib/core/task';
 import { AHORA, TITULO_VALIDO, registrarCreacion } from './crear';
 import { editaElOtro, editarYGuardar, editoYo } from './edicion';
 import { diasDe } from './periodica-calendario';

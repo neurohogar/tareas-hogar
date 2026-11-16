@@ -2,13 +2,13 @@
 // anotaciones de una tarea borrada (§6.2, §7). Una anotación se nombra en los pasos por el
 // instante en que se anotó.
 import { expect } from 'vitest';
-import { anotar, editarTexto, type Anotacion, type ContextoAlAnotar, type PantallaActual, type Sentido } from '../../src/lib/core/anotacion';
-import { anotacionesEnPantalla, type GrupoDeAnotaciones } from '../../src/lib/core/anotaciones';
-import { textoDeAnotaciones } from '../../src/lib/core/anotaciones-copiadas';
-import { anotacionesHuerfanas } from '../../src/lib/core/borrado';
-import { avisoAlCompletar } from '../../src/lib/core/aviso';
-import { hayCambios } from '../../src/lib/core/cambios-sin-guardar';
-import { DATOS_AL_CREAR } from '../../src/lib/core/datos-de-tarea';
+import { anotar, editarTexto, type Anotacion, type ContextoAlAnotar, type PantallaActual, type Sentido } from '../../src/lib/core/annotation';
+import { anotacionesEnPantalla, type GrupoDeAnotaciones } from '../../src/lib/core/annotations';
+import { textoDeAnotaciones } from '../../src/lib/core/copied-annotations';
+import { anotacionesHuerfanas } from '../../src/lib/core/deletion';
+import { avisoAlCompletar } from '../../src/lib/core/notice';
+import { hayCambios } from '../../src/lib/core/unsaved-changes';
+import { DATOS_AL_CREAR } from '../../src/lib/core/task-data';
 import { OTRO, borrarGuardado, cambiosAlCrear, cambiosAlEditar, laTareaTitulada, loQueHuboGuardado, nuevoId, tareasDe, type StepDefinition, type World } from './world';
 import { P, TITULO, fechaHora, numero } from './valores';
 

@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { porcentajeDeProgreso, type Estado } from '#lib/core/estado.ts';
-	import type { Etiqueta } from '#lib/core/etiqueta.ts';
-	import { textoDeEsfuerzo } from '#lib/core/esfuerzo.ts';
-	import { textoDelHorario } from '#lib/core/horario.ts';
-	import { nombreDeTarea } from '#lib/core/nombre-de-tarea.ts';
-	import type { BotonesDePaso } from '#lib/core/paso-actual.ts';
-	import type { LineaDeMinima } from '#lib/core/version-minima.ts';
-	import type { Tarea } from '#lib/core/tarea.ts';
+	import { porcentajeDeProgreso, type Estado } from '#lib/core/status.ts';
+	import type { Etiqueta } from '#lib/core/label.ts';
+	import { textoDeEsfuerzo } from '#lib/core/effort.ts';
+	import { textoDelHorario } from '#lib/core/schedule.ts';
+	import { nombreDeTarea } from '#lib/core/task-name.ts';
+	import type { BotonesDePaso } from '#lib/core/current-step.ts';
+	import type { LineaDeMinima } from '#lib/core/minimal-version.ts';
+	import type { Tarea } from '#lib/core/task.ts';
 	import ChipEtiqueta from './ChipEtiqueta.svelte';
 
 	let {

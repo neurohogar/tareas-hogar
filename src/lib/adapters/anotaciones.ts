@@ -1,7 +1,7 @@
 // Traduce entre la anotación del core y Firestore (spec §7):
 // users/{uid}/anotaciones/{anotacionId}.
 import { collection, deleteDoc, deleteField, doc, FirestoreError, getDocFromServer, onSnapshot, setDoc, Timestamp, updateDoc, type DocumentData, type QueryDocumentSnapshot } from 'firebase/firestore';
-import type { Anotacion, PantallaDeAnotacion, Sentido } from '#lib/core/anotacion.ts';
+import type { Anotacion, PantallaDeAnotacion, Sentido } from '#lib/core/annotation.ts';
 import { db } from './firebase';
 
 interface AnotacionDoc {

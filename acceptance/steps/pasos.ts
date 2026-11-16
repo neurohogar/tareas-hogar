@@ -1,14 +1,14 @@
 // Pasos de la tarea (spec §4.1 Pasos, §4.4, §6.1, §6.2, §7): el primer paso es el paso 1 y `pasos` guarda los
 // demás; `pasoActual` es el paso en que va la tarea. Nunca inválidos; «Hecho» y «Paso anterior» mueven el avance.
 import { expect } from 'vitest';
-import { completadoMasReciente, completadosDeTarea, completar } from '../../src/lib/core/completados';
-import { crearPuntual, type DatosPuntual } from '../../src/lib/core/crear-puntual';
-import { crearPeriodicaCalendario } from '../../src/lib/core/crear-periodica-calendario';
-import { datosDeTarea } from '../../src/lib/core/datos-de-tarea';
-import { aplicarCambio, type CambioDeTarea } from '../../src/lib/core/documento-de-tarea';
-import { accionDeHecho, cambioAlCompletar, cambioDePasoAnterior, type BotonesDePaso } from '../../src/lib/core/paso-actual';
-import { pasoEnQueVa, pasosDeLaTarea } from '../../src/lib/core/pasos';
-import type { Tarea } from '../../src/lib/core/tarea';
+import { completadoMasReciente, completadosDeTarea, completar } from '../../src/lib/core/completions';
+import { crearPuntual, type DatosPuntual } from '../../src/lib/core/create-one-off';
+import { crearPeriodicaCalendario } from '../../src/lib/core/create-recurring-calendar';
+import { datosDeTarea } from '../../src/lib/core/task-data';
+import { aplicarCambio, type CambioDeTarea } from '../../src/lib/core/task-document';
+import { accionDeHecho, cambioAlCompletar, cambioDePasoAnterior, type BotonesDePaso } from '../../src/lib/core/current-step';
+import { pasoEnQueVa, pasosDeLaTarea } from '../../src/lib/core/steps';
+import type { Tarea } from '../../src/lib/core/task';
 import { AHORA, crearEnWorld, registrarCreacion } from './crear';
 import { editaElOtro, editoYo } from './edicion';
 import { diasDe, formaDe } from './periodica-calendario';

@@ -1,20 +1,20 @@
-import type { AccionDelPanel } from '../../src/lib/core/accion-del-panel';
-import type { LoDeArriba } from '../../src/lib/core/atras-del-panel';
-import type { Anotacion, PantallaActual } from '../../src/lib/core/anotacion';
-import type { GrupoDeAnotaciones } from '../../src/lib/core/anotaciones';
-import type { Aviso } from '../../src/lib/core/aviso';
-import type { FormularioDelPanel, ValoresDelPanel } from '../../src/lib/core/cambios-sin-guardar';
-import type { ErroresDeCreacion } from '../../src/lib/core/creacion';
-import { tareaDesdeDocumento, type DocumentoDeTarea } from '../../src/lib/core/documento-de-tarea';
-import type { Estado } from '../../src/lib/core/estado';
-import type { BotonesDePaso } from '../../src/lib/core/paso-actual';
-import type { LineaDeMinima } from '../../src/lib/core/version-minima';
-import type { Etiqueta } from '../../src/lib/core/etiqueta';
-import type { ErrorDeRenombrado } from '../../src/lib/core/gestion-de-etiquetas';
-import type { GrupoDelHistorial } from '../../src/lib/core/historial';
-import { datosDeTarea } from '../../src/lib/core/datos-de-tarea';
-import { etiquetasDeTarea } from '../../src/lib/core/etiquetas-de-tarea';
-import type { Completado, Tarea } from '../../src/lib/core/tarea';
+import type { AccionDelPanel } from '../../src/lib/core/panel-action';
+import type { LoDeArriba } from '../../src/lib/core/panel-back';
+import type { Anotacion, PantallaActual } from '../../src/lib/core/annotation';
+import type { GrupoDeAnotaciones } from '../../src/lib/core/annotations';
+import type { Aviso } from '../../src/lib/core/notice';
+import type { FormularioDelPanel, ValoresDelPanel } from '../../src/lib/core/unsaved-changes';
+import type { ErroresDeCreacion } from '../../src/lib/core/creation';
+import { tareaDesdeDocumento, type DocumentoDeTarea } from '../../src/lib/core/task-document';
+import type { Estado } from '../../src/lib/core/status';
+import type { BotonesDePaso } from '../../src/lib/core/current-step';
+import type { LineaDeMinima } from '../../src/lib/core/minimal-version';
+import type { Etiqueta } from '../../src/lib/core/label';
+import type { ErrorDeRenombrado } from '../../src/lib/core/label-management';
+import type { GrupoDelHistorial } from '../../src/lib/core/history';
+import { datosDeTarea } from '../../src/lib/core/task-data';
+import { etiquetasDeTarea } from '../../src/lib/core/task-labels';
+import type { Completado, Tarea } from '../../src/lib/core/task';
 
 /** Lo que hay guardado: los documentos de las tareas, los completados y las etiquetas. */
 export interface Guardado {

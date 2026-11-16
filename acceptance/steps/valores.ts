@@ -1,6 +1,6 @@
 // Conversión estricta de valores de Examples a tipos del dominio. Un valor
 // malformado falla el escenario (requisito del runtime APS).
-import { DIAS_DE_LA_SEMANA, type DiaSemana, type OcurrenciaCubierta, type Unidad } from '../../src/lib/core/tarea';
+import { DIAS_DE_LA_SEMANA, type DiaSemana, type OcurrenciaCubierta, type Unidad } from '../../src/lib/core/task';
 
 /** Captura de un `<placeholder>`; el runtime la reemplaza por su valor. */
 export const P = '(<[A-Za-z0-9_]+>)';

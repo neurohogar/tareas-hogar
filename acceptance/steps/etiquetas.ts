@@ -3,17 +3,17 @@
 // (lo guardado antes de mi último cambio, más sus propios cambios); sus
 // cambios llegan después de los míos.
 import { expect } from 'vitest';
-import { borradoDeEtiqueta, referenciasRotas } from '../../src/lib/core/borrado-de-etiqueta';
-import { datosDeTarea, type DatosDeTarea } from '../../src/lib/core/datos-de-tarea';
-import { aplicarCambio, aplicarCambiosDeReferencias, tareaDesdeDocumento } from '../../src/lib/core/documento-de-tarea';
-import { PALETA, type Color, type Etiqueta } from '../../src/lib/core/etiqueta';
-import { etiquetasDeTarea } from '../../src/lib/core/etiquetas-de-tarea';
-import { filtroVigente } from '../../src/lib/core/filtro-por-etiqueta';
-import { fusionDeDuplicadas } from '../../src/lib/core/fusion-de-etiquetas';
-import { aplicarCambioDeEtiqueta, renombrar, type ErrorDeRenombrado } from '../../src/lib/core/gestion-de-etiquetas';
-import { crearConEtiquetas, editarConEtiquetas } from '../../src/lib/core/guardar-con-etiquetas';
-import { ordenarEtiquetas } from '../../src/lib/core/orden-de-etiquetas';
-import type { Tarea } from '../../src/lib/core/tarea';
+import { borradoDeEtiqueta, referenciasRotas } from '../../src/lib/core/label-deletion';
+import { datosDeTarea, type DatosDeTarea } from '../../src/lib/core/task-data';
+import { aplicarCambio, aplicarCambiosDeReferencias, tareaDesdeDocumento } from '../../src/lib/core/task-document';
+import { PALETA, type Color, type Etiqueta } from '../../src/lib/core/label';
+import { etiquetasDeTarea } from '../../src/lib/core/task-labels';
+import { filtroVigente } from '../../src/lib/core/label-filter';
+import { fusionDeDuplicadas } from '../../src/lib/core/label-merge';
+import { aplicarCambioDeEtiqueta, renombrar, type ErrorDeRenombrado } from '../../src/lib/core/label-management';
+import { crearConEtiquetas, editarConEtiquetas } from '../../src/lib/core/save-with-labels';
+import { ordenarEtiquetas } from '../../src/lib/core/label-order';
+import type { Tarea } from '../../src/lib/core/task';
 import { AHORA } from './crear';
 import { P, TITULO, lista } from './valores';
 import {

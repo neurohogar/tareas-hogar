@@ -2,9 +2,9 @@
 // su completado más reciente, según lo que decida el core.
 import { expect } from 'vitest';
 import { accionDelCheckbox, checkboxHabilitado } from '../../src/lib/core/checkbox';
-import { estaCompletada } from '../../src/lib/core/completada';
-import { estadoDeTarea } from '../../src/lib/core/estado-de-tarea';
-import { filasDePendientes } from '../../src/lib/core/pendientes';
+import { estaCompletada } from '../../src/lib/core/completed';
+import { estadoDeTarea } from '../../src/lib/core/task-status';
+import { filasDePendientes } from '../../src/lib/core/pending';
 import { borrarCompletado } from './deshacer';
 import { completoYo } from './periodica-relativa';
 import { P, fechaHora } from './valores';

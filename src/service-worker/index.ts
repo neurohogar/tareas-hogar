@@ -9,7 +9,7 @@
 import { version } from '$app/env';
 import { immutable, assets } from '$app/manifest';
 import { asset } from '$app/paths';
-import { CACHE_DE_FUENTES, esArchivoDeFuente } from '#lib/core/fuentes-empaquetadas.ts';
+import { CACHE_DE_FUENTES, esArchivoDeFuente } from '#lib/core/bundled-fonts.ts';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 const CACHE = `tareas-hogar-${version}`;

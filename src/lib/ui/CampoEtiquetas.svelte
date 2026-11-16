@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Etiqueta } from '#lib/core/etiqueta.ts';
-	import { elegirEtiquetas, type EtiquetaElegida } from '#lib/core/etiquetas-escritas.ts';
-	import { agregarEscrita, quitarElegida, sugerencias } from '#lib/core/panel-de-etiquetas.ts';
+	import type { Etiqueta } from '#lib/core/label.ts';
+	import { elegirEtiquetas, type EtiquetaElegida } from '#lib/core/typed-labels.ts';
+	import { agregarEscrita, quitarElegida, sugerencias } from '#lib/core/label-panel.ts';
 	import ChipEtiqueta from './ChipEtiqueta.svelte';
 	import { MENSAJES_DE_NOMBRE } from './mensajes-de-etiqueta';
 

@@ -2,20 +2,20 @@
 // cerrarlo o usar una acción, y qué cierra Atrás. El panel es el de world.panel; lo que escribe y lo
 // que tiene encima, world.panel.cambios. Con el panel cerrado, world.panel no existe.
 import { expect } from 'vitest';
-import { queHaceAtras, type LoDeArriba } from '../../src/lib/core/atras-del-panel';
-import { accionDeLaOpcion, cambioDeAccion, queHaceLaAccion, type AccionDelPanel } from '../../src/lib/core/accion-del-panel';
-import { avisoDeAccion, descartarYActuar, guardarYActuar, type AccionEnAviso } from '../../src/lib/core/aviso-de-accion';
-import { AVISO_DE_CIERRE, alCerrarElPanel, type AvisoDeCambios, type BotonDelAviso } from '../../src/lib/core/cambios-sin-guardar-aviso';
-import { crearDesdePanel, editarDesdePanel } from '../../src/lib/core/cambios-sin-guardar-guardado';
-import { hayCambios, type FormularioDelPanel } from '../../src/lib/core/cambios-sin-guardar';
-import type { DatosComunes } from '../../src/lib/core/creacion';
-import { crearPuntual } from '../../src/lib/core/crear-puntual';
-import { DATOS_AL_CREAR, type DatosDeTarea } from '../../src/lib/core/datos-de-tarea';
-import { aplicarCambio, type CambioDeTarea } from '../../src/lib/core/documento-de-tarea';
-import { OPCIONES_DE_ESFUERZO } from '../../src/lib/core/esfuerzo';
-import type { HorarioEscrito } from '../../src/lib/core/horario';
-import { OPCIONES_DE_POSPONER } from '../../src/lib/core/posposicion';
-import type { Tarea } from '../../src/lib/core/tarea';
+import { queHaceAtras, type LoDeArriba } from '../../src/lib/core/panel-back';
+import { accionDeLaOpcion, cambioDeAccion, queHaceLaAccion, type AccionDelPanel } from '../../src/lib/core/panel-action';
+import { avisoDeAccion, descartarYActuar, guardarYActuar, type AccionEnAviso } from '../../src/lib/core/action-notice';
+import { AVISO_DE_CIERRE, alCerrarElPanel, type AvisoDeCambios, type BotonDelAviso } from '../../src/lib/core/unsaved-changes-notice';
+import { crearDesdePanel, editarDesdePanel } from '../../src/lib/core/unsaved-changes-saved';
+import { hayCambios, type FormularioDelPanel } from '../../src/lib/core/unsaved-changes';
+import type { DatosComunes } from '../../src/lib/core/creation';
+import { crearPuntual } from '../../src/lib/core/create-one-off';
+import { DATOS_AL_CREAR, type DatosDeTarea } from '../../src/lib/core/task-data';
+import { aplicarCambio, type CambioDeTarea } from '../../src/lib/core/task-document';
+import { OPCIONES_DE_ESFUERZO } from '../../src/lib/core/effort';
+import type { HorarioEscrito } from '../../src/lib/core/schedule';
+import { OPCIONES_DE_POSPONER } from '../../src/lib/core/postponement';
+import type { Tarea } from '../../src/lib/core/task';
 import { AHORA, ANTES_DEL_ESCENARIO, registrarCreacion } from './crear';
 import { P, fechaHora, lista } from './valores';
 import {

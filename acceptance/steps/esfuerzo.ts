@@ -1,11 +1,11 @@
 // Esfuerzo de tarea (spec §4.1), el selector del panel (§6.2) y los conflictos
 // entre dispositivos (§7). "sin estimar" es una tarea sin el campo.
 import { expect } from 'vitest';
-import { crearPeriodicaCalendario } from '../../src/lib/core/crear-periodica-calendario';
-import { crearPuntual } from '../../src/lib/core/crear-puntual';
-import { datosDeTarea } from '../../src/lib/core/datos-de-tarea';
-import { aplicarCambio } from '../../src/lib/core/documento-de-tarea';
-import type { Esfuerzo, Tarea } from '../../src/lib/core/tarea';
+import { crearPeriodicaCalendario } from '../../src/lib/core/create-recurring-calendar';
+import { crearPuntual } from '../../src/lib/core/create-one-off';
+import { datosDeTarea } from '../../src/lib/core/task-data';
+import { aplicarCambio } from '../../src/lib/core/task-document';
+import type { Esfuerzo, Tarea } from '../../src/lib/core/task';
 import { AHORA, crearEnWorld, registrarCreacion } from './crear';
 import { editaElOtro, editoYo } from './edicion';
 import { diasDe } from './periodica-calendario';

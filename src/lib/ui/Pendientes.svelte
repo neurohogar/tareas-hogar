@@ -2,12 +2,12 @@
 	import { guardarMostrarCompletadas, leerMostrarCompletadas } from '#lib/adapters/mostrar-completadas.ts';
 	import { guardarMostrarPausadas, leerMostrarPausadas } from '#lib/adapters/mostrar-pausadas.ts';
 	import { checkboxHabilitado } from '#lib/core/checkbox.ts';
-	import type { FormularioDelPanel } from '#lib/core/cambios-sin-guardar.ts';
-	import { etiquetasDeTarea } from '#lib/core/etiquetas-de-tarea.ts';
-	import { filtrarPorEtiqueta, filtroVigente } from '#lib/core/filtro-por-etiqueta.ts';
-	import { filtrarSoloRapidas, textoDeListaVacia } from '#lib/core/solo-rapidas.ts';
-	import { ordenarEtiquetas } from '#lib/core/orden-de-etiquetas.ts';
-	import { filasDePendientes } from '#lib/core/pendientes.ts';
+	import type { FormularioDelPanel } from '#lib/core/unsaved-changes.ts';
+	import { etiquetasDeTarea } from '#lib/core/task-labels.ts';
+	import { filtrarPorEtiqueta, filtroVigente } from '#lib/core/label-filter.ts';
+	import { filtrarSoloRapidas, textoDeListaVacia } from '#lib/core/quick-only.ts';
+	import { ordenarEtiquetas } from '#lib/core/label-order.ts';
+	import { filasDePendientes } from '#lib/core/pending.ts';
 	import FilaTarea from './FilaTarea.svelte';
 	import PanelTarea from './PanelTarea.svelte';
 	import { laSesion } from './sesion';

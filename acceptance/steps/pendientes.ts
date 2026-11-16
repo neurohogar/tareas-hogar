@@ -1,8 +1,8 @@
 import { expect } from 'vitest';
-import { textoDeEsfuerzo } from '../../src/lib/core/esfuerzo';
-import { filtrarPorEtiqueta, filtroVigente } from '../../src/lib/core/filtro-por-etiqueta';
-import { filasDePendientes } from '../../src/lib/core/pendientes';
-import { filtrarSoloRapidas, textoDeListaVacia } from '../../src/lib/core/solo-rapidas';
+import { textoDeEsfuerzo } from '../../src/lib/core/effort';
+import { filtrarPorEtiqueta, filtroVigente } from '../../src/lib/core/label-filter';
+import { filasDePendientes } from '../../src/lib/core/pending';
+import { filtrarSoloRapidas, textoDeListaVacia } from '../../src/lib/core/quick-only';
 import { CUALQUIER_MOMENTO } from './periodica-relativa';
 import { P, fechaHora, lista } from './valores';
 import { tareasDe, type FilaConsultada, type StepDefinition, type World } from './world';
