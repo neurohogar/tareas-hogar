@@ -2,20 +2,20 @@
 // cerrarlo o usar una acción, y qué cierra Atrás. El panel es el de world.panel; lo que escribe y lo
 // que tiene encima, world.panel.cambios. Con el panel cerrado, world.panel no existe.
 import { expect } from 'vitest';
-import { queHaceAtras, type LoDeArriba } from '../../src/lib/core/panel-back';
-import { accionDeLaOpcion, cambioDeAccion, queHaceLaAccion, type AccionDelPanel } from '../../src/lib/core/panel-action';
-import { avisoDeAccion, descartarYActuar, guardarYActuar, type AccionEnAviso } from '../../src/lib/core/action-notice';
-import { AVISO_DE_CIERRE, alCerrarElPanel, type AvisoDeCambios, type BotonDelAviso } from '../../src/lib/core/unsaved-changes-notice';
-import { crearDesdePanel, editarDesdePanel } from '../../src/lib/core/unsaved-changes-saved';
-import { hayCambios, type FormularioDelPanel } from '../../src/lib/core/unsaved-changes';
-import type { DatosComunes } from '../../src/lib/core/creation';
-import { crearPuntual } from '../../src/lib/core/create-one-off';
-import { DATOS_AL_CREAR, type DatosDeTarea } from '../../src/lib/core/task-data';
-import { aplicarCambio, type CambioDeTarea } from '../../src/lib/core/task-document';
-import { OPCIONES_DE_ESFUERZO } from '../../src/lib/core/effort';
-import type { HorarioEscrito } from '../../src/lib/core/schedule';
-import { OPCIONES_DE_POSPONER } from '../../src/lib/core/postponement';
-import type { Tarea } from '../../src/lib/core/task';
+import { whatBackDoes, type OnTop } from '../../src/lib/core/panel-back';
+import { optionAction, changeOfAction, whatTheActionDoes, type PanelAction } from '../../src/lib/core/panel-action';
+import { actionNotice, discardAndAct, saveAndAct, type NoticeAction } from '../../src/lib/core/action-notice';
+import { CLOSE_NOTICE, onClosePanel, type ChangesNotice, type NoticeButton } from '../../src/lib/core/unsaved-changes-notice';
+import { createFromPanel, editFromPanel } from '../../src/lib/core/unsaved-changes-saved';
+import { hasChanges, type PanelForm } from '../../src/lib/core/unsaved-changes';
+import type { CommonData } from '../../src/lib/core/creation';
+import { createOneOff } from '../../src/lib/core/create-one-off';
+import { DATA_ON_CREATE, type TaskData } from '../../src/lib/core/task-data';
+import { applyChange, type TaskChange } from '../../src/lib/core/task-document';
+import { EFFORT_OPTIONS } from '../../src/lib/core/effort';
+import type { TypedSchedule } from '../../src/lib/core/schedule';
+import { POSTPONE_OPTIONS } from '../../src/lib/core/postponement';
+import type { Task } from '../../src/lib/core/task';
 import { AHORA, ANTES_DEL_ESCENARIO, registrarCreacion } from './crear';
 import { P, fechaHora, lista } from './valores';
 import {
@@ -31,7 +31,7 @@ import {
 	type World
 } from './world';
 
-const elMomento = ({ ahora }: CambiosDelPanel) => ahora ?? AHORA;
+const elMomento = ({ now: ahora }: CambiosDelPanel) => ahora ?? AHORA;
 
 /** Un valor malformado falla el escenario: nada se interpreta por parecido. */
 function deLaTabla<T>(tabla: Record<string, T>, valor: string, que: string): T {
@@ -39,36 +39,36 @@ function deLaTabla<T>(tabla: Record<string, T>, valor: string, que: string): T {
 	return tabla[valor];
 }
 
-function abroParaEditar(world: World, datos: DatosComunes): void {
-	registrarCreacion(world, (id) => crearPuntual(datos, id, ANTES_DEL_ESCENARIO));
-	expect(world.errores).toBeUndefined();
+function abroParaEditar(world: World, datos: CommonData): void {
+	registrarCreacion(world, (id) => createOneOff(datos, id, ANTES_DEL_ESCENARIO));
+	expect(world.errors).toBeUndefined();
 	const tarea = laTarea(world);
 	world.panel = { pausa: undefined, cambios: cambiosAlEditar(world, tarea) };
 }
 
 /** La ventana "HH:MM-HH:MM" de un paso. */
-function ventana(valor: string): HorarioEscrito[number] {
+function ventana(valor: string): TypedSchedule[number] {
 	const partes = /^(\d{2}:\d{2})-(\d{2}:\d{2})$/.exec(valor);
 	if (!partes) throw new Error(`Ventana inválida: "${valor}"`);
-	return { desde: partes[1], hasta: partes[2] };
+	return { from: partes[1], to: partes[2] };
 }
 
-function contextoDeLaAccion(world: World, cambios: CambiosDelPanel, tareaAlAbrir: Tarea, accion: AccionDelPanel): AccionEnAviso {
+function contextoDeLaAccion(world: World, cambios: CambiosDelPanel, tareaAlAbrir: Task, accion: PanelAction): NoticeAction {
 	const tarea = tareasDe(world).find(({ id }) => id === tareaAlAbrir.id);
 	if (!tarea) throw new Error('La tarea del panel ya no existe');
-	return { accion, tareaAlAbrir, tarea, completados: world.completados, ahora: elMomento(cambios), formulario: cambios.formulario, existentes: world.etiquetas };
+	return { action: accion, taskOnOpen: tareaAlAbrir, task: tarea, completions: world.completions, now: elMomento(cambios), form: cambios.form, existings: world.labels };
 }
 
 /** Lo que hizo otro dispositivo o el paso del tiempo mientras el panel estaba abierto (§6.2, §7). */
 function panelAlDia(world: World): CambiosDelPanel | undefined {
 	const cambios = world.panel?.cambios;
 	if (!cambios) return undefined;
-	const { tareaAlAbrir, accion } = cambios;
+	const { taskOnOpen: tareaAlAbrir, action: accion } = cambios;
 	if (tareaAlAbrir && !tareasDe(world).some(({ id }) => id === tareaAlAbrir.id)) {
 		world.panel = undefined;
 		return undefined;
 	}
-	if (cambios.encima === 'aviso de acción' && tareaAlAbrir && accion && !avisoDeAccion(contextoDeLaAccion(world, cambios, tareaAlAbrir, accion))) cierroLoDeArriba(cambios);
+	if (cambios.top === 'aviso de acción' && tareaAlAbrir && accion && !actionNotice(contextoDeLaAccion(world, cambios, tareaAlAbrir, accion))) cierroLoDeArriba(cambios);
 	return cambios;
 }
 
@@ -79,13 +79,13 @@ function elPanelAbierto(world: World): CambiosDelPanel {
 }
 
 function cierroLoDeArriba(cambios: CambiosDelPanel): void {
-	cambios.encima = 'nada';
-	cambios.accion = undefined;
+	cambios.top = 'nada';
+	cambios.action = undefined;
 }
 
-const conCambios = ({ alAbrir, formulario }: CambiosDelPanel) => hayCambios(alAbrir, formulario);
+const conCambios = ({ alAbrir, form: formulario }: CambiosDelPanel) => hasChanges(alAbrir, formulario);
 
-const NOMBRES_DE_ENCIMA: Record<string, LoDeArriba> = {
+const NOMBRES_DE_ENCIMA: Record<string, OnTop> = {
 	nada: 'nada',
 	'el aviso de cierre': 'aviso de cierre',
 	'el aviso de acción': 'aviso de acción',
@@ -94,7 +94,7 @@ const NOMBRES_DE_ENCIMA: Record<string, LoDeArriba> = {
 	'las sugerencias de Etiquetas': 'sugerencias de Etiquetas'
 };
 
-const LO_ABIERTO: Partial<Record<LoDeArriba, string>> = {
+const LO_ABIERTO: Partial<Record<OnTop, string>> = {
 	'aviso de cierre': 'el panel con el aviso de cierre',
 	'aviso de acción': 'el panel con el aviso de acción',
 	'confirmación de Borrar tarea': 'el panel con la confirmación de Borrar tarea',
@@ -103,89 +103,89 @@ const LO_ABIERTO: Partial<Record<LoDeArriba, string>> = {
 
 // ---- Lo que se escribe ----
 
-const CAMPOS: Record<string, { lee: (f: FormularioDelPanel) => string | undefined; escribe: (f: FormularioDelPanel, valor: string) => FormularioDelPanel }> = {
-	Título: { lee: (f) => f.datos.titulo, escribe: (f, titulo) => ({ ...f, datos: { ...f.datos, titulo } }) },
-	Nota: { lee: (f) => f.datos.nota, escribe: (f, nota) => ({ ...f, datos: { ...f.datos, nota } }) },
-	'Primer paso': { lee: (f) => f.datos.primerPaso, escribe: (f, primerPaso) => ({ ...f, datos: { ...f.datos, primerPaso } }) },
-	'Versión mínima': { lee: (f) => f.datos.versionMinima, escribe: (f, versionMinima) => ({ ...f, datos: { ...f.datos, versionMinima } }) },
-	'Etiquetas sin confirmar': { lee: (f) => f.sinConfirmar, escribe: (f, sinConfirmar) => ({ ...f, sinConfirmar }) }
+const CAMPOS: Record<string, { lee: (f: PanelForm) => string | undefined; escribe: (f: PanelForm, valor: string) => PanelForm }> = {
+	Título: { lee: (f) => f.data.title, escribe: (f, titulo) => ({ ...f, data: { ...f.data, title: titulo } }) },
+	Nota: { lee: (f) => f.data.note, escribe: (f, nota) => ({ ...f, data: { ...f.data, note: nota } }) },
+	'Primer paso': { lee: (f) => f.data.firstStep, escribe: (f, primerPaso) => ({ ...f, data: { ...f.data, firstStep: primerPaso } }) },
+	'Versión mínima': { lee: (f) => f.data.minimalVersion, escribe: (f, versionMinima) => ({ ...f, data: { ...f.data, minimalVersion: versionMinima } }) },
+	'Etiquetas sin confirmar': { lee: (f) => f.unconfirmed, escribe: (f, sinConfirmar) => ({ ...f, unconfirmed: sinConfirmar }) }
 };
 
 /** Los pasos más del panel: el campo «Paso N» (N ≥ 2) es el lugar N - 2 de `pasos` (§6.2). */
 const LUGAR_DE_PASO = /^Paso (\d+)$/;
 
-function lugarDelPaso(formulario: FormularioDelPanel, campo: string): number {
+function lugarDelPaso(formulario: PanelForm, campo: string): number {
 	const lugar = Number(LUGAR_DE_PASO.exec(campo)?.[1]) - 2;
-	if (!(lugar >= 0 && lugar < (formulario.datos.pasos ?? []).length)) throw new Error(`Campo inválido: "${campo}"`);
+	if (!(lugar >= 0 && lugar < (formulario.data.steps ?? []).length)) throw new Error(`Campo inválido: "${campo}"`);
 	return lugar;
 }
 
 function campoDe(campo: string): (typeof CAMPOS)[string] {
 	if (!LUGAR_DE_PASO.test(campo)) return deLaTabla(CAMPOS, campo, 'Campo');
-	const conPasos = (f: FormularioDelPanel, pasos: string[]): FormularioDelPanel => ({ ...f, datos: { ...f.datos, pasos } });
+	const conPasos = (f: PanelForm, pasos: string[]): PanelForm => ({ ...f, data: { ...f.data, steps: pasos } });
 	return {
-		lee: (f) => f.datos.pasos?.[lugarDelPaso(f, campo)],
-		escribe: (f, valor) => conPasos(f, (f.datos.pasos ?? []).map((paso, lugar) => (lugar === lugarDelPaso(f, campo) ? valor : paso)))
+		lee: (f) => f.data.steps?.[lugarDelPaso(f, campo)],
+		escribe: (f, valor) => conPasos(f, (f.data.steps ?? []).map((paso, lugar) => (lugar === lugarDelPaso(f, campo) ? valor : paso)))
 	};
 }
 
 function escribo(world: World, campo: string, valor: string): void {
 	const cambios = elPanelAbierto(world);
-	cambios.formulario = campoDe(campo).escribe(cambios.formulario, valor);
+	cambios.form = campoDe(campo).escribe(cambios.form, valor);
 }
 
 /** «Agregar paso» suma un campo vacío al final; «Quitar» saca el del campo (§6.2). */
-function cambioLosPasos(world: World, cambiar: (pasos: readonly string[], formulario: FormularioDelPanel) => string[]): void {
+function cambioLosPasos(world: World, cambiar: (pasos: readonly string[], formulario: PanelForm) => string[]): void {
 	const cambios = elPanelAbierto(world);
-	const { formulario } = cambios;
-	cambios.formulario = { ...formulario, datos: { ...formulario.datos, pasos: cambiar(formulario.datos.pasos ?? [], formulario) } };
+	const { form: formulario } = cambios;
+	cambios.form = { ...formulario, data: { ...formulario.data, steps: cambiar(formulario.data.steps ?? [], formulario) } };
 }
 
-const comunesDe = ({ titulo, emoji, nota, primerPaso, pasos, versionMinima, horario, esfuerzo }: DatosDeTarea): DatosComunes => ({ titulo, emoji, nota, primerPaso, pasos, versionMinima, horario, esfuerzo });
+const comunesDe = ({ title: titulo, emoji, note: nota, firstStep: primerPaso, steps: pasos, minimalVersion: versionMinima, schedule: horario, effort: esfuerzo }: TaskData): CommonData => ({ title: titulo, emoji, note: nota, firstStep: primerPaso, steps: pasos, minimalVersion: versionMinima, schedule: horario, effort: esfuerzo });
 
 /** Los campos de cada opción de "Se repite": los de la tarea si es de esa forma; si no, como al crear (§6.2). */
-const SE_REPITE: Record<string, { forma: DatosDeTarea['forma']; vacios: Partial<DatosDeTarea> }> = {
-	'No se repite': { forma: 'puntual', vacios: {} },
-	Intervalo: { forma: 'relativa', vacios: { cada: Number.NaN, unidad: 'horas' } }
+const SE_REPITE: Record<string, { shape: TaskData['shape']; vacios: Partial<TaskData> }> = {
+	'No se repite': { shape: 'puntual', vacios: {} },
+	Intervalo: { shape: 'relativa', vacios: { every: Number.NaN, unit: 'horas' } }
 };
 
-const SELECTORES: Record<string, (cambios: CambiosDelPanel, valor: string) => DatosDeTarea> = {
-	'Se repite': ({ alAbrir, formulario }, valor) => {
-		const { forma, vacios } = deLaTabla(SE_REPITE, valor, 'Opción de Se repite');
-		const base = alAbrir.datos.forma === forma ? alAbrir.datos : { forma, ...vacios };
-		return { ...base, ...comunesDe(formulario.datos) } as DatosDeTarea;
+const SELECTORES: Record<string, (cambios: CambiosDelPanel, valor: string) => TaskData> = {
+	'Se repite': ({ alAbrir, form: formulario }, valor) => {
+		const { shape: forma, vacios } = deLaTabla(SE_REPITE, valor, 'Opción de Se repite');
+		const base = alAbrir.data.shape === forma ? alAbrir.data : { shape: forma, ...vacios };
+		return { ...base, ...comunesDe(formulario.data) } as TaskData;
 	},
-	Esfuerzo: ({ formulario }, valor) => {
+	Esfuerzo: ({ form: formulario }, valor) => {
 		// El paso nombra la opción sin la duración que la acompaña en pantalla: "Media", no "Media (≈ 15 min)".
-		const opcion = OPCIONES_DE_ESFUERZO.find(({ texto }) => texto === valor || texto.startsWith(`${valor} (`));
+		const opcion = EFFORT_OPTIONS.find(({ text: texto }) => texto === valor || texto.startsWith(`${valor} (`));
 		if (!opcion) throw new Error(`Esfuerzo inválido: "${valor}"`);
-		return { ...formulario.datos, esfuerzo: opcion.valor };
+		return { ...formulario.data, effort: opcion.value };
 	}
 };
 
-function cambioElHorario(world: World, horario: HorarioEscrito): void {
+function cambioElHorario(world: World, horario: TypedSchedule): void {
 	const cambios = elPanelAbierto(world);
-	cambios.formulario = { ...cambios.formulario, datos: { ...cambios.formulario.datos, horario } };
+	cambios.form = { ...cambios.form, data: { ...cambios.form.data, schedule: horario } };
 }
 
 function cambioLasEtiquetas(world: World, cambiar: (etiquetas: readonly string[]) => string[]): void {
 	const cambios = elPanelAbierto(world);
-	cambios.formulario = { ...cambios.formulario, etiquetas: cambiar(cambios.formulario.etiquetas) };
+	cambios.form = { ...cambios.form, labels: cambiar(cambios.form.labels) };
 }
 
 // ---- Los avisos ----
 
-const ACCIONES_FIJAS: Record<string, AccionDelPanel | 'borrar tarea'> = { Pausar: 'pausar', Reanudar: 'reanudar', 'Quitar posponer': 'quitar posponer', 'Borrar tarea': 'borrar tarea' };
+const ACCIONES_FIJAS: Record<string, PanelAction | 'borrar tarea'> = { Pausar: 'pausar', Reanudar: 'reanudar', 'Quitar posponer': 'quitar posponer', 'Borrar tarea': 'borrar tarea' };
 
-function accionDe(texto: string): AccionDelPanel | 'borrar tarea' {
-	const opcion = OPCIONES_DE_POSPONER.find(({ opcion }) => texto === `Posponer ${opcion}`);
-	return opcion ? accionDeLaOpcion(opcion.opcion) : deLaTabla(ACCIONES_FIJAS, texto, 'Acción');
+function accionDe(texto: string): PanelAction | 'borrar tarea' {
+	const opcion = POSTPONE_OPTIONS.find(({ option: opcion }) => texto === `Posponer ${opcion}`);
+	return opcion ? optionAction(opcion.option) : deLaTabla(ACCIONES_FIJAS, texto, 'Acción');
 }
 
-function elAviso(world: World, cambios: CambiosDelPanel): AvisoDeCambios {
-	if (cambios.encima === 'aviso de cierre') return AVISO_DE_CIERRE;
-	const { tareaAlAbrir, accion } = cambios;
-	const aviso = cambios.encima === 'aviso de acción' && tareaAlAbrir && accion && avisoDeAccion(contextoDeLaAccion(world, cambios, tareaAlAbrir, accion));
+function elAviso(world: World, cambios: CambiosDelPanel): ChangesNotice {
+	if (cambios.top === 'aviso de cierre') return CLOSE_NOTICE;
+	const { taskOnOpen: tareaAlAbrir, action: accion } = cambios;
+	const aviso = cambios.top === 'aviso de acción' && tareaAlAbrir && accion && actionNotice(contextoDeLaAccion(world, cambios, tareaAlAbrir, accion));
 	if (!aviso) throw new Error('No hay un aviso abierto');
 	return aviso;
 }
@@ -194,78 +194,78 @@ function cierroElPanel(world: World): void {
 	world.panel = undefined;
 }
 
-function actuo(world: World, tarea: Tarea, cambio: CambioDeTarea): void {
+function actuo(world: World, tarea: Task, cambio: TaskChange): void {
 	recordarAntesDeMiCambio(world);
-	world.documentos = aplicarCambio(world.documentos, tarea.id, cambio);
+	world.documentos = applyChange(world.documentos, tarea.id, cambio);
 	cierroElPanel(world);
 }
 
 /** Elegir la acción: el panel, con la tarea de ahora, tiene que ofrecerla (§6.2). */
 function elijoLaAccion(world: World, texto: string, momento: string): void {
 	const cambios = elPanelAbierto(world);
-	cambios.ahora = fechaHora(momento);
+	cambios.now = fechaHora(momento);
 	const accion = accionDe(texto);
-	const tarea = cambios.tareaAlAbrir;
+	const tarea = cambios.taskOnOpen;
 	if (!tarea) throw new Error('Las acciones son solo al editar');
-	const efecto = queHaceLaAccion(accion, conCambios(cambios));
+	const efecto = whatTheActionDoes(accion, conCambios(cambios));
 	if (accion === 'borrar tarea' || efecto === 'pide confirmar el borrado') {
-		cambios.encima = 'confirmación de Borrar tarea';
+		cambios.top = 'confirmación de Borrar tarea';
 		return;
 	}
 	const contexto = contextoDeLaAccion(world, cambios, tarea, accion);
 	if (efecto === 'abre el aviso de acción') {
-		expect(avisoDeAccion(contexto)).toBeDefined();
-		cambios.encima = 'aviso de acción';
-		cambios.accion = accion;
+		expect(actionNotice(contexto)).toBeDefined();
+		cambios.top = 'aviso de acción';
+		cambios.action = accion;
 	} else {
-		expect(descartarYActuar(contexto)).toBeDefined();
-		actuo(world, contexto.tarea, cambioDeAccion(accion, contexto.ahora));
+		expect(discardAndAct(contexto)).toBeDefined();
+		actuo(world, contexto.task, changeOfAction(accion, contexto.now));
 	}
 }
 
 /** Si Guardar falla (§6.2): no se ejecuta nada, el aviso se cierra y el panel sigue con lo escrito. */
-function fallaGuardar(world: World, cambios: CambiosDelPanel, errores: World['errores']): void {
-	world.errores = errores;
+function fallaGuardar(world: World, cambios: CambiosDelPanel, errores: World['errors']): void {
+	world.errors = errores;
 	cierroLoDeArriba(cambios);
 }
 
-const alGuardar = (world: World) => ({ existentes: world.etiquetas, nuevoId: () => nuevoIdDeEtiqueta(world) });
+const alGuardar = (world: World) => ({ existings: world.labels, newId: () => nuevoIdDeEtiqueta(world) });
 
 function guardoDesdeElCierre(world: World, cambios: CambiosDelPanel): void {
-	const { tareaAlAbrir, formulario } = cambios;
+	const { taskOnOpen: tareaAlAbrir, form: formulario } = cambios;
 	const actual = tareaAlAbrir && tareasDe(world).find(({ id }) => id === tareaAlAbrir.id);
 	if (actual) {
-		const edicion = editarDesdePanel(actual, formulario, alGuardar(world), elMomento(cambios));
-		if (!edicion.ok) return fallaGuardar(world, cambios, edicion.errores);
-		world.etiquetas = [...world.etiquetas, ...edicion.nuevas];
-		return actuo(world, actual, edicion.cambio);
+		const edicion = editFromPanel(actual, formulario, alGuardar(world), elMomento(cambios));
+		if (!edicion.ok) return fallaGuardar(world, cambios, edicion.errors);
+		world.labels = [...world.labels, ...edicion.newLabels];
+		return actuo(world, actual, edicion.change);
 	}
-	const creacion = crearDesdePanel(formulario, nuevoId(world, 'tarea'), elMomento(cambios), alGuardar(world));
-	if (!creacion.ok) return fallaGuardar(world, cambios, creacion.errores);
-	world.etiquetas = [...world.etiquetas, ...creacion.nuevas];
-	world.documentos = [...world.documentos, creacion.tarea];
+	const creacion = createFromPanel(formulario, nuevoId(world, 'tarea'), elMomento(cambios), alGuardar(world));
+	if (!creacion.ok) return fallaGuardar(world, cambios, creacion.errors);
+	world.labels = [...world.labels, ...creacion.newLabels];
+	world.documentos = [...world.documentos, creacion.task];
 	cierroElPanel(world);
 }
 
-function guardoYActuo(world: World, cambios: CambiosDelPanel, contexto: AccionEnAviso): void {
-	const resultado = guardarYActuar(contexto, () => nuevoIdDeEtiqueta(world));
-	if (resultado.resultado === 'rechazado') return fallaGuardar(world, cambios, resultado.errores);
-	if (resultado.resultado === 'aviso cerrado') return cierroLoDeArriba(cambios);
-	if (resultado.resultado === 'aviso actualizado') return;
-	world.etiquetas = [...world.etiquetas, ...resultado.nuevas];
-	actuo(world, contexto.tarea, resultado.cambio);
+function guardoYActuo(world: World, cambios: CambiosDelPanel, contexto: NoticeAction): void {
+	const resultado = saveAndAct(contexto, () => nuevoIdDeEtiqueta(world));
+	if (resultado.result === 'rechazado') return fallaGuardar(world, cambios, resultado.errors);
+	if (resultado.result === 'aviso cerrado') return cierroLoDeArriba(cambios);
+	if (resultado.result === 'aviso actualizado') return;
+	world.labels = [...world.labels, ...resultado.newLabels];
+	actuo(world, contexto.task, resultado.change);
 }
 
-function descartoYActuo(world: World, cambios: CambiosDelPanel, contexto: AccionEnAviso): void {
-	const cambio = descartarYActuar(contexto);
-	if (cambio) actuo(world, contexto.tarea, cambio);
+function descartoYActuo(world: World, cambios: CambiosDelPanel, contexto: NoticeAction): void {
+	const cambio = discardAndAct(contexto);
+	if (cambio) actuo(world, contexto.task, cambio);
 	else cierroLoDeArriba(cambios);
 }
 
-function tocoElBoton(world: World, cambios: CambiosDelPanel, { efecto }: BotonDelAviso): void {
+function tocoElBoton(world: World, cambios: CambiosDelPanel, { effect: efecto }: NoticeButton): void {
 	if (efecto === 'seguir editando') return cierroLoDeArriba(cambios);
-	const { tareaAlAbrir, accion } = cambios;
-	if (cambios.encima === 'aviso de acción' && tareaAlAbrir && accion) {
+	const { taskOnOpen: tareaAlAbrir, action: accion } = cambios;
+	if (cambios.top === 'aviso de acción' && tareaAlAbrir && accion) {
 		const contexto = contextoDeLaAccion(world, cambios, tareaAlAbrir, accion);
 		return efecto === 'guardar' ? guardoYActuo(world, cambios, contexto) : descartoYActuo(world, cambios, contexto);
 	}
@@ -275,23 +275,23 @@ function tocoElBoton(world: World, cambios: CambiosDelPanel, { efecto }: BotonDe
 
 function tocoEnElAviso(world: World, texto: string, momento?: string): void {
 	const cambios = elPanelAbierto(world);
-	if (momento !== undefined) cambios.ahora = fechaHora(momento);
-	const boton = elAviso(world, cambios).botones.find((candidato) => candidato.texto === texto);
+	if (momento !== undefined) cambios.now = fechaHora(momento);
+	const boton = elAviso(world, cambios).buttons.find((candidato) => candidato.text === texto);
 	if (!boton) throw new Error(`El aviso no ofrece "${texto}"`);
 	tocoElBoton(world, cambios, boton);
 }
 
 function cierroElPanelDesde(world: World, cambios: CambiosDelPanel, efecto: 'cierra el panel' | 'abre el aviso de cierre'): void {
 	if (efecto === 'cierra el panel') cierroElPanel(world);
-	else cambios.encima = 'aviso de cierre';
+	else cambios.top = 'aviso de cierre';
 }
 
 function tocoAtras(world: World): void {
 	const cambios = elPanelAbierto(world);
 	world.tocoAtras = true;
-	const deshacerArriba = cambios.encima === 'nada' && world.avisoDeDeshacerAbierto === true;
-	const efecto = queHaceAtras({ encima: deshacerArriba ? 'aviso de deshacer' : cambios.encima, hayCambios: conCambios(cambios), tecladoAbierto: cambios.tecladoAbierto });
-	if (efecto === 'cierra el teclado') cambios.tecladoAbierto = false;
+	const deshacerArriba = cambios.top === 'nada' && world.avisoDeDeshacerAbierto === true;
+	const efecto = whatBackDoes({ top: deshacerArriba ? 'aviso de deshacer' : cambios.top, hasChanges: conCambios(cambios), keyboardOpen: cambios.keyboardOpen });
+	if (efecto === 'cierra el teclado') cambios.keyboardOpen = false;
 	else if (efecto !== 'cierra lo de arriba') cierroElPanelDesde(world, cambios, efecto);
 	else if (deshacerArriba) world.avisoDeDeshacerAbierto = false;
 	else cierroLoDeArriba(cambios);
@@ -307,21 +307,21 @@ const PIDE_CONFIRMACION = 'pide confirmación';
 export const cambiosSinGuardarSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con nota ${P}$`),
-		run: (world, titulo, nota) => abroParaEditar(world, { titulo, nota })
+		run: (world, titulo, nota) => abroParaEditar(world, { title: titulo, note: nota })
 	},
 	{
 		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con versión mínima ${P}$`),
-		run: (world, titulo, versionMinima) => abroParaEditar(world, { titulo, versionMinima })
+		run: (world, titulo, versionMinima) => abroParaEditar(world, { title: titulo, minimalVersion: versionMinima })
 	},
 	{
 		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con primer paso ${P}$`),
-		run: (world, titulo, primerPaso) => abroParaEditar(world, { titulo, primerPaso })
+		run: (world, titulo, primerPaso) => abroParaEditar(world, { title: titulo, firstStep: primerPaso })
 	},
 	{
 		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con los pasos ${P}$`),
 		run: (world, titulo, pasos) => {
 			const [primerPaso, ...mas] = lista(pasos);
-			abroParaEditar(world, { titulo, primerPaso, pasos: mas });
+			abroParaEditar(world, { title: titulo, firstStep: primerPaso, steps: mas });
 		}
 	},
 	{
@@ -336,19 +336,19 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 	},
 	{
 		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con los horarios ${P} y ${P}$`),
-		run: (world, titulo, primero, segundo) => abroParaEditar(world, { titulo, horario: [ventana(primero), ventana(segundo)] })
+		run: (world, titulo, primero, segundo) => abroParaEditar(world, { title: titulo, schedule: [ventana(primero), ventana(segundo)] })
 	},
 	{
 		pattern: /^abro el panel para crear una tarea$/,
 		run: (world) => {
-			world.panel = { pausa: undefined, cambios: cambiosAlCrear(DATOS_AL_CREAR) };
+			world.panel = { pausa: undefined, cambios: cambiosAlCrear(DATA_ON_CREATE) };
 		}
 	},
 	{
 		pattern: new RegExp(`^el panel está abierto ${P}$`),
 		run: (world, estado) => {
 			const escrito = deLaTabla(ESTADOS_DEL_PANEL, estado, 'Estado del panel');
-			abroParaEditar(world, { titulo: TITULO_AL_ABRIR });
+			abroParaEditar(world, { title: TITULO_AL_ABRIR });
 			if (escrito) escribo(world, 'Título', escrito);
 		}
 	},
@@ -356,9 +356,9 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 		pattern: new RegExp(`^encima del panel hay ${P}$`),
 		run: (world, encima) => {
 			const cambios = elPanelAbierto(world);
-			cambios.encima = deLaTabla(NOMBRES_DE_ENCIMA, encima, 'Lo de arriba');
+			cambios.top = deLaTabla(NOMBRES_DE_ENCIMA, encima, 'Lo de arriba');
 			// Una tarea puntual sin posponer ofrece Posponer: su aviso de acción puede estar abierto (§5.9).
-			if (cambios.encima === 'aviso de acción') cambios.accion = accionDeLaOpcion('1 hora');
+			if (cambios.top === 'aviso de acción') cambios.action = optionAction('1 hora');
 		}
 	},
 	{
@@ -374,7 +374,7 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 	{
 		pattern: /^el teclado en pantalla está abierto$/,
 		run: (world) => {
-			elPanelAbierto(world).tecladoAbierto = true;
+			elPanelAbierto(world).keyboardOpen = true;
 		}
 	},
 	{
@@ -397,7 +397,7 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 		pattern: new RegExp(`^elijo ${P} en ${P}$`),
 		run: (world, valor, selector) => {
 			const cambios = elPanelAbierto(world);
-			cambios.formulario = { ...cambios.formulario, datos: deLaTabla(SELECTORES, selector, 'Selector')(cambios, valor) };
+			cambios.form = { ...cambios.form, data: deLaTabla(SELECTORES, selector, 'Selector')(cambios, valor) };
 		}
 	},
 	{
@@ -406,7 +406,7 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 	},
 	{
 		pattern: /^agrego una fila de horario vacía$/,
-		run: (world) => cambioElHorario(world, [...(elPanelAbierto(world).formulario.datos.horario ?? []), { desde: '', hasta: '' }])
+		run: (world) => cambioElHorario(world, [...(elPanelAbierto(world).form.data.schedule ?? []), { from: '', to: '' }])
 	},
 	{
 		pattern: new RegExp(`^agrego la etiqueta ${P}$`),
@@ -420,7 +420,7 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 		pattern: /^toco la X del panel$/,
 		run: (world) => {
 			const cambios = elPanelAbierto(world);
-			cierroElPanelDesde(world, cambios, alCerrarElPanel(conCambios(cambios)));
+			cierroElPanelDesde(world, cambios, onClosePanel(conCambios(cambios)));
 		}
 	},
 	{
@@ -442,27 +442,27 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^pasa el tiempo hasta ${P}$`),
 		run: (world, momento) => {
-			elPanelAbierto(world).ahora = fechaHora(momento);
+			elPanelAbierto(world).now = fechaHora(momento);
 		}
 	},
 	{
 		pattern: new RegExp(`^queda abierto ${P}$`),
 		run: (world, abierto) => {
 			const cambios = panelAlDia(world);
-			expect(cambios ? (LO_ABIERTO[cambios.encima] ?? 'el panel') : 'nada').toBe(abierto);
+			expect(cambios ? (LO_ABIERTO[cambios.top] ?? 'el panel') : 'nada').toBe(abierto);
 		}
 	},
 	{
 		pattern: new RegExp(`^el aviso dice ${P}$`),
-		run: (world, mensaje) => expect(elAviso(world, elPanelAbierto(world)).mensaje).toBe(mensaje)
+		run: (world, mensaje) => expect(elAviso(world, elPanelAbierto(world)).message).toBe(mensaje)
 	},
 	{
 		pattern: new RegExp(`^el aviso ofrece ${P}$`),
-		run: (world, botones) => expect(elAviso(world, elPanelAbierto(world)).botones.map(({ texto }) => texto)).toEqual(lista(botones))
+		run: (world, botones) => expect(elAviso(world, elPanelAbierto(world)).buttons.map(({ text: texto }) => texto)).toEqual(lista(botones))
 	},
 	{
 		pattern: new RegExp(`^el campo ${P} sigue con ${P}$`),
-		run: (world, campo, valor) => expect(campoDe(campo).lee(elPanelAbierto(world).formulario)).toBe(valor)
+		run: (world, campo, valor) => expect(campoDe(campo).lee(elPanelAbierto(world).form)).toBe(valor)
 	},
 	{
 		pattern: new RegExp(`^al recargar la app el navegador ${P}$`),

@@ -1,65 +1,65 @@
 // Spec §6.2 y §4.3: guardar el panel con las etiquetas escritas. Las
 // etiquetas nuevas se crean solo si se guarda: una creación o edición
 // rechazada (por cualquier campo) no crea ninguna.
-import type { ErroresDeCreacion } from './creation';
-import { crearSegunDatos, type DatosDeTarea } from './task-data';
-import type { CambioDeTarea } from './task-document';
-import { editar } from './editing';
-import type { Etiqueta } from './label';
-import { elegirEtiquetas, guardarElegidas, type EleccionDeEtiquetas } from './typed-labels';
-import { idsDeEtiquetas, type Tarea } from './task';
+import type { CreationErrors } from './creation';
+import { createFromData, type TaskData } from './task-data';
+import type { TaskChange } from './task-document';
+import { edit } from './editing';
+import type { Label } from './label';
+import { chooseLabels, saveChosen, type LabelChoice } from './typed-labels';
+import { labelIds, type Task } from './task';
 
-export interface EtiquetasAlGuardar {
+export interface LabelsOnSave {
 	/** Las etiquetas que existen al guardar. */
-	existentes: readonly Etiqueta[];
+	existings: readonly Label[];
 	/** Da el id de cada etiqueta nueva. */
-	nuevoId: () => string;
+	newId: () => string;
 }
 
-type Rechazo = { ok: false; errores: ErroresDeCreacion };
-export type CreacionConEtiquetas = { ok: true; tarea: Tarea; nuevas: Etiqueta[] } | Rechazo;
-export type EdicionConEtiquetas = { ok: true; cambio: CambioDeTarea; nuevas: Etiqueta[] } | Rechazo;
+type Rejection = { ok: false; errors: CreationErrors };
+export type CreationWithLabels = { ok: true; task: Task; newLabels: Label[] } | Rejection;
+export type EditingWithLabels = { ok: true; change: TaskChange; newLabels: Label[] } | Rejection;
 
 /** Los errores de los otros campos junto con el de las etiquetas. */
-function rechazo(campos: { ok: true } | Rechazo, eleccion: EleccionDeEtiquetas): Rechazo {
+function rejection(fields: { ok: true } | Rejection, choice: LabelChoice): Rejection {
 	return {
 		ok: false,
-		errores: { ...(!campos.ok && campos.errores), ...(!eleccion.ok && { etiquetas: eleccion.error }) }
+		errors: { ...(!fields.ok && fields.errors), ...(!choice.ok && { labels: choice.error }) }
 	};
 }
 
-export function crearConEtiquetas(
-	datos: DatosDeTarea,
-	escritas: readonly string[],
+export function createWithLabels(
+	data: TaskData,
+	typedItems: readonly string[],
 	id: string,
-	ahora: Date,
-	{ existentes, nuevoId }: EtiquetasAlGuardar
-): CreacionConEtiquetas {
-	const creacion = crearSegunDatos(datos, id, ahora);
-	const eleccion = elegirEtiquetas(escritas, existentes);
-	if (!creacion.ok || !eleccion.ok) return rechazo(creacion, eleccion);
-	const { ids, nuevas } = guardarElegidas(eleccion.elegidas, nuevoId);
-	return { ok: true, tarea: ids.length > 0 ? { ...creacion.tarea, etiquetas: ids } : creacion.tarea, nuevas };
+	now: Date,
+	{ existings, newId }: LabelsOnSave
+): CreationWithLabels {
+	const creation = createFromData(data, id, now);
+	const choice = chooseLabels(typedItems, existings);
+	if (!creation.ok || !choice.ok) return rejection(creation, choice);
+	const { ids, newLabels } = saveChosen(choice.chosenItems, newId);
+	return { ok: true, task: ids.length > 0 ? { ...creation.task, labels: ids } : creation.task, newLabels };
 }
 
-const mismasEtiquetas = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((id) => b.includes(id));
+const sameLabels = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((id) => b.includes(id));
 
 /**
  * Como `editar` (§6.2), y la tarea queda exactamente con las etiquetas
  * escritas. El campo etiquetas se escribe entero, y solo si cambió (§7).
  * `ahora`, el momento de guardar, reanuda la pausada que pasa a puntual (§5.8).
  */
-export function editarConEtiquetas(
-	tarea: Tarea,
-	datos: DatosDeTarea,
-	escritas: readonly string[],
-	{ existentes, nuevoId }: EtiquetasAlGuardar,
-	ahora?: Date
-): EdicionConEtiquetas {
-	const edicion = editar(tarea, datos, ahora);
-	const eleccion = elegirEtiquetas(escritas, existentes);
-	if (!edicion.ok || !eleccion.ok) return rechazo(edicion, eleccion);
-	const { ids, nuevas } = guardarElegidas(eleccion.elegidas, nuevoId);
-	const cambio = mismasEtiquetas(idsDeEtiquetas(tarea), ids) ? edicion.cambio : { ...edicion.cambio, etiquetas: ids };
-	return { ok: true, cambio, nuevas };
+export function editWithLabels(
+	task: Task,
+	data: TaskData,
+	typedItems: readonly string[],
+	{ existings, newId }: LabelsOnSave,
+	now?: Date
+): EditingWithLabels {
+	const editing = edit(task, data, now);
+	const choice = chooseLabels(typedItems, existings);
+	if (!editing.ok || !choice.ok) return rejection(editing, choice);
+	const { ids, newLabels } = saveChosen(choice.chosenItems, newId);
+	const change = sameLabels(labelIds(task), ids) ? editing.change : { ...editing.change, labels: ids };
+	return { ok: true, change, newLabels };
 }

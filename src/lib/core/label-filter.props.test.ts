@@ -1,37 +1,37 @@
 // Spec §6.1 (Filtro por etiqueta).
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { PALETA, type Etiqueta } from './label';
-import { filtrarPorEtiqueta, filtroVigente } from './label-filter';
-import type { FilaDePendientes } from './pending';
-import { tieneEtiqueta } from './task';
+import { PALETTE, type Label } from './label';
+import { filterByLabel, activeFilter } from './label-filter';
+import type { PendingRow } from './pending';
+import { hasLabel } from './task';
 
 const IDS = ['a', 'b', 'c'];
-const filas = fc.array(fc.uniqueArray(fc.constantFrom(...IDS), { maxLength: 3 }), { maxLength: 8 }).map((listas) =>
-	listas.map((etiquetas, i): FilaDePendientes => ({
-		tarea: { id: `t${i}`, titulo: `T${i}`, tipo: 'puntual', creadaEn: new Date(0), etiquetas },
-		estado: { tipo: 'pendiente' },
-		completada: false
+const rows = fc.array(fc.uniqueArray(fc.constantFrom(...IDS), { maxLength: 3 }), { maxLength: 8 }).map((lists) =>
+	lists.map((labels, i): PendingRow => ({
+		task: { id: `t${i}`, title: `T${i}`, kind: 'puntual', createdAt: new Date(0), labels },
+		status: { kind: 'pendiente' },
+		completed: false
 	}))
 );
-const elegida = fc.option(fc.constantFrom(...IDS), { nil: undefined });
+const chosen = fc.option(fc.constantFrom(...IDS), { nil: undefined });
 
 describe('filtrarPorEtiqueta (propiedades)', () => {
 	it('es la subsecuencia de las filas con esa etiqueta: mismo orden de urgencia, ninguna de más ni de menos', () => {
 		fc.assert(
-			fc.property(filas, elegida, (lista, etiquetaId) => {
-				const filtradas = filtrarPorEtiqueta(lista, etiquetaId);
-				const esperadas = etiquetaId === undefined ? lista : lista.filter(({ tarea }) => tieneEtiqueta(tarea, etiquetaId));
-				expect(filtradas).toStrictEqual(esperadas);
+			fc.property(rows, chosen, (list, labelId) => {
+				const filtered = filterByLabel(list, labelId);
+				const expectedValues = labelId === undefined ? list : list.filter(({ task }) => hasLabel(task, labelId));
+				expect(filtered).toStrictEqual(expectedValues);
 			})
 		);
 	});
 
 	it('filtrar dos veces por la misma es lo mismo que una', () => {
 		fc.assert(
-			fc.property(filas, elegida, (lista, etiquetaId) => {
-				const una = filtrarPorEtiqueta(lista, etiquetaId);
-				expect(filtrarPorEtiqueta(una, etiquetaId)).toStrictEqual(una);
+			fc.property(rows, chosen, (list, labelId) => {
+				const one = filterByLabel(list, labelId);
+				expect(filterByLabel(one, labelId)).toStrictEqual(one);
 			})
 		);
 	});
@@ -39,11 +39,11 @@ describe('filtrarPorEtiqueta (propiedades)', () => {
 
 describe('filtroVigente (propiedades)', () => {
 	it('es la elegida si existe; si no, "Todas"', () => {
-		const etiquetas = fc.subarray(IDS).map((ids) => ids.map((id): Etiqueta => ({ id, nombre: id, color: PALETA[0] })));
+		const labels = fc.subarray(IDS).map((ids) => ids.map((id): Label => ({ id, name: id, color: PALETTE[0] })));
 		fc.assert(
-			fc.property(elegida, etiquetas, (etiquetaId, lista) => {
-				const existe = lista.some(({ id }) => id === etiquetaId);
-				expect(filtroVigente(etiquetaId, lista)).toBe(existe ? etiquetaId : undefined);
+			fc.property(chosen, labels, (labelId, list) => {
+				const exists = list.some(({ id }) => id === labelId);
+				expect(activeFilter(labelId, list)).toBe(exists ? labelId : undefined);
 			})
 		);
 	});

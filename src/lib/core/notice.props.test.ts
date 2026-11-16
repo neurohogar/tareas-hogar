@@ -2,56 +2,56 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
-  avisoAlCompletar,
-  avisoVisible,
-  completadoADeshacer,
-  DURACION_DEL_AVISO_MS,
-  msHastaQueVence,
+  noticeOnComplete,
+  visibleNotice,
+  completionToUndo,
+  NOTICE_DURATION_MS,
+  msUntilDue,
 } from "./notice";
-import { completar } from "./completions";
-import { estadoDeTarea } from "./task-status";
+import { complete } from "./completions";
+import { taskStatus } from "./task-status";
 import {
-  DIAS_DE_LA_SEMANA,
-  type Completado,
-  type Recurrencia,
-  type Tarea,
+  WEEKDAYS,
+  type Completion,
+  type Recurrence,
+  type Task,
 } from "./task";
 
-const HORA_MS = 3_600_000;
-const instante = fc.integer({ min: 0, max: 4_000_000_000_000 });
-const tareaSimple: Tarea = {
+const HOUR_MS = 3_600_000;
+const instant = fc.integer({ min: 0, max: 4_000_000_000_000 });
+const simpleTask: Task = {
   id: "t",
-  titulo: "Regar",
-  tipo: "puntual",
-  creadaEn: new Date(0),
+  title: "Regar",
+  kind: "puntual",
+  createdAt: new Date(0),
 };
-const avisoEn = (ms: number) =>
-  avisoAlCompletar(tareaSimple, {
+const noticeAt = (ms: number) =>
+  noticeOnComplete(simpleTask, {
     id: "c",
-    tareaId: "t",
-    completadoEn: new Date(ms),
+    taskId: "t",
+    completedAt: new Date(ms),
   });
 /** Desde completadoEn hasta ahora: alrededor de la ventana y lejos de ella. */
-const desplazamiento = fc.oneof(
+const shift = fc.oneof(
   fc.integer({
-    min: -2 * DURACION_DEL_AVISO_MS,
-    max: 2 * DURACION_DEL_AVISO_MS,
+    min: -2 * NOTICE_DURATION_MS,
+    max: 2 * NOTICE_DURATION_MS,
   }),
   fc.integer({ min: -1e10, max: 1e10 }),
 );
-const enVentana = (d: number) => d >= 0 && d < DURACION_DEL_AVISO_MS;
+const inWindow = (d: number) => d >= 0 && d < NOTICE_DURATION_MS;
 
 describe("aviso (propiedades)", () => {
   it("se ve, y ofrece deshacer su completado, exactamente en [completadoEn, completadoEn + 5 s)", () => {
     fc.assert(
-      fc.property(instante, desplazamiento, (t, d) => {
-        const aviso = avisoEn(t);
-        const ahora = new Date(t + d);
-        expect(avisoVisible(aviso, ahora)).toBe(
-          enVentana(d) ? aviso : undefined,
+      fc.property(instant, shift, (t, d) => {
+        const notice = noticeAt(t);
+        const now = new Date(t + d);
+        expect(visibleNotice(notice, now)).toBe(
+          inWindow(d) ? notice : undefined,
         );
-        expect(completadoADeshacer(aviso, ahora)).toBe(
-          enVentana(d) ? aviso.completado : undefined,
+        expect(completionToUndo(notice, now)).toBe(
+          inWindow(d) ? notice.completion : undefined,
         );
       }),
     );
@@ -59,9 +59,9 @@ describe("aviso (propiedades)", () => {
 
   it("sin aviso no hay nada que ver ni deshacer", () => {
     fc.assert(
-      fc.property(instante, (t) => {
-        expect(avisoVisible(undefined, new Date(t))).toBeUndefined();
-        expect(completadoADeshacer(undefined, new Date(t))).toBeUndefined();
+      fc.property(instant, (t) => {
+        expect(visibleNotice(undefined, new Date(t))).toBeUndefined();
+        expect(completionToUndo(undefined, new Date(t))).toBeUndefined();
       }),
     );
   });
@@ -69,15 +69,15 @@ describe("aviso (propiedades)", () => {
   it("mientras se ve, vence justo cuando dejan de pasar msHastaQueVence", () => {
     fc.assert(
       fc.property(
-        instante,
-        fc.integer({ min: 0, max: DURACION_DEL_AVISO_MS - 1 }),
+        instant,
+        fc.integer({ min: 0, max: NOTICE_DURATION_MS - 1 }),
         (t, d) => {
-          const aviso = avisoEn(t);
-          const falta = msHastaQueVence(aviso, new Date(t + d));
-          expect(falta).toBeGreaterThan(0);
-          expect(falta).toBeLessThanOrEqual(DURACION_DEL_AVISO_MS);
-          expect(avisoVisible(aviso, new Date(t + d + falta - 1))).toBe(aviso);
-          expect(avisoVisible(aviso, new Date(t + d + falta))).toBeUndefined();
+          const notice = noticeAt(t);
+          const missing = msUntilDue(notice, new Date(t + d));
+          expect(missing).toBeGreaterThan(0);
+          expect(missing).toBeLessThanOrEqual(NOTICE_DURATION_MS);
+          expect(visibleNotice(notice, new Date(t + d + missing - 1))).toBe(notice);
+          expect(visibleNotice(notice, new Date(t + d + missing))).toBeUndefined();
         },
       ),
     );
@@ -86,25 +86,25 @@ describe("aviso (propiedades)", () => {
   it("nombra la tarea y el completado al completar; uno nuevo reemplaza al anterior", () => {
     fc.assert(
       fc.property(
-        instante,
-        fc.integer({ min: 0, max: 10 * DURACION_DEL_AVISO_MS }),
-        desplazamiento,
-        (t, entre, d) => {
-          const primero = avisoEn(t);
-          const otraTarea: Tarea = { ...tareaSimple, id: "u", titulo: "Pagar" };
-          const nuevo: Completado = {
+        instant,
+        fc.integer({ min: 0, max: 10 * NOTICE_DURATION_MS }),
+        shift,
+        (t, between, d) => {
+          const firstOne = noticeAt(t);
+          const otherTask: Task = { ...simpleTask, id: "u", title: "Pagar" };
+          const newValue: Completion = {
             id: "d",
-            tareaId: "u",
-            completadoEn: new Date(t + entre),
+            taskId: "u",
+            completedAt: new Date(t + between),
           };
-          const segundo = avisoAlCompletar(otraTarea, nuevo);
-          expect(segundo).toEqual({ nombre: "Pagar", completado: nuevo });
-          const deshecho = completadoADeshacer(
-            segundo,
-            new Date(t + entre + d),
+          const secondOne = noticeOnComplete(otherTask, newValue);
+          expect(secondOne).toEqual({ name: "Pagar", completion: newValue });
+          const undoneItem = completionToUndo(
+            secondOne,
+            new Date(t + between + d),
           );
-          expect(deshecho).not.toBe(primero.completado);
-          expect(deshecho).toBe(enVentana(d) ? nuevo : undefined);
+          expect(undoneItem).not.toBe(firstOne.completion);
+          expect(undoneItem).toBe(inWindow(d) ? newValue : undefined);
         },
       ),
     );
@@ -112,96 +112,96 @@ describe("aviso (propiedades)", () => {
 });
 
 // Tareas de los tres tipos, con un historial armado con `completar` en orden.
-const DIAS_MES = fc
+const MONTH_DAYS_ARBITRARY = fc
   .uniqueArray(fc.integer({ min: 1, max: 31 }), { minLength: 1, maxLength: 6 })
   .map((d) => d.sort((a, b) => a - b));
-const recurrencia: fc.Arbitrary<Recurrencia> = fc.oneof(
+const recurrence: fc.Arbitrary<Recurrence> = fc.oneof(
   fc
     .record({
-      cada: fc.integer({ min: 1, max: 500 }),
-      unidad: fc.constantFrom("horas" as const, "dias" as const),
+      every: fc.integer({ min: 1, max: 500 }),
+      unit: fc.constantFrom("horas" as const, "dias" as const),
     })
-    .map((r) => ({ modo: "relativo" as const, ...r })),
+    .map((r) => ({ mode: "relativo" as const, ...r })),
   fc
-    .subarray([...DIAS_DE_LA_SEMANA], { minLength: 1 })
-    .map((d) => ({ modo: "calendario" as const, diasSemana: d })),
-  DIAS_MES.map((d) => ({ modo: "calendario" as const, diasMes: d })),
+    .subarray([...WEEKDAYS], { minLength: 1 })
+    .map((d) => ({ mode: "calendario" as const, weekdays: d })),
+  MONTH_DAYS_ARBITRARY.map((d) => ({ mode: "calendario" as const, monthDays: d })),
 );
-const creadaEn = fc
+const createdAt = fc
   .tuple(fc.integer({ min: 0, max: 20_000 }), fc.integer({ min: 0, max: 23 }))
-  .map(([dia, hora]) => new Date(1990, 0, 1 + dia, hora));
-const tarea: fc.Arbitrary<Tarea> = fc.oneof(
+  .map(([day, hour]) => new Date(1990, 0, 1 + day, hour));
+const task: fc.Arbitrary<Task> = fc.oneof(
   fc
-    .tuple(recurrencia, creadaEn)
-    .map(([r, c]): Tarea => ({
+    .tuple(recurrence, createdAt)
+    .map(([r, c]): Task => ({
       id: "t",
-      titulo: "T",
-      tipo: "periodica",
-      recurrencia: r,
-      creadaEn: c,
+      title: "T",
+      kind: "periodica",
+      recurrence: r,
+      createdAt: c,
     })),
   fc
     .tuple(
-      creadaEn,
+      createdAt,
       fc.option(fc.integer({ min: 0, max: 400 }), { nil: undefined }),
     )
-    .map(([c, dias]): Tarea => ({
+    .map(([c, days]): Task => ({
       id: "t",
-      titulo: "T",
-      tipo: "puntual",
-      creadaEn: c,
-      ...(dias !== undefined && {
-        fechaLimite: new Date(
+      title: "T",
+      kind: "puntual",
+      createdAt: c,
+      ...(days !== undefined && {
+        dueDate: new Date(
           c.getFullYear(),
           c.getMonth(),
-          c.getDate() + dias,
+          c.getDate() + days,
         ),
       }),
     })),
 );
-const escenario = fc.record({
-  tarea,
+const scenario = fc.record({
+  task,
   /** Horas desde creadaEn de los completados previos (en orden) y del último. */
-  horas: fc
+  hours: fc
     .array(fc.integer({ min: 0, max: 2_000 }), { maxLength: 8 })
     .map((hs) => hs.sort((a, b) => a - b)),
-  despuesDelUltimo: fc.integer({ min: 0, max: 500 }),
-  deshacerTras: fc.integer({ min: 0, max: DURACION_DEL_AVISO_MS - 1 }),
-  consultaTras: fc.integer({ min: 0, max: 3_000 }),
+  afterLast: fc.integer({ min: 0, max: 500 }),
+  undoAfter: fc.integer({ min: 0, max: NOTICE_DURATION_MS - 1 }),
+  queryAfter: fc.integer({ min: 0, max: 3_000 }),
 });
 
 describe("deshacer el último completado (propiedades)", () => {
   it("borra solo ese completado: el estado y el próximo completado quedan como si no se hubiera completado", () => {
     fc.assert(
       fc.property(
-        escenario,
-        ({ tarea: t, horas, despuesDelUltimo, deshacerTras, consultaTras }) => {
-          const en = (h: number) =>
-            new Date(t.creadaEn.getTime() + h * HORA_MS);
-          const previos = horas.reduce<Completado[]>(
-            (cs, h) => [...cs, completar(t, cs, `c${cs.length}`, en(h))],
+        scenario,
+        ({ task: t, hours, afterLast, undoAfter, queryAfter }) => {
+          const at = (h: number) =>
+            new Date(t.createdAt.getTime() + h * HOUR_MS);
+          const priorCount = hours.reduce<Completion[]>(
+            (cs, h) => [...cs, complete(t, cs, `c${cs.length}`, at(h))],
             [],
           );
-          const momento = (horas.at(-1) ?? 0) + despuesDelUltimo;
-          const ultimo = completar(t, previos, "ultimo", en(momento));
-          const aviso = avisoAlCompletar(t, ultimo);
+          const moment = (hours.at(-1) ?? 0) + afterLast;
+          const last = complete(t, priorCount, "ultimo", at(moment));
+          const notice = noticeOnComplete(t, last);
 
-          const deshecho = completadoADeshacer(
-            aviso,
-            new Date(en(momento).getTime() + deshacerTras),
+          const undoneItem = completionToUndo(
+            notice,
+            new Date(at(moment).getTime() + undoAfter),
           );
-          expect(deshecho).toBe(ultimo);
-          const quedan = [...previos, ultimo].filter(
-            ({ id }) => id !== deshecho?.id,
+          expect(undoneItem).toBe(last);
+          const remain = [...priorCount, last].filter(
+            ({ id }) => id !== undoneItem?.id,
           );
-          expect(quedan).toEqual(previos);
+          expect(remain).toEqual(priorCount);
 
-          const consulta = en(momento + consultaTras);
-          expect(estadoDeTarea(t, quedan, consulta)).toEqual(
-            estadoDeTarea(t, previos, consulta),
+          const query = at(moment + queryAfter);
+          expect(taskStatus(t, remain, query)).toEqual(
+            taskStatus(t, priorCount, query),
           );
-          expect(completar(t, quedan, "otra", consulta)).toEqual(
-            completar(t, previos, "otra", consulta),
+          expect(complete(t, remain, "otra", query)).toEqual(
+            complete(t, priorCount, "otra", query),
           );
         },
       ),

@@ -1,15 +1,15 @@
 // Spec §5.9 (Posponer): qué posposición está vigente y cómo cambia el estado de la tarea mientras dura.
-import type { Estado } from './status';
-import type { Posposicion, Tarea } from './task';
+import type { Status } from './status';
+import type { Postponement, Task } from './task';
 
 /** Spec §5.9: una tarea está pospuesta mientras ahora < hasta; desde hasta, la posposición venció. */
-export function posposicionVigente({ pospuesta }: Tarea, ahora: Date): Posposicion | undefined {
-	return pospuesta && ahora.getTime() < pospuesta.hasta.getTime() ? pospuesta : undefined;
+export function activePostponement({ postponed }: Task, now: Date): Postponement | undefined {
+	return postponed && now.getTime() < postponed.to.getTime() ? postponed : undefined;
 }
 
 /** Spec §5.9: los únicos estados a los que les afecta posponer. */
-export function pendienteOAtrasada({ tipo }: Estado): boolean {
-	return tipo === 'pendiente' || tipo === 'atrasada';
+export function pendingOrOverdue({ kind }: Status): boolean {
+	return kind === 'pendiente' || kind === 'atrasada';
 }
 
 /**
@@ -17,11 +17,11 @@ export function pendienteOAtrasada({ tipo }: Estado): boolean {
  * pendiente o atrasada está en espera, con el progreso de la posposición; cualquier
  * otro estado no cambia.
  */
-export function conPosposicion(estado: Estado, tarea: Tarea, ahora: Date): Estado {
-	const vigente = posposicionVigente(tarea, ahora);
-	if (!vigente || !pendienteOAtrasada(estado)) return estado;
-	const { desde, hasta } = vigente;
+export function withPostponement(status: Status, task: Task, now: Date): Status {
+	const active = activePostponement(task, now);
+	if (!active || !pendingOrOverdue(status)) return status;
+	const { from, to } = active;
 	// Un desde posterior a ahora (otro reloj) da 0: el progreso queda entre 0 y 1.
-	const progreso = Math.max(0, ahora.getTime() - desde.getTime()) / (hasta.getTime() - desde.getTime());
-	return { tipo: 'en espera', progreso };
+	const progress = Math.max(0, now.getTime() - from.getTime()) / (to.getTime() - from.getTime());
+	return { kind: 'en espera', progress };
 }

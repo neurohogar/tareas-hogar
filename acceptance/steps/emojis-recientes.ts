@@ -5,13 +5,13 @@
 // lista; después la verifican. Las acciones que dependen de una lista declarada
 // fallan si falta.
 import { expect } from 'vitest';
-import { agregarReciente } from '../../src/lib/core/recent-emojis';
+import { addRecent } from '../../src/lib/core/recent-emojis';
 import { P, lista, numero } from './valores';
 import type { StepDefinition, World } from './world';
 
 /** Elegir un emoji en el selector lo suma a los recientes de este dispositivo. */
 export function registrarEleccion(world: World, emoji: string): void {
-	world.recientes = agregarReciente(world.recientes ?? [], emoji);
+	world.recientes = addRecent(world.recientes ?? [], emoji);
 	world.huboAccionSobreRecientes = true;
 }
 
@@ -54,7 +54,7 @@ export const emojisRecientesSteps: StepDefinition[] = [
 			registrarEleccion(world, NUEVO);
 			// Con el panel abierto, el emoji elegido queda en el formulario (§6.2).
 			const cambios = world.panel?.cambios;
-			if (cambios) cambios.formulario = { ...cambios.formulario, datos: { ...cambios.formulario.datos, emoji: NUEVO } };
+			if (cambios) cambios.form = { ...cambios.form, data: { ...cambios.form.data, emoji: NUEVO } };
 		}
 	},
 	{

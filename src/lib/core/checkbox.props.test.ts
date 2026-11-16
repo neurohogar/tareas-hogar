@@ -1,80 +1,80 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { accionDelCheckbox } from './checkbox';
-import { estaCompletada } from './completed';
-import { completadosDeTarea, completar, ultimoCompletadoEn } from './completions';
-import { inicioDelDia } from './days';
-import type { Completado, RecurrenciaCalendario, RecurrenciaRelativa, Tarea } from './task';
+import { checkboxAction } from './checkbox';
+import { isCompleted } from './completed';
+import { completionsOfTask, complete, lastCompletedAt } from './completions';
+import { startOfDay } from './days';
+import type { Completion, CalendarRecurrence, RelativeRecurrence, Task } from './task';
 
-const instante = fc.integer({ min: 0, max: 4_102_444_800_000 }).map((ms) => new Date(ms));
-const dia = fc.integer({ min: 0, max: 47_000 }).map((n) => new Date(1970, 0, 1 + n));
-const relativa: fc.Arbitrary<RecurrenciaRelativa> = fc.record({
-	modo: fc.constant('relativo' as const),
-	cada: fc.integer({ min: 1, max: 1000 }),
-	unidad: fc.constantFrom('horas' as const, 'dias' as const)
+const instant = fc.integer({ min: 0, max: 4_102_444_800_000 }).map((ms) => new Date(ms));
+const day = fc.integer({ min: 0, max: 47_000 }).map((n) => new Date(1970, 0, 1 + n));
+const relative: fc.Arbitrary<RelativeRecurrence> = fc.record({
+	mode: fc.constant('relativo' as const),
+	every: fc.integer({ min: 1, max: 1000 }),
+	unit: fc.constantFrom('horas' as const, 'dias' as const)
 });
-const calendario: fc.Arbitrary<RecurrenciaCalendario> = fc.record({
-	modo: fc.constant('calendario' as const),
-	diasMes: fc.uniqueArray(fc.integer({ min: 1, max: 31 }), { minLength: 1, maxLength: 3 }).map((d) => d.sort((a, b) => a - b))
+const calendar: fc.Arbitrary<CalendarRecurrence> = fc.record({
+	mode: fc.constant('calendario' as const),
+	monthDays: fc.uniqueArray(fc.integer({ min: 1, max: 31 }), { minLength: 1, maxLength: 3 }).map((d) => d.sort((a, b) => a - b))
 });
-const puntual = fc
-	.tuple(fc.option(dia, { nil: undefined }), dia)
-	.map(([fechaLimite, creadaEn]): Tarea => ({ id: 't', titulo: 'T', tipo: 'puntual', creadaEn, ...(fechaLimite && { fechaLimite }) }));
-const periodica = (recurrencia: fc.Arbitrary<RecurrenciaRelativa | RecurrenciaCalendario>) =>
-	fc.tuple(recurrencia, dia).map(([recurrencia, creadaEn]): Tarea => ({ id: 't', titulo: 'T', tipo: 'periodica', recurrencia, creadaEn }));
-const tarea = fc.oneof(puntual, periodica(relativa), periodica(calendario));
+const oneOff = fc
+	.tuple(fc.option(day, { nil: undefined }), day)
+	.map(([dueDate, createdAt]): Task => ({ id: 't', title: 'T', kind: 'puntual', createdAt, ...(dueDate && { dueDate }) }));
+const recurring = (recurrence: fc.Arbitrary<RelativeRecurrence | CalendarRecurrence>) =>
+	fc.tuple(recurrence, day).map(([recurrence, createdAt]): Task => ({ id: 't', title: 'T', kind: 'periodica', recurrence, createdAt }));
+const task = fc.oneof(oneOff, recurring(relative), recurring(calendar));
 /** Completados de la tarea t y de otra, para que el filtrado por tarea se ejercite. */
-const completados = fc
-	.array(fc.tuple(fc.constantFrom('t', 'otra'), instante), { maxLength: 6 })
-	.map((lista) => lista.map(([tareaId, completadoEn], i): Completado => ({ id: `c${i}`, tareaId, completadoEn })));
+const completions = fc
+	.array(fc.tuple(fc.constantFrom('t', 'otra'), instant), { maxLength: 6 })
+	.map((list) => list.map(([taskId, completedAt], i): Completion => ({ id: `c${i}`, taskId, completedAt })));
 
 describe('accionDelCheckbox (propiedades)', () => {
 	it('una tarea no completada siempre se completa', () => {
 		fc.assert(
-			fc.property(tarea, completados, instante, (t, hechos, ahora) => {
-				fc.pre(!estaCompletada(t, hechos, ahora));
-				expect(accionDelCheckbox(t, hechos, ahora)).toEqual({ tipo: 'completar' });
+			fc.property(task, completions, instant, (t, doneOnes, now) => {
+				fc.pre(!isCompleted(t, doneOnes, now));
+				expect(checkboxAction(t, doneOnes, now)).toEqual({ kind: 'completar' });
 			})
 		);
 	});
 
 	it('si borra, borra el completado más reciente de la propia tarea', () => {
 		fc.assert(
-			fc.property(tarea, completados, instante, (t, hechos, ahora) => {
-				const accion = accionDelCheckbox(t, hechos, ahora);
-				if (accion.tipo !== 'borrar') return;
-				const propios = completadosDeTarea(hechos, t.id);
-				expect(propios).toContain(accion.completado);
-				expect(accion.completado.completadoEn.getTime()).toBe(ultimoCompletadoEn(propios));
+			fc.property(task, completions, instant, (t, doneOnes, now) => {
+				const action = checkboxAction(t, doneOnes, now);
+				if (action.kind !== 'borrar') return;
+				const owns = completionsOfTask(doneOnes, t.id);
+				expect(owns).toContain(action.completion);
+				expect(action.completion.completedAt.getTime()).toBe(lastCompletedAt(owns));
 			})
 		);
 	});
 
 	it('una puntual completada siempre borra', () => {
 		fc.assert(
-			fc.property(puntual, completados, instante, (t, hechos, ahora) => {
-				fc.pre(completadosDeTarea(hechos, t.id).length > 0);
-				expect(accionDelCheckbox(t, hechos, ahora).tipo).toBe('borrar');
+			fc.property(oneOff, completions, instant, (t, doneOnes, now) => {
+				fc.pre(completionsOfTask(doneOnes, t.id).length > 0);
+				expect(checkboxAction(t, doneOnes, now).kind).toBe('borrar');
 			})
 		);
 	});
 
 	it('una periódica cuyo último completado es de un día anterior se completa de nuevo', () => {
 		fc.assert(
-			fc.property(fc.oneof(periodica(relativa), periodica(calendario)), completados, instante, (t, hechos, ahora) => {
-				const propios = completadosDeTarea(hechos, t.id);
-				fc.pre(propios.length > 0 && ultimoCompletadoEn(propios) < inicioDelDia(ahora).getTime());
-				expect(accionDelCheckbox(t, hechos, ahora)).toEqual({ tipo: 'completar' });
+			fc.property(fc.oneof(recurring(relative), recurring(calendar)), completions, instant, (t, doneOnes, now) => {
+				const owns = completionsOfTask(doneOnes, t.id);
+				fc.pre(owns.length > 0 && lastCompletedAt(owns) < startOfDay(now).getTime());
+				expect(checkboxAction(t, doneOnes, now)).toEqual({ kind: 'completar' });
 			})
 		);
 	});
 
 	it('ida y vuelta: tocar después de completar ahora borra justo ese completado', () => {
 		fc.assert(
-			fc.property(fc.oneof(puntual, periodica(relativa)), completados, instante, (t, hechos, ahora) => {
-				const anteriores = hechos.filter(({ completadoEn }) => completadoEn.getTime() < ahora.getTime());
-				const nuevo = completar(t, anteriores, 'nuevo', ahora);
-				expect(accionDelCheckbox(t, [...anteriores, nuevo], ahora)).toEqual({ tipo: 'borrar', completado: nuevo });
+			fc.property(fc.oneof(oneOff, recurring(relative)), completions, instant, (t, doneOnes, now) => {
+				const previousItems = doneOnes.filter(({ completedAt }) => completedAt.getTime() < now.getTime());
+				const newValue = complete(t, previousItems, 'nuevo', now);
+				expect(checkboxAction(t, [...previousItems, newValue], now)).toEqual({ kind: 'borrar', completion: newValue });
 			})
 		);
 	});

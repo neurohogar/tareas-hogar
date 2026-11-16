@@ -1,20 +1,20 @@
 // Spec §6.5 y §7: qué se ve según haya o no red.
 
 /** El texto de la franja de aviso; sin red es "Sin conexión", con red no hay franja. */
-export function franjaDeConexion(enLinea: boolean): string | undefined {
-	return enLinea ? undefined : 'Sin conexión';
+export function connectionStrip(online: boolean): string | undefined {
+	return online ? undefined : 'Sin conexión';
 }
 
-export interface PantallaDeEntrada {
+export interface EntryScreen {
 	/** Lo que explica por qué no se puede entrar; sin él, no hay nada que explicar. */
-	mensaje: string | undefined;
-	botonHabilitado: boolean;
+	message: string | undefined;
+	buttonEnabled: boolean;
 }
 
 /** La pantalla de entrada (sin sesión previa): sin red no se puede entrar. */
-export function pantallaDeEntrada(enLinea: boolean): PantallaDeEntrada {
+export function entryScreen(online: boolean): EntryScreen {
 	return {
-		mensaje: enLinea ? undefined : 'Necesitás conexión para entrar la primera vez',
-		botonHabilitado: enLinea
+		message: online ? undefined : 'Necesitás conexión para entrar la primera vez',
+		buttonEnabled: online
 	};
 }

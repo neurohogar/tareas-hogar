@@ -1,24 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { alCerrarElPanel, AVISO_DE_CIERRE, MENSAJE_DE_CAMBIOS } from './unsaved-changes-notice';
+import { onClosePanel, CLOSE_NOTICE, CHANGES_MESSAGE } from './unsaved-changes-notice';
 
 describe('alCerrarElPanel (spec §6.2)', () => {
 	it('sin cambios cierra directo; con cambios abre el aviso de cierre', () => {
-		expect(alCerrarElPanel(false)).toBe('cierra el panel');
-		expect(alCerrarElPanel(true)).toBe('abre el aviso de cierre');
+		expect(onClosePanel(false)).toBe('cierra el panel');
+		expect(onClosePanel(true)).toBe('abre el aviso de cierre');
 	});
 });
 
 describe('AVISO_DE_CIERRE (spec §6.2)', () => {
 	it('dice "Tenés cambios sin guardar"', () => {
-		expect(MENSAJE_DE_CAMBIOS).toBe('Tenés cambios sin guardar');
-		expect(AVISO_DE_CIERRE.mensaje).toBe('Tenés cambios sin guardar');
+		expect(CHANGES_MESSAGE).toBe('Tenés cambios sin guardar');
+		expect(CLOSE_NOTICE.message).toBe('Tenés cambios sin guardar');
 	});
 
 	it('ofrece Seguir editando, Descartar y Guardar, en ese orden y cada uno con su efecto', () => {
-		expect(AVISO_DE_CIERRE.botones).toEqual([
-			{ texto: 'Seguir editando', efecto: 'seguir editando' },
-			{ texto: 'Descartar', efecto: 'descartar' },
-			{ texto: 'Guardar', efecto: 'guardar' }
+		expect(CLOSE_NOTICE.buttons).toEqual([
+			{ text: 'Seguir editando', effect: 'seguir editando' },
+			{ text: 'Descartar', effect: 'descartar' },
+			{ text: 'Guardar', effect: 'guardar' }
 		]);
 	});
 });

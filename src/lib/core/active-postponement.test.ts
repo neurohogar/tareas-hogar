@@ -1,55 +1,55 @@
 import { describe, expect, it } from 'vitest';
-import { conPosposicion, posposicionVigente } from './active-postponement';
-import type { Tarea } from './task';
+import { withPostponement, activePostponement } from './active-postponement';
+import type { Task } from './task';
 
-const CREADA = new Date(2026, 6, 1, 8, 0, 0);
-const PUNTUAL: Tarea = { id: 'p', titulo: 'Pagar', tipo: 'puntual', creadaEn: CREADA };
-const DESDE = new Date(2026, 6, 15, 10, 0, 0);
-const HASTA = new Date(2026, 6, 15, 13, 0, 0);
-const POSPUESTA: Tarea = { ...PUNTUAL, pospuesta: { desde: DESDE, hasta: HASTA } };
+const CREATED = new Date(2026, 6, 1, 8, 0, 0);
+const ONE_OFF: Task = { id: 'p', title: 'Pagar', kind: 'puntual', createdAt: CREATED };
+const FROM = new Date(2026, 6, 15, 10, 0, 0);
+const TO = new Date(2026, 6, 15, 13, 0, 0);
+const POSTPONED: Task = { ...ONE_OFF, postponed: { from: FROM, to: TO } };
 
 describe('posposicionVigente (spec §5.9)', () => {
 	it('mientras ahora < hasta; desde hasta (inclusive), ya no', () => {
-		const guardada = { desde: DESDE, hasta: HASTA };
+		const saved = { from: FROM, to: TO };
 
-		expect(posposicionVigente(POSPUESTA, DESDE)).toStrictEqual(guardada);
-		expect(posposicionVigente(POSPUESTA, new Date(HASTA.getTime() - 1))).toStrictEqual(guardada);
-		expect(posposicionVigente(POSPUESTA, HASTA)).toBeUndefined();
+		expect(activePostponement(POSTPONED, FROM)).toStrictEqual(saved);
+		expect(activePostponement(POSTPONED, new Date(TO.getTime() - 1))).toStrictEqual(saved);
+		expect(activePostponement(POSTPONED, TO)).toBeUndefined();
 	});
 
 	it('sin el campo, no está pospuesta', () => {
-		expect(posposicionVigente(PUNTUAL, DESDE)).toBeUndefined();
+		expect(activePostponement(ONE_OFF, FROM)).toBeUndefined();
 	});
 });
 
 describe('conPosposicion (spec §5.9)', () => {
-	const A_LA_MITAD = new Date(2026, 6, 15, 11, 30, 0);
+	const HALFWAY = new Date(2026, 6, 15, 11, 30, 0);
 
-	it.each([[{ tipo: 'pendiente' }], [{ tipo: 'atrasada' }]] as const)('%o, mientras dura, está en espera con el progreso de la posposición', (estado) => {
-		expect(conPosposicion(estado, POSPUESTA, A_LA_MITAD)).toStrictEqual({ tipo: 'en espera', progreso: 0.5 });
+	it.each([[{ kind: 'pendiente' }], [{ kind: 'atrasada' }]] as const)('%o, mientras dura, está en espera con el progreso de la posposición', (status) => {
+		expect(withPostponement(status, POSTPONED, HALFWAY)).toStrictEqual({ kind: 'en espera', progress: 0.5 });
 	});
 
 	it('el progreso es 0 al posponer', () => {
-		expect(conPosposicion({ tipo: 'pendiente' }, POSPUESTA, DESDE)).toStrictEqual({ tipo: 'en espera', progreso: 0 });
+		expect(withPostponement({ kind: 'pendiente' }, POSTPONED, FROM)).toStrictEqual({ kind: 'en espera', progress: 0 });
 	});
 
 	it('un desde posterior a ahora (otro reloj) da progreso 0, no negativo', () => {
-		const antes = new Date(2026, 6, 15, 9, 0, 0);
+		const before = new Date(2026, 6, 15, 9, 0, 0);
 
-		expect(conPosposicion({ tipo: 'pendiente' }, POSPUESTA, antes)).toStrictEqual({ tipo: 'en espera', progreso: 0 });
+		expect(withPostponement({ kind: 'pendiente' }, POSTPONED, before)).toStrictEqual({ kind: 'en espera', progress: 0 });
 	});
 
-	it.each([[{ tipo: 'pendiente' }], [{ tipo: 'atrasada' }]] as const)('desde hasta, %o vuelve tal cual', (estado) => {
-		expect(conPosposicion(estado, POSPUESTA, HASTA)).toBe(estado);
+	it.each([[{ kind: 'pendiente' }], [{ kind: 'atrasada' }]] as const)('desde hasta, %o vuelve tal cual', (status) => {
+		expect(withPostponement(status, POSTPONED, TO)).toBe(status);
 	});
 
-	it.each([[{ tipo: 'en espera', progreso: 0.25 }], [{ tipo: 'completada' }], [{ tipo: 'pausada' }]] as const)('%o no cambia', (estado) => {
-		expect(conPosposicion(estado, POSPUESTA, A_LA_MITAD)).toBe(estado);
+	it.each([[{ kind: 'en espera', progress: 0.25 }], [{ kind: 'completada' }], [{ kind: 'pausada' }]] as const)('%o no cambia', (status) => {
+		expect(withPostponement(status, POSTPONED, HALFWAY)).toBe(status);
 	});
 
 	it('sin posposición, el estado no cambia', () => {
-		const estado = { tipo: 'pendiente' } as const;
+		const status = { kind: 'pendiente' } as const;
 
-		expect(conPosposicion(estado, PUNTUAL, A_LA_MITAD)).toBe(estado);
+		expect(withPostponement(status, ONE_OFF, HALFWAY)).toBe(status);
 	});
 });

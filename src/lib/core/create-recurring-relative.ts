@@ -1,20 +1,20 @@
-import { crearPeriodica, type DatosComunes, type ErroresDeRecurrencia, type ResultadoDeCreacion } from './creation';
-import type { TareaPeriodica, Unidad } from './task';
+import { createRecurring, type CommonData, type RecurrenceErrors, type CreationResult } from './creation';
+import type { RecurringTask, Unit } from './task';
 
-export interface DatosPeriodicaRelativa extends DatosComunes {
-	cada: number;
-	unidad: Unidad;
+export interface RecurringRelativeData extends CommonData {
+	every: number;
+	unit: Unit;
 }
 
 /** Spec §4.1: con más de una ventana, el intervalo tiene que ser en días. */
-const variasVentanasEnHoras = ({ unidad, horario = [] }: DatosPeriodicaRelativa) => unidad === 'horas' && horario.length > 1;
+const severalWindowsInHours = ({ unit, schedule = [] }: RecurringRelativeData) => unit === 'horas' && schedule.length > 1;
 
 /** Spec §4.1 y §4.2: título no vacío (sin contar espacios), cada entero ≥ 1 y, en horas, una sola ventana. */
-export function crearPeriodicaRelativa(datos: DatosPeriodicaRelativa, id: string, ahora: Date): ResultadoDeCreacion<TareaPeriodica> {
-	const { cada, unidad, ...comunes } = datos;
-	const errores: ErroresDeRecurrencia = {
-		...(!(Number.isInteger(cada) && cada >= 1) && { cada: 'invalido' as const }),
-		...(variasVentanasEnHoras(datos) && { horario: 'variasEnHoras' as const })
+export function createRecurringRelative(data: RecurringRelativeData, id: string, now: Date): CreationResult<RecurringTask> {
+	const { every, unit, ...commons } = data;
+	const errors: RecurrenceErrors = {
+		...(!(Number.isInteger(every) && every >= 1) && { every: 'invalido' as const }),
+		...(severalWindowsInHours(data) && { schedule: 'variasEnHoras' as const })
 	};
-	return crearPeriodica({ ...comunes, id, ahora }, errores, () => ({ modo: 'relativo', cada, unidad }));
+	return createRecurring({ ...commons, id, now }, errors, () => ({ mode: 'relativo', every, unit }));
 }

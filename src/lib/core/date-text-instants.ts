@@ -1,23 +1,23 @@
 // Spec §6.1 (Fecha y distancia): los instantes que nombran «Tocaba …» (desde
 // cuándo toca una atrasada) y «Vuelve …» (cuándo vuelve a pendiente una en espera).
-import { completadosDeTarea } from './completions';
-import type { Estado } from './status';
-import { proximaOcurrencia } from './recurring-calendar-status';
-import { instanteDeUrgenciaRelativa } from './recurring-relative-status';
-import { comoRecienCreada } from './pause';
-import { plazosConHorario } from './deadlines-with-schedule';
-import { posposicionVigente } from './active-postponement';
-import type { Completado, Tarea } from './task';
-import { instanteDeUrgencia } from './urgency';
+import { completionsOfTask } from './completions';
+import type { Status } from './status';
+import { nextOccurrence } from './recurring-calendar-status';
+import { relativeUrgencyInstant } from './recurring-relative-status';
+import { asJustCreated } from './pause';
+import { deadlinesWithSchedule } from './deadlines-with-schedule';
+import { activePostponement } from './active-postponement';
+import type { Completion, Task } from './task';
+import { urgencyInstant } from './urgency';
 
-export type EstadoEnEspera = Extract<Estado, { tipo: 'en espera' }>;
+export type WaitingStatus = Extract<Status, { kind: 'en espera' }>;
 
 /** Sin horario: la fecha límite, V (o creadaEn, nunca completada) o las 00:00 de N. */
-function tocabaSinHorario(tarea: Tarea, deLaTarea: readonly Completado[]): Date | undefined {
-	if (tarea.tipo === 'puntual') return tarea.fechaLimite;
-	const { recurrencia } = tarea;
-	if (recurrencia.modo === 'relativo') return instanteDeUrgenciaRelativa(recurrencia, tarea.creadaEn, deLaTarea, { tipo: 'pendiente' });
-	return proximaOcurrencia(recurrencia, tarea.creadaEn, deLaTarea);
+function wasDueWithoutSchedule(task: Task, ofTheTask: readonly Completion[]): Date | undefined {
+	if (task.kind === 'puntual') return task.dueDate;
+	const { recurrence } = task;
+	if (recurrence.mode === 'relativo') return relativeUrgencyInstant(recurrence, task.createdAt, ofTheTask, { kind: 'pendiente' });
+	return nextOccurrence(recurrence, task.createdAt, ofTheTask);
 }
 
 /**
@@ -27,12 +27,12 @@ function tocabaSinHorario(tarea: Tarea, deLaTarea: readonly Completado[]): Date 
  * ahí, el instante sin horario (nunca es un instante futuro). De una reanudada,
  * como recién creada (§5.8).
  */
-export function instanteDeTocaba(guardada: Tarea, completados: readonly Completado[], ahora: Date): Date | undefined {
-	const { tarea, propios } = comoRecienCreada(guardada, completadosDeTarea(completados, guardada.id));
-	const sinHorario = tocabaSinHorario(tarea, propios);
-	if (tarea.tipo === 'puntual' || !tarea.horario) return sinHorario;
-	const { disponible } = plazosConHorario(tarea, tarea.horario, propios);
-	return disponible <= ahora.getTime() ? new Date(disponible) : sinHorario;
+export function dueInstant(saved: Task, completions: readonly Completion[], now: Date): Date | undefined {
+	const { task, owns } = asJustCreated(saved, completionsOfTask(completions, saved.id));
+	const withoutSchedule = wasDueWithoutSchedule(task, owns);
+	if (task.kind === 'puntual' || !task.schedule) return withoutSchedule;
+	const { available } = deadlinesWithSchedule(task, task.schedule, owns);
+	return available <= now.getTime() ? new Date(available) : withoutSchedule;
 }
 
 /**
@@ -40,9 +40,9 @@ export function instanteDeTocaba(guardada: Tarea, completados: readonly Completa
  * la ordena (relativa, V; calendario, 00:00 de N; con horario, A; pospuesta,
  * hasta). Si una posposición y su propia regla la tienen en espera, el más tarde.
  */
-export function instanteDeVuelve(tarea: Tarea, completados: readonly Completado[], estado: EstadoEnEspera, ahora: Date): Date {
+export function returnInstant(task: Task, completions: readonly Completion[], status: WaitingStatus, now: Date): Date {
 	// En espera siempre hay un instante: el de su regla o, si solo la posposición la tiene en espera, su hasta.
-	const porSuRegla = instanteDeUrgencia(tarea, completados, estado, ahora) as Date;
-	const hasta = posposicionVigente(tarea, ahora)?.hasta;
-	return hasta ? new Date(Math.max(hasta.getTime(), porSuRegla.getTime())) : porSuRegla;
+	const byItsRule = urgencyInstant(task, completions, status, now) as Date;
+	const to = activePostponement(task, now)?.to;
+	return to ? new Date(Math.max(to.getTime(), byItsRule.getTime())) : byItsRule;
 }

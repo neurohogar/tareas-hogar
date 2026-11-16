@@ -1,36 +1,36 @@
 // Spec §7 (Limpiezas y reintentos): propiedades de las reglas de limpiezas.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { elementosAIntentar, reintentaCon, resultadoDelIntento, type Suceso } from './cleanups';
+import { itemsToAttempt, retriesWith, attemptResult, type AppEvent } from './cleanups';
 
 const ids = fc.uniqueArray(fc.constantFrom<string[]>('a1', 'a2', 'a3', 'a4', 'a5', 'a6'), { maxLength: 6 });
-const fallos = fc.array(fc.constantFrom<string[]>('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'z9'), { maxLength: 8 });
-const sucesos = fc.constantFrom<Suceso>('vuelve la conexión', 'cambian los datos', 'pasa el tiempo');
+const failures = fc.array(fc.constantFrom<string[]>('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'z9'), { maxLength: 8 });
+const appEvents = fc.constantFrom<AppEvent>('vuelve la conexión', 'cambian los datos', 'pasa el tiempo');
 
 describe('resultadoDelIntento (propiedades)', () => {
 	it('limpios y pendientes particionan lo intentado, conservando el orden', () => {
 		fc.assert(
-			fc.property(ids, fallos, (intentados, fallaron) => {
-				const { limpios, pendientes } = resultadoDelIntento(intentados, fallaron);
-				expect([...limpios, ...pendientes].sort()).toEqual([...intentados].sort());
-				expect(limpios.filter((id) => pendientes.includes(id))).toEqual([]);
-				expect(intentados.filter((id) => limpios.includes(id))).toEqual(limpios);
-				expect(intentados.filter((id) => pendientes.includes(id))).toEqual(pendientes);
+			fc.property(ids, failures, (attempted, failed) => {
+				const { cleaned, pendings } = attemptResult(attempted, failed);
+				expect([...cleaned, ...pendings].sort()).toEqual([...attempted].sort());
+				expect(cleaned.filter((id) => pendings.includes(id))).toEqual([]);
+				expect(attempted.filter((id) => cleaned.includes(id))).toEqual(cleaned);
+				expect(attempted.filter((id) => pendings.includes(id))).toEqual(pendings);
 			})
 		);
 	});
 	it('quedan por limpiar exactamente los intentados que fallaron', () => {
 		fc.assert(
-			fc.property(ids, fallos, (intentados, fallaron) => {
-				expect(resultadoDelIntento(intentados, fallaron).pendientes).toEqual(intentados.filter((id) => fallaron.includes(id)));
+			fc.property(ids, failures, (attempted, failed) => {
+				expect(attemptResult(attempted, failed).pendings).toEqual(attempted.filter((id) => failed.includes(id)));
 			})
 		);
 	});
 	it('sin conexión (fallan todos) no se limpia ninguno, y si nada falla se limpian todos', () => {
 		fc.assert(
-			fc.property(ids, (intentados) => {
-				expect(resultadoDelIntento(intentados, intentados).limpios).toEqual([]);
-				expect(resultadoDelIntento(intentados, []).pendientes).toEqual([]);
+			fc.property(ids, (attempted) => {
+				expect(attemptResult(attempted, attempted).cleaned).toEqual([]);
+				expect(attemptResult(attempted, []).pendings).toEqual([]);
 			})
 		);
 	});
@@ -39,25 +39,25 @@ describe('resultadoDelIntento (propiedades)', () => {
 describe('elementosAIntentar (propiedades)', () => {
 	it('es lo detectado sin intento en curso, en el mismo orden', () => {
 		fc.assert(
-			fc.property(ids, ids, (porLimpiar, enCurso) => {
-				const a = elementosAIntentar(porLimpiar, new Set<string>(enCurso));
-				expect(a).toEqual(porLimpiar.filter((id) => !enCurso.includes(id)));
+			fc.property(ids, ids, (toClean, inProgress) => {
+				const a = itemsToAttempt(toClean, new Set<string>(inProgress));
+				expect(a).toEqual(toClean.filter((id) => !inProgress.includes(id)));
 			})
 		);
 	});
 	it('nunca devuelve un elemento en curso y, sin nada en curso, devuelve todo', () => {
 		fc.assert(
-			fc.property(ids, ids, (porLimpiar, enCurso) => {
-				expect(elementosAIntentar(porLimpiar, new Set<string>(enCurso)).some((id) => enCurso.includes(id))).toBe(false);
-				expect(elementosAIntentar(porLimpiar, new Set<string>())).toEqual(porLimpiar);
+			fc.property(ids, ids, (toClean, inProgress) => {
+				expect(itemsToAttempt(toClean, new Set<string>(inProgress)).some((id) => inProgress.includes(id))).toBe(false);
+				expect(itemsToAttempt(toClean, new Set<string>())).toEqual(toClean);
 			})
 		);
 	});
 	it('es idempotente: lo que ya se mandó a intentar no se manda de nuevo', () => {
 		fc.assert(
-			fc.property(ids, ids, (porLimpiar, enCurso) => {
-				const primero = elementosAIntentar(porLimpiar, new Set<string>(enCurso));
-				expect(elementosAIntentar(porLimpiar, new Set<string>([...enCurso, ...primero]))).toEqual([]);
+			fc.property(ids, ids, (toClean, inProgress) => {
+				const firstOne = itemsToAttempt(toClean, new Set<string>(inProgress));
+				expect(itemsToAttempt(toClean, new Set<string>([...inProgress, ...firstOne]))).toEqual([]);
 			})
 		);
 	});
@@ -66,8 +66,8 @@ describe('elementosAIntentar (propiedades)', () => {
 describe('reintentaCon (propiedades)', () => {
 	it('reintenta con todo suceso salvo el paso del tiempo', () => {
 		fc.assert(
-			fc.property(sucesos, (suceso) => {
-				expect(reintentaCon(suceso)).toBe(suceso !== 'pasa el tiempo');
+			fc.property(appEvents, (occurrenceEvent) => {
+				expect(retriesWith(occurrenceEvent)).toBe(occurrenceEvent !== 'pasa el tiempo');
 			})
 		);
 	});

@@ -1,98 +1,98 @@
 // Spec §4.1 (Pasos): la lista se normaliza sin perder pasos con texto, y el avance nunca sale de la lista.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { completar } from './completions';
-import { datosDeTarea } from './task-data';
-import type { CambioDeTarea } from './task-document';
-import { editar } from './editing';
-import { accionDeHecho, cambioAlBorrarCompletado, cambioAlCompletar, cambioDePasoAnterior } from './current-step';
-import { normalizarPasos, pasoConTope, pasoEnQueVa, pasosDeLaTarea, tieneVariosPasos } from './steps';
-import type { Tarea, TareaPuntual } from './task';
+import { complete } from './completions';
+import { taskData } from './task-data';
+import type { TaskChange } from './task-document';
+import { edit } from './editing';
+import { doneAction, changeOnDeleteCompletion, changeOnComplete, previousStepChange } from './current-step';
+import { normalizeSteps, stepWithLimit, stepItIsOn, taskSteps, hasSeveralSteps } from './steps';
+import type { Task, OneOffTask } from './task';
 
-const CREADA = new Date(2026, 6, 1, 8, 0, 0);
-const texto = fc.string({ maxLength: 8 });
-const lista = fc.array(texto, { maxLength: 6 });
+const CREATED = new Date(2026, 6, 1, 8, 0, 0);
+const text = fc.string({ maxLength: 8 });
+const list = fc.array(text, { maxLength: 6 });
 
-const tareaCon = (primerPaso: string, pasos: string[], pasoActual: number): TareaPuntual => ({
+const taskWith = (firstStep: string, steps: string[], currentStep: number): OneOffTask => ({
 	id: 't',
-	titulo: 'Ropa',
-	tipo: 'puntual',
-	creadaEn: CREADA,
-	...normalizarPasos(primerPaso, pasos),
-	pasoActual
+	title: 'Ropa',
+	kind: 'puntual',
+	createdAt: CREATED,
+	...normalizeSteps(firstStep, steps),
+	currentStep
 });
 
 /** Aplica el cambio parcial a la tarea: null quita pasoActual, ausente lo deja. */
-const aplicar = (tarea: TareaPuntual, cambio: CambioDeTarea): TareaPuntual => {
-	if (!('pasoActual' in cambio)) return tarea;
-	const { pasoActual: _antes, ...resto } = tarea;
-	return cambio.pasoActual == null ? resto : { ...resto, pasoActual: cambio.pasoActual };
+const apply = (task: OneOffTask, change: TaskChange): OneOffTask => {
+	if (!('currentStep' in change)) return task;
+	const { currentStep: _before, ...rest } = task;
+	return change.currentStep == null ? rest : { ...rest, currentStep: change.currentStep };
 };
 
 describe('pasos (propiedades)', () => {
 	it('normalizar conserva en orden los pasos con texto, recortados, y es idempotente', () => {
 		fc.assert(
-			fc.property(texto, lista, (primerPaso, pasos) => {
-				const normalizados = normalizarPasos(primerPaso, pasos);
-				const conTexto = [primerPaso, ...pasos].map((paso) => paso.trim()).filter((paso) => paso !== '');
-				expect(pasosDeLaTarea(normalizados)).toStrictEqual(conTexto);
-				expect(normalizarPasos(normalizados.primerPaso, normalizados.pasos)).toStrictEqual(normalizados);
-				expect(normalizados.pasos?.length).not.toBe(0);
+			fc.property(text, list, (firstStep, steps) => {
+				const normalizedValues = normalizeSteps(firstStep, steps);
+				const withText = [firstStep, ...steps].map((step) => step.trim()).filter((step) => step !== '');
+				expect(taskSteps(normalizedValues)).toStrictEqual(withText);
+				expect(normalizeSteps(normalizedValues.firstStep, normalizedValues.steps)).toStrictEqual(normalizedValues);
+				expect(normalizedValues.steps?.length).not.toBe(0);
 			})
 		);
 	});
 
 	it('el paso en que va, «Hecho» y «Paso anterior» nunca salen del primero ni del último', () => {
 		fc.assert(
-			fc.property(texto, lista, fc.integer({ min: -3, max: 10 }), (primerPaso, pasos, pasoActual) => {
-				const tarea = tareaCon(primerPaso, pasos, pasoActual);
-				const cantidad = Math.max(1, pasosDeLaTarea(tarea).length);
-				const enRango = (paso: number) => paso >= 1 && paso <= cantidad;
-				expect(enRango(pasoEnQueVa(tarea))).toBe(true);
-				const accion = accionDeHecho(tarea, [], CREADA);
-				if (accion.tipo === 'avanzar') expect(enRango(pasoEnQueVa({ ...tarea, pasoActual: accion.cambio.pasoActual ?? 1 }))).toBe(true);
-				const anterior = cambioDePasoAnterior(tarea).pasoActual;
-				expect(enRango(anterior ?? 1)).toBe(true);
+			fc.property(text, list, fc.integer({ min: -3, max: 10 }), (firstStep, steps, currentStep) => {
+				const task = taskWith(firstStep, steps, currentStep);
+				const amount = Math.max(1, taskSteps(task).length);
+				const inRange = (step: number) => step >= 1 && step <= amount;
+				expect(inRange(stepItIsOn(task))).toBe(true);
+				const action = doneAction(task, [], CREATED);
+				if (action.kind === 'avanzar') expect(inRange(stepItIsOn({ ...task, currentStep: action.change.currentStep ?? 1 }))).toBe(true);
+				const previous = previousStepChange(task).currentStep;
+				expect(inRange(previous ?? 1)).toBe(true);
 			})
 		);
 	});
 
 	it('pasoConTope siempre cae entre 1 y la cantidad de pasos (1 si no hay)', () => {
 		fc.assert(
-			fc.property(texto, lista, fc.integer({ min: -50, max: 50 }), (primerPaso, pasos, paso) => {
-				const tarea = tareaCon(primerPaso, pasos, 1);
-				const tope = pasoConTope(tarea, paso);
-				expect(tope).toBeGreaterThanOrEqual(1);
-				expect(tope).toBeLessThanOrEqual(Math.max(1, pasosDeLaTarea(tarea).length));
-				expect(pasoConTope(tarea, tope)).toBe(tope);
+			fc.property(text, list, fc.integer({ min: -50, max: 50 }), (firstStep, steps, step) => {
+				const task = taskWith(firstStep, steps, 1);
+				const cap = stepWithLimit(task, step);
+				expect(cap).toBeGreaterThanOrEqual(1);
+				expect(cap).toBeLessThanOrEqual(Math.max(1, taskSteps(task).length));
+				expect(stepWithLimit(task, cap)).toBe(cap);
 			})
 		);
 	});
 
 	it('completar y luego deshacer devuelve el mismo paso en que iba', () => {
 		fc.assert(
-			fc.property(texto, lista, fc.integer({ min: 1, max: 10 }), (primerPaso, pasos, pasoActual) => {
-				const tarea = tareaCon(primerPaso, pasos, pasoActual);
-				fc.pre(tieneVariosPasos(tarea));
-				const completado = completar(tarea, [], 'c', CREADA);
-				const completada = aplicar(tarea, cambioAlCompletar(tarea));
-				expect(pasoEnQueVa(completada)).toBe(1);
-				const deshecha = aplicar(completada, cambioAlBorrarCompletado(completada, [completado], completado));
-				expect(pasoEnQueVa(deshecha)).toBe(pasoEnQueVa(tarea));
+			fc.property(text, list, fc.integer({ min: 1, max: 10 }), (firstStep, steps, currentStep) => {
+				const task = taskWith(firstStep, steps, currentStep);
+				fc.pre(hasSeveralSteps(task));
+				const completion = complete(task, [], 'c', CREATED);
+				const completed = apply(task, changeOnComplete(task));
+				expect(stepItIsOn(completed)).toBe(1);
+				const undone = apply(completed, changeOnDeleteCompletion(completed, [completion], completion));
+				expect(stepItIsOn(undone)).toBe(stepItIsOn(task));
 			})
 		);
 	});
 
 	it('editar solo escribe pasos si cambiaron y nunca pasoActual', () => {
 		fc.assert(
-			fc.property(texto, lista, texto, lista, fc.integer({ min: 1, max: 10 }), (primeroAntes, antes, primeroDespues, despues, pasoActual) => {
-				const tarea: Tarea = tareaCon(primeroAntes, antes, pasoActual);
-				const resultado = editar(tarea, { ...datosDeTarea(tarea), primerPaso: primeroDespues, pasos: despues });
-				if (!resultado.ok) throw new Error('debía editarse');
-				const nuevos = normalizarPasos(primeroDespues, despues);
-				const cambiaron = JSON.stringify(nuevos.pasos) !== JSON.stringify(tarea.pasos);
-				expect('pasos' in resultado.cambio).toBe(cambiaron);
-				expect('pasoActual' in resultado.cambio).toBe(false);
+			fc.property(text, list, text, list, fc.integer({ min: 1, max: 10 }), (firstBefore, before, firstAfter, after, currentStep) => {
+				const task: Task = taskWith(firstBefore, before, currentStep);
+				const result = edit(task, { ...taskData(task), firstStep: firstAfter, steps: after });
+				if (!result.ok) throw new Error('debía editarse');
+				const newItems = normalizeSteps(firstAfter, after);
+				const haveChanged = JSON.stringify(newItems.steps) !== JSON.stringify(task.steps);
+				expect('steps' in result.change).toBe(haveChanged);
+				expect('currentStep' in result.change).toBe(false);
 			})
 		);
 	});

@@ -1,17 +1,17 @@
 // Spec §6.2 (Etiquetas en el panel): autocompletado y agregar lo escrito. El
 // panel guarda los nombres elegidos; se resuelven a etiquetas al guardar.
-import { mismoNombre, validarNombre, type Etiqueta, type NombreValidado } from './label';
-import { ordenarEtiquetas } from './label-order';
+import { sameName, validateName, type Label, type ValidatedName } from './label';
+import { sortLabels } from './label-order';
 
-const MARCAS_DIACRITICAS = /[̀-ͯ]/g;
+const DIACRITIC_MARKS = /[̀-ͯ]/g;
 
 /** Para buscar: sin mayúsculas ni acentos (la ñ coincide con la n). */
-const plano = (texto: string) => texto.normalize('NFD').replace(MARCAS_DIACRITICAS, '').toLowerCase();
+const flat = (text: string) => text.normalize('NFD').replace(DIACRITIC_MARKS, '').toLowerCase();
 
-export interface Sugerencias {
-	etiquetas: Etiqueta[];
+export interface Suggestions {
+	labels: Label[];
 	/** «Crear "x"»: lo escrito, si ninguna existente se llama así. */
-	crear?: string;
+	create?: string;
 }
 
 /**
@@ -19,16 +19,16 @@ export interface Sugerencias {
  * acentos), sin las ya elegidas, en el orden de la §4.3; y crear lo escrito si
  * ninguna existente coincide exactamente (sin distinguir mayúsculas).
  */
-export function sugerencias(escrito: string, existentes: readonly Etiqueta[], elegidas: readonly string[]): Sugerencias {
-	const texto = escrito.trim();
-	if (texto === '') return { etiquetas: [] };
-	const yaElegida = (etiqueta: Etiqueta) => elegidas.some((nombre) => mismoNombre(nombre, etiqueta.nombre));
-	const etiquetas = ordenarEtiquetas(existentes.filter((etiqueta) => plano(etiqueta.nombre).includes(plano(texto)) && !yaElegida(etiqueta)));
-	const existe = existentes.some((etiqueta) => mismoNombre(etiqueta.nombre, texto));
-	return existe ? { etiquetas } : { etiquetas, crear: texto };
+export function suggestions(typedOne: string, existings: readonly Label[], chosenItems: readonly string[]): Suggestions {
+	const text = typedOne.trim();
+	if (text === '') return { labels: [] };
+	const alreadyChosen = (label: Label) => chosenItems.some((name) => sameName(name, label.name));
+	const labels = sortLabels(existings.filter((label) => flat(label.name).includes(flat(text)) && !alreadyChosen(label)));
+	const exists = existings.some((label) => sameName(label.name, text));
+	return exists ? { labels } : { labels, create: text };
 }
 
-export type Agregado = { ok: true; nombres: string[] } | Extract<NombreValidado, { ok: false }>;
+export type Added = { ok: true; names: string[] } | Extract<ValidatedName, { ok: false }>;
 
 /**
  * Agregar lo escrito (Enter o elegir una sugerencia): la existente con ese
@@ -36,15 +36,15 @@ export type Agregado = { ok: true; nombres: string[] } | Extract<NombreValidado,
  * Vacío o solo espacios no agrega nada ni es un error (no ofrece crear); un
  * nombre de más de 30 caracteres se rechaza.
  */
-export function agregarEscrita(escrito: string, existentes: readonly Etiqueta[], elegidas: readonly string[]): Agregado {
-	const validado = validarNombre(escrito);
-	if (!validado.ok) return validado.error === 'vacio' ? { ok: true, nombres: [...elegidas] } : validado;
-	const nombre = existentes.find((etiqueta) => mismoNombre(etiqueta.nombre, validado.nombre))?.nombre ?? validado.nombre;
-	const repetida = elegidas.some((elegida) => mismoNombre(elegida, nombre));
-	return { ok: true, nombres: repetida ? [...elegidas] : [...elegidas, nombre] };
+export function addTyped(typedOne: string, existings: readonly Label[], chosenItems: readonly string[]): Added {
+	const validated = validateName(typedOne);
+	if (!validated.ok) return validated.error === 'vacio' ? { ok: true, names: [...chosenItems] } : validated;
+	const name = existings.find((label) => sameName(label.name, validated.name))?.name ?? validated.name;
+	const repeated = chosenItems.some((chosen) => sameName(chosen, name));
+	return { ok: true, names: repeated ? [...chosenItems] : [...chosenItems, name] };
 }
 
 /** Quitar un chip: el nombre elegido que es esa etiqueta (sin distinguir mayúsculas, como al agregarla). */
-export function quitarElegida(nombre: string, elegidas: readonly string[]): string[] {
-	return elegidas.filter((elegida) => !mismoNombre(elegida, nombre));
+export function removeChosen(name: string, chosenItems: readonly string[]): string[] {
+	return chosenItems.filter((chosen) => !sameName(chosen, name));
 }

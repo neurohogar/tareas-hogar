@@ -1,18 +1,18 @@
-import { clasificarEnPendientes, type EnPendientes } from './completed';
-import { completadosDeTarea, ultimoCompletadoEn } from './completions';
+import { classifyInPending, type InPending } from './completed';
+import { completionsOfTask, lastCompletedAt } from './completions';
 import {
-	compararCompletadas,
-	compararPausadas,
-	compararPorUrgencia,
-	type FilaCompletada,
-	type FilaPorOrdenar
+	compareCompleted,
+	comparePaused,
+	compareByUrgency,
+	type CompletedRow,
+	type RowToOrder
 } from './pending-order';
-import { comoRecienCreada } from './pause';
-import { botonesDePaso, textoDelPaso, type BotonesDePaso } from './current-step';
-import type { Completado, Tarea } from './task';
-import { textoDeFecha } from './task-date-text';
-import { instanteDeUrgencia } from './urgency';
-import { lineaDeMinima, type LineaDeMinima } from './minimal-version';
+import { asJustCreated } from './pause';
+import { stepButtons, stepText, type StepButtons } from './current-step';
+import type { Completion, Task } from './task';
+import { dateText } from './task-date-text';
+import { urgencyInstant } from './urgency';
+import { minimalLine, type MinimalLine } from './minimal-version';
 
 /**
  * Una fila de Pendientes; si está completada, se ve tachada y con el checkbox
@@ -22,7 +22,7 @@ import { lineaDeMinima, type LineaDeMinima } from './minimal-version';
  * solo en las filas pendiente o atrasada (§6.1). minima: la línea «Mínima: …»
  * y si «Hice la mínima» está habilitado, en esas mismas filas.
  */
-export type FilaDePendientes = { tarea: Tarea; textoDeFecha?: string; textoDePrimerPaso?: string; botonesDePaso?: BotonesDePaso; minima?: LineaDeMinima } & EnPendientes;
+export type PendingRow = { task: Task; dateText?: string; firstStepText?: string; stepButtons?: StepButtons; minimal?: MinimalLine } & InPending;
 
 /**
  * Spec §6.1: las filas de la lista Pendientes. Primero las no completadas,
@@ -30,40 +30,40 @@ export type FilaDePendientes = { tarea: Tarea; textoDeFecha?: string; textoDePri
  * completadas, de la de completadoEn más reciente a la más antigua; con
  * Mostrar pausadas encendido, al final las pausadas (§5.8), por título.
  */
-export function filasDePendientes(
-	tareas: readonly Tarea[],
-	completados: readonly Completado[],
-	ahora: Date,
-	mostrarCompletadas = false,
-	mostrarPausadas = false
-): FilaDePendientes[] {
-	const noCompletadas: FilaPorOrdenar[] = [];
-	const completadas: FilaCompletada[] = [];
-	const pausadas: Tarea[] = [];
-	for (const tarea of tareas) {
-		const { propios } = comoRecienCreada(tarea, completadosDeTarea(completados, tarea.id));
-		const enPendientes = clasificarEnPendientes(tarea, completados, ahora);
-		if (enPendientes.estado.tipo === 'pausada') pausadas.push(tarea);
-		else if (enPendientes.completada) completadas.push({ tarea, estado: enPendientes.estado, ultimoCompletadoEn: ultimoCompletadoEn(propios) });
-		else noCompletadas.push({ tarea, estado: enPendientes.estado, instante: instanteDeUrgencia(tarea, completados, enPendientes.estado, ahora) });
+export function pendingRows(
+	tasks: readonly Task[],
+	completions: readonly Completion[],
+	now: Date,
+	showCompleted = false,
+	showPaused = false
+): PendingRow[] {
+	const notCompleted: RowToOrder[] = [];
+	const completedItems: CompletedRow[] = [];
+	const pausedItems: Task[] = [];
+	for (const task of tasks) {
+		const { owns } = asJustCreated(task, completionsOfTask(completions, task.id));
+		const inPending = classifyInPending(task, completions, now);
+		if (inPending.status.kind === 'pausada') pausedItems.push(task);
+		else if (inPending.completed) completedItems.push({ task, status: inPending.status, lastCompletedAt: lastCompletedAt(owns) });
+		else notCompleted.push({ task, status: inPending.status, instant: urgencyInstant(task, completions, inPending.status, now) });
 	}
-	const conTexto = (tarea: Tarea, estado: FilaDePendientes['estado']) => textoDeFecha(tarea, completados, estado, ahora);
-	const conPaso = (tarea: Tarea, estado: FilaDePendientes['estado']) => {
-		const texto = textoDelPaso(tarea, estado);
-		const botones = botonesDePaso(tarea, estado, completados, ahora);
-		const minima = lineaDeMinima(tarea, estado, completados, ahora);
-		return { ...(texto !== undefined && { textoDePrimerPaso: texto }), ...(botones && { botonesDePaso: botones }), ...(minima && { minima }) };
+	const withText = (task: Task, status: PendingRow['status']) => dateText(task, completions, status, now);
+	const withStep = (task: Task, status: PendingRow['status']) => {
+		const text = stepText(task, status);
+		const buttons = stepButtons(task, status, completions, now);
+		const minimal = minimalLine(task, status, completions, now);
+		return { ...(text !== undefined && { firstStepText: text }), ...(buttons && { stepButtons: buttons }), ...(minimal && { minimal }) };
 	};
-	const filas = noCompletadas
-		.sort(compararPorUrgencia)
-		.map(({ tarea, estado }): FilaDePendientes => ({ tarea, estado, completada: false, textoDeFecha: conTexto(tarea, estado), ...conPaso(tarea, estado) }));
-	const alFinal = mostrarCompletadas
-		? completadas
-				.sort(compararCompletadas)
-				.map(({ tarea, estado }): FilaDePendientes => ({ tarea, estado, completada: true, textoDeFecha: conTexto(tarea, estado) }))
+	const rows = notCompleted
+		.sort(compareByUrgency)
+		.map(({ task, status }): PendingRow => ({ task, status, completed: false, dateText: withText(task, status), ...withStep(task, status) }));
+	const atEnd = showCompleted
+		? completedItems
+				.sort(compareCompleted)
+				.map(({ task, status }): PendingRow => ({ task, status, completed: true, dateText: withText(task, status) }))
 		: [];
-	const pausadasAlFinal = mostrarPausadas
-		? pausadas.sort(compararPausadas).map((tarea): FilaDePendientes => ({ tarea, estado: { tipo: 'pausada' }, completada: false }))
+	const pausedAtEnd = showPaused
+		? pausedItems.sort(comparePaused).map((task): PendingRow => ({ task, status: { kind: 'pausada' }, completed: false }))
 		: [];
-	return [...filas, ...alFinal, ...pausadasAlFinal];
+	return [...rows, ...atEnd, ...pausedAtEnd];
 }

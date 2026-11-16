@@ -1,86 +1,86 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { diaDelMes, inicioDelDia, sumarDias, ultimoDiaDelMes } from './days';
-import { esOcurrencia, primeraOcurrenciaPosterior, ultimaOcurrenciaEntre } from './occurrences';
-import { DIAS_DE_LA_SEMANA, type RecurrenciaCalendario } from './task';
+import { dayOfMonth, startOfDay, addDays, lastDayOfMonth } from './days';
+import { isOccurrence, firstLaterOccurrence, lastOccurrenceBetween } from './occurrences';
+import { WEEKDAYS, type CalendarRecurrence } from './task';
 
-const dia = fc.integer({ min: 0, max: 47_000 }).map((n) => new Date(1970, 0, 1 + n));
-const momento = fc
-	.tuple(dia, fc.integer({ min: 0, max: 23 }), fc.integer({ min: 0, max: 59 }))
-	.map(([d, hora, minuto]) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), hora, minuto));
-const diasSemana = fc.subarray([...DIAS_DE_LA_SEMANA], { minLength: 1 });
-const diasMes = fc
+const day = fc.integer({ min: 0, max: 47_000 }).map((n) => new Date(1970, 0, 1 + n));
+const moment = fc
+	.tuple(day, fc.integer({ min: 0, max: 23 }), fc.integer({ min: 0, max: 59 }))
+	.map(([d, hour, minute]) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, minute));
+const weekdays = fc.subarray([...WEEKDAYS], { minLength: 1 });
+const monthDays = fc
 	.uniqueArray(fc.integer({ min: 1, max: 31 }), { minLength: 1, maxLength: 6 })
-	.map((dias) => dias.sort((a, b) => a - b));
-const recurrencia: fc.Arbitrary<RecurrenciaCalendario> = fc.oneof(
-	diasSemana.map((d) => ({ modo: 'calendario' as const, diasSemana: d })),
-	diasMes.map((d) => ({ modo: 'calendario' as const, diasMes: d }))
+	.map((days) => days.sort((a, b) => a - b));
+const recurrence: fc.Arbitrary<CalendarRecurrence> = fc.oneof(
+	weekdays.map((d) => ({ mode: 'calendario' as const, weekdays: d })),
+	monthDays.map((d) => ({ mode: 'calendario' as const, monthDays: d }))
 );
 
 /** Los inicios de día en (desde, hasta]. */
-function diasEntre(desde: Date, hasta: Date): Date[] {
-	const dias: Date[] = [];
-	for (let d = sumarDias(desde, 1); d <= hasta; d = sumarDias(d, 1)) dias.push(d);
-	return dias;
+function daysBetween(from: Date, to: Date): Date[] {
+	const days: Date[] = [];
+	for (let d = addDays(from, 1); d <= to; d = addDays(d, 1)) days.push(d);
+	return days;
 }
 
 describe('ocurrencias (propiedades)', () => {
 	it('la primera ocurrencia posterior es un inicio de día, ocurre, y no hay otra antes (a lo sumo 31 días)', () => {
 		fc.assert(
-			fc.property(recurrencia, momento, (r, m) => {
-				const n = primeraOcurrenciaPosterior(r, m);
-				const desde = inicioDelDia(m);
-				expect(inicioDelDia(n)).toEqual(n);
-				expect(n > desde).toBe(true);
-				expect(n <= sumarDias(desde, 31)).toBe(true);
-				expect(esOcurrencia(r, n)).toBe(true);
-				expect(diasEntre(desde, sumarDias(n, -1)).some((d) => esOcurrencia(r, d))).toBe(false);
+			fc.property(recurrence, moment, (r, m) => {
+				const n = firstLaterOccurrence(r, m);
+				const from = startOfDay(m);
+				expect(startOfDay(n)).toEqual(n);
+				expect(n > from).toBe(true);
+				expect(n <= addDays(from, 31)).toBe(true);
+				expect(isOccurrence(r, n)).toBe(true);
+				expect(daysBetween(from, addDays(n, -1)).some((d) => isOccurrence(r, d))).toBe(false);
 			})
 		);
 	});
 
 	it('la última ocurrencia entre (desde, hasta] es la más reciente, o no hay ninguna', () => {
 		fc.assert(
-			fc.property(recurrencia, dia, fc.integer({ min: -3, max: 70 }), fc.integer({ min: 0, max: 23 }), (r, desde, n, hora) => {
-				const hasta = new Date(sumarDias(desde, n).getTime() + hora * 3_600_000);
-				const ocurrencias = diasEntre(desde, inicioDelDia(hasta)).filter((d) => esOcurrencia(r, d));
-				expect(ultimaOcurrenciaEntre(r, desde, hasta)).toEqual(ocurrencias.at(-1));
+			fc.property(recurrence, day, fc.integer({ min: -3, max: 70 }), fc.integer({ min: 0, max: 23 }), (r, from, n, hour) => {
+				const to = new Date(addDays(from, n).getTime() + hour * 3_600_000);
+				const occurrences = daysBetween(from, startOfDay(to)).filter((d) => isOccurrence(r, d));
+				expect(lastOccurrenceBetween(r, from, to)).toEqual(occurrences.at(-1));
 			})
 		);
 	});
 
 	it('en cada mes, cada día elegido ocurre exactamente una vez; uno que no existe cae en el último día', () => {
 		fc.assert(
-			fc.property(dia, fc.integer({ min: 1, max: 31 }), (d, elegido) => {
-				const ultimo = ultimoDiaDelMes(d);
-				const delMes = diasEntre(sumarDias(d, -diaDelMes(d)), sumarDias(d, ultimo - diaDelMes(d)));
-				const ocurrencias = delMes.filter((x) => esOcurrencia({ modo: 'calendario', diasMes: [elegido] }, x));
-				expect(ocurrencias.map(diaDelMes)).toEqual([Math.min(elegido, ultimo)]);
+			fc.property(day, fc.integer({ min: 1, max: 31 }), (d, chosenOne) => {
+				const last = lastDayOfMonth(d);
+				const ofMonth = daysBetween(addDays(d, -dayOfMonth(d)), addDays(d, last - dayOfMonth(d)));
+				const occurrences = ofMonth.filter((x) => isOccurrence({ mode: 'calendario', monthDays: [chosenOne] }, x));
+				expect(occurrences.map(dayOfMonth)).toEqual([Math.min(chosenOne, last)]);
 			})
 		);
 	});
 
 	it('en cualquier semana corrida hay tantas ocurrencias como días de la semana elegidos', () => {
 		fc.assert(
-			fc.property(diasSemana, dia, (elegidos, d) => {
-				const semana = diasEntre(sumarDias(d, -1), sumarDias(d, 6));
-				const r: RecurrenciaCalendario = { modo: 'calendario', diasSemana: elegidos };
-				expect(semana.filter((x) => esOcurrencia(r, x))).toHaveLength(elegidos.length);
+			fc.property(weekdays, day, (chosenOnes, d) => {
+				const week = daysBetween(addDays(d, -1), addDays(d, 6));
+				const r: CalendarRecurrence = { mode: 'calendario', weekdays: chosenOnes };
+				expect(week.filter((x) => isOccurrence(r, x))).toHaveLength(chosenOnes.length);
 			})
 		);
 	});
 
 	it('el orden y las repeticiones de los días no cambian qué días ocurren', () => {
-		const conOtroOrden = recurrencia.chain((r) => {
-			const dias: readonly (string | number)[] = 'diasSemana' in r ? r.diasSemana : r.diasMes;
-			const repetidos = [...dias, ...dias];
+		const withOtherOrder = recurrence.chain((r) => {
+			const days: readonly (string | number)[] = 'weekdays' in r ? r.weekdays : r.monthDays;
+			const repeatedItems = [...days, ...days];
 			return fc
-				.shuffledSubarray(repetidos, { minLength: repetidos.length })
-				.map((otros) => [r, { ...r, ['diasSemana' in r ? 'diasSemana' : 'diasMes']: otros } as RecurrenciaCalendario] as const);
+				.shuffledSubarray(repeatedItems, { minLength: repeatedItems.length })
+				.map((others) => [r, { ...r, ['weekdays' in r ? 'weekdays' : 'monthDays']: others } as CalendarRecurrence] as const);
 		});
 		fc.assert(
-			fc.property(conOtroOrden, dia, ([r, otra], d) => {
-				expect(esOcurrencia(otra, d)).toBe(esOcurrencia(r, d));
+			fc.property(withOtherOrder, day, ([r, other], d) => {
+				expect(isOccurrence(other, d)).toBe(isOccurrence(r, d));
 			})
 		);
 	});

@@ -1,219 +1,219 @@
 import { describe, expect, it } from 'vitest';
-import { aplicarCambio, aplicarCambiosDeReferencias, tareaDesdeDocumento, type DocumentoDeTarea } from './task-document';
-import type { Recurrencia } from './task';
+import { applyChange, applyReferenceChanges, taskFromDocument, type TaskDocument } from './task-document';
+import type { Recurrence } from './task';
 
-const CREADA = new Date(2026, 6, 1, 8, 0, 0);
-const RELATIVA = { modo: 'relativo', cada: 2, unidad: 'dias' } as const;
-const LIMITE = new Date(2026, 6, 14);
+const CREATED = new Date(2026, 6, 1, 8, 0, 0);
+const RELATIVE = { mode: 'relativo', every: 2, unit: 'dias' } as const;
+const LIMIT = new Date(2026, 6, 14);
 
-const PUNTUAL: DocumentoDeTarea = { id: 't1', titulo: 'Pagar', tipo: 'puntual', fechaLimite: LIMITE, creadaEn: CREADA };
-const PERIODICA: DocumentoDeTarea = { id: 't2', titulo: 'Regar', tipo: 'periodica', recurrencia: RELATIVA, creadaEn: CREADA };
+const ONE_OFF: TaskDocument = { id: 't1', title: 'Pagar', kind: 'puntual', dueDate: LIMIT, createdAt: CREATED };
+const RECURRING: TaskDocument = { id: 't2', title: 'Regar', kind: 'periodica', recurrence: RELATIVE, createdAt: CREATED };
 
 describe('tareaDesdeDocumento', () => {
 	it('una puntual conserva su fecha límite e ignora una recurrencia que no le corresponde', () => {
-		expect(tareaDesdeDocumento({ ...PUNTUAL, recurrencia: RELATIVA })).toStrictEqual(PUNTUAL);
+		expect(taskFromDocument({ ...ONE_OFF, recurrence: RELATIVE })).toStrictEqual(ONE_OFF);
 	});
 
 	it('una puntual sin fecha límite queda sin el campo', () => {
-		const { fechaLimite: _, ...sinLimite } = PUNTUAL;
+		const { dueDate: _, ...withoutLimit } = ONE_OFF;
 
-		expect(tareaDesdeDocumento(sinLimite)).toStrictEqual(sinLimite);
+		expect(taskFromDocument(withoutLimit)).toStrictEqual(withoutLimit);
 	});
 
 	it('una periódica conserva su recurrencia e ignora una fecha límite que no le corresponde', () => {
-		expect(tareaDesdeDocumento({ ...PERIODICA, fechaLimite: LIMITE })).toStrictEqual(PERIODICA);
+		expect(taskFromDocument({ ...RECURRING, dueDate: LIMIT })).toStrictEqual(RECURRING);
 	});
 
 	it('las dos formas conservan su emoji y su nota', () => {
-		const campos = { emoji: '🌱', nota: 'Usar guantes' };
+		const fields = { emoji: '🌱', note: 'Usar guantes' };
 
-		expect(tareaDesdeDocumento({ ...PUNTUAL, ...campos })).toStrictEqual({ ...PUNTUAL, ...campos });
-		expect(tareaDesdeDocumento({ ...PERIODICA, ...campos })).toStrictEqual({ ...PERIODICA, ...campos });
+		expect(taskFromDocument({ ...ONE_OFF, ...fields })).toStrictEqual({ ...ONE_OFF, ...fields });
+		expect(taskFromDocument({ ...RECURRING, ...fields })).toStrictEqual({ ...RECURRING, ...fields });
 	});
 
 	it('las dos formas conservan sus etiquetas', () => {
-		expect(tareaDesdeDocumento({ ...PUNTUAL, etiquetas: ['e1'] })).toStrictEqual({ ...PUNTUAL, etiquetas: ['e1'] });
-		expect(tareaDesdeDocumento({ ...PERIODICA, etiquetas: ['e1', 'e2'] })).toStrictEqual({ ...PERIODICA, etiquetas: ['e1', 'e2'] });
+		expect(taskFromDocument({ ...ONE_OFF, labels: ['e1'] })).toStrictEqual({ ...ONE_OFF, labels: ['e1'] });
+		expect(taskFromDocument({ ...RECURRING, labels: ['e1', 'e2'] })).toStrictEqual({ ...RECURRING, labels: ['e1', 'e2'] });
 	});
 
 	it('una periódica sin recurrencia viola el modelo', () => {
-		const { recurrencia: _, ...sinRecurrencia } = PERIODICA;
+		const { recurrence: _, ...withoutRecurrence } = RECURRING;
 
-		expect(() => tareaDesdeDocumento(sinRecurrencia)).toThrow();
+		expect(() => taskFromDocument(withoutRecurrence)).toThrow();
 	});
 });
 
 describe('aplicarCambio', () => {
 	it('escribe solo los campos del cambio y deja los demás', () => {
-		const [editado] = aplicarCambio([PUNTUAL], 't1', { titulo: 'Pagar la luz' });
+		const [editedDocument] = applyChange([ONE_OFF], 't1', { title: 'Pagar la luz' });
 
-		expect(editado).toStrictEqual({ ...PUNTUAL, titulo: 'Pagar la luz' });
+		expect(editedDocument).toStrictEqual({ ...ONE_OFF, title: 'Pagar la luz' });
 	});
 
 	it('un campo en null se quita del documento', () => {
-		const [editado] = aplicarCambio([PUNTUAL], 't1', { tipo: 'periodica', recurrencia: RELATIVA, fechaLimite: null });
+		const [editedDocument] = applyChange([ONE_OFF], 't1', { kind: 'periodica', recurrence: RELATIVE, dueDate: null });
 
-		expect(editado).toStrictEqual({ id: 't1', titulo: 'Pagar', tipo: 'periodica', recurrencia: RELATIVA, creadaEn: CREADA });
+		expect(editedDocument).toStrictEqual({ id: 't1', title: 'Pagar', kind: 'periodica', recurrence: RELATIVE, createdAt: CREATED });
 	});
 
 	it('la recurrencia se reemplaza entera, sin mezclar subcampos', () => {
-		const semanal: Recurrencia = { modo: 'calendario', diasSemana: ['martes'] };
-		const [editado] = aplicarCambio([PERIODICA], 't2', { recurrencia: semanal });
+		const weekly: Recurrence = { mode: 'calendario', weekdays: ['martes'] };
+		const [editedDocument] = applyChange([RECURRING], 't2', { recurrence: weekly });
 
-		expect(editado.recurrencia).toStrictEqual(semanal);
+		expect(editedDocument.recurrence).toStrictEqual(weekly);
 	});
 
 	it('solo cambia el documento de esa tarea', () => {
-		expect(aplicarCambio([PUNTUAL, PERIODICA], 't2', { titulo: 'Otro' })[0]).toBe(PUNTUAL);
+		expect(applyChange([ONE_OFF, RECURRING], 't2', { title: 'Otro' })[0]).toBe(ONE_OFF);
 	});
 
 	it('gana el borrado: un cambio sobre una tarea que no existe no la crea', () => {
-		expect(aplicarCambio([PUNTUAL], 'borrada', { titulo: 'Revivida' })).toStrictEqual([PUNTUAL]);
+		expect(applyChange([ONE_OFF], 'borrada', { title: 'Revivida' })).toStrictEqual([ONE_OFF]);
 	});
 
 	it('no modifica el documento original', () => {
-		aplicarCambio([PUNTUAL], 't1', { titulo: 'Otro', fechaLimite: null });
+		applyChange([ONE_OFF], 't1', { title: 'Otro', dueDate: null });
 
-		expect(PUNTUAL).toStrictEqual({ id: 't1', titulo: 'Pagar', tipo: 'puntual', fechaLimite: LIMITE, creadaEn: CREADA });
+		expect(ONE_OFF).toStrictEqual({ id: 't1', title: 'Pagar', kind: 'puntual', dueDate: LIMIT, createdAt: CREATED });
 	});
 });
 
 describe('aplicarCambio con emoji y nota', () => {
 	it('escribe el emoji y la nota, y null los quita', () => {
-		const conCampos = aplicarCambio([PUNTUAL], 't1', { emoji: '🌱', nota: 'Hola' });
+		const withFields = applyChange([ONE_OFF], 't1', { emoji: '🌱', note: 'Hola' });
 
-		expect(conCampos[0]).toStrictEqual({ ...PUNTUAL, emoji: '🌱', nota: 'Hola' });
-		expect(aplicarCambio(conCampos, 't1', { emoji: null, nota: null })[0]).toStrictEqual(PUNTUAL);
+		expect(withFields[0]).toStrictEqual({ ...ONE_OFF, emoji: '🌱', note: 'Hola' });
+		expect(applyChange(withFields, 't1', { emoji: null, note: null })[0]).toStrictEqual(ONE_OFF);
 	});
 
 	it('un cambio de nota no toca el emoji', () => {
-		expect(aplicarCambio([{ ...PUNTUAL, emoji: '🌱' }], 't1', { nota: 'Hola' })[0]).toStrictEqual({ ...PUNTUAL, emoji: '🌱', nota: 'Hola' });
+		expect(applyChange([{ ...ONE_OFF, emoji: '🌱' }], 't1', { note: 'Hola' })[0]).toStrictEqual({ ...ONE_OFF, emoji: '🌱', note: 'Hola' });
 	});
 });
 
 describe('aplicarCambio con etiquetas', () => {
 	it('el campo etiquetas se reemplaza entero: gana el último cambio, sin unir', () => {
-		const conCocina = aplicarCambio([{ ...PUNTUAL, etiquetas: ['cocina'] }], 't1', { etiquetas: ['cocina', 'bano'] });
-		const [editado] = aplicarCambio(conCocina, 't1', { etiquetas: ['cocina', 'patio'] });
+		const withKitchen = applyChange([{ ...ONE_OFF, labels: ['cocina'] }], 't1', { labels: ['cocina', 'bano'] });
+		const [editedDocument] = applyChange(withKitchen, 't1', { labels: ['cocina', 'patio'] });
 
-		expect(editado.etiquetas).toStrictEqual(['cocina', 'patio']);
+		expect(editedDocument.labels).toStrictEqual(['cocina', 'patio']);
 	});
 });
 
 describe('aplicarCambiosDeReferencias', () => {
 	it('quita las etiquetas nombradas de las tareas nombradas y deja sus otras etiquetas', () => {
-		const pagar = { ...PUNTUAL, etiquetas: ['bano', 'cocina'] };
-		const regar = { ...PERIODICA, etiquetas: ['cocina'] };
-		const quitarCocina = (tareaId: string) => ({ tareaId, quitar: ['cocina'], poner: [] });
+		const pay = { ...ONE_OFF, labels: ['bano', 'cocina'] };
+		const water = { ...RECURRING, labels: ['cocina'] };
+		const removeKitchen = (taskId: string) => ({ taskId, remove: ['cocina'], put: [] });
 
-		expect(aplicarCambiosDeReferencias([pagar, regar], [quitarCocina('t1'), quitarCocina('t2')])).toStrictEqual([
-			{ ...pagar, etiquetas: ['bano'] },
-			{ ...regar, etiquetas: [] }
+		expect(applyReferenceChanges([pay, water], [removeKitchen('t1'), removeKitchen('t2')])).toStrictEqual([
+			{ ...pay, labels: ['bano'] },
+			{ ...water, labels: [] }
 		]);
 	});
 
 	it('pone al final las que no estaban, sin repetir', () => {
-		const pagar = { ...PUNTUAL, etiquetas: ['b', 'c', 'a'] };
+		const pay = { ...ONE_OFF, labels: ['b', 'c', 'a'] };
 
-		expect(aplicarCambiosDeReferencias([pagar], [{ tareaId: 't1', quitar: ['b'], poner: ['a', 'd'] }])).toStrictEqual([
-			{ ...pagar, etiquetas: ['c', 'a', 'd'] }
+		expect(applyReferenceChanges([pay], [{ taskId: 't1', remove: ['b'], put: ['a', 'd'] }])).toStrictEqual([
+			{ ...pay, labels: ['c', 'a', 'd'] }
 		]);
 	});
 
 	it('no toca las tareas no nombradas, aunque tengan la etiqueta', () => {
-		const regar = { ...PERIODICA, etiquetas: ['cocina'] };
+		const water = { ...RECURRING, labels: ['cocina'] };
 
-		expect(aplicarCambiosDeReferencias([regar], [{ tareaId: 't1', quitar: ['cocina'], poner: [] }])).toStrictEqual([regar]);
+		expect(applyReferenceChanges([water], [{ taskId: 't1', remove: ['cocina'], put: [] }])).toStrictEqual([water]);
 	});
 
 	it('una tarea que ya no existe se saltea', () => {
-		expect(aplicarCambiosDeReferencias([PUNTUAL], [{ tareaId: 'borrada', quitar: [], poner: ['a'] }])).toStrictEqual([PUNTUAL]);
+		expect(applyReferenceChanges([ONE_OFF], [{ taskId: 'borrada', remove: [], put: ['a'] }])).toStrictEqual([ONE_OFF]);
 	});
 
 	it('aplica en orden varios cambios a la misma tarea', () => {
-		const pagar = { ...PUNTUAL, etiquetas: ['a'] };
-		const cambios = [
-			{ tareaId: 't1', quitar: ['a'], poner: ['b'] },
-			{ tareaId: 't1', quitar: ['b'], poner: ['c'] }
+		const pay = { ...ONE_OFF, labels: ['a'] };
+		const changes = [
+			{ taskId: 't1', remove: ['a'], put: ['b'] },
+			{ taskId: 't1', remove: ['b'], put: ['c'] }
 		];
 
-		expect(aplicarCambiosDeReferencias([pagar], cambios)).toStrictEqual([{ ...pagar, etiquetas: ['c'] }]);
+		expect(applyReferenceChanges([pay], changes)).toStrictEqual([{ ...pay, labels: ['c'] }]);
 	});
 });
 
 describe('tareaDesdeDocumento y aplicarCambio con pausa (spec §5.8, §7)', () => {
-	const REANUDADA = new Date(2026, 6, 15, 10, 0, 0);
+	const RESUMED = new Date(2026, 6, 15, 10, 0, 0);
 
 	it('una periódica conserva pausada y reanudadaEn', () => {
-		const documento = { ...PERIODICA, pausada: true, reanudadaEn: REANUDADA };
+		const doc = { ...RECURRING, paused: true, resumedAt: RESUMED };
 
-		expect(tareaDesdeDocumento(documento)).toStrictEqual(documento);
+		expect(taskFromDocument(doc)).toStrictEqual(doc);
 	});
 
 	it('una puntual ignora pausada y reanudadaEn', () => {
-		expect(tareaDesdeDocumento({ ...PUNTUAL, pausada: true, reanudadaEn: REANUDADA })).toStrictEqual(PUNTUAL);
+		expect(taskFromDocument({ ...ONE_OFF, paused: true, resumedAt: RESUMED })).toStrictEqual(ONE_OFF);
 	});
 
 	it('reanudar quita pausada y guarda reanudadaEn; pausar en otro dispositivo después la deja pausada', () => {
-		const pausada = { ...PERIODICA, pausada: true };
-		const reanudada = aplicarCambio([pausada], 't2', { pausada: null, reanudadaEn: REANUDADA });
+		const paused = { ...RECURRING, paused: true };
+		const resumed = applyChange([paused], 't2', { paused: null, resumedAt: RESUMED });
 
-		expect(reanudada).toStrictEqual([{ ...PERIODICA, reanudadaEn: REANUDADA }]);
-		expect(aplicarCambio(reanudada, 't2', { pausada: true })).toStrictEqual([{ ...PERIODICA, reanudadaEn: REANUDADA, pausada: true }]);
+		expect(resumed).toStrictEqual([{ ...RECURRING, resumedAt: RESUMED }]);
+		expect(applyChange(resumed, 't2', { paused: true })).toStrictEqual([{ ...RECURRING, resumedAt: RESUMED, paused: true }]);
 	});
 });
 
 describe('pospuesta en el documento (spec §4.1, §7)', () => {
-	const PRIMERA = { desde: new Date(2026, 6, 15, 10, 0, 0), hasta: new Date(2026, 6, 15, 13, 0, 0) };
-	const SEGUNDA = { desde: new Date(2026, 6, 15, 10, 5, 0), hasta: new Date(2026, 6, 15, 11, 5, 0) };
+	const FIRST = { from: new Date(2026, 6, 15, 10, 0, 0), to: new Date(2026, 6, 15, 13, 0, 0) };
+	const SECOND = { from: new Date(2026, 6, 15, 10, 5, 0), to: new Date(2026, 6, 15, 11, 5, 0) };
 
 	it.each([
-		['una puntual', PUNTUAL],
-		['una periódica', PERIODICA]
-	])('%s conserva pospuesta', (_, documento) => {
-		expect(tareaDesdeDocumento({ ...documento, pospuesta: PRIMERA }).pospuesta).toStrictEqual(PRIMERA);
+		['una puntual', ONE_OFF],
+		['una periódica', RECURRING]
+	])('%s conserva pospuesta', (_, doc) => {
+		expect(taskFromDocument({ ...doc, postponed: FIRST }).postponed).toStrictEqual(FIRST);
 	});
 
 	it('sin pospuesta, la tarea queda sin el campo', () => {
-		expect(tareaDesdeDocumento(PUNTUAL)).not.toHaveProperty('pospuesta');
+		expect(taskFromDocument(ONE_OFF)).not.toHaveProperty('postponed');
 	});
 
 	it('es un solo campo: el último cambio queda entero, sin mezclar desde y hasta', () => {
-		const [documento] = aplicarCambio([{ ...PUNTUAL, pospuesta: PRIMERA }], PUNTUAL.id, { pospuesta: SEGUNDA });
+		const [doc] = applyChange([{ ...ONE_OFF, postponed: FIRST }], ONE_OFF.id, { postponed: SECOND });
 
-		expect(documento.pospuesta).toStrictEqual(SEGUNDA);
+		expect(doc.postponed).toStrictEqual(SECOND);
 	});
 
 	it('en null, se quita del documento', () => {
-		const [documento] = aplicarCambio([{ ...PUNTUAL, pospuesta: PRIMERA }], PUNTUAL.id, { pospuesta: null });
+		const [doc] = applyChange([{ ...ONE_OFF, postponed: FIRST }], ONE_OFF.id, { postponed: null });
 
-		expect(documento).not.toHaveProperty('pospuesta');
+		expect(doc).not.toHaveProperty('postponed');
 	});
 });
 
 describe('el esfuerzo en el documento', () => {
 	it('las dos formas conservan su esfuerzo', () => {
-		expect(tareaDesdeDocumento({ ...PUNTUAL, esfuerzo: 'rapida' })).toStrictEqual({ ...PUNTUAL, esfuerzo: 'rapida' });
-		expect(tareaDesdeDocumento({ ...PERIODICA, esfuerzo: 'larga' })).toStrictEqual({ ...PERIODICA, esfuerzo: 'larga' });
+		expect(taskFromDocument({ ...ONE_OFF, effort: 'rapida' })).toStrictEqual({ ...ONE_OFF, effort: 'rapida' });
+		expect(taskFromDocument({ ...RECURRING, effort: 'larga' })).toStrictEqual({ ...RECURRING, effort: 'larga' });
 	});
 
 	it('sin el campo, la tarea queda sin estimar', () => {
-		expect(tareaDesdeDocumento(PUNTUAL)).not.toHaveProperty('esfuerzo');
+		expect(taskFromDocument(ONE_OFF)).not.toHaveProperty('effort');
 	});
 
 	it('es un campo independiente: se combina con un cambio de título de otro dispositivo (§7)', () => {
-		const conEsfuerzo: DocumentoDeTarea = { ...PUNTUAL, esfuerzo: 'media' };
-		const [resultado] = aplicarCambio(aplicarCambio([conEsfuerzo], 't1', { titulo: 'Pagar la luz' }), 't1', { esfuerzo: 'rapida' });
+		const withEffort: TaskDocument = { ...ONE_OFF, effort: 'media' };
+		const [result] = applyChange(applyChange([withEffort], 't1', { title: 'Pagar la luz' }), 't1', { effort: 'rapida' });
 
-		expect(resultado).toStrictEqual({ ...PUNTUAL, titulo: 'Pagar la luz', esfuerzo: 'rapida' });
+		expect(result).toStrictEqual({ ...ONE_OFF, title: 'Pagar la luz', effort: 'rapida' });
 	});
 
 	it('el último cambio gana, también si lo quita con null (§7)', () => {
-		const conEsfuerzo: DocumentoDeTarea = { ...PUNTUAL, esfuerzo: 'media' };
-		const [quitado] = aplicarCambio(aplicarCambio([conEsfuerzo], 't1', { esfuerzo: 'rapida' }), 't1', { esfuerzo: null });
-		const [puesto] = aplicarCambio(aplicarCambio([conEsfuerzo], 't1', { esfuerzo: null }), 't1', { esfuerzo: 'larga' });
+		const withEffort: TaskDocument = { ...ONE_OFF, effort: 'media' };
+		const [removed] = applyChange(applyChange([withEffort], 't1', { effort: 'rapida' }), 't1', { effort: null });
+		const [updated] = applyChange(applyChange([withEffort], 't1', { effort: null }), 't1', { effort: 'larga' });
 
-		expect(quitado).toStrictEqual(PUNTUAL);
-		expect(puesto).toStrictEqual({ ...PUNTUAL, esfuerzo: 'larga' });
+		expect(removed).toStrictEqual(ONE_OFF);
+		expect(updated).toStrictEqual({ ...ONE_OFF, effort: 'larga' });
 	});
 });

@@ -1,61 +1,61 @@
 import { describe, expect, it } from 'vitest';
-import type { Etiqueta } from './label';
-import { fusionDeDuplicadas } from './label-merge';
-import type { TareaPuntual } from './task';
+import type { Label } from './label';
+import { mergeOfDuplicates } from './label-merge';
+import type { OneOffTask } from './task';
 
-const etiqueta = (id: string, nombre: string): Etiqueta => ({ id, nombre, color: 'gris' });
-const tarea = (id: string, etiquetas?: string[]): TareaPuntual => ({
+const label = (id: string, name: string): Label => ({ id, name, color: 'gris' });
+const task = (id: string, labels?: string[]): OneOffTask => ({
 	id,
-	titulo: id,
-	tipo: 'puntual',
-	creadaEn: new Date(2026, 6, 1),
-	...(etiquetas && { etiquetas })
+	title: id,
+	kind: 'puntual',
+	createdAt: new Date(2026, 6, 1),
+	...(labels && { labels })
 });
 
 describe('fusionDeDuplicadas', () => {
 	it('sin duplicadas, nada que fusionar', () => {
-		expect(fusionDeDuplicadas([etiqueta('a', 'Cocina'), etiqueta('b', 'Baño')], [tarea('t', ['a', 'b'])])).toStrictEqual({
-			borradas: [],
-			referencias: []
+		expect(mergeOfDuplicates([label('a', 'Cocina'), label('b', 'Baño')], [task('t', ['a', 'b'])])).toStrictEqual({
+			deletedItems: [],
+			references: []
 		});
 	});
 
 	it('sobrevive la de id menor; las tareas de la otra pasan a la sobreviviente, sin repetirla', () => {
-		const etiquetas = [etiqueta('b', 'cocina'), etiqueta('a', 'Cocina'), etiqueta('c', 'Baño')];
-		const tareas = [tarea('pagar', ['a', 'b', 'c']), tarea('regar', ['b']), tarea('barrer', ['c']), tarea('lavar')];
+		const labels = [label('b', 'cocina'), label('a', 'Cocina'), label('c', 'Baño')];
+		const tasks = [task('pagar', ['a', 'b', 'c']), task('regar', ['b']), task('barrer', ['c']), task('lavar')];
 
-		expect(fusionDeDuplicadas(etiquetas, tareas)).toStrictEqual({
-			borradas: ['b'],
-			referencias: [
-				{ tareaId: 'pagar', quitar: ['b'], poner: ['a'] },
-				{ tareaId: 'regar', quitar: ['b'], poner: ['a'] }
+		expect(mergeOfDuplicates(labels, tasks)).toStrictEqual({
+			deletedItems: ['b'],
+			references: [
+				{ taskId: 'pagar', remove: ['b'], put: ['a'] },
+				{ taskId: 'regar', remove: ['b'], put: ['a'] }
 			]
 		});
 	});
 
 	it('el id menor se compara por unidades de código, no por el orden de la lista', () => {
-		const etiquetas = [etiqueta('a2', 'Cocina'), etiqueta('a10', 'COCINA'), etiqueta('a1', 'cocina')];
+		const labels = [label('a2', 'Cocina'), label('a10', 'COCINA'), label('a1', 'cocina')];
 
-		expect(fusionDeDuplicadas(etiquetas, []).borradas).toStrictEqual(['a2', 'a10']);
+		expect(mergeOfDuplicates(labels, []).deletedItems).toStrictEqual(['a2', 'a10']);
 	});
 
 	it('los acentos distinguen: Árbol y Arbol no son duplicadas', () => {
-		expect(fusionDeDuplicadas([etiqueta('a', 'Árbol'), etiqueta('b', 'Arbol')], []).borradas).toStrictEqual([]);
+		expect(mergeOfDuplicates([label('a', 'Árbol'), label('b', 'Arbol')], []).deletedItems).toStrictEqual([]);
 	});
 
 	it('una referencia a una etiqueta que no existe queda como está', () => {
-		const etiquetas = [etiqueta('a', 'Cocina'), etiqueta('b', 'cocina')];
+		const labels = [label('a', 'Cocina'), label('b', 'cocina')];
 
-		expect(fusionDeDuplicadas(etiquetas, [tarea('pagar', ['borrada', 'b'])]).referencias).toStrictEqual([
-			{ tareaId: 'pagar', quitar: ['b'], poner: ['a'] }
+		expect(mergeOfDuplicates(labels, [task('pagar', ['borrada', 'b'])]).references).toStrictEqual([
+			{ taskId: 'pagar', remove: ['b'], put: ['a'] }
 		]);
 	});
 
 	it('una tarea con duplicadas de dos nombres las reemplaza por las dos sobrevivientes, una vez cada una', () => {
-		const etiquetas = [etiqueta('a', 'Cocina'), etiqueta('b', 'cocina'), etiqueta('c', 'COCINA'), etiqueta('d', 'Baño'), etiqueta('e', 'baño')];
+		const labels = [label('a', 'Cocina'), label('b', 'cocina'), label('c', 'COCINA'), label('d', 'Baño'), label('e', 'baño')];
 
-		expect(fusionDeDuplicadas(etiquetas, [tarea('pagar', ['e', 'b', 'c'])]).referencias).toStrictEqual([
-			{ tareaId: 'pagar', quitar: ['e', 'b', 'c'], poner: ['d', 'a'] }
+		expect(mergeOfDuplicates(labels, [task('pagar', ['e', 'b', 'c'])]).references).toStrictEqual([
+			{ taskId: 'pagar', remove: ['e', 'b', 'c'], put: ['d', 'a'] }
 		]);
 	});
 });

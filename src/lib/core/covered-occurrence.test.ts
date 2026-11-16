@@ -1,71 +1,71 @@
 import { describe, expect, it } from 'vitest';
-import { ultimaCubierta, ultimaOcurrenciaCubierta } from './covered-occurrence';
-import type { Completado } from './task';
+import { lastCovered, lastCoveredOccurrence } from './covered-occurrence';
+import type { Completion } from './task';
 
-const CREADA = new Date(2026, 5, 1, 8, 0, 0);
-const dia = (d: number) => new Date(2026, 6, d);
+const CREATED = new Date(2026, 5, 1, 8, 0, 0);
+const day = (d: number) => new Date(2026, 6, d);
 
-const cubre = (d: number, completadoEn = dia(d)): Completado => ({
+const covers = (d: number, completedAt = day(d)): Completion => ({
 	id: `c-${d}`,
-	tareaId: 't',
-	completadoEn,
-	ocurrenciaCubierta: dia(d)
+	taskId: 't',
+	completedAt,
+	coveredOccurrence: day(d)
 });
-const sinCubierta = (completadoEn: Date): Completado => ({ id: 'c-libre', tareaId: 't', completadoEn });
+const uncovered = (completedAt: Date): Completion => ({ id: 'c-libre', taskId: 't', completedAt });
 
 describe('ultimaOcurrenciaCubierta (P)', () => {
 	it('sin completados es el día anterior a creadaEn', () => {
-		expect(ultimaOcurrenciaCubierta(CREADA, [])).toEqual(new Date(2026, 4, 31));
+		expect(lastCoveredOccurrence(CREATED, [])).toEqual(new Date(2026, 4, 31));
 	});
 
 	it('es la mayor ocurrenciaCubierta', () => {
-		expect(ultimaOcurrenciaCubierta(CREADA, [cubre(16, dia(14)), cubre(7)])).toEqual(dia(16));
+		expect(lastCoveredOccurrence(CREATED, [covers(16, day(14)), covers(7)])).toEqual(day(16));
 	});
 
 	it('un completado sin ocurrenciaCubierta aporta el día de su completadoEn', () => {
-		expect(ultimaOcurrenciaCubierta(CREADA, [sinCubierta(new Date(2026, 6, 13, 10, 0, 0))])).toEqual(dia(13));
+		expect(lastCoveredOccurrence(CREATED, [uncovered(new Date(2026, 6, 13, 10, 0, 0))])).toEqual(day(13));
 	});
 
 	it('toma la mayor entre las cubiertas y los días de los completados sin cubierta', () => {
-		const completados = [cubre(7), sinCubierta(new Date(2026, 6, 13, 10, 0, 0))];
+		const completions = [covers(7), uncovered(new Date(2026, 6, 13, 10, 0, 0))];
 
-		expect(ultimaOcurrenciaCubierta(CREADA, completados)).toEqual(dia(13));
-		expect(ultimaOcurrenciaCubierta(CREADA, [cubre(16), sinCubierta(new Date(2026, 6, 14, 23, 0, 0))])).toEqual(dia(16));
+		expect(lastCoveredOccurrence(CREATED, completions)).toEqual(day(13));
+		expect(lastCoveredOccurrence(CREATED, [covers(16), uncovered(new Date(2026, 6, 14, 23, 0, 0))])).toEqual(day(16));
 	});
 });
 
-const en = (d: number, hora = 0) => new Date(2026, 6, d, hora);
-const ms = (d: number, hora = 0) => en(d, hora).getTime();
-const completado = (completadoEn: Date, ocurrenciaCubierta?: Completado['ocurrenciaCubierta']): Completado => ({
-	id: `c-${completadoEn.getTime()}`,
-	tareaId: 't',
-	completadoEn,
-	...(ocurrenciaCubierta && { ocurrenciaCubierta })
+const at = (d: number, hour = 0) => new Date(2026, 6, d, hour);
+const ms = (d: number, hour = 0) => at(d, hour).getTime();
+const completion = (completedAt: Date, coveredOccurrence?: Completion['coveredOccurrence']): Completion => ({
+	id: `c-${completedAt.getTime()}`,
+	taskId: 't',
+	completedAt,
+	...(coveredOccurrence && { coveredOccurrence })
 });
-const cubreInicio = (completadoEn: Date, inicio: Date) => completado(completadoEn, { inicio });
+const coversStart = (completedAt: Date, start: Date) => completion(completedAt, { start });
 
 describe('P con horario (spec §5.6)', () => {
 	it('una ocurrenciaCubierta con hora es el instante que cubrió', () => {
-		expect(ultimaCubierta(en(1), [cubreInicio(en(15, 8), en(15, 7))])).toBe(ms(15, 7));
+		expect(lastCovered(at(1), [coversStart(at(15, 8), at(15, 7))])).toBe(ms(15, 7));
 	});
 
 	it('una fecha sola, o un completado sin ocurrenciaCubierta, cubre el día entero', () => {
-		expect(ultimaCubierta(en(1), [completado(en(15, 8), en(15))])).toBe(ms(16) - 1);
-		expect(ultimaCubierta(en(1), [completado(en(15, 6))])).toBe(ms(16) - 1);
+		expect(lastCovered(at(1), [completion(at(15, 8), at(15))])).toBe(ms(16) - 1);
+		expect(lastCovered(at(1), [completion(at(15, 6))])).toBe(ms(16) - 1);
 	});
 
 	it('con hora y sin hora, es la mayor de los completados', () => {
-		expect(ultimaCubierta(en(1), [cubreInicio(en(15, 19), en(15, 18)), completado(en(15, 8), en(15))])).toBe(ms(16) - 1);
-		expect(ultimaCubierta(en(1), [completado(en(14, 8), en(14)), cubreInicio(en(15, 8), en(15, 7))])).toBe(ms(15, 7));
+		expect(lastCovered(at(1), [coversStart(at(15, 19), at(15, 18)), completion(at(15, 8), at(15))])).toBe(ms(16) - 1);
+		expect(lastCovered(at(1), [completion(at(14, 8), at(14)), coversStart(at(15, 8), at(15, 7))])).toBe(ms(15, 7));
 	});
 
 	it('sin completados, cubre el día anterior a creadaEn entero', () => {
-		expect(ultimaCubierta(en(15, 12), [])).toBe(ms(15) - 1);
+		expect(lastCovered(at(15, 12), [])).toBe(ms(15) - 1);
 	});
 });
 
 describe('ultimaOcurrenciaCubierta con horario (spec §5.3, §5.6)', () => {
 	it('una ocurrenciaCubierta con hora cuenta por su día', () => {
-		expect(ultimaOcurrenciaCubierta(CREADA, [cubreInicio(en(15, 19), en(15, 18))])).toEqual(dia(15));
+		expect(lastCoveredOccurrence(CREATED, [coversStart(at(15, 19), at(15, 18))])).toEqual(day(15));
 	});
 });

@@ -1,67 +1,67 @@
 import { describe, expect, it } from 'vitest';
-import type { Etiqueta } from './label';
-import { elegirEtiquetas, guardarElegidas } from './typed-labels';
+import type { Label } from './label';
+import { chooseLabels, saveChosen } from './typed-labels';
 
-const COCINA: Etiqueta = { id: 'e1', nombre: 'Cocina', color: 'azul' };
-const BANO: Etiqueta = { id: 'e2', nombre: 'Baño', color: 'gris' };
+const KITCHEN: Label = { id: 'e1', name: 'Cocina', color: 'azul' };
+const BATHROOM: Label = { id: 'e2', name: 'Baño', color: 'gris' };
 
 describe('elegirEtiquetas', () => {
 	it('un nombre nuevo es una etiqueta nueva con el color menos usado', () => {
-		expect(elegirEtiquetas(['Patio'], [BANO])).toStrictEqual({ ok: true, elegidas: [{ nombre: 'Patio', color: 'rojo' }] });
+		expect(chooseLabels(['Patio'], [BATHROOM])).toStrictEqual({ ok: true, chosenItems: [{ name: 'Patio', color: 'rojo' }] });
 	});
 
 	it('un nombre existente, sin distinguir mayúsculas, usa esa etiqueta con su nombre guardado', () => {
-		expect(elegirEtiquetas(['COCINA'], [COCINA])).toStrictEqual({ ok: true, elegidas: [COCINA] });
+		expect(chooseLabels(['COCINA'], [KITCHEN])).toStrictEqual({ ok: true, chosenItems: [KITCHEN] });
 	});
 
 	it('quita los espacios de los extremos antes de buscar o crear', () => {
-		expect(elegirEtiquetas(['  cocina  ', ' Ropa sucia '], [COCINA])).toStrictEqual({
+		expect(chooseLabels(['  cocina  ', ' Ropa sucia '], [KITCHEN])).toStrictEqual({
 			ok: true,
-			elegidas: [COCINA, { nombre: 'Ropa sucia', color: 'gris' }]
+			chosenItems: [KITCHEN, { name: 'Ropa sucia', color: 'gris' }]
 		});
 	});
 
 	it('varias nuevas se colorean en el orden escrito, cada una contando las anteriores', () => {
-		expect(elegirEtiquetas(['Patio', 'Cocina'], [BANO])).toStrictEqual({
+		expect(chooseLabels(['Patio', 'Cocina'], [BATHROOM])).toStrictEqual({
 			ok: true,
-			elegidas: [
-				{ nombre: 'Patio', color: 'rojo' },
-				{ nombre: 'Cocina', color: 'naranja' }
+			chosenItems: [
+				{ name: 'Patio', color: 'rojo' },
+				{ name: 'Cocina', color: 'naranja' }
 			]
 		});
 	});
 
 	it('la misma etiqueta escrita dos veces queda una vez, con el primer nombre escrito', () => {
-		expect(elegirEtiquetas(['Patio', 'Cocina', 'PATIO'], [])).toStrictEqual({
+		expect(chooseLabels(['Patio', 'Cocina', 'PATIO'], [])).toStrictEqual({
 			ok: true,
-			elegidas: [
-				{ nombre: 'Patio', color: 'gris' },
-				{ nombre: 'Cocina', color: 'rojo' }
+			chosenItems: [
+				{ name: 'Patio', color: 'gris' },
+				{ name: 'Cocina', color: 'rojo' }
 			]
 		});
-		expect(elegirEtiquetas(['cocina', 'Cocina'], [COCINA])).toStrictEqual({ ok: true, elegidas: [COCINA] });
+		expect(chooseLabels(['cocina', 'Cocina'], [KITCHEN])).toStrictEqual({ ok: true, chosenItems: [KITCHEN] });
 	});
 
 	it('un nombre inválido rechaza la elección entera', () => {
-		expect(elegirEtiquetas(['Casa', 'Limpieza profunda del baño 1234'], [])).toStrictEqual({ ok: false, error: 'largo' });
-		expect(elegirEtiquetas(['   '], [])).toStrictEqual({ ok: false, error: 'vacio' });
+		expect(chooseLabels(['Casa', 'Limpieza profunda del baño 1234'], [])).toStrictEqual({ ok: false, error: 'largo' });
+		expect(chooseLabels(['   '], [])).toStrictEqual({ ok: false, error: 'vacio' });
 	});
 
 	it('sin nombres, ninguna etiqueta', () => {
-		expect(elegirEtiquetas([], [COCINA])).toStrictEqual({ ok: true, elegidas: [] });
+		expect(chooseLabels([], [KITCHEN])).toStrictEqual({ ok: true, chosenItems: [] });
 	});
 });
 
 describe('guardarElegidas', () => {
 	it('da id a las nuevas y devuelve los ids de todas en el orden elegido', () => {
 		const ids = ['n1', 'n2'];
-		const resultado = guardarElegidas([{ nombre: 'Patio', color: 'rojo' }, COCINA, { nombre: 'Living', color: 'gris' }], () => ids.shift() as string);
+		const result = saveChosen([{ name: 'Patio', color: 'rojo' }, KITCHEN, { name: 'Living', color: 'gris' }], () => ids.shift() as string);
 
-		expect(resultado).toStrictEqual({
+		expect(result).toStrictEqual({
 			ids: ['n1', 'e1', 'n2'],
-			nuevas: [
-				{ id: 'n1', nombre: 'Patio', color: 'rojo' },
-				{ id: 'n2', nombre: 'Living', color: 'gris' }
+			newLabels: [
+				{ id: 'n1', name: 'Patio', color: 'rojo' },
+				{ id: 'n2', name: 'Living', color: 'gris' }
 			]
 		});
 	});

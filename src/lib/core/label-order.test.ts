@@ -1,26 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import type { Etiqueta } from './label';
-import { ordenarEtiquetas } from './label-order';
+import type { Label } from './label';
+import { sortLabels } from './label-order';
 
-const etiqueta = (id: string, nombre: string): Etiqueta => ({ id, nombre, color: 'gris' });
+const label = (id: string, name: string): Label => ({ id, name, color: 'gris' });
 
 describe('ordenarEtiquetas', () => {
 	it('alfabético en español: sin mayúsculas ni acentos, ñ después de n', () => {
-		const etiquetas = [etiqueta('1', 'zapatos'), etiqueta('2', 'Ñoquis'), etiqueta('3', 'árbol'), etiqueta('4', 'Nube'), etiqueta('5', 'baño'), etiqueta('6', 'Bano')];
+		const labels = [label('1', 'zapatos'), label('2', 'Ñoquis'), label('3', 'árbol'), label('4', 'Nube'), label('5', 'baño'), label('6', 'Bano')];
 
-		expect(ordenarEtiquetas(etiquetas).map(({ nombre }) => nombre)).toStrictEqual(['árbol', 'Bano', 'baño', 'Nube', 'Ñoquis', 'zapatos']);
+		expect(sortLabels(labels).map(({ name }) => name)).toStrictEqual(['árbol', 'Bano', 'baño', 'Nube', 'Ñoquis', 'zapatos']);
 	});
 
 	it('si empatan, va primero la de id menor', () => {
-		const etiquetas = [etiqueta('b', 'Arbol'), etiqueta('a', 'Árbol')];
+		const labels = [label('b', 'Arbol'), label('a', 'Árbol')];
 
-		expect(ordenarEtiquetas(etiquetas).map(({ id }) => id)).toStrictEqual(['a', 'b']);
+		expect(sortLabels(labels).map(({ id }) => id)).toStrictEqual(['a', 'b']);
 	});
 
 	it('no modifica la lista recibida', () => {
-		const etiquetas = [etiqueta('1', 'b'), etiqueta('2', 'a')];
-		ordenarEtiquetas(etiquetas);
+		const labels = [label('1', 'b'), label('2', 'a')];
+		sortLabels(labels);
 
-		expect(etiquetas.map(({ id }) => id)).toStrictEqual(['1', '2']);
+		expect(labels.map(({ id }) => id)).toStrictEqual(['1', '2']);
 	});
 });

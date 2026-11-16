@@ -1,21 +1,21 @@
-import { crearTarea, type DatosComunes, type ResultadoDeCreacion } from './creation';
-import { leerDiaIso } from './days';
-import type { TareaPuntual } from './task';
+import { createTask, type CommonData, type CreationResult } from './creation';
+import { readIsoDay } from './days';
+import type { OneOffTask } from './task';
 
-export interface DatosPuntual extends DatosComunes {
+export interface OneOffData extends CommonData {
 	/** AAAA-MM-DD; sin el campo, la tarea no tiene fecha límite. */
-	fechaLimite?: string;
+	dueDate?: string;
 }
 
 /**
  * Spec §4.1: título no vacío y, si hay fecha límite, una fecha que existe en el
  * calendario. Se acepta una fecha límite pasada: la tarea queda atrasada.
  */
-export function crearPuntual({ fechaLimite, ...comunes }: DatosPuntual, id: string, ahora: Date): ResultadoDeCreacion<TareaPuntual> {
-	const dia = fechaLimite === undefined ? undefined : leerDiaIso(fechaLimite);
-	const fechaInvalida = fechaLimite !== undefined && dia === undefined;
-	return crearTarea<TareaPuntual>({ ...comunes, id, ahora }, fechaInvalida ? { fechaLimite: 'invalida' } : {}, () => ({
-		tipo: 'puntual',
-		...(dia && { fechaLimite: dia })
+export function createOneOff({ dueDate, ...commons }: OneOffData, id: string, now: Date): CreationResult<OneOffTask> {
+	const day = dueDate === undefined ? undefined : readIsoDay(dueDate);
+	const invalidDate = dueDate !== undefined && day === undefined;
+	return createTask<OneOffTask>({ ...commons, id, now }, invalidDate ? { dueDate: 'invalida' } : {}, () => ({
+		kind: 'puntual',
+		...(day && { dueDate: day })
 	}));
 }

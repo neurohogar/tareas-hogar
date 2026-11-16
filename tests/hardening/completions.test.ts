@@ -1,25 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { completadoMasReciente } from '../../src/lib/core/completions';
-import { filasDePendientes } from '../../src/lib/core/pending';
-import type { Completado, Tarea } from '../../src/lib/core/task';
+import { latestCompletion } from '../../src/lib/core/completions';
+import { pendingRows } from '../../src/lib/core/pending';
+import type { Completion, Task } from '../../src/lib/core/task';
 
-const completado = (id: string, completadoEn: Date): Completado => ({ id, tareaId: 't', completadoEn });
+const completion = (id: string, completedAt: Date): Completion => ({ id, taskId: 't', completedAt });
 
 describe('completadoMasReciente: empate', () => {
 	it('con el mismo completadoEn devuelve el primero', () => {
-		const momento = new Date(2026, 6, 15, 10, 0);
-		const a = completado('a', momento);
-		const b = completado('b', new Date(momento.getTime()));
-		expect(completadoMasReciente([a, b])).toBe(a);
-		expect(completadoMasReciente([b, a])).toBe(b);
+		const moment = new Date(2026, 6, 15, 10, 0);
+		const a = completion('a', moment);
+		const b = completion('b', new Date(moment.getTime()));
+		expect(latestCompletion([a, b])).toBe(a);
+		expect(latestCompletion([b, a])).toBe(b);
 	});
 });
 
 describe('filasDePendientes: Mostrar completadas apagado por defecto', () => {
 	it('sin el cuarto argumento no incluye las completadas', () => {
-		const tarea: Tarea = { id: 't', titulo: 't', tipo: 'puntual', creadaEn: new Date(2026, 0, 1) };
-		const ahora = new Date(2026, 6, 15, 12, 0);
-		const filas = filasDePendientes([tarea], [completado('c', new Date(2026, 6, 15, 10, 0))], ahora);
-		expect(filas).toEqual([]);
+		const task: Task = { id: 't', title: 't', kind: 'puntual', createdAt: new Date(2026, 0, 1) };
+		const now = new Date(2026, 6, 15, 12, 0);
+		const rows = pendingRows([task], [completion('c', new Date(2026, 6, 15, 10, 0))], now);
+		expect(rows).toEqual([]);
 	});
 });

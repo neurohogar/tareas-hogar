@@ -1,19 +1,19 @@
 // Spec §6.2: qué muestra el panel de edición según el ancho, el modo y los errores.
-import type { ErroresDeCreacion } from './creation';
-import { DATOS_AL_CREAR, type DatosDeTarea } from './task-data';
+import type { CreationErrors } from './creation';
+import { DATA_ON_CREATE, type TaskData } from './task-data';
 
-export type PresentacionDelPanel = 'pestanas' | 'secciones';
-export type ModoDelPanel = 'crear' | 'editar';
-export type SeccionDelPanel = 'Tarea' | 'Cuándo' | 'Acciones';
-export type CampoConError = 'Título' | 'Etiquetas' | 'fecha límite' | 'Cada' | 'días' | 'horario';
-export type OpcionDeRepeticion = 'puntual' | 'relativo' | 'semanal' | 'mensual';
-export type DestinoDelError = { pestana: SeccionDelPanel | undefined; campo: CampoConError };
+export type PanelPresentation = 'pestanas' | 'secciones';
+export type PanelMode = 'crear' | 'editar';
+export type PanelSection = 'Tarea' | 'Cuándo' | 'Acciones';
+export type FieldWithError = 'Título' | 'Etiquetas' | 'fecha límite' | 'Cada' | 'días' | 'horario';
+export type RepetitionOption = 'puntual' | 'relativo' | 'semanal' | 'mensual';
+export type ErrorDestination = { tab: PanelSection | undefined; field: FieldWithError };
 
-const ANCHO_MAXIMO_DE_CELULAR_EN_REM = 40;
-const SECCIONES_AL_CREAR: readonly SeccionDelPanel[] = ['Tarea', 'Cuándo'];
-const SECCIONES_AL_EDITAR: readonly SeccionDelPanel[] = ['Tarea', 'Cuándo', 'Acciones'];
-const CAMPOS_EN_ORDEN_DE_LECTURA: readonly CampoConError[] = ['Título', 'Etiquetas', 'fecha límite', 'Cada', 'días', 'horario'];
-const SECCION_DEL_CAMPO: Readonly<Record<CampoConError, SeccionDelPanel>> = {
+const MAX_PHONE_WIDTH_IN_REM = 40;
+const SECTIONS_ON_CREATE: readonly PanelSection[] = ['Tarea', 'Cuándo'];
+const SECTIONS_ON_EDIT: readonly PanelSection[] = ['Tarea', 'Cuándo', 'Acciones'];
+const FIELDS_IN_READING_ORDER: readonly FieldWithError[] = ['Título', 'Etiquetas', 'fecha límite', 'Cada', 'días', 'horario'];
+const SECTION_OF_FIELD: Readonly<Record<FieldWithError, PanelSection>> = {
 	Título: 'Tarea',
 	Etiquetas: 'Tarea',
 	'fecha límite': 'Cuándo',
@@ -23,54 +23,54 @@ const SECCION_DEL_CAMPO: Readonly<Record<CampoConError, SeccionDelPanel>> = {
 };
 
 /** Spec §6.2, Pestañas: "Siempre abre en Tarea, al crear y al editar". */
-export const PESTANA_AL_ABRIR: SeccionDelPanel = 'Tarea';
+export const TAB_ON_OPEN: PanelSection = 'Tarea';
 
 /** Spec §6.2: la opción de "Se repite" que viene elegida: al crear (sin datos), No se repite; al editar, la de la tarea. */
-export function repeticionAlAbrir(datos: DatosDeTarea = DATOS_AL_CREAR): OpcionDeRepeticion {
-	if (datos.forma === 'puntual') return 'puntual';
-	if (datos.forma === 'relativa') return 'relativo';
-	return datos.diasSemana.length > 0 ? 'semanal' : 'mensual';
+export function repetitionOnOpen(data: TaskData = DATA_ON_CREATE): RepetitionOption {
+	if (data.shape === 'puntual') return 'puntual';
+	if (data.shape === 'relativa') return 'relativo';
+	return data.weekdays.length > 0 ? 'semanal' : 'mensual';
 }
 
 /** Spec §6.2, Presentación del panel: hasta 40rem inclusive es celular, en pestañas; por encima, secciones seguidas. */
-export function presentacionDelPanel(anchoRem: number): PresentacionDelPanel {
-	return anchoRem <= ANCHO_MAXIMO_DE_CELULAR_EN_REM ? 'pestanas' : 'secciones';
+export function panelPresentation(widthRem: number): PanelPresentation {
+	return widthRem <= MAX_PHONE_WIDTH_IN_REM ? 'pestanas' : 'secciones';
 }
 
 /** Spec §6.2, Pestañas: al crear Acciones no aparece; al editar aparece siempre. */
-export function seccionesDelPanel(modo: ModoDelPanel): readonly SeccionDelPanel[] {
-	return modo === 'crear' ? SECCIONES_AL_CREAR : SECCIONES_AL_EDITAR;
+export function panelSections(mode: PanelMode): readonly PanelSection[] {
+	return mode === 'crear' ? SECTIONS_ON_CREATE : SECTIONS_ON_EDIT;
 }
 
 /** Spec §6.2, Errores: las secciones con algún campo que muestra un error, en el orden de las pestañas. */
-export function seccionesMarcadas(camposConError: readonly CampoConError[]): readonly SeccionDelPanel[] {
-	return SECCIONES_AL_EDITAR.filter((seccion) => camposConError.some((campo) => SECCION_DEL_CAMPO[campo] === seccion));
+export function markedSections(fieldsWithError: readonly FieldWithError[]): readonly PanelSection[] {
+	return SECTIONS_ON_EDIT.filter((section) => fieldsWithError.some((field) => SECTION_OF_FIELD[field] === section));
 }
 
 /** Spec §6.2, Errores: al fallar Guardar, el primer campo con error y, solo en pestañas, la pestaña a la que salta. */
-export function destinoAlFallarGuardar(camposConError: readonly CampoConError[], presentacion: PresentacionDelPanel): DestinoDelError | undefined {
-	const campo = CAMPOS_EN_ORDEN_DE_LECTURA.find((candidato) => camposConError.includes(candidato));
-	if (!campo) return undefined;
-	return { pestana: presentacion === 'pestanas' ? SECCION_DEL_CAMPO[campo] : undefined, campo };
+export function destinationOnSaveFailure(fieldsWithError: readonly FieldWithError[], presentation: PanelPresentation): ErrorDestination | undefined {
+	const field = FIELDS_IN_READING_ORDER.find((candidate) => fieldsWithError.includes(candidate));
+	if (!field) return undefined;
+	return { tab: presentation === 'pestanas' ? SECTION_OF_FIELD[field] : undefined, field };
 }
 
 /** Spec §6.2, Teclado en pantalla: la barra de Guardar se oculta solo mientras el teclado en pantalla está abierto. */
-export function barraDeGuardarVisible(tecladoAbierto: boolean): boolean {
-	return !tecladoAbierto;
+export function saveBarVisible(keyboardOpen: boolean): boolean {
+	return !keyboardOpen;
 }
 
 /**
  * Spec §6.2, Errores: los campos que muestran un error ahora, en el orden de lectura. Solo cuentan los
  * campos de la opción elegida en "Se repite"; el error de Etiquetas puede venir del guardado o del campo en vivo.
  */
-export function camposConError(errores: ErroresDeCreacion, repeticion: OpcionDeRepeticion, errorDeEtiquetas: boolean): CampoConError[] {
-	const conError: Record<CampoConError, boolean> = {
-		Título: errores.titulo !== undefined,
-		Etiquetas: errorDeEtiquetas,
-		'fecha límite': errores.fechaLimite !== undefined && repeticion === 'puntual',
-		Cada: errores.cada !== undefined && repeticion === 'relativo',
-		días: errores.dias !== undefined && (repeticion === 'semanal' || repeticion === 'mensual'),
-		horario: errores.horario !== undefined
+export function fieldsWithError(errors: CreationErrors, repetition: RepetitionOption, labelsError: boolean): FieldWithError[] {
+	const withError: Record<FieldWithError, boolean> = {
+		Título: errors.title !== undefined,
+		Etiquetas: labelsError,
+		'fecha límite': errors.dueDate !== undefined && repetition === 'puntual',
+		Cada: errors.every !== undefined && repetition === 'relativo',
+		días: errors.days !== undefined && (repetition === 'semanal' || repetition === 'mensual'),
+		horario: errors.schedule !== undefined
 	};
-	return CAMPOS_EN_ORDEN_DE_LECTURA.filter((campo) => conError[campo]);
+	return FIELDS_IN_READING_ORDER.filter((field) => withError[field]);
 }

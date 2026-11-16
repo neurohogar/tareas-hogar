@@ -1,14 +1,14 @@
 // Pasos de la tarea (spec §4.1 Pasos, §4.4, §6.1, §6.2, §7): el primer paso es el paso 1 y `pasos` guarda los
 // demás; `pasoActual` es el paso en que va la tarea. Nunca inválidos; «Hecho» y «Paso anterior» mueven el avance.
 import { expect } from 'vitest';
-import { completadoMasReciente, completadosDeTarea, completar } from '../../src/lib/core/completions';
-import { crearPuntual, type DatosPuntual } from '../../src/lib/core/create-one-off';
-import { crearPeriodicaCalendario } from '../../src/lib/core/create-recurring-calendar';
-import { datosDeTarea } from '../../src/lib/core/task-data';
-import { aplicarCambio, type CambioDeTarea } from '../../src/lib/core/task-document';
-import { accionDeHecho, cambioAlCompletar, cambioDePasoAnterior, type BotonesDePaso } from '../../src/lib/core/current-step';
-import { pasoEnQueVa, pasosDeLaTarea } from '../../src/lib/core/steps';
-import type { Tarea } from '../../src/lib/core/task';
+import { latestCompletion, completionsOfTask, complete } from '../../src/lib/core/completions';
+import { createOneOff, type OneOffData } from '../../src/lib/core/create-one-off';
+import { createRecurringCalendar } from '../../src/lib/core/create-recurring-calendar';
+import { taskData } from '../../src/lib/core/task-data';
+import { applyChange, type TaskChange } from '../../src/lib/core/task-document';
+import { doneAction, changeOnComplete, previousStepChange, type StepButtons } from '../../src/lib/core/current-step';
+import { stepItIsOn, taskSteps } from '../../src/lib/core/steps';
+import type { Task } from '../../src/lib/core/task';
 import { AHORA, crearEnWorld, registrarCreacion } from './crear';
 import { editaElOtro, editoYo } from './edicion';
 import { diasDe, formaDe } from './periodica-calendario';
@@ -29,58 +29,58 @@ function numeroDePaso(valor: string): number {
 
 /** Un guardado con pasos es aceptado: nunca rechaza (§4.1). */
 function sinRechazo(world: World): void {
-	expect(world.errores).toBeUndefined();
+	expect(world.errors).toBeUndefined();
 }
 
 /** La lista completa ("A, B, C") como el primer paso y los pasos más. */
 function datosDeLista(texto: string, extra: string[] = []) {
 	const [primerPaso, ...pasos] = lista(texto);
-	return { primerPaso, pasos: [...pasos, ...extra] };
+	return { firstStep: primerPaso, steps: [...pasos, ...extra] };
 }
 
-function crearPuntualConPasos(world: World, datos: DatosPuntual): void {
-	registrarCreacion(world, (id) => crearPuntual(datos, id, AHORA));
+function crearPuntualConPasos(world: World, datos: OneOffData): void {
+	registrarCreacion(world, (id) => createOneOff(datos, id, AHORA));
 	sinRechazo(world);
 }
 
 /** Deja la tarea ya guardada con esos pasos, sin pasar por editar (no es un cambio "de mi lado"). */
-function guardadaConPasos(world: World, tarea: Tarea, texto: string): void {
-	const { primerPaso, pasos } = datosDeLista(texto);
+function guardadaConPasos(world: World, tarea: Task, texto: string): void {
+	const { firstStep: primerPaso, steps: pasos } = datosDeLista(texto);
 	world.documentos = world.documentos.map((documento) => {
 		if (documento.id !== tarea.id) return documento;
-		const { pasos: _anteriores, ...resto } = documento;
-		return { ...resto, primerPaso, ...(pasos.length > 0 && { pasos }) };
+		const { steps: _anteriores, ...resto } = documento;
+		return { ...resto, firstStep: primerPaso, ...(pasos.length > 0 && { steps: pasos }) };
 	});
 }
 
 /** Deja la tarea ya guardada en ese paso; el paso 1 es el que no tiene campo (§4.1). */
-function guardadaEnElPaso(world: World, tarea: Tarea, paso: number): void {
+function guardadaEnElPaso(world: World, tarea: Task, paso: number): void {
 	world.documentos = world.documentos.map((documento) => {
 		if (documento.id !== tarea.id) return documento;
-		const { pasoActual: _anterior, ...resto } = documento;
-		return paso === 1 ? resto : { ...resto, pasoActual: paso };
+		const { currentStep: _anterior, ...resto } = documento;
+		return paso === 1 ? resto : { ...resto, currentStep: paso };
 	});
 }
 
 /** La lista de pasos de la tarea con el paso `numero` cambiado; uno más que la cantidad lo agrega al final. */
-function conElPaso(tarea: Tarea, numero: number, texto: string): string[] {
-	const pasos = pasosDeLaTarea(tarea);
+function conElPaso(tarea: Task, numero: number, texto: string): string[] {
+	const pasos = taskSteps(tarea);
 	if (numero < 1 || numero > pasos.length + 1) throw new Error(`No hay un paso ${numero}`);
 	return numero === pasos.length + 1 ? [...pasos, texto] : pasos.map((paso, lugar) => (lugar === numero - 1 ? texto : paso));
 }
 
 /** Los datos de la tarea con esa lista de pasos escrita; el resto como estaba. */
-const conLosPasos = (pasos: readonly string[]) => (tarea: Tarea) => {
+const conLosPasos = (pasos: readonly string[]) => (tarea: Task) => {
 	const [primerPaso = '', ...mas] = pasos;
-	return { ...datosDeTarea(tarea), primerPaso, pasos: mas };
+	return { ...taskData(tarea), firstStep: primerPaso, steps: mas };
 };
 
 /** Cada forma de cambio de un paso: "<sujeto> el paso N a ...". */
-const CAMBIOS: { texto: string; valor: (...valores: string[]) => string }[] = [
-	{ texto: P, valor: (paso) => paso },
-	{ texto: `${P} con espacios al inicio y al final`, valor: (paso) => `  ${paso}  ` },
-	{ texto: 'uno de solo espacios', valor: () => SOLO_ESPACIOS },
-	{ texto: `uno de ${P} caracteres`, valor: (largo) => 'x'.repeat(numero(largo)) }
+const CAMBIOS: { text: string; value: (...valores: string[]) => string }[] = [
+	{ text: P, value: (paso) => paso },
+	{ text: `${P} con espacios al inicio y al final`, value: (paso) => `  ${paso}  ` },
+	{ text: 'uno de solo espacios', value: () => SOLO_ESPACIOS },
+	{ text: `uno de ${P} caracteres`, value: (largo) => 'x'.repeat(numero(largo)) }
 ];
 
 const EDITORES = [
@@ -89,7 +89,7 @@ const EDITORES = [
 ];
 
 const pasosDeEditar: StepDefinition[] = EDITORES.flatMap(({ sujeto, editar }) =>
-	CAMBIOS.map(({ texto, valor }) => ({
+	CAMBIOS.map(({ text: texto, value: valor }) => ({
 		pattern: new RegExp(`^${sujeto} el paso ${N} a ${texto}$`),
 		run: (world: World, paso: string, ...valores: string[]) => {
 			editar(world, (tarea) => conLosPasos(conElPaso(tarea, numero(paso), valor(...valores)))(tarea));
@@ -99,40 +99,40 @@ const pasosDeEditar: StepDefinition[] = EDITORES.flatMap(({ sujeto, editar }) =>
 );
 
 /** Pasar a un paso o completar desde la fila: lo que decide el core, escrito como lo haría ese dispositivo. */
-function tocoHecho(world: World, tarea: Tarea, momento: Date): void {
+function tocoHecho(world: World, tarea: Task, momento: Date): void {
 	world.checkboxTocado = true;
 	// Sin una consulta antes, lo que se afirma después es del momento en que se tocó.
 	if (world.momentosDelEstado.length === 0) world.momentosDelEstado = [momento];
-	const accion = accionDeHecho(tarea, world.completados, momento);
-	if (accion.tipo === 'completar') return completoYo(world, momento, tarea);
-	if (accion.tipo === 'avanzar') {
+	const accion = doneAction(tarea, world.completions, momento);
+	if (accion.kind === 'completar') return completoYo(world, momento, tarea);
+	if (accion.kind === 'avanzar') {
 		recordarAntesDeMiCambio(world);
-		escribirCambio(world, tarea, accion.cambio);
+		escribirCambio(world, tarea, accion.change);
 	}
 }
 
-function escribirCambio(world: World, tarea: Tarea, cambio: CambioDeTarea): void {
-	world.documentos = aplicarCambio(world.documentos, tarea.id, cambio);
+function escribirCambio(world: World, tarea: Task, cambio: TaskChange): void {
+	world.documentos = applyChange(world.documentos, tarea.id, cambio);
 }
 
 /** El otro dispositivo decide con lo que veía; su cambio llega a lo guardado. */
 function tocaHechoElOtro(world: World, momento: Date): void {
 	const visto = loQueVioElOtro(world);
 	const tarea = laTarea(visto);
-	const accion = accionDeHecho(tarea, visto.completados, momento);
-	if (accion.tipo === 'avanzar') escribirCambio(world, tarea, accion.cambio);
-	if (accion.tipo === 'completar') {
-		world.completados = [...world.completados, completar(tarea, visto.completados, nuevoId(world, 'completado'), momento)];
-		escribirCambio(world, tarea, cambioAlCompletar(tarea));
+	const accion = doneAction(tarea, visto.completions, momento);
+	if (accion.kind === 'avanzar') escribirCambio(world, tarea, accion.change);
+	if (accion.kind === 'completar') {
+		world.completions = [...world.completions, complete(tarea, visto.completions, nuevoId(world, 'completado'), momento)];
+		escribirCambio(world, tarea, changeOnComplete(tarea));
 	}
 }
 
-const textoDeBotones = ({ pasoAnterior }: BotonesDePaso) => (pasoAnterior ? 'Paso anterior y Hecho' : 'Hecho');
+const textoDeBotones = ({ previousStep: pasoAnterior }: StepButtons) => (pasoAnterior ? 'Paso anterior y Hecho' : 'Hecho');
 
 /** En cada momento consultado, la lista tiene una sola fila y sus botones de paso son esos. */
 function laFilaMuestraLosBotones(world: World, esperado: string | undefined): void {
 	expect(world.consultasDePendientes.length).toBeGreaterThan(0);
-	for (const filas of world.consultasDePendientes) expect(filas.map(({ botonesDePaso }) => botonesDePaso && textoDeBotones(botonesDePaso))).toEqual([esperado]);
+	for (const filas of world.consultasDePendientes) expect(filas.map(({ stepButtons: botonesDePaso }) => botonesDePaso && textoDeBotones(botonesDePaso))).toEqual([esperado]);
 }
 
 const ESTADOS_DEL_BOTON: Record<string, boolean> = { habilitado: true, deshabilitado: false };
@@ -141,24 +141,24 @@ export const pasosSteps: StepDefinition[] = [
 	...pasosDeEditar,
 	{
 		pattern: new RegExp(`^creo una tarea puntual con título ${P} y pasos ${P}$`),
-		run: (world, titulo, pasos) => crearPuntualConPasos(world, { titulo, ...datosDeLista(pasos) })
+		run: (world, titulo, pasos) => crearPuntualConPasos(world, { title: titulo, ...datosDeLista(pasos) })
 	},
 	{
 		pattern: new RegExp(`^creo una tarea puntual con título ${P} y pasos ${P} y un paso más de solo espacios$`),
-		run: (world, titulo, pasos) => crearPuntualConPasos(world, { titulo, ...datosDeLista(pasos, [SOLO_ESPACIOS]) })
+		run: (world, titulo, pasos) => crearPuntualConPasos(world, { title: titulo, ...datosDeLista(pasos, [SOLO_ESPACIOS]) })
 	},
 	{
 		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} cada 2 dias y pasos ${P}$`),
 		run: (world, titulo, pasos) => {
-			crearEnWorld(world, { titulo, cada: 2, unidad: 'dias', ...datosDeLista(pasos) });
+			crearEnWorld(world, { title: titulo, every: 2, unit: 'dias', ...datosDeLista(pasos) });
 			sinRechazo(world);
 		}
 	},
 	{
 		pattern: new RegExp(`^creo una tarea periódica semanal con título ${P} los ${P} y pasos ${P}$`),
 		run: (world, titulo, dias, pasos) => {
-			const datos = { titulo, ...datosDeLista(pasos), ...diasDe(formaDe('semanal los'), dias) };
-			registrarCreacion(world, (id) => crearPeriodicaCalendario(datos, id, AHORA));
+			const datos = { title: titulo, ...datosDeLista(pasos), ...diasDe(formaDe('semanal los'), dias) };
+			registrarCreacion(world, (id) => createRecurringCalendar(datos, id, AHORA));
 			sinRechazo(world);
 		}
 	},
@@ -179,7 +179,7 @@ export const pasosSteps: StepDefinition[] = [
 		pattern: new RegExp(`^la tarea fue completada el ${P} en el paso ${P}$`),
 		run: (world, momento, paso) => {
 			const { id } = registrarCompletado(world, fechaHora(momento));
-			world.completados = world.completados.map((completado) => (completado.id === id ? { ...completado, pasoAlCompletar: numeroDePaso(paso) } : completado));
+			world.completions = world.completions.map((completado) => (completado.id === id ? { ...completado, stepAtCompletion: numeroDePaso(paso) } : completado));
 		}
 	},
 	{
@@ -209,7 +209,7 @@ export const pasosSteps: StepDefinition[] = [
 		run: (world) => {
 			const tarea = laTarea(world);
 			recordarAntesDeMiCambio(world);
-			escribirCambio(world, tarea, cambioDePasoAnterior(tarea));
+			escribirCambio(world, tarea, previousStepChange(tarea));
 		}
 	},
 	{
@@ -218,41 +218,41 @@ export const pasosSteps: StepDefinition[] = [
 	},
 	{
 		pattern: new RegExp(`^la tarea tiene los pasos ${P}$`),
-		run: (world, pasos) => expect(pasosDeLaTarea(laTarea(world))).toEqual(lista(pasos))
+		run: (world, pasos) => expect(taskSteps(laTarea(world))).toEqual(lista(pasos))
 	},
 	{
 		pattern: /^la tarea no tiene más pasos$/,
-		run: (world) => expect(elDocumento(world)).not.toHaveProperty('pasos')
+		run: (world) => expect(elDocumento(world)).not.toHaveProperty('steps')
 	},
 	{
 		pattern: new RegExp(`^la tarea tiene ${P} pasos$`),
-		run: (world, cantidad) => expect(pasosDeLaTarea(laTarea(world))).toHaveLength(numero(cantidad))
+		run: (world, cantidad) => expect(taskSteps(laTarea(world))).toHaveLength(numero(cantidad))
 	},
 	{
 		pattern: new RegExp(`^el paso ${N} de la tarea tiene ${P} caracteres$`),
-		run: (world, paso, largo) => expect(pasosDeLaTarea(laTarea(world))[numero(paso) - 1]).toHaveLength(numero(largo))
+		run: (world, paso, largo) => expect(taskSteps(laTarea(world))[numero(paso) - 1]).toHaveLength(numero(largo))
 	},
 	{
 		pattern: new RegExp(`^la tarea va en el paso ${N}$`),
-		run: (world, paso) => expect(pasoEnQueVa(laTarea(world))).toBe(numero(paso))
+		run: (world, paso) => expect(stepItIsOn(laTarea(world))).toBe(numero(paso))
 	},
 	{
 		pattern: new RegExp(`^el último completado de la tarea guarda el paso ${P}$`),
-		run: (world, paso) => expect(completadoMasReciente(completadosDeTarea(world.completados, laTarea(world).id)).pasoAlCompletar).toBe(numero(paso))
+		run: (world, paso) => expect(latestCompletion(completionsOfTask(world.completions, laTarea(world).id)).stepAtCompletion).toBe(numero(paso))
 	},
 	{
 		pattern: /^el último completado de la tarea no guarda paso$/,
 		run: (world) => {
-			const completados = completadosDeTarea(world.completados, laTarea(world).id);
+			const completados = completionsOfTask(world.completions, laTarea(world).id);
 			expect(completados.length).toBeGreaterThan(0);
-			expect(completadoMasReciente(completados)).not.toHaveProperty('pasoAlCompletar');
+			expect(latestCompletion(completados)).not.toHaveProperty('stepAtCompletion');
 		}
 	},
 	{
 		pattern: new RegExp(`^la fila de la tarea muestra el paso ${P}$`),
 		run: (world, texto) => {
 			expect(world.consultasDePendientes.length).toBeGreaterThan(0);
-			for (const filas of world.consultasDePendientes) expect(filas.map(({ textoDePrimerPaso }) => textoDePrimerPaso)).toEqual([texto]);
+			for (const filas of world.consultasDePendientes) expect(filas.map(({ firstStepText: textoDePrimerPaso }) => textoDePrimerPaso)).toEqual([texto]);
 		}
 	},
 	{
@@ -268,7 +268,7 @@ export const pasosSteps: StepDefinition[] = [
 		run: (world, estado) => {
 			expect(Object.hasOwn(ESTADOS_DEL_BOTON, estado)).toBe(true);
 			expect(world.consultasDePendientes.length).toBeGreaterThan(0);
-			for (const filas of world.consultasDePendientes) expect(filas.map(({ botonesDePaso }) => botonesDePaso?.hechoHabilitado)).toEqual([ESTADOS_DEL_BOTON[estado]]);
+			for (const filas of world.consultasDePendientes) expect(filas.map(({ stepButtons: botonesDePaso }) => botonesDePaso?.doneEnabled)).toEqual([ESTADOS_DEL_BOTON[estado]]);
 		}
 	}
 ];

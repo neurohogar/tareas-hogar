@@ -1,24 +1,24 @@
 // Spec §4.3 y §6.4 (Renombrar).
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { mismoNombre, PALETA, type Etiqueta } from './label';
-import { aplicarCambioDeEtiqueta, renombrar } from './label-management';
+import { sameName, PALETTE, type Label } from './label';
+import { applyLabelChange, rename } from './label-management';
 
-const nombre = fc.constantFrom('Cocina', 'cocina', ' COCINA ', 'Baño', 'Patio', '  ', 'x'.repeat(31));
-const etiquetas = fc
+const name = fc.constantFrom('Cocina', 'cocina', ' COCINA ', 'Baño', 'Patio', '  ', 'x'.repeat(31));
+const labels = fc
 	.uniqueArray(fc.constantFrom('Cocina', 'Baño', 'Patio', 'Árbol'), { minLength: 1, maxLength: 4 })
-	.map((nombres) => nombres.map((n, i): Etiqueta => ({ id: `e${i}`, nombre: n, color: PALETA[i] })));
+	.map((names) => names.map((n, i): Label => ({ id: `e${i}`, name: n, color: PALETTE[i] })));
 
 describe('renombrar (propiedades)', () => {
 	it('un renombrado aceptado nunca deja dos etiquetas con el mismo nombre (sin distinguir mayúsculas)', () => {
 		fc.assert(
-			fc.property(etiquetas, fc.nat(), nombre, (lista, indice, escrito) => {
-				const etiqueta = lista[indice % lista.length];
-				const resultado = renombrar(etiqueta, escrito, lista);
-				if (!resultado.ok) return;
-				const despues = aplicarCambioDeEtiqueta(lista, etiqueta.id, resultado.cambio);
-				despues.forEach((a, i) => despues.slice(i + 1).forEach((b) => expect(mismoNombre(a.nombre, b.nombre)).toBe(false)));
-				expect(despues.find(({ id }) => id === etiqueta.id)?.color).toBe(etiqueta.color);
+			fc.property(labels, fc.nat(), name, (list, index, typedOne) => {
+				const label = list[index % list.length];
+				const result = rename(label, typedOne, list);
+				if (!result.ok) return;
+				const after = applyLabelChange(list, label.id, result.change);
+				after.forEach((a, i) => after.slice(i + 1).forEach((b) => expect(sameName(a.name, b.name)).toBe(false)));
+				expect(after.find(({ id }) => id === label.id)?.color).toBe(label.color);
 			})
 		);
 	});

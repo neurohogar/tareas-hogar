@@ -1,38 +1,38 @@
 import { expect } from 'vitest';
-import { textoDeEsfuerzo } from '../../src/lib/core/effort';
-import { filtrarPorEtiqueta, filtroVigente } from '../../src/lib/core/label-filter';
-import { filasDePendientes } from '../../src/lib/core/pending';
-import { filtrarSoloRapidas, textoDeListaVacia } from '../../src/lib/core/quick-only';
+import { effortText } from '../../src/lib/core/effort';
+import { filterByLabel, activeFilter } from '../../src/lib/core/label-filter';
+import { pendingRows } from '../../src/lib/core/pending';
+import { filterQuickOnly, emptyListText } from '../../src/lib/core/quick-only';
 import { CUALQUIER_MOMENTO } from './periodica-relativa';
 import { P, fechaHora, lista } from './valores';
 import { tareasDe, type FilaConsultada, type StepDefinition, type World } from './world';
 
 /** Las filas de la lista, con el filtro por etiqueta elegido, Solo rápidas y los checks Mostrar completadas y Mostrar pausadas (§6.1). */
 function filasEn(world: World, ahora: Date): FilaConsultada[] {
-	const filas = filasDePendientes(tareasDe(world), world.completados, ahora, world.mostrarCompletadas, world.mostrarPausadas);
-	const porEtiqueta = filtrarPorEtiqueta(filas, filtroVigente(world.filtro, world.etiquetas));
-	return filtrarSoloRapidas(porEtiqueta, world.soloRapidas === true).map(({ tarea, completada, estado, textoDeFecha, textoDePrimerPaso, botonesDePaso, minima }) => ({
-		titulo: tarea.titulo,
-		completada,
-		pausada: estado.tipo === 'pausada',
-		esfuerzo: textoDeEsfuerzo(tarea.esfuerzo),
-		textoDeFecha,
-		textoDePrimerPaso,
-		botonesDePaso,
-		minima
+	const filas = pendingRows(tareasDe(world), world.completions, ahora, world.mostrarCompletadas, world.mostrarPausadas);
+	const porEtiqueta = filterByLabel(filas, activeFilter(world.filtro, world.labels));
+	return filterQuickOnly(porEtiqueta, world.soloRapidas === true).map(({ task: tarea, completed: completada, status: estado, dateText: textoDeFecha, firstStepText: textoDePrimerPaso, stepButtons: botonesDePaso, minimal: minima }) => ({
+		title: tarea.title,
+		completed: completada,
+		paused: estado.kind === 'pausada',
+		effort: effortText(tarea.effort),
+		dateText: textoDeFecha,
+		firstStepText: textoDePrimerPaso,
+		stepButtons: botonesDePaso,
+		minimal: minima
 	}));
 }
 
 /** En cada momento consultado, los títulos de las filas que cumplen `incluida`, de arriba hacia abajo. */
 function cadaConsultaMuestra(world: World, titulos: string[], incluida = (_: FilaConsultada) => true): void {
 	expect(world.consultasDePendientes.length).toBeGreaterThan(0);
-	for (const filas of world.consultasDePendientes) expect(filas.filter(incluida).map(({ titulo }) => titulo)).toEqual(titulos);
+	for (const filas of world.consultasDePendientes) expect(filas.filter(incluida).map(({ title: titulo }) => titulo)).toEqual(titulos);
 }
 
 /** En cada momento consultado, la lista tiene una sola fila y muestra ese texto de esfuerzo. */
 function laFilaMuestraElEsfuerzo(world: World, texto: string | undefined): void {
 	expect(world.consultasDePendientes.length).toBeGreaterThan(0);
-	for (const filas of world.consultasDePendientes) expect(filas.map(({ esfuerzo }) => esfuerzo)).toEqual([texto]);
+	for (const filas of world.consultasDePendientes) expect(filas.map(({ effort: esfuerzo }) => esfuerzo)).toEqual([texto]);
 }
 
 const ESTADOS_DEL_BOTON: Record<string, boolean> = { encendido: true, apagado: false };
@@ -77,11 +77,11 @@ export const pendientesSteps: StepDefinition[] = [
 	},
 	{
 		pattern: new RegExp(`^Pendientes muestra como completadas ${P}$`),
-		run: (world, completadas) => cadaConsultaMuestra(world, lista(completadas), ({ completada }) => completada)
+		run: (world, completadas) => cadaConsultaMuestra(world, lista(completadas), ({ completed: completada }) => completada)
 	},
 	{
 		pattern: new RegExp(`^Pendientes muestra como pausadas ${P}$`),
-		run: (world, pausadas) => cadaConsultaMuestra(world, lista(pausadas), ({ pausada }) => pausada)
+		run: (world, pausadas) => cadaConsultaMuestra(world, lista(pausadas), ({ paused: pausada }) => pausada)
 	},
 	{
 		pattern: /^Pendientes no muestra ninguna tarea$/,
@@ -92,7 +92,7 @@ export const pendientesSteps: StepDefinition[] = [
 		pattern: new RegExp(`^Pendientes muestra el texto ${P}$`),
 		run: (world, texto) => {
 			cadaConsultaMuestra(world, []);
-			expect(textoDeListaVacia(filtroVigente(world.filtro, world.etiquetas), world.soloRapidas === true)).toBe(texto);
+			expect(emptyListText(activeFilter(world.filtro, world.labels), world.soloRapidas === true)).toBe(texto);
 		}
 	},
 	{

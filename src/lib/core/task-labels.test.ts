@@ -1,22 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import type { Etiqueta } from './label';
-import { etiquetasDeTarea } from './task-labels';
-import type { TareaPuntual } from './task';
+import type { Label } from './label';
+import { taskLabels } from './task-labels';
+import type { OneOffTask } from './task';
 
-const COCINA: Etiqueta = { id: 'e1', nombre: 'Cocina', color: 'rojo' };
-const BANO: Etiqueta = { id: 'e2', nombre: 'Baño', color: 'gris' };
-const PAGAR: TareaPuntual = { id: 't1', titulo: 'Pagar', tipo: 'puntual', creadaEn: new Date(2026, 6, 1) };
+const KITCHEN: Label = { id: 'e1', name: 'Cocina', color: 'rojo' };
+const BATHROOM: Label = { id: 'e2', name: 'Baño', color: 'gris' };
+const PAY: OneOffTask = { id: 't1', title: 'Pagar', kind: 'puntual', createdAt: new Date(2026, 6, 1) };
 
 describe('etiquetasDeTarea', () => {
 	it('las etiquetas de la tarea, en orden alfabético', () => {
-		expect(etiquetasDeTarea({ ...PAGAR, etiquetas: ['e1', 'e2'] }, [COCINA, BANO])).toStrictEqual([BANO, COCINA]);
+		expect(taskLabels({ ...PAY, labels: ['e1', 'e2'] }, [KITCHEN, BATHROOM])).toStrictEqual([BATHROOM, KITCHEN]);
 	});
 
 	it('sin el campo, ninguna', () => {
-		expect(etiquetasDeTarea(PAGAR, [COCINA])).toStrictEqual([]);
+		expect(taskLabels(PAY, [KITCHEN])).toStrictEqual([]);
 	});
 
 	it('ignora las referencias a etiquetas que no existen', () => {
-		expect(etiquetasDeTarea({ ...PAGAR, etiquetas: ['borrada', 'e1'] }, [COCINA, BANO])).toStrictEqual([COCINA]);
+		expect(taskLabels({ ...PAY, labels: ['borrada', 'e1'] }, [KITCHEN, BATHROOM])).toStrictEqual([KITCHEN]);
 	});
 });

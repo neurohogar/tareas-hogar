@@ -1,17 +1,17 @@
 // Spec §6.7 (Copiar): el texto que copia el botón Copiar de la pantalla Anotaciones.
-import type { Anotacion } from './annotation';
-import { anotacionesVisibles, type AnotacionVisible } from './annotations';
-import { fechaYHoraEnTexto } from './dates-in-text';
-import type { Tarea } from './task';
+import type { Annotation } from './annotation';
+import { visibleAnnotations, type VisibleAnnotation } from './annotations';
+import { dateAndTimeInText } from './dates-in-text';
+import type { Task } from './task';
 
-const SEPARADOR = ' · ';
+const SEPARATOR = ' · ';
 
-const masAntiguaPrimero = (a: Date, b: Date) => a.getTime() - b.getTime();
+const oldestFirst = (a: Date, b: Date) => a.getTime() - b.getTime();
 
 /** Fecha y hora, sentido, pantalla, y el nombre de la tarea y el texto solo si los hay. */
-function lineaDeAnotacion({ anotacion, nombreDeTarea }: AnotacionVisible): string {
-	const { anotadaEn, sentido, pantalla, texto } = anotacion;
-	return [fechaYHoraEnTexto(anotadaEn), sentido, pantalla, nombreDeTarea, texto].filter((parte) => parte !== undefined).join(SEPARADOR);
+function annotationLine({ annotation, taskName }: VisibleAnnotation): string {
+	const { annotatedAt, sense, screen, text } = annotation;
+	return [dateAndTimeInText(annotatedAt), sense, screen, taskName, text].filter((part) => part !== undefined).join(SEPARATOR);
 }
 
 /**
@@ -19,7 +19,7 @@ function lineaDeAnotacion({ anotacion, nombreDeTarea }: AnotacionVisible): strin
  * a la más reciente (si empatan, primero la de id menor); undefined si no hay
  * nada para copiar.
  */
-export function textoDeAnotaciones(tareas: readonly Tarea[], anotaciones: readonly Anotacion[]): string | undefined {
-	const lineas = anotacionesVisibles(tareas, anotaciones, masAntiguaPrimero).map(lineaDeAnotacion);
-	return lineas.length === 0 ? undefined : lineas.join('\n');
+export function annotationsText(tasks: readonly Task[], annotations: readonly Annotation[]): string | undefined {
+	const lines = visibleAnnotations(tasks, annotations, oldestFirst).map(annotationLine);
+	return lines.length === 0 ? undefined : lines.join('\n');
 }

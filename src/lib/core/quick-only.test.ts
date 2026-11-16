@@ -1,49 +1,49 @@
 import { describe, expect, it } from 'vitest';
-import type { FilaDePendientes } from './pending';
-import { filtrarSoloRapidas, textoDeListaVacia } from './quick-only';
-import type { Esfuerzo } from './task';
+import type { PendingRow } from './pending';
+import { filterQuickOnly, emptyListText } from './quick-only';
+import type { Effort } from './task';
 
-const fila = (id: string, esfuerzo?: Esfuerzo): FilaDePendientes => ({
-	tarea: { id, titulo: id, tipo: 'puntual', creadaEn: new Date(2026, 6, 1), ...(esfuerzo && { esfuerzo }) },
-	estado: { tipo: 'pendiente' },
-	completada: false
+const row = (id: string, effort?: Effort): PendingRow => ({
+	task: { id, title: id, kind: 'puntual', createdAt: new Date(2026, 6, 1), ...(effort && { effort }) },
+	status: { kind: 'pendiente' },
+	completed: false
 });
 
 describe('filtrarSoloRapidas', () => {
-	const filas = [fila('foco', 'rapida'), fila('regar', 'media'), fila('pagar'), fila('lavar', 'larga'), fila('barrer', 'rapida')];
+	const rows = [row('foco', 'rapida'), row('regar', 'media'), row('pagar'), row('lavar', 'larga'), row('barrer', 'rapida')];
 
 	it('apagado deja la lista entera', () => {
-		expect(filtrarSoloRapidas(filas, false)).toStrictEqual(filas);
+		expect(filterQuickOnly(rows, false)).toStrictEqual(rows);
 	});
 
 	it('encendido deja solo las rápidas, en el mismo orden', () => {
-		expect(filtrarSoloRapidas(filas, true)).toStrictEqual([filas[0], filas[4]]);
+		expect(filterQuickOnly(rows, true)).toStrictEqual([rows[0], rows[4]]);
 	});
 
 	it('también aplica a las completadas', () => {
-		const hecha = (id: string, esfuerzo?: Esfuerzo): FilaDePendientes => ({
-			tarea: fila(id, esfuerzo).tarea,
-			estado: { tipo: 'completada' },
-			completada: true
+		const done = (id: string, effort?: Effort): PendingRow => ({
+			task: row(id, effort).task,
+			status: { kind: 'completada' },
+			completed: true
 		});
-		const completada = hecha('hecha');
-		const completadaRapida = hecha('hecha2', 'rapida');
+		const completed = done('hecha');
+		const quickCompleted = done('hecha2', 'rapida');
 
-		expect(filtrarSoloRapidas([completada, completadaRapida], true)).toStrictEqual([completadaRapida]);
+		expect(filterQuickOnly([completed, quickCompleted], true)).toStrictEqual([quickCompleted]);
 	});
 });
 
 describe('textoDeListaVacia', () => {
 	it('encendido y sin etiqueta elegida: "No hay tareas rápidas"', () => {
-		expect(textoDeListaVacia(undefined, true)).toBe('No hay tareas rápidas');
+		expect(emptyListText(undefined, true)).toBe('No hay tareas rápidas');
 	});
 
 	it('con una etiqueta elegida, encendido o apagado: "No hay tareas con esta etiqueta"', () => {
-		expect(textoDeListaVacia('e1', true)).toBe('No hay tareas con esta etiqueta');
-		expect(textoDeListaVacia('e1', false)).toBe('No hay tareas con esta etiqueta');
+		expect(emptyListText('e1', true)).toBe('No hay tareas con esta etiqueta');
+		expect(emptyListText('e1', false)).toBe('No hay tareas con esta etiqueta');
 	});
 
 	it('apagado y sin etiqueta elegida, ningún texto', () => {
-		expect(textoDeListaVacia(undefined, false)).toBeUndefined();
+		expect(emptyListText(undefined, false)).toBeUndefined();
 	});
 });

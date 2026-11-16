@@ -1,10 +1,10 @@
 // El checkbox de la fila de Pendientes (spec §6.1): completa la tarea o borra
 // su completado más reciente, según lo que decida el core.
 import { expect } from 'vitest';
-import { accionDelCheckbox, checkboxHabilitado } from '../../src/lib/core/checkbox';
-import { estaCompletada } from '../../src/lib/core/completed';
-import { estadoDeTarea } from '../../src/lib/core/task-status';
-import { filasDePendientes } from '../../src/lib/core/pending';
+import { checkboxAction, checkboxEnabled } from '../../src/lib/core/checkbox';
+import { isCompleted } from '../../src/lib/core/completed';
+import { taskStatus } from '../../src/lib/core/task-status';
+import { pendingRows } from '../../src/lib/core/pending';
 import { borrarCompletado } from './deshacer';
 import { completoYo } from './periodica-relativa';
 import { P, fechaHora } from './valores';
@@ -15,11 +15,11 @@ function tocarCheckbox(world: World, momento: Date): void {
 	world.checkboxTocado = true;
 	// Sin una consulta antes, lo que se afirma después es del momento en que se tocó.
 	if (world.momentosDelEstado.length === 0) world.momentosDelEstado = [momento];
-	const accion = accionDelCheckbox(tarea, world.completados, momento);
-	if (accion.tipo === 'ninguna') return;
-	if (accion.tipo === 'completar') return completoYo(world, momento, tarea);
+	const accion = checkboxAction(tarea, world.completions, momento);
+	if (accion.kind === 'ninguna') return;
+	if (accion.kind === 'completar') return completoYo(world, momento, tarea);
 	recordarAntesDeMiCambio(world);
-	borrarCompletado(world, accion.completado);
+	borrarCompletado(world, accion.completion);
 }
 
 /** Cada momento en que se consultó el estado o Pendientes, con lo guardado ahora. */
@@ -38,7 +38,7 @@ export const checkboxSteps: StepDefinition[] = [
 		run: (world, no) => {
 			const tarea = laTarea(world);
 			enCadaMomentoConsultado(world, (ahora) =>
-				expect(estaCompletada(tarea, world.completados, ahora)).toBe(no === undefined)
+				expect(isCompleted(tarea, world.completions, ahora)).toBe(no === undefined)
 			);
 		}
 	},
@@ -46,14 +46,14 @@ export const checkboxSteps: StepDefinition[] = [
 		pattern: /^la tarea aparece en Pendientes$/,
 		run: (world) =>
 			enCadaMomentoConsultado(world, (ahora) =>
-				expect(filasDePendientes([laTarea(world)], world.completados, ahora, world.mostrarCompletadas, world.mostrarPausadas)).toHaveLength(1)
+				expect(pendingRows([laTarea(world)], world.completions, ahora, world.mostrarCompletadas, world.mostrarPausadas)).toHaveLength(1)
 			)
 	},
 	{
 		pattern: /^el checkbox de la tarea está (habilitado|deshabilitado)$/,
 		run: (world, como) =>
 			enCadaMomentoConsultado(world, (ahora) =>
-				expect(checkboxHabilitado(laTarea(world), world.completados, ahora)).toBe(como === 'habilitado')
+				expect(checkboxEnabled(laTarea(world), world.completions, ahora)).toBe(como === 'habilitado')
 			)
 	},
 	{
@@ -61,14 +61,14 @@ export const checkboxSteps: StepDefinition[] = [
 		pattern: /^la tarea no tiene estado$/,
 		run: (world) =>
 			enCadaMomentoConsultado(world, (ahora) =>
-				expect(['pendiente', 'atrasada', 'en espera']).not.toContain(estadoDeTarea(laTarea(world), world.completados, ahora).tipo)
+				expect(['pendiente', 'atrasada', 'en espera']).not.toContain(taskStatus(laTarea(world), world.completions, ahora).kind)
 			)
 	},
 	{
 		pattern: /^la tarea no aparece en Pendientes$/,
 		run: (world) =>
 			enCadaMomentoConsultado(world, (ahora) =>
-				expect(filasDePendientes([laTarea(world)], world.completados, ahora, world.mostrarCompletadas, world.mostrarPausadas)).toEqual([])
+				expect(pendingRows([laTarea(world)], world.completions, ahora, world.mostrarCompletadas, world.mostrarPausadas)).toEqual([])
 			)
 	}
 ];

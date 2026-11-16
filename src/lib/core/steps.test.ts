@@ -1,249 +1,249 @@
 import { describe, expect, it } from 'vitest';
-import { hayCambios } from './unsaved-changes';
-import { crearPeriodicaCalendario } from './create-recurring-calendar';
-import { crearPeriodicaRelativa } from './create-recurring-relative';
-import { crearPuntual } from './create-one-off';
-import { crearSegunDatos, datosDeTarea, type DatosDeTarea } from './task-data';
-import { aplicarCambio, tareaDesdeDocumento, type DocumentoDeTarea } from './task-document';
-import { editar } from './editing';
-import { normalizarPasos, pasoEnQueVa, pasosDeLaTarea, tieneVariosPasos } from './steps';
-import type { TareaPeriodica, TareaPuntual } from './task';
+import { hasChanges } from './unsaved-changes';
+import { createRecurringCalendar } from './create-recurring-calendar';
+import { createRecurringRelative } from './create-recurring-relative';
+import { createOneOff } from './create-one-off';
+import { createFromData, taskData, type TaskData } from './task-data';
+import { applyChange, taskFromDocument, type TaskDocument } from './task-document';
+import { edit } from './editing';
+import { normalizeSteps, stepItIsOn, taskSteps, hasSeveralSteps } from './steps';
+import type { RecurringTask, OneOffTask } from './task';
 
-const CREADA = new Date(2026, 6, 1, 8, 0, 0);
-const PUNTUAL: TareaPuntual = { id: 't1', titulo: 'Ropa', tipo: 'puntual', creadaEn: CREADA, primerPaso: 'Separar', pasos: ['Lavar', 'Tender'] };
+const CREATED = new Date(2026, 6, 1, 8, 0, 0);
+const ONE_OFF: OneOffTask = { id: 't1', title: 'Ropa', kind: 'puntual', createdAt: CREATED, firstStep: 'Separar', steps: ['Lavar', 'Tender'] };
 
 describe('normalizarPasos (spec §4.1, Pasos: Texto)', () => {
 	it('recorta cada paso', () => {
-		expect(normalizarPasos(' Separar ', ['  Lavar', 'Tender  '])).toStrictEqual({ primerPaso: 'Separar', pasos: ['Lavar', 'Tender'] });
+		expect(normalizeSteps(' Separar ', ['  Lavar', 'Tender  '])).toStrictEqual({ firstStep: 'Separar', steps: ['Lavar', 'Tender'] });
 	});
 
 	it('descarta los vacíos o de solo espacios y los de abajo suben', () => {
-		expect(normalizarPasos('Separar', ['', 'Lavar', ' \t ', 'Tender'])).toStrictEqual({ primerPaso: 'Separar', pasos: ['Lavar', 'Tender'] });
+		expect(normalizeSteps('Separar', ['', 'Lavar', ' \t ', 'Tender'])).toStrictEqual({ firstStep: 'Separar', steps: ['Lavar', 'Tender'] });
 	});
 
 	it('si el primer paso queda vacío y el paso 2 no, el paso 2 pasa a ser el primer paso', () => {
-		expect(normalizarPasos('  ', ['Lavar', 'Tender'])).toStrictEqual({ primerPaso: 'Lavar', pasos: ['Tender'] });
+		expect(normalizeSteps('  ', ['Lavar', 'Tender'])).toStrictEqual({ firstStep: 'Lavar', steps: ['Tender'] });
 	});
 
 	it('sin pasos más allá del primero, no hay campo pasos', () => {
-		expect(normalizarPasos('Separar', ['', '  '])).toStrictEqual({ primerPaso: 'Separar' });
-		expect(normalizarPasos('Separar')).toStrictEqual({ primerPaso: 'Separar' });
+		expect(normalizeSteps('Separar', ['', '  '])).toStrictEqual({ firstStep: 'Separar' });
+		expect(normalizeSteps('Separar')).toStrictEqual({ firstStep: 'Separar' });
 	});
 
 	it('todo vacío es sin primer paso y sin pasos', () => {
-		expect(normalizarPasos(' ', [' '])).toStrictEqual({});
-		expect(normalizarPasos()).toStrictEqual({});
+		expect(normalizeSteps(' ', [' '])).toStrictEqual({});
+		expect(normalizeSteps()).toStrictEqual({});
 	});
 
 	it('no hay máximo de pasos ni de largo', () => {
-		const muchos = Array.from({ length: 200 }, (_, i) => `Paso ${i + 2} ${'x'.repeat(1000)}`);
+		const many = Array.from({ length: 200 }, (_, i) => `Paso ${i + 2} ${'x'.repeat(1000)}`);
 
-		expect(normalizarPasos('Separar', muchos)).toStrictEqual({ primerPaso: 'Separar', pasos: muchos });
+		expect(normalizeSteps('Separar', many)).toStrictEqual({ firstStep: 'Separar', steps: many });
 	});
 });
 
 describe('pasosDeLaTarea y tieneVariosPasos (spec §4.1)', () => {
 	it('el primer paso es el paso 1 y siguen los de pasos, en orden', () => {
-		expect(pasosDeLaTarea(PUNTUAL)).toStrictEqual(['Separar', 'Lavar', 'Tender']);
-		expect(tieneVariosPasos(PUNTUAL)).toBe(true);
+		expect(taskSteps(ONE_OFF)).toStrictEqual(['Separar', 'Lavar', 'Tender']);
+		expect(hasSeveralSteps(ONE_OFF)).toBe(true);
 	});
 
 	it('con primer paso y sin pasos, un solo paso', () => {
-		const { pasos: _, ...unPaso } = PUNTUAL;
+		const { steps: _, ...aStep } = ONE_OFF;
 
-		expect(pasosDeLaTarea(unPaso)).toStrictEqual(['Separar']);
-		expect(tieneVariosPasos(unPaso)).toBe(false);
+		expect(taskSteps(aStep)).toStrictEqual(['Separar']);
+		expect(hasSeveralSteps(aStep)).toBe(false);
 	});
 
 	it('sin primer paso, ningún paso', () => {
-		expect(pasosDeLaTarea({ pasos: ['Lavar'] })).toStrictEqual([]);
-		expect(tieneVariosPasos({ pasos: ['Lavar'] })).toBe(false);
+		expect(taskSteps({ steps: ['Lavar'] })).toStrictEqual([]);
+		expect(hasSeveralSteps({ steps: ['Lavar'] })).toBe(false);
 	});
 });
 
 describe('pasoEnQueVa (spec §4.1, Pasos: Avance)', () => {
 	it('sin pasoActual, el paso 1', () => {
-		expect(pasoEnQueVa(PUNTUAL)).toBe(1);
+		expect(stepItIsOn(ONE_OFF)).toBe(1);
 	});
 
 	it('el pasoActual guardado', () => {
-		expect(pasoEnQueVa({ ...PUNTUAL, pasoActual: 2 })).toBe(2);
-		expect(pasoEnQueVa({ ...PUNTUAL, pasoActual: 3 })).toBe(3);
+		expect(stepItIsOn({ ...ONE_OFF, currentStep: 2 })).toBe(2);
+		expect(stepItIsOn({ ...ONE_OFF, currentStep: 3 })).toBe(3);
 	});
 
 	it('con menos pasos que pasoActual, el último', () => {
-		expect(pasoEnQueVa({ ...PUNTUAL, pasoActual: 7 })).toBe(3);
+		expect(stepItIsOn({ ...ONE_OFF, currentStep: 7 })).toBe(3);
 	});
 
-	it.each([0, -2])('un pasoActual %i de un dato viejo es el paso 1', (pasoActual) => {
-		expect(pasoEnQueVa({ ...PUNTUAL, pasoActual })).toBe(1);
+	it.each([0, -2])('un pasoActual %i de un dato viejo es el paso 1', (currentStep) => {
+		expect(stepItIsOn({ ...ONE_OFF, currentStep })).toBe(1);
 	});
 
 	it('sin pasos, el paso 1', () => {
-		expect(pasoEnQueVa({ pasoActual: 3 })).toBe(1);
+		expect(stepItIsOn({ currentStep: 3 })).toBe(1);
 	});
 });
 
 describe('crear con pasos (spec §4.1)', () => {
-	const comunes = { titulo: 'Ropa', primerPaso: ' Separar', pasos: ['Lavar ', '', 'Tender'] };
+	const commons = { title: 'Ropa', firstStep: ' Separar', steps: ['Lavar ', '', 'Tender'] };
 
 	it('las tres formas guardan los pasos normalizados', () => {
-		const esperado = { primerPaso: 'Separar', pasos: ['Lavar', 'Tender'] };
+		const expected = { firstStep: 'Separar', steps: ['Lavar', 'Tender'] };
 
-		expect(crearPuntual(comunes, 'p', CREADA)).toMatchObject({ ok: true, tarea: esperado });
-		expect(crearPeriodicaRelativa({ ...comunes, cada: 2, unidad: 'dias' }, 'r', CREADA)).toMatchObject({ ok: true, tarea: esperado });
-		expect(crearPeriodicaCalendario({ ...comunes, diasSemana: ['lunes'], diasMes: [] }, 'c', CREADA)).toMatchObject({ ok: true, tarea: esperado });
+		expect(createOneOff(commons, 'p', CREATED)).toMatchObject({ ok: true, task: expected });
+		expect(createRecurringRelative({ ...commons, every: 2, unit: 'dias' }, 'r', CREATED)).toMatchObject({ ok: true, task: expected });
+		expect(createRecurringCalendar({ ...commons, weekdays: ['lunes'], monthDays: [] }, 'c', CREATED)).toMatchObject({ ok: true, task: expected });
 	});
 
 	it('un paso de solo espacios no rechaza la creación: se crea sin él, sin campo pasos', () => {
-		expect(crearPuntual({ titulo: 'Ropa', primerPaso: 'Separar', pasos: ['   '] }, 't1', CREADA)).toStrictEqual({
+		expect(createOneOff({ title: 'Ropa', firstStep: 'Separar', steps: ['   '] }, 't1', CREATED)).toStrictEqual({
 			ok: true,
-			tarea: { id: 't1', titulo: 'Ropa', tipo: 'puntual', creadaEn: CREADA, primerPaso: 'Separar' }
+			task: { id: 't1', title: 'Ropa', kind: 'puntual', createdAt: CREATED, firstStep: 'Separar' }
 		});
 	});
 
 	it('con el primer paso vacío, el paso 2 pasa a ser el primer paso', () => {
-		expect(crearPuntual({ titulo: 'Ropa', primerPaso: '', pasos: ['Lavar'] }, 't1', CREADA)).toMatchObject({
+		expect(createOneOff({ title: 'Ropa', firstStep: '', steps: ['Lavar'] }, 't1', CREATED)).toMatchObject({
 			ok: true,
-			tarea: { primerPaso: 'Lavar' }
+			task: { firstStep: 'Lavar' }
 		});
 	});
 
 	it('crear no guarda pasoActual', () => {
-		const creada = crearPuntual(comunes, 'p', CREADA);
+		const created = createOneOff(commons, 'p', CREATED);
 
-		expect(creada.ok && 'pasoActual' in creada.tarea).toBe(false);
+		expect(created.ok && 'currentStep' in created.task).toBe(false);
 	});
 });
 
 describe('datosDeTarea con pasos (spec §6.2)', () => {
 	it('carga los pasos más, y crearSegunDatos lo devuelve igual', () => {
-		const relativa: TareaPeriodica = {
+		const relative: RecurringTask = {
 			id: 't2',
-			titulo: 'Regar',
-			tipo: 'periodica',
-			recurrencia: { modo: 'relativo', cada: 1, unidad: 'dias' },
-			creadaEn: CREADA,
-			primerPaso: 'Llenar',
-			pasos: ['Regar']
+			title: 'Regar',
+			kind: 'periodica',
+			recurrence: { mode: 'relativo', every: 1, unit: 'dias' },
+			createdAt: CREATED,
+			firstStep: 'Llenar',
+			steps: ['Regar']
 		};
-		const datos = datosDeTarea(relativa);
+		const data = taskData(relative);
 
-		expect(datos).toMatchObject({ primerPaso: 'Llenar', pasos: ['Regar'] });
-		expect(crearSegunDatos(datos, relativa.id, CREADA)).toStrictEqual({ ok: true, tarea: relativa });
+		expect(data).toMatchObject({ firstStep: 'Llenar', steps: ['Regar'] });
+		expect(createFromData(data, relative.id, CREATED)).toStrictEqual({ ok: true, task: relative });
 	});
 
 	it('los pasos cargados son una copia', () => {
-		const datos = datosDeTarea(PUNTUAL);
+		const data = taskData(ONE_OFF);
 
-		expect(datos.pasos).not.toBe(PUNTUAL.pasos);
+		expect(data.steps).not.toBe(ONE_OFF.steps);
 	});
 
 	it('sin pasos, los datos no tienen el campo', () => {
-		const { pasos: _, ...unPaso } = PUNTUAL;
+		const { steps: _, ...aStep } = ONE_OFF;
 
-		expect('pasos' in datosDeTarea(unPaso)).toBe(false);
+		expect('steps' in taskData(aStep)).toBe(false);
 	});
 });
 
 describe('tareaDesdeDocumento y aplicarCambio con pasos (spec §7)', () => {
-	const DOCUMENTO: DocumentoDeTarea = { id: 't1', titulo: 'Ropa', tipo: 'puntual', creadaEn: CREADA, primerPaso: 'Separar' };
+	const DOC: TaskDocument = { id: 't1', title: 'Ropa', kind: 'puntual', createdAt: CREATED, firstStep: 'Separar' };
 
 	it('la tarea conserva pasos y pasoActual del documento', () => {
-		expect(tareaDesdeDocumento({ ...DOCUMENTO, pasos: ['Lavar'], pasoActual: 2 })).toStrictEqual({ ...DOCUMENTO, pasos: ['Lavar'], pasoActual: 2 });
+		expect(taskFromDocument({ ...DOC, steps: ['Lavar'], currentStep: 2 })).toStrictEqual({ ...DOC, steps: ['Lavar'], currentStep: 2 });
 	});
 
 	it('una periódica también', () => {
-		const periodica: DocumentoDeTarea = { ...DOCUMENTO, tipo: 'periodica', recurrencia: { modo: 'relativo', cada: 1, unidad: 'dias' } };
+		const recurring: TaskDocument = { ...DOC, kind: 'periodica', recurrence: { mode: 'relativo', every: 1, unit: 'dias' } };
 
-		expect(tareaDesdeDocumento({ ...periodica, pasos: ['Lavar'], pasoActual: 2 })).toMatchObject({ pasos: ['Lavar'], pasoActual: 2 });
+		expect(taskFromDocument({ ...recurring, steps: ['Lavar'], currentStep: 2 })).toMatchObject({ steps: ['Lavar'], currentStep: 2 });
 	});
 
 	it('sin los campos, o con pasos vacío, no los tiene', () => {
-		expect(tareaDesdeDocumento(DOCUMENTO)).toStrictEqual(DOCUMENTO);
-		expect(tareaDesdeDocumento({ ...DOCUMENTO, pasos: [] })).toStrictEqual(DOCUMENTO);
+		expect(taskFromDocument(DOC)).toStrictEqual(DOC);
+		expect(taskFromDocument({ ...DOC, steps: [] })).toStrictEqual(DOC);
 	});
 
 	it('pasos se reemplaza entero y pasoActual es otro campo', () => {
-		const [conPasos] = aplicarCambio([{ ...DOCUMENTO, pasos: ['Lavar', 'Tender'], pasoActual: 2 }], 't1', { pasos: ['Planchar'] });
+		const [withSteps] = applyChange([{ ...DOC, steps: ['Lavar', 'Tender'], currentStep: 2 }], 't1', { steps: ['Planchar'] });
 
-		expect(conPasos).toStrictEqual({ ...DOCUMENTO, pasos: ['Planchar'], pasoActual: 2 });
-		expect(aplicarCambio([conPasos], 't1', { pasos: null, pasoActual: null })[0]).toStrictEqual(DOCUMENTO);
+		expect(withSteps).toStrictEqual({ ...DOC, steps: ['Planchar'], currentStep: 2 });
+		expect(applyChange([withSteps], 't1', { steps: null, currentStep: null })[0]).toStrictEqual(DOC);
 	});
 });
 
 describe('editar los pasos (spec §4.1, §7)', () => {
-	const datos = (cambios: Partial<DatosDeTarea>) => ({ ...datosDeTarea(PUNTUAL), ...cambios }) as DatosDeTarea;
+	const data = (changes: Partial<TaskData>) => ({ ...taskData(ONE_OFF), ...changes }) as TaskData;
 
 	it('cambiar un paso escribe la lista entera, recortada', () => {
-		expect(editar(PUNTUAL, datos({ pasos: ['Lavar', ' Planchar '] }))).toStrictEqual({ ok: true, cambio: { pasos: ['Lavar', 'Planchar'] } });
+		expect(edit(ONE_OFF, data({ steps: ['Lavar', ' Planchar '] }))).toStrictEqual({ ok: true, change: { steps: ['Lavar', 'Planchar'] } });
 	});
 
 	it('agregar un paso escribe la lista entera', () => {
-		expect(editar(PUNTUAL, datos({ pasos: ['Lavar', 'Tender', 'Guardar'] }))).toStrictEqual({ ok: true, cambio: { pasos: ['Lavar', 'Tender', 'Guardar'] } });
+		expect(edit(ONE_OFF, data({ steps: ['Lavar', 'Tender', 'Guardar'] }))).toStrictEqual({ ok: true, change: { steps: ['Lavar', 'Tender', 'Guardar'] } });
 	});
 
 	it('los mismos pasos, con espacios o un vacío que se descarta, no cambian nada', () => {
-		expect(editar(PUNTUAL, datos({ pasos: [' Lavar ', '', 'Tender'] }))).toStrictEqual({ ok: true, cambio: {} });
+		expect(edit(ONE_OFF, data({ steps: [' Lavar ', '', 'Tender'] }))).toStrictEqual({ ok: true, change: {} });
 	});
 
 	it('quitar todos los pasos más lo quita (null)', () => {
-		expect(editar(PUNTUAL, datos({ pasos: ['', ' '] }))).toStrictEqual({ ok: true, cambio: { pasos: null } });
+		expect(edit(ONE_OFF, data({ steps: ['', ' '] }))).toStrictEqual({ ok: true, change: { steps: null } });
 	});
 
 	it('vaciar el primer paso sube el paso 2: cambian los dos campos', () => {
-		expect(editar(PUNTUAL, datos({ primerPaso: '' }))).toStrictEqual({ ok: true, cambio: { primerPaso: 'Lavar', pasos: ['Tender'] } });
+		expect(edit(ONE_OFF, data({ firstStep: '' }))).toStrictEqual({ ok: true, change: { firstStep: 'Lavar', steps: ['Tender'] } });
 	});
 
 	it('nunca escribe pasoActual, aunque queden menos pasos', () => {
-		const resultado = editar({ ...PUNTUAL, pasoActual: 3 }, datos({ pasos: [] }));
+		const result = edit({ ...ONE_OFF, currentStep: 3 }, data({ steps: [] }));
 
-		expect(resultado).toStrictEqual({ ok: true, cambio: { pasos: null } });
+		expect(result).toStrictEqual({ ok: true, change: { steps: null } });
 	});
 
 	it('cambiar el tipo no toca los pasos', () => {
-		const aRelativa: DatosDeTarea = { ...datosDeTarea(PUNTUAL), forma: 'relativa', cada: 1, unidad: 'dias' } as DatosDeTarea;
-		const resultado = editar({ ...PUNTUAL, pasoActual: 2 }, aRelativa);
+		const toRelative: TaskData = { ...taskData(ONE_OFF), shape: 'relativa', every: 1, unit: 'dias' } as TaskData;
+		const result = edit({ ...ONE_OFF, currentStep: 2 }, toRelative);
 
-		expect(resultado.ok && ('pasos' in resultado.cambio || 'pasoActual' in resultado.cambio)).toBe(false);
+		expect(result.ok && ('steps' in result.change || 'currentStep' in result.change)).toBe(false);
 	});
 });
 
 describe('hayCambios con pasos (spec §6.2)', () => {
-	const ABIERTO: DatosDeTarea = { forma: 'puntual', titulo: 'Ropa', primerPaso: 'Separar', pasos: ['Lavar'] };
-	const cambia = (actual: DatosDeTarea, alAbrir: DatosDeTarea = ABIERTO) =>
-		hayCambios({ datos: alAbrir, etiquetas: [] }, { datos: actual, etiquetas: [], sinConfirmar: '' });
+	const OPEN: TaskData = { shape: 'puntual', title: 'Ropa', firstStep: 'Separar', steps: ['Lavar'] };
+	const doesChange = (current: TaskData, onOpen: TaskData = OPEN) =>
+		hasChanges({ data: onOpen, labels: [] }, { data: current, labels: [], unconfirmed: '' });
 
 	it('cambiar un paso cuenta; el mismo con espacios alrededor, no', () => {
-		expect(cambia({ ...ABIERTO, pasos: ['Tender'] })).toBe(true);
-		expect(cambia({ ...ABIERTO, pasos: ['  Lavar '] })).toBe(false);
+		expect(doesChange({ ...OPEN, steps: ['Tender'] })).toBe(true);
+		expect(doesChange({ ...OPEN, steps: ['  Lavar '] })).toBe(false);
 	});
 
 	it('vaciar o dejar en solo espacios un paso existente cuenta', () => {
-		expect(cambia({ ...ABIERTO, pasos: [''] })).toBe(true);
-		expect(cambia({ ...ABIERTO, pasos: ['   '] })).toBe(true);
+		expect(doesChange({ ...OPEN, steps: [''] })).toBe(true);
+		expect(doesChange({ ...OPEN, steps: ['   '] })).toBe(true);
 	});
 
 	it('agregar un paso vacío o de solo espacios no cuenta; escrito, sí', () => {
-		expect(cambia({ ...ABIERTO, pasos: ['Lavar', ''] })).toBe(false);
-		expect(cambia({ ...ABIERTO, pasos: ['Lavar', '  '] })).toBe(false);
-		expect(cambia({ ...ABIERTO, pasos: ['Lavar', 'Tender'] })).toBe(true);
+		expect(doesChange({ ...OPEN, steps: ['Lavar', ''] })).toBe(false);
+		expect(doesChange({ ...OPEN, steps: ['Lavar', '  '] })).toBe(false);
+		expect(doesChange({ ...OPEN, steps: ['Lavar', 'Tender'] })).toBe(true);
 	});
 
 	it('quitar un paso existente cuenta', () => {
-		expect(cambia({ ...ABIERTO, pasos: [] })).toBe(true);
+		expect(doesChange({ ...OPEN, steps: [] })).toBe(true);
 	});
 
 	it('al crear, agregar un paso vacío no cuenta y escribirlo sí', () => {
-		const alCrear: DatosDeTarea = { forma: 'puntual', titulo: '' };
+		const onCreate: TaskData = { shape: 'puntual', title: '' };
 
-		expect(cambia({ ...alCrear, pasos: [''] }, alCrear)).toBe(false);
-		expect(cambia({ ...alCrear, pasos: ['Lavar'] }, alCrear)).toBe(true);
+		expect(doesChange({ ...onCreate, steps: [''] }, onCreate)).toBe(false);
+		expect(doesChange({ ...onCreate, steps: ['Lavar'] }, onCreate)).toBe(true);
 	});
 
 	it('con una repetición inválida, un paso vacío tampoco cuenta', () => {
-		const invalida: DatosDeTarea = { forma: 'relativa', titulo: 'Ropa', cada: 0, unidad: 'dias' };
+		const invalid: TaskData = { shape: 'relativa', title: 'Ropa', every: 0, unit: 'dias' };
 
-		expect(cambia({ ...invalida, pasos: [' '] }, invalida)).toBe(false);
+		expect(doesChange({ ...invalid, steps: [' '] }, invalid)).toBe(false);
 	});
 });

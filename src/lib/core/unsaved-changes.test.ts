@@ -1,172 +1,172 @@
 import { describe, expect, it } from 'vitest';
-import { hayCambios, type ValoresDelPanel } from './unsaved-changes';
-import { DATOS_AL_CREAR, datosDeTarea, type DatosDeTarea } from './task-data';
-import type { Tarea } from './task';
+import { hasChanges, type PanelValues } from './unsaved-changes';
+import { DATA_ON_CREATE, taskData, type TaskData } from './task-data';
+import type { Task } from './task';
 
-const CREADA = new Date(2026, 6, 13, 8, 0, 0);
-const PUNTUAL: DatosDeTarea = { forma: 'puntual', titulo: 'Pagar', nota: 'Luz' };
-const RELATIVA: DatosDeTarea = { forma: 'relativa', titulo: 'Regar', cada: 2, unidad: 'dias' };
-const SEMANAL: DatosDeTarea = { forma: 'calendario', titulo: 'Regar', diasSemana: ['lunes', 'jueves'], diasMes: [] };
-const CON_HORARIOS: DatosDeTarea = {
-	forma: 'puntual',
-	titulo: 'Pagar',
-	horario: [
-		{ desde: '08:00', hasta: '10:00' },
-		{ desde: '12:00', hasta: '14:00' }
+const CREATED = new Date(2026, 6, 13, 8, 0, 0);
+const ONE_OFF: TaskData = { shape: 'puntual', title: 'Pagar', note: 'Luz' };
+const RELATIVE: TaskData = { shape: 'relativa', title: 'Regar', every: 2, unit: 'dias' };
+const WEEKLY: TaskData = { shape: 'calendario', title: 'Regar', weekdays: ['lunes', 'jueves'], monthDays: [] };
+const WITH_SCHEDULES: TaskData = {
+	shape: 'puntual',
+	title: 'Pagar',
+	schedule: [
+		{ from: '08:00', to: '10:00' },
+		{ from: '12:00', to: '14:00' }
 	]
 };
 /** Como abre el panel al crear: nada escrito. */
-const AL_CREAR: DatosDeTarea = { forma: 'puntual', titulo: '', emoji: '', nota: '', fechaLimite: undefined };
+const ON_CREATE: TaskData = { shape: 'puntual', title: '', emoji: '', note: '', dueDate: undefined };
 
-const abierto = (datos: DatosDeTarea, etiquetas: readonly string[] = []): ValoresDelPanel => ({ datos, etiquetas });
-const cambia = (alAbrir: DatosDeTarea, datos: DatosDeTarea, sinConfirmar = '') => hayCambios(abierto(alAbrir), { datos, etiquetas: [], sinConfirmar });
+const open = (data: TaskData, labels: readonly string[] = []): PanelValues => ({ data, labels });
+const doesChange = (onOpen: TaskData, data: TaskData, unconfirmed = '') => hasChanges(open(onOpen), { data, labels: [], unconfirmed });
 
 describe('hayCambios (spec §6.2): Guardar cambiaría algo respecto de los valores al abrir', () => {
 	it('los mismos valores no son un cambio', () => {
-		expect(cambia(PUNTUAL, { ...PUNTUAL })).toBe(false);
+		expect(doesChange(ONE_OFF, { ...ONE_OFF })).toBe(false);
 	});
 
 	it('otro título, otra nota, otro emoji u otro esfuerzo son un cambio', () => {
-		expect(cambia(PUNTUAL, { ...PUNTUAL, titulo: 'Pagar luz' })).toBe(true);
-		expect(cambia(PUNTUAL, { ...PUNTUAL, nota: 'Gas' })).toBe(true);
-		expect(cambia(PUNTUAL, { ...PUNTUAL, emoji: '🌱' })).toBe(true);
-		expect(cambia(PUNTUAL, { ...PUNTUAL, esfuerzo: 'media' })).toBe(true);
+		expect(doesChange(ONE_OFF, { ...ONE_OFF, title: 'Pagar luz' })).toBe(true);
+		expect(doesChange(ONE_OFF, { ...ONE_OFF, note: 'Gas' })).toBe(true);
+		expect(doesChange(ONE_OFF, { ...ONE_OFF, emoji: '🌱' })).toBe(true);
+		expect(doesChange(ONE_OFF, { ...ONE_OFF, effort: 'media' })).toBe(true);
 	});
 
 	it('los espacios que Guardar recorta no cuentan', () => {
-		expect(cambia(PUNTUAL, { ...PUNTUAL, titulo: '  Pagar  ', nota: '  Luz \n' })).toBe(false);
-		expect(cambia({ ...PUNTUAL, emoji: '🌱' }, { ...PUNTUAL, emoji: ' 🌱 ' })).toBe(false);
+		expect(doesChange(ONE_OFF, { ...ONE_OFF, title: '  Pagar  ', note: '  Luz \n' })).toBe(false);
+		expect(doesChange({ ...ONE_OFF, emoji: '🌱' }, { ...ONE_OFF, emoji: ' 🌱 ' })).toBe(false);
 	});
 
 	it('un valor que no es un solo emoji se compara tal cual: otro texto es un cambio', () => {
-		expect(cambia({ ...PUNTUAL, emoji: '🌱' }, { ...PUNTUAL, emoji: '🌱🌱' })).toBe(true);
+		expect(doesChange({ ...ONE_OFF, emoji: '🌱' }, { ...ONE_OFF, emoji: '🌱🌱' })).toBe(true);
 	});
 
 	it('un campo vaciado cuenta aunque sea inválido, y solo espacios es vaciarlo', () => {
-		expect(cambia(PUNTUAL, { ...PUNTUAL, titulo: '' })).toBe(true);
-		expect(cambia(PUNTUAL, { ...PUNTUAL, titulo: '   ' })).toBe(true);
-		expect(cambia(PUNTUAL, { ...PUNTUAL, nota: '' })).toBe(true);
-		expect(cambia(PUNTUAL, { ...PUNTUAL, nota: '   ' })).toBe(true);
+		expect(doesChange(ONE_OFF, { ...ONE_OFF, title: '' })).toBe(true);
+		expect(doesChange(ONE_OFF, { ...ONE_OFF, title: '   ' })).toBe(true);
+		expect(doesChange(ONE_OFF, { ...ONE_OFF, note: '' })).toBe(true);
+		expect(doesChange(ONE_OFF, { ...ONE_OFF, note: '   ' })).toBe(true);
 	});
 
 	it('sin el campo y el campo vacío son lo mismo', () => {
-		expect(cambia({ forma: 'puntual', titulo: 'Pagar' }, { forma: 'puntual', titulo: 'Pagar', emoji: '', nota: '', horario: undefined, fechaLimite: undefined })).toBe(false);
+		expect(doesChange({ shape: 'puntual', title: 'Pagar' }, { shape: 'puntual', title: 'Pagar', emoji: '', note: '', schedule: undefined, dueDate: undefined })).toBe(false);
 	});
 
 	it('los valores con que el panel abre una tarea coinciden con el formulario recién abierto', () => {
-		const tarea: Tarea = { id: 't', titulo: 'Pagar', tipo: 'puntual', fechaLimite: new Date(2026, 6, 20), creadaEn: CREADA };
-		expect(cambia(datosDeTarea(tarea), { forma: 'puntual', titulo: 'Pagar', emoji: '', nota: '', horario: undefined, fechaLimite: '2026-07-20' })).toBe(false);
+		const task: Task = { id: 't', title: 'Pagar', kind: 'puntual', dueDate: new Date(2026, 6, 20), createdAt: CREATED };
+		expect(doesChange(taskData(task), { shape: 'puntual', title: 'Pagar', emoji: '', note: '', schedule: undefined, dueDate: '2026-07-20' })).toBe(false);
 	});
 
 	describe('Se repite', () => {
 		it('otra opción es un cambio, aunque sus campos estén vacíos', () => {
-			expect(cambia(PUNTUAL, { ...PUNTUAL, forma: 'relativa', cada: Number.NaN, unidad: 'horas' })).toBe(true);
-			expect(cambia(RELATIVA, { forma: 'puntual', titulo: 'Regar' })).toBe(true);
-			expect(cambia(SEMANAL, { ...SEMANAL, diasSemana: [], diasMes: [1] })).toBe(true);
+			expect(doesChange(ONE_OFF, { ...ONE_OFF, shape: 'relativa', every: Number.NaN, unit: 'horas' })).toBe(true);
+			expect(doesChange(RELATIVE, { shape: 'puntual', title: 'Regar' })).toBe(true);
+			expect(doesChange(WEEKLY, { ...WEEKLY, weekdays: [], monthDays: [1] })).toBe(true);
 		});
 
 		it('otro valor de sus campos es un cambio', () => {
-			expect(cambia(RELATIVA, { ...RELATIVA, cada: 3 } as DatosDeTarea)).toBe(true);
-			expect(cambia(RELATIVA, { ...RELATIVA, unidad: 'horas' } as DatosDeTarea)).toBe(true);
-			expect(cambia(RELATIVA, { ...RELATIVA, cada: Number.NaN } as DatosDeTarea)).toBe(true);
-			expect(cambia(PUNTUAL, { ...PUNTUAL, fechaLimite: '2026-07-20' } as DatosDeTarea)).toBe(true);
-			expect(cambia(SEMANAL, { ...SEMANAL, diasSemana: ['lunes'] } as DatosDeTarea)).toBe(true);
+			expect(doesChange(RELATIVE, { ...RELATIVE, every: 3 } as TaskData)).toBe(true);
+			expect(doesChange(RELATIVE, { ...RELATIVE, unit: 'horas' } as TaskData)).toBe(true);
+			expect(doesChange(RELATIVE, { ...RELATIVE, every: Number.NaN } as TaskData)).toBe(true);
+			expect(doesChange(ONE_OFF, { ...ONE_OFF, dueDate: '2026-07-20' } as TaskData)).toBe(true);
+			expect(doesChange(WEEKLY, { ...WEEKLY, weekdays: ['lunes'] } as TaskData)).toBe(true);
 		});
 
 		it('una fecha a medio escribir es un cambio aunque tenga valor vacío', () => {
-			expect(cambia(PUNTUAL, { ...PUNTUAL, fechaLimite: '' } as DatosDeTarea)).toBe(true);
+			expect(doesChange(ONE_OFF, { ...ONE_OFF, dueDate: '' } as TaskData)).toBe(true);
 		});
 
 		it('los días son un conjunto: el orden en que se tocaron no cuenta', () => {
-			expect(cambia(SEMANAL, { ...SEMANAL, diasSemana: ['jueves', 'lunes'] } as DatosDeTarea)).toBe(false);
-			const mensual: DatosDeTarea = { forma: 'calendario', titulo: 'Regar', diasSemana: [], diasMes: [1, 15] };
-			expect(cambia(mensual, { ...mensual, diasMes: [15, 1] })).toBe(false);
+			expect(doesChange(WEEKLY, { ...WEEKLY, weekdays: ['jueves', 'lunes'] } as TaskData)).toBe(false);
+			const monthly: TaskData = { shape: 'calendario', title: 'Regar', weekdays: [], monthDays: [1, 15] };
+			expect(doesChange(monthly, { ...monthly, monthDays: [15, 1] })).toBe(false);
 		});
 
 		it('un formulario inválido sin tocar no es un cambio', () => {
-			const sinCada: DatosDeTarea = { ...RELATIVA, cada: Number.NaN } as DatosDeTarea;
-			expect(cambia(sinCada, { ...sinCada })).toBe(false);
+			const withoutEvery: TaskData = { ...RELATIVE, every: Number.NaN } as TaskData;
+			expect(doesChange(withoutEvery, { ...withoutEvery })).toBe(false);
 		});
 	});
 
 	describe('Horario', () => {
 		it('intercambiar dos ventanas no cambia nada: Guardar las ordena', () => {
-			const [primera, segunda] = CON_HORARIOS.horario!;
-			expect(cambia(CON_HORARIOS, { ...CON_HORARIOS, horario: [segunda, primera] })).toBe(false);
+			const [first, second] = WITH_SCHEDULES.schedule!;
+			expect(doesChange(WITH_SCHEDULES, { ...WITH_SCHEDULES, schedule: [second, first] })).toBe(false);
 		});
 
 		it('cambiar una ventana sí', () => {
-			const [primera] = CON_HORARIOS.horario!;
-			expect(cambia(CON_HORARIOS, { ...CON_HORARIOS, horario: [primera, { desde: '12:00', hasta: '15:00' }] })).toBe(true);
+			const [first] = WITH_SCHEDULES.schedule!;
+			expect(doesChange(WITH_SCHEDULES, { ...WITH_SCHEDULES, schedule: [first, { from: '12:00', to: '15:00' }] })).toBe(true);
 		});
 
 		it('una fila vacía cuenta aunque sea inválida', () => {
-			expect(cambia(CON_HORARIOS, { ...CON_HORARIOS, horario: [...CON_HORARIOS.horario!, { desde: '', hasta: '' }] })).toBe(true);
-			expect(cambia(PUNTUAL, { ...PUNTUAL, horario: [{ desde: '', hasta: '' }] })).toBe(true);
+			expect(doesChange(WITH_SCHEDULES, { ...WITH_SCHEDULES, schedule: [...WITH_SCHEDULES.schedule!, { from: '', to: '' }] })).toBe(true);
+			expect(doesChange(ONE_OFF, { ...ONE_OFF, schedule: [{ from: '', to: '' }] })).toBe(true);
 		});
 
 		it('apagar el horario es un cambio; sin ventanas es lo mismo que sin horario', () => {
-			expect(cambia(CON_HORARIOS, { ...CON_HORARIOS, horario: undefined })).toBe(true);
-			expect(cambia(PUNTUAL, { ...PUNTUAL, horario: [] })).toBe(false);
+			expect(doesChange(WITH_SCHEDULES, { ...WITH_SCHEDULES, schedule: undefined })).toBe(true);
+			expect(doesChange(ONE_OFF, { ...ONE_OFF, schedule: [] })).toBe(false);
 		});
 
 		it('varias ventanas en una relativa en horas se miden igual, aunque Guardar las rechace', () => {
-			const enHoras = { forma: 'relativa', titulo: 'Regar', cada: 2, unidad: 'horas', horario: CON_HORARIOS.horario } as DatosDeTarea;
-			expect(cambia(enHoras, { ...enHoras })).toBe(false);
+			const inHours = { shape: 'relativa', title: 'Regar', every: 2, unit: 'horas', schedule: WITH_SCHEDULES.schedule } as TaskData;
+			expect(doesChange(inHours, { ...inHours })).toBe(false);
 		});
 	});
 
 	describe('Etiquetas', () => {
-		const conEtiquetas = (alAbrir: readonly string[], etiquetas: readonly string[]) => hayCambios(abierto(PUNTUAL, alAbrir), { datos: PUNTUAL, etiquetas, sinConfirmar: '' });
+		const withLabels = (onOpen: readonly string[], labels: readonly string[]) => hasChanges(open(ONE_OFF, onOpen), { data: ONE_OFF, labels, unconfirmed: '' });
 
 		it('agregar o quitar una etiqueta es un cambio', () => {
-			expect(conEtiquetas([], ['casa'])).toBe(true);
-			expect(conEtiquetas(['casa'], [])).toBe(true);
-			expect(conEtiquetas(['casa'], ['auto'])).toBe(true);
+			expect(withLabels([], ['casa'])).toBe(true);
+			expect(withLabels(['casa'], [])).toBe(true);
+			expect(withLabels(['casa'], ['auto'])).toBe(true);
 		});
 
 		it('agregarla y quitarla, cambiarlas de orden o de mayúsculas no cambia nada', () => {
-			expect(conEtiquetas(['casa', 'auto'], ['auto', 'casa'])).toBe(false);
-			expect(conEtiquetas(['casa'], ['Casa'])).toBe(false);
+			expect(withLabels(['casa', 'auto'], ['auto', 'casa'])).toBe(false);
+			expect(withLabels(['casa'], ['Casa'])).toBe(false);
 		});
 	});
 
 	describe('Texto sin confirmar en Etiquetas (única excepción)', () => {
 		it('cuenta aunque Guardar no cambie nada por él', () => {
-			expect(cambia(PUNTUAL, PUNTUAL, 'casa')).toBe(true);
-			expect(cambia(PUNTUAL, PUNTUAL, '  casa  ')).toBe(true);
+			expect(doesChange(ONE_OFF, ONE_OFF, 'casa')).toBe(true);
+			expect(doesChange(ONE_OFF, ONE_OFF, '  casa  ')).toBe(true);
 		});
 
 		it('solo espacios no cuenta', () => {
-			expect(cambia(PUNTUAL, PUNTUAL, '   ')).toBe(false);
+			expect(doesChange(ONE_OFF, ONE_OFF, '   ')).toBe(false);
 		});
 	});
 
 	describe('Al crear', () => {
 		it('se mide contra No se repite, la opción que viene elegida (S23, S5)', () => {
-			const intervalo: DatosDeTarea = { ...AL_CREAR, forma: 'relativa', cada: Number.NaN, unidad: 'horas' };
-			expect(cambia(DATOS_AL_CREAR, AL_CREAR)).toBe(false);
-			expect(cambia(DATOS_AL_CREAR, intervalo)).toBe(true);
+			const interval: TaskData = { ...ON_CREATE, shape: 'relativa', every: Number.NaN, unit: 'horas' };
+			expect(doesChange(DATA_ON_CREATE, ON_CREATE)).toBe(false);
+			expect(doesChange(DATA_ON_CREATE, interval)).toBe(true);
 		});
 
 		it('el formulario como se abrió, o con solo espacios, no es un cambio', () => {
-			expect(cambia(AL_CREAR, AL_CREAR)).toBe(false);
-			expect(cambia(AL_CREAR, { ...AL_CREAR, titulo: '   ' })).toBe(false);
-			expect(cambia(AL_CREAR, { ...AL_CREAR, nota: '   ' })).toBe(false);
-			expect(cambia(AL_CREAR, AL_CREAR, '   ')).toBe(false);
+			expect(doesChange(ON_CREATE, ON_CREATE)).toBe(false);
+			expect(doesChange(ON_CREATE, { ...ON_CREATE, title: '   ' })).toBe(false);
+			expect(doesChange(ON_CREATE, { ...ON_CREATE, note: '   ' })).toBe(false);
+			expect(doesChange(ON_CREATE, ON_CREATE, '   ')).toBe(false);
 		});
 
 		it('cargar cualquier campo es un cambio', () => {
-			expect(cambia(AL_CREAR, { ...AL_CREAR, titulo: 'Pagar' })).toBe(true);
-			expect(cambia(AL_CREAR, { ...AL_CREAR, esfuerzo: 'media' })).toBe(true);
-			expect(cambia(AL_CREAR, { ...AL_CREAR, forma: 'relativa', cada: Number.NaN, unidad: 'horas' })).toBe(true);
-			expect(cambia(AL_CREAR, AL_CREAR, 'casa')).toBe(true);
+			expect(doesChange(ON_CREATE, { ...ON_CREATE, title: 'Pagar' })).toBe(true);
+			expect(doesChange(ON_CREATE, { ...ON_CREATE, effort: 'media' })).toBe(true);
+			expect(doesChange(ON_CREATE, { ...ON_CREATE, shape: 'relativa', every: Number.NaN, unit: 'horas' })).toBe(true);
+			expect(doesChange(ON_CREATE, ON_CREATE, 'casa')).toBe(true);
 		});
 	});
 
 	it('se mide contra los valores al abrir, no contra los de otro dispositivo', () => {
-		const remota: Tarea = { id: 't', titulo: 'Pagar luz', nota: 'Luz', tipo: 'puntual', creadaEn: CREADA };
-		expect(cambia(PUNTUAL, datosDeTarea(remota))).toBe(true);
-		expect(cambia(PUNTUAL, PUNTUAL)).toBe(false);
+		const remote: Task = { id: 't', title: 'Pagar luz', note: 'Luz', kind: 'puntual', createdAt: CREATED };
+		expect(doesChange(ONE_OFF, taskData(remote))).toBe(true);
+		expect(doesChange(ONE_OFF, ONE_OFF)).toBe(false);
 	});
 });

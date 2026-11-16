@@ -3,16 +3,16 @@
 // y la barra de Guardar con el teclado en pantalla.
 import { expect } from 'vitest';
 import {
-	PESTANA_AL_ABRIR,
-	barraDeGuardarVisible,
-	destinoAlFallarGuardar,
-	presentacionDelPanel,
-	seccionesDelPanel,
-	seccionesMarcadas,
-	type CampoConError,
-	type ModoDelPanel,
-	type PresentacionDelPanel,
-	type SeccionDelPanel
+	TAB_ON_OPEN,
+	saveBarVisible,
+	destinationOnSaveFailure,
+	panelPresentation,
+	panelSections,
+	markedSections,
+	type FieldWithError,
+	type PanelMode,
+	type PanelPresentation,
+	type PanelSection
 } from '../../src/lib/core/panel-tabs';
 import { P, numero } from './valores';
 import type { StepDefinition, World } from './world';
@@ -20,10 +20,10 @@ import type { StepDefinition, World } from './world';
 /** Lo que el escenario declaró del panel; vive lo que vive su World. */
 interface DeclaradoDelPanel {
 	anchoRem?: number;
-	modo?: ModoDelPanel;
-	camposConError?: CampoConError[];
-	camposDelGuardado?: CampoConError[];
-	tecladoAbierto?: boolean;
+	mode?: PanelMode;
+	camposConError?: FieldWithError[];
+	camposDelGuardado?: FieldWithError[];
+	keyboardOpen?: boolean;
 }
 
 const declarados = new WeakMap<World, DeclaradoDelPanel>();
@@ -46,12 +46,12 @@ function unoDe<T extends string>(permitidos: readonly T[], valor: string, que: s
 	return permitido;
 }
 
-const CAMPOS: readonly CampoConError[] = ['Título', 'Etiquetas', 'fecha límite', 'Cada', 'días', 'horario'];
-const SECCIONES: readonly SeccionDelPanel[] = ['Tarea', 'Cuándo', 'Acciones'];
-const MODOS: readonly ModoDelPanel[] = ['crear', 'editar'];
+const CAMPOS: readonly FieldWithError[] = ['Título', 'Etiquetas', 'fecha límite', 'Cada', 'días', 'horario'];
+const SECCIONES: readonly PanelSection[] = ['Tarea', 'Cuándo', 'Acciones'];
+const MODOS: readonly PanelMode[] = ['crear', 'editar'];
 const FOCOS = ['un campo está enfocado', 'ningún campo está enfocado'] as const;
 
-const PRESENTACIONES: Record<string, PresentacionDelPanel> = { 'en pestañas': 'pestanas', 'en secciones seguidas': 'secciones' };
+const PRESENTACIONES: Record<string, PanelPresentation> = { 'en pestañas': 'pestanas', 'en secciones seguidas': 'secciones' };
 const TECLADOS: Record<string, boolean> = { abierto: true, cerrado: false };
 const BARRAS: Record<string, boolean> = { visible: true, oculta: false };
 
@@ -61,11 +61,11 @@ function deLaTabla<T>(tabla: Record<string, T>, valor: string, que: string): T {
 
 const lista = (valor: string) => valor.split(',').map((parte) => parte.trim());
 
-function camposDe(valor: string): CampoConError[] {
+function camposDe(valor: string): FieldWithError[] {
 	return valor === 'ninguno' ? [] : lista(valor).map((campo) => unoDe(CAMPOS, campo, 'Campo'));
 }
 
-function seccionesDe(valor: string): SeccionDelPanel[] {
+function seccionesDe(valor: string): PanelSection[] {
 	return lista(valor).map((seccion) => unoDe(SECCIONES, seccion, 'Sección'));
 }
 
@@ -77,8 +77,8 @@ function anchoDe(valor: string): number {
 
 function destinoDe(world: World) {
 	const declarado = declaradoDe(world);
-	const presentacion = presentacionDelPanel(declarada(declarado.anchoRem, 'el ancho de la pantalla'));
-	const destino = destinoAlFallarGuardar(declarada(declarado.camposDelGuardado, 'el guardado que falla'), presentacion);
+	const presentacion = panelPresentation(declarada(declarado.anchoRem, 'el ancho de la pantalla'));
+	const destino = destinationOnSaveFailure(declarada(declarado.camposDelGuardado, 'el guardado que falla'), presentacion);
 	return declarada(destino, 'un guardado con errores');
 }
 
@@ -93,26 +93,26 @@ export const panelPestanasSteps: StepDefinition[] = [
 		pattern: new RegExp(`^el panel se presenta ${P}$`),
 		run: (world, presentacion) => {
 			const ancho = declarada(declaradoDe(world).anchoRem, 'el ancho de la pantalla');
-			expect(presentacionDelPanel(ancho)).toBe(deLaTabla(PRESENTACIONES, presentacion, 'Presentación'));
+			expect(panelPresentation(ancho)).toBe(deLaTabla(PRESENTACIONES, presentacion, 'Presentación'));
 		}
 	},
 	{
 		pattern: new RegExp(`^el panel se abre para ${P}$`),
 		run: (world, modo) => {
-			declaradoDe(world).modo = unoDe(MODOS, modo, 'Modo');
+			declaradoDe(world).mode = unoDe(MODOS, modo, 'Modo');
 		}
 	},
 	{
 		pattern: new RegExp(`^el panel ofrece las secciones ${P}$`),
 		run: (world, secciones) => {
-			expect(seccionesDelPanel(declarada(declaradoDe(world).modo, 'el modo del panel'))).toEqual(seccionesDe(secciones));
+			expect(panelSections(declarada(declaradoDe(world).mode, 'el modo del panel'))).toEqual(seccionesDe(secciones));
 		}
 	},
 	{
 		pattern: new RegExp(`^la pestaña abierta es ${P}$`),
 		run: (world, abierta) => {
-			declarada(declaradoDe(world).modo, 'el modo del panel');
-			expect(PESTANA_AL_ABRIR).toBe(unoDe(SECCIONES, abierta, 'Sección'));
+			declarada(declaradoDe(world).mode, 'el modo del panel');
+			expect(TAB_ON_OPEN).toBe(unoDe(SECCIONES, abierta, 'Sección'));
 		}
 	},
 	{
@@ -125,7 +125,7 @@ export const panelPestanasSteps: StepDefinition[] = [
 		pattern: new RegExp(`^las secciones marcadas son ${P}$`),
 		run: (world, marcadas) => {
 			const esperadas = marcadas === 'ninguna' ? [] : seccionesDe(marcadas);
-			expect(seccionesMarcadas(declarada(declaradoDe(world).camposConError, 'los campos con error'))).toEqual(esperadas);
+			expect(markedSections(declarada(declaradoDe(world).camposConError, 'los campos con error'))).toEqual(esperadas);
 		}
 	},
 	{
@@ -138,19 +138,19 @@ export const panelPestanasSteps: StepDefinition[] = [
 		pattern: new RegExp(`^el panel salta a la pestaña ${P}$`),
 		run: (world, pestana) => {
 			const esperada = pestana === 'ninguna' ? undefined : unoDe(SECCIONES, pestana, 'Sección');
-			expect(destinoDe(world).pestana).toBe(esperada);
+			expect(destinoDe(world).tab).toBe(esperada);
 		}
 	},
 	{
 		pattern: new RegExp(`^el contenido se desplaza hasta el campo ${P}$`),
 		run: (world, campo) => {
-			expect(destinoDe(world).campo).toBe(unoDe(CAMPOS, campo, 'Campo'));
+			expect(destinoDe(world).field).toBe(unoDe(CAMPOS, campo, 'Campo'));
 		}
 	},
 	{
 		pattern: new RegExp(`^el teclado en pantalla está ${P}$`),
 		run: (world, teclado) => {
-			declaradoDe(world).tecladoAbierto = deLaTabla(TECLADOS, teclado, 'Teclado');
+			declaradoDe(world).keyboardOpen = deLaTabla(TECLADOS, teclado, 'Teclado');
 		}
 	},
 	{
@@ -163,8 +163,8 @@ export const panelPestanasSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^la barra de Guardar está ${P}$`),
 		run: (world, barra) => {
-			const tecladoAbierto = declarada(declaradoDe(world).tecladoAbierto, 'el teclado en pantalla');
-			expect(barraDeGuardarVisible(tecladoAbierto)).toBe(deLaTabla(BARRAS, barra, 'Barra'));
+			const tecladoAbierto = declarada(declaradoDe(world).keyboardOpen, 'el teclado en pantalla');
+			expect(saveBarVisible(tecladoAbierto)).toBe(deLaTabla(BARRAS, barra, 'Barra'));
 		}
 	}
 ];

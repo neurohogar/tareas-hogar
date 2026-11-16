@@ -1,41 +1,41 @@
 import { describe, expect, it } from 'vitest';
-import type { Etiqueta } from './label';
-import { filtrarPorEtiqueta, filtroVigente } from './label-filter';
-import type { FilaDePendientes } from './pending';
-import type { Tarea } from './task';
+import type { Label } from './label';
+import { filterByLabel, activeFilter } from './label-filter';
+import type { PendingRow } from './pending';
+import type { Task } from './task';
 
-const COCINA: Etiqueta = { id: 'e1', nombre: 'Cocina', color: 'rojo' };
-const BANO: Etiqueta = { id: 'e2', nombre: 'Baño', color: 'gris' };
+const KITCHEN: Label = { id: 'e1', name: 'Cocina', color: 'rojo' };
+const BATHROOM: Label = { id: 'e2', name: 'Baño', color: 'gris' };
 
-const fila = (id: string, etiquetas?: string[]): FilaDePendientes => ({
-	tarea: { id, titulo: id, tipo: 'puntual', creadaEn: new Date(2026, 6, 1), ...(etiquetas && { etiquetas }) } as Tarea,
-	estado: { tipo: 'pendiente' },
-	completada: false
+const row = (id: string, labels?: string[]): PendingRow => ({
+	task: { id, title: id, kind: 'puntual', createdAt: new Date(2026, 6, 1), ...(labels && { labels }) } as Task,
+	status: { kind: 'pendiente' },
+	completed: false
 });
 
 describe('filtroVigente', () => {
 	it('"Todas" (sin etiqueta) sigue en "Todas"', () => {
-		expect(filtroVigente(undefined, [COCINA])).toBeUndefined();
+		expect(activeFilter(undefined, [KITCHEN])).toBeUndefined();
 	});
 
 	it('una etiqueta que existe sigue elegida', () => {
-		expect(filtroVigente('e1', [COCINA, BANO])).toBe('e1');
+		expect(activeFilter('e1', [KITCHEN, BATHROOM])).toBe('e1');
 	});
 
 	it('si la etiqueta elegida ya no existe, vuelve a "Todas"', () => {
-		expect(filtroVigente('e1', [BANO])).toBeUndefined();
+		expect(activeFilter('e1', [BATHROOM])).toBeUndefined();
 	});
 });
 
 describe('filtrarPorEtiqueta', () => {
-	const filas = [fila('pagar', ['e1', 'e2']), fila('basura', ['e2']), fila('regar'), fila('lavar', ['e1'])];
+	const rows = [row('pagar', ['e1', 'e2']), row('basura', ['e2']), row('regar'), row('lavar', ['e1'])];
 
 	it('"Todas" deja la lista entera', () => {
-		expect(filtrarPorEtiqueta(filas, undefined)).toStrictEqual(filas);
+		expect(filterByLabel(rows, undefined)).toStrictEqual(rows);
 	});
 
 	it('una etiqueta deja solo las tareas que la tienen, en el mismo orden', () => {
-		expect(filtrarPorEtiqueta(filas, 'e1')).toStrictEqual([filas[0], filas[3]]);
-		expect(filtrarPorEtiqueta(filas, 'e2')).toStrictEqual([filas[0], filas[1]]);
+		expect(filterByLabel(rows, 'e1')).toStrictEqual([rows[0], rows[3]]);
+		expect(filterByLabel(rows, 'e2')).toStrictEqual([rows[0], rows[1]]);
 	});
 });

@@ -1,6 +1,6 @@
 // Última vez del panel de edición (spec §6.2).
 import { expect } from 'vitest';
-import { ultimaVez } from '../../src/lib/core/last-time';
+import { lastTime } from '../../src/lib/core/last-time';
 import { P, fechaHora } from './valores';
 import { laTarea, type StepDefinition } from './world';
 
@@ -8,7 +8,7 @@ export const ultimaVezSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^consulto la última vez el ${P}$`),
 		run: (world, ahora) => {
-			world.ultimaVez = ultimaVez(laTarea(world).id, world.completados, fechaHora(ahora));
+			world.ultimaVez = lastTime(laTarea(world).id, world.completions, fechaHora(ahora));
 		}
 	},
 	{

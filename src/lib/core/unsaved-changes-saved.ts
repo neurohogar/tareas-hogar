@@ -1,30 +1,30 @@
 // Spec §6.2 (Cambios sin guardar): Guardar con texto sin confirmar en Etiquetas.
 // Guardar no crea esa etiqueta, pero un nombre inválido lo hace fallar.
-import type { FormularioDelPanel } from './unsaved-changes';
-import type { ErroresDeCreacion } from './creation';
-import { validarNombre, type ErrorDeNombre } from './label';
-import { crearConEtiquetas, editarConEtiquetas, type CreacionConEtiquetas, type EdicionConEtiquetas, type EtiquetasAlGuardar } from './save-with-labels';
-import type { Tarea } from './task';
+import type { PanelForm } from './unsaved-changes';
+import type { CreationErrors } from './creation';
+import { validateName, type NameError } from './label';
+import { createWithLabels, editWithLabels, type CreationWithLabels, type EditingWithLabels, type LabelsOnSave } from './save-with-labels';
+import type { Task } from './task';
 
 /** Spec §6.2 y §4.3: el nombre inválido escrito sin confirmar; vacío o solo espacios no es un nombre. */
-function errorDeSinConfirmar(sinConfirmar: string): ErrorDeNombre | undefined {
-	const validado = validarNombre(sinConfirmar);
-	return validado.ok || validado.error === 'vacio' ? undefined : validado.error;
+function unconfirmedError(unconfirmed: string): NameError | undefined {
+	const validated = validateName(unconfirmed);
+	return validated.ok || validated.error === 'vacio' ? undefined : validated.error;
 }
 
 /** El resultado de Guardar, o el rechazo que suma el error del texto sin confirmar. */
-function conSinConfirmar<R extends CreacionConEtiquetas | EdicionConEtiquetas>(resultado: R, sinConfirmar: string): R | { ok: false; errores: ErroresDeCreacion } {
-	const etiquetas = errorDeSinConfirmar(sinConfirmar);
-	if (!etiquetas) return resultado;
-	return { ok: false, errores: { ...(!resultado.ok && resultado.errores), etiquetas } };
+function withUnconfirmed<R extends CreationWithLabels | EditingWithLabels>(result: R, unconfirmed: string): R | { ok: false; errors: CreationErrors } {
+	const labels = unconfirmedError(unconfirmed);
+	if (!labels) return result;
+	return { ok: false, errors: { ...(!result.ok && result.errors), labels } };
 }
 
 /** Spec §6.2: Guardar al editar, desde el panel o un aviso; `ahora` es el momento de guardar. */
-export function editarDesdePanel(tarea: Tarea, { datos, etiquetas, sinConfirmar }: FormularioDelPanel, alGuardar: EtiquetasAlGuardar, ahora: Date): EdicionConEtiquetas {
-	return conSinConfirmar(editarConEtiquetas(tarea, datos, [...etiquetas], alGuardar, ahora), sinConfirmar);
+export function editFromPanel(task: Task, { data, labels, unconfirmed }: PanelForm, onSave: LabelsOnSave, now: Date): EditingWithLabels {
+	return withUnconfirmed(editWithLabels(task, data, [...labels], onSave, now), unconfirmed);
 }
 
 /** Spec §6.2: Guardar al crear, desde el panel o el aviso de cierre. */
-export function crearDesdePanel({ datos, etiquetas, sinConfirmar }: FormularioDelPanel, id: string, ahora: Date, alGuardar: EtiquetasAlGuardar): CreacionConEtiquetas {
-	return conSinConfirmar(crearConEtiquetas(datos, [...etiquetas], id, ahora, alGuardar), sinConfirmar);
+export function createFromPanel({ data, labels, unconfirmed }: PanelForm, id: string, now: Date, onSave: LabelsOnSave): CreationWithLabels {
+	return withUnconfirmed(createWithLabels(data, [...labels], id, now, onSave), unconfirmed);
 }

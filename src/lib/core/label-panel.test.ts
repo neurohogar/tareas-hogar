@@ -1,67 +1,67 @@
 import { describe, expect, it } from 'vitest';
-import type { Etiqueta } from './label';
-import { agregarEscrita, quitarElegida, sugerencias } from './label-panel';
+import type { Label } from './label';
+import { addTyped, removeChosen, suggestions } from './label-panel';
 
-const BANO: Etiqueta = { id: 'e1', nombre: 'Baño', color: 'gris' };
-const COCINA: Etiqueta = { id: 'e2', nombre: 'Cocina', color: 'rojo' };
-const ROPA: Etiqueta = { id: 'e3', nombre: 'Ropa sucia', color: 'naranja' };
-const EXISTENTES = [ROPA, COCINA, BANO];
+const BATHROOM: Label = { id: 'e1', name: 'Baño', color: 'gris' };
+const KITCHEN: Label = { id: 'e2', name: 'Cocina', color: 'rojo' };
+const CLOTHES: Label = { id: 'e3', name: 'Ropa sucia', color: 'naranja' };
+const EXISTING = [CLOTHES, KITCHEN, BATHROOM];
 
 describe('sugerencias', () => {
 	it('las existentes que contienen lo escrito, en orden alfabético, y crear lo escrito', () => {
-		expect(sugerencias('a', EXISTENTES, [])).toStrictEqual({ etiquetas: [BANO, COCINA, ROPA], crear: 'a' });
+		expect(suggestions('a', EXISTING, [])).toStrictEqual({ labels: [BATHROOM, KITCHEN, CLOTHES], create: 'a' });
 	});
 
 	it('sin distinguir mayúsculas ni acentos: BANO sugiere Baño, y ofrece crear porque no coincide exactamente', () => {
-		expect(sugerencias('BANO', EXISTENTES, [])).toStrictEqual({ etiquetas: [BANO], crear: 'BANO' });
+		expect(suggestions('BANO', EXISTING, [])).toStrictEqual({ labels: [BATHROOM], create: 'BANO' });
 	});
 
 	it('si una existente se llama así (sin distinguir mayúsculas), no ofrece crear', () => {
-		expect(sugerencias('cocina', EXISTENTES, [])).toStrictEqual({ etiquetas: [COCINA] });
+		expect(suggestions('cocina', EXISTING, [])).toStrictEqual({ labels: [KITCHEN] });
 	});
 
 	it('no sugiere las que la tarea ya tiene', () => {
-		expect(sugerencias('co', EXISTENTES, ['cocina'])).toStrictEqual({ etiquetas: [], crear: 'co' });
+		expect(suggestions('co', EXISTING, ['cocina'])).toStrictEqual({ labels: [], create: 'co' });
 	});
 
 	it('quita los espacios de los extremos de lo escrito', () => {
-		expect(sugerencias('  Sucia ', EXISTENTES, [])).toStrictEqual({ etiquetas: [ROPA], crear: 'Sucia' });
+		expect(suggestions('  Sucia ', EXISTING, [])).toStrictEqual({ labels: [CLOTHES], create: 'Sucia' });
 	});
 
 	it('vacío o solo espacios no sugiere nada ni ofrece crear', () => {
-		expect(sugerencias('   ', EXISTENTES, [])).toStrictEqual({ etiquetas: [] });
+		expect(suggestions('   ', EXISTING, [])).toStrictEqual({ labels: [] });
 	});
 });
 
 describe('agregarEscrita', () => {
 	it('una existente se agrega con su nombre guardado', () => {
-		expect(agregarEscrita('cocina', EXISTENTES, ['Baño'])).toStrictEqual({ ok: true, nombres: ['Baño', 'Cocina'] });
+		expect(addTyped('cocina', EXISTING, ['Baño'])).toStrictEqual({ ok: true, names: ['Baño', 'Cocina'] });
 	});
 
 	it('un nombre nuevo se agrega sin los espacios de los extremos', () => {
-		expect(agregarEscrita('  Patio ', EXISTENTES, [])).toStrictEqual({ ok: true, nombres: ['Patio'] });
+		expect(addTyped('  Patio ', EXISTING, [])).toStrictEqual({ ok: true, names: ['Patio'] });
 	});
 
 	it('una que la tarea ya tiene no se agrega dos veces', () => {
-		expect(agregarEscrita('COCINA', EXISTENTES, ['Cocina'])).toStrictEqual({ ok: true, nombres: ['Cocina'] });
-		expect(agregarEscrita('patio', EXISTENTES, ['Patio'])).toStrictEqual({ ok: true, nombres: ['Patio'] });
+		expect(addTyped('COCINA', EXISTING, ['Cocina'])).toStrictEqual({ ok: true, names: ['Cocina'] });
+		expect(addTyped('patio', EXISTING, ['Patio'])).toStrictEqual({ ok: true, names: ['Patio'] });
 	});
 
 	it('un nombre demasiado largo no se agrega', () => {
-		expect(agregarEscrita('x'.repeat(31), EXISTENTES, ['Baño'])).toStrictEqual({ ok: false, error: 'largo' });
+		expect(addTyped('x'.repeat(31), EXISTING, ['Baño'])).toStrictEqual({ ok: false, error: 'largo' });
 	});
 
 	it('vacío o solo espacios no agrega nada, sin error', () => {
-		expect(agregarEscrita('  ', EXISTENTES, ['Baño'])).toStrictEqual({ ok: true, nombres: ['Baño'] });
+		expect(addTyped('  ', EXISTING, ['Baño'])).toStrictEqual({ ok: true, names: ['Baño'] });
 	});
 });
 
 describe('quitarElegida', () => {
 	it('quita el nombre sin distinguir mayúsculas y deja los otros en su orden', () => {
-		expect(quitarElegida('Cocina', ['Baño', 'cocina', 'Patio'])).toStrictEqual(['Baño', 'Patio']);
+		expect(removeChosen('Cocina', ['Baño', 'cocina', 'Patio'])).toStrictEqual(['Baño', 'Patio']);
 	});
 
 	it('un nombre que no está no cambia nada', () => {
-		expect(quitarElegida('Cocina', ['Baño'])).toStrictEqual(['Baño']);
+		expect(removeChosen('Cocina', ['Baño'])).toStrictEqual(['Baño']);
 	});
 });

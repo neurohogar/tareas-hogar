@@ -1,22 +1,22 @@
-import { camposDeEsfuerzo } from './effort';
-import { leerEmoji, type LecturaDeEmoji } from './emoji';
-import type { ErrorDeNombre } from './label';
-import { leerHorario, type ErrorDeHorario, type HorarioEscrito, type LecturaDeHorario } from './schedule';
-import { camposDeTexto } from './text-fields';
-import { recortarTexto } from './free-text';
-import { normalizarPasos } from './steps';
-import type { Esfuerzo, Recurrencia, Tarea, TareaPeriodica } from './task';
+import { effortFields } from './effort';
+import { readEmoji, type EmojiReading } from './emoji';
+import type { NameError } from './label';
+import { readSchedule, type ScheduleError, type TypedSchedule, type ScheduleReading } from './schedule';
+import { textFields } from './text-fields';
+import { trimText } from './free-text';
+import { normalizeSteps } from './steps';
+import type { Effort, Recurrence, Task, RecurringTask } from './task';
 
 /** Un motivo de rechazo por regla de validación (spec §4.1 y §4.2). */
-export interface ErroresDeCreacion {
-	titulo?: 'vacio';
+export interface CreationErrors {
+	title?: 'vacio';
 	emoji?: 'invalido';
-	cada?: 'invalido';
-	dias?: 'faltan' | 'diaDelMesInvalido' | 'combinados';
-	fechaLimite?: 'invalida';
-	horario?: ErrorDeHorario;
+	every?: 'invalido';
+	days?: 'faltan' | 'diaDelMesInvalido' | 'combinados';
+	dueDate?: 'invalida';
+	schedule?: ScheduleError;
 	/** Un nombre de etiqueta escrito en el panel (§4.3). */
-	etiquetas?: ErrorDeNombre;
+	labels?: NameError;
 }
 
 /**
@@ -24,45 +24,45 @@ export interface ErroresDeCreacion {
  * horario es el que solo depende del tipo (§4.1: varias ventanas en una
  * relativa en horas); uno del horario mismo tiene prioridad.
  */
-type ErroresDelTipo = Omit<ErroresDeCreacion, 'titulo' | 'emoji' | 'etiquetas'>;
-export type ErroresDeRecurrencia = Omit<ErroresDelTipo, 'fechaLimite'>;
+type KindErrors = Omit<CreationErrors, 'title' | 'emoji' | 'labels'>;
+export type RecurrenceErrors = Omit<KindErrors, 'dueDate'>;
 
-const camposDeEmoji = (lectura: LecturaDeEmoji) => (lectura.ok && lectura.emoji !== undefined ? { emoji: lectura.emoji } : {});
+const emojiFields = (reading: EmojiReading) => (reading.ok && reading.emoji !== undefined ? { emoji: reading.emoji } : {});
 
-const camposDeHorario = (lectura: LecturaDeHorario) => (lectura.ok && lectura.horario ? { horario: lectura.horario } : {});
+const scheduleFields = (reading: ScheduleReading) => (reading.ok && reading.schedule ? { schedule: reading.schedule } : {});
 
 /** Spec §4.1: la nota y la versión mínima se recortan; vacías o solo espacios son sin el campo. */
-const camposDeTextoLibre = (nota: string, versionMinima: string) => camposDeTexto({ nota: recortarTexto(nota), versionMinima: recortarTexto(versionMinima) });
+const freeTextFields = (note: string, minimalVersion: string) => textFields({ note: trimText(note), minimalVersion: trimText(minimalVersion) });
 
 /** Lo que distingue a un tipo de tarea, sin lo común (id, título, creadaEn). */
-type DatosDelTipo<T extends Tarea> = Omit<T, 'id' | 'titulo' | 'emoji' | 'nota' | 'primerPaso' | 'pasos' | 'versionMinima' | 'esfuerzo' | 'horario' | 'creadaEn' | 'etiquetas'>;
+type KindData<T extends Task> = Omit<T, 'id' | 'title' | 'emoji' | 'note' | 'firstStep' | 'steps' | 'minimalVersion' | 'effort' | 'schedule' | 'createdAt' | 'labels'>;
 
-export type ResultadoDeCreacion<T extends Tarea = Tarea> =
-	| { ok: true; tarea: T }
-	| { ok: false; errores: ErroresDeCreacion };
+export type CreationResult<T extends Task = Task> =
+	| { ok: true; task: T }
+	| { ok: false; errors: CreationErrors };
 
 /** Lo que escribe el panel en los campos comunes a todo tipo de tarea. */
-export interface DatosComunes {
-	titulo: string;
+export interface CommonData {
+	title: string;
 	/** Tal como se escribió: leerEmoji lo valida (§4.1). */
 	emoji?: string;
 	/** Tal como se escribió: recortarTexto lo recorta (§4.1). */
-	nota?: string;
+	note?: string;
 	/** Tal como se escribió: normalizarPasos lo recorta junto con los pasos más (§4.1). */
-	primerPaso?: string;
+	firstStep?: string;
 	/** Los pasos 2 en adelante, tal como se escribieron, vacíos incluidos (§4.1, Pasos). */
-	pasos?: readonly string[];
+	steps?: readonly string[];
 	/** Tal como se escribió: recortarTexto lo recorta (§4.1, Versión mínima). */
-	versionMinima?: string;
+	minimalVersion?: string;
 	/** Tal como se escribió; sin él, la tarea no tiene horario. leerHorario lo valida (§4.1). */
-	horario?: HorarioEscrito;
+	schedule?: TypedSchedule;
 	/** Sin él, la tarea queda sin estimar (§4.1). */
-	esfuerzo?: Esfuerzo;
+	effort?: Effort;
 }
 
-interface Alta extends DatosComunes {
+interface High extends CommonData {
 	id: string;
-	ahora: Date;
+	now: Date;
 }
 
 /**
@@ -71,30 +71,30 @@ interface Alta extends DatosComunes {
  * Junta esos errores con los del tipo; si no hay ninguno, crea la
  * tarea con lo que arma `datosDelTipo`.
  */
-export function crearTarea<T extends Tarea>(
-	{ titulo, emoji = '', nota = '', primerPaso, pasos, versionMinima = '', horario, esfuerzo, id, ahora }: Alta,
-	erroresDelTipo: ErroresDelTipo,
-	datosDelTipo: () => DatosDelTipo<T>
-): ResultadoDeCreacion<T> {
-	const guardado = titulo.trim();
-	const lectura = leerEmoji(emoji);
-	const horarioLeido = leerHorario(horario);
-	const errores: ErroresDeCreacion = {
-		...(guardado === '' && { titulo: 'vacio' as const }),
-		...(!lectura.ok && { emoji: 'invalido' as const }),
-		...erroresDelTipo,
-		...(!horarioLeido.ok && { horario: horarioLeido.error })
+export function createTask<T extends Task>(
+	{ title, emoji = '', note = '', firstStep, steps, minimalVersion = '', schedule, effort, id, now }: High,
+	kindErrors: KindErrors,
+	kindData: () => KindData<T>
+): CreationResult<T> {
+	const savedValue = title.trim();
+	const reading = readEmoji(emoji);
+	const scheduleRead = readSchedule(schedule);
+	const errors: CreationErrors = {
+		...(savedValue === '' && { title: 'vacio' as const }),
+		...(!reading.ok && { emoji: 'invalido' as const }),
+		...kindErrors,
+		...(!scheduleRead.ok && { schedule: scheduleRead.error })
 	};
-	if (Object.keys(errores).length > 0) return { ok: false, errores };
-	const campos = { ...camposDeEmoji(lectura), ...camposDeTextoLibre(nota, versionMinima), ...normalizarPasos(primerPaso, pasos), ...camposDeHorario(horarioLeido), ...camposDeEsfuerzo(esfuerzo) };
+	if (Object.keys(errors).length > 0) return { ok: false, errors };
+	const fields = { ...emojiFields(reading), ...freeTextFields(note, minimalVersion), ...normalizeSteps(firstStep, steps), ...scheduleFields(scheduleRead), ...effortFields(effort) };
 	// TypeScript no reconstruye T a partir de Omit<T, …> y las claves omitidas.
-	return { ok: true, tarea: { id, titulo: guardado, ...campos, ...datosDelTipo(), creadaEn: ahora } as T };
+	return { ok: true, task: { id, title: savedValue, ...fields, ...kindData(), createdAt: now } as T };
 }
 
-export function crearPeriodica(
-	alta: Alta,
-	erroresDeRecurrencia: ErroresDeRecurrencia,
-	recurrencia: () => Recurrencia
-): ResultadoDeCreacion<TareaPeriodica> {
-	return crearTarea<TareaPeriodica>(alta, erroresDeRecurrencia, () => ({ tipo: 'periodica', recurrencia: recurrencia() }));
+export function createRecurring(
+	high: High,
+	recurrenceErrors: RecurrenceErrors,
+	recurrence: () => Recurrence
+): CreationResult<RecurringTask> {
+	return createTask<RecurringTask>(high, recurrenceErrors, () => ({ kind: 'periodica', recurrence: recurrence() }));
 }

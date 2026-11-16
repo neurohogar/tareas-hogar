@@ -1,119 +1,119 @@
 // Modelo de dominio (spec §4). Solo lo que usa la rebanada actual.
 
-export type Unidad = 'horas' | 'dias';
+export type Unit = 'horas' | 'dias';
 
 /** Spec §4.1: rápida (≤ 5 min), media (≈ 15 min) o larga. */
-export type Esfuerzo = 'rapida' | 'media' | 'larga';
+export type Effort = 'rapida' | 'media' | 'larga';
 
-export interface RecurrenciaRelativa {
-	modo: 'relativo';
-	cada: number;
-	unidad: Unidad;
+export interface RelativeRecurrence {
+	mode: 'relativo';
+	every: number;
+	unit: Unit;
 }
 
 /** De lunes a domingo, en el orden de la semana. */
-export const DIAS_DE_LA_SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'] as const;
+export const WEEKDAYS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'] as const;
 
-export type DiaSemana = (typeof DIAS_DE_LA_SEMANA)[number];
+export type Weekday = (typeof WEEKDAYS)[number];
 
 /** Spec §4.2: al menos un día de la semana, sin repetir, en el orden de la semana. */
-export interface RecurrenciaSemanal {
-	modo: 'calendario';
-	diasSemana: DiaSemana[];
+export interface WeeklyRecurrence {
+	mode: 'calendario';
+	weekdays: Weekday[];
 }
 
 /** Los días del mes que se pueden elegir (spec §4.2), de menor a mayor. */
-export const DIAS_DEL_MES: readonly number[] = Array.from({ length: 31 }, (_, indice) => indice + 1);
+export const MONTH_DAYS: readonly number[] = Array.from({ length: 31 }, (_, index) => index + 1);
 
 /** Spec §4.2: al menos un día del mes (1..31), sin repetir, de menor a mayor. */
-export interface RecurrenciaMensual {
-	modo: 'calendario';
-	diasMes: number[];
+export interface MonthlyRecurrence {
+	mode: 'calendario';
+	monthDays: number[];
 }
 
-export type RecurrenciaCalendario = RecurrenciaSemanal | RecurrenciaMensual;
+export type CalendarRecurrence = WeeklyRecurrence | MonthlyRecurrence;
 
-export type Recurrencia = RecurrenciaRelativa | RecurrenciaCalendario;
+export type Recurrence = RelativeRecurrence | CalendarRecurrence;
 
 /** Spec §4.1: una ventana diaria [desde, hasta) en la que se puede completar; horas locales "HH:MM", desde < hasta. */
-export interface Ventana {
-	desde: string;
-	hasta: string;
+export interface TimeWindow {
+	from: string;
+	to: string;
 }
 
 /** Spec §4.1: una o más ventanas, ordenadas por desde y sin superponerse. */
-export type Horario = Ventana[];
+export type Schedule = TimeWindow[];
 
 /** Spec §4.1 y §5.9: un solo campo; sin él, la tarea no está pospuesta. */
-export interface Posposicion {
-	desde: Date;
-	hasta: Date;
+export interface Postponement {
+	from: Date;
+	to: Date;
 }
 
-export interface TareaPeriodica {
+export interface RecurringTask {
 	id: string;
-	titulo: string;
+	title: string;
 	/** Spec §4.1: un solo emoji; sin el campo, la tarea no tiene emoji. */
 	emoji?: string;
 	/** Spec §4.1: texto libre, ya recortado; sin el campo, la tarea no tiene nota. */
-	nota?: string;
+	note?: string;
 	/** Spec §4.1: una línea, ya recortada; sin el campo, la tarea no tiene primer paso. */
-	primerPaso?: string;
+	firstStep?: string;
 	/** Spec §4.1 (Pasos): los pasos 2 en adelante, ya recortados y sin vacíos; sin el campo, no hay más pasos. */
-	pasos?: string[];
+	steps?: string[];
 	/** Spec §4.1 (Pasos): el número del paso en que va la tarea; sin el campo, el paso 1. */
-	pasoActual?: number;
+	currentStep?: number;
 	/** Spec §4.1 (Versión mínima): una línea, ya recortada; sin el campo, la tarea no tiene versión mínima. */
-	versionMinima?: string;
+	minimalVersion?: string;
 	/** Spec §4.1: sin el campo, sin estimar. */
-	esfuerzo?: Esfuerzo;
+	effort?: Effort;
 	/** Spec §4.1: ids de etiqueta, sin repetir; sin el campo, ninguna. */
-	etiquetas?: string[];
-	tipo: 'periodica';
-	recurrencia: Recurrencia;
+	labels?: string[];
+	kind: 'periodica';
+	recurrence: Recurrence;
 	/** Spec §4.1 y §5.5: sin el campo, se puede completar a cualquier hora. */
-	horario?: Horario;
-	creadaEn: Date;
+	schedule?: Schedule;
+	createdAt: Date;
 	/** Spec §4.1 y §5.8: sin el campo (o en false), no está pausada. */
-	pausada?: boolean;
+	paused?: boolean;
 	/** Spec §4.1 y §5.8: la última vez que se reanudó; desde ahí se evalúa como recién creada. */
-	reanudadaEn?: Date;
-	pospuesta?: Posposicion;
+	resumedAt?: Date;
+	postponed?: Postponement;
 }
 
 /** Spec §4.1: se hace una sola vez; la fecha límite es un día, a las 00:00 locales. */
-export interface TareaPuntual {
+export interface OneOffTask {
 	id: string;
-	titulo: string;
+	title: string;
 	/** Spec §4.1: un solo emoji; sin el campo, la tarea no tiene emoji. */
 	emoji?: string;
 	/** Spec §4.1: texto libre, ya recortado; sin el campo, la tarea no tiene nota. */
-	nota?: string;
+	note?: string;
 	/** Spec §4.1: una línea, ya recortada; sin el campo, la tarea no tiene primer paso. */
-	primerPaso?: string;
+	firstStep?: string;
 	/** Spec §4.1 (Pasos): los pasos 2 en adelante, ya recortados y sin vacíos; sin el campo, no hay más pasos. */
-	pasos?: string[];
+	steps?: string[];
 	/** Spec §4.1 (Pasos): el número del paso en que va la tarea; sin el campo, el paso 1. */
-	pasoActual?: number;
+	currentStep?: number;
 	/** Spec §4.1 (Versión mínima): una línea, ya recortada; sin el campo, la tarea no tiene versión mínima. */
-	versionMinima?: string;
+	minimalVersion?: string;
 	/** Spec §4.1: sin el campo, sin estimar. */
-	esfuerzo?: Esfuerzo;
+	effort?: Effort;
 	/** Spec §4.1: ids de etiqueta, sin repetir; sin el campo, ninguna. */
-	etiquetas?: string[];
-	tipo: 'puntual';
-	fechaLimite?: Date;
+	labels?: string[];
+	kind: 'puntual';
+	dueDate?: Date;
 	/** Spec §4.1 y §5.5: sin el campo, se puede completar a cualquier hora. */
-	horario?: Horario;
-	creadaEn: Date;
-	pospuesta?: Posposicion;
+	schedule?: Schedule;
+	createdAt: Date;
+	postponed?: Postponement;
 }
 
-export type Tarea = TareaPeriodica | TareaPuntual;
+export type Task = RecurringTask | OneOffTask;
 
 /** Spec §4.4: una ocurrencia con horario, identificada por su inicio (el día a la hora desde de su ventana). */
-export interface InicioDeOcurrencia {
-	inicio: Date;
+export interface OccurrenceStart {
+	start: Date;
 }
 
 /**
@@ -121,21 +121,21 @@ export interface InicioDeOcurrencia {
  * varios horarios) o el inicio de una ocurrencia con horario. Son formatos
  * distintos: una ventana que empieza a las 00:00 no se confunde con una fecha.
  */
-export type OcurrenciaCubierta = Date | InicioDeOcurrencia;
+export type CoveredOccurrence = Date | OccurrenceStart;
 
-export interface Completado {
+export interface Completion {
 	id: string;
-	tareaId: string;
-	completadoEn: Date;
+	taskId: string;
+	completedAt: Date;
 	/** En modo calendario (§5.3, §5.6) y en relativas con varias ventanas (§5.7). */
-	ocurrenciaCubierta?: OcurrenciaCubierta;
+	coveredOccurrence?: CoveredOccurrence;
 	/** Spec §4.4: el paso en que iba la tarea al completarla; solo en tareas de dos pasos o más. */
-	pasoAlCompletar?: number;
+	stepAtCompletion?: number;
 	/** Spec §4.4: true si fue «Hice la mínima»; sin el campo, el completado fue entero. Se fija al completar. */
-	fueMinima?: boolean;
+	wasMinimal?: boolean;
 }
 
 /** Spec §4.1: los ids de etiqueta de la tarea; sin el campo, ninguna. */
-export const idsDeEtiquetas = ({ etiquetas = [] }: Tarea): readonly string[] => etiquetas;
+export const labelIds = ({ labels = [] }: Task): readonly string[] => labels;
 
-export const tieneEtiqueta = (tarea: Tarea, etiquetaId: string): boolean => idsDeEtiquetas(tarea).includes(etiquetaId);
+export const hasLabel = (task: Task, labelId: string): boolean => labelIds(task).includes(labelId);

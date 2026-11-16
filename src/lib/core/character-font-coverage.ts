@@ -5,26 +5,26 @@
 // - Noto: @fontsource/noto-color-emoji 5.3.2 (Noto Color Emoji 2.057), todos sus subconjuntos.
 
 /** Los puntos de código que una fuente puede dibujar. */
-export type Cobertura = ReadonlySet<number>;
+export type Coverage = ReadonlySet<number>;
 
 /** Lee rangos en hexadecimal ("20-7e 102"): cada uno es un punto de código o un intervalo cerrado. */
-function coberturaDe(lineas: string[]): Cobertura {
-	const cobertura = new Set<number>();
-	for (const rango of lineas.join(' ').split(' ')) {
-		const [desde, hasta = desde] = rango.split('-').map((hexa) => Number.parseInt(hexa, 16));
-		for (let punto = desde; punto <= hasta; punto++) cobertura.add(punto);
+function coverageOf(lines: string[]): Coverage {
+	const coverage = new Set<number>();
+	for (const range of lines.join(' ').split(' ')) {
+		const [from, to = from] = range.split('-').map((hex) => Number.parseInt(hex, 16));
+		for (let point = from; point <= to; point++) coverage.add(point);
 	}
-	return cobertura;
+	return coverage;
 }
 
-export const COBERTURA_DE_ATKINSON: Cobertura = coberturaDe([
+export const ATKINSON_COVERAGE: Coverage = coverageOf([
 	'20-7e a0-ac ae-b4 b6-107 10a-113 116-11b 11e-123 126-127 12a-12b 12e-133 136-137 139-13e',
 	'141-148 150-155 158-15b 15e-165 16a-16b 16e-17e 192 218-21b 237 2c6-2c7 2c9 2da 2dc-2dd',
 	'300-301 303-304 308 1e80-1e85 1e9e 1ef2-1ef3 2009 2013-2014 2018-201a 201c-201e 2020 2022',
 	'2026 2039-203a 2044 20ac 20b9 2113 2122 2212 2215'
 ]);
 
-export const COBERTURA_DE_NOTO: Cobertura = coberturaDe([
+export const NOTO_COVERAGE: Coverage = coverageOf([
 	'20 23 2a 30-39 a9 ae 200d 203c 2049 20e3 2122 2139 2194-2199 21a9-21aa 231a-231b 2328 23cf',
 	'23e9-23f3 23f8-23fa 24c2 25aa-25ab 25b6 25c0 25fb-25fe 2600-2604 260e 2611 2614-2615 2618',
 	'261d 2620 2622-2623 2626 262a 262e-262f 2638-263a 2640 2642 2648-2653 265f-2660 2663',

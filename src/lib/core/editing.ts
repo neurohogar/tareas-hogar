@@ -1,34 +1,34 @@
 // Spec §6.2 (Editar) y §7 (Conflictos): editar valida como crear y produce
 // un cambio parcial, solo con los campos que cambiaron.
-import type { ErroresDeCreacion } from './creation';
-import { crearSegunDatos, type DatosDeTarea } from './task-data';
-import type { CambioDeTarea } from './task-document';
-import { estaPausada, reanudar } from './pause';
-import type { Horario, Recurrencia, Tarea } from './task';
+import type { CreationErrors } from './creation';
+import { createFromData, type TaskData } from './task-data';
+import type { TaskChange } from './task-document';
+import { isPaused, resume } from './pause';
+import type { Schedule, Recurrence, Task } from './task';
 
-export type ResultadoDeEdicion = { ok: true; cambio: CambioDeTarea } | { ok: false; errores: ErroresDeCreacion };
+export type EditingResult = { ok: true; change: TaskChange } | { ok: false; errors: CreationErrors };
 
 /** Una clave que identifica la recurrencia: dos recurrencias son la misma si tienen la misma clave. */
-function claveDeRecurrencia(recurrencia: Recurrencia): string {
-	if (recurrencia.modo === 'relativo') return `relativo ${recurrencia.cada} ${recurrencia.unidad}`;
-	if ('diasSemana' in recurrencia) return `semanal ${recurrencia.diasSemana.join(' ')}`;
-	return `mensual ${recurrencia.diasMes.join(' ')}`;
+function recurrenceKey(recurrence: Recurrence): string {
+	if (recurrence.mode === 'relativo') return `relativo ${recurrence.every} ${recurrence.unit}`;
+	if ('weekdays' in recurrence) return `semanal ${recurrence.weekdays.join(' ')}`;
+	return `mensual ${recurrence.monthDays.join(' ')}`;
 }
 
-const claveDeHorario = (horario: Horario) => horario.map(({ desde, hasta }) => `${desde}-${hasta}`).join(' ');
+const scheduleKey = (schedule: Schedule) => schedule.map(({ from, to }) => `${from}-${to}`).join(' ');
 
-const claveDePasos = (pasos: readonly string[]) => JSON.stringify(pasos);
+const stepsKey = (steps: readonly string[]) => JSON.stringify(steps);
 
-const recurrenciaDe = (tarea: Tarea) => (tarea.tipo === 'periodica' ? tarea.recurrencia : undefined);
-const fechaLimiteDe = (tarea: Tarea) => (tarea.tipo === 'puntual' ? tarea.fechaLimite : undefined);
+const recurrenceOf = (task: Task) => (task.kind === 'periodica' ? task.recurrence : undefined);
+const dueDateOf = (task: Task) => (task.kind === 'puntual' ? task.dueDate : undefined);
 
 /** Quitar el campo se escribe como null; undefined es "sin el campo". */
-const nuloSiFalta = <T>(valor: T | undefined): T | null => (valor === undefined ? null : valor);
+const nullIfMissing = <T>(value: T | undefined): T | null => (value === undefined ? null : value);
 
 /** El campo cambió de valor: undefined es "sin el campo" y se escribe como null (quitarlo). */
-function cambioDeCampo<T>(antes: T | undefined, despues: T | undefined, clave: (valor: T) => string | number) {
-	const igual = antes === undefined || despues === undefined ? antes === despues : clave(antes) === clave(despues);
-	return igual ? {} : { valor: nuloSiFalta(despues) };
+function fieldChange<T>(before: T | undefined, after: T | undefined, key: (value: T) => string | number) {
+	const same = before === undefined || after === undefined ? before === after : key(before) === key(after);
+	return same ? {} : { value: nullIfMissing(after) };
 }
 
 /**
@@ -37,43 +37,43 @@ function cambioDeCampo<T>(antes: T | undefined, despues: T | undefined, clave: (
  * aunque quede vacío (una puntual sin fecha límite), así no reaparece un valor
  * que dejó una edición concurrente cuando ese campo no correspondía (§7).
  */
-function cambioDeTipo(despues: Tarea): CambioDeTarea {
-	return { tipo: despues.tipo, fechaLimite: nuloSiFalta(fechaLimiteDe(despues)), recurrencia: nuloSiFalta(recurrenciaDe(despues)) };
+function kindChange(after: Task): TaskChange {
+	return { kind: after.kind, dueDate: nullIfMissing(dueDateOf(after)), recurrence: nullIfMissing(recurrenceOf(after)) };
 }
 
 /** Del mismo tipo, los campos de tipo que cambiaron de valor. */
-function cambioDeCampos(antes: Tarea, despues: Tarea): CambioDeTarea {
-	const cambio: CambioDeTarea = {};
-	const fechaLimite = cambioDeCampo(fechaLimiteDe(antes), fechaLimiteDe(despues), (dia) => dia.getTime());
-	if ('valor' in fechaLimite) cambio.fechaLimite = fechaLimite.valor;
-	const recurrencia = cambioDeCampo(recurrenciaDe(antes), recurrenciaDe(despues), claveDeRecurrencia);
-	if ('valor' in recurrencia) cambio.recurrencia = recurrencia.valor;
-	return cambio;
+function fieldsChange(before: Task, after: Task): TaskChange {
+	const change: TaskChange = {};
+	const dueDate = fieldChange(dueDateOf(before), dueDateOf(after), (day) => day.getTime());
+	if ('value' in dueDate) change.dueDate = dueDate.value;
+	const recurrence = fieldChange(recurrenceOf(before), recurrenceOf(after), recurrenceKey);
+	if ('value' in recurrence) change.recurrence = recurrence.value;
+	return change;
 }
 
 /** Emoji, nota, primer paso, versión mínima y esfuerzo: si cambiaron, el valor nuevo, o null si la tarea quedó sin el campo. */
-function cambioDeValor(campo: 'emoji' | 'nota' | 'primerPaso' | 'versionMinima' | 'esfuerzo', antes: string | undefined, despues: string | undefined) {
-	return antes === despues ? {} : { [campo]: nuloSiFalta(despues) };
+function valueChange(field: 'emoji' | 'note' | 'firstStep' | 'minimalVersion' | 'effort', before: string | undefined, after: string | undefined) {
+	return before === after ? {} : { [field]: nullIfMissing(after) };
 }
 
 /** Horario y pasos más son un solo campo cada uno: si cambió, se escribe entero, o null si la tarea quedó sin él (§7). */
-function cambioDeCampoEntero<T>(campo: 'horario' | 'pasos', antes: T | undefined, despues: T | undefined, clave: (valor: T) => string | number): CambioDeTarea {
-	const cambio = cambioDeCampo(antes, despues, clave);
-	return 'valor' in cambio ? { [campo]: cambio.valor } : {};
+function wholeFieldChange<T>(field: 'schedule' | 'steps', before: T | undefined, after: T | undefined, key: (value: T) => string | number): TaskChange {
+	const change = fieldChange(before, after, key);
+	return 'value' in change ? { [field]: change.value } : {};
 }
 
 /** Los campos en que difieren las dos tareas; pasoActual no se edita en el panel (§6.2). */
-function cambioEntre(antes: Tarea, despues: Tarea): CambioDeTarea {
+function changeBetween(before: Task, after: Task): TaskChange {
 	return {
-		...cambioDeCampoEntero('horario', antes.horario, despues.horario, claveDeHorario),
-		...(antes.titulo !== despues.titulo && { titulo: despues.titulo }),
-		...cambioDeValor('emoji', antes.emoji, despues.emoji),
-		...cambioDeValor('nota', antes.nota, despues.nota),
-		...cambioDeValor('primerPaso', antes.primerPaso, despues.primerPaso),
-		...cambioDeCampoEntero('pasos', antes.pasos, despues.pasos, claveDePasos),
-		...cambioDeValor('versionMinima', antes.versionMinima, despues.versionMinima),
-		...cambioDeValor('esfuerzo', antes.esfuerzo, despues.esfuerzo),
-		...(antes.tipo === despues.tipo ? cambioDeCampos(antes, despues) : cambioDeTipo(despues))
+		...wholeFieldChange('schedule', before.schedule, after.schedule, scheduleKey),
+		...(before.title !== after.title && { title: after.title }),
+		...valueChange('emoji', before.emoji, after.emoji),
+		...valueChange('note', before.note, after.note),
+		...valueChange('firstStep', before.firstStep, after.firstStep),
+		...wholeFieldChange('steps', before.steps, after.steps, stepsKey),
+		...valueChange('minimalVersion', before.minimalVersion, after.minimalVersion),
+		...valueChange('effort', before.effort, after.effort),
+		...(before.kind === after.kind ? fieldsChange(before, after) : kindChange(after))
 	};
 }
 
@@ -89,10 +89,10 @@ function cambioEntre(antes: Tarea, despues: Tarea): CambioDeTarea {
  * Spec §5.8: pasar a puntual una periódica pausada la reanuda en `ahora` (el
  * momento de guardar); sin `ahora`, no la reanuda. Lo demás la deja pausada.
  */
-export function editar(tarea: Tarea, datos: DatosDeTarea, ahora?: Date): ResultadoDeEdicion {
-	const resultado = crearSegunDatos(datos, tarea.id, tarea.creadaEn);
-	if (!resultado.ok) return resultado;
-	const cambio = cambioEntre(tarea, resultado.tarea);
-	const seReanuda = ahora && estaPausada(tarea) && resultado.tarea.tipo === 'puntual';
-	return { ok: true, cambio: seReanuda ? { ...cambio, ...reanudar(ahora) } : cambio };
+export function edit(task: Task, data: TaskData, now?: Date): EditingResult {
+	const result = createFromData(data, task.id, task.createdAt);
+	if (!result.ok) return result;
+	const change = changeBetween(task, result.task);
+	const isResumed = now && isPaused(task) && result.task.kind === 'puntual';
+	return { ok: true, change: isResumed ? { ...change, ...resume(now) } : change };
 }

@@ -8,16 +8,16 @@
 // quitado, queda una referencia rota, que se ignora y se limpia (§7).
 
 /** Quitar unos ids de las etiquetas de una tarea y poner otros, sin repetir. */
-export interface CambioDeReferencias {
-	tareaId: string;
-	quitar: string[];
-	poner: string[];
+export interface ReferencesChange {
+	taskId: string;
+	remove: string[];
+	put: string[];
 }
 
 /**
  * Las etiquetas de la tarea tras el cambio: sin las quitadas, con las puestas
  * al final si no estaban (como arrayRemove seguido de arrayUnion).
  */
-export function aplicarReferencias(ids: readonly string[] = [], { quitar, poner }: Pick<CambioDeReferencias, 'quitar' | 'poner'>): string[] {
-	return [...new Set([...ids.filter((id) => !quitar.includes(id)), ...poner])];
+export function applyReferences(ids: readonly string[] = [], { remove, put }: Pick<ReferencesChange, 'remove' | 'put'>): string[] {
+	return [...new Set([...ids.filter((id) => !remove.includes(id)), ...put])];
 }

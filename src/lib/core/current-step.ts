@@ -1,38 +1,38 @@
 // Spec §4.1 (Pasos: Avance, Completar, Deshacer) y §6.1: el paso en que va la
 // tarea, cómo lo muestra la fila y qué lo mueve. Solo «Hecho», «Paso
 // anterior», completar y borrar un completado lo cambian.
-import { accionDelCheckbox } from './checkbox';
-import { completadoMasReciente, completadosDeTarea } from './completions';
-import type { CambioDeTarea } from './task-document';
-import type { Estado } from './status';
-import { pasoConTope, pasoEnQueVa, pasosDeLaTarea, tieneVariosPasos } from './steps';
-import type { Completado, Tarea } from './task';
+import { checkboxAction } from './checkbox';
+import { latestCompletion, completionsOfTask } from './completions';
+import type { TaskChange } from './task-document';
+import type { Status } from './status';
+import { stepWithLimit, stepItIsOn, taskSteps, hasSeveralSteps } from './steps';
+import type { Completion, Task } from './task';
 
 /** Qué hace tocar «Hecho»: pasar al paso siguiente, completar la tarea como el checkbox, o nada (deshabilitado). */
-export type AccionDeHecho = { tipo: 'avanzar'; cambio: CambioDeTarea } | { tipo: 'completar' } | { tipo: 'ninguna' };
+export type DoneAction = { kind: 'avanzar'; change: TaskChange } | { kind: 'completar' } | { kind: 'ninguna' };
 
 /** Los botones de la línea del paso: «Paso anterior» (si se ve) y si «Hecho» está habilitado. */
-export interface BotonesDePaso {
-	pasoAnterior: boolean;
-	hechoHabilitado: boolean;
+export interface StepButtons {
+	previousStep: boolean;
+	doneEnabled: boolean;
 }
 
 /** Spec §6.1: la línea del paso y la de la mínima solo se ven en las filas pendiente o atrasada. */
-export const lineaVisible = ({ tipo }: Pick<Estado, 'tipo'>) => tipo === 'pendiente' || tipo === 'atrasada';
+export const visibleLine = ({ kind }: Pick<Status, 'kind'>) => kind === 'pendiente' || kind === 'atrasada';
 
 /** Sin el campo es el paso 1 (§4.1): ir al 1 lo quita; si ya va en ese paso guardado, no se escribe nada. */
-function cambioAPaso({ pasoActual }: Tarea, paso: number): CambioDeTarea {
-	const alUno = paso === 1;
-	if (alUno ? pasoActual === undefined : pasoActual === paso) return {};
-	return { pasoActual: alUno ? null : paso };
+function changeToStep({ currentStep }: Task, step: number): TaskChange {
+	const toOne = step === 1;
+	if (toOne ? currentStep === undefined : currentStep === step) return {};
+	return { currentStep: toOne ? null : step };
 }
 
 /** Spec §6.1: «Primer paso: …» si va en el paso 1, «Paso: …» si va en otro, completo; solo en filas pendiente o atrasada. */
-export function textoDelPaso(tarea: Tarea, estado: Pick<Estado, 'tipo'>): string | undefined {
-	const pasos = pasosDeLaTarea(tarea);
-	if (pasos.length === 0 || !lineaVisible(estado)) return undefined;
-	const paso = pasoEnQueVa(tarea);
-	return (paso === 1 ? 'Primer paso: ' : 'Paso: ') + pasos[paso - 1];
+export function stepText(task: Task, status: Pick<Status, 'kind'>): string | undefined {
+	const steps = taskSteps(task);
+	if (steps.length === 0 || !visibleLine(status)) return undefined;
+	const step = stepItIsOn(task);
+	return (step === 1 ? 'Primer paso: ' : 'Paso: ') + steps[step - 1];
 }
 
 /**
@@ -40,28 +40,28 @@ export function textoDelPaso(tarea: Tarea, estado: Pick<Estado, 'tipo'>): string
  * siguiente; en el último completa la tarea exactamente como el checkbox, y
  * si el checkbox está deshabilitado (§5.5), no hace nada.
  */
-export function accionDeHecho(tarea: Tarea, completados: readonly Completado[], ahora: Date): AccionDeHecho {
-	const cantidad = pasosDeLaTarea(tarea).length;
-	const paso = pasoEnQueVa(tarea);
-	if (cantidad < 2) return { tipo: 'ninguna' };
-	if (paso < cantidad) return { tipo: 'avanzar', cambio: cambioAPaso(tarea, paso + 1) };
-	return accionDelCheckbox(tarea, completados, ahora).tipo === 'completar' ? { tipo: 'completar' } : { tipo: 'ninguna' };
+export function doneAction(task: Task, completions: readonly Completion[], now: Date): DoneAction {
+	const amount = taskSteps(task).length;
+	const step = stepItIsOn(task);
+	if (amount < 2) return { kind: 'ninguna' };
+	if (step < amount) return { kind: 'avanzar', change: changeToStep(task, step + 1) };
+	return checkboxAction(task, completions, now).kind === 'completar' ? { kind: 'completar' } : { kind: 'ninguna' };
 }
 
 /** Spec §4.1 y §6.1: «Paso anterior» vuelve al paso de antes; no pasa del primero. */
-export function cambioDePasoAnterior(tarea: Tarea): CambioDeTarea {
-	return cambioAPaso(tarea, Math.max(1, pasoEnQueVa(tarea) - 1));
+export function previousStepChange(task: Task): TaskChange {
+	return changeToStep(task, Math.max(1, stepItIsOn(task) - 1));
 }
 
 /** Spec §6.1: con dos pasos o más y la línea visible, «Paso anterior» (no en el paso 1) y «Hecho», habilitado según accionDeHecho. */
-export function botonesDePaso(tarea: Tarea, estado: Pick<Estado, 'tipo'>, completados: readonly Completado[], ahora: Date): BotonesDePaso | undefined {
-	if (!tieneVariosPasos(tarea) || !lineaVisible(estado)) return undefined;
-	return { pasoAnterior: pasoEnQueVa(tarea) > 1, hechoHabilitado: accionDeHecho(tarea, completados, ahora).tipo !== 'ninguna' };
+export function stepButtons(task: Task, status: Pick<Status, 'kind'>, completions: readonly Completion[], now: Date): StepButtons | undefined {
+	if (!hasSeveralSteps(task) || !visibleLine(status)) return undefined;
+	return { previousStep: stepItIsOn(task) > 1, doneEnabled: doneAction(task, completions, now).kind !== 'ninguna' };
 }
 
 /** Spec §4.1 (Pasos: Completar): completar la tarea, por el checkbox, por «Hecho» o por «Hice la mínima», la vuelve al paso 1. */
-export function cambioAlCompletar(tarea: Tarea): CambioDeTarea {
-	return cambioAPaso(tarea, 1);
+export function changeOnComplete(task: Task): TaskChange {
+	return changeToStep(task, 1);
 }
 
 /**
@@ -70,9 +70,9 @@ export function cambioAlCompletar(tarea: Tarea): CambioDeTarea {
  * su pasoAlCompletar, con el tope del último paso. Borrar otro, o uno sin
  * pasoAlCompletar, no lo cambia. `completados` puede incluir o no al borrado.
  */
-export function cambioAlBorrarCompletado(tarea: Tarea, completados: readonly Completado[], borrado: Completado): CambioDeTarea {
-	const { pasoAlCompletar } = borrado;
-	if (pasoAlCompletar === undefined || !tieneVariosPasos(tarea)) return {};
-	const masReciente = completadoMasReciente([borrado, ...completadosDeTarea(completados, tarea.id)]);
-	return masReciente === borrado ? cambioAPaso(tarea, pasoConTope(tarea, pasoAlCompletar)) : {};
+export function changeOnDeleteCompletion(task: Task, completions: readonly Completion[], deletion: Completion): TaskChange {
+	const { stepAtCompletion } = deletion;
+	if (stepAtCompletion === undefined || !hasSeveralSteps(task)) return {};
+	const mostRecent = latestCompletion([deletion, ...completionsOfTask(completions, task.id)]);
+	return mostRecent === deletion ? changeToStep(task, stepWithLimit(task, stepAtCompletion)) : {};
 }

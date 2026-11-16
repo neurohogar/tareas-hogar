@@ -1,92 +1,92 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { clasificarEnPendientes, estaCompletada } from './completed';
-import { completadosDeTarea } from './completions';
-import { estadoDeTarea } from './task-status';
-import { posposicionVigente } from './active-postponement';
-import type { Completado, Tarea } from './task';
+import { classifyInPending, isCompleted } from './completed';
+import { completionsOfTask } from './completions';
+import { taskStatus } from './task-status';
+import { activePostponement } from './active-postponement';
+import type { Completion, Task } from './task';
 
-const instante = fc.integer({ min: 0, max: 4_000_000_000_000 }).map((ms) => new Date(ms));
-const posposicion = fc
-	.tuple(instante, fc.integer({ min: 1, max: 100_000_000 }))
-	.map(([desde, duracion]) => ({ desde, hasta: new Date(desde.getTime() + duracion) }));
+const instant = fc.integer({ min: 0, max: 4_000_000_000_000 }).map((ms) => new Date(ms));
+const postponement = fc
+	.tuple(instant, fc.integer({ min: 1, max: 100_000_000 }))
+	.map(([from, duration]) => ({ from, to: new Date(from.getTime() + duration) }));
 /** Puntual o periódica relativa, con o sin posposición, pausada o no. */
-const tarea = fc
+const task = fc
 	.tuple(
 		fc.boolean(),
-		instante,
-		fc.option(instante, { nil: undefined }),
+		instant,
+		fc.option(instant, { nil: undefined }),
 		fc.integer({ min: 1, max: 100 }),
 		fc.constantFrom('horas' as const, 'dias' as const),
-		fc.option(posposicion, { nil: undefined }),
+		fc.option(postponement, { nil: undefined }),
 		fc.boolean()
 	)
-	.map(([esPuntual, creadaEn, fechaLimite, cada, unidad, pospuesta, pausada]): Tarea => {
-		const comun = { id: 't', titulo: 'T', creadaEn, ...(pospuesta && { pospuesta }) };
-		if (esPuntual) return { ...comun, tipo: 'puntual', ...(fechaLimite && { fechaLimite }) };
-		return { ...comun, tipo: 'periodica', recurrencia: { modo: 'relativo', cada, unidad }, ...(pausada && { pausada }) };
+	.map(([isOneOff, createdAt, dueDate, every, unit, postponed, paused]): Task => {
+		const common = { id: 't', title: 'T', createdAt, ...(postponed && { postponed }) };
+		if (isOneOff) return { ...common, kind: 'puntual', ...(dueDate && { dueDate }) };
+		return { ...common, kind: 'periodica', recurrence: { mode: 'relativo', every, unit }, ...(paused && { paused }) };
 	});
-const completados = fc.array(
-	fc.record({ id: fc.uuid(), tareaId: fc.constantFrom('t', 'otra'), completadoEn: instante }) as fc.Arbitrary<Completado>,
+const completions = fc.array(
+	fc.record({ id: fc.uuid(), taskId: fc.constantFrom('t', 'otra'), completedAt: instant }) as fc.Arbitrary<Completion>,
 	{ maxLength: 5 }
 );
 
 describe('clasificarEnPendientes (propiedades)', () => {
 	it('conserva el estado de la tarea y coincide con estaCompletada', () => {
 		fc.assert(
-			fc.property(tarea, completados, instante, (t, cs, ahora) => {
-				const clasificada = clasificarEnPendientes(t, cs, ahora);
-				expect(clasificada.estado).toEqual(estadoDeTarea(t, cs, ahora));
-				expect(clasificada.completada).toBe(estaCompletada(t, cs, ahora));
+			fc.property(task, completions, instant, (t, cs, now) => {
+				const classified = classifyInPending(t, cs, now);
+				expect(classified.status).toEqual(taskStatus(t, cs, now));
+				expect(classified.completed).toBe(isCompleted(t, cs, now));
 			})
 		);
 	});
 
 	it('una tarea sin completados propios nunca está completada', () => {
 		fc.assert(
-			fc.property(tarea, completados, instante, (t, cs, ahora) => {
-				fc.pre(completadosDeTarea(cs, t.id).length === 0);
-				expect(estaCompletada(t, cs, ahora)).toBe(false);
+			fc.property(task, completions, instant, (t, cs, now) => {
+				fc.pre(completionsOfTask(cs, t.id).length === 0);
+				expect(isCompleted(t, cs, now)).toBe(false);
 			})
 		);
 	});
 
 	it('una pendiente o atrasada nunca está completada', () => {
 		fc.assert(
-			fc.property(tarea, completados, instante, (t, cs, ahora) => {
-				const { tipo } = estadoDeTarea(t, cs, ahora);
-				fc.pre(tipo === 'pendiente' || tipo === 'atrasada');
-				expect(estaCompletada(t, cs, ahora)).toBe(false);
+			fc.property(task, completions, instant, (t, cs, now) => {
+				const { kind } = taskStatus(t, cs, now);
+				fc.pre(kind === 'pendiente' || kind === 'atrasada');
+				expect(isCompleted(t, cs, now)).toBe(false);
 			})
 		);
 	});
 
 	it('una puntual con completados está completada, esté o no pospuesta (§5.1)', () => {
 		fc.assert(
-			fc.property(tarea, completados, instante, (t, cs, ahora) => {
-				fc.pre(t.tipo === 'puntual' && completadosDeTarea(cs, t.id).length > 0);
-				expect(estaCompletada(t, cs, ahora)).toBe(true);
+			fc.property(task, completions, instant, (t, cs, now) => {
+				fc.pre(t.kind === 'puntual' && completionsOfTask(cs, t.id).length > 0);
+				expect(isCompleted(t, cs, now)).toBe(true);
 			})
 		);
 	});
 
 	it('una pospuesta vigente cuya regla propia es pendiente o atrasada no está completada (§5.9)', () => {
 		fc.assert(
-			fc.property(tarea, completados, instante, (t, cs, ahora) => {
-				fc.pre(posposicionVigente(t, ahora) !== undefined);
-				const { pospuesta: _, ...sinPosposicion } = t;
-				const { tipo } = estadoDeTarea(sinPosposicion, cs, ahora);
-				fc.pre(tipo === 'pendiente' || tipo === 'atrasada');
-				expect(estaCompletada(t, cs, ahora)).toBe(false);
+			fc.property(task, completions, instant, (t, cs, now) => {
+				fc.pre(activePostponement(t, now) !== undefined);
+				const { postponed: _, ...withoutPostponement } = t;
+				const { kind } = taskStatus(withoutPostponement, cs, now);
+				fc.pre(kind === 'pendiente' || kind === 'atrasada');
+				expect(isCompleted(t, cs, now)).toBe(false);
 			})
 		);
 	});
 
 	it('una pausada nunca está completada (§5.8)', () => {
 		fc.assert(
-			fc.property(tarea, completados, instante, (t, cs, ahora) => {
-				fc.pre(t.tipo === 'periodica' && t.pausada === true);
-				expect(estaCompletada(t, cs, ahora)).toBe(false);
+			fc.property(task, completions, instant, (t, cs, now) => {
+				fc.pre(t.kind === 'periodica' && t.paused === true);
+				expect(isCompleted(t, cs, now)).toBe(false);
 			})
 		);
 	});

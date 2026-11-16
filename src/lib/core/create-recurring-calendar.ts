@@ -1,35 +1,35 @@
-import { crearPeriodica, type DatosComunes, type ErroresDeRecurrencia, type ResultadoDeCreacion } from './creation';
-import { DIAS_DE_LA_SEMANA, DIAS_DEL_MES, type DiaSemana, type RecurrenciaCalendario, type TareaPeriodica } from './task';
+import { createRecurring, type CommonData, type RecurrenceErrors, type CreationResult } from './creation';
+import { WEEKDAYS, MONTH_DAYS, type Weekday, type CalendarRecurrence, type RecurringTask } from './task';
 
-export interface DatosPeriodicaCalendario extends DatosComunes {
-	diasSemana: readonly DiaSemana[];
-	diasMes: readonly number[];
+export interface RecurringCalendarData extends CommonData {
+	weekdays: readonly Weekday[];
+	monthDays: readonly number[];
 }
 
-const esDiaDelMes = (dia: number) => DIAS_DEL_MES.includes(dia);
+const isDayOfMonth = (day: number) => MONTH_DAYS.includes(day);
 
 /** Spec §4.2: semanal o mensual (no las dos), con al menos un día, y días del mes entre 1 y 31. */
-function errorDeDias({ diasSemana, diasMes }: DatosPeriodicaCalendario): ErroresDeRecurrencia['dias'] {
-	if (diasSemana.length > 0 && diasMes.length > 0) return 'combinados';
-	if (diasSemana.length === 0 && diasMes.length === 0) return 'faltan';
-	if (!diasMes.every(esDiaDelMes)) return 'diaDelMesInvalido';
+function daysError({ weekdays, monthDays }: RecurringCalendarData): RecurrenceErrors['days'] {
+	if (weekdays.length > 0 && monthDays.length > 0) return 'combinados';
+	if (weekdays.length === 0 && monthDays.length === 0) return 'faltan';
+	if (!monthDays.every(isDayOfMonth)) return 'diaDelMesInvalido';
 	return undefined;
 }
 
 /** Los días son un conjunto: se guardan sin repetir y en orden (de la semana, o de menor a mayor). */
-function recurrenciaDe({ diasSemana, diasMes }: DatosPeriodicaCalendario): RecurrenciaCalendario {
-	if (diasSemana.length > 0)
-		return { modo: 'calendario', diasSemana: DIAS_DE_LA_SEMANA.filter((dia) => diasSemana.includes(dia)) };
-	return { modo: 'calendario', diasMes: [...new Set(diasMes)].sort((a, b) => a - b) };
+function recurrenceOf({ weekdays, monthDays }: RecurringCalendarData): CalendarRecurrence {
+	if (weekdays.length > 0)
+		return { mode: 'calendario', weekdays: WEEKDAYS.filter((day) => weekdays.includes(day)) };
+	return { mode: 'calendario', monthDays: [...new Set(monthDays)].sort((a, b) => a - b) };
 }
 
 /** Spec §4.1 y §4.2: crea una periódica de calendario, semanal o mensual. */
-export function crearPeriodicaCalendario(
-	datos: DatosPeriodicaCalendario,
+export function createRecurringCalendar(
+	data: RecurringCalendarData,
 	id: string,
-	ahora: Date
-): ResultadoDeCreacion<TareaPeriodica> {
-	const dias = errorDeDias(datos);
-	const { titulo, emoji, nota, primerPaso, pasos, versionMinima, horario, esfuerzo } = datos;
-	return crearPeriodica({ titulo, emoji, nota, primerPaso, pasos, versionMinima, horario, esfuerzo, id, ahora }, dias ? { dias } : {}, () => recurrenciaDe(datos));
+	now: Date
+): CreationResult<RecurringTask> {
+	const days = daysError(data);
+	const { title, emoji, note, firstStep, steps, minimalVersion, schedule, effort } = data;
+	return createRecurring({ title, emoji, note, firstStep, steps, minimalVersion, schedule, effort, id, now }, days ? { days } : {}, () => recurrenceOf(data));
 }

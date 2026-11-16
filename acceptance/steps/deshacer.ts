@@ -1,10 +1,10 @@
 // Deshacer un completado (spec §5.4): desde el Historial, desde el aviso y
 // desde otro dispositivo.
 import { expect } from 'vitest';
-import { avisoVisible, completadoADeshacer } from '../../src/lib/core/notice';
-import { aplicarCambio } from '../../src/lib/core/task-document';
-import { cambioAlBorrarCompletado } from '../../src/lib/core/current-step';
-import type { Completado } from '../../src/lib/core/task';
+import { visibleNotice, completionToUndo } from '../../src/lib/core/notice';
+import { applyChange } from '../../src/lib/core/task-document';
+import { changeOnDeleteCompletion } from '../../src/lib/core/current-step';
+import type { Completion } from '../../src/lib/core/task';
 import { P, TITULO, fechaHora } from './valores';
 import {
 	OTRO,
@@ -18,9 +18,9 @@ import {
 } from './world';
 
 /** El completado con ese completadoEn, aunque ya se haya borrado. */
-function elCompletadoDel(world: World, momento: string): Completado {
+function elCompletadoDel(world: World, momento: string): Completion {
 	const instante = fechaHora(momento).getTime();
-	const delMomento = loQueHuboGuardado(world).completados.filter(({ completadoEn }) => completadoEn.getTime() === instante);
+	const delMomento = loQueHuboGuardado(world).completions.filter(({ completedAt: completadoEn }) => completadoEn.getTime() === instante);
 	if (delMomento.length !== 1) throw new Error(`Se esperaba un completado del ${momento}, hay ${delMomento.length}`);
 	return delMomento[0];
 }
@@ -29,16 +29,16 @@ function elCompletadoDel(world: World, momento: string): Completado {
  * Como deleteDoc: borrar un completado que ya no existe no hace nada. Si era el más reciente de una
  * tarea de dos pasos o más, la tarea vuelve al paso en que iba al completarla (§4.1, Pasos: Deshacer).
  */
-export function borrarCompletado(world: World, completado: Completado | undefined): void {
+export function borrarCompletado(world: World, completado: Completion | undefined): void {
 	if (!completado) return;
-	const tarea = tareasDe(world).find(({ id }) => id === completado.tareaId);
-	if (tarea) world.documentos = aplicarCambio(world.documentos, tarea.id, cambioAlBorrarCompletado(tarea, world.completados, completado));
+	const tarea = tareasDe(world).find(({ id }) => id === completado.taskId);
+	if (tarea) world.documentos = applyChange(world.documentos, tarea.id, changeOnDeleteCompletion(tarea, world.completions, completado));
 	borrarGuardado(world, [], [completado.id]);
 }
 
 function elAvisoConsultado(world: World) {
 	if (!world.avisoConsultado) throw new Error('No se consultó el aviso');
-	return world.avisoConsultado.aviso;
+	return world.avisoConsultado.notice;
 }
 
 export const deshacerSteps: StepDefinition[] = [
@@ -57,15 +57,15 @@ export const deshacerSteps: StepDefinition[] = [
 		pattern: new RegExp(`^toco Deshacer en el aviso el ${P}$`),
 		run: (world, momento) => {
 			recordarAntesDeMiCambio(world);
-			borrarCompletado(world, completadoADeshacer(world.aviso, fechaHora(momento)));
-			world.aviso = undefined;
+			borrarCompletado(world, completionToUndo(world.notice, fechaHora(momento)));
+			world.notice = undefined;
 		}
 	},
 	{
 		pattern: new RegExp(`^consulto el aviso el ${P}$`),
 		run: (world, ahora) => {
 			const momento = fechaHora(ahora);
-			world.avisoConsultado = { aviso: avisoVisible(world.aviso, momento), ahora: momento };
+			world.avisoConsultado = { notice: visibleNotice(world.notice, momento), now: momento };
 		}
 	},
 	{
@@ -73,14 +73,14 @@ export const deshacerSteps: StepDefinition[] = [
 		run: (world, titulo, momento) => {
 			const tarea = laTareaTitulada(world, titulo);
 			const aviso = elAvisoConsultado(world);
-			expect(aviso?.nombre).toBe(titulo);
+			expect(aviso?.name).toBe(titulo);
 			// El paso en que iba la tarea (§4.4) lo afirman los pasos de los pasos; acá, ningún otro campo.
-			const { pasoAlCompletar, fueMinima, ...resto } = aviso?.completado ?? {};
-			expect(resto).toStrictEqual({ id: expect.any(String), tareaId: tarea.id, completadoEn: fechaHora(momento) });
+			const { stepAtCompletion: pasoAlCompletar, wasMinimal: fueMinima, ...resto } = aviso?.completion ?? {};
+			expect(resto).toStrictEqual({ id: expect.any(String), taskId: tarea.id, completedAt: fechaHora(momento) });
 			if (pasoAlCompletar !== undefined) expect(pasoAlCompletar).toBeGreaterThanOrEqual(1);
 			// Que fue la mínima (§4.4) lo afirman los pasos de la mínima; solo se escribe en true.
 			if (fueMinima !== undefined) expect(fueMinima).toBe(true);
-			expect(world.completados).toContainEqual(aviso?.completado);
+			expect(world.completions).toContainEqual(aviso?.completion);
 		}
 	},
 	{

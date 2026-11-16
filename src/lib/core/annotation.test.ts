@@ -1,104 +1,104 @@
 import { describe, expect, it } from 'vitest';
-import { anotar, editarTexto, normalizarTextoDeAnotacion, type Anotacion, type ContextoAlAnotar } from './annotation';
-import type { Aviso } from './notice';
+import { annotate, editText, normalizeAnnotationText, type Annotation, type AnnotateContext } from './annotation';
+import type { Notice } from './notice';
 
-const ahora = new Date(2026, 6, 15, 8, 0, 2);
+const now = new Date(2026, 6, 15, 8, 0, 2);
 
-const aviso = (tareaId: string, completadoEn: Date): Aviso => ({ nombre: tareaId, completado: { id: 'c1', tareaId, completadoEn } });
+const notice = (taskId: string, completedAt: Date): Notice => ({ name: taskId, completion: { id: 'c1', taskId, completedAt } });
 
-const enPendientes: ContextoAlAnotar = { pantalla: 'Pendientes' };
+const inPending: AnnotateContext = { screen: 'Pendientes' };
 
 describe('normalizarTextoDeAnotacion (spec §4.5)', () => {
 	it('recorta los espacios del inicio y del final y conserva los de adentro', () => {
-		expect(normalizarTextoDeAnotacion('   quedó  lindo   ')).toBe('quedó  lindo');
+		expect(normalizeAnnotationText('   quedó  lindo   ')).toBe('quedó  lindo');
 	});
 
-	it.each(['', ' ', '    ', '\t \n'])('vacío o solo espacios (%j) es sin texto', (texto) => {
-		expect(normalizarTextoDeAnotacion(texto)).toBeUndefined();
+	it.each(['', ' ', '    ', '\t \n'])('vacío o solo espacios (%j) es sin texto', (text) => {
+		expect(normalizeAnnotationText(text)).toBeUndefined();
 	});
 
 	it('es una sola línea: los saltos de línea se quitan, como en un campo de una línea', () => {
-		expect(normalizarTextoDeAnotacion('quedó\nlin\r\ndo')).toBe('quedólindo');
+		expect(normalizeAnnotationText('quedó\nlin\r\ndo')).toBe('quedólindo');
 	});
 
 	it('no tiene largo máximo', () => {
-		expect(normalizarTextoDeAnotacion('x'.repeat(5000))).toHaveLength(5000);
+		expect(normalizeAnnotationText('x'.repeat(5000))).toHaveLength(5000);
 	});
 });
 
 describe('anotar (spec §5.10)', () => {
 	it('guarda el id, el sentido, el instante y la pantalla donde está la persona, sin tarea ni texto', () => {
-		expect(anotar('a1', 'Me molestó', ahora, { pantalla: 'Historial' })).toStrictEqual({
+		expect(annotate('a1', 'Me molestó', now, { screen: 'Historial' })).toStrictEqual({
 			id: 'a1',
-			sentido: 'Me molestó',
-			anotadaEn: ahora,
-			pantalla: 'Historial'
+			sense: 'Me molestó',
+			annotatedAt: now,
+			screen: 'Historial'
 		});
 	});
 
 	it('guarda el texto recortado', () => {
-		expect(anotar('a1', 'Me sirvió', ahora, enPendientes, '  quedó lindo ').texto).toBe('quedó lindo');
+		expect(annotate('a1', 'Me sirvió', now, inPending, '  quedó lindo ').text).toBe('quedó lindo');
 	});
 
 	it('solo espacios como texto no guarda el campo', () => {
-		expect(anotar('a1', 'Me sirvió', ahora, enPendientes, '   ')).not.toHaveProperty('texto');
+		expect(annotate('a1', 'Me sirvió', now, inPending, '   ')).not.toHaveProperty('text');
 	});
 
 	it('con el panel abierto al editar, la pantalla es el Panel de edición y la tarea la del panel', () => {
-		const anotacion = anotar('a1', 'Me sirvió', ahora, { pantalla: 'Etiquetas', panel: { tareaId: 'regar' } });
+		const annotation = annotate('a1', 'Me sirvió', now, { screen: 'Etiquetas', panel: { taskId: 'regar' } });
 
-		expect(anotacion).toMatchObject({ pantalla: 'Panel de edición', tareaId: 'regar' });
+		expect(annotation).toMatchObject({ screen: 'Panel de edición', taskId: 'regar' });
 	});
 
 	it('con el panel abierto al crear, la pantalla es el Panel de edición y no hay tarea', () => {
-		const anotacion = anotar('a1', 'Me sirvió', ahora, { pantalla: 'Historial', panel: {} });
+		const annotation = annotate('a1', 'Me sirvió', now, { screen: 'Historial', panel: {} });
 
-		expect(anotacion.pantalla).toBe('Panel de edición');
-		expect(anotacion).not.toHaveProperty('tareaId');
+		expect(annotation.screen).toBe('Panel de edición');
+		expect(annotation).not.toHaveProperty('taskId');
 	});
 
-	it.each([new Date(2026, 6, 15, 8, 0, 0), new Date(2026, 6, 15, 7, 59, 57, 1)])('con el aviso de deshacer visible (completado %s), la tarea es la que nombra', (completadoEn) => {
-		expect(anotar('a1', 'Me sirvió', ahora, { ...enPendientes, aviso: aviso('regar', completadoEn) }).tareaId).toBe('regar');
+	it.each([new Date(2026, 6, 15, 8, 0, 0), new Date(2026, 6, 15, 7, 59, 57, 1)])('con el aviso de deshacer visible (completado %s), la tarea es la que nombra', (completedAt) => {
+		expect(annotate('a1', 'Me sirvió', now, { ...inPending, notice: notice('regar', completedAt) }).taskId).toBe('regar');
 	});
 
-	it.each([new Date(2026, 6, 15, 7, 59, 57), new Date(2026, 6, 15, 8, 0, 3)])('con el aviso de deshacer no visible (completado %s), no hay tarea', (completadoEn) => {
-		expect(anotar('a1', 'Me sirvió', ahora, { ...enPendientes, aviso: aviso('regar', completadoEn) })).not.toHaveProperty('tareaId');
+	it.each([new Date(2026, 6, 15, 7, 59, 57), new Date(2026, 6, 15, 8, 0, 3)])('con el aviso de deshacer no visible (completado %s), no hay tarea', (completedAt) => {
+		expect(annotate('a1', 'Me sirvió', now, { ...inPending, notice: notice('regar', completedAt) })).not.toHaveProperty('taskId');
 	});
 
 	it('con el panel abierto al editar manda la tarea del panel aunque el aviso se vea', () => {
-		const contexto = { ...enPendientes, panel: { tareaId: 'pagar' }, aviso: aviso('regar', ahora) };
+		const context = { ...inPending, panel: { taskId: 'pagar' }, notice: notice('regar', now) };
 
-		expect(anotar('a1', 'Me sirvió', ahora, contexto).tareaId).toBe('pagar');
+		expect(annotate('a1', 'Me sirvió', now, context).taskId).toBe('pagar');
 	});
 
 	it('con el panel abierto al crear no hay tarea aunque el aviso se vea', () => {
-		const contexto = { ...enPendientes, panel: {}, aviso: aviso('regar', ahora) };
+		const context = { ...inPending, panel: {}, notice: notice('regar', now) };
 
-		expect(anotar('a1', 'Me sirvió', ahora, contexto)).not.toHaveProperty('tareaId');
+		expect(annotate('a1', 'Me sirvió', now, context)).not.toHaveProperty('taskId');
 	});
 });
 
 describe('editarTexto (spec §6.7, §7)', () => {
-	const conTexto: Anotacion = { id: 'a1', sentido: 'Me molestó', anotadaEn: ahora, pantalla: 'Panel de edición', tareaId: 'regar', texto: 'uno' };
-	const otra: Anotacion = { id: 'a2', sentido: 'Me sirvió', anotadaEn: ahora, pantalla: 'Pendientes', texto: 'dos' };
+	const withText: Annotation = { id: 'a1', sense: 'Me molestó', annotatedAt: now, screen: 'Panel de edición', taskId: 'regar', text: 'uno' };
+	const other: Annotation = { id: 'a2', sense: 'Me sirvió', annotatedAt: now, screen: 'Pendientes', text: 'dos' };
 
 	it('cambia solo el texto, recortado, de la anotación elegida', () => {
-		expect(editarTexto([conTexto, otra], 'a1', '  tres ')).toStrictEqual([{ ...conTexto, texto: 'tres' }, otra]);
+		expect(editText([withText, other], 'a1', '  tres ')).toStrictEqual([{ ...withText, text: 'tres' }, other]);
 	});
 
 	it('vaciarlo la deja sin texto', () => {
-		const { texto: _, ...sinTexto } = conTexto;
+		const { text: _, ...withoutText } = withText;
 
-		expect(editarTexto([conTexto], 'a1', '  ')).toStrictEqual([sinTexto]);
+		expect(editText([withText], 'a1', '  ')).toStrictEqual([withoutText]);
 	});
 
 	it('una anotación sin texto puede recibir uno', () => {
-		const { texto: _, ...sinTexto } = otra;
+		const { text: _, ...withoutText } = other;
 
-		expect(editarTexto([sinTexto], 'a2', 'tres')).toStrictEqual([{ ...sinTexto, texto: 'tres' }]);
+		expect(editText([withoutText], 'a2', 'tres')).toStrictEqual([{ ...withoutText, text: 'tres' }]);
 	});
 
 	it('editar una anotación ya borrada no la revive', () => {
-		expect(editarTexto([otra], 'a1', 'tres')).toStrictEqual([otra]);
+		expect(editText([other], 'a1', 'tres')).toStrictEqual([other]);
 	});
 });

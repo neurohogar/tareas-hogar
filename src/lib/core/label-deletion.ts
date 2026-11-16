@@ -1,21 +1,21 @@
 // Spec §4.3 (borrar una etiqueta) y §7 (Etiqueta borrada).
-import type { Etiqueta } from './label';
-import type { CambioDeReferencias } from './label-references';
-import { idsDeEtiquetas, tieneEtiqueta, type Tarea } from './task';
+import type { Label } from './label';
+import type { ReferencesChange } from './label-references';
+import { labelIds, hasLabel, type Task } from './task';
 
 /** Lo que se escribe al borrar: la etiqueta, y quitarla de las tareas que la tienen. */
-export interface BorradoDeEtiqueta {
-	etiquetaId: string;
-	referencias: CambioDeReferencias[];
+export interface LabelDeletion {
+	labelId: string;
+	references: ReferencesChange[];
 }
 
 /** Borrar una etiqueta la quita de todas las tareas; las tareas no se borran. */
-export function borradoDeEtiqueta(etiquetaId: string, tareas: readonly Tarea[]): BorradoDeEtiqueta {
+export function labelDeletion(labelId: string, tasks: readonly Task[]): LabelDeletion {
 	return {
-		etiquetaId,
-		referencias: tareas
-			.filter((tarea) => tieneEtiqueta(tarea, etiquetaId))
-			.map(({ id }) => ({ tareaId: id, quitar: [etiquetaId], poner: [] }))
+		labelId,
+		references: tasks
+			.filter((task) => hasLabel(task, labelId))
+			.map(({ id }) => ({ taskId: id, remove: [labelId], put: [] }))
 	};
 }
 
@@ -24,10 +24,10 @@ export function borradoDeEtiqueta(etiquetaId: string, tareas: readonly Tarea[]):
  * sin conexión, se las asignó después de borradas): esas referencias se
  * ignoran y se limpian, quitándolas.
  */
-export function referenciasRotas(tareas: readonly Tarea[], etiquetas: readonly Etiqueta[]): CambioDeReferencias[] {
-	const existe = (id: string) => etiquetas.some((etiqueta) => etiqueta.id === id);
-	return tareas.flatMap((tarea) => {
-		const quitar = idsDeEtiquetas(tarea).filter((id) => !existe(id));
-		return quitar.length > 0 ? [{ tareaId: tarea.id, quitar, poner: [] }] : [];
+export function brokenReferences(tasks: readonly Task[], labels: readonly Label[]): ReferencesChange[] {
+	const exists = (id: string) => labels.some((label) => label.id === id);
+	return tasks.flatMap((task) => {
+		const remove = labelIds(task).filter((id) => !exists(id));
+		return remove.length > 0 ? [{ taskId: task.id, remove, put: [] }] : [];
 	});
 }

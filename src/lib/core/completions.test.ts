@@ -1,143 +1,143 @@
 import { describe, expect, it } from 'vitest';
-import { completadosDeTarea, completar } from './completions';
-import type { Completado, TareaPeriodica, TareaPuntual } from './task';
+import { completionsOfTask, complete } from './completions';
+import type { Completion, RecurringTask, OneOffTask } from './task';
 
-const TAREA: TareaPeriodica = {
+const TASK: RecurringTask = {
 	id: 'tarea-1',
-	titulo: 'Ventilar',
-	tipo: 'periodica',
-	recurrencia: { modo: 'relativo', cada: 4, unidad: 'horas' },
-	creadaEn: new Date(2026, 6, 1, 8, 0, 0)
+	title: 'Ventilar',
+	kind: 'periodica',
+	recurrence: { mode: 'relativo', every: 4, unit: 'horas' },
+	createdAt: new Date(2026, 6, 1, 8, 0, 0)
 };
 
-const MARTES_Y_JUEVES: TareaPeriodica = {
+const TUESDAY_AND_THURSDAY: RecurringTask = {
 	id: 'tarea-2',
-	titulo: 'Sacar la basura',
-	tipo: 'periodica',
-	recurrencia: { modo: 'calendario', diasSemana: ['martes', 'jueves'] },
-	creadaEn: new Date(2026, 6, 13, 8, 0, 0)
+	title: 'Sacar la basura',
+	kind: 'periodica',
+	recurrence: { mode: 'calendario', weekdays: ['martes', 'jueves'] },
+	createdAt: new Date(2026, 6, 13, 8, 0, 0)
 };
-const dia = (d: number) => new Date(2026, 6, d);
+const day = (d: number) => new Date(2026, 6, d);
 
-const PUNTUAL: TareaPuntual = {
+const ONE_OFF: OneOffTask = {
 	id: 'tarea-3',
-	titulo: 'Pagar la luz',
-	tipo: 'puntual',
-	fechaLimite: new Date(2026, 6, 15),
-	creadaEn: new Date(2026, 6, 1, 8, 0, 0)
+	title: 'Pagar la luz',
+	kind: 'puntual',
+	dueDate: new Date(2026, 6, 15),
+	createdAt: new Date(2026, 6, 1, 8, 0, 0)
 };
 
 describe('completar', () => {
 	it('registra el completado de una puntual en ese momento, sin ocurrencia cubierta', () => {
-		const momento = new Date(2026, 6, 16, 10, 0, 0);
+		const moment = new Date(2026, 6, 16, 10, 0, 0);
 
-		expect(completar(PUNTUAL, [], 'c1', momento)).toStrictEqual({ id: 'c1', tareaId: 'tarea-3', completadoEn: momento });
+		expect(complete(ONE_OFF, [], 'c1', moment)).toStrictEqual({ id: 'c1', taskId: 'tarea-3', completedAt: moment });
 	});
 
 	it('registra un completado de la tarea en ese momento, sin ocurrencia cubierta', () => {
-		const momento = new Date(2026, 6, 15, 9, 30, 0);
+		const moment = new Date(2026, 6, 15, 9, 30, 0);
 
-		const completado = completar(TAREA, [], 'c1', momento);
+		const completion = complete(TASK, [], 'c1', moment);
 
-		expect(completado).toStrictEqual({ id: 'c1', tareaId: 'tarea-1', completadoEn: momento });
+		expect(completion).toStrictEqual({ id: 'c1', taskId: 'tarea-1', completedAt: moment });
 	});
 
 	it('en modo calendario cubre la ocurrencia más reciente sin cubrir hasta hoy', () => {
-		const viernes = new Date(2026, 6, 17, 10, 0, 0);
+		const friday = new Date(2026, 6, 17, 10, 0, 0);
 
-		expect(completar(MARTES_Y_JUEVES, [], 'c1', viernes)).toStrictEqual({
+		expect(complete(TUESDAY_AND_THURSDAY, [], 'c1', friday)).toStrictEqual({
 			id: 'c1',
-			tareaId: 'tarea-2',
-			completadoEn: viernes,
-			ocurrenciaCubierta: dia(16)
+			taskId: 'tarea-2',
+			completedAt: friday,
+			coveredOccurrence: day(16)
 		});
 	});
 
 	it('en modo calendario, sin ocurrencias sin cubrir hasta hoy, cubre la próxima', () => {
-		const lunes = new Date(2026, 6, 13, 10, 0, 0);
+		const monday = new Date(2026, 6, 13, 10, 0, 0);
 
-		expect(completar(MARTES_Y_JUEVES, [], 'c1', lunes).ocurrenciaCubierta).toEqual(dia(14));
+		expect(complete(TUESDAY_AND_THURSDAY, [], 'c1', monday).coveredOccurrence).toEqual(day(14));
 	});
 
 	it('parte de lo que cubrieron los completados anteriores de la tarea, no de otras', () => {
-		const lunes = new Date(2026, 6, 13, 20, 0, 0);
-		const anterior: Completado = {
+		const monday = new Date(2026, 6, 13, 20, 0, 0);
+		const previous: Completion = {
 			id: 'c1',
-			tareaId: 'tarea-2',
-			completadoEn: new Date(2026, 6, 13, 9),
-			ocurrenciaCubierta: dia(14)
+			taskId: 'tarea-2',
+			completedAt: new Date(2026, 6, 13, 9),
+			coveredOccurrence: day(14)
 		};
-		const deOtra: Completado = { ...anterior, id: 'c2', tareaId: 'otra', ocurrenciaCubierta: dia(16) };
+		const ofOther: Completion = { ...previous, id: 'c2', taskId: 'otra', coveredOccurrence: day(16) };
 
-		expect(completar(MARTES_Y_JUEVES, [anterior, deOtra], 'c3', lunes).ocurrenciaCubierta).toEqual(dia(16));
-		expect(completar(MARTES_Y_JUEVES, [deOtra], 'c3', lunes).ocurrenciaCubierta).toEqual(dia(14));
+		expect(complete(TUESDAY_AND_THURSDAY, [previous, ofOther], 'c3', monday).coveredOccurrence).toEqual(day(16));
+		expect(complete(TUESDAY_AND_THURSDAY, [ofOther], 'c3', monday).coveredOccurrence).toEqual(day(14));
 	});
 });
 
 describe('completadosDeTarea', () => {
-	const de = (id: string, tareaId: string): Completado => ({ id, tareaId, completadoEn: new Date(2026, 6, 15) });
+	const of = (id: string, taskId: string): Completion => ({ id, taskId, completedAt: new Date(2026, 6, 15) });
 
 	it('devuelve solo los completados de la tarea pedida, en su orden', () => {
-		const completados = [de('a', 'tarea-1'), de('b', 'tarea-2'), de('c', 'tarea-1')];
+		const completions = [of('a', 'tarea-1'), of('b', 'tarea-2'), of('c', 'tarea-1')];
 
-		expect(completadosDeTarea(completados, 'tarea-1').map((c) => c.id)).toEqual(['a', 'c']);
+		expect(completionsOfTask(completions, 'tarea-1').map((c) => c.id)).toEqual(['a', 'c']);
 	});
 
 	it('devuelve una lista vacía si la tarea no tiene completados', () => {
-		expect(completadosDeTarea([de('b', 'tarea-2')], 'tarea-1')).toEqual([]);
+		expect(completionsOfTask([of('b', 'tarea-2')], 'tarea-1')).toEqual([]);
 	});
 });
 
 describe('completar con horario (spec §4.4, §5.6, §5.7)', () => {
-	const MANANA_Y_TARDE = [
-		{ desde: '07:00', hasta: '10:00' },
-		{ desde: '18:00', hasta: '21:00' }
+	const MORNING_AND_AFTERNOON = [
+		{ from: '07:00', to: '10:00' },
+		{ from: '18:00', to: '21:00' }
 	];
-	const en = (d: number, hora: number) => new Date(2026, 6, d, hora, 0, 0);
+	const at = (d: number, hour: number) => new Date(2026, 6, d, hour, 0, 0);
 
 	it('de calendario con horario, guarda el inicio de la ocurrencia que cubre', () => {
-		const tarea: TareaPeriodica = { ...MARTES_Y_JUEVES, horario: MANANA_Y_TARDE };
-		expect(completar(tarea, [], 'c', en(14, 19)).ocurrenciaCubierta).toStrictEqual({ inicio: en(14, 18) });
+		const task: RecurringTask = { ...TUESDAY_AND_THURSDAY, schedule: MORNING_AND_AFTERNOON };
+		expect(complete(task, [], 'c', at(14, 19)).coveredOccurrence).toStrictEqual({ start: at(14, 18) });
 	});
 
 	it('de calendario con una sola ventana, también con hora', () => {
-		const tarea: TareaPeriodica = { ...MARTES_Y_JUEVES, horario: [{ desde: '08:00', hasta: '11:00' }] };
-		expect(completar(tarea, [], 'c', en(14, 9)).ocurrenciaCubierta).toStrictEqual({ inicio: en(14, 8) });
+		const task: RecurringTask = { ...TUESDAY_AND_THURSDAY, schedule: [{ from: '08:00', to: '11:00' }] };
+		expect(complete(task, [], 'c', at(14, 9)).coveredOccurrence).toStrictEqual({ start: at(14, 8) });
 	});
 
 	it('relativa en días con varias ventanas, guarda el inicio de la ventana que cubre', () => {
-		const tarea: TareaPeriodica = { ...TAREA, recurrencia: { modo: 'relativo', cada: 2, unidad: 'dias' }, horario: MANANA_Y_TARDE };
-		const anterior: Completado = { id: 'a', tareaId: tarea.id, completadoEn: en(13, 8), ocurrenciaCubierta: { inicio: en(13, 7) } };
-		expect(completar(tarea, [anterior], 'c', en(13, 19)).ocurrenciaCubierta).toStrictEqual({ inicio: en(13, 18) });
+		const task: RecurringTask = { ...TASK, recurrence: { mode: 'relativo', every: 2, unit: 'dias' }, schedule: MORNING_AND_AFTERNOON };
+		const previous: Completion = { id: 'a', taskId: task.id, completedAt: at(13, 8), coveredOccurrence: { start: at(13, 7) } };
+		expect(complete(task, [previous], 'c', at(13, 19)).coveredOccurrence).toStrictEqual({ start: at(13, 18) });
 	});
 
 	it('relativa con una sola ventana, o en horas, no cubre ninguna ocurrencia', () => {
-		const enDias: TareaPeriodica = { ...TAREA, recurrencia: { modo: 'relativo', cada: 2, unidad: 'dias' }, horario: [MANANA_Y_TARDE[0]] };
-		expect(completar(enDias, [], 'c', en(13, 8))).not.toHaveProperty('ocurrenciaCubierta');
-		const enHoras: TareaPeriodica = { ...TAREA, horario: MANANA_Y_TARDE };
-		expect(completar(enHoras, [], 'c', en(13, 8))).not.toHaveProperty('ocurrenciaCubierta');
+		const inDays: RecurringTask = { ...TASK, recurrence: { mode: 'relativo', every: 2, unit: 'dias' }, schedule: [MORNING_AND_AFTERNOON[0]] };
+		expect(complete(inDays, [], 'c', at(13, 8))).not.toHaveProperty('coveredOccurrence');
+		const inHours: RecurringTask = { ...TASK, schedule: MORNING_AND_AFTERNOON };
+		expect(complete(inHours, [], 'c', at(13, 8))).not.toHaveProperty('coveredOccurrence');
 	});
 });
 
 describe('completar una reanudada (spec §5.8)', () => {
-	const REANUDADA_MIERCOLES = new Date(2026, 6, 15, 10, 0, 0);
+	const RESUMED_WEDNESDAY = new Date(2026, 6, 15, 10, 0, 0);
 
 	it('de calendario, reanudada un día sin ocurrencia, cubre la próxima, no la perdida en la pausa', () => {
-		const tarea = { ...MARTES_Y_JUEVES, reanudadaEn: REANUDADA_MIERCOLES };
+		const task = { ...TUESDAY_AND_THURSDAY, resumedAt: RESUMED_WEDNESDAY };
 
-		expect(completar(tarea, [], 'c1', new Date(2026, 6, 15, 12, 0, 0)).ocurrenciaCubierta).toEqual(dia(16));
+		expect(complete(task, [], 'c1', new Date(2026, 6, 15, 12, 0, 0)).coveredOccurrence).toEqual(day(16));
 	});
 
 	it('de calendario, ignora los completados de antes de reanudar', () => {
-		const cubrioElJueves = { id: 'c0', tareaId: 'tarea-2', completadoEn: new Date(2026, 6, 14, 9, 0, 0), ocurrenciaCubierta: dia(16) };
-		const tarea = { ...MARTES_Y_JUEVES, reanudadaEn: REANUDADA_MIERCOLES };
+		const coveredOnThursday = { id: 'c0', taskId: 'tarea-2', completedAt: new Date(2026, 6, 14, 9, 0, 0), coveredOccurrence: day(16) };
+		const task = { ...TUESDAY_AND_THURSDAY, resumedAt: RESUMED_WEDNESDAY };
 
-		expect(completar(tarea, [cubrioElJueves], 'c1', new Date(2026, 6, 15, 12, 0, 0)).ocurrenciaCubierta).toEqual(dia(16));
+		expect(complete(task, [coveredOnThursday], 'c1', new Date(2026, 6, 15, 12, 0, 0)).coveredOccurrence).toEqual(day(16));
 	});
 
 	it('con horario, una ventana que cerró antes de reanudar no se cubre', () => {
-		const tarea = { ...MARTES_Y_JUEVES, horario: [{ desde: '08:00', hasta: '09:00' }], reanudadaEn: new Date(2026, 6, 14, 10, 0, 0) };
+		const task = { ...TUESDAY_AND_THURSDAY, schedule: [{ from: '08:00', to: '09:00' }], resumedAt: new Date(2026, 6, 14, 10, 0, 0) };
 
-		expect(completar(tarea, [], 'c1', new Date(2026, 6, 14, 11, 0, 0)).ocurrenciaCubierta).toEqual({ inicio: new Date(2026, 6, 16, 8, 0, 0) });
+		expect(complete(task, [], 'c1', new Date(2026, 6, 14, 11, 0, 0)).coveredOccurrence).toEqual({ start: new Date(2026, 6, 16, 8, 0, 0) });
 	});
 });

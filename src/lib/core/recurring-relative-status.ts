@@ -1,27 +1,27 @@
-import { ultimoCompletadoEn } from './completions';
-import type { EstadoEnPendientes } from './status';
-import type { MomentosDeEspera } from './status-with-schedule';
-import type { Completado, RecurrenciaRelativa } from './task';
+import { lastCompletedAt } from './completions';
+import type { PendingStatus } from './status';
+import type { WaitMoments } from './status-with-schedule';
+import type { Completion, RelativeRecurrence } from './task';
 
-const MS_POR_HORA = 3_600_000;
-const HORAS_POR_UNIDAD = { horas: 1, dias: 24 } as const;
+const MS_PER_HOUR = 3_600_000;
+const HOURS_PER_UNIT = { horas: 1, dias: 24 } as const;
 
-function intervaloEnMs(recurrencia: RecurrenciaRelativa): number {
-	return recurrencia.cada * HORAS_POR_UNIDAD[recurrencia.unidad] * MS_POR_HORA;
+function intervalInMs(recurrence: RelativeRecurrence): number {
+	return recurrence.every * HOURS_PER_UNIT[recurrence.unit] * MS_PER_HOUR;
 }
 
 /** Spec §5.2, en ms: U, V = U + intervalo y V + intervalo (desde ahí, atrasada). */
-interface Plazos {
-	ultimo: number;
-	vuelveAPendiente: number;
-	atrasadaDesde: number;
+interface Deadlines {
+	last: number;
+	returnsToPending: number;
+	overdueFrom: number;
 }
 
 /** Solo para una relativa con al menos un completado. */
-function plazos(recurrencia: RecurrenciaRelativa, completados: readonly Completado[]): Plazos {
-	const ultimo = ultimoCompletadoEn(completados);
-	const intervalo = intervaloEnMs(recurrencia);
-	return { ultimo, vuelveAPendiente: ultimo + intervalo, atrasadaDesde: ultimo + 2 * intervalo };
+function deadlines(recurrence: RelativeRecurrence, completions: readonly Completion[]): Deadlines {
+	const last = lastCompletedAt(completions);
+	const interval = intervalInMs(recurrence);
+	return { last, returnsToPending: last + interval, overdueFrom: last + 2 * interval };
 }
 
 /**
@@ -29,47 +29,47 @@ function plazos(recurrencia: RecurrenciaRelativa, completados: readonly Completa
  * Nunca completada → pendiente; ahora < V → en espera; V ≤ ahora < V + intervalo
  * → pendiente; ahora ≥ V + intervalo → atrasada.
  */
-export function estadoPeriodicaRelativa(
-	recurrencia: RecurrenciaRelativa,
-	completados: readonly Completado[],
-	ahora: Date
-): EstadoEnPendientes {
-	if (completados.length === 0) return { tipo: 'pendiente' };
+export function recurringRelativeStatus(
+	recurrence: RelativeRecurrence,
+	completions: readonly Completion[],
+	now: Date
+): PendingStatus {
+	if (completions.length === 0) return { kind: 'pendiente' };
 
-	const { ultimo, vuelveAPendiente, atrasadaDesde } = plazos(recurrencia, completados);
-	const momento = ahora.getTime();
+	const { last, returnsToPending, overdueFrom } = deadlines(recurrence, completions);
+	const moment = now.getTime();
 
-	if (momento < vuelveAPendiente)
-		return { tipo: 'en espera', progreso: Math.max(0, momento - ultimo) / (vuelveAPendiente - ultimo) };
-	if (momento < atrasadaDesde) return { tipo: 'pendiente' };
-	return { tipo: 'atrasada' };
+	if (moment < returnsToPending)
+		return { kind: 'en espera', progress: Math.max(0, moment - last) / (returnsToPending - last) };
+	if (moment < overdueFrom) return { kind: 'pendiente' };
+	return { kind: 'atrasada' };
 }
 
 /**
  * Spec §6.1 para una relativa: nunca completada, pendiente desde creadaEn; si
  * no, atrasada desde V + intervalo, y pendiente desde V o en espera hasta V.
  */
-export function instanteDeUrgenciaRelativa(
-	recurrencia: RecurrenciaRelativa,
-	creadaEn: Date,
-	completados: readonly Completado[],
-	estado: EstadoEnPendientes
+export function relativeUrgencyInstant(
+	recurrence: RelativeRecurrence,
+	createdAt: Date,
+	completions: readonly Completion[],
+	status: PendingStatus
 ): Date {
-	if (completados.length === 0) return creadaEn;
-	const { vuelveAPendiente, atrasadaDesde } = plazos(recurrencia, completados);
-	return new Date(estado.tipo === 'atrasada' ? atrasadaDesde : vuelveAPendiente);
+	if (completions.length === 0) return createdAt;
+	const { returnsToPending, overdueFrom } = deadlines(recurrence, completions);
+	return new Date(status.kind === 'atrasada' ? overdueFrom : returnsToPending);
 }
 
 /**
  * Spec §5.5 para una relativa: pasaría a pendiente en V (nunca completada,
  * creadaEn), espera desde U (o creadaEn) y, sin horario, se atrasa en V + intervalo.
  */
-export function momentosRelativa(
-	recurrencia: RecurrenciaRelativa,
-	creadaEn: Date,
-	completados: readonly Completado[]
-): MomentosDeEspera {
-	if (completados.length === 0) return { pasaAPendiente: creadaEn.getTime(), inicioDeEspera: creadaEn.getTime() };
-	const { ultimo, vuelveAPendiente, atrasadaDesde } = plazos(recurrencia, completados);
-	return { pasaAPendiente: vuelveAPendiente, inicioDeEspera: ultimo, atrasadaSinHorario: atrasadaDesde };
+export function relativeMoments(
+	recurrence: RelativeRecurrence,
+	createdAt: Date,
+	completions: readonly Completion[]
+): WaitMoments {
+	if (completions.length === 0) return { becomesPending: createdAt.getTime(), waitStart: createdAt.getTime() };
+	const { last, returnsToPending, overdueFrom } = deadlines(recurrence, completions);
+	return { becomesPending: returnsToPending, waitStart: last, overdueWithoutSchedule: overdueFrom };
 }

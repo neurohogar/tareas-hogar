@@ -1,64 +1,64 @@
 import { describe, expect, it } from 'vitest';
-import { crearDesdePanel, editarDesdePanel } from './unsaved-changes-saved';
-import type { DatosDeTarea } from './task-data';
-import type { Etiqueta } from './label';
-import type { Tarea } from './task';
+import { createFromPanel, editFromPanel } from './unsaved-changes-saved';
+import type { TaskData } from './task-data';
+import type { Label } from './label';
+import type { Task } from './task';
 
-const AHORA = new Date(2026, 6, 15, 8, 0, 0);
-const PAGAR: Tarea = { id: 't', titulo: 'Pagar', tipo: 'puntual', creadaEn: AHORA };
-const DATOS: DatosDeTarea = { forma: 'puntual', titulo: 'Pagar luz' };
-const LARGO = 'abcdefghijklmnopqrstuvwxyz12345';
-const CASA: Etiqueta = { id: 'e1', nombre: 'casa', color: 'gris' };
-const etiquetas = { existentes: [CASA], nuevoId: () => 'nueva' };
+const NOW = new Date(2026, 6, 15, 8, 0, 0);
+const PAY: Task = { id: 't', title: 'Pagar', kind: 'puntual', createdAt: NOW };
+const DATA: TaskData = { shape: 'puntual', title: 'Pagar luz' };
+const LONG = 'abcdefghijklmnopqrstuvwxyz12345';
+const HOME: Label = { id: 'e1', name: 'casa', color: 'gris' };
+const labels = { existings: [HOME], newId: () => 'nueva' };
 
 describe('editarDesdePanel (spec §6.2): Guardar con texto sin confirmar en Etiquetas', () => {
-	const formulario = (sinConfirmar: string, datos = DATOS) => ({ datos, etiquetas: [], sinConfirmar });
+	const form = (unconfirmed: string, data = DATA) => ({ data, labels: [], unconfirmed });
 
 	it('el texto válido no crea la etiqueta ni cambia lo que se guarda', () => {
-		const resultado = editarDesdePanel(PAGAR, formulario('auto'), etiquetas, AHORA);
-		expect(resultado).toEqual({ ok: true, cambio: { titulo: 'Pagar luz' }, nuevas: [] });
+		const result = editFromPanel(PAY, form('auto'), labels, NOW);
+		expect(result).toEqual({ ok: true, change: { title: 'Pagar luz' }, newLabels: [] });
 	});
 
 	it('el texto de solo espacios no hace fallar Guardar', () => {
-		expect(editarDesdePanel(PAGAR, formulario('   '), etiquetas, AHORA)).toEqual({ ok: true, cambio: { titulo: 'Pagar luz' }, nuevas: [] });
+		expect(editFromPanel(PAY, form('   '), labels, NOW)).toEqual({ ok: true, change: { title: 'Pagar luz' }, newLabels: [] });
 	});
 
 	it('un nombre inválido hace fallar Guardar', () => {
-		const resultado = editarDesdePanel(PAGAR, formulario(LARGO), etiquetas, AHORA);
-		expect(resultado).toEqual({ ok: false, errores: { etiquetas: 'largo' } });
+		const result = editFromPanel(PAY, form(LONG), labels, NOW);
+		expect(result).toEqual({ ok: false, errors: { labels: 'largo' } });
 	});
 
 	it('junta ese error con los de los otros campos', () => {
-		const resultado = editarDesdePanel(PAGAR, formulario(LARGO, { forma: 'puntual', titulo: '' }), etiquetas, AHORA);
-		expect(resultado).toEqual({ ok: false, errores: { titulo: 'vacio', etiquetas: 'largo' } });
+		const result = editFromPanel(PAY, form(LONG, { shape: 'puntual', title: '' }), labels, NOW);
+		expect(result).toEqual({ ok: false, errors: { title: 'vacio', labels: 'largo' } });
 	});
 
 	it('sin texto inválido, los errores son los de Guardar', () => {
-		const resultado = editarDesdePanel(PAGAR, formulario('', { forma: 'puntual', titulo: '' }), etiquetas, AHORA);
-		expect(resultado).toEqual({ ok: false, errores: { titulo: 'vacio' } });
+		const result = editFromPanel(PAY, form('', { shape: 'puntual', title: '' }), labels, NOW);
+		expect(result).toEqual({ ok: false, errors: { title: 'vacio' } });
 	});
 
 	it('guarda las etiquetas confirmadas', () => {
-		const resultado = editarDesdePanel(PAGAR, { datos: DATOS, etiquetas: ['casa'], sinConfirmar: '' }, etiquetas, AHORA);
-		expect(resultado).toEqual({ ok: true, cambio: { titulo: 'Pagar luz', etiquetas: ['e1'] }, nuevas: [] });
+		const result = editFromPanel(PAY, { data: DATA, labels: ['casa'], unconfirmed: '' }, labels, NOW);
+		expect(result).toEqual({ ok: true, change: { title: 'Pagar luz', labels: ['e1'] }, newLabels: [] });
 	});
 
 	it('pasa el ahora: pasar a puntual una pausada la reanuda (§5.8)', () => {
-		const pausada: Tarea = { id: 't', titulo: 'Pagar luz', tipo: 'periodica', recurrencia: { modo: 'relativo', cada: 2, unidad: 'dias' }, pausada: true, creadaEn: AHORA };
-		const resultado = editarDesdePanel(pausada, formulario(''), etiquetas, AHORA);
-		expect(resultado.ok && resultado.cambio.reanudadaEn).toEqual(AHORA);
+		const paused: Task = { id: 't', title: 'Pagar luz', kind: 'periodica', recurrence: { mode: 'relativo', every: 2, unit: 'dias' }, paused: true, createdAt: NOW };
+		const result = editFromPanel(paused, form(''), labels, NOW);
+		expect(result.ok && result.change.resumedAt).toEqual(NOW);
 	});
 });
 
 describe('crearDesdePanel (spec §6.2)', () => {
-	const formulario = (sinConfirmar: string, datos = DATOS) => ({ datos, etiquetas: [], sinConfirmar });
+	const form = (unconfirmed: string, data = DATA) => ({ data, labels: [], unconfirmed });
 
 	it('el texto válido no crea la etiqueta', () => {
-		const resultado = crearDesdePanel(formulario('auto'), 'id', AHORA, etiquetas);
-		expect(resultado).toEqual({ ok: true, tarea: { id: 'id', titulo: 'Pagar luz', tipo: 'puntual', creadaEn: AHORA }, nuevas: [] });
+		const result = createFromPanel(form('auto'), 'id', NOW, labels);
+		expect(result).toEqual({ ok: true, task: { id: 'id', title: 'Pagar luz', kind: 'puntual', createdAt: NOW }, newLabels: [] });
 	});
 
 	it('un nombre inválido hace fallar Guardar y no crea la tarea', () => {
-		expect(crearDesdePanel(formulario(LARGO), 'id', AHORA, etiquetas)).toEqual({ ok: false, errores: { etiquetas: 'largo' } });
+		expect(createFromPanel(form(LONG), 'id', NOW, labels)).toEqual({ ok: false, errors: { labels: 'largo' } });
 	});
 });

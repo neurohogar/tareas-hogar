@@ -1,40 +1,40 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
-	ULTIMO_REINTENTO_EN_MS,
-	PRIMER_REINTENTO_EN_MS,
-	claveEnLaCache,
-	clavesReemplazadas,
-	siguienteEspera
+	LAST_RETRY_IN_MS,
+	FIRST_RETRY_IN_MS,
+	keyInCache,
+	replacedKeys,
+	nextWait
 } from './bundled-fonts';
 
-const nombre = fc.stringMatching(/^[a-z0-9-]{1,12}$/).map((n) => `${n}.woff2`);
-const huella = fc.stringMatching(/^[a-f0-9]{1,8}$/);
+const name = fc.stringMatching(/^[a-z0-9-]{1,12}$/).map((n) => `${n}.woff2`);
+const fingerprint = fc.stringMatching(/^[a-f0-9]{1,8}$/);
 
 describe('reintentos', () => {
 	it('la espera nunca baja, nunca pasa el máximo y llega a él', () => {
 		fc.assert(
-			fc.property(fc.integer({ min: PRIMER_REINTENTO_EN_MS, max: ULTIMO_REINTENTO_EN_MS }), (espera) => {
-				const siguiente = siguienteEspera(espera);
-				expect(siguiente).toBeGreaterThanOrEqual(espera);
-				expect(siguiente).toBeLessThanOrEqual(ULTIMO_REINTENTO_EN_MS);
+			fc.property(fc.integer({ min: FIRST_RETRY_IN_MS, max: LAST_RETRY_IN_MS }), (wait) => {
+				const following = nextWait(wait);
+				expect(following).toBeGreaterThanOrEqual(wait);
+				expect(following).toBeLessThanOrEqual(LAST_RETRY_IN_MS);
 			})
 		);
-		let espera = PRIMER_REINTENTO_EN_MS;
-		for (let i = 0; i < 10; i++) espera = siguienteEspera(espera);
-		expect(espera).toBe(ULTIMO_REINTENTO_EN_MS);
+		let wait = FIRST_RETRY_IN_MS;
+		for (let i = 0; i < 10; i++) wait = nextWait(wait);
+		expect(wait).toBe(LAST_RETRY_IN_MS);
 	});
 });
 
 describe('entradas reemplazadas', () => {
 	it('nunca incluyen la clave vigente y son todas del mismo archivo', () => {
 		fc.assert(
-			fc.property(nombre, nombre, fc.array(huella, { maxLength: 6 }), huella, (a, otro, viejas, vigente) => {
-				const urls = [...viejas.map((h) => `https://x.test${claveEnLaCache(a, h)}`), `https://x.test${claveEnLaCache(otro, 'z')}`];
-				const reemplazadas = clavesReemplazadas(urls, a, claveEnLaCache(a, vigente));
-				for (const url of reemplazadas) {
+			fc.property(name, name, fc.array(fingerprint, { maxLength: 6 }), fingerprint, (a, another, olds, active) => {
+				const urls = [...olds.map((h) => `https://x.test${keyInCache(a, h)}`), `https://x.test${keyInCache(another, 'z')}`];
+				const replaced = replacedKeys(urls, a, keyInCache(a, active));
+				for (const url of replaced) {
 					expect(url.includes(`/fuentes/${a}?`)).toBe(true);
-					expect(url.endsWith(claveEnLaCache(a, vigente))).toBe(false);
+					expect(url.endsWith(keyInCache(a, active))).toBe(false);
 				}
 			})
 		);
@@ -42,12 +42,12 @@ describe('entradas reemplazadas', () => {
 
 	it('es idempotente: lo que queda después de borrarlas no reemplaza nada más', () => {
 		fc.assert(
-			fc.property(nombre, fc.array(huella, { maxLength: 6 }), huella, (a, viejas, vigente) => {
-				const clave = claveEnLaCache(a, vigente);
-				const urls = [...viejas.map((h) => claveEnLaCache(a, h)), clave];
-				const borradas = clavesReemplazadas(urls, a, clave);
-				const quedan = urls.filter((u) => !borradas.includes(u));
-				expect(clavesReemplazadas(quedan, a, clave)).toEqual([]);
+			fc.property(name, fc.array(fingerprint, { maxLength: 6 }), fingerprint, (a, olds, active) => {
+				const key = keyInCache(a, active);
+				const urls = [...olds.map((h) => keyInCache(a, h)), key];
+				const deletedItems = replacedKeys(urls, a, key);
+				const remain = urls.filter((u) => !deletedItems.includes(u));
+				expect(replacedKeys(remain, a, key)).toEqual([]);
 			})
 		);
 	});

@@ -1,37 +1,37 @@
 // Spec §4.3 (Orden): el mismo en todos lados.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { compararIds } from './compare-ids';
-import { PALETA, type Etiqueta } from './label';
-import { compararTitulos } from './alphabetical-order';
-import { ordenarEtiquetas } from './label-order';
+import { compareIds } from './compare-ids';
+import { PALETTE, type Label } from './label';
+import { compareTitles } from './alphabetical-order';
+import { sortLabels } from './label-order';
 
-const nombre = fc.constantFrom('Cocina', 'cocina', 'Baño', 'bano', 'Ñandú', 'Nube', 'Árbol', 'arbol', 'Patio');
-const etiquetas = fc.uniqueArray(
+const name = fc.constantFrom('Cocina', 'cocina', 'Baño', 'bano', 'Ñandú', 'Nube', 'Árbol', 'arbol', 'Patio');
+const labels = fc.uniqueArray(
 	fc.record({
 		id: fc.string({ maxLength: 3 }),
-		nombre,
-		color: fc.constantFrom(...PALETA)
+		name,
+		color: fc.constantFrom(...PALETTE)
 	}),
 	{
 		maxLength: 10,
 		selector: ({ id }) => id
 	}
-) as fc.Arbitrary<Etiqueta[]>;
-const permutadas = etiquetas.chain((lista) =>
-	fc.shuffledSubarray(lista, { minLength: lista.length }).map((otra) => [lista, otra] as const)
+) as fc.Arbitrary<Label[]>;
+const permutedItems = labels.chain((list) =>
+	fc.shuffledSubarray(list, { minLength: list.length }).map((other) => [list, other] as const)
 );
 
 describe('ordenarEtiquetas (propiedades)', () => {
 	it('es una permutación de la entrada, ordenada por nombre y después por id', () => {
 		fc.assert(
-			fc.property(etiquetas, (lista) => {
-				const ordenadas = ordenarEtiquetas(lista);
-				expect([...ordenadas].sort((a, b) => compararIds(a.id, b.id))).toStrictEqual([...lista].sort((a, b) => compararIds(a.id, b.id)));
-				for (let i = 1; i < ordenadas.length; i++) {
-					const [a, b] = [ordenadas[i - 1], ordenadas[i]];
-					const porNombre = compararTitulos(a.nombre, b.nombre);
-					expect(porNombre < 0 || (porNombre === 0 && compararIds(a.id, b.id) < 0)).toBe(true);
+			fc.property(labels, (list) => {
+				const ordered = sortLabels(list);
+				expect([...ordered].sort((a, b) => compareIds(a.id, b.id))).toStrictEqual([...list].sort((a, b) => compareIds(a.id, b.id)));
+				for (let i = 1; i < ordered.length; i++) {
+					const [a, b] = [ordered[i - 1], ordered[i]];
+					const byName = compareTitles(a.name, b.name);
+					expect(byName < 0 || (byName === 0 && compareIds(a.id, b.id) < 0)).toBe(true);
 				}
 			})
 		);
@@ -39,18 +39,18 @@ describe('ordenarEtiquetas (propiedades)', () => {
 
 	it('es total: no depende del orden de entrada', () => {
 		fc.assert(
-			fc.property(permutadas, ([lista, otra]) => {
-				expect(ordenarEtiquetas(otra)).toStrictEqual(ordenarEtiquetas(lista));
+			fc.property(permutedItems, ([list, other]) => {
+				expect(sortLabels(other)).toStrictEqual(sortLabels(list));
 			})
 		);
 	});
 
 	it('no modifica la entrada', () => {
 		fc.assert(
-			fc.property(etiquetas, (lista) => {
-				const copia = [...lista];
-				ordenarEtiquetas(lista);
-				expect(lista).toStrictEqual(copia);
+			fc.property(labels, (list) => {
+				const copy = [...list];
+				sortLabels(list);
+				expect(list).toStrictEqual(copy);
 			})
 		);
 	});

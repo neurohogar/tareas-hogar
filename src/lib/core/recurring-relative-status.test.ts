@@ -1,81 +1,81 @@
 import { describe, expect, it } from 'vitest';
-import { estadoPeriodicaRelativa } from './recurring-relative-status';
-import type { Completado, RecurrenciaRelativa } from './task';
+import { recurringRelativeStatus } from './recurring-relative-status';
+import type { Completion, RelativeRecurrence } from './task';
 
-const HORA = 3_600_000;
-const CADA_4_HORAS: RecurrenciaRelativa = { modo: 'relativo', cada: 4, unidad: 'horas' };
-const CADA_2_DIAS: RecurrenciaRelativa = { modo: 'relativo', cada: 2, unidad: 'dias' };
+const TIME_RE = 3_600_000;
+const EVERY_4_HOURS: RelativeRecurrence = { mode: 'relativo', every: 4, unit: 'horas' };
+const EVERY_2_DAYS: RelativeRecurrence = { mode: 'relativo', every: 2, unit: 'dias' };
 const U = new Date(2026, 6, 15, 8, 0, 0);
 
-const completadoEn = (fecha: Date, id = 'c'): Completado => ({ id, tareaId: 't', completadoEn: fecha });
-const despuesDeU = (ms: number) => new Date(U.getTime() + ms);
+const completedAt = (date: Date, id = 'c'): Completion => ({ id, taskId: 't', completedAt: date });
+const afterU = (ms: number) => new Date(U.getTime() + ms);
 
 describe('estadoPeriodicaRelativa', () => {
 	it('nunca completada: pendiente', () => {
-		expect(estadoPeriodicaRelativa(CADA_4_HORAS, [], U)).toEqual({ tipo: 'pendiente' });
+		expect(recurringRelativeStatus(EVERY_4_HOURS, [], U)).toEqual({ kind: 'pendiente' });
 	});
 
 	it('antes del vencimiento: en espera con la fracción transcurrida del intervalo', () => {
-		expect(estadoPeriodicaRelativa(CADA_4_HORAS, [completadoEn(U)], despuesDeU(HORA))).toEqual({
-			tipo: 'en espera',
-			progreso: 0.25
+		expect(recurringRelativeStatus(EVERY_4_HOURS, [completedAt(U)], afterU(TIME_RE))).toEqual({
+			kind: 'en espera',
+			progress: 0.25
 		});
 	});
 
 	it('en el momento de completar: en espera con progreso 0', () => {
-		expect(estadoPeriodicaRelativa(CADA_4_HORAS, [completadoEn(U)], U)).toEqual({ tipo: 'en espera', progreso: 0 });
+		expect(recurringRelativeStatus(EVERY_4_HOURS, [completedAt(U)], U)).toEqual({ kind: 'en espera', progress: 0 });
 	});
 
 	it('un milisegundo antes del vencimiento sigue en espera', () => {
-		const estado = estadoPeriodicaRelativa(CADA_4_HORAS, [completadoEn(U)], despuesDeU(4 * HORA - 1));
-		expect(estado.tipo).toBe('en espera');
+		const status = recurringRelativeStatus(EVERY_4_HOURS, [completedAt(U)], afterU(4 * TIME_RE - 1));
+		expect(status.kind).toBe('en espera');
 	});
 
 	it('en el vencimiento pasa a pendiente', () => {
-		expect(estadoPeriodicaRelativa(CADA_4_HORAS, [completadoEn(U)], despuesDeU(4 * HORA))).toEqual({
-			tipo: 'pendiente'
+		expect(recurringRelativeStatus(EVERY_4_HOURS, [completedAt(U)], afterU(4 * TIME_RE))).toEqual({
+			kind: 'pendiente'
 		});
 	});
 
 	it('un milisegundo antes de perder un ciclo completo sigue pendiente', () => {
-		const estado = estadoPeriodicaRelativa(CADA_4_HORAS, [completadoEn(U)], despuesDeU(8 * HORA - 1));
-		expect(estado).toEqual({ tipo: 'pendiente' });
+		const status = recurringRelativeStatus(EVERY_4_HOURS, [completedAt(U)], afterU(8 * TIME_RE - 1));
+		expect(status).toEqual({ kind: 'pendiente' });
 	});
 
 	it('al perder un ciclo completo pasa a atrasada', () => {
-		expect(estadoPeriodicaRelativa(CADA_4_HORAS, [completadoEn(U)], despuesDeU(8 * HORA))).toEqual({
-			tipo: 'atrasada'
+		expect(recurringRelativeStatus(EVERY_4_HOURS, [completedAt(U)], afterU(8 * TIME_RE))).toEqual({
+			kind: 'atrasada'
 		});
 	});
 
 	it('"cada N días" son N × 24 horas', () => {
-		expect(estadoPeriodicaRelativa(CADA_2_DIAS, [completadoEn(U)], despuesDeU(12 * HORA))).toEqual({
-			tipo: 'en espera',
-			progreso: 0.25
+		expect(recurringRelativeStatus(EVERY_2_DAYS, [completedAt(U)], afterU(12 * TIME_RE))).toEqual({
+			kind: 'en espera',
+			progress: 0.25
 		});
-		expect(estadoPeriodicaRelativa(CADA_2_DIAS, [completadoEn(U)], despuesDeU(48 * HORA)).tipo).toBe('pendiente');
-		expect(estadoPeriodicaRelativa(CADA_2_DIAS, [completadoEn(U)], despuesDeU(96 * HORA)).tipo).toBe('atrasada');
+		expect(recurringRelativeStatus(EVERY_2_DAYS, [completedAt(U)], afterU(48 * TIME_RE)).kind).toBe('pendiente');
+		expect(recurringRelativeStatus(EVERY_2_DAYS, [completedAt(U)], afterU(96 * TIME_RE)).kind).toBe('atrasada');
 	});
 
 	it('cuenta desde el completado más reciente, sin importar el orden de la lista', () => {
-		const anterior = completadoEn(new Date(2026, 6, 14, 8, 0, 0), 'viejo');
-		const reciente = completadoEn(U, 'nuevo');
-		const ahora = despuesDeU(2 * HORA);
+		const previous = completedAt(new Date(2026, 6, 14, 8, 0, 0), 'viejo');
+		const recent = completedAt(U, 'nuevo');
+		const now = afterU(2 * TIME_RE);
 
-		expect(estadoPeriodicaRelativa(CADA_4_HORAS, [reciente, anterior], ahora)).toEqual({
-			tipo: 'en espera',
-			progreso: 0.5
+		expect(recurringRelativeStatus(EVERY_4_HOURS, [recent, previous], now)).toEqual({
+			kind: 'en espera',
+			progress: 0.5
 		});
-		expect(estadoPeriodicaRelativa(CADA_4_HORAS, [anterior, reciente], ahora)).toEqual({
-			tipo: 'en espera',
-			progreso: 0.5
+		expect(recurringRelativeStatus(EVERY_4_HOURS, [previous, recent], now)).toEqual({
+			kind: 'en espera',
+			progress: 0.5
 		});
 	});
 
 	it('un completado posterior a ahora (relojes desfasados) deja el progreso en 0', () => {
-		expect(estadoPeriodicaRelativa(CADA_4_HORAS, [completadoEn(U)], despuesDeU(-HORA))).toEqual({
-			tipo: 'en espera',
-			progreso: 0
+		expect(recurringRelativeStatus(EVERY_4_HOURS, [completedAt(U)], afterU(-TIME_RE))).toEqual({
+			kind: 'en espera',
+			progress: 0
 		});
 	});
 });

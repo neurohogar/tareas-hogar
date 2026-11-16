@@ -1,69 +1,69 @@
 import { describe, expect, it } from 'vitest';
-import { accionDePausa, comoRecienCreada, estaPausada, pausar, reanudar } from './pause';
-import type { Completado, TareaPeriodica, TareaPuntual } from './task';
+import { pauseAction, asJustCreated, isPaused, pause, resume } from './pause';
+import type { Completion, RecurringTask, OneOffTask } from './task';
 
-const CREADA = new Date(2026, 6, 1, 8, 0, 0);
-const REANUDADA = new Date(2026, 6, 15, 10, 0, 0);
-const RELATIVA: TareaPeriodica = {
+const CREATED = new Date(2026, 6, 1, 8, 0, 0);
+const RESUMED = new Date(2026, 6, 15, 10, 0, 0);
+const RELATIVE: RecurringTask = {
 	id: 'r',
-	titulo: 'Regar',
-	tipo: 'periodica',
-	recurrencia: { modo: 'relativo', cada: 2, unidad: 'dias' },
-	creadaEn: CREADA
+	title: 'Regar',
+	kind: 'periodica',
+	recurrence: { mode: 'relativo', every: 2, unit: 'dias' },
+	createdAt: CREATED
 };
-const PUNTUAL: TareaPuntual = { id: 'p', titulo: 'Pagar', tipo: 'puntual', creadaEn: CREADA };
-const completado = (id: string, completadoEn: Date): Completado => ({ id, tareaId: 'r', completadoEn });
+const ONE_OFF: OneOffTask = { id: 'p', title: 'Pagar', kind: 'puntual', createdAt: CREATED };
+const completion = (id: string, completedAt: Date): Completion => ({ id, taskId: 'r', completedAt });
 
 describe('pausar y reanudar (spec §5.8, §7)', () => {
 	it('pausar escribe pausada', () => {
-		expect(pausar()).toStrictEqual({ pausada: true });
+		expect(pause()).toStrictEqual({ paused: true });
 	});
 
 	it('reanudar quita pausada y guarda reanudadaEn = ahora, en el mismo cambio', () => {
-		expect(reanudar(REANUDADA)).toStrictEqual({ pausada: null, reanudadaEn: REANUDADA });
+		expect(resume(RESUMED)).toStrictEqual({ paused: null, resumedAt: RESUMED });
 	});
 });
 
 describe('estaPausada (spec §4.1, §5.8)', () => {
 	it('una periódica con pausada está pausada; sin el campo, no', () => {
-		expect(estaPausada({ ...RELATIVA, pausada: true })).toBe(true);
-		expect(estaPausada(RELATIVA)).toBe(false);
-		expect(estaPausada({ ...RELATIVA, pausada: false })).toBe(false);
+		expect(isPaused({ ...RELATIVE, paused: true })).toBe(true);
+		expect(isPaused(RELATIVE)).toBe(false);
+		expect(isPaused({ ...RELATIVE, paused: false })).toBe(false);
 	});
 
 	it('una puntual nunca está pausada', () => {
-		expect(estaPausada(PUNTUAL)).toBe(false);
+		expect(isPaused(ONE_OFF)).toBe(false);
 	});
 });
 
 describe('accionDePausa (spec §6.2)', () => {
 	it('al editar una periódica ofrece pausar; si está pausada, reanudar', () => {
-		expect(accionDePausa(RELATIVA)).toBe('pausar');
-		expect(accionDePausa({ ...RELATIVA, pausada: true })).toBe('reanudar');
+		expect(pauseAction(RELATIVE)).toBe('pausar');
+		expect(pauseAction({ ...RELATIVE, paused: true })).toBe('reanudar');
 	});
 
 	it('una puntual no se puede pausar', () => {
-		expect(accionDePausa(PUNTUAL)).toBeUndefined();
+		expect(pauseAction(ONE_OFF)).toBeUndefined();
 	});
 });
 
 describe('comoRecienCreada (spec §5.8)', () => {
 	it('una reanudada se evalúa con creadaEn = reanudadaEn y sin los completados anteriores a reanudadaEn', () => {
-		const tarea = { ...RELATIVA, reanudadaEn: REANUDADA };
-		const antes = completado('c1', new Date(2026, 6, 15, 9, 59, 59));
-		const enElInstante = completado('c2', REANUDADA);
-		const despues = completado('c3', new Date(2026, 6, 16, 8, 0, 0));
+		const task = { ...RELATIVE, resumedAt: RESUMED };
+		const before = completion('c1', new Date(2026, 6, 15, 9, 59, 59));
+		const atTheInstant = completion('c2', RESUMED);
+		const after = completion('c3', new Date(2026, 6, 16, 8, 0, 0));
 
-		expect(comoRecienCreada(tarea, [antes, enElInstante, despues])).toStrictEqual({
-			tarea: { ...tarea, creadaEn: REANUDADA },
-			propios: [enElInstante, despues]
+		expect(asJustCreated(task, [before, atTheInstant, after])).toStrictEqual({
+			task: { ...task, createdAt: RESUMED },
+			owns: [atTheInstant, after]
 		});
 	});
 
 	it('una que nunca se reanudó se evalúa tal cual', () => {
-		const propios = [completado('c1', new Date(2026, 6, 2))];
+		const owns = [completion('c1', new Date(2026, 6, 2))];
 
-		expect(comoRecienCreada(RELATIVA, propios)).toStrictEqual({ tarea: RELATIVA, propios });
-		expect(comoRecienCreada(PUNTUAL, [])).toStrictEqual({ tarea: PUNTUAL, propios: [] });
+		expect(asJustCreated(RELATIVE, owns)).toStrictEqual({ task: RELATIVE, owns });
+		expect(asJustCreated(ONE_OFF, [])).toStrictEqual({ task: ONE_OFF, owns: [] });
 	});
 });

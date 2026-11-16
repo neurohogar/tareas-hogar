@@ -1,37 +1,37 @@
 // Lo que se carga en el panel de una tarea (spec §6.2), el mismo al crear y
 // al editar: el título y los campos de la forma elegida en "Se repite".
-import { camposDeTexto } from './text-fields';
-import type { ResultadoDeCreacion } from './creation';
-import { crearPeriodicaCalendario, type DatosPeriodicaCalendario } from './create-recurring-calendar';
-import { crearPeriodicaRelativa, type DatosPeriodicaRelativa } from './create-recurring-relative';
-import { crearPuntual, type DatosPuntual } from './create-one-off';
-import { camposDeEsfuerzo } from './effort';
-import { diaIso } from './days';
-import type { Tarea } from './task';
+import { textFields } from './text-fields';
+import type { CreationResult } from './creation';
+import { createRecurringCalendar, type RecurringCalendarData } from './create-recurring-calendar';
+import { createRecurringRelative, type RecurringRelativeData } from './create-recurring-relative';
+import { createOneOff, type OneOffData } from './create-one-off';
+import { effortFields } from './effort';
+import { isoDay } from './days';
+import type { Task } from './task';
 
-export type DatosDeTarea =
-	| ({ forma: 'puntual' } & DatosPuntual)
-	| ({ forma: 'relativa' } & DatosPeriodicaRelativa)
-	| ({ forma: 'calendario' } & DatosPeriodicaCalendario);
+export type TaskData =
+	| ({ shape: 'puntual' } & OneOffData)
+	| ({ shape: 'relativa' } & RecurringRelativeData)
+	| ({ shape: 'calendario' } & RecurringCalendarData);
 
 /** Spec §6.2: los valores con que abre el panel al crear; "Se repite" viene en No se repite (puntual). */
-export const DATOS_AL_CREAR: DatosDeTarea = { forma: 'puntual', titulo: '' };
+export const DATA_ON_CREATE: TaskData = { shape: 'puntual', title: '' };
 
 /** Valida los datos con las reglas de su forma (§4.1–§4.2) y, si son válidos, arma la tarea. */
-export function crearSegunDatos(datos: DatosDeTarea, id: string, ahora: Date): ResultadoDeCreacion {
-	if (datos.forma === 'puntual') return crearPuntual(datos, id, ahora);
-	if (datos.forma === 'relativa') return crearPeriodicaRelativa(datos, id, ahora);
-	return crearPeriodicaCalendario(datos, id, ahora);
+export function createFromData(data: TaskData, id: string, now: Date): CreationResult {
+	if (data.shape === 'puntual') return createOneOff(data, id, now);
+	if (data.shape === 'relativa') return createRecurringRelative(data, id, now);
+	return createRecurringCalendar(data, id, now);
 }
 
 /** Los valores actuales de la tarea, como los carga el panel al editar: la inversa de crearSegunDatos. */
-export function datosDeTarea(tarea: Tarea): DatosDeTarea {
-	const { titulo, emoji, nota, primerPaso, pasos, versionMinima, horario, esfuerzo } = tarea;
-	const comunes = { titulo, ...camposDeTexto({ emoji, nota, primerPaso, versionMinima }), ...(pasos && { pasos: [...pasos] }), ...(horario && { horario: horario.map((ventana) => ({ ...ventana })) }), ...camposDeEsfuerzo(esfuerzo) };
-	if (tarea.tipo === 'puntual')
-		return { forma: 'puntual', ...comunes, ...(tarea.fechaLimite && { fechaLimite: diaIso(tarea.fechaLimite) }) };
-	const { recurrencia } = tarea;
-	if (recurrencia.modo === 'relativo') return { forma: 'relativa', ...comunes, cada: recurrencia.cada, unidad: recurrencia.unidad };
-	if ('diasSemana' in recurrencia) return { forma: 'calendario', ...comunes, diasSemana: [...recurrencia.diasSemana], diasMes: [] };
-	return { forma: 'calendario', ...comunes, diasSemana: [], diasMes: [...recurrencia.diasMes] };
+export function taskData(task: Task): TaskData {
+	const { title, emoji, note, firstStep, steps, minimalVersion, schedule, effort } = task;
+	const commons = { title, ...textFields({ emoji, note, firstStep, minimalVersion }), ...(steps && { steps: [...steps] }), ...(schedule && { schedule: schedule.map((timeWindow) => ({ ...timeWindow })) }), ...effortFields(effort) };
+	if (task.kind === 'puntual')
+		return { shape: 'puntual', ...commons, ...(task.dueDate && { dueDate: isoDay(task.dueDate) }) };
+	const { recurrence } = task;
+	if (recurrence.mode === 'relativo') return { shape: 'relativa', ...commons, every: recurrence.every, unit: recurrence.unit };
+	if ('weekdays' in recurrence) return { shape: 'calendario', ...commons, weekdays: [...recurrence.weekdays], monthDays: [] };
+	return { shape: 'calendario', ...commons, weekdays: [], monthDays: [...recurrence.monthDays] };
 }

@@ -1,86 +1,86 @@
 import { describe, expect, it } from 'vitest';
-import type { DatosDeTarea } from './task-data';
-import type { Etiqueta } from './label';
-import { crearConEtiquetas, editarConEtiquetas } from './save-with-labels';
-import type { TareaPuntual } from './task';
+import type { TaskData } from './task-data';
+import type { Label } from './label';
+import { createWithLabels, editWithLabels } from './save-with-labels';
+import type { OneOffTask } from './task';
 
-const AHORA = new Date(2026, 6, 15, 8, 0, 0);
-const COCINA: Etiqueta = { id: 'e1', nombre: 'Cocina', color: 'gris' };
-const BANO: Etiqueta = { id: 'e2', nombre: 'Baño', color: 'rojo' };
-const PAGAR: TareaPuntual = { id: 't1', titulo: 'Pagar', tipo: 'puntual', creadaEn: AHORA };
-const DATOS: DatosDeTarea = { forma: 'puntual', titulo: 'Pagar' };
+const NOW = new Date(2026, 6, 15, 8, 0, 0);
+const KITCHEN: Label = { id: 'e1', name: 'Cocina', color: 'gris' };
+const BATHROOM: Label = { id: 'e2', name: 'Baño', color: 'rojo' };
+const PAY: OneOffTask = { id: 't1', title: 'Pagar', kind: 'puntual', createdAt: NOW };
+const DATA: TaskData = { shape: 'puntual', title: 'Pagar' };
 
-const ids = (...lista: string[]) => () => lista.shift() as string;
+const ids = (...list: string[]) => () => list.shift() as string;
 
 describe('crearConEtiquetas', () => {
 	it('crea la tarea con sus etiquetas y las nuevas', () => {
-		const resultado = crearConEtiquetas(DATOS, ['Patio', 'cocina'], 't1', AHORA, { existentes: [COCINA], nuevoId: ids('e9') });
+		const result = createWithLabels(DATA, ['Patio', 'cocina'], 't1', NOW, { existings: [KITCHEN], newId: ids('e9') });
 
-		expect(resultado).toStrictEqual({
+		expect(result).toStrictEqual({
 			ok: true,
-			tarea: { ...PAGAR, etiquetas: ['e9', 'e1'] },
-			nuevas: [{ id: 'e9', nombre: 'Patio', color: 'rojo' }]
+			task: { ...PAY, labels: ['e9', 'e1'] },
+			newLabels: [{ id: 'e9', name: 'Patio', color: 'rojo' }]
 		});
 	});
 
 	it('sin etiquetas, la tarea queda sin el campo', () => {
-		expect(crearConEtiquetas(DATOS, [], 't1', AHORA, { existentes: [], nuevoId: ids() })).toStrictEqual({ ok: true, tarea: PAGAR, nuevas: [] });
+		expect(createWithLabels(DATA, [], 't1', NOW, { existings: [], newId: ids() })).toStrictEqual({ ok: true, task: PAY, newLabels: [] });
 	});
 
 	it('un nombre de etiqueta inválido rechaza la creación entera, junto con los otros errores', () => {
-		const resultado = crearConEtiquetas({ forma: 'puntual', titulo: ' ' }, ['x'.repeat(31)], 't1', AHORA, { existentes: [], nuevoId: ids('e9') });
+		const result = createWithLabels({ shape: 'puntual', title: ' ' }, ['x'.repeat(31)], 't1', NOW, { existings: [], newId: ids('e9') });
 
-		expect(resultado).toStrictEqual({ ok: false, errores: { titulo: 'vacio', etiquetas: 'largo' } });
+		expect(result).toStrictEqual({ ok: false, errors: { title: 'vacio', labels: 'largo' } });
 	});
 });
 
 describe('editarConEtiquetas', () => {
-	const contexto = { existentes: [COCINA, BANO], nuevoId: ids('e9') };
+	const context = { existings: [KITCHEN, BATHROOM], newId: ids('e9') };
 
 	it('reemplaza las etiquetas de la tarea por las escritas', () => {
-		const resultado = editarConEtiquetas({ ...PAGAR, etiquetas: ['e1'] }, DATOS, ['Baño', 'Patio'], contexto);
+		const result = editWithLabels({ ...PAY, labels: ['e1'] }, DATA, ['Baño', 'Patio'], context);
 
-		expect(resultado).toStrictEqual({
+		expect(result).toStrictEqual({
 			ok: true,
-			cambio: { etiquetas: ['e2', 'e9'] },
-			nuevas: [{ id: 'e9', nombre: 'Patio', color: 'naranja' }]
+			change: { labels: ['e2', 'e9'] },
+			newLabels: [{ id: 'e9', name: 'Patio', color: 'naranja' }]
 		});
 	});
 
 	it('las mismas etiquetas, en otro orden, no son un cambio', () => {
-		const resultado = editarConEtiquetas({ ...PAGAR, etiquetas: ['e1', 'e2'] }, DATOS, ['Baño', 'Cocina'], contexto);
+		const result = editWithLabels({ ...PAY, labels: ['e1', 'e2'] }, DATA, ['Baño', 'Cocina'], context);
 
-		expect(resultado).toStrictEqual({ ok: true, cambio: {}, nuevas: [] });
+		expect(result).toStrictEqual({ ok: true, change: {}, newLabels: [] });
 	});
 
 	it('quitar todas es un cambio a ninguna', () => {
-		expect(editarConEtiquetas({ ...PAGAR, etiquetas: ['e1'] }, DATOS, [], contexto)).toStrictEqual({ ok: true, cambio: { etiquetas: [] }, nuevas: [] });
+		expect(editWithLabels({ ...PAY, labels: ['e1'] }, DATA, [], context)).toStrictEqual({ ok: true, change: { labels: [] }, newLabels: [] });
 	});
 
 	it('una tarea sin el campo y sin etiquetas escritas no cambia', () => {
-		expect(editarConEtiquetas(PAGAR, DATOS, [], contexto)).toStrictEqual({ ok: true, cambio: {}, nuevas: [] });
+		expect(editWithLabels(PAY, DATA, [], context)).toStrictEqual({ ok: true, change: {}, newLabels: [] });
 	});
 
 	it('se combina con los cambios de los otros campos', () => {
-		const resultado = editarConEtiquetas(PAGAR, { ...DATOS, titulo: 'Pagar la luz' }, ['Cocina'], contexto);
+		const result = editWithLabels(PAY, { ...DATA, title: 'Pagar la luz' }, ['Cocina'], context);
 
-		expect(resultado).toStrictEqual({ ok: true, cambio: { titulo: 'Pagar la luz', etiquetas: ['e1'] }, nuevas: [] });
+		expect(result).toStrictEqual({ ok: true, change: { title: 'Pagar la luz', labels: ['e1'] }, newLabels: [] });
 	});
 
 	it('un error en otro campo rechaza la edición entera: no se crea ninguna etiqueta', () => {
-		expect(editarConEtiquetas(PAGAR, { ...DATOS, titulo: '' }, ['Patio'], contexto)).toStrictEqual({ ok: false, errores: { titulo: 'vacio' } });
+		expect(editWithLabels(PAY, { ...DATA, title: '' }, ['Patio'], context)).toStrictEqual({ ok: false, errors: { title: 'vacio' } });
 	});
 
 	it('un nombre de etiqueta vacío rechaza la edición entera', () => {
-		expect(editarConEtiquetas(PAGAR, DATOS, ['  '], contexto)).toStrictEqual({ ok: false, errores: { etiquetas: 'vacio' } });
+		expect(editWithLabels(PAY, DATA, ['  '], context)).toStrictEqual({ ok: false, errors: { labels: 'vacio' } });
 	});
 });
 
 describe('editarConEtiquetas de una pausada (spec §5.8)', () => {
 	it('pasarla a puntual la reanuda en ese momento', () => {
-		const pausada = { id: 't2', titulo: 'Regar', tipo: 'periodica', recurrencia: { modo: 'relativo', cada: 2, unidad: 'dias' }, creadaEn: AHORA, pausada: true } as const;
-		const resultado = editarConEtiquetas({ ...pausada }, DATOS, [], { existentes: [], nuevoId: ids() }, AHORA);
+		const paused = { id: 't2', title: 'Regar', kind: 'periodica', recurrence: { mode: 'relativo', every: 2, unit: 'dias' }, createdAt: NOW, paused: true } as const;
+		const result = editWithLabels({ ...paused }, DATA, [], { existings: [], newId: ids() }, NOW);
 
-		expect(resultado.ok && resultado.cambio).toMatchObject({ pausada: null, reanudadaEn: AHORA });
+		expect(result.ok && result.change).toMatchObject({ paused: null, resumedAt: NOW });
 	});
 });

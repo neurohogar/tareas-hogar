@@ -1,10 +1,10 @@
 // Primer paso de la tarea (spec §4.1, §6.1, §6.2): se escribe en el panel y la fila lo muestra
 // solo en pendiente y atrasada. Una sola línea, recortada; vacío es sin campo; nunca inválido.
 import { expect } from 'vitest';
-import { crearPuntual, type DatosPuntual } from '../../src/lib/core/create-one-off';
-import { crearPeriodicaCalendario } from '../../src/lib/core/create-recurring-calendar';
-import { datosDeTarea } from '../../src/lib/core/task-data';
-import type { Tarea } from '../../src/lib/core/task';
+import { createOneOff, type OneOffData } from '../../src/lib/core/create-one-off';
+import { createRecurringCalendar } from '../../src/lib/core/create-recurring-calendar';
+import { taskData } from '../../src/lib/core/task-data';
+import type { Task } from '../../src/lib/core/task';
 import { AHORA, crearEnWorld, registrarCreacion } from './crear';
 import { editaElOtro, editoYo } from './edicion';
 import { diasDe, formaDe } from './periodica-calendario';
@@ -18,29 +18,29 @@ const SOLO_ESPACIOS = '   ';
 const conMargenes = (texto: string) => `  ${texto}  `;
 
 /** Los datos de la tarea con el primer paso escrito; el resto como estaba. */
-const conPrimerPaso = (primerPaso: string) => (tarea: Tarea) => ({ ...datosDeTarea(tarea), primerPaso });
+const conPrimerPaso = (primerPaso: string) => (tarea: Task) => ({ ...taskData(tarea), firstStep: primerPaso });
 
 /** Un guardado con primer paso es aceptado: nunca rechaza (§4.1). */
 function sinRechazo(world: World): void {
-	expect(world.errores).toBeUndefined();
+	expect(world.errors).toBeUndefined();
 }
 
-function crearPuntualConPrimerPaso(world: World, datos: DatosPuntual): void {
-	registrarCreacion(world, (id) => crearPuntual(datos, id, AHORA));
+function crearPuntualConPrimerPaso(world: World, datos: OneOffData): void {
+	registrarCreacion(world, (id) => createOneOff(datos, id, AHORA));
 	sinRechazo(world);
 }
 
 /** Deja la tarea ya guardada con ese primer paso, sin pasar por editar (no es un cambio "de mi lado"). */
-function guardadaConPrimerPaso(world: World, tarea: Tarea, primerPaso: string): void {
-	world.documentos = world.documentos.map((documento) => (documento.id === tarea.id ? { ...documento, primerPaso } : documento));
+function guardadaConPrimerPaso(world: World, tarea: Task, primerPaso: string): void {
+	world.documentos = world.documentos.map((documento) => (documento.id === tarea.id ? { ...documento, firstStep: primerPaso } : documento));
 }
 
 /** Cada forma de cambio del primer paso: "<sujeto> el primer paso a ...". */
-const CAMBIOS: { texto: string; valor: (...valores: string[]) => string }[] = [
-	{ texto: P, valor: (primerPaso) => primerPaso },
-	{ texto: `${P} con espacios al inicio y al final`, valor: (primerPaso) => conMargenes(primerPaso) },
-	{ texto: 'uno de solo espacios', valor: () => SOLO_ESPACIOS },
-	{ texto: `uno de ${P} caracteres`, valor: (largo) => 'x'.repeat(numero(largo)) }
+const CAMBIOS: { text: string; value: (...valores: string[]) => string }[] = [
+	{ text: P, value: (primerPaso) => primerPaso },
+	{ text: `${P} con espacios al inicio y al final`, value: (primerPaso) => conMargenes(primerPaso) },
+	{ text: 'uno de solo espacios', value: () => SOLO_ESPACIOS },
+	{ text: `uno de ${P} caracteres`, value: (largo) => 'x'.repeat(numero(largo)) }
 ];
 
 const EDITORES = [
@@ -49,7 +49,7 @@ const EDITORES = [
 ];
 
 const pasosDeEditar: StepDefinition[] = EDITORES.flatMap(({ sujeto, editar }) =>
-	CAMBIOS.map(({ texto, valor }) => ({
+	CAMBIOS.map(({ text: texto, value: valor }) => ({
 		pattern: new RegExp(`^${sujeto} el primer paso a ${texto}$`),
 		run: (world: World, ...valores: string[]) => {
 			editar(world, conPrimerPaso(valor(...valores)));
@@ -61,33 +61,33 @@ const pasosDeEditar: StepDefinition[] = EDITORES.flatMap(({ sujeto, editar }) =>
 /** En cada momento consultado, la lista tiene una sola fila y muestra ese texto de primer paso. */
 function laFilaMuestraElPrimerPaso(world: World, texto: string | undefined): void {
 	expect(world.consultasDePendientes.length).toBeGreaterThan(0);
-	for (const filas of world.consultasDePendientes) expect(filas.map(({ textoDePrimerPaso }) => textoDePrimerPaso)).toEqual([texto]);
+	for (const filas of world.consultasDePendientes) expect(filas.map(({ firstStepText: textoDePrimerPaso }) => textoDePrimerPaso)).toEqual([texto]);
 }
 
 export const primerPasoSteps: StepDefinition[] = [
 	...pasosDeEditar,
 	{
 		pattern: new RegExp(`^creo una tarea puntual con título ${P} y primer paso ${P}$`),
-		run: (world, titulo, primerPaso) => crearPuntualConPrimerPaso(world, { titulo, primerPaso })
+		run: (world, titulo, primerPaso) => crearPuntualConPrimerPaso(world, { title: titulo, firstStep: primerPaso })
 	},
 	{
 		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} cada 2 dias y primer paso ${P}$`),
 		run: (world, titulo, primerPaso) => {
-			crearEnWorld(world, { titulo, cada: 2, unidad: 'dias', primerPaso });
+			crearEnWorld(world, { title: titulo, every: 2, unit: 'dias', firstStep: primerPaso });
 			sinRechazo(world);
 		}
 	},
 	{
 		pattern: new RegExp(`^creo una tarea periódica (semanal|mensual) con título ${P} (los|los días) ${P} y primer paso ${P}$`),
 		run: (world, forma, titulo, conector, dias, primerPaso) => {
-			const datos = { titulo, primerPaso, ...diasDe(formaDe(`${forma} ${conector}`), dias) };
-			registrarCreacion(world, (id) => crearPeriodicaCalendario(datos, id, AHORA));
+			const datos = { title: titulo, firstStep: primerPaso, ...diasDe(formaDe(`${forma} ${conector}`), dias) };
+			registrarCreacion(world, (id) => createRecurringCalendar(datos, id, AHORA));
 			sinRechazo(world);
 		}
 	},
 	{
 		pattern: new RegExp(`^creo una tarea puntual con título ${P} y un primer paso de solo espacios$`),
-		run: (world, titulo) => crearPuntualConPrimerPaso(world, { titulo, primerPaso: SOLO_ESPACIOS })
+		run: (world, titulo) => crearPuntualConPrimerPaso(world, { title: titulo, firstStep: SOLO_ESPACIOS })
 	},
 	{
 		pattern: new RegExp(`^el primer paso de la tarea es ${P}$`),
@@ -114,15 +114,15 @@ export const primerPasoSteps: StepDefinition[] = [
 	},
 	{
 		pattern: new RegExp(`^la tarea tiene primer paso ${P}$`),
-		run: (world, primerPaso) => expect(laTarea(world).primerPaso).toBe(primerPaso)
+		run: (world, primerPaso) => expect(laTarea(world).firstStep).toBe(primerPaso)
 	},
 	{
 		pattern: /^la tarea no tiene primer paso$/,
-		run: (world) => expect(elDocumento(world)).not.toHaveProperty('primerPaso')
+		run: (world) => expect(elDocumento(world)).not.toHaveProperty('firstStep')
 	},
 	{
 		pattern: new RegExp(`^la tarea tiene un primer paso de ${P} caracteres$`),
-		run: (world, largo) => expect(laTarea(world).primerPaso).toHaveLength(numero(largo))
+		run: (world, largo) => expect(laTarea(world).firstStep).toHaveLength(numero(largo))
 	},
 	{
 		// El estado esperado llega como valor de la tabla; el del primer paso es el de siempre (§5).
@@ -130,7 +130,7 @@ export const primerPasoSteps: StepDefinition[] = [
 		run: (world, tipo) => {
 			expect(ESTADOS).toContain(tipo);
 			expect(world.estados.length).toBeGreaterThan(0);
-			for (const estado of world.estados) expect(estado.tipo).toBe(tipo);
+			for (const estado of world.estados) expect(estado.kind).toBe(tipo);
 		}
 	},
 	{

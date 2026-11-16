@@ -2,7 +2,7 @@
 // nombra de qué elementos se trata. Los pasos declaran qué hay por limpiar y qué intentos fallan;
 // los Then preguntan qué quedó limpio y qué quedó por reintentar.
 import { expect } from 'vitest';
-import { elementosAIntentar, reintentaCon, resultadoDelIntento, type Suceso } from '../../src/lib/core/cleanups';
+import { itemsToAttempt, retriesWith, attemptResult, type AppEvent } from '../../src/lib/core/cleanups';
 import type { StepDefinition, World } from './world';
 
 const LIMPIEZAS = ['completados huérfanos', 'anotaciones huérfanas', 'referencias a etiquetas borradas', 'etiquetas duplicadas'];
@@ -11,7 +11,7 @@ interface Limpieza {
 	original: string[];
 	porLimpiar: string[];
 	fallan: Set<string>;
-	limpios: string[];
+	cleaned: string[];
 }
 
 const estados = new WeakMap<World, Limpieza>();
@@ -19,7 +19,7 @@ const estados = new WeakMap<World, Limpieza>();
 function estado(world: World): Limpieza {
 	let actual = estados.get(world);
 	if (!actual) {
-		actual = { original: [], porLimpiar: [], fallan: new Set(), limpios: [] };
+		actual = { original: [], porLimpiar: [], fallan: new Set(), cleaned: [] };
 		estados.set(world, actual);
 	}
 	return actual;
@@ -36,23 +36,23 @@ function ids(valor: string): string[] {
 /** Un intento: se intenta cada elemento por limpiar por separado; los que fallaron siguen por limpiar. */
 function intentar(world: World): void {
 	const actual = estado(world);
-	const resultado = resultadoDelIntento(elementosAIntentar(actual.porLimpiar, new Set()), [...actual.fallan]);
-	actual.limpios.push(...resultado.limpios);
-	actual.porLimpiar = resultado.pendientes;
+	const resultado = attemptResult(itemsToAttempt(actual.porLimpiar, new Set()), [...actual.fallan]);
+	actual.cleaned.push(...resultado.cleaned);
+	actual.porLimpiar = resultado.pendings;
 }
 
-function sucede(world: World, suceso: Suceso): void {
-	if (reintentaCon(suceso)) intentar(world);
+function sucede(world: World, suceso: AppEvent): void {
+	if (retriesWith(suceso)) intentar(world);
 }
 
-const SUCESOS: Suceso[] = ['vuelve la conexión', 'cambian los datos'];
+const SUCESOS: AppEvent[] = ['vuelve la conexión', 'cambian los datos'];
 
 export const limpiezasSteps: StepDefinition[] = [
 	{
 		pattern: /^hay por limpiar (.+) de (.+)$/,
 		run: (world, elementos, limpieza) => {
 			if (!LIMPIEZAS.includes(limpieza)) throw new Error(`Limpieza desconocida: "${limpieza}"`);
-			estados.set(world, { original: ids(elementos), porLimpiar: ids(elementos), fallan: new Set(), limpios: [] });
+			estados.set(world, { original: ids(elementos), porLimpiar: ids(elementos), fallan: new Set(), cleaned: [] });
 		}
 	},
 	{
@@ -70,8 +70,8 @@ export const limpiezasSteps: StepDefinition[] = [
 	{
 		pattern: /^sucede que (.+)$/,
 		run: (world, suceso) => {
-			if (!SUCESOS.includes(suceso as Suceso)) throw new Error(`Suceso desconocido: "${suceso}"`);
-			sucede(world, suceso as Suceso);
+			if (!SUCESOS.includes(suceso as AppEvent)) throw new Error(`Suceso desconocido: "${suceso}"`);
+			sucede(world, suceso as AppEvent);
 		}
 	},
 	{
@@ -83,7 +83,7 @@ export const limpiezasSteps: StepDefinition[] = [
 	},
 	{
 		pattern: /^quedan limpios (.+)$/,
-		run: (world, limpios) => expect(estado(world).original.filter((id) => estado(world).limpios.includes(id))).toEqual(ids(limpios))
+		run: (world, limpios) => expect(estado(world).original.filter((id) => estado(world).cleaned.includes(id))).toEqual(ids(limpios))
 	},
 	{
 		pattern: /^quedan por limpiar (.+)$/,

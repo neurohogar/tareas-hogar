@@ -1,17 +1,17 @@
 // Spec §6.1: qué hace tocar el checkbox de una fila de Pendientes.
-import { completadoMasReciente, completadosDeTarea } from './completions';
-import { estaCompletada } from './completed';
-import { inicioDelDia } from './days';
-import { dentroDelHorario } from './schedule';
-import { comoRecienCreada, estaPausada } from './pause';
-import type { Completado, Tarea } from './task';
+import { latestCompletion, completionsOfTask } from './completions';
+import { isCompleted } from './completed';
+import { startOfDay } from './days';
+import { withinSchedule } from './schedule';
+import { asJustCreated, isPaused } from './pause';
+import type { Completion, Task } from './task';
 
 /** "ninguna": el checkbox está deshabilitado (completaría fuera de la ventana, §5.5, o la tarea está pausada, §5.8). */
-export type AccionDelCheckbox = { tipo: 'completar' } | { tipo: 'borrar'; completado: Completado } | { tipo: 'ninguna' };
+export type CheckboxAction = { kind: 'completar' } | { kind: 'borrar'; completion: Completion } | { kind: 'ninguna' };
 
 /** Spec §5.5: con horario, solo se completa dentro de alguna de sus ventanas. */
-function completarSiSePuede({ horario }: Tarea, ahora: Date): AccionDelCheckbox {
-	return !horario || dentroDelHorario(horario, ahora) ? { tipo: 'completar' } : { tipo: 'ninguna' };
+function completeIfPossible({ schedule }: Task, now: Date): CheckboxAction {
+	return !schedule || withinSchedule(schedule, now) ? { kind: 'completar' } : { kind: 'ninguna' };
 }
 
 /**
@@ -23,17 +23,17 @@ function completarSiSePuede({ horario }: Tarea, ahora: Date): AccionDelCheckbox 
  * De una pausada, nada; de una reanudada, solo cuentan los completados desde
  * reanudadaEn (§5.8).
  */
-export function accionDelCheckbox(tarea: Tarea, completados: readonly Completado[], ahora: Date): AccionDelCheckbox {
-	if (estaPausada(tarea)) return { tipo: 'ninguna' };
-	const { propios } = comoRecienCreada(tarea, completadosDeTarea(completados, tarea.id));
-	if (!estaCompletada(tarea, completados, ahora)) return completarSiSePuede(tarea, ahora);
-	const masReciente = completadoMasReciente(propios);
-	const deHoyOPosterior = masReciente.completadoEn.getTime() >= inicioDelDia(ahora).getTime();
-	if (tarea.tipo === 'puntual' || deHoyOPosterior) return { tipo: 'borrar', completado: masReciente };
-	return completarSiSePuede(tarea, ahora);
+export function checkboxAction(task: Task, completions: readonly Completion[], now: Date): CheckboxAction {
+	if (isPaused(task)) return { kind: 'ninguna' };
+	const { owns } = asJustCreated(task, completionsOfTask(completions, task.id));
+	if (!isCompleted(task, completions, now)) return completeIfPossible(task, now);
+	const mostRecent = latestCompletion(owns);
+	const ofTodayOrLater = mostRecent.completedAt.getTime() >= startOfDay(now).getTime();
+	if (task.kind === 'puntual' || ofTodayOrLater) return { kind: 'borrar', completion: mostRecent };
+	return completeIfPossible(task, now);
 }
 
 /** Spec §6.1 y §5.8: deshabilitado si tocarlo completaría fuera de la ventana, o si la tarea está pausada. */
-export function checkboxHabilitado(tarea: Tarea, completados: readonly Completado[], ahora: Date): boolean {
-	return accionDelCheckbox(tarea, completados, ahora).tipo !== 'ninguna';
+export function checkboxEnabled(task: Task, completions: readonly Completion[], now: Date): boolean {
+	return checkboxAction(task, completions, now).kind !== 'ninguna';
 }

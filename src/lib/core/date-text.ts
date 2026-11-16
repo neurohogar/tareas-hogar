@@ -1,16 +1,16 @@
 // Spec §6.1 (Fecha y distancia): la frase «Tocaba …» o «Vuelve …» que nombra un
 // instante respecto de ahora, con la fecha exacta y la distancia relativa.
-import { anioDe, diaDeLaSemana, diaDelMes, diasEntre, inicioDelDia, mesDe } from './days';
-import { horaEnTexto, nombreDelMes } from './dates-in-text';
+import { yearOf, weekday, dayOfMonth, daysBetween, startOfDay, monthOf } from './days';
+import { timeInText, monthName } from './dates-in-text';
 
 /** «Tocaba» en una atrasada; «Vuelve» en una en espera. */
-export type VerboDeFecha = 'Tocaba' | 'Vuelve';
+export type DateVerb = 'Tocaba' | 'Vuelve';
 
-const MS_POR_MINUTO = 60_000;
-const MINUTOS_POR_HORA = 60;
+const MS_PER_MINUTE = 60_000;
+const MINUTES_PER_HOUR = 60;
 
 /** Los días locales que se nombran con una palabra, por su distancia a hoy. */
-const PALABRA_DEL_DIA = new Map([
+const DAY_WORD = new Map([
 	[-1, 'ayer'],
 	[0, 'hoy'],
 	[1, 'mañana']
@@ -22,44 +22,44 @@ const PALABRA_DEL_DIA = new Map([
  * palabras ya son la distancia. Ej.: «Tocaba el martes 10 · hace 3 días»,
  * «Vuelve hoy 18:00 · en 8 horas», «Vuelve mañana».
  */
-export function fraseDeFecha(verbo: VerboDeFecha, instante: Date, ahora: Date): string {
-	const dias = diasEntre(ahora, instante);
-	const conHora = instante.getTime() !== inicioDelDia(instante).getTime();
-	const hora = conHora ? ` ${horaEnTexto(instante)}` : '';
-	const palabra = PALABRA_DEL_DIA.get(dias);
-	if (palabra === undefined) return `${verbo} el ${diaConNumero(instante, ahora)}${hora} · ${distanciaEnDias(dias)}`;
-	return conHora ? `${verbo} ${palabra}${hora} · ${distanciaEnHorasOMinutos(instante, ahora)}` : `${verbo} ${palabra}`;
+export function datePhrase(verb: DateVerb, instant: Date, now: Date): string {
+	const days = daysBetween(now, instant);
+	const withTime = instant.getTime() !== startOfDay(instant).getTime();
+	const hour = withTime ? ` ${timeInText(instant)}` : '';
+	const word = DAY_WORD.get(days);
+	if (word === undefined) return `${verb} el ${dayWithNumber(instant, now)}${hour} · ${distanceInDays(days)}`;
+	return withTime ? `${verb} ${word}${hour} · ${distanceInHoursOrMinutes(instant, now)}` : `${verb} ${word}`;
 }
 
 /** «martes 10», con « de <mes>» si el mes no es el de ahora y « de <año>» si el año no es el de ahora. */
-function diaConNumero(dia: Date, ahora: Date): string {
-	const delMes = `${diaDeLaSemana(dia)} ${diaDelMes(dia)}`;
-	if (anioDe(dia) !== anioDe(ahora)) return `${delMes} de ${nombreDelMes(dia)} de ${anioDe(dia)}`;
-	return mesDe(dia) === mesDe(ahora) ? delMes : `${delMes} de ${nombreDelMes(dia)}`;
+function dayWithNumber(day: Date, now: Date): string {
+	const ofMonth = `${weekday(day)} ${dayOfMonth(day)}`;
+	if (yearOf(day) !== yearOf(now)) return `${ofMonth} de ${monthName(day)} de ${yearOf(day)}`;
+	return monthOf(day) === monthOf(now) ? ofMonth : `${ofMonth} de ${monthName(day)}`;
 }
 
-const PREFIJO_DE_LA_DISTANCIA = new Map([
+const DISTANCE_PREFIX = new Map([
 	[-1, 'hace'],
 	[1, 'en']
 ]);
 
 /** A 2 o más días locales: «hace N días» / «en N días». */
-const distanciaEnDias = (dias: number) => `${PREFIJO_DE_LA_DISTANCIA.get(Math.sign(dias))} ${Math.abs(dias)} días`;
+const distanceInDays = (days: number) => `${DISTANCE_PREFIX.get(Math.sign(days))} ${Math.abs(days)} días`;
 
-const contar = (cantidad: number, singular: string, plural: string) => `${cantidad} ${cantidad === 1 ? singular : plural}`;
+const count = (amount: number, singular: string, plural: string) => `${amount} ${amount === 1 ? singular : plural}`;
 
 /**
  * Desde ahora, aunque cruce la medianoche: en horas o, a menos de una hora, en
  * minutos. Lo pasado se redondea hacia abajo y lo futuro hacia arriba; lo
  * pasado a menos de un minuto es «ahora» (lo futuro nunca llega a 0 minutos).
  */
-function distanciaEnHorasOMinutos(instante: Date, ahora: Date): string {
+function distanceInHoursOrMinutes(instant: Date, now: Date): string {
 	// Con signo, ceil redondea lo futuro hacia arriba y lo pasado hacia abajo (en valor absoluto).
-	const minutos = Math.ceil((instante.getTime() - ahora.getTime()) / MS_POR_MINUTO);
-	if (minutos === 0) return 'ahora';
-	const cantidad =
-		Math.abs(minutos) < MINUTOS_POR_HORA
-			? contar(Math.abs(minutos), 'minuto', 'minutos')
-			: contar(Math.abs(Math.ceil(minutos / MINUTOS_POR_HORA)), 'hora', 'horas');
-	return `${PREFIJO_DE_LA_DISTANCIA.get(Math.sign(minutos))} ${cantidad}`;
+	const minutes = Math.ceil((instant.getTime() - now.getTime()) / MS_PER_MINUTE);
+	if (minutes === 0) return 'ahora';
+	const amount =
+		Math.abs(minutes) < MINUTES_PER_HOUR
+			? count(Math.abs(minutes), 'minuto', 'minutos')
+			: count(Math.abs(Math.ceil(minutes / MINUTES_PER_HOUR)), 'hora', 'horas');
+	return `${DISTANCE_PREFIX.get(Math.sign(minutes))} ${amount}`;
 }

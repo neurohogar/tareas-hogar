@@ -1,9 +1,9 @@
 import { expect } from 'vitest';
-import { completadosDeTarea } from '../../src/lib/core/completions';
-import type { ResultadoDeCreacion } from '../../src/lib/core/creation';
+import { completionsOfTask } from '../../src/lib/core/completions';
+import type { CreationResult } from '../../src/lib/core/creation';
 import {
-	crearPeriodicaRelativa,
-	type DatosPeriodicaRelativa
+	createRecurringRelative,
+	type RecurringRelativeData
 } from '../../src/lib/core/create-recurring-relative';
 import { P, numero, unidad } from './valores';
 import { laTarea, laTareaDeTipo, nuevoId, type StepDefinition, type World } from './world';
@@ -20,29 +20,29 @@ export const AHORA = new Date(2026, 6, 15, 8, 0, 0);
  */
 export const ANTES_DEL_ESCENARIO = new Date(2000, 0, 1, 0, 0, 0);
 
-export function registrarCreacion(world: World, crear: (id: string) => ResultadoDeCreacion): void {
+export function registrarCreacion(world: World, crear: (id: string) => CreationResult): void {
 	const resultado = crear(nuevoId(world, 'tarea'));
-	if (resultado.ok) world.documentos = [...world.documentos, resultado.tarea];
-	else world.errores = resultado.errores;
+	if (resultado.ok) world.documentos = [...world.documentos, resultado.task];
+	else world.errors = resultado.errors;
 }
 
-export function crearEnWorld(world: World, datos: DatosPeriodicaRelativa, ahora = AHORA): void {
-	registrarCreacion(world, (id) => crearPeriodicaRelativa(datos, id, ahora));
+export function crearEnWorld(world: World, datos: RecurringRelativeData, ahora = AHORA): void {
+	registrarCreacion(world, (id) => createRecurringRelative(datos, id, ahora));
 }
 
 const MOTIVOS = {
-	'título vacío': { titulo: 'vacio' },
-	'intervalo inválido': { cada: 'invalido' },
-	'falta de días': { dias: 'faltan' },
-	'día del mes inválido': { dias: 'diaDelMesInvalido' },
-	'semanal y mensual combinados': { dias: 'combinados' },
-	'fecha límite inválida': { fechaLimite: 'invalida' },
+	'título vacío': { title: 'vacio' },
+	'intervalo inválido': { every: 'invalido' },
+	'falta de días': { days: 'faltan' },
+	'día del mes inválido': { days: 'diaDelMesInvalido' },
+	'semanal y mensual combinados': { days: 'combinados' },
+	'fecha límite inválida': { dueDate: 'invalida' },
 	'emoji inválido': { emoji: 'invalido' },
-	'nombre de etiqueta vacío': { etiquetas: 'vacio' },
-	'nombre de etiqueta demasiado largo': { etiquetas: 'largo' },
-	'horario incompleto': { horario: 'incompleto' },
-	'horarios superpuestos': { horario: 'superpuestos' },
-	'varios horarios en una relativa en horas': { horario: 'variasEnHoras' }
+	'nombre de etiqueta vacío': { labels: 'vacio' },
+	'nombre de etiqueta demasiado largo': { labels: 'largo' },
+	'horario incompleto': { schedule: 'incompleto' },
+	'horarios superpuestos': { schedule: 'superpuestos' },
+	'varios horarios en una relativa en horas': { schedule: 'variasEnHoras' }
 };
 
 const TIPOS = { periódica: 'periodica', puntual: 'puntual' };
@@ -50,43 +50,43 @@ const TIPOS = { periódica: 'periodica', puntual: 'puntual' };
 export const crearSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} cada ${P} ${P}$`),
-		run: (world, titulo, cada, u) => crearEnWorld(world, { titulo, cada: numero(cada), unidad: unidad(u) })
+		run: (world, titulo, cada, u) => crearEnWorld(world, { title: titulo, every: numero(cada), unit: unidad(u) })
 	},
 	{
 		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} y un intervalo válido$`),
-		run: (world, titulo) => crearEnWorld(world, { titulo, cada: CADA_VALIDO, unidad: 'dias' })
+		run: (world, titulo) => crearEnWorld(world, { title: titulo, every: CADA_VALIDO, unit: 'dias' })
 	},
 	{
 		pattern: /^creo una tarea periódica relativa con un título de solo espacios y un intervalo válido$/,
-		run: (world) => crearEnWorld(world, { titulo: '   ', cada: CADA_VALIDO, unidad: 'dias' })
+		run: (world) => crearEnWorld(world, { title: '   ', every: CADA_VALIDO, unit: 'dias' })
 	},
 	{
 		pattern: new RegExp(
 			`^creo una tarea periódica relativa con un título válido y ${P} como cantidad del intervalo$`
 		),
-		run: (world, cada) => crearEnWorld(world, { titulo: TITULO_VALIDO, cada: numero(cada), unidad: 'dias' })
+		run: (world, cada) => crearEnWorld(world, { title: TITULO_VALIDO, every: numero(cada), unit: 'dias' })
 	},
 	{
 		pattern: new RegExp(`^se crea una tarea (${Object.keys(TIPOS).join('|')}) con título ${P}$`),
 		run: (world, tipo, titulo) => {
 			const tarea = laTarea(world);
-			expect(tarea.tipo).toBe(TIPOS[tipo as keyof typeof TIPOS]);
-			expect(tarea.titulo).toBe(titulo);
+			expect(tarea.kind).toBe(TIPOS[tipo as keyof typeof TIPOS]);
+			expect(tarea.title).toBe(titulo);
 		}
 	},
 	{
 		pattern: new RegExp(`^su recurrencia es relativa cada ${P} ${P}$`),
 		run: (world, cada, u) => {
-			expect(laTareaDeTipo(world, 'periodica').recurrencia).toEqual({ modo: 'relativo', cada: numero(cada), unidad: unidad(u) });
+			expect(laTareaDeTipo(world, 'periodica').recurrence).toEqual({ mode: 'relativo', every: numero(cada), unit: unidad(u) });
 		}
 	},
 	{
 		pattern: /^la tarea no tiene completados$/,
-		run: (world) => expect(completadosDeTarea(world.completados, laTarea(world).id)).toEqual([])
+		run: (world) => expect(completionsOfTask(world.completions, laTarea(world).id)).toEqual([])
 	},
 	{
 		pattern: new RegExp(`^la (?:creación|edición) se rechaza por (${Object.keys(MOTIVOS).join('|')})$`),
-		run: (world, motivo) => expect(world.errores).toEqual(MOTIVOS[motivo as keyof typeof MOTIVOS])
+		run: (world, motivo) => expect(world.errors).toEqual(MOTIVOS[motivo as keyof typeof MOTIVOS])
 	},
 	{
 		pattern: /^no se crea ninguna tarea$/,

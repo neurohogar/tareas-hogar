@@ -1,25 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { franjaDeConexion, pantallaDeEntrada } from './connection';
+import { connectionStrip, entryScreen } from './connection';
 
 describe('franjaDeConexion', () => {
 	it('muestra "Sin conexión" mientras no hay red', () => {
-		expect(franjaDeConexion(false)).toBe('Sin conexión');
+		expect(connectionStrip(false)).toBe('Sin conexión');
 	});
 
 	it('no muestra nada con red', () => {
-		expect(franjaDeConexion(true)).toBeUndefined();
+		expect(connectionStrip(true)).toBeUndefined();
 	});
 });
 
 describe('pantallaDeEntrada', () => {
 	it('sin conexión pide conexión para entrar la primera vez y deshabilita el botón', () => {
-		expect(pantallaDeEntrada(false)).toStrictEqual({
-			mensaje: 'Necesitás conexión para entrar la primera vez',
-			botonHabilitado: false
+		expect(entryScreen(false)).toStrictEqual({
+			message: 'Necesitás conexión para entrar la primera vez',
+			buttonEnabled: false
 		});
 	});
 
 	it('con conexión no avisa nada y habilita el botón', () => {
-		expect(pantallaDeEntrada(true)).toStrictEqual({ mensaje: undefined, botonHabilitado: true });
+		expect(entryScreen(true)).toStrictEqual({ message: undefined, buttonEnabled: true });
 	});
 });

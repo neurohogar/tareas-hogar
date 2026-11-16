@@ -1,96 +1,96 @@
 import { describe, expect, it } from 'vitest';
-import { crearPeriodicaCalendario } from './create-recurring-calendar';
-import { crearPeriodicaRelativa } from './create-recurring-relative';
-import { crearPuntual } from './create-one-off';
-import { crearSegunDatos, datosDeTarea } from './task-data';
-import { OPCIONES_DE_ESFUERZO, textoDeEsfuerzo } from './effort';
-import type { Esfuerzo, Tarea } from './task';
+import { createRecurringCalendar } from './create-recurring-calendar';
+import { createRecurringRelative } from './create-recurring-relative';
+import { createOneOff } from './create-one-off';
+import { createFromData, taskData } from './task-data';
+import { EFFORT_OPTIONS, effortText } from './effort';
+import type { Effort, Task } from './task';
 
-const AHORA = new Date(2026, 6, 15, 8, 0, 0);
+const NOW = new Date(2026, 6, 15, 8, 0, 0);
 
 describe('textoDeEsfuerzo', () => {
 	it('da el nivel en texto', () => {
-		expect(textoDeEsfuerzo('rapida')).toBe('Rápida');
-		expect(textoDeEsfuerzo('media')).toBe('Media');
-		expect(textoDeEsfuerzo('larga')).toBe('Larga');
+		expect(effortText('rapida')).toBe('Rápida');
+		expect(effortText('media')).toBe('Media');
+		expect(effortText('larga')).toBe('Larga');
 	});
 
 	it('sin esfuerzo, nada', () => {
-		expect(textoDeEsfuerzo(undefined)).toBeUndefined();
+		expect(effortText(undefined)).toBeUndefined();
 	});
 });
 
 describe('OPCIONES_DE_ESFUERZO', () => {
 	it('el selector empieza en "Sin estimar", que es sin el campo, y sigue con los tres niveles', () => {
-		expect(OPCIONES_DE_ESFUERZO).toStrictEqual([
-			{ valor: undefined, texto: 'Sin estimar' },
-			{ valor: 'rapida', texto: 'Rápida (≤ 5 min)' },
-			{ valor: 'media', texto: 'Media (≈ 15 min)' },
-			{ valor: 'larga', texto: 'Larga' }
+		expect(EFFORT_OPTIONS).toStrictEqual([
+			{ value: undefined, text: 'Sin estimar' },
+			{ value: 'rapida', text: 'Rápida (≤ 5 min)' },
+			{ value: 'media', text: 'Media (≈ 15 min)' },
+			{ value: 'larga', text: 'Larga' }
 		]);
 	});
 });
 
 describe('crear con esfuerzo', () => {
-	it.each<Esfuerzo>(['rapida', 'media', 'larga'])('una puntual guarda el esfuerzo %s', (esfuerzo) => {
-		expect(crearPuntual({ titulo: 'Pagar', esfuerzo }, 't1', AHORA)).toStrictEqual({
+	it.each<Effort>(['rapida', 'media', 'larga'])('una puntual guarda el esfuerzo %s', (effort) => {
+		expect(createOneOff({ title: 'Pagar', effort }, 't1', NOW)).toStrictEqual({
 			ok: true,
-			tarea: { id: 't1', titulo: 'Pagar', esfuerzo, tipo: 'puntual', creadaEn: AHORA }
+			task: { id: 't1', title: 'Pagar', effort, kind: 'puntual', createdAt: NOW }
 		});
 	});
 
 	it('sin esfuerzo, la tarea queda sin el campo', () => {
-		expect(crearPuntual({ titulo: 'Pagar', esfuerzo: undefined }, 't1', AHORA)).toStrictEqual({
+		expect(createOneOff({ title: 'Pagar', effort: undefined }, 't1', NOW)).toStrictEqual({
 			ok: true,
-			tarea: { id: 't1', titulo: 'Pagar', tipo: 'puntual', creadaEn: AHORA }
+			task: { id: 't1', title: 'Pagar', kind: 'puntual', createdAt: NOW }
 		});
 	});
 
 	it('una periódica relativa guarda el esfuerzo', () => {
-		expect(crearPeriodicaRelativa({ titulo: 'Regar', cada: 2, unidad: 'dias', esfuerzo: 'rapida' }, 't1', AHORA)).toStrictEqual({
+		expect(createRecurringRelative({ title: 'Regar', every: 2, unit: 'dias', effort: 'rapida' }, 't1', NOW)).toStrictEqual({
 			ok: true,
-			tarea: {
+			task: {
 				id: 't1',
-				titulo: 'Regar',
-				esfuerzo: 'rapida',
-				tipo: 'periodica',
-				recurrencia: { modo: 'relativo', cada: 2, unidad: 'dias' },
-				creadaEn: AHORA
+				title: 'Regar',
+				effort: 'rapida',
+				kind: 'periodica',
+				recurrence: { mode: 'relativo', every: 2, unit: 'dias' },
+				createdAt: NOW
 			}
 		});
 	});
 
 	it('una periódica de calendario guarda el esfuerzo', () => {
-		const datos = { titulo: 'Basura', diasSemana: ['martes'] as const, diasMes: [], esfuerzo: 'larga' as const };
+		const data = { title: 'Basura', weekdays: ['martes'] as const, monthDays: [], effort: 'larga' as const };
 
-		expect(crearPeriodicaCalendario(datos, 't1', AHORA)).toStrictEqual({
+		expect(createRecurringCalendar(data, 't1', NOW)).toStrictEqual({
 			ok: true,
-			tarea: {
+			task: {
 				id: 't1',
-				titulo: 'Basura',
-				esfuerzo: 'larga',
-				tipo: 'periodica',
-				recurrencia: { modo: 'calendario', diasSemana: ['martes'] },
-				creadaEn: AHORA
+				title: 'Basura',
+				effort: 'larga',
+				kind: 'periodica',
+				recurrence: { mode: 'calendario', weekdays: ['martes'] },
+				createdAt: NOW
 			}
 		});
 	});
 });
 
 describe('datosDeTarea con esfuerzo', () => {
-	const PUNTUAL: Tarea = { id: 't1', titulo: 'Pagar', tipo: 'puntual', creadaEn: AHORA };
+	const ONE_OFF: Task = { id: 't1', title: 'Pagar', kind: 'puntual', createdAt: NOW };
 
 	it('carga el esfuerzo de la tarea', () => {
-		expect(datosDeTarea({ ...PUNTUAL, esfuerzo: 'media' })).toStrictEqual({ forma: 'puntual', titulo: 'Pagar', esfuerzo: 'media' });
+		expect(taskData({ ...ONE_OFF, effort: 'media' })).toStrictEqual({ shape: 'puntual', title: 'Pagar', effort: 'media' });
 	});
 
 	it('sin esfuerzo, sin la clave', () => {
-		expect(datosDeTarea(PUNTUAL)).toStrictEqual({ forma: 'puntual', titulo: 'Pagar' });
+		expect(taskData(ONE_OFF)).toStrictEqual({ shape: 'puntual', title: 'Pagar' });
 	});
 
 	it('es la inversa de crearSegunDatos', () => {
-		const tarea: Tarea = { ...PUNTUAL, esfuerzo: 'larga' };
+		const task: Task = { ...ONE_OFF, effort: 'larga' };
 
-		expect(crearSegunDatos(datosDeTarea(tarea), 't1', AHORA)).toStrictEqual({ ok: true, tarea });
+		expect(createFromData(taskData(task), 't1', NOW)).toStrictEqual({ ok: true, task });
 	});
 });

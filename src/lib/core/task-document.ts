@@ -1,92 +1,92 @@
 // Spec §7 (Conflictos): una tarea tal como queda guardada. Las ediciones son
 // parciales y por campo, así que tras dos ediciones concurrentes el documento
 // puede tener un campo que no corresponde a su tipo.
-import { camposDeTexto } from './text-fields';
-import { aplicarReferencias, type CambioDeReferencias } from './label-references';
-import { camposDeEsfuerzo } from './effort';
-import { horarioGuardado } from './schedule';
-import type { Esfuerzo, Horario, Posposicion, Recurrencia, Tarea, Ventana } from './task';
+import { textFields } from './text-fields';
+import { applyReferences, type ReferencesChange } from './label-references';
+import { effortFields } from './effort';
+import { savedSchedule } from './schedule';
+import type { Effort, Schedule, Postponement, Recurrence, Task, TimeWindow } from './task';
 
 /** Los campos de la §4.1 que tiene la rebanada actual, sin exigir que correspondan al tipo. */
-export interface DocumentoDeTarea {
+export interface TaskDocument {
 	id: string;
-	titulo: string;
+	title: string;
 	emoji?: string;
-	nota?: string;
-	primerPaso?: string;
-	pasos?: string[];
-	pasoActual?: number;
-	versionMinima?: string;
-	esfuerzo?: Esfuerzo;
-	tipo: Tarea['tipo'];
-	creadaEn: Date;
-	fechaLimite?: Date;
-	recurrencia?: Recurrencia;
+	note?: string;
+	firstStep?: string;
+	steps?: string[];
+	currentStep?: number;
+	minimalVersion?: string;
+	effort?: Effort;
+	kind: Task['kind'];
+	createdAt: Date;
+	dueDate?: Date;
+	recurrence?: Recurrence;
 	/** Una lista de ventanas o, en el formato anterior, una sola (§4.1). */
-	horario?: Horario | Ventana;
-	etiquetas?: string[];
+	schedule?: Schedule | TimeWindow;
+	labels?: string[];
 	/** Spec §5.8: solo vale para las periódicas. */
-	pausada?: boolean;
+	paused?: boolean;
 	/** Spec §5.8: solo vale para las periódicas; una puntual lo ignora. */
-	reanudadaEn?: Date;
-	pospuesta?: Posposicion;
+	resumedAt?: Date;
+	postponed?: Postponement;
 }
 
 /**
  * Un cambio parcial: solo los campos que cambiaron. Un campo en null se quita
  * del documento. La recurrencia es un campo: se reemplaza entera.
  */
-export interface CambioDeTarea {
-	titulo?: string;
+export interface TaskChange {
+	title?: string;
 	emoji?: string | null;
-	nota?: string | null;
-	primerPaso?: string | null;
+	note?: string | null;
+	firstStep?: string | null;
 	/** Un solo campo: se reemplaza entero, como etiquetas (§7). */
-	pasos?: string[] | null;
+	steps?: string[] | null;
 	/** Otro campo, independiente de pasos (§7); null es el paso 1. */
-	pasoActual?: number | null;
-	versionMinima?: string | null;
-	esfuerzo?: Esfuerzo | null;
-	tipo?: Tarea['tipo'];
-	fechaLimite?: Date | null;
-	recurrencia?: Recurrencia | null;
+	currentStep?: number | null;
+	minimalVersion?: string | null;
+	effort?: Effort | null;
+	kind?: Task['kind'];
+	dueDate?: Date | null;
+	recurrence?: Recurrence | null;
 	/** Un solo campo: sus ventanas, con desde y hasta, se escriben juntas (§7). */
-	horario?: Horario | null;
+	schedule?: Schedule | null;
 	/** Se reemplaza entero: gana el último cambio, no se unen los agregados (§7). */
-	etiquetas?: string[];
+	labels?: string[];
 	/** Pausar y reanudar los escriben juntos (§7). */
-	pausada?: true | null;
-	reanudadaEn?: Date;
+	paused?: true | null;
+	resumedAt?: Date;
 	/** Un solo campo: desde y hasta se escriben juntos (§7). */
-	pospuesta?: Posposicion | null;
+	postponed?: Postponement | null;
 }
 
 /** La tarea que describe el documento: un campo que no corresponde al tipo se ignora. */
-export function tareaDesdeDocumento(documento: DocumentoDeTarea): Tarea {
-	const { id, titulo, emoji, nota, primerPaso, versionMinima, esfuerzo, tipo, creadaEn, fechaLimite, recurrencia, horario, etiquetas, pospuesta } = documento;
-	const comunes = { id, titulo, ...camposDeTexto({ emoji, nota, primerPaso, versionMinima }), ...camposDePasos(documento), ...camposDeEsfuerzo(esfuerzo), ...(etiquetas && { etiquetas }), ...(horario && { horario: horarioGuardado(horario) }), ...(pospuesta && { pospuesta }) };
-	if (tipo === 'puntual') return { ...comunes, tipo, ...(fechaLimite && { fechaLimite }), creadaEn };
-	if (!recurrencia) throw new Error(`La tarea periódica ${id} no tiene recurrencia`);
-	return { ...comunes, tipo, recurrencia, creadaEn, ...camposDePausa(documento) };
+export function taskFromDocument(doc: TaskDocument): Task {
+	const { id, title, emoji, note, firstStep, minimalVersion, effort, kind, createdAt, dueDate, recurrence, schedule, labels, postponed } = doc;
+	const commons = { id, title, ...textFields({ emoji, note, firstStep, minimalVersion }), ...stepsFields(doc), ...effortFields(effort), ...(labels && { labels }), ...(schedule && { schedule: savedSchedule(schedule) }), ...(postponed && { postponed }) };
+	if (kind === 'puntual') return { ...commons, kind, ...(dueDate && { dueDate }), createdAt };
+	if (!recurrence) throw new Error(`La tarea periódica ${id} no tiene recurrencia`);
+	return { ...commons, kind, recurrence, createdAt, ...pauseFields(doc) };
 }
 
 /** Spec §4.1 (Pasos): pasos (si tiene alguno) y pasoActual, solo los que tiene el documento. */
-function camposDePasos({ pasos, pasoActual }: DocumentoDeTarea) {
-	return { ...(pasos && pasos.length > 0 && { pasos }), ...(pasoActual !== undefined && { pasoActual }) };
+function stepsFields({ steps, currentStep }: TaskDocument) {
+	return { ...(steps && steps.length > 0 && { steps }), ...(currentStep !== undefined && { currentStep }) };
 }
 
 /** Spec §5.8: pausada y reanudadaEn, solo los que tiene el documento. */
-function camposDePausa({ pausada, reanudadaEn }: DocumentoDeTarea) {
-	return { ...(pausada && { pausada }), ...(reanudadaEn && { reanudadaEn }) };
+function pauseFields({ paused, resumedAt }: TaskDocument) {
+	return { ...(paused && { paused }), ...(resumedAt && { resumedAt }) };
 }
 
-function aplicarAlDocumento(documento: DocumentoDeTarea, cambio: CambioDeTarea): DocumentoDeTarea {
-	const editado: Record<string, unknown> = { ...documento };
-	for (const [campo, valor] of Object.entries(cambio)) {
-		if (valor === null) delete editado[campo];
-		else editado[campo] = valor;
+function applyToDocument(doc: TaskDocument, change: TaskChange): TaskDocument {
+	const editedDocument: Record<string, unknown> = { ...doc };
+	for (const [field, value] of Object.entries(change)) {
+		if (value === null) delete editedDocument[field];
+		else editedDocument[field] = value;
 	}
-	return editado as unknown as DocumentoDeTarea;
+	return editedDocument as unknown as TaskDocument;
 }
 
 /**
@@ -94,8 +94,8 @@ function aplicarAlDocumento(documento: DocumentoDeTarea, cambio: CambioDeTarea):
  * recibirlo: gana el último cambio por campo y, si la tarea ya no existe
  * (gana el borrado), el cambio se descarta.
  */
-export function aplicarCambio(documentos: readonly DocumentoDeTarea[], tareaId: string, cambio: CambioDeTarea): DocumentoDeTarea[] {
-	return documentos.map((documento) => (documento.id === tareaId ? aplicarAlDocumento(documento, cambio) : documento));
+export function applyChange(docs: readonly TaskDocument[], taskId: string, change: TaskChange): TaskDocument[] {
+	return docs.map((doc) => (doc.id === taskId ? applyToDocument(doc, change) : doc));
 }
 
 /**
@@ -104,15 +104,15 @@ export function aplicarCambio(documentos: readonly DocumentoDeTarea[], tareaId: 
  * arrayUnion: tocan solo los ids que nombran. Una tarea que ya no existe se
  * saltea.
  */
-export function aplicarCambiosDeReferencias(
-	documentos: readonly DocumentoDeTarea[],
-	cambios: readonly CambioDeReferencias[]
-): DocumentoDeTarea[] {
-	return cambios.reduce(
-		(actuales, cambio) =>
-			actuales.map((documento) =>
-				documento.id === cambio.tareaId ? { ...documento, etiquetas: aplicarReferencias(documento.etiquetas, cambio) } : documento
+export function applyReferenceChanges(
+	docs: readonly TaskDocument[],
+	changes: readonly ReferencesChange[]
+): TaskDocument[] {
+	return changes.reduce(
+		(currentItems, change) =>
+			currentItems.map((doc) =>
+				doc.id === change.taskId ? { ...doc, labels: applyReferences(doc.labels, change) } : doc
 			),
-		[...documentos]
+		[...docs]
 	);
 }

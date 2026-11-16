@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { nombreDeTarea } from './task-name';
-import type { Tarea } from './task';
+import { taskName } from './task-name';
+import type { Task } from './task';
 
-const REGAR: Tarea = { id: 't1', titulo: 'Regar', tipo: 'puntual', creadaEn: new Date(2026, 0, 1) };
+const WATER: Task = { id: 't1', title: 'Regar', kind: 'puntual', createdAt: new Date(2026, 0, 1) };
 
 describe('nombreDeTarea', () => {
 	it('con emoji es «emoji título», con un solo espacio', () => {
-		expect(nombreDeTarea({ ...REGAR, emoji: '🌱' })).toBe('🌱 Regar');
+		expect(taskName({ ...WATER, emoji: '🌱' })).toBe('🌱 Regar');
 	});
 
 	it('sin emoji es solo el título, sin espacio inicial', () => {
-		expect(nombreDeTarea(REGAR)).toBe('Regar');
+		expect(taskName(WATER)).toBe('Regar');
 	});
 
 	it('no incluye la nota', () => {
-		expect(nombreDeTarea({ ...REGAR, ...{ nota: 'Usar guantes' } })).toBe('Regar');
+		expect(taskName({ ...WATER, ...{ note: 'Usar guantes' } })).toBe('Regar');
 	});
 });

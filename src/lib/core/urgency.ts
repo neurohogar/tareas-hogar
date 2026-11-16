@@ -1,23 +1,23 @@
-import { completadosDeTarea } from './completions';
-import { sumarDias } from './days';
-import type { EstadoEnPendientes } from './status';
-import { instantePeriodicaConHorario, instantePuntualConHorario } from './status-with-schedule';
-import { esperaPorPosposicion } from './task-status';
-import { proximaOcurrencia } from './recurring-calendar-status';
-import { instanteDeUrgenciaRelativa } from './recurring-relative-status';
-import { comoRecienCreada } from './pause';
-import { plazosConHorario } from './deadlines-with-schedule';
-import type { Completado, Tarea } from './task';
+import { completionsOfTask } from './completions';
+import { addDays } from './days';
+import type { PendingStatus } from './status';
+import { recurringInstantWithSchedule, oneOffInstantWithSchedule } from './status-with-schedule';
+import { waitForPostponement } from './task-status';
+import { nextOccurrence } from './recurring-calendar-status';
+import { relativeUrgencyInstant } from './recurring-relative-status';
+import { asJustCreated } from './pause';
+import { deadlinesWithSchedule } from './deadlines-with-schedule';
+import type { Completion, Task } from './task';
 
 /** Un día límite (fecha límite o N) cuenta desde sus 00:00; atrasado, desde las 00:00 del día siguiente. */
-const desdeElDia = (dia: Date, atrasada: boolean) => (atrasada ? sumarDias(dia, 1) : dia);
+const fromDay = (day: Date, overdue: boolean) => (overdue ? addDays(day, 1) : day);
 
-function instanteSinHorario(tarea: Tarea, deLaTarea: readonly Completado[], estado: EstadoEnPendientes): Date | undefined {
-	const atrasada = estado.tipo === 'atrasada';
-	if (tarea.tipo === 'puntual') return tarea.fechaLimite && desdeElDia(tarea.fechaLimite, atrasada);
-	const { recurrencia } = tarea;
-	if (recurrencia.modo === 'relativo') return instanteDeUrgenciaRelativa(recurrencia, tarea.creadaEn, deLaTarea, estado);
-	return desdeElDia(proximaOcurrencia(recurrencia, tarea.creadaEn, deLaTarea), atrasada);
+function instantWithoutSchedule(task: Task, ofTheTask: readonly Completion[], status: PendingStatus): Date | undefined {
+	const overdue = status.kind === 'atrasada';
+	if (task.kind === 'puntual') return task.dueDate && fromDay(task.dueDate, overdue);
+	const { recurrence } = task;
+	if (recurrence.mode === 'relativo') return relativeUrgencyInstant(recurrence, task.createdAt, ofTheTask, status);
+	return fromDay(nextOccurrence(recurrence, task.createdAt, ofTheTask), overdue);
 }
 
 /**
@@ -28,17 +28,17 @@ function instanteSinHorario(tarea: Tarea, deLaTarea: readonly Completado[], esta
  * De una reanudada, como recién creada en reanudadaEn (§5.8). En espera por una
  * posposición, vuelve en hasta (§5.9).
  */
-export function instanteDeUrgencia(
-	guardada: Tarea,
-	completados: readonly Completado[],
-	estado: EstadoEnPendientes,
-	ahora: Date
+export function urgencyInstant(
+	saved: Task,
+	completions: readonly Completion[],
+	status: PendingStatus,
+	now: Date
 ): Date | undefined {
-	const posposicion = esperaPorPosposicion(guardada, completados, ahora);
-	if (posposicion) return posposicion.hasta;
-	const { tarea, propios: deLaTarea } = comoRecienCreada(guardada, completadosDeTarea(completados, guardada.id));
-	const { horario } = tarea;
-	if (!horario) return instanteSinHorario(tarea, deLaTarea, estado);
-	if (tarea.tipo === 'puntual') return instantePuntualConHorario({ ...tarea, horario }, estado, ahora);
-	return instantePeriodicaConHorario(plazosConHorario(tarea, horario, deLaTarea), estado);
+	const postponement = waitForPostponement(saved, completions, now);
+	if (postponement) return postponement.to;
+	const { task, owns: ofTheTask } = asJustCreated(saved, completionsOfTask(completions, saved.id));
+	const { schedule } = task;
+	if (!schedule) return instantWithoutSchedule(task, ofTheTask, status);
+	if (task.kind === 'puntual') return oneOffInstantWithSchedule({ ...task, schedule }, status, now);
+	return recurringInstantWithSchedule(deadlinesWithSchedule(task, schedule, ofTheTask), status);
 }

@@ -1,21 +1,21 @@
 // Spec §6.2 (Última vez): cuándo se completó la tarea por última vez, según
 // su completadoEn más reciente y el día local.
-import { completadoMasReciente, completadosDeTarea } from './completions';
-import { diasEntre } from './days';
-import { encabezadoDelDia, horaEnTexto } from './dates-in-text';
-import type { Completado } from './task';
+import { latestCompletion, completionsOfTask } from './completions';
+import { daysBetween } from './days';
+import { dayHeader, timeInText } from './dates-in-text';
+import type { Completion } from './task';
 
 /** "hoy 08:05", "ayer 19:30", "hace N días", la fecha y la hora de un día posterior a hoy, o "nunca". */
-export function ultimaVez(tareaId: string, completados: readonly Completado[], ahora: Date): string {
-	const propios = completadosDeTarea(completados, tareaId);
-	if (propios.length === 0) return 'nunca';
-	return momentoEnTexto(completadoMasReciente(propios).completadoEn, ahora);
+export function lastTime(taskId: string, completions: readonly Completion[], now: Date): string {
+	const owns = completionsOfTask(completions, taskId);
+	if (owns.length === 0) return 'nunca';
+	return momentInText(latestCompletion(owns).completedAt, now);
 }
 
-function momentoEnTexto(momento: Date, ahora: Date): string {
-	const diasAtras = diasEntre(momento, ahora);
-	if (diasAtras >= 2) return `hace ${diasAtras} días`;
-	if (diasAtras === 1) return `ayer ${horaEnTexto(momento)}`;
-	if (diasAtras === 0) return `hoy ${horaEnTexto(momento)}`;
-	return `${encabezadoDelDia(momento, ahora)} ${horaEnTexto(momento)}`;
+function momentInText(moment: Date, now: Date): string {
+	const daysAgo = daysBetween(moment, now);
+	if (daysAgo >= 2) return `hace ${daysAgo} días`;
+	if (daysAgo === 1) return `ayer ${timeInText(moment)}`;
+	if (daysAgo === 0) return `hoy ${timeInText(moment)}`;
+	return `${dayHeader(moment, now)} ${timeInText(moment)}`;
 }

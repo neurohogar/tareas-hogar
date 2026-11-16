@@ -1,27 +1,27 @@
 // Spec §6.7 (Anotaciones): qué anotaciones se ven, en qué orden y agrupadas por día.
-import type { Anotacion } from './annotation';
-import { anotacionConTareaExistente } from './deletion';
-import { compararIds } from './compare-ids';
-import { encabezadoDelDia, horaEnTexto } from './dates-in-text';
-import { nombreDeTarea } from './task-name';
-import type { Tarea } from './task';
+import type { Annotation } from './annotation';
+import { annotationWithExistingTask } from './deletion';
+import { compareIds } from './compare-ids';
+import { dayHeader, timeInText } from './dates-in-text';
+import { taskName } from './task-name';
+import type { Task } from './task';
 
 /** Una anotación que la pantalla muestra, con el nombre actual de su tarea. */
-export interface AnotacionVisible {
-	anotacion: Anotacion;
+export interface VisibleAnnotation {
+	annotation: Annotation;
 	/** «emoji título» de la tarea como es ahora (§4.1); sin tarea, no está. */
-	nombreDeTarea?: string;
+	taskName?: string;
 }
 
-export interface EntradaDeAnotaciones extends AnotacionVisible {
+export interface AnnotationsEntry extends VisibleAnnotation {
 	/** "HH:MM" de anotadaEn. */
-	hora: string;
+	hour: string;
 }
 
-export interface GrupoDeAnotaciones {
+export interface AnnotationsGroup {
 	/** "Hoy", "Ayer" o la fecha del día, como en el Historial. */
-	encabezado: string;
-	entradas: EntradaDeAnotaciones[];
+	header: string;
+	entries: AnnotationsEntry[];
 }
 
 /**
@@ -29,33 +29,33 @@ export interface GrupoDeAnotaciones {
  * ni las de tareas borradas), en el orden de anotadaEn que pide compararInstantes
  * (si empatan, primero la de id menor), cada una con el nombre actual de su tarea.
  */
-export function anotacionesVisibles(tareas: readonly Tarea[], anotaciones: readonly Anotacion[], compararInstantes: (a: Date, b: Date) => number): AnotacionVisible[] {
-	const porId = new Map(tareas.map((tarea) => [tarea.id, tarea]));
-	return anotaciones
-		.filter((anotacion) => anotacionConTareaExistente(tareas, anotacion))
-		.sort((a, b) => compararInstantes(a.anotadaEn, b.anotadaEn) || compararIds(a.id, b.id))
-		.map((anotacion) => {
-			const tarea = anotacion.tareaId === undefined ? undefined : porId.get(anotacion.tareaId);
-			return tarea ? { anotacion, nombreDeTarea: nombreDeTarea(tarea) } : { anotacion };
+export function visibleAnnotations(tasks: readonly Task[], annotations: readonly Annotation[], compareInstants: (a: Date, b: Date) => number): VisibleAnnotation[] {
+	const byId = new Map(tasks.map((task) => [task.id, task]));
+	return annotations
+		.filter((annotation) => annotationWithExistingTask(tasks, annotation))
+		.sort((a, b) => compareInstants(a.annotatedAt, b.annotatedAt) || compareIds(a.id, b.id))
+		.map((annotation) => {
+			const task = annotation.taskId === undefined ? undefined : byId.get(annotation.taskId);
+			return task ? { annotation, taskName: taskName(task) } : { annotation };
 		});
 }
 
-const masRecientePrimero = (a: Date, b: Date) => b.getTime() - a.getTime();
+const mostRecentFirst = (a: Date, b: Date) => b.getTime() - a.getTime();
 
 /**
  * Spec §6.7: de la más reciente a la más antigua (si empatan, primero la de id
  * menor), agrupadas por día local con los encabezados del Historial.
  */
-export function anotacionesEnPantalla(tareas: readonly Tarea[], anotaciones: readonly Anotacion[], ahora: Date): GrupoDeAnotaciones[] {
-	const grupos: GrupoDeAnotaciones[] = [];
-	for (const visible of anotacionesVisibles(tareas, anotaciones, masRecientePrimero)) {
-		const { anotadaEn } = visible.anotacion;
-		const encabezado = encabezadoDelDia(anotadaEn, ahora);
-		const entrada = { ...visible, hora: horaEnTexto(anotadaEn) };
+export function annotationsOnScreen(tasks: readonly Task[], annotations: readonly Annotation[], now: Date): AnnotationsGroup[] {
+	const groups: AnnotationsGroup[] = [];
+	for (const visible of visibleAnnotations(tasks, annotations, mostRecentFirst)) {
+		const { annotatedAt } = visible.annotation;
+		const header = dayHeader(annotatedAt, now);
+		const entry = { ...visible, hour: timeInText(annotatedAt) };
 		// Cada día tiene un encabezado distinto: entradas seguidas con el mismo encabezado son del mismo día.
-		const ultimo = grupos.at(-1);
-		if (ultimo?.encabezado === encabezado) ultimo.entradas.push(entrada);
-		else grupos.push({ encabezado, entradas: [entrada] });
+		const last = groups.at(-1);
+		if (last?.header === header) last.entries.push(entry);
+		else groups.push({ header, entries: [entry] });
 	}
-	return grupos;
+	return groups;
 }

@@ -1,40 +1,40 @@
 // Spec §4.1 y §5.5: el horario de una tarea, una o más ventanas diarias
 // [desde, hasta) en las que se puede completar. Horas locales "HH:MM" de 24 h,
 // desde < hasta, ordenadas por desde y sin superponerse.
-import { enElMinuto, sumarDias } from './days';
-import type { Horario, Ventana } from './task';
+import { atTheMinute, addDays } from './days';
+import type { Schedule, TimeWindow } from './task';
 
 /** Lo que escribe el panel en una fila Desde/Hasta: cada hora puede faltar o venir vacía. */
-export interface VentanaEscrita {
-	desde?: string;
-	hasta?: string;
+export interface TypedWindow {
+	from?: string;
+	to?: string;
 }
 
 /** Las filas Desde/Hasta del panel, en el orden en que se escribieron. */
-export type HorarioEscrito = VentanaEscrita[];
+export type TypedSchedule = TypedWindow[];
 
 /** variasEnHoras: más de una ventana en una relativa en horas (§4.1); lo detecta la relativa. */
-export type ErrorDeHorario = 'incompleto' | 'finNoPosterior' | 'superpuestos' | 'variasEnHoras';
+export type ScheduleError = 'incompleto' | 'finNoPosterior' | 'superpuestos' | 'variasEnHoras';
 
-export type LecturaDeHorario = { ok: true; horario?: Horario } | { ok: false; error: ErrorDeHorario };
+export type ScheduleReading = { ok: true; schedule?: Schedule } | { ok: false; error: ScheduleError };
 
-const HORA = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 /** Minutos desde las 00:00, o undefined si no es una hora HH:MM. */
-function minutosDe(hora: string | undefined): number | undefined {
-	const partes = hora === undefined ? null : HORA.exec(hora);
-	return partes ? Number(partes[1]) * 60 + Number(partes[2]) : undefined;
+function minutesOf(hour: string | undefined): number | undefined {
+	const parts = hour === undefined ? null : TIME_RE.exec(hour);
+	return parts ? Number(parts[1]) * 60 + Number(parts[2]) : undefined;
 }
 
-const completa = ({ desde, hasta }: VentanaEscrita) => minutosDe(desde) !== undefined && minutosDe(hasta) !== undefined;
+const isComplete = ({ from, to }: TypedWindow) => minutesOf(from) !== undefined && minutesOf(to) !== undefined;
 
 /** Un horario guardado siempre es válido. */
-const minutos = (hora: string) => minutosDe(hora) as number;
+const minutes = (hour: string) => minutesOf(hour) as number;
 
-const finPosterior = ({ desde, hasta }: Ventana) => minutos(desde) < minutos(hasta);
+const laterEnd = ({ from, to }: TimeWindow) => minutes(from) < minutes(to);
 
 /** Ya ordenadas por desde: se superponen si una empieza antes de que termine la anterior. */
-const superpuestas = (ordenadas: Horario) => ordenadas.some((ventana, i) => i > 0 && minutos(ventana.desde) < minutos(ordenadas[i - 1].hasta));
+const overlapping = (ordered: Schedule) => ordered.some((timeWindow, i) => i > 0 && minutes(timeWindow.from) < minutes(ordered[i - 1].to));
 
 /**
  * Spec §4.1: sin ventanas escritas, la tarea no tiene horario. Con una hora
@@ -42,62 +42,62 @@ const superpuestas = (ordenadas: Horario) => ordenadas.some((ventana, i) => i > 
  * de fin no es posterior a la de inicio; con ventanas que se pisan, se
  * superponen. Si es válido, las ventanas quedan ordenadas por desde.
  */
-export function leerHorario(escrito: HorarioEscrito | undefined): LecturaDeHorario {
-	if (escrito === undefined || escrito.length === 0) return { ok: true };
-	if (!escrito.every(completa)) return { ok: false, error: 'incompleto' };
-	const ventanas = (escrito as Horario).map(({ desde, hasta }) => ({ desde, hasta }));
-	if (!ventanas.every(finPosterior)) return { ok: false, error: 'finNoPosterior' };
-	const ordenadas = ventanas.sort((a, b) => minutos(a.desde) - minutos(b.desde));
-	if (superpuestas(ordenadas)) return { ok: false, error: 'superpuestos' };
-	return { ok: true, horario: ordenadas };
+export function readSchedule(typedOne: TypedSchedule | undefined): ScheduleReading {
+	if (typedOne === undefined || typedOne.length === 0) return { ok: true };
+	if (!typedOne.every(isComplete)) return { ok: false, error: 'incompleto' };
+	const timeWindows = (typedOne as Schedule).map(({ from, to }) => ({ from, to }));
+	if (!timeWindows.every(laterEnd)) return { ok: false, error: 'finNoPosterior' };
+	const ordered = timeWindows.sort((a, b) => minutes(a.from) - minutes(b.from));
+	if (overlapping(ordered)) return { ok: false, error: 'superpuestos' };
+	return { ok: true, schedule: ordered };
 }
 
 /** Spec §4.1: un documento con una sola ventana (el formato anterior) se lee como una lista de una. */
-export function horarioGuardado(guardado: Ventana | Horario): Horario {
-	return Array.isArray(guardado) ? guardado : [guardado];
+export function savedSchedule(savedValue: TimeWindow | Schedule): Schedule {
+	return Array.isArray(savedValue) ? savedValue : [savedValue];
 }
 
 /** Una ventana en un día dado (§5.6: una ocurrencia), en ms: [inicio, cierre). */
-export interface Ocurrencia {
-	inicio: number;
-	cierre: number;
+export interface Occurrence {
+	start: number;
+	closing: number;
 }
 
 /** Las ventanas del día, en orden, en ms. */
-export function ocurrenciasDelDia(horario: Horario, dia: Date): Ocurrencia[] {
-	return horario.map(({ desde, hasta }) => ({
-		inicio: enElMinuto(dia, minutos(desde)).getTime(),
-		cierre: enElMinuto(dia, minutos(hasta)).getTime()
+export function occurrencesOfDay(schedule: Schedule, day: Date): Occurrence[] {
+	return schedule.map(({ from, to }) => ({
+		start: atTheMinute(day, minutes(from)).getTime(),
+		closing: atTheMinute(day, minutes(to)).getTime()
 	}));
 }
 
 /** Las ventanas de ayer, hoy y mañana respecto de `momento`, en orden. */
-const ventanasAlrededor = (horario: Horario, momento: Date) =>
-	[-1, 0, 1].flatMap((dias) => ocurrenciasDelDia(horario, sumarDias(momento, dias)));
+const windowsAround = (schedule: Schedule, moment: Date) =>
+	[-1, 0, 1].flatMap((days) => occurrencesOfDay(schedule, addDays(moment, days)));
 
 /** Spec §5.5: A (el primer instante ≥ desde que cae en una ventana) y C (el hasta de esa ventana), en ms. */
-export function ventanaDisponible(horario: Horario, desde: Date): { disponible: number; cierre: number } {
-	const momento = desde.getTime();
-	const { inicio, cierre } = ventanasAlrededor(horario, desde).find((ventana) => momento < ventana.cierre) as Ocurrencia;
-	return { disponible: Math.max(momento, inicio), cierre };
+export function availableWindow(schedule: Schedule, from: Date): { available: number; closing: number } {
+	const moment = from.getTime();
+	const { start, closing } = windowsAround(schedule, from).find((timeWindow) => moment < timeWindow.closing) as Occurrence;
+	return { available: Math.max(moment, start), closing };
 }
 
-export function dentroDelHorario(horario: Horario, ahora: Date): boolean {
-	return ventanaDisponible(horario, ahora).disponible === ahora.getTime();
+export function withinSchedule(schedule: Schedule, now: Date): boolean {
+	return availableWindow(schedule, now).available === now.getTime();
 }
 
 /** El hasta de la última ventana del día, en ms. */
-export function cierreDelDia(horario: Horario, dia: Date): number {
-	return (ocurrenciasDelDia(horario, dia).at(-1) as Ocurrencia).cierre;
+export function endOfDay(schedule: Schedule, day: Date): number {
+	return (occurrencesOfDay(schedule, day).at(-1) as Occurrence).closing;
 }
 
 /** El hasta de la última ventana que cerró hasta ahora (inclusive), en ms. */
-export function ultimoCierre(horario: Horario, ahora: Date): number {
-	const cerradas = ventanasAlrededor(horario, ahora).filter(({ cierre }) => cierre <= ahora.getTime());
-	return (cerradas.at(-1) as Ocurrencia).cierre;
+export function lastClosing(schedule: Schedule, now: Date): number {
+	const closed = windowsAround(schedule, now).filter(({ closing }) => closing <= now.getTime());
+	return (closed.at(-1) as Occurrence).closing;
 }
 
 /** Spec §6.1: el horario en la fila, "08:00–11:00"; con varias ventanas, separadas por " · ". */
-export function textoDelHorario(horario: Horario): string {
-	return horario.map(({ desde, hasta }) => `${desde}–${hasta}`).join(' · ');
+export function scheduleText(schedule: Schedule): string {
+	return schedule.map(({ from, to }) => `${from}–${to}`).join(' · ');
 }

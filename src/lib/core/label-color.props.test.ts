@@ -1,18 +1,18 @@
 // Spec §4.3 (Color de una etiqueta nueva).
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { colorMenosUsado } from './label-color';
-import { PALETA, type Color } from './label';
+import { leastUsedColor } from './label-color';
+import { PALETTE, type Color } from './label';
 
-const usados = fc.array(fc.constantFrom(...PALETA), { maxLength: 30 });
-const veces = (lista: readonly Color[], color: Color) => lista.filter((usado) => usado === color).length;
+const usedOnes = fc.array(fc.constantFrom(...PALETTE), { maxLength: 30 });
+const times = (list: readonly Color[], color: Color) => list.filter((used) => used === color).length;
 
 describe('colorMenosUsado (propiedades)', () => {
 	it('es el primero de la paleta entre los menos usados', () => {
 		fc.assert(
-			fc.property(usados, (lista) => {
-				const minimo = Math.min(...PALETA.map((color) => veces(lista, color)));
-				expect(colorMenosUsado(lista)).toBe(PALETA.find((color) => veces(lista, color) === minimo));
+			fc.property(usedOnes, (list) => {
+				const minimum = Math.min(...PALETTE.map((color) => times(list, color)));
+				expect(leastUsedColor(list)).toBe(PALETTE.find((color) => times(list, color) === minimum));
 			})
 		);
 	});
@@ -20,9 +20,9 @@ describe('colorMenosUsado (propiedades)', () => {
 	it('no depende del orden de las etiquetas existentes', () => {
 		fc.assert(
 			fc.property(
-				usados.chain((lista) => fc.shuffledSubarray(lista, { minLength: lista.length }).map((otra) => [lista, otra] as const)),
-				([lista, permutada]) => {
-					expect(colorMenosUsado(permutada)).toBe(colorMenosUsado(lista));
+				usedOnes.chain((list) => fc.shuffledSubarray(list, { minLength: list.length }).map((other) => [list, other] as const)),
+				([list, permuted]) => {
+					expect(leastUsedColor(permuted)).toBe(leastUsedColor(list));
 				}
 			)
 		);

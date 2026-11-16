@@ -1,57 +1,57 @@
 import { describe, expect, it } from 'vitest';
-import { filasDePendientes } from './pending';
-import type { Completado, DiaSemana, Tarea, TareaPeriodica } from './task';
+import { pendingRows } from './pending';
+import type { Completion, Weekday, Task, RecurringTask } from './task';
 
-const CREADA = new Date(2026, 6, 1);
-const AHORA = new Date(2026, 6, 15, 8, 0, 0);
-interface Datos {
-	titulo?: string;
-	creadaEn?: Date;
+const CREATED = new Date(2026, 6, 1);
+const NOW = new Date(2026, 6, 15, 8, 0, 0);
+interface Data {
+	title?: string;
+	createdAt?: Date;
 }
-const puntual = (id: string, fechaLimite?: Date, { titulo = id, creadaEn = CREADA }: Datos = {}): Tarea => ({
+const oneOff = (id: string, dueDate?: Date, { title = id, createdAt = CREATED }: Data = {}): Task => ({
 	id,
-	titulo,
-	tipo: 'puntual',
-	creadaEn,
-	...(fechaLimite && { fechaLimite })
+	title,
+	kind: 'puntual',
+	createdAt,
+	...(dueDate && { dueDate })
 });
-const relativa = (id: string, { titulo = id, creadaEn = CREADA }: Datos = {}): Tarea => ({
+const relative = (id: string, { title = id, createdAt = CREATED }: Data = {}): Task => ({
 	id,
-	titulo,
-	tipo: 'periodica',
-	recurrencia: { modo: 'relativo', cada: 1, unidad: 'dias' },
-	creadaEn
+	title,
+	kind: 'periodica',
+	recurrence: { mode: 'relativo', every: 1, unit: 'dias' },
+	createdAt
 });
 /** Semanal creada hoy a las 07:00, antes de su primera ocurrencia: en espera sin completados. */
-const semanal = (id: string, dia: DiaSemana, { titulo = id, creadaEn = new Date(2026, 6, 15, 7, 0, 0) }: Datos = {}): Tarea => ({
+const weekly = (id: string, day: Weekday, { title = id, createdAt = new Date(2026, 6, 15, 7, 0, 0) }: Data = {}): Task => ({
 	id,
-	titulo,
-	tipo: 'periodica',
-	recurrencia: { modo: 'calendario', diasSemana: [dia] },
-	creadaEn
+	title,
+	kind: 'periodica',
+	recurrence: { mode: 'calendario', weekdays: [day] },
+	createdAt
 });
-const completadoDe = (tareaId: string, completadoEn = new Date(2026, 6, 15, 7, 0, 0)): Completado => ({ id: `c-${tareaId}`, tareaId, completadoEn });
-const ids = (tareas: Tarea[], completados: Completado[] = [], ahora = AHORA) =>
-	filasDePendientes(tareas, completados, ahora).map(({ tarea }) => tarea.id);
-const conCompletadas = (tareas: Tarea[], completados: Completado[] = [], ahora = AHORA) =>
-	filasDePendientes(tareas, completados, ahora, true).map(({ tarea, completada }) => [tarea.id, completada]);
+const completionOf = (taskId: string, completedAt = new Date(2026, 6, 15, 7, 0, 0)): Completion => ({ id: `c-${taskId}`, taskId, completedAt });
+const ids = (tasks: Task[], completions: Completion[] = [], now = NOW) =>
+	pendingRows(tasks, completions, now).map(({ task }) => task.id);
+const withCompleted = (tasks: Task[], completions: Completion[] = [], now = NOW) =>
+	pendingRows(tasks, completions, now, true).map(({ task, completed }) => [task.id, completed]);
 
 describe('filasDePendientes (spec §6.1)', () => {
 	it('da cada tarea que aparece con su estado y si está completada', () => {
-		const enEspera = relativa('r');
-		const atrasada = puntual('a', new Date(2026, 6, 10));
-		expect(filasDePendientes([enEspera, atrasada], [completadoDe('r')], AHORA, true)).toEqual([
-			{ tarea: atrasada, estado: { tipo: 'atrasada' }, completada: false, textoDeFecha: 'Tocaba el viernes 10 · hace 5 días' },
-			{ tarea: enEspera, estado: { tipo: 'en espera', progreso: 1 / 24 }, completada: true, textoDeFecha: 'Vuelve mañana 07:00 · en 23 horas' }
+		const waiting = relative('r');
+		const overdue = oneOff('a', new Date(2026, 6, 10));
+		expect(pendingRows([waiting, overdue], [completionOf('r')], NOW, true)).toEqual([
+			{ task: overdue, status: { kind: 'atrasada' }, completed: false, dateText: 'Tocaba el viernes 10 · hace 5 días' },
+			{ task: waiting, status: { kind: 'en espera', progress: 1 / 24 }, completed: true, dateText: 'Vuelve mañana 07:00 · en 23 horas' }
 		]);
 	});
 
 	it('cada fila lleva su texto de fecha (§6.1): «Tocaba …» si está atrasada, «Vuelve …» si está en espera, ninguno si no', () => {
-		const pendiente = puntual('p', AHORA);
-		const pospuesta: Tarea = { ...puntual('e'), pospuesta: { desde: AHORA, hasta: new Date(2026, 6, 15, 9, 0, 0) } };
-		const pausada: Tarea = { ...(relativa('z') as TareaPeriodica), pausada: true };
-		const textos = filasDePendientes([pendiente, pospuesta, pausada], [], AHORA, true, true).map(({ tarea, textoDeFecha }) => [tarea.id, textoDeFecha]);
-		expect(textos).toEqual([
+		const pending = oneOff('p', NOW);
+		const postponed: Task = { ...oneOff('e'), postponed: { from: NOW, to: new Date(2026, 6, 15, 9, 0, 0) } };
+		const paused: Task = { ...(relative('z') as RecurringTask), paused: true };
+		const texts = pendingRows([pending, postponed, paused], [], NOW, true, true).map(({ task, dateText }) => [task.id, dateText]);
+		expect(texts).toEqual([
 			['p', undefined],
 			['e', 'Vuelve hoy 09:00 · en 1 hora'],
 			['z', undefined]
@@ -59,50 +59,50 @@ describe('filasDePendientes (spec §6.1)', () => {
 	});
 
 	it('el texto de fecha se deriva de ahora: se actualiza solo con el paso del tiempo (§6.1)', () => {
-		const atrasada = puntual('a', new Date(2026, 6, 14));
-		const texto = (ahora: Date) => filasDePendientes([atrasada], [], ahora)[0].textoDeFecha;
-		expect(texto(new Date(2026, 6, 15, 23, 59, 59))).toBe('Tocaba ayer');
-		expect(texto(new Date(2026, 6, 16, 0, 0, 0))).toBe('Tocaba el martes 14 · hace 2 días');
+		const overdue = oneOff('a', new Date(2026, 6, 14));
+		const text = (now: Date) => pendingRows([overdue], [], now)[0].dateText;
+		expect(text(new Date(2026, 6, 15, 23, 59, 59))).toBe('Tocaba ayer');
+		expect(text(new Date(2026, 6, 16, 0, 0, 0))).toBe('Tocaba el martes 14 · hace 2 días');
 	});
 
 	describe('Mostrar completadas apagado (el valor inicial)', () => {
 		it('deja afuera las puntuales completadas', () => {
-			const sinHacer = puntual('s');
-			expect(filasDePendientes([puntual('h'), sinHacer], [completadoDe('h')], AHORA)).toEqual([
-				{ tarea: sinHacer, estado: { tipo: 'pendiente' }, completada: false }
+			const notDone = oneOff('s');
+			expect(pendingRows([oneOff('h'), notDone], [completionOf('h')], NOW)).toEqual([
+				{ task: notDone, status: { kind: 'pendiente' }, completed: false }
 			]);
 		});
 
 		it('deja afuera las periódicas en espera con completados', () => {
-			expect(ids([relativa('r'), puntual('s')], [completadoDe('r')])).toEqual(['s']);
+			expect(ids([relative('r'), oneOff('s')], [completionOf('r')])).toEqual(['s']);
 		});
 
 		it('muestra la periódica pendiente con completados y la semanal en espera sin completados', () => {
-			const pendiente = relativa('r');
-			expect(ids([semanal('s', 'sábado'), pendiente], [completadoDe('r', new Date(2026, 6, 14, 7, 0, 0))])).toEqual(['r', 's']);
+			const pending = relative('r');
+			expect(ids([weekly('s', 'sábado'), pending], [completionOf('r', new Date(2026, 6, 14, 7, 0, 0))])).toEqual(['r', 's']);
 		});
 
 		it('apagado explícito es lo mismo que el valor inicial', () => {
-			expect(filasDePendientes([relativa('r')], [completadoDe('r')], AHORA, false)).toEqual([]);
+			expect(pendingRows([relative('r')], [completionOf('r')], NOW, false)).toEqual([]);
 		});
 	});
 
 	describe('Mostrar completadas encendido', () => {
 		it('las completadas van después de las no completadas, aunque estas estén en espera', () => {
-			const completada = puntual('hecha');
-			expect(conCompletadas([completada, semanal('s', 'sábado')], [completadoDe('hecha')])).toEqual([
+			const completed = oneOff('hecha');
+			expect(withCompleted([completed, weekly('s', 'sábado')], [completionOf('hecha')])).toEqual([
 				['s', false],
 				['hecha', true]
 			]);
 		});
 
 		it('las completadas van de la de completadoEn más reciente a la más antigua, sin importar el tipo', () => {
-			const completados = [
-				completadoDe('vieja', new Date(2026, 6, 13, 9, 0, 0)),
-				completadoDe('r', new Date(2026, 6, 15, 7, 0, 0)),
-				completadoDe('nueva', new Date(2026, 6, 15, 7, 30, 0))
+			const completions = [
+				completionOf('vieja', new Date(2026, 6, 13, 9, 0, 0)),
+				completionOf('r', new Date(2026, 6, 15, 7, 0, 0)),
+				completionOf('nueva', new Date(2026, 6, 15, 7, 30, 0))
 			];
-			expect(conCompletadas([puntual('vieja'), relativa('r'), puntual('nueva')], completados)).toEqual([
+			expect(withCompleted([oneOff('vieja'), relative('r'), oneOff('nueva')], completions)).toEqual([
 				['nueva', true],
 				['r', true],
 				['vieja', true]
@@ -110,184 +110,184 @@ describe('filasDePendientes (spec §6.1)', () => {
 		});
 
 		it('ordena una completada por su completado más reciente', () => {
-			const completados = [
-				{ id: 'c1', tareaId: 'dos', completadoEn: new Date(2026, 6, 15, 7, 0, 0) },
-				{ id: 'c2', tareaId: 'dos', completadoEn: new Date(2026, 6, 10, 7, 0, 0) },
-				completadoDe('una', new Date(2026, 6, 14, 7, 0, 0))
+			const completions = [
+				{ id: 'c1', taskId: 'dos', completedAt: new Date(2026, 6, 15, 7, 0, 0) },
+				{ id: 'c2', taskId: 'dos', completedAt: new Date(2026, 6, 10, 7, 0, 0) },
+				completionOf('una', new Date(2026, 6, 14, 7, 0, 0))
 			];
-			expect(ids([puntual('una'), puntual('dos')], completados, AHORA)).toEqual([]);
-			expect(conCompletadas([puntual('una'), puntual('dos')], completados)).toEqual([
+			expect(ids([oneOff('una'), oneOff('dos')], completions, NOW)).toEqual([]);
+			expect(withCompleted([oneOff('una'), oneOff('dos')], completions)).toEqual([
 				['dos', true],
 				['una', true]
 			]);
 		});
 
 		it('si empata completadoEn: creadaEn más antigua, después título en español, después id', () => {
-			const momento = new Date(2026, 6, 15, 7, 0, 0);
-			const tareas = [
-				puntual('t3', undefined, { titulo: 'Ñandú' }),
-				puntual('t2', undefined, { titulo: 'Nube' }),
-				puntual('t1', undefined, { titulo: 'nube' }),
-				puntual('t0', undefined, { titulo: 'Zeta', creadaEn: new Date(2020, 0, 1) })
+			const moment = new Date(2026, 6, 15, 7, 0, 0);
+			const tasks = [
+				oneOff('t3', undefined, { title: 'Ñandú' }),
+				oneOff('t2', undefined, { title: 'Nube' }),
+				oneOff('t1', undefined, { title: 'nube' }),
+				oneOff('t0', undefined, { title: 'Zeta', createdAt: new Date(2020, 0, 1) })
 			];
-			const completados = tareas.map(({ id }) => ({ id: `c-${id}`, tareaId: id, completadoEn: momento }));
-			expect(conCompletadas(tareas, completados).map(([id]) => id)).toEqual(['t0', 't1', 't2', 't3']);
+			const completions = tasks.map(({ id }) => ({ id: `c-${id}`, taskId: id, completedAt: moment }));
+			expect(withCompleted(tasks, completions).map(([id]) => id)).toEqual(['t0', 't1', 't2', 't3']);
 		});
 	});
 
 	it('sin tareas no hay filas', () => {
-		expect(filasDePendientes([], [], AHORA)).toEqual([]);
+		expect(pendingRows([], [], NOW)).toEqual([]);
 	});
 
 	it('no modifica la lista recibida', () => {
-		const tareas = [relativa('r'), puntual('a', new Date(2026, 6, 10))];
-		const copia = [...tareas];
-		filasDePendientes(tareas, [completadoDe('r')], AHORA);
-		expect(tareas).toEqual(copia);
+		const tasks = [relative('r'), oneOff('a', new Date(2026, 6, 10))];
+		const copy = [...tasks];
+		pendingRows(tasks, [completionOf('r')], NOW);
+		expect(tasks).toEqual(copy);
 	});
 
 	describe('orden por urgencia', () => {
 		it('agrupa atrasada, pendiente y en espera, en ese orden', () => {
-			const enEspera = semanal('espera', 'sábado');
-			const pendiente = puntual('pendiente', new Date(2026, 6, 15));
-			const atrasada = puntual('atrasada', new Date(2026, 6, 14));
-			expect(ids([enEspera, pendiente, atrasada])).toEqual(['atrasada', 'pendiente', 'espera']);
+			const waiting = weekly('espera', 'sábado');
+			const pending = oneOff('pendiente', new Date(2026, 6, 15));
+			const overdue = oneOff('atrasada', new Date(2026, 6, 14));
+			expect(ids([waiting, pending, overdue])).toEqual(['atrasada', 'pendiente', 'espera']);
 		});
 
 		it('manda el grupo aunque el instante de otro grupo sea anterior', () => {
 			// La relativa está atrasada recién desde las 07:00 de hoy; la puntual, pendiente desde las 00:00.
-			const relativaAtrasada = relativa('r');
-			const pendiente = puntual('p', new Date(2026, 6, 15));
-			expect(ids([pendiente, relativaAtrasada], [completadoDe('r', new Date(2026, 6, 13, 7, 0, 0))])).toEqual(['r', 'p']);
+			const overdueRelative = relative('r');
+			const pending = oneOff('p', new Date(2026, 6, 15));
+			expect(ids([pending, overdueRelative], [completionOf('r', new Date(2026, 6, 13, 7, 0, 0))])).toEqual(['r', 'p']);
 		});
 
 		it('atrasadas: primero la que lleva más tiempo atrasada', () => {
 			// Puntual atrasada desde el 12 a las 00:00; relativa desde el 11 a las 20:00 (V + intervalo).
-			const p = puntual('p', new Date(2026, 6, 11));
-			const r = relativa('r');
-			expect(ids([p, r], [completadoDe('r', new Date(2026, 6, 9, 20, 0, 0))])).toEqual(['r', 'p']);
-			expect(ids([p, r], [completadoDe('r', new Date(2026, 6, 10, 0, 0, 1))])).toEqual(['p', 'r']);
+			const p = oneOff('p', new Date(2026, 6, 11));
+			const r = relative('r');
+			expect(ids([p, r], [completionOf('r', new Date(2026, 6, 9, 20, 0, 0))])).toEqual(['r', 'p']);
+			expect(ids([p, r], [completionOf('r', new Date(2026, 6, 10, 0, 0, 1))])).toEqual(['p', 'r']);
 		});
 
 		it('pendientes: primero la que está pendiente desde antes', () => {
-			const p = puntual('p', new Date(2026, 6, 15));
-			const r = relativa('r');
+			const p = oneOff('p', new Date(2026, 6, 15));
+			const r = relative('r');
 			// V = el 15 a las 00:00:01, después de la fecha límite.
-			expect(ids([r, p], [completadoDe('r', new Date(2026, 6, 14, 0, 0, 1))])).toEqual(['p', 'r']);
+			expect(ids([r, p], [completionOf('r', new Date(2026, 6, 14, 0, 0, 1))])).toEqual(['p', 'r']);
 			// V = el 14 a las 23:59:59, antes.
-			expect(ids([p, r], [completadoDe('r', new Date(2026, 6, 13, 23, 59, 59))])).toEqual(['r', 'p']);
+			expect(ids([p, r], [completionOf('r', new Date(2026, 6, 13, 23, 59, 59))])).toEqual(['r', 'p']);
 		});
 
 		it('en espera: primero la que vuelve antes', () => {
-			const pronto = semanal('pronto', 'jueves', { creadaEn: new Date(2026, 6, 15, 7, 30, 0) });
-			const tarde = semanal('tarde', 'sábado');
-			expect(ids([tarde, pronto])).toEqual(['pronto', 'tarde']);
+			const soon = weekly('pronto', 'jueves', { createdAt: new Date(2026, 6, 15, 7, 30, 0) });
+			const afternoon = weekly('tarde', 'sábado');
+			expect(ids([afternoon, soon])).toEqual(['pronto', 'tarde']);
 		});
 
 		it('las puntuales sin fecha límite van al final del grupo pendiente, por creadaEn', () => {
-			const vieja = puntual('vieja', undefined, { creadaEn: new Date(2020, 0, 1) });
-			const nueva = puntual('nueva', undefined, { creadaEn: new Date(2020, 0, 2) });
-			const conFecha = puntual('conFecha', new Date(2026, 11, 31));
-			const enEspera = semanal('espera', 'sábado');
-			expect(ids([nueva, enEspera, vieja, conFecha])).toEqual(['conFecha', 'vieja', 'nueva', 'espera']);
+			const old = oneOff('vieja', undefined, { createdAt: new Date(2020, 0, 1) });
+			const newLabel = oneOff('nueva', undefined, { createdAt: new Date(2020, 0, 2) });
+			const withDate = oneOff('conFecha', new Date(2026, 11, 31));
+			const waiting = weekly('espera', 'sábado');
+			expect(ids([newLabel, waiting, old, withDate])).toEqual(['conFecha', 'vieja', 'nueva', 'espera']);
 		});
 
 		it('si empata el instante, primero la de creadaEn más antigua', () => {
-			const limite = new Date(2026, 6, 20);
-			const antes = puntual('b', limite, { titulo: 'Zeta', creadaEn: new Date(2026, 6, 1, 8, 0, 0) });
-			const despues = puntual('a', limite, { titulo: 'Alfa', creadaEn: new Date(2026, 6, 1, 8, 0, 1) });
-			expect(ids([despues, antes])).toEqual(['b', 'a']);
+			const limit = new Date(2026, 6, 20);
+			const before = oneOff('b', limit, { title: 'Zeta', createdAt: new Date(2026, 6, 1, 8, 0, 0) });
+			const after = oneOff('a', limit, { title: 'Alfa', createdAt: new Date(2026, 6, 1, 8, 0, 1) });
+			expect(ids([after, before])).toEqual(['b', 'a']);
 		});
 
 		it('si también empata creadaEn, por título en orden alfabético en español', () => {
-			const nube = puntual('z', undefined, { titulo: 'Nube' });
-			const nandu = puntual('a', undefined, { titulo: 'Ñandú' });
-			expect(ids([nandu, nube])).toEqual(['z', 'a']);
+			const cloud = oneOff('z', undefined, { title: 'Nube' });
+			const rhea = oneOff('a', undefined, { title: 'Ñandú' });
+			expect(ids([rhea, cloud])).toEqual(['z', 'a']);
 		});
 
 		it('si también empata el título, por id', () => {
-			const segunda = puntual('t2', undefined, { titulo: 'Barrer' });
-			const primera = puntual('t1', undefined, { titulo: 'barrer' });
-			expect(ids([segunda, primera])).toEqual(['t1', 't2']);
-			expect(ids([primera, segunda])).toEqual(['t1', 't2']);
+			const second = oneOff('t2', undefined, { title: 'Barrer' });
+			const first = oneOff('t1', undefined, { title: 'barrer' });
+			expect(ids([second, first])).toEqual(['t1', 't2']);
+			expect(ids([first, second])).toEqual(['t1', 't2']);
 		});
 	});
 });
 
 describe('filasDePendientes con pausadas y reanudadas (spec §5.8, §6.1)', () => {
-	const pausada = (tarea: Tarea): Tarea => ({ ...tarea, pausada: true }) as Tarea;
-	const conPausadas = (tareas: Tarea[], completados: Completado[] = [], mostrarCompletadas = false) =>
-		filasDePendientes(tareas, completados, AHORA, mostrarCompletadas, true).map(({ tarea, estado }) => [tarea.id, estado.tipo]);
+	const paused = (task: Task): Task => ({ ...task, paused: true }) as Task;
+	const withPaused = (tasks: Task[], completions: Completion[] = [], showCompleted = false) =>
+		pendingRows(tasks, completions, NOW, showCompleted, true).map(({ task, status }) => [task.id, status.kind]);
 
 	it('sin Mostrar pausadas, las pausadas no se ven', () => {
-		expect(ids([pausada(relativa('p')), relativa('r')])).toEqual(['r']);
-		expect(filasDePendientes([pausada(relativa('p'))], [], AHORA, true).map(({ tarea }) => tarea.id)).toEqual([]);
+		expect(ids([paused(relative('p')), relative('r')])).toEqual(['r']);
+		expect(pendingRows([paused(relative('p'))], [], NOW, true).map(({ task }) => task.id)).toEqual([]);
 	});
 
 	it('con Mostrar pausadas, van al final por título, sin importar urgencia ni creadaEn, sin estado y no completadas', () => {
-		const tareas = [
-			pausada(relativa('b', { titulo: 'Ñandú' })),
-			pausada(relativa('a', { titulo: 'Árbol', creadaEn: new Date(2026, 6, 10) })),
-			pausada(relativa('c', { titulo: 'nube' })),
-			puntual('x', new Date(2026, 6, 10))
+		const tasks = [
+			paused(relative('b', { title: 'Ñandú' })),
+			paused(relative('a', { title: 'Árbol', createdAt: new Date(2026, 6, 10) })),
+			paused(relative('c', { title: 'nube' })),
+			oneOff('x', new Date(2026, 6, 10))
 		];
 
-		expect(conPausadas(tareas)).toEqual([
+		expect(withPaused(tasks)).toEqual([
 			['x', 'atrasada'],
 			['a', 'pausada'],
 			['c', 'pausada'],
 			['b', 'pausada']
 		]);
-		expect(filasDePendientes(tareas, [], AHORA, false, true).at(-1)).toEqual({ tarea: tareas[0], estado: { tipo: 'pausada' }, completada: false });
+		expect(pendingRows(tasks, [], NOW, false, true).at(-1)).toEqual({ task: tasks[0], status: { kind: 'pausada' }, completed: false });
 	});
 
 	it('las pausadas van después de las completadas', () => {
-		expect(conPausadas([pausada(relativa('p')), relativa('r')], [completadoDe('r'), completadoDe('p')], true)).toEqual([
+		expect(withPaused([paused(relative('p')), relative('r')], [completionOf('r'), completionOf('p')], true)).toEqual([
 			['r', 'en espera'],
 			['p', 'pausada']
 		]);
 	});
 
 	it('una de calendario reanudada en espera, con completados solo de antes de reanudar, no está completada', () => {
-		const reanudada = { ...semanal('s', 'jueves'), reanudadaEn: new Date(2026, 6, 15, 7, 30, 0) } as Tarea;
+		const resumed = { ...weekly('s', 'jueves'), resumedAt: new Date(2026, 6, 15, 7, 30, 0) } as Task;
 
-		expect(conCompletadas([reanudada], [completadoDe('s')])).toEqual([['s', false]]);
+		expect(withCompleted([resumed], [completionOf('s')])).toEqual([['s', false]]);
 	});
 
 	it('una relativa reanudada está pendiente desde reanudadaEn; si empata, desempata su creadaEn real', () => {
-		const reanudadaEn = new Date(2026, 6, 10);
-		const reanudada = { ...relativa('z', { creadaEn: new Date(2026, 5, 1) }), reanudadaEn } as Tarea;
-		const anterior = relativa('m', { creadaEn: new Date(2026, 6, 5) });
-		const empata = relativa('a', { creadaEn: reanudadaEn });
+		const resumedAt = new Date(2026, 6, 10);
+		const resumed = { ...relative('z', { createdAt: new Date(2026, 5, 1) }), resumedAt } as Task;
+		const previous = relative('m', { createdAt: new Date(2026, 6, 5) });
+		const ties = relative('a', { createdAt: resumedAt });
 
-		expect(ids([reanudada, anterior])).toEqual(['m', 'z']);
-		expect(ids([empata, reanudada])).toEqual(['z', 'a']);
+		expect(ids([resumed, previous])).toEqual(['m', 'z']);
+		expect(ids([ties, resumed])).toEqual(['z', 'a']);
 	});
 });
 
 describe('filasDePendientes con pospuestas (spec §5.9, §6.1)', () => {
-	const DESDE = new Date(2026, 6, 15, 7, 30, 0);
-	const pospuestaHasta = (hasta: Date) => ({ pospuesta: { desde: DESDE, hasta } });
+	const FROM = new Date(2026, 6, 15, 7, 30, 0);
+	const postponedUntil = (to: Date) => ({ postponed: { from: FROM, to } });
 
 	it('una pospuesta con un completado de hoy se ve con Mostrar completadas apagado', () => {
-		const tarea: Tarea = {
+		const task: Task = {
 			id: 'r',
-			titulo: 'r',
-			tipo: 'periodica',
-			recurrencia: { modo: 'relativo', cada: 4, unidad: 'horas' },
-			creadaEn: CREADA,
-			...pospuestaHasta(new Date(2026, 6, 15, 10, 0, 0))
+			title: 'r',
+			kind: 'periodica',
+			recurrence: { mode: 'relativo', every: 4, unit: 'horas' },
+			createdAt: CREATED,
+			...postponedUntil(new Date(2026, 6, 15, 10, 0, 0))
 		};
-		const deHoy: Completado = { id: 'c', tareaId: 'r', completadoEn: new Date(2026, 6, 15, 3, 0, 0) };
+		const ofToday: Completion = { id: 'c', taskId: 'r', completedAt: new Date(2026, 6, 15, 3, 0, 0) };
 
-		expect(filasDePendientes([tarea], [deHoy], AHORA).map(({ completada }) => completada)).toStrictEqual([false]);
+		expect(pendingRows([task], [ofToday], NOW).map(({ completed }) => completed)).toStrictEqual([false]);
 	});
 
 	it('las pospuestas van en el grupo en espera, ordenadas por hasta', () => {
-		const tarde = { ...puntual('tarde'), ...pospuestaHasta(new Date(2026, 6, 15, 12, 0, 0)) };
-		const temprano = { ...puntual('temprano', new Date(2026, 6, 10)), ...pospuestaHasta(new Date(2026, 6, 15, 9, 0, 0)) };
-		const titulos = filasDePendientes([tarde, temprano, puntual('libre')], [], AHORA).map(({ tarea }) => tarea.titulo);
+		const afternoon = { ...oneOff('tarde'), ...postponedUntil(new Date(2026, 6, 15, 12, 0, 0)) };
+		const early = { ...oneOff('temprano', new Date(2026, 6, 10)), ...postponedUntil(new Date(2026, 6, 15, 9, 0, 0)) };
+		const titles = pendingRows([afternoon, early, oneOff('libre')], [], NOW).map(({ task }) => task.title);
 
-		expect(titulos).toStrictEqual(['libre', 'temprano', 'tarde']);
+		expect(titles).toStrictEqual(['libre', 'temprano', 'tarde']);
 	});
 });

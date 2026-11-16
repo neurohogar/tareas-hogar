@@ -3,17 +3,17 @@
 // (lo guardado antes de mi último cambio, más sus propios cambios); sus
 // cambios llegan después de los míos.
 import { expect } from 'vitest';
-import { borradoDeEtiqueta, referenciasRotas } from '../../src/lib/core/label-deletion';
-import { datosDeTarea, type DatosDeTarea } from '../../src/lib/core/task-data';
-import { aplicarCambio, aplicarCambiosDeReferencias, tareaDesdeDocumento } from '../../src/lib/core/task-document';
-import { PALETA, type Color, type Etiqueta } from '../../src/lib/core/label';
-import { etiquetasDeTarea } from '../../src/lib/core/task-labels';
-import { filtroVigente } from '../../src/lib/core/label-filter';
-import { fusionDeDuplicadas } from '../../src/lib/core/label-merge';
-import { aplicarCambioDeEtiqueta, renombrar, type ErrorDeRenombrado } from '../../src/lib/core/label-management';
-import { crearConEtiquetas, editarConEtiquetas } from '../../src/lib/core/save-with-labels';
-import { ordenarEtiquetas } from '../../src/lib/core/label-order';
-import type { Tarea } from '../../src/lib/core/task';
+import { labelDeletion, brokenReferences } from '../../src/lib/core/label-deletion';
+import { taskData, type TaskData } from '../../src/lib/core/task-data';
+import { applyChange, applyReferenceChanges, taskFromDocument } from '../../src/lib/core/task-document';
+import { PALETTE, type Color, type Label } from '../../src/lib/core/label';
+import { taskLabels } from '../../src/lib/core/task-labels';
+import { activeFilter } from '../../src/lib/core/label-filter';
+import { mergeOfDuplicates } from '../../src/lib/core/label-merge';
+import { applyLabelChange, rename, type RenameError } from '../../src/lib/core/label-management';
+import { createWithLabels, editWithLabels } from '../../src/lib/core/save-with-labels';
+import { sortLabels } from '../../src/lib/core/label-order';
+import type { Task } from '../../src/lib/core/task';
 import { AHORA } from './crear';
 import { P, TITULO, lista } from './valores';
 import {
@@ -66,48 +66,48 @@ const EL_OTRO: Actor = {
 	}
 };
 
-const lasEtiquetas = (guardado: Guardado, etiquetas: Etiqueta[]): Guardado => ({ ...copiaDe(guardado), etiquetas });
+const lasEtiquetas = (guardado: Guardado, etiquetas: Label[]): Guardado => ({ ...copiaDe(guardado), labels: etiquetas });
 
 /** En los Given y en los pasos que nombran una etiqueta, el nombre es exacto. */
-function laEtiquetaLlamada(guardado: Guardado, nombre: string): Etiqueta {
-	const llamadas = guardado.etiquetas.filter((etiqueta) => etiqueta.nombre === nombre);
+function laEtiquetaLlamada(guardado: Guardado, nombre: string): Label {
+	const llamadas = guardado.labels.filter((etiqueta) => etiqueta.name === nombre);
 	if (llamadas.length !== 1) throw new Error(`Se esperaba una etiqueta "${nombre}", hay ${llamadas.length}`);
 	return llamadas[0];
 }
 
 function color(valor: string): Color {
-	if (!(PALETA as readonly string[]).includes(valor)) throw new Error(`Color inválido: "${valor}"`);
+	if (!(PALETTE as readonly string[]).includes(valor)) throw new Error(`Color inválido: "${valor}"`);
 	return valor as Color;
 }
 
 /** "Nombre:color", como lo escribe "existen las etiquetas". */
-function etiquetaDeclarada(valor: string): Omit<Etiqueta, 'id'> {
+function etiquetaDeclarada(valor: string): Omit<Label, 'id'> {
 	const separador = valor.lastIndexOf(':');
 	if (separador <= 0) throw new Error(`Etiqueta inválida (se espera nombre:color): "${valor}"`);
-	return { nombre: valor.slice(0, separador), color: color(valor.slice(separador + 1)) };
+	return { name: valor.slice(0, separador), color: color(valor.slice(separador + 1)) };
 }
 
-const comoTexto = ({ nombre, color }: Etiqueta) => `${nombre}:${color}`;
-const nombres = (etiquetas: Etiqueta[]) => etiquetas.map(({ nombre }) => nombre);
+const comoTexto = ({ name: nombre, color }: Label) => `${nombre}:${color}`;
+const nombres = (etiquetas: Label[]) => etiquetas.map(({ name: nombre }) => nombre);
 
 /** Los datos que carga el panel; por defecto, los de la tarea sin cambios. */
-type DatosDelPanel = (tarea: Tarea) => DatosDeTarea;
+type DatosDelPanel = (tarea: Task) => TaskData;
 
 /** Edita la tarea en el panel con lo que ve: los datos que carga y las etiquetas escritas, y guarda. */
-function guardarPanel(world: World, vista: Guardado, titulo: string, escritas: string[], datos: DatosDelPanel = datosDeTarea): Aplicar | undefined {
+function guardarPanel(world: World, vista: Guardado, titulo: string, escritas: string[], datos: DatosDelPanel = taskData): Aplicar | undefined {
 	const tarea = laTareaTitulada(vista, titulo);
-	const resultado = editarConEtiquetas(tarea, datos(tarea), escritas, {
-		existentes: vista.etiquetas,
-		nuevoId: () => nuevoIdDeEtiqueta(world)
+	const resultado = editWithLabels(tarea, datos(tarea), escritas, {
+		existings: vista.labels,
+		newId: () => nuevoIdDeEtiqueta(world)
 	});
 	if (!resultado.ok) {
-		world.errores = resultado.errores;
+		world.errors = resultado.errors;
 		return undefined;
 	}
 	return (guardado) => ({
 		...copiaDe(guardado),
-		documentos: aplicarCambio(guardado.documentos, tarea.id, resultado.cambio),
-		etiquetas: [...guardado.etiquetas, ...resultado.nuevas]
+		documentos: applyChange(guardado.documentos, tarea.id, resultado.change),
+		labels: [...guardado.labels, ...resultado.newLabels]
 	});
 }
 
@@ -128,17 +128,17 @@ const OPERACIONES: { verbo: Verbo; resto: string; calcular: Calcular }[] = [
 		resto: `el color de la etiqueta ${P} a ${P}`,
 		calcular: (_, vista, nombre, nuevo) => {
 			const { id } = laEtiquetaLlamada(vista, nombre);
-			return (guardado) => lasEtiquetas(guardado, aplicarCambioDeEtiqueta(guardado.etiquetas, id, { color: color(nuevo) }));
+			return (guardado) => lasEtiquetas(guardado, applyLabelChange(guardado.labels, id, { color: color(nuevo) }));
 		}
 	},
 	{
 		verbo: { yo: 'borro', otro: 'borra' },
 		resto: `la etiqueta ${P}`,
 		calcular: (_, vista, nombre) => {
-			const borrado = borradoDeEtiqueta(laEtiquetaLlamada(vista, nombre).id, tareasDe(vista));
+			const borrado = labelDeletion(laEtiquetaLlamada(vista, nombre).id, tareasDe(vista));
 			return (guardado) => ({
-				...lasEtiquetas(guardado, guardado.etiquetas.filter(({ id }) => id !== borrado.etiquetaId)),
-				documentos: aplicarCambiosDeReferencias(guardado.documentos, borrado.referencias)
+				...lasEtiquetas(guardado, guardado.labels.filter(({ id }) => id !== borrado.labelId)),
+				documentos: applyReferenceChanges(guardado.documentos, borrado.references)
 			});
 		}
 	}
@@ -146,12 +146,12 @@ const OPERACIONES: { verbo: Verbo; resto: string; calcular: Calcular }[] = [
 
 function renombrado(world: World, vista: Guardado, nombre: string, escrito: string): Aplicar | undefined {
 	const etiqueta = laEtiquetaLlamada(vista, nombre);
-	const resultado = renombrar(etiqueta, escrito, vista.etiquetas);
+	const resultado = rename(etiqueta, escrito, vista.labels);
 	if (!resultado.ok) {
 		world.errorDeRenombrado = resultado.error;
 		return undefined;
 	}
-	return (guardado) => lasEtiquetas(guardado, aplicarCambioDeEtiqueta(guardado.etiquetas, etiqueta.id, resultado.cambio));
+	return (guardado) => lasEtiquetas(guardado, applyLabelChange(guardado.labels, etiqueta.id, resultado.change));
 }
 
 const pasosDeOperaciones: StepDefinition[] = [YO, EL_OTRO].flatMap((actor) =>
@@ -167,32 +167,32 @@ const editoEtiquetas = (world: World, titulo: string, escritas: string[], datos?
 
 function creoConEtiquetas(world: World, titulo: string, escritas: string[]): void {
 	recordarAntesDeMiCambio(world);
-	const resultado = crearConEtiquetas({ forma: 'puntual', titulo }, escritas, nuevoId(world, 'tarea'), AHORA, {
-		existentes: world.etiquetas,
-		nuevoId: () => nuevoIdDeEtiqueta(world)
+	const resultado = createWithLabels({ shape: 'puntual', title: titulo }, escritas, nuevoId(world, 'tarea'), AHORA, {
+		existings: world.labels,
+		newId: () => nuevoIdDeEtiqueta(world)
 	});
 	if (!resultado.ok) {
-		world.errores = resultado.errores;
+		world.errors = resultado.errors;
 		return;
 	}
-	world.documentos = [...world.documentos, resultado.tarea];
-	world.etiquetas = [...world.etiquetas, ...resultado.nuevas];
+	world.documentos = [...world.documentos, resultado.task];
+	world.labels = [...world.labels, ...resultado.newLabels];
 }
 
 /** La app detecta etiquetas duplicadas y las fusiona (§7). */
 function fusionar(world: World): void {
-	const { borradas, referencias } = fusionDeDuplicadas(world.etiquetas, tareasDe(world));
-	world.etiquetas = world.etiquetas.filter(({ id }) => !borradas.includes(id));
-	world.documentos = aplicarCambiosDeReferencias(world.documentos, referencias);
+	const { deletedItems: borradas, references: referencias } = mergeOfDuplicates(world.labels, tareasDe(world));
+	world.labels = world.labels.filter(({ id }) => !borradas.includes(id));
+	world.documentos = applyReferenceChanges(world.documentos, referencias);
 }
 
-const RECHAZOS_DE_RENOMBRADO: Record<string, ErrorDeRenombrado> = {
+const RECHAZOS_DE_RENOMBRADO: Record<string, RenameError> = {
 	'nombre repetido': 'repetido',
 	'nombre demasiado largo': 'largo',
 	'nombre vacío': 'vacio'
 };
 
-const chipsDe = (world: World, titulo: string) => nombres(etiquetasDeTarea(laTareaTitulada(world, titulo), world.etiquetas));
+const chipsDe = (world: World, titulo: string) => nombres(taskLabels(laTareaTitulada(world, titulo), world.labels));
 
 /** Lo que mi último cambio agregó a lo guardado: no estaba antes de él. */
 function agregadoPorMiCambio<T extends { id: string }>(ahora: T[], antes: T[]): T[] {
@@ -201,15 +201,15 @@ function agregadoPorMiCambio<T extends { id: string }>(ahora: T[], antes: T[]): 
 }
 
 /** La única tarea que creó mi último cambio, nombrada sin su título. */
-function laTareaNueva(world: World): Tarea {
+function laTareaNueva(world: World): Task {
 	const nuevas = agregadoPorMiCambio(world.documentos, loQueVioElOtro(world).documentos);
 	expect(nuevas).toHaveLength(1);
-	return tareaDesdeDocumento(nuevas[0]);
+	return taskFromDocument(nuevas[0]);
 }
 
 /** Los chips del filtro: "Todas" y una por etiqueta; sin etiquetas, el filtro no se muestra. */
 function chipsDelFiltro(world: World): string[] {
-	const etiquetas = ordenarEtiquetas(world.etiquetas);
+	const etiquetas = sortLabels(world.labels);
 	return etiquetas.length === 0 ? [] : ['Todas', ...nombres(etiquetas)];
 }
 
@@ -219,14 +219,14 @@ export const etiquetasSteps: StepDefinition[] = [
 		pattern: new RegExp(`^existen las etiquetas ${P}$`),
 		run: (world, declaradas) => {
 			const nuevas = lista(declaradas).map((valor) => ({ id: nuevoIdDeEtiqueta(world), ...etiquetaDeclarada(valor) }));
-			world.etiquetas = [...world.etiquetas, ...nuevas];
+			world.labels = [...world.labels, ...nuevas];
 		}
 	},
 	{
 		pattern: new RegExp(`^la tarea ${TITULO} tiene las etiquetas ${P}$`),
 		run: (world, titulo, declaradas) => {
 			const etiquetas = lista(declaradas).map((nombre) => laEtiquetaLlamada(world, nombre).id);
-			world.documentos = aplicarCambio(world.documentos, laTareaTitulada(world, titulo).id, { etiquetas });
+			world.documentos = applyChange(world.documentos, laTareaTitulada(world, titulo).id, { labels: etiquetas });
 		}
 	},
 	{
@@ -251,7 +251,7 @@ export const etiquetasSteps: StepDefinition[] = [
 		pattern: new RegExp(`^edito en una misma edición el título a ${P} y las etiquetas a ${P}$`),
 		run: (world, titulo, escritas) => {
 			const [tarea] = tareasDe(world);
-			editoEtiquetas(world, tarea.titulo, lista(escritas), (actual) => ({ ...datosDeTarea(actual), titulo }));
+			editoEtiquetas(world, tarea.title, lista(escritas), (actual) => ({ ...taskData(actual), title: titulo }));
 		}
 	},
 	{
@@ -276,7 +276,7 @@ export const etiquetasSteps: StepDefinition[] = [
 	},
 	{
 		pattern: new RegExp(`^la tarea que se creó muestra las etiquetas ${P}$`),
-		run: (world, chips) => expect(chipsDe(world, laTareaNueva(world).titulo)).toEqual(lista(chips))
+		run: (world, chips) => expect(chipsDe(world, laTareaNueva(world).title)).toEqual(lista(chips))
 	},
 	{
 		pattern: /^no se crea ninguna tarea nueva$/,
@@ -291,16 +291,16 @@ export const etiquetasSteps: StepDefinition[] = [
 	},
 	{
 		pattern: new RegExp(`^la pantalla Etiquetas muestra ${P}$`),
-		run: (world, etiquetas) => expect(ordenarEtiquetas(world.etiquetas).map(comoTexto)).toEqual(lista(etiquetas))
+		run: (world, etiquetas) => expect(sortLabels(world.labels).map(comoTexto)).toEqual(lista(etiquetas))
 	},
 	{
 		pattern: /^la pantalla Etiquetas no muestra ninguna etiqueta$/,
-		run: (world) => expect(world.etiquetas).toEqual([])
+		run: (world) => expect(world.labels).toEqual([])
 	},
 	{
 		pattern: new RegExp(`^la etiqueta nueva tiene color ${P}$`),
 		run: (world, esperado) => {
-			const nuevas = agregadoPorMiCambio(world.etiquetas, loQueVioElOtro(world).etiquetas);
+			const nuevas = agregadoPorMiCambio(world.labels, loQueVioElOtro(world).labels);
 			expect(nuevas.map(({ color }) => color)).toEqual([color(esperado)]);
 		}
 	},
@@ -315,8 +315,8 @@ export const etiquetasSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^el filtro elegido es ${P}$`),
 		run: (world, esperado) => {
-			const vigente = filtroVigente(world.filtro, world.etiquetas);
-			const nombre = world.etiquetas.find(({ id }) => id === vigente)?.nombre ?? 'Todas';
+			const vigente = activeFilter(world.filtro, world.labels);
+			const nombre = world.labels.find(({ id }) => id === vigente)?.name ?? 'Todas';
 			expect(nombre).toBe(esperado);
 		}
 	},
@@ -324,8 +324,8 @@ export const etiquetasSteps: StepDefinition[] = [
 		pattern: new RegExp(`^las tareas con etiquetas borradas a limpiar son solo ${P}$`),
 		run: (world, titulos) => {
 			const tareas = tareasDe(world);
-			const tituloDe = (id: string) => tareas.find((tarea) => tarea.id === id)?.titulo;
-			expect(referenciasRotas(tareas, world.etiquetas).map(({ tareaId }) => tituloDe(tareaId))).toEqual(lista(titulos));
+			const tituloDe = (id: string) => tareas.find((tarea) => tarea.id === id)?.title;
+			expect(brokenReferences(tareas, world.labels).map(({ taskId: tareaId }) => tituloDe(tareaId))).toEqual(lista(titulos));
 		}
 	},
 	{

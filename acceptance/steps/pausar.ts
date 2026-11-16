@@ -1,22 +1,22 @@
 // Pausar y reanudar una periódica (spec §5.8, §6.2, §7): el botón del panel de
 // edición actúa en el momento, sin Guardar.
 import { expect } from 'vitest';
-import { aplicarCambio, type CambioDeTarea } from '../../src/lib/core/task-document';
-import { accionDePausa, pausar, reanudar } from '../../src/lib/core/pause';
-import type { Tarea } from '../../src/lib/core/task';
+import { applyChange, type TaskChange } from '../../src/lib/core/task-document';
+import { pauseAction, pause, resume } from '../../src/lib/core/pause';
+import type { Task } from '../../src/lib/core/task';
 import { P, TITULO, fechaHora } from './valores';
 import { OTRO, cambiosAlEditar, elDocumento, laTarea, laTareaTitulada, loQueVioElOtro, recordarAntesDeMiCambio, type StepDefinition, type World } from './world';
 
 const laElegida = (world: World, titulo?: string) => (titulo === undefined ? laTarea(world) : laTareaTitulada(world, titulo));
 
-export function guardarCambio(world: World, tarea: Tarea, cambio: CambioDeTarea): void {
-	world.documentos = aplicarCambio(world.documentos, tarea.id, cambio);
+export function guardarCambio(world: World, tarea: Task, cambio: TaskChange): void {
+	world.documentos = applyChange(world.documentos, tarea.id, cambio);
 }
 
 /** Toco el botón de pausa del panel: tiene que ofrecer esa acción (§6.2). */
-function tocoElBoton(world: World, accion: 'pausar' | 'reanudar', cambio: CambioDeTarea, titulo?: string): void {
+function tocoElBoton(world: World, accion: 'pausar' | 'reanudar', cambio: TaskChange, titulo?: string): void {
 	const tarea = laElegida(world, titulo);
-	expect(accionDePausa(tarea)).toBe(accion);
+	expect(pauseAction(tarea)).toBe(accion);
 	recordarAntesDeMiCambio(world);
 	guardarCambio(world, tarea, cambio);
 }
@@ -37,46 +37,46 @@ export function elPanel(world: World): NonNullable<World['panel']> {
 export const pausarSteps: StepDefinition[] = [
 	{
 		pattern: /^pauso la tarea$/,
-		run: (world) => tocoElBoton(world, 'pausar', pausar())
+		run: (world) => tocoElBoton(world, 'pausar', pause())
 	},
 	{
 		pattern: new RegExp(`^pauso la tarea ${TITULO}$`),
-		run: (world, titulo) => tocoElBoton(world, 'pausar', pausar(), titulo)
+		run: (world, titulo) => tocoElBoton(world, 'pausar', pause(), titulo)
 	},
 	{
 		pattern: /^la tarea fue pausada$/,
-		run: (world) => guardarCambio(world, laTarea(world), pausar())
+		run: (world) => guardarCambio(world, laTarea(world), pause())
 	},
 	{
 		pattern: new RegExp(`^la tarea ${TITULO} fue pausada$`),
-		run: (world, titulo) => guardarCambio(world, laTareaTitulada(world, titulo), pausar())
+		run: (world, titulo) => guardarCambio(world, laTareaTitulada(world, titulo), pause())
 	},
 	{
 		pattern: new RegExp(`^${OTRO} pausa la tarea$`),
-		run: (world) => guardarCambio(world, laTarea(loQueVioElOtro(world)), pausar())
+		run: (world) => guardarCambio(world, laTarea(loQueVioElOtro(world)), pause())
 	},
 	{
 		pattern: new RegExp(`^reanudo la tarea el ${P}$`),
-		run: (world, momento) => tocoElBoton(world, 'reanudar', reanudar(fechaHora(momento)))
+		run: (world, momento) => tocoElBoton(world, 'reanudar', resume(fechaHora(momento)))
 	},
 	{
 		pattern: new RegExp(`^reanudo la tarea ${TITULO} el ${P}$`),
-		run: (world, titulo, momento) => tocoElBoton(world, 'reanudar', reanudar(fechaHora(momento)), titulo)
+		run: (world, titulo, momento) => tocoElBoton(world, 'reanudar', resume(fechaHora(momento)), titulo)
 	},
 	{
 		// §4.1: sin el campo, no está pausada.
 		pattern: /^la tarea está pausada$/,
-		run: (world) => expect(elDocumento(world).pausada).toBe(true)
+		run: (world) => expect(elDocumento(world).paused).toBe(true)
 	},
 	{
 		pattern: /^la tarea no está pausada$/,
-		run: (world) => expect(elDocumento(world)).not.toHaveProperty('pausada')
+		run: (world) => expect(elDocumento(world)).not.toHaveProperty('paused')
 	},
 	{
 		pattern: /^abro la tarea en el panel de edición$/,
 		run: (world) => {
 			const tarea = laTarea(world);
-			world.panel = { pausa: accionDePausa(tarea), cambios: cambiosAlEditar(world, tarea) };
+			world.panel = { pausa: pauseAction(tarea), cambios: cambiosAlEditar(world, tarea) };
 		}
 	},
 	{

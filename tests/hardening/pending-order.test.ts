@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { compararPorUrgencia, type FilaPorOrdenar } from '../../src/lib/core/pending-order';
+import { compareByUrgency, type RowToOrder } from '../../src/lib/core/pending-order';
 
-const fila = (id: string): FilaPorOrdenar => ({
-	tarea: { id, titulo: 'Barrer', tipo: 'puntual', creadaEn: new Date(0) },
-	estado: { tipo: 'pendiente' },
-	instante: new Date(0)
+const row = (id: string): RowToOrder => ({
+	task: { id, title: 'Barrer', kind: 'puntual', createdAt: new Date(0) },
+	status: { kind: 'pendiente' },
+	instant: new Date(0)
 });
 
 describe('compararPorUrgencia: último desempate por id', () => {
 	it('el id menor va primero, el mayor después y el mismo id empata', () => {
-		expect(compararPorUrgencia(fila('a'), fila('b'))).toBe(-1);
-		expect(compararPorUrgencia(fila('b'), fila('a'))).toBe(1);
-		expect(compararPorUrgencia(fila('a'), fila('a'))).toBe(0);
+		expect(compareByUrgency(row('a'), row('b'))).toBe(-1);
+		expect(compareByUrgency(row('b'), row('a'))).toBe(1);
+		expect(compareByUrgency(row('a'), row('a'))).toBe(0);
 	});
 });

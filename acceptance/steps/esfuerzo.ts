@@ -1,11 +1,11 @@
 // Esfuerzo de tarea (spec §4.1), el selector del panel (§6.2) y los conflictos
 // entre dispositivos (§7). "sin estimar" es una tarea sin el campo.
 import { expect } from 'vitest';
-import { crearPeriodicaCalendario } from '../../src/lib/core/create-recurring-calendar';
-import { crearPuntual } from '../../src/lib/core/create-one-off';
-import { datosDeTarea } from '../../src/lib/core/task-data';
-import { aplicarCambio } from '../../src/lib/core/task-document';
-import type { Esfuerzo, Tarea } from '../../src/lib/core/task';
+import { createRecurringCalendar } from '../../src/lib/core/create-recurring-calendar';
+import { createOneOff } from '../../src/lib/core/create-one-off';
+import { taskData } from '../../src/lib/core/task-data';
+import { applyChange } from '../../src/lib/core/task-document';
+import type { Effort, Task } from '../../src/lib/core/task';
 import { AHORA, crearEnWorld, registrarCreacion } from './crear';
 import { editaElOtro, editoYo } from './edicion';
 import { diasDe } from './periodica-calendario';
@@ -15,38 +15,38 @@ import { OTRO, elDocumento, laTarea, laTareaTitulada, type StepDefinition } from
 const SIN_ESTIMAR = 'sin estimar';
 const NIVELES: readonly string[] = ['rapida', 'media', 'larga'];
 
-function esfuerzoDe(valor: string): Esfuerzo | undefined {
+function esfuerzoDe(valor: string): Effort | undefined {
 	if (valor === SIN_ESTIMAR) return undefined;
 	if (!NIVELES.includes(valor)) throw new Error(`Esfuerzo inválido: "${valor}"`);
-	return valor as Esfuerzo;
+	return valor as Effort;
 }
 
 /** Elegir en el selector del panel: el resto de la tarea queda como estaba. */
-const eligiendo = (valor: string) => (tarea: Tarea) => ({ ...datosDeTarea(tarea), esfuerzo: esfuerzoDe(valor) });
+const eligiendo = (valor: string) => (tarea: Task) => ({ ...taskData(tarea), effort: esfuerzoDe(valor) });
 
 export const esfuerzoSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^creo una tarea puntual con título ${P} y esfuerzo ${P}$`),
-		run: (world, titulo, esfuerzo) => registrarCreacion(world, (id) => crearPuntual({ titulo, esfuerzo: esfuerzoDe(esfuerzo) }, id, AHORA))
+		run: (world, titulo, esfuerzo) => registrarCreacion(world, (id) => createOneOff({ title: titulo, effort: esfuerzoDe(esfuerzo) }, id, AHORA))
 	},
 	{
 		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} cada ${P} ${P} y esfuerzo ${P}$`),
-		run: (world, titulo, cada, u, esfuerzo) => crearEnWorld(world, { titulo, cada: numero(cada), unidad: unidad(u), esfuerzo: esfuerzoDe(esfuerzo) })
+		run: (world, titulo, cada, u, esfuerzo) => crearEnWorld(world, { title: titulo, every: numero(cada), unit: unidad(u), effort: esfuerzoDe(esfuerzo) })
 	},
 	{
 		pattern: new RegExp(`^creo una tarea periódica semanal con título ${P} los ${P} y esfuerzo ${P}$`),
 		run: (world, titulo, dias, esfuerzo) =>
-			registrarCreacion(world, (id) => crearPeriodicaCalendario({ titulo, ...diasDe('semanal', dias), esfuerzo: esfuerzoDe(esfuerzo) }, id, AHORA))
+			registrarCreacion(world, (id) => createRecurringCalendar({ title: titulo, ...diasDe('semanal', dias), effort: esfuerzoDe(esfuerzo) }, id, AHORA))
 	},
 	{
 		pattern: new RegExp(`^una tarea puntual sin fecha límite con esfuerzo ${P}$`),
-		run: (world, esfuerzo) => registrarCreacion(world, (id) => crearPuntual({ titulo: 'Tarea', esfuerzo: esfuerzoDe(esfuerzo) }, id, AHORA))
+		run: (world, esfuerzo) => registrarCreacion(world, (id) => createOneOff({ title: 'Tarea', effort: esfuerzoDe(esfuerzo) }, id, AHORA))
 	},
 	{
 		// Ya guardado: no es un cambio de este dispositivo.
 		pattern: new RegExp(`^la tarea ${TITULO} tiene esfuerzo ${P}$`),
 		run: (world, titulo, esfuerzo) => {
-			world.documentos = aplicarCambio(world.documentos, laTareaTitulada(world, titulo).id, { esfuerzo: esfuerzoDe(esfuerzo) ?? null });
+			world.documentos = applyChange(world.documentos, laTareaTitulada(world, titulo).id, { effort: esfuerzoDe(esfuerzo) ?? null });
 		}
 	},
 	{
@@ -61,8 +61,8 @@ export const esfuerzoSteps: StepDefinition[] = [
 		pattern: new RegExp(`^su esfuerzo es ${P}$`),
 		run: (world, esfuerzo) => {
 			const esperado = esfuerzoDe(esfuerzo);
-			if (esperado === undefined) expect(elDocumento(world)).not.toHaveProperty('esfuerzo');
-			else expect(laTarea(world).esfuerzo).toBe(esperado);
+			if (esperado === undefined) expect(elDocumento(world)).not.toHaveProperty('effort');
+			else expect(laTarea(world).effort).toBe(esperado);
 		}
 	}
 ];

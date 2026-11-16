@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { porcentajeDeProgreso } from './status';
+import { progressPercentage } from './status';
 
 describe('porcentajeDeProgreso', () => {
 	it.each([
@@ -8,7 +8,7 @@ describe('porcentajeDeProgreso', () => {
 		[47 / 48, 98],
 		[0.994, 99],
 		[0.125, 13]
-	])('progreso %s → %s %%, redondeado a entero', (progreso, porcentaje) => {
-		expect(porcentajeDeProgreso(progreso)).toBe(porcentaje);
+	])('progreso %s → %s %%, redondeado a entero', (progress, percentage) => {
+		expect(progressPercentage(progress)).toBe(percentage);
 	});
 });

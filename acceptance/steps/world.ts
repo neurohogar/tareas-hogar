@@ -1,41 +1,41 @@
-import type { AccionDelPanel } from '../../src/lib/core/panel-action';
-import type { LoDeArriba } from '../../src/lib/core/panel-back';
-import type { Anotacion, PantallaActual } from '../../src/lib/core/annotation';
-import type { GrupoDeAnotaciones } from '../../src/lib/core/annotations';
-import type { Aviso } from '../../src/lib/core/notice';
-import type { FormularioDelPanel, ValoresDelPanel } from '../../src/lib/core/unsaved-changes';
-import type { ErroresDeCreacion } from '../../src/lib/core/creation';
-import { tareaDesdeDocumento, type DocumentoDeTarea } from '../../src/lib/core/task-document';
-import type { Estado } from '../../src/lib/core/status';
-import type { BotonesDePaso } from '../../src/lib/core/current-step';
-import type { LineaDeMinima } from '../../src/lib/core/minimal-version';
-import type { Etiqueta } from '../../src/lib/core/label';
-import type { ErrorDeRenombrado } from '../../src/lib/core/label-management';
-import type { GrupoDelHistorial } from '../../src/lib/core/history';
-import { datosDeTarea } from '../../src/lib/core/task-data';
-import { etiquetasDeTarea } from '../../src/lib/core/task-labels';
-import type { Completado, Tarea } from '../../src/lib/core/task';
+import type { PanelAction } from '../../src/lib/core/panel-action';
+import type { OnTop } from '../../src/lib/core/panel-back';
+import type { Annotation, CurrentScreen } from '../../src/lib/core/annotation';
+import type { AnnotationsGroup } from '../../src/lib/core/annotations';
+import type { Notice } from '../../src/lib/core/notice';
+import type { PanelForm, PanelValues } from '../../src/lib/core/unsaved-changes';
+import type { CreationErrors } from '../../src/lib/core/creation';
+import { taskFromDocument, type TaskDocument } from '../../src/lib/core/task-document';
+import type { Status } from '../../src/lib/core/status';
+import type { StepButtons } from '../../src/lib/core/current-step';
+import type { MinimalLine } from '../../src/lib/core/minimal-version';
+import type { Label } from '../../src/lib/core/label';
+import type { RenameError } from '../../src/lib/core/label-management';
+import type { HistoryGroup } from '../../src/lib/core/history';
+import { taskData } from '../../src/lib/core/task-data';
+import { taskLabels } from '../../src/lib/core/task-labels';
+import type { Completion, Task } from '../../src/lib/core/task';
 
 /** Lo que hay guardado: los documentos de las tareas, los completados y las etiquetas. */
 export interface Guardado {
-	documentos: DocumentoDeTarea[];
-	completados: Completado[];
-	etiquetas: Etiqueta[];
+	documentos: TaskDocument[];
+	completions: Completion[];
+	labels: Label[];
 }
 
 /** Estado de una ejecución de escenario: un repositorio en memoria. */
 export interface World extends Guardado {
 	siguienteId: number;
 	/** El texto del que se pregunta con qué fuente se dibuja (§6). */
-	texto?: string;
+	text?: string;
 	/** Rechazo de la última creación o edición. */
-	errores?: ErroresDeCreacion;
+	errors?: CreationErrors;
 	/** Lo guardado justo antes de mi último cambio: lo que ve otro dispositivo "sin ver ese cambio". */
 	antesDeMiCambio?: Guardado;
-	completadosAnteriores?: Completado[];
-	nuevoCompletado?: Completado;
+	completadosAnteriores?: Completion[];
+	nuevoCompletado?: Completion;
 	momentoDelNuevoCompletado?: Date;
-	estados: Estado[];
+	estados: Status[];
 	/** Los momentos en que se consultó el estado (en el orden de `estados`) o Pendientes. */
 	momentosDelEstado: Date[];
 	/** Las filas de Pendientes, de arriba hacia abajo, en cada momento consultado. */
@@ -47,7 +47,7 @@ export interface World extends Guardado {
 	/** El botón "Solo rápidas" de este dispositivo (§6.1); sin él, apagado. */
 	soloRapidas?: boolean;
 	/** El panel de edición abierto (§6.2): el botón de pausa que ofrece y, si se abrió en un momento dado, lo que dice de la posposición. */
-	panel?: { pausa: 'pausar' | 'reanudar' | undefined; posposicion?: { boton: 'posponer' | 'quitar' | undefined; texto: string | undefined }; cambios: CambiosDelPanel };
+	panel?: { pausa: 'pausar' | 'reanudar' | undefined; posposicion?: { boton: 'posponer' | 'quitar' | undefined; text: string | undefined }; cambios: CambiosDelPanel };
 	/** El aviso de deshacer (§5.4) está a la vista: no depende del panel, sigue abierto aunque el panel se cierre. */
 	avisoDeDeshacerAbierto?: boolean;
 	/** Ya se tocó Atrás con el panel abierto (§6.2). */
@@ -57,17 +57,17 @@ export interface World extends Guardado {
 	/** Lo que se borró (tareas y completados), para nombrarlo después de borrado. */
 	borrado: Guardado;
 	/** El aviso del último completado de este dispositivo. */
-	aviso?: Aviso;
+	notice?: Notice;
 	/** El aviso que se veía en el último momento consultado (aviso: undefined si no había). */
-	avisoConsultado?: { aviso?: Aviso; ahora: Date };
+	avisoConsultado?: { notice?: Notice; now: Date };
 	/** El Historial en el último momento consultado. */
-	historial?: GrupoDelHistorial[];
+	historial?: HistoryGroup[];
 	/** El texto de "Última vez" en el último momento consultado. */
 	ultimaVez?: string;
 	/** El id de la etiqueta elegida en el filtro de Pendientes; sin él, "Todas". */
 	filtro?: string;
 	/** Rechazo del último renombrado de etiqueta. */
-	errorDeRenombrado?: ErrorDeRenombrado;
+	errorDeRenombrado?: RenameError;
 	/** Los emojis recientes del selector en este dispositivo; sin ellos, todavía no se declararon. */
 	recientes?: string[];
 	/** Ya hubo una acción sobre los recientes: los pasos "los emojis recientes son" y "hay N" verifican en vez de declarar. */
@@ -78,18 +78,18 @@ export interface World extends Guardado {
 	/** Cuándo llega cada cosa en esta apertura de la app (§6.6). */
 	apertura?: AperturaDeLaApp;
 	/** Las anotaciones guardadas (§4.5, §7) y las que se borraron, para nombrarlas después. */
-	anotaciones: Anotacion[];
-	anotacionesBorradas: Anotacion[];
+	anotaciones: Annotation[];
+	anotacionesBorradas: Annotation[];
 	/** La pantalla donde está la persona (§5.10). */
-	pantallaActual?: PantallaActual;
+	pantallaActual?: CurrentScreen;
 	/** El panel de edición abierto desde la mirada de Anotar (§5.10): su tarea, si la hay, y lo que tenía al abrirse. */
-	panelDeAnotar?: { tareaId?: string; cambios: CambiosDelPanel; documentosAlAbrir: DocumentoDeTarea[] };
+	panelDeAnotar?: { taskId?: string; cambios: CambiosDelPanel; documentosAlAbrir: TaskDocument[] };
 	/** La última anotación declarada: los pasos "la anotación ..." la describen. */
 	ultimaAnotacionId?: string;
 	/** La pantalla Anotaciones en el último momento consultado. */
-	anotacionesConsultadas?: GrupoDeAnotaciones[];
+	anotacionesConsultadas?: AnnotationsGroup[];
 	/** Ya se copió: el texto (o nada para copiar). */
-	copiado?: { texto: string | undefined };
+	copiado?: { text: string | undefined };
 }
 
 /** Una fuente en la apertura: en qué segundo queda lista o falla, y si podría venir del dispositivo sin conexión. */
@@ -105,9 +105,9 @@ export interface AperturaDeLaApp {
 	sinConexion: boolean;
 	pierdeLaConexion: number;
 	auth: number;
-	tareas: number;
-	completados: number;
-	etiquetas: number;
+	tasks: number;
+	completions: number;
+	labels: number;
 	atkinson: FuenteDeLaApertura;
 	noto: FuenteDeLaApertura;
 	recordaba: boolean;
@@ -117,48 +117,48 @@ export interface AperturaDeLaApp {
 /** Lo que se escribió en el panel y lo que tiene encima (§6.2, Cambios sin guardar y Atrás). */
 export interface CambiosDelPanel {
 	/** La tarea con que se abrió; sin ella, el panel se abrió para crear. */
-	tareaAlAbrir?: Tarea;
-	alAbrir: ValoresDelPanel;
-	formulario: FormularioDelPanel;
-	encima: LoDeArriba;
+	taskOnOpen?: Task;
+	alAbrir: PanelValues;
+	form: PanelForm;
+	top: OnTop;
 	/** La acción del aviso de acción abierto. */
-	accion?: AccionDelPanel;
+	action?: PanelAction;
 	/** El último momento conocido, si un paso lo dio. */
-	ahora?: Date;
-	tecladoAbierto: boolean;
+	now?: Date;
+	keyboardOpen: boolean;
 }
 
 /** Lo que se ve de una fila de Pendientes: el título, si se ve completada o pausada, el texto del esfuerzo y el de fecha. */
 export interface FilaConsultada {
-	titulo: string;
-	completada: boolean;
-	pausada: boolean;
-	esfuerzo: string | undefined;
+	title: string;
+	completed: boolean;
+	paused: boolean;
+	effort: string | undefined;
 	/** El texto de fecha y distancia («Tocaba …», «Vuelve …», §6.1); sin él, la fila no lo muestra. */
-	textoDeFecha: string | undefined;
+	dateText: string | undefined;
 	/** La línea del paso de la fila, «Primer paso: …» o «Paso: …» (§6.1); sin ella, la fila no la muestra. */
-	textoDePrimerPaso: string | undefined;
+	firstStepText: string | undefined;
 	/** Los botones «Paso anterior» y «Hecho» de la línea del paso (§6.1); sin ellos, la fila no los muestra. */
-	botonesDePaso: BotonesDePaso | undefined;
+	stepButtons: StepButtons | undefined;
 	/** La línea «Mínima: …» de la fila y si «Hice la mínima» está habilitado (§6.1); sin ella, la fila no la muestra. */
-	minima: LineaDeMinima | undefined;
+	minimal: MinimalLine | undefined;
 }
 
 /** El sujeto de los pasos del otro dispositivo: actúa sobre lo guardado antes de mi último cambio. */
 export const OTRO = 'otro dispositivo, sin ver ese cambio,';
 
-function cambiosAlAbrir(alAbrir: ValoresDelPanel, tareaAlAbrir?: Tarea, ahora?: Date): CambiosDelPanel {
-	return { tareaAlAbrir, alAbrir, formulario: { ...alAbrir, sinConfirmar: '' }, encima: 'nada', ahora, tecladoAbierto: false };
+function cambiosAlAbrir(alAbrir: PanelValues, tareaAlAbrir?: Task, ahora?: Date): CambiosDelPanel {
+	return { taskOnOpen: tareaAlAbrir, alAbrir, form: { ...alAbrir, unconfirmed: '' }, top: 'nada', now: ahora, keyboardOpen: false };
 }
 
 /** Spec §6.2: al editar, el panel se abre con los valores actuales de la tarea. */
-export function cambiosAlEditar(world: World, tarea: Tarea, ahora?: Date): CambiosDelPanel {
-	return cambiosAlAbrir({ datos: datosDeTarea(tarea), etiquetas: etiquetasDeTarea(tarea, world.etiquetas).map(({ nombre }) => nombre) }, tarea, ahora);
+export function cambiosAlEditar(world: World, tarea: Task, ahora?: Date): CambiosDelPanel {
+	return cambiosAlAbrir({ data: taskData(tarea), labels: taskLabels(tarea, world.labels).map(({ name: nombre }) => nombre) }, tarea, ahora);
 }
 
 /** Spec §6.2: al crear, el panel se abre con los valores de `datos`. */
-export function cambiosAlCrear(datos: ValoresDelPanel['datos']): CambiosDelPanel {
-	return cambiosAlAbrir({ datos, etiquetas: [] });
+export function cambiosAlCrear(datos: PanelValues['data']): CambiosDelPanel {
+	return cambiosAlAbrir({ data: datos, labels: [] });
 }
 
 /** Un paso soportado: el runtime lo despacha con las capturas ya resueltas. */
@@ -170,15 +170,15 @@ export interface StepDefinition {
 export function createWorld(): World {
 	return {
 		documentos: [],
-		completados: [],
-		etiquetas: [],
+		completions: [],
+		labels: [],
 		siguienteId: 1,
 		anotaciones: [],
 		anotacionesBorradas: [],
 		estados: [],
 		momentosDelEstado: [],
 		consultasDePendientes: [],
-		borrado: { documentos: [], completados: [], etiquetas: [] }
+		borrado: { documentos: [], completions: [], labels: [] }
 	};
 }
 
@@ -192,34 +192,34 @@ export function nuevoIdDeEtiqueta(world: World): string {
 }
 
 /** Solo lo guardado, sin el resto del estado del escenario. */
-export const copiaDe = ({ documentos, completados, etiquetas }: Guardado): Guardado => ({ documentos, completados, etiquetas });
+export const copiaDe = ({ documentos, completions: completados, labels: etiquetas }: Guardado): Guardado => ({ documentos, completions: completados, labels: etiquetas });
 
 /** Las tareas que describen los documentos guardados. */
-export function tareasDe(guardado: Guardado): Tarea[] {
-	return guardado.documentos.map(tareaDesdeDocumento);
+export function tareasDe(guardado: Guardado): Task[] {
+	return guardado.documentos.map(taskFromDocument);
 }
 
 /** La única tarea guardada. */
-export function laTarea(guardado: Guardado): Tarea {
+export function laTarea(guardado: Guardado): Task {
 	const tareas = tareasDe(guardado);
 	if (tareas.length !== 1) throw new Error(`Se esperaba una tarea, hay ${tareas.length}`);
 	return tareas[0];
 }
 
 /** El documento de la única tarea, con los campos que tenga aunque no correspondan a su tipo. */
-export function elDocumento(world: World): DocumentoDeTarea {
-	return world.documentos.find(({ id }) => id === laTarea(world).id) as DocumentoDeTarea;
+export function elDocumento(world: World): TaskDocument {
+	return world.documentos.find(({ id }) => id === laTarea(world).id) as TaskDocument;
 }
 
-export function laTareaDeTipo<T extends Tarea['tipo']>(world: World, tipo: T): Extract<Tarea, { tipo: T }> {
+export function laTareaDeTipo<T extends Task['kind']>(world: World, tipo: T): Extract<Task, { kind: T }> {
 	const tarea = laTarea(world);
-	if (tarea.tipo !== tipo) throw new Error(`Se esperaba una tarea ${tipo}, es ${tarea.tipo}`);
-	return tarea as Extract<Tarea, { tipo: T }>;
+	if (tarea.kind !== tipo) throw new Error(`Se esperaba una tarea ${tipo}, es ${tarea.kind}`);
+	return tarea as Extract<Task, { kind: T }>;
 }
 
 /** La única tarea guardada con ese título. */
-export function laTareaTitulada(guardado: Guardado, titulo: string): Tarea {
-	const conEseTitulo = tareasDe(guardado).filter((tarea) => tarea.titulo === titulo);
+export function laTareaTitulada(guardado: Guardado, titulo: string): Task {
+	const conEseTitulo = tareasDe(guardado).filter((tarea) => tarea.title === titulo);
 	if (conEseTitulo.length !== 1) throw new Error(`Se esperaba una tarea "${titulo}", hay ${conEseTitulo.length}`);
 	return conEseTitulo[0];
 }
@@ -252,18 +252,18 @@ export function borrarGuardado(world: World, documentoIds: readonly string[], co
 	const seBorra = ({ id }: { id: string }, ids: readonly string[]) => ids.includes(id);
 	world.borrado = {
 		documentos: [...world.borrado.documentos, ...world.documentos.filter((d) => seBorra(d, documentoIds))],
-		completados: [...world.borrado.completados, ...world.completados.filter((c) => seBorra(c, completadoIds))],
-		etiquetas: world.borrado.etiquetas
+		completions: [...world.borrado.completions, ...world.completions.filter((c) => seBorra(c, completadoIds))],
+		labels: world.borrado.labels
 	};
 	world.documentos = world.documentos.filter((d) => !seBorra(d, documentoIds));
-	world.completados = world.completados.filter((c) => !seBorra(c, completadoIds));
+	world.completions = world.completions.filter((c) => !seBorra(c, completadoIds));
 }
 
 /** Todo lo que estuvo guardado en algún momento: lo que hay y lo que se borró. */
 export function loQueHuboGuardado(world: World): Guardado {
 	return {
 		documentos: [...world.documentos, ...world.borrado.documentos],
-		completados: [...world.completados, ...world.borrado.completados],
-		etiquetas: [...world.etiquetas, ...world.borrado.etiquetas]
+		completions: [...world.completions, ...world.borrado.completions],
+		labels: [...world.labels, ...world.borrado.labels]
 	};
 }

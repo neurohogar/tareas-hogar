@@ -1,6 +1,6 @@
 // Conversión estricta de valores de Examples a tipos del dominio. Un valor
 // malformado falla el escenario (requisito del runtime APS).
-import { DIAS_DE_LA_SEMANA, type DiaSemana, type OcurrenciaCubierta, type Unidad } from '../../src/lib/core/task';
+import { WEEKDAYS, type Weekday, type CoveredOccurrence, type Unit } from '../../src/lib/core/task';
 
 /** Captura de un `<placeholder>`; el runtime la reemplaza por su valor. */
 export const P = '(<[A-Za-z0-9_]+>)';
@@ -33,7 +33,7 @@ export function numero(valor: string): number {
 	return Number(valor);
 }
 
-export function unidad(valor: string): Unidad {
+export function unidad(valor: string): Unit {
 	if (valor !== 'horas' && valor !== 'dias') throw new Error(`Unidad inválida: "${valor}"`);
 	return valor;
 }
@@ -48,8 +48,8 @@ export function fecha(valor: string): Date {
  * Spec §4.4: una ocurrencia cubierta sin hora (2026-07-14) es un día; con hora
  * (2026-07-14T07:00:00), el inicio de una ocurrencia con horario.
  */
-export function ocurrencia(valor: string): OcurrenciaCubierta {
-	return FECHA_LOCAL.test(valor) ? fecha(valor) : { inicio: fechaHora(valor) };
+export function ocurrencia(valor: string): CoveredOccurrence {
+	return FECHA_LOCAL.test(valor) ? fecha(valor) : { start: fechaHora(valor) };
 }
 
 /** Lista separada por comas ("martes, jueves"), en el orden escrito. */
@@ -59,10 +59,10 @@ export function lista(valor: string): string[] {
 	return elementos;
 }
 
-export function diasSemana(valor: string): DiaSemana[] {
+export function diasSemana(valor: string): Weekday[] {
 	return lista(valor).map((dia) => {
-		if (!(DIAS_DE_LA_SEMANA as readonly string[]).includes(dia)) throw new Error(`Día de la semana inválido: "${dia}"`);
-		return dia as DiaSemana;
+		if (!(WEEKDAYS as readonly string[]).includes(dia)) throw new Error(`Día de la semana inválido: "${dia}"`);
+		return dia as Weekday;
 	});
 }
 

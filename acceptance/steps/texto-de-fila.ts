@@ -1,16 +1,16 @@
 // El texto de fecha de la fila de Pendientes («Tocaba …», «Vuelve …», spec §6.1) y el
 // regreso del aviso de completar (§5.4).
 import { expect } from 'vitest';
-import { regresoDelAviso } from '../../src/lib/core/notice';
+import { noticeReturn } from '../../src/lib/core/notice';
 import { P, TITULO } from './valores';
 import { laTarea, type World, type StepDefinition } from './world';
 
 /** El regreso que dice el aviso consultado, que tiene que verse y nombrar la tarea. */
 function regresoDelCompletado(world: World): string | undefined {
 	if (!world.avisoConsultado) throw new Error('No se consultó el aviso');
-	const { aviso, ahora } = world.avisoConsultado;
-	expect(aviso?.nombre).toBe(laTarea(world).titulo);
-	return aviso && regresoDelAviso(aviso, ahora);
+	const { notice: aviso, now: ahora } = world.avisoConsultado;
+	expect(aviso?.name).toBe(laTarea(world).title);
+	return aviso && noticeReturn(aviso, ahora);
 }
 
 /** En cada momento consultado, la lista tiene una sola fila y su texto de fecha es `texto`. */
@@ -18,7 +18,7 @@ function laFilaMuestraElTexto(world: World, texto: string | undefined): void {
 	expect(world.consultasDePendientes.length).toBeGreaterThan(0);
 	for (const filas of world.consultasDePendientes) {
 		expect(filas).toHaveLength(1);
-		expect(filas[0].textoDeFecha).toBe(texto);
+		expect(filas[0].dateText).toBe(texto);
 	}
 }
 
@@ -32,9 +32,9 @@ export const textoDeFilaSteps: StepDefinition[] = [
 		run: (world, titulo, texto) => {
 			expect(world.consultasDePendientes.length).toBeGreaterThan(0);
 			for (const filas of world.consultasDePendientes) {
-				const delTitulo = filas.filter((fila) => fila.titulo === titulo);
+				const delTitulo = filas.filter((fila) => fila.title === titulo);
 				expect(delTitulo).toHaveLength(1);
-				expect(delTitulo[0].textoDeFecha).toBe(texto);
+				expect(delTitulo[0].dateText).toBe(texto);
 			}
 		}
 	},

@@ -1,38 +1,38 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { sumarDias } from './days';
-import { cierreDelDia, dentroDelHorario, leerHorario, ocurrenciasDelDia, textoDelHorario, ultimoCierre, ventanaDisponible } from './schedule';
-import type { Horario } from './task';
+import { addDays } from './days';
+import { endOfDay, withinSchedule, readSchedule, occurrencesOfDay, scheduleText, lastClosing, availableWindow } from './schedule';
+import type { Schedule } from './task';
 
-const hora = (minutos: number) => `${String(Math.floor(minutos / 60)).padStart(2, '0')}:${String(minutos % 60).padStart(2, '0')}`;
-const minutosDelDia = fc.integer({ min: 0, max: 1439 });
+const hour = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+const minutesOfDay = fc.integer({ min: 0, max: 1439 });
 /** Un horario válido (§4.1): de una a cuatro ventanas ordenadas y sin superponerse. */
-const horario: fc.Arbitrary<Horario> = fc
+const schedule: fc.Arbitrary<Schedule> = fc
 	.integer({ min: 1, max: 4 })
-	.chain((n) => fc.uniqueArray(minutosDelDia, { minLength: 2 * n, maxLength: 2 * n }))
-	.map((minutos) => {
-		const orden = [...minutos].sort((a, b) => a - b);
-		return orden.flatMap((m, i) => (i % 2 === 0 ? [{ desde: hora(m), hasta: hora(orden[i + 1]) }] : []));
+	.chain((n) => fc.uniqueArray(minutesOfDay, { minLength: 2 * n, maxLength: 2 * n }))
+	.map((minutes) => {
+		const order = [...minutes].sort((a, b) => a - b);
+		return order.flatMap((m, i) => (i % 2 === 0 ? [{ from: hour(m), to: hour(order[i + 1]) }] : []));
 	});
-const instante = fc.integer({ min: 0, max: 4_102_444_800_000 }).map((ms) => new Date(ms));
+const instant = fc.integer({ min: 0, max: 4_102_444_800_000 }).map((ms) => new Date(ms));
 /** Minutos locales desde las 00:00 del momento (solo para comparar con las horas HH:MM). */
-const minutoLocal = (momento: Date) => momento.getHours() * 60 + momento.getMinutes();
-const minutosDe = (texto: string) => Number(texto.slice(0, 2)) * 60 + Number(texto.slice(3));
+const localMinute = (moment: Date) => moment.getHours() * 60 + moment.getMinutes();
+const minutesOf = (text: string) => Number(text.slice(0, 2)) * 60 + Number(text.slice(3));
 
 describe('leerHorario (propiedades)', () => {
 	it('un horario válido se lee tal cual: leer es idempotente sobre lo guardado', () => {
 		fc.assert(
-			fc.property(horario, (h) => {
-				expect(leerHorario(h)).toEqual({ ok: true, horario: h });
+			fc.property(schedule, (h) => {
+				expect(readSchedule(h)).toEqual({ ok: true, schedule: h });
 			})
 		);
 	});
 
 	it('dos horas con desde ≥ hasta: la de fin no es posterior', () => {
 		fc.assert(
-			fc.property(minutosDelDia, minutosDelDia, (a, b) => {
+			fc.property(minutesOfDay, minutesOfDay, (a, b) => {
 				fc.pre(a >= b);
-				expect(leerHorario([{ desde: hora(a), hasta: hora(b) }])).toEqual({
+				expect(readSchedule([{ from: hour(a), to: hour(b) }])).toEqual({
 					ok: false,
 					error: 'finNoPosterior'
 				});
@@ -42,9 +42,9 @@ describe('leerHorario (propiedades)', () => {
 
 	it('si falta una de las dos horas, está incompleto', () => {
 		fc.assert(
-			fc.property(minutosDelDia, fc.boolean(), fc.constantFrom(undefined, ''), (m, faltaDesde, falta) => {
-				const escrito = faltaDesde ? { desde: falta, hasta: hora(m) } : { desde: hora(m), hasta: falta };
-				expect(leerHorario([escrito])).toEqual({
+			fc.property(minutesOfDay, fc.boolean(), fc.constantFrom(undefined, ''), (m, missingFrom, missing) => {
+				const typedOne = missingFrom ? { from: missing, to: hour(m) } : { from: hour(m), to: missing };
+				expect(readSchedule([typedOne])).toEqual({
 					ok: false,
 					error: 'incompleto'
 				});
@@ -55,9 +55,9 @@ describe('leerHorario (propiedades)', () => {
 	it('el orden en que se escriben las ventanas no importa: se guardan ordenadas por desde', () => {
 		fc.assert(
 			fc.property(
-				horario.chain((h) => fc.tuple(fc.constant(h), fc.shuffledSubarray(h, { minLength: h.length, maxLength: h.length }))),
-				([h, escrito]) => {
-					expect(leerHorario(escrito)).toEqual({ ok: true, horario: h });
+				schedule.chain((h) => fc.tuple(fc.constant(h), fc.shuffledSubarray(h, { minLength: h.length, maxLength: h.length }))),
+				([h, typedOne]) => {
+					expect(readSchedule(typedOne)).toEqual({ ok: true, schedule: h });
 				}
 			)
 		);
@@ -65,23 +65,23 @@ describe('leerHorario (propiedades)', () => {
 
 	it('dos ventanas que se pisan están superpuestas, en cualquier orden', () => {
 		fc.assert(
-			fc.property(fc.uniqueArray(minutosDelDia, { minLength: 3, maxLength: 3 }), minutosDelDia, fc.boolean(), (tres, extra, invertir) => {
+			fc.property(fc.uniqueArray(minutesOfDay, { minLength: 3, maxLength: 3 }), minutesOfDay, fc.boolean(), (three, extra, invert) => {
 				// a < b < c ≤ max(c, extra): [a, c) y [b, max(c, extra)) comparten [b, c).
-				const [a, b, c] = [...tres].sort((x, y) => x - y);
-				const ventanas = [
-					{ desde: hora(a), hasta: hora(c) },
-					{ desde: hora(b), hasta: hora(Math.max(c, extra)) }
+				const [a, b, c] = [...three].sort((x, y) => x - y);
+				const timeWindows = [
+					{ from: hour(a), to: hour(c) },
+					{ from: hour(b), to: hour(Math.max(c, extra)) }
 				];
-				expect(leerHorario(invertir ? ventanas.reverse() : ventanas)).toEqual({ ok: false, error: 'superpuestos' });
+				expect(readSchedule(invert ? timeWindows.reverse() : timeWindows)).toEqual({ ok: false, error: 'superpuestos' });
 			})
 		);
 	});
 
 	it('el texto de la fila nombra cada ventana, en orden, separadas por " · "', () => {
 		fc.assert(
-			fc.property(horario, (h) => {
-				const partes = textoDelHorario(h).split(' · ');
-				expect(partes).toEqual(h.map(({ desde, hasta }) => `${desde}–${hasta}`));
+			fc.property(schedule, (h) => {
+				const parts = scheduleText(h).split(' · ');
+				expect(parts).toEqual(h.map(({ from, to }) => `${from}–${to}`));
 			})
 		);
 	});
@@ -90,53 +90,53 @@ describe('leerHorario (propiedades)', () => {
 describe('ventana del horario (propiedades)', () => {
 	it('dentro del horario: el minuto local está en [desde, hasta) de alguna ventana', () => {
 		fc.assert(
-			fc.property(horario, instante, (h, ahora) => {
-				const minuto = minutoLocal(ahora);
-				expect(dentroDelHorario(h, ahora)).toBe(h.some(({ desde, hasta }) => minuto >= minutosDe(desde) && minuto < minutosDe(hasta)));
+			fc.property(schedule, instant, (h, now) => {
+				const minute = localMinute(now);
+				expect(withinSchedule(h, now)).toBe(h.some(({ from, to }) => minute >= minutesOf(from) && minute < minutesOf(to)));
 			})
 		);
 	});
 
 	it('A es el primer instante ≥ desde dentro de una ventana, y C el hasta de esa ventana', () => {
 		fc.assert(
-			fc.property(horario, instante, (h, desde) => {
-				const { disponible, cierre } = ventanaDisponible(h, desde);
-				expect(disponible).toBeGreaterThanOrEqual(desde.getTime());
-				expect(dentroDelHorario(h, new Date(disponible))).toBe(true);
+			fc.property(schedule, instant, (h, from) => {
+				const { available, closing } = availableWindow(h, from);
+				expect(available).toBeGreaterThanOrEqual(from.getTime());
+				expect(withinSchedule(h, new Date(available))).toBe(true);
 				// C es el hasta de la ventana del día de A que contiene A.
-				const ventana = ocurrenciasDelDia(h, new Date(disponible)).find(({ inicio, cierre }) => inicio <= disponible && disponible < cierre);
-				expect(cierre).toBe(ventana?.cierre);
+				const timeWindow = occurrencesOfDay(h, new Date(available)).find(({ start, closing }) => start <= available && available < closing);
+				expect(closing).toBe(timeWindow?.closing);
 				// Entre desde y A no hay instante dentro de una ventana: A es el primero.
-				if (disponible > desde.getTime()) expect(dentroDelHorario(h, new Date(disponible - 1))).toBe(false);
+				if (available > from.getTime()) expect(withinSchedule(h, new Date(available - 1))).toBe(false);
 			})
 		);
 	});
 
 	it('A es idempotente: desde A, la ventana disponible es la misma', () => {
 		fc.assert(
-			fc.property(horario, instante, (h, desde) => {
-				const ventana = ventanaDisponible(h, desde);
-				expect(ventanaDisponible(h, new Date(ventana.disponible))).toEqual(ventana);
+			fc.property(schedule, instant, (h, from) => {
+				const timeWindow = availableWindow(h, from);
+				expect(availableWindow(h, new Date(timeWindow.available))).toEqual(timeWindow);
 			})
 		);
 	});
 
 	it('el último cierre ya pasó y no hay otro cierre entre él y ahora', () => {
 		fc.assert(
-			fc.property(horario, instante, (h, ahora) => {
-				const cierre = ultimoCierre(h, ahora);
-				expect(cierre).toBeLessThanOrEqual(ahora.getTime());
-				const cierres = [-1, 0, 1].flatMap((d) => ocurrenciasDelDia(h, sumarDias(ahora, d)).map((o) => o.cierre));
-				expect(cierres).toContain(cierre);
-				expect(cierres.filter((c) => c > cierre && c <= ahora.getTime())).toEqual([]);
+			fc.property(schedule, instant, (h, now) => {
+				const closing = lastClosing(h, now);
+				expect(closing).toBeLessThanOrEqual(now.getTime());
+				const closings = [-1, 0, 1].flatMap((d) => occurrencesOfDay(h, addDays(now, d)).map((o) => o.closing));
+				expect(closings).toContain(closing);
+				expect(closings.filter((c) => c > closing && c <= now.getTime())).toEqual([]);
 			})
 		);
 	});
 
 	it('el cierre del día es el hasta de su última ventana', () => {
 		fc.assert(
-			fc.property(horario, instante, (h, dia) => {
-				expect(cierreDelDia(h, dia)).toBe(Math.max(...ocurrenciasDelDia(h, dia).map((o) => o.cierre)));
+			fc.property(schedule, instant, (h, day) => {
+				expect(endOfDay(h, day)).toBe(Math.max(...occurrencesOfDay(h, day).map((o) => o.closing)));
 			})
 		);
 	});

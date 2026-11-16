@@ -1,21 +1,21 @@
 // Spec §4.4: ocurrenciaCubierta guardada como texto. Una fecha (2026-07-14) y
 // una fecha y hora (2026-07-14T07:00) tienen formatos distintos, así una
 // ventana que empieza a las 00:00 no se confunde con una fecha.
-import { diaDesdeIso, diaIso, dosDigitos, enElMinuto, horaYMinuto } from './days';
-import type { OcurrenciaCubierta } from './task';
+import { dayFromIso, isoDay, twoDigits, atTheMinute, hourAndMinute } from './days';
+import type { CoveredOccurrence } from './task';
 
-const FECHA_Y_HORA = /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):([0-5]\d)$/;
+const DATE_AND_TIME = /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):([0-5]\d)$/;
 
-export function ocurrenciaEnTexto(ocurrencia: OcurrenciaCubierta): string {
-	if (ocurrencia instanceof Date) return diaIso(ocurrencia);
-	const { hora, minuto } = horaYMinuto(ocurrencia.inicio);
-	return `${diaIso(ocurrencia.inicio)}T${dosDigitos(hora)}:${dosDigitos(minuto)}`;
+export function occurrenceInText(occurrence: CoveredOccurrence): string {
+	if (occurrence instanceof Date) return isoDay(occurrence);
+	const { hour, minute } = hourAndMinute(occurrence.start);
+	return `${isoDay(occurrence.start)}T${twoDigits(hour)}:${twoDigits(minute)}`;
 }
 
 /** Para valores ya guardados: uno inválido es un error. */
-export function ocurrenciaDesdeTexto(texto: string): OcurrenciaCubierta {
-	const partes = FECHA_Y_HORA.exec(texto);
-	if (!partes) return diaDesdeIso(texto);
-	const [, fecha, hora, minuto] = partes;
-	return { inicio: enElMinuto(diaDesdeIso(fecha), Number(hora) * 60 + Number(minuto)) };
+export function occurrenceFromText(text: string): CoveredOccurrence {
+	const parts = DATE_AND_TIME.exec(text);
+	if (!parts) return dayFromIso(text);
+	const [, date, hour, minute] = parts;
+	return { start: atTheMinute(dayFromIso(date), Number(hour) * 60 + Number(minute)) };
 }

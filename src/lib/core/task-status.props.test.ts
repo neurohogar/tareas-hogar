@@ -1,40 +1,40 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { estadoDeTarea } from './task-status';
-import type { Completado, Tarea, TareaPeriodica } from './task';
+import { taskStatus } from './task-status';
+import type { Completion, Task, RecurringTask } from './task';
 
-const instante = fc.integer({ min: 0, max: 4_000_000_000_000 });
-const periodica = fc.record({
-	cada: fc.integer({ min: 1, max: 10_000 }),
-	unidad: fc.constantFrom('horas' as const, 'dias' as const)
-}).map(({ cada, unidad }): TareaPeriodica => ({
+const instant = fc.integer({ min: 0, max: 4_000_000_000_000 });
+const recurring = fc.record({
+	every: fc.integer({ min: 1, max: 10_000 }),
+	unit: fc.constantFrom('horas' as const, 'dias' as const)
+}).map(({ every, unit }): RecurringTask => ({
 	id: 'propia',
-	titulo: 'T',
-	tipo: 'periodica',
-	recurrencia: { modo: 'relativo', cada, unidad },
-	creadaEn: new Date(0)
+	title: 'T',
+	kind: 'periodica',
+	recurrence: { mode: 'relativo', every, unit },
+	createdAt: new Date(0)
 }));
-const puntual = fc.option(fc.integer({ min: 0, max: 47_000 }), { nil: undefined }).map(
-	(dias): Tarea => ({
+const oneOff = fc.option(fc.integer({ min: 0, max: 47_000 }), { nil: undefined }).map(
+	(days): Task => ({
 		id: 'propia',
-		titulo: 'T',
-		tipo: 'puntual',
-		creadaEn: new Date(0),
-		...(dias !== undefined && { fechaLimite: new Date(1970, 0, 1 + dias) })
+		title: 'T',
+		kind: 'puntual',
+		createdAt: new Date(0),
+		...(days !== undefined && { dueDate: new Date(1970, 0, 1 + days) })
 	})
 );
-const tarea = fc.oneof(periodica, puntual);
-const completadosDe = (tareaId: string) =>
-	fc.array(instante, { maxLength: 6 }).map((momentos) =>
-		momentos.map((ms, i): Completado => ({ id: `${tareaId}-${i}`, tareaId, completadoEn: new Date(ms) }))
+const task = fc.oneof(recurring, oneOff);
+const completionsOf = (taskId: string) =>
+	fc.array(instant, { maxLength: 6 }).map((moments) =>
+		moments.map((ms, i): Completion => ({ id: `${taskId}-${i}`, taskId, completedAt: new Date(ms) }))
 	);
 
 describe('estadoDeTarea (propiedades)', () => {
 	it('los completados de otras tareas no cambian el estado', () => {
 		fc.assert(
-			fc.property(tarea, completadosDe('propia'), completadosDe('otra'), instante, (t, propios, ajenos, ahora) => {
-				const fecha = new Date(ahora);
-				expect(estadoDeTarea(t, [...ajenos, ...propios], fecha)).toEqual(estadoDeTarea(t, propios, fecha));
+			fc.property(task, completionsOf('propia'), completionsOf('otra'), instant, (t, owns, foreigns, now) => {
+				const date = new Date(now);
+				expect(taskStatus(t, [...foreigns, ...owns], date)).toEqual(taskStatus(t, owns, date));
 			})
 		);
 	});
