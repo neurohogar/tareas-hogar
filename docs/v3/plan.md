@@ -78,6 +78,8 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 
 ### E4. Versión mínima
 
+- **Estado.** Parcial. Implementado el campo opcional «versión mínima» y «Hice la mínima» (feature `version-minima`); el completado queda en el Historial como «Mínima». Pendiente: el campo «cuenta como hecha cuando…», en otra feature.
+
 - **Problema y persona.** Altas capacidades y TEA, sobre todo. El todo o nada: si no se puede hacer la tarea entera, no se empieza.
 - **Evidencia.** `aacc H5` (fuerte para el problema; el crédito parcial como remedio es una inferencia); `tdah §1.2a` (fuerte en población general: aversión y baja autoeficacia); `tea §4` (moderada); `tea §3`, `tea §9` y `hogar A4` (débil).
 - **Qué propone.** Un campo opcional «versión mínima» («solo el inodoro»). Completarla cuenta como hecha y queda en el historial como lo que fue. Un campo opcional «cuenta como hecha cuando…».
