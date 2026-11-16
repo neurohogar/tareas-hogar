@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { franjaDeConexion } from '#lib/core/connection.ts';
+	import { connectionStrip } from '#lib/core/connection.ts';
 	import { enLineaReactivo } from './en-linea.svelte';
 
 	const enLinea = enLineaReactivo();
-	const texto = $derived(franjaDeConexion(enLinea.valor));
+	const texto = $derived(connectionStrip(enLinea.valor));
 
 	// Mientras se ve, el panel a pantalla completa empieza debajo de ella.
 	$effect(() => {

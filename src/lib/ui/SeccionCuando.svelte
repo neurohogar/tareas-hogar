@@ -7,9 +7,9 @@
 </script>
 
 <script lang="ts">
-	import type { ErroresDeCreacion } from '#lib/core/creation.ts';
-	import type { OpcionDeRepeticion, PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-tabs.ts';
-	import { DIAS_DE_LA_SEMANA, DIAS_DEL_MES, type DiaSemana, type Unidad } from '#lib/core/task.ts';
+	import type { CreationErrors } from '#lib/core/creation.ts';
+	import type { RepetitionOption, PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
+	import { WEEKDAYS, MONTH_DAYS, type Weekday, type Unit } from '#lib/core/task.ts';
 	import MarcoDeSeccion from './MarcoDeSeccion.svelte';
 
 	let {
@@ -26,13 +26,13 @@
 		cadaInicial,
 		unidadInicial
 	}: {
-		presentacion: PresentacionDelPanel;
-		abierta: SeccionDelPanel;
-		errores: ErroresDeCreacion;
+		presentacion: PanelPresentation;
+		abierta: PanelSection;
+		errores: CreationErrors;
 		/** El error de un campo dura lo que dura su mensaje: al corregirlo se va. */
-		limpiar: (campo: keyof ErroresDeCreacion) => void;
-		repeticion: OpcionDeRepeticion;
-		diasSemana: DiaSemana[];
+		limpiar: (campo: keyof CreationErrors) => void;
+		repeticion: RepetitionOption;
+		diasSemana: Weekday[];
 		diasMes: number[];
 		/** "Solo en un horario": apagado, la tarea no tiene horario (§6.2). */
 		conHorario: boolean;
@@ -40,22 +40,22 @@
 		ventanas: Ventana[];
 		fechaLimiteInicial: string;
 		cadaInicial: string;
-		unidadInicial: Unidad;
+		unidadInicial: Unit;
 	} = $props();
 
-	const REPETICIONES: { valor: OpcionDeRepeticion; nombre: string }[] = [
+	const REPETICIONES: { valor: RepetitionOption; nombre: string }[] = [
 		{ valor: 'puntual', nombre: 'No se repite' },
 		{ valor: 'relativo', nombre: 'Intervalo' },
 		{ valor: 'semanal', nombre: 'Días de la semana' },
 		{ valor: 'mensual', nombre: 'Días del mes' }
 	];
-	const ERRORES_DE_HORARIO: Record<NonNullable<ErroresDeCreacion['horario']>, string> = {
+	const ERRORES_DE_HORARIO: Record<NonNullable<CreationErrors['schedule']>, string> = {
 		finNoPosterior: 'La hora de fin tiene que ser posterior a la de inicio',
 		incompleto: 'Completá las dos horas',
 		superpuestos: 'Los horarios no se pueden superponer',
 		variasEnHoras: 'Con varios horarios, el intervalo tiene que ser en días'
 	};
-	const ERRORES_DE_DIAS: Record<NonNullable<ErroresDeCreacion['dias']>, string> = {
+	const ERRORES_DE_DIAS: Record<NonNullable<CreationErrors['days']>, string> = {
 		faltan: 'Elegí al menos un día.',
 		diaDelMesInvalido: 'Los días del mes van del 1 al 31.',
 		combinados: 'Elegí días de la semana o días del mes, no los dos.'
@@ -63,12 +63,12 @@
 
 	function agregarVentana() {
 		ventanas = [...ventanas, { desde: '', hasta: '' }];
-		limpiar('horario');
+		limpiar('schedule');
 	}
 
 	function quitarVentana(indice: number) {
 		ventanas = ventanas.filter((_, i) => i !== indice);
-		limpiar('horario');
+		limpiar('schedule');
 	}
 
 	/** La primera fila conserva los ids de siempre; las demás llevan su número. */
@@ -99,11 +99,11 @@
 					name="fechaLimite"
 					type="date"
 					value={fechaLimiteInicial}
-					oninput={() => limpiar('fechaLimite')}
-					aria-invalid={errores.fechaLimite ? 'true' : undefined}
-					aria-describedby={errores.fechaLimite ? 'error-fecha-limite' : undefined}
+					oninput={() => limpiar('dueDate')}
+					aria-invalid={errores.dueDate ? 'true' : undefined}
+					aria-describedby={errores.dueDate ? 'error-fecha-limite' : undefined}
 				/>
-				{#if errores.fechaLimite}
+				{#if errores.dueDate}
 					<p id="error-fecha-limite" class="error">Ingresá una fecha completa y que exista, o dejala vacía.</p>
 				{/if}
 			</div>
@@ -118,16 +118,16 @@
 					min="1"
 					step="1"
 					value={cadaInicial}
-					oninput={() => limpiar('cada')}
-					aria-invalid={errores.cada ? 'true' : undefined}
-					aria-describedby={errores.cada ? 'error-cada' : undefined}
+					oninput={() => limpiar('every')}
+					aria-invalid={errores.every ? 'true' : undefined}
+					aria-describedby={errores.every ? 'error-cada' : undefined}
 				/>
 				<label for="campo-unidad" class="oculto">Unidad</label>
 				<select id="campo-unidad" name="unidad" value={unidadInicial}>
 					<option value="horas">horas</option>
 					<option value="dias">días</option>
 				</select>
-				{#if errores.cada}
+				{#if errores.every}
 					<p id="error-cada" class="error">Cada tiene que ser un número entero, 1 o más.</p>
 				{/if}
 			</div>
@@ -138,40 +138,40 @@
 					class:semana={repeticion === 'semanal'}
 					role="group"
 					aria-label={repeticion === 'semanal' ? 'Días de la semana' : 'Días del mes'}
-					aria-describedby={errores.dias ? 'error-dias' : undefined}
+					aria-describedby={errores.days ? 'error-dias' : undefined}
 				>
 					{#if repeticion === 'semanal'}
-						{#each DIAS_DE_LA_SEMANA as dia (dia)}
+						{#each WEEKDAYS as dia (dia)}
 							<button
 								type="button"
 								aria-pressed={diasSemana.includes(dia)}
 								onclick={() => {
 									diasSemana = alternar(diasSemana, dia);
-									limpiar('dias');
+									limpiar('days');
 								}}>{dia}</button
 							>
 						{/each}
 					{:else}
-						{#each DIAS_DEL_MES as dia (dia)}
+						{#each MONTH_DAYS as dia (dia)}
 							<button
 								type="button"
 								aria-pressed={diasMes.includes(dia)}
 								onclick={() => {
 									diasMes = alternar(diasMes, dia);
-									limpiar('dias');
+									limpiar('days');
 								}}>{dia}</button
 							>
 						{/each}
 					{/if}
 				</div>
-				{#if errores.dias}
-					<p id="error-dias" class="error">{ERRORES_DE_DIAS[errores.dias]}</p>
+				{#if errores.days}
+					<p id="error-dias" class="error">{ERRORES_DE_DIAS[errores.days]}</p>
 				{/if}
 			</div>
 		{/if}
 	</fieldset>
 
-	<div class="horario" data-campo="horario" role="group" aria-label="Horario" aria-describedby={errores.horario ? 'error-horario' : undefined}>
+	<div class="horario" data-campo="horario" role="group" aria-label="Horario" aria-describedby={errores.schedule ? 'error-horario' : undefined}>
 		<label class="opcion">
 			<input type="checkbox" bind:checked={conHorario} />
 			Solo en un horario
@@ -184,16 +184,16 @@
 						id={idDeCampo('desde', indice)}
 						type="time"
 						bind:value={ventana.desde}
-						oninput={() => limpiar('horario')}
-						aria-invalid={errores.horario ? 'true' : undefined}
+						oninput={() => limpiar('schedule')}
+						aria-invalid={errores.schedule ? 'true' : undefined}
 					/>
 					<label for={idDeCampo('hasta', indice)}>Hasta</label>
 					<input
 						id={idDeCampo('hasta', indice)}
 						type="time"
 						bind:value={ventana.hasta}
-						oninput={() => limpiar('horario')}
-						aria-invalid={errores.horario ? 'true' : undefined}
+						oninput={() => limpiar('schedule')}
+						aria-invalid={errores.schedule ? 'true' : undefined}
 					/>
 					{#if ventanas.length > 1}
 						<button type="button" class="texto" onclick={() => quitarVentana(indice)}>Quitar</button>
@@ -202,8 +202,8 @@
 			{/each}
 			<button type="button" class="texto" onclick={agregarVentana}>Agregar horario</button>
 		{/if}
-		{#if errores.horario}
-			<p id="error-horario" class="error">{ERRORES_DE_HORARIO[errores.horario]}</p>
+		{#if errores.schedule}
+			<p id="error-horario" class="error">{ERRORES_DE_HORARIO[errores.schedule]}</p>
 		{/if}
 	</div>
 </MarcoDeSeccion>

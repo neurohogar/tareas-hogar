@@ -1,30 +1,30 @@
 <script lang="ts">
-	import { historial, type EntradaDelHistorial } from '#lib/core/history.ts';
-	import { nombreDeTarea } from '#lib/core/task-name.ts';
+	import { history, type HistoryEntry } from '#lib/core/history.ts';
+	import { taskName } from '#lib/core/task-name.ts';
 	import { laSesion } from './sesion';
 
 	const sesion = laSesion();
-	const grupos = $derived(historial(sesion.tareas, sesion.completados, sesion.ahora));
+	const grupos = $derived(history(sesion.tareas, sesion.completados, sesion.ahora));
 
 	/** La entrada cuyo Borrar espera confirmación, con el encabezado de su día al tocarlo. */
-	let porBorrar = $state.raw<{ entrada: EntradaDelHistorial; encabezado: string } | undefined>(undefined);
+	let porBorrar = $state.raw<{ entrada: HistoryEntry; encabezado: string } | undefined>(undefined);
 
-	function borrar(entrada: EntradaDelHistorial) {
+	function borrar(entrada: HistoryEntry) {
 		porBorrar = undefined;
-		sesion.borrarCompletado(entrada.completado);
+		sesion.borrarCompletado(entrada.completion);
 	}
 </script>
 
 <section>
 	<h1>Historial</h1>
-	{#each grupos as { encabezado, entradas } (encabezado)}
+	{#each grupos as { header: encabezado, entries: entradas } (encabezado)}
 		<h2>{encabezado}</h2>
 		<ul class="lista">
-			{#each entradas as entrada (entrada.completado.id)}
+			{#each entradas as entrada (entrada.completion.id)}
 				<li class="entrada">
 					<!-- El botón cubre la entrada fuera de Borrar: tocarla abre la edición de la tarea. -->
-					<button type="button" class="titulo" onclick={() => sesion.abrir(entrada.tarea)}>{nombreDeTarea(entrada.tarea)}</button>
-					<span class="hora">{entrada.textoDeHora}</span>
+					<button type="button" class="titulo" onclick={() => sesion.abrir(entrada.task)}>{taskName(entrada.task)}</button>
+					<span class="hora">{entrada.timeText}</span>
 					<button type="button" class="borrar" onclick={() => (porBorrar = { entrada, encabezado })}>Borrar</button>
 				</li>
 			{/each}
@@ -38,7 +38,7 @@
 	{@const { entrada, encabezado } = porBorrar}
 	<div class="fondo" role="alertdialog" aria-modal="true" aria-labelledby="titulo-borrar-completado">
 		<div class="caja">
-			<p id="titulo-borrar-completado">¿Borrar «{nombreDeTarea(entrada.tarea)}» de {encabezado}, {entrada.textoDeHora}?</p>
+			<p id="titulo-borrar-completado">¿Borrar «{taskName(entrada.task)}» de {encabezado}, {entrada.timeText}?</p>
 			<div class="acciones">
 				<button type="button" onclick={() => (porBorrar = undefined)}>Cancelar</button>
 				<button type="button" class="principal" onclick={() => borrar(entrada)}>Borrar</button>

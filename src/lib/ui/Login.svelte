@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { entrarConGoogle } from '#lib/adapters/auth.ts';
-	import { pantallaDeEntrada } from '#lib/core/connection.ts';
+	import { entryScreen } from '#lib/core/connection.ts';
 	import { enLineaReactivo } from './en-linea.svelte';
 
 	let error = $state('');
 	const enLinea = enLineaReactivo();
-	const entrada = $derived(pantallaDeEntrada(enLinea.valor));
+	const entrada = $derived(entryScreen(enLinea.valor));
 
 	async function entrar() {
 		error = '';
@@ -19,8 +19,8 @@
 
 <section class="login">
 	<h1>Tareas Hogar</h1>
-	<button type="button" onclick={entrar} disabled={!entrada.botonHabilitado}>Entrar con Google</button>
-	{#if entrada.mensaje}<p>{entrada.mensaje}</p>{/if}
+	<button type="button" onclick={entrar} disabled={!entrada.buttonEnabled}>Entrar con Google</button>
+	{#if entrada.message}<p>{entrada.message}</p>{/if}
 	{#if error}<p role="alert">{error}</p>{/if}
 </section>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import type { EtiquetaNueva } from '#lib/core/label.ts';
+	import type { NewLabel } from '#lib/core/label.ts';
 
 	// Un chip es un elemento de lista: su nombre accesible es el de la etiqueta y su descripción, el color
 	// (title: el texto del chip queda solo con el nombre).
@@ -9,7 +9,7 @@
 		children,
 		acciones
 	}: {
-		etiqueta: Pick<EtiquetaNueva, 'nombre' | 'color'>;
+		etiqueta: Pick<NewLabel, 'name' | 'color'>;
 		/** Dentro del chip, después del nombre. */
 		children?: Snippet;
 		/** Al lado del chip. */
@@ -17,9 +17,9 @@
 	} = $props();
 </script>
 
-<li class="elemento" aria-label={etiqueta.nombre} title={etiqueta.color}>
+<li class="elemento" aria-label={etiqueta.name} title={etiqueta.color}>
 	<span class="chip" style:--color-chip={`var(--etiqueta-${etiqueta.color})`}>
-		<span class="nombre">{etiqueta.nombre}</span>
+		<span class="nombre">{etiqueta.name}</span>
 		{@render children?.()}
 	</span>
 	{@render acciones?.()}

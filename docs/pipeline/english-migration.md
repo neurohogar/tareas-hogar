@@ -58,6 +58,16 @@ The project is open source, so everything except the text the person sees in the
 
 Doubtful terms (to decide when touched, with the choice recorded here): `limpiezas` (check what it does before naming it), `fecha límite` versus `plazo`, `vigente` (`active` or `current`).
 
+Decisions taken in layer A (2026-11-16):
+
+- `limpiezas` is `cleanups`: the module (`cleanups.ts`) decides which orphan completions, orphan annotations and broken label references are cleaned and retried, so it is a set of cleanups, not cleaning in general.
+- `fecha límite` is `dueDate` (the optional day of a one-off task); `plazos` is `deadlines` (the instants at which a recurring task with a schedule becomes available, overdue or waiting). They are different concepts, so they keep different words.
+- `vigente` is `active` (`activePostponement`, `activeFilter`).
+- `ventana` is `timeWindow` and `Ventana` is `TimeWindow`, not `window`: `check:arch` forbids the `window` global in the core and matches the bare word. `documento` is `doc` for the same reason (`document`).
+- `tipo` is `kind`, `forma` is `shape`, `modo` is `mode`, `cada` is `every`, `unidad` is `unit`, `diasSemana` is `weekdays`, `diasMes` is `monthDays`. Their stored values (`'periodica'`, `'relativo'`, `'dias'`, `'lunes'`, ...) stay Spanish.
+- Property keys that act as string literals (`'x' in value`, `toHaveProperty('x')`, `Pick<T, 'x'>`, `keyof` positions and the field lists in `editing`) follow the renamed property. They are the only literal differences besides test titles.
+- `describe`/`it` titles and internal error messages are still Spanish after layer A; they are translated with the comments in layer D.
+
 ## Core file names
 
 `accion-del-panel` panel-action, `anotacion(es)` annotation(s), `aviso` notice, `borrado` deletion, `cambios-sin-guardar` unsaved-changes, `campos-de-texto` text-fields, `completados` completions, `conexion` connection, `creacion` creation, `crear-periodica-calendario` create-recurring-calendar, `crear-periodica-relativa` create-recurring-relative, `crear-puntual` create-one-off, `datos-de-tarea` task-data, `dias` days, `documento-de-tarea` task-document, `edicion` editing, `esfuerzo` effort, `estado` status, `etiqueta` label, `fechas-en-texto` dates-in-text, `historial` history, `horario` schedule, `nombre-de-tarea` task-name, `ocurrencias` occurrences, `orden-de-pendientes` pending-order, `paso-actual` current-step, `pasos` steps, `pausa` pause, `pendientes` pending, `posposicion` postponement, `primer-paso` first-step, `tarea` task, `texto-de-fecha` date-text, `texto-libre` free-text, `urgencia` urgency, `version-minima` minimal-version. The `.test.ts` and `.props.test.ts` files follow their source. The full list is produced by the rename script from this glossary.

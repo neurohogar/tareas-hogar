@@ -2,18 +2,18 @@
 // observa y las acciones sobre ellos. Las pantallas le preguntan al core qué
 // mostrar con esos datos.
 import { getContext, setContext } from 'svelte';
-import type { Anotacion, Sentido } from '#lib/core/annotation.ts';
-import type { ErroresDeCreacion } from '#lib/core/creation.ts';
-import type { FormularioDelPanel } from '#lib/core/unsaved-changes.ts';
-import type { Color, Etiqueta } from '#lib/core/label.ts';
-import type { ErrorDeRenombrado } from '#lib/core/label-management.ts';
-import type { Completado, Tarea } from '#lib/core/task.ts';
+import type { Annotation, Sense } from '#lib/core/annotation.ts';
+import type { CreationErrors } from '#lib/core/creation.ts';
+import type { PanelForm } from '#lib/core/unsaved-changes.ts';
+import type { Color, Label } from '#lib/core/label.ts';
+import type { RenameError } from '#lib/core/label-management.ts';
+import type { Completion, Task } from '#lib/core/task.ts';
 
 export interface Sesion {
-	readonly tareas: Tarea[];
-	readonly completados: Completado[];
-	readonly etiquetas: Etiqueta[];
-	readonly anotaciones: Anotacion[];
+	readonly tareas: Task[];
+	readonly completados: Completion[];
+	readonly etiquetas: Label[];
+	readonly anotaciones: Annotation[];
 	/** El recuadro de Anotar (§5.10) está abierto. */
 	readonly anotando: boolean;
 	/** Hay un panel de edición abierto (al crear o al editar). */
@@ -21,13 +21,13 @@ export interface Sesion {
 	abrirAnotar(): void;
 	cerrarAnotar(): void;
 	/** Segundo toque de Anotar: guarda la anotación con el contexto que toma el core. */
-	anotar(sentido: Sentido, texto: string): void;
+	anotar(sentido: Sense, texto: string): void;
 	/** Un panel de edición se abre (con la tarea, al editar); devuelve cómo avisar que se cerró. */
 	panelAbierto(tareaId: string | undefined): () => void;
 	/** Editar texto de una anotación (§6.7). */
-	editarTextoDeAnotacion(anotacion: Anotacion, texto: string): void;
+	editarTextoDeAnotacion(anotacion: Annotation, texto: string): void;
 	/** Borra una anotación, ya confirmado. */
-	borrarAnotacion(anotacion: Anotacion): void;
+	borrarAnotacion(anotacion: Annotation): void;
 	/** La hora actual; se actualiza sola. */
 	readonly ahora: Date;
 	/** El id de la etiqueta elegida en el filtro de Pendientes; sin él, "Todas". */
@@ -37,24 +37,24 @@ export interface Sesion {
 	readonly soloRapidas: boolean;
 	alternarSoloRapidas(): void;
 	/** Tocar el checkbox de la fila (§6.1): completa la tarea (con el aviso) o borra su último completado. */
-	tocarCheckbox(tarea: Tarea): void;
+	tocarCheckbox(tarea: Task): void;
 	/** «Hice la mínima» de la fila (§6.1): completa la tarea como el checkbox, recordando que fue la mínima. */
-	hacerLaMinima(tarea: Tarea): void;
+	hacerLaMinima(tarea: Task): void;
 	/** «Hecho» de la fila (§6.1): pasa al paso siguiente o, en el último, completa la tarea como el checkbox. */
-	tocarHecho(tarea: Tarea): void;
+	tocarHecho(tarea: Task): void;
 	/** «Paso anterior» de la fila (§6.1). */
-	pasoAnterior(tarea: Tarea): void;
+	pasoAnterior(tarea: Task): void;
 	/** Crea una tarea con el formulario del panel; si algo es inválido devuelve los errores. */
-	crear(formulario: FormularioDelPanel): ErroresDeCreacion | undefined;
+	crear(formulario: PanelForm): CreationErrors | undefined;
 	/** Abre el panel Editar tarea. */
-	abrir(tarea: Tarea): void;
+	abrir(tarea: Task): void;
 	/** Borra un completado (deshacer desde el Historial), ya confirmado. */
-	borrarCompletado(completado: Completado): void;
+	borrarCompletado(completado: Completion): void;
 	/** Renombra la etiqueta; si el nombre es inválido o repetido devuelve el error. */
-	renombrarEtiqueta(etiqueta: Etiqueta, escrito: string): ErrorDeRenombrado | undefined;
-	recolorearEtiqueta(etiqueta: Etiqueta, color: Color): void;
+	renombrarEtiqueta(etiqueta: Label, escrito: string): RenameError | undefined;
+	recolorearEtiqueta(etiqueta: Label, color: Color): void;
 	/** Borra la etiqueta (ya confirmado): se quita de todas las tareas. */
-	borrarEtiqueta(etiqueta: Etiqueta): void;
+	borrarEtiqueta(etiqueta: Label): void;
 }
 
 const CLAVE = Symbol('sesion');

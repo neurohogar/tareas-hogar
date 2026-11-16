@@ -1,6 +1,6 @@
 // Spec §6.6: lo que la pantalla de carga necesita del navegador. Se dibuja en src/app.html,
 // antes de que corra el JavaScript. Lo recordado vive solo en el dispositivo (§7).
-import { recuerdoAlArrancar } from '#lib/core/loading-screen.ts';
+import { rememberedOnStart } from '#lib/core/loading-screen.ts';
 import { huellaDeNoto } from './fuentes';
 
 const CLAVE = 'tareas-hogar:tope-de-noto';
@@ -19,7 +19,7 @@ export function quitarPantallaDeCarga(): void {
 export function leerRecuerdoDeTopeDeNoto(): boolean {
 	try {
 		const huella = localStorage.getItem(CLAVE);
-		return recuerdoAlArrancar(huella !== null, huella !== huellaDeNoto());
+		return rememberedOnStart(huella !== null, huella !== huellaDeNoto());
 	} catch {
 		return false;
 	}

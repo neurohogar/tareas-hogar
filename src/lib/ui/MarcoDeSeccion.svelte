@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import type { PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-tabs.ts';
+	import type { PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
 
 	/** El contenedor de una sección del panel: tabpanel en pestañas, bloque con título en secciones seguidas. */
 	let {
@@ -8,7 +8,7 @@
 		presentacion,
 		abierta,
 		children
-	}: { nombre: SeccionDelPanel; presentacion: PresentacionDelPanel; abierta: SeccionDelPanel; children: Snippet } = $props();
+	}: { nombre: PanelSection; presentacion: PanelPresentation; abierta: PanelSection; children: Snippet } = $props();
 
 	const enPestanas = $derived(presentacion === 'pestanas');
 </script>

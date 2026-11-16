@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Etiqueta } from '#lib/core/label.ts';
-	import { elegirEtiquetas, type EtiquetaElegida } from '#lib/core/typed-labels.ts';
-	import { agregarEscrita, quitarElegida, sugerencias } from '#lib/core/label-panel.ts';
+	import type { Label } from '#lib/core/label.ts';
+	import { chooseLabels, type ChosenLabel } from '#lib/core/typed-labels.ts';
+	import { addTyped, removeChosen, suggestions } from '#lib/core/label-panel.ts';
 	import ChipEtiqueta from './ChipEtiqueta.svelte';
 	import { MENSAJES_DE_NOMBRE } from './mensajes-de-etiqueta';
 
@@ -11,23 +11,23 @@
 		existentes,
 		error = $bindable(),
 		escrito = $bindable('')
-	}: { nombres: string[]; existentes: Etiqueta[]; error: string | undefined; escrito?: string } = $props();
+	}: { nombres: string[]; existentes: Label[]; error: string | undefined; escrito?: string } = $props();
 
-	const opciones = $derived(sugerencias(escrito, existentes, nombres));
+	const opciones = $derived(suggestions(escrito, existentes, nombres));
 	const abierta = $derived(escrito.trim() !== '');
 	/** Los chips, con el color que tendrán las nuevas al guardar. */
-	const elegidas = $derived.by((): EtiquetaElegida[] => {
-		const eleccion = elegirEtiquetas(nombres, existentes);
-		return eleccion.ok ? eleccion.elegidas : [];
+	const elegidas = $derived.by((): ChosenLabel[] => {
+		const eleccion = chooseLabels(nombres, existentes);
+		return eleccion.ok ? eleccion.chosenItems : [];
 	});
 
 	function agregar(nombre: string) {
-		const resultado = agregarEscrita(nombre, existentes, nombres);
+		const resultado = addTyped(nombre, existentes, nombres);
 		if (!resultado.ok) {
 			error = MENSAJES_DE_NOMBRE[resultado.error];
 			return;
 		}
-		nombres = resultado.nombres;
+		nombres = resultado.names;
 		escrito = '';
 		error = undefined;
 	}
@@ -43,13 +43,13 @@
 	<label for="campo-etiquetas">Etiquetas</label>
 	{#if elegidas.length > 0}
 		<ul class="chips" aria-label="Etiquetas de la tarea">
-			{#each elegidas as etiqueta (etiqueta.nombre)}
+			{#each elegidas as etiqueta (etiqueta.name)}
 				<ChipEtiqueta {etiqueta}>
 					<button
 						type="button"
 						class="quitar"
-						aria-label={`Quitar «${etiqueta.nombre}»`}
-						onclick={() => (nombres = quitarElegida(etiqueta.nombre, nombres))}>×</button
+						aria-label={`Quitar «${etiqueta.name}»`}
+						onclick={() => (nombres = removeChosen(etiqueta.name, nombres))}>×</button
 					>
 				</ChipEtiqueta>
 			{/each}
@@ -70,12 +70,12 @@
 	/>
 	{#if abierta}
 		<ul id="sugerencias-etiquetas" class="sugerencias" role="listbox" aria-label="Sugerencias de etiquetas">
-			{#each opciones.etiquetas as etiqueta (etiqueta.id)}
+			{#each opciones.labels as etiqueta (etiqueta.id)}
 				<!-- svelte-ignore a11y_click_events_have_key_events: Enter en el campo elige con el teclado -->
-				<li role="option" aria-selected="false" tabindex="-1" onclick={() => agregar(etiqueta.nombre)}>{etiqueta.nombre}</li>
+				<li role="option" aria-selected="false" tabindex="-1" onclick={() => agregar(etiqueta.name)}>{etiqueta.name}</li>
 			{/each}
-			{#if opciones.crear !== undefined}
-				{@const crear = opciones.crear}
+			{#if opciones.create !== undefined}
+				{@const crear = opciones.create}
 				<!-- svelte-ignore a11y_click_events_have_key_events: Enter en el campo elige con el teclado -->
 				<li role="option" aria-selected="false" tabindex="-1" onclick={() => agregar(crear)}>Crear «{crear}»</li>
 			{/if}

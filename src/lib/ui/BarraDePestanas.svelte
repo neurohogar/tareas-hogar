@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SeccionDelPanel } from '#lib/core/panel-tabs.ts';
+	import type { PanelSection } from '#lib/core/panel-tabs.ts';
 	import Icono from './iconos/Icono.svelte';
 
 	const ICONOS_DE_SECCION = { Tarea: 'tarea', Cuándo: 'cuando', Acciones: 'acciones' } as const;
@@ -9,7 +9,7 @@
 		abierta,
 		marcadas,
 		alElegir
-	}: { secciones: readonly SeccionDelPanel[]; abierta: SeccionDelPanel; marcadas: readonly SeccionDelPanel[]; alElegir: (seccion: SeccionDelPanel) => void } = $props();
+	}: { secciones: readonly PanelSection[]; abierta: PanelSection; marcadas: readonly PanelSection[]; alElegir: (seccion: PanelSection) => void } = $props();
 
 	function mover(evento: KeyboardEvent, indice: number) {
 		const paso = evento.key === 'ArrowRight' ? 1 : evento.key === 'ArrowLeft' ? -1 : 0;

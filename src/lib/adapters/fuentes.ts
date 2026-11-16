@@ -3,14 +3,14 @@
 // no con @font-face: así hay un solo pedido por intento, el navegador nunca se queda
 // con una descarga abortada, y un juego que no puede dibujar nunca deja un emoji en blanco.
 import {
-	CACHE_DE_FUENTES,
-	PRIMER_REINTENTO_EN_MS,
-	claveEnLaCache,
-	clavesReemplazadas,
-	rutaDeFuente,
-	siguienteEspera
+	FONT_CACHE,
+	FIRST_RETRY_IN_MS,
+	keyInCache,
+	replacedKeys,
+	fontPath,
+	nextWait
 } from '#lib/core/bundled-fonts.ts';
-import { resumenDeFuentes, type EstadoDeFuente } from '#lib/core/loading-screen.ts';
+import { fontsSummary, type FontStatus } from '#lib/core/loading-screen.ts';
 
 /** Por archivo de fuente, la huella de su contenido (vite.config.ts). */
 declare const __HUELLAS_DE_FUENTES__: Record<string, string>;
@@ -65,7 +65,7 @@ function dibujaNoto(): boolean {
 	return contexto.getImageData(0, 0, lienzo.width, lienzo.height).data.some((valor, i) => i % 4 === 3 && valor > 0);
 }
 
-const claveDe = ({ nombre }: ArchivoDeFuente) => claveEnLaCache(nombre, __HUELLAS_DE_FUENTES__[nombre]);
+const claveDe = ({ nombre }: ArchivoDeFuente) => keyInCache(nombre, __HUELLAS_DE_FUENTES__[nombre]);
 
 async function crearCara(familia: string, { peso }: ArchivoDeFuente, datos: ArrayBuffer): Promise<FontFace> {
 	return new FontFace(familia, datos, { weight: String(peso), style: 'normal' }).load();
@@ -74,7 +74,7 @@ async function crearCara(familia: string, { peso }: ArchivoDeFuente, datos: Arra
 /** La cara guardada en el dispositivo, si hay una que se pueda usar. */
 async function leerGuardada(familia: string, archivo: ArchivoDeFuente): Promise<FontFace | undefined> {
 	try {
-		const guardada = await (await caches.open(CACHE_DE_FUENTES)).match(claveDe(archivo));
+		const guardada = await (await caches.open(FONT_CACHE)).match(claveDe(archivo));
 		return guardada && (await crearCara(familia, archivo, await guardada.arrayBuffer()));
 	} catch {
 		return undefined;
@@ -84,11 +84,11 @@ async function leerGuardada(familia: string, archivo: ArchivoDeFuente): Promise<
 /** Guarda el archivo y borra las versiones que reemplaza. Sin almacenamiento, la fuente dura lo que dure la página. */
 async function guardar(archivo: ArchivoDeFuente, datos: ArrayBuffer): Promise<void> {
 	try {
-		const cache = await caches.open(CACHE_DE_FUENTES);
+		const cache = await caches.open(FONT_CACHE);
 		const clave = claveDe(archivo);
 		await cache.put(clave, new Response(datos));
 		const guardadas = (await cache.keys()).map(({ url }) => url);
-		await Promise.all(clavesReemplazadas(guardadas, archivo.nombre, clave).map((vieja) => cache.delete(vieja)));
+		await Promise.all(replacedKeys(guardadas, archivo.nombre, clave).map((vieja) => cache.delete(vieja)));
 	} catch {
 		// Se vuelve a bajar en la próxima apertura.
 	}
@@ -96,7 +96,7 @@ async function guardar(archivo: ArchivoDeFuente, datos: ArrayBuffer): Promise<vo
 
 /** `no-cache`: el archivo guardado tiene que ser el de esta versión, no uno viejo de la caché HTTP. */
 async function bajar({ nombre }: ArchivoDeFuente): Promise<ArrayBuffer> {
-	const respuesta = await fetch(rutaDeFuente(nombre), { cache: 'no-cache' });
+	const respuesta = await fetch(fontPath(nombre), { cache: 'no-cache' });
 	if (!respuesta.ok) throw new Error(`Sin ${nombre}: ${respuesta.status}`);
 	return respuesta.arrayBuffer();
 }
@@ -118,11 +118,11 @@ function proximoIntento(esperaEnMs: number): Promise<void> {
  * Lo guardado o, si no, lo que se baje: reintenta hasta conseguirlo. Un archivo que no es
  * una fuente válida (la respuesta de otra ruta, por ejemplo) cuenta como falla y no se guarda.
  */
-async function obtenerCara(familia: string, archivo: ArchivoDeFuente, avisar: (estado: EstadoDeFuente) => void): Promise<FontFace> {
+async function obtenerCara(familia: string, archivo: ArchivoDeFuente, avisar: (estado: FontStatus) => void): Promise<FontFace> {
 	const guardada = await leerGuardada(familia, archivo);
 	if (guardada) return guardada;
 	avisar('sin-guardar');
-	for (let espera = PRIMER_REINTENTO_EN_MS; ; espera = siguienteEspera(espera)) {
+	for (let espera = FIRST_RETRY_IN_MS; ; espera = nextWait(espera)) {
 		try {
 			const datos = await bajar(archivo);
 			const cara = await crearCara(familia, archivo, datos);
@@ -140,13 +140,13 @@ async function obtenerCara(familia: string, archivo: ArchivoDeFuente, avisar: (e
  * Registra el juego entero de una vez: con un peso solo, el navegador lo usaría también
  * para los otros pesos, y el diseño cambiaría (spec §6). Avisa `lista` recién al poder dibujar.
  */
-async function cargarJuego({ familia, archivos, sePuedeDibujar }: Juego, avisar: (estado: EstadoDeFuente) => void): Promise<void> {
-	const estados = archivos.map((): EstadoDeFuente => 'guardada');
+async function cargarJuego({ familia, archivos, sePuedeDibujar }: Juego, avisar: (estado: FontStatus) => void): Promise<void> {
+	const estados = archivos.map((): FontStatus => 'guardada');
 	const caras = await Promise.all(
 		archivos.map((archivo, i) =>
 			obtenerCara(familia, archivo, (estado) => {
 				estados[i] = estado;
-				avisar(resumenDeFuentes(estados));
+				avisar(fontsSummary(estados));
 			})
 		)
 	);
@@ -159,8 +159,8 @@ async function cargarJuego({ familia, archivos, sePuedeDibujar }: Juego, avisar:
 }
 
 export interface EstadoDeLasFuentes {
-	atkinson: EstadoDeFuente;
-	noto: EstadoDeFuente;
+	atkinson: FontStatus;
+	noto: FontStatus;
 }
 
 /**

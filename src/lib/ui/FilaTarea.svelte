@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { porcentajeDeProgreso, type Estado } from '#lib/core/status.ts';
-	import type { Etiqueta } from '#lib/core/label.ts';
-	import { textoDeEsfuerzo } from '#lib/core/effort.ts';
-	import { textoDelHorario } from '#lib/core/schedule.ts';
-	import { nombreDeTarea } from '#lib/core/task-name.ts';
-	import type { BotonesDePaso } from '#lib/core/current-step.ts';
-	import type { LineaDeMinima } from '#lib/core/minimal-version.ts';
-	import type { Tarea } from '#lib/core/task.ts';
+	import { progressPercentage, type Status } from '#lib/core/status.ts';
+	import type { Label } from '#lib/core/label.ts';
+	import { effortText } from '#lib/core/effort.ts';
+	import { scheduleText } from '#lib/core/schedule.ts';
+	import { taskName } from '#lib/core/task-name.ts';
+	import type { StepButtons } from '#lib/core/current-step.ts';
+	import type { MinimalLine } from '#lib/core/minimal-version.ts';
+	import type { Task } from '#lib/core/task.ts';
 	import ChipEtiqueta from './ChipEtiqueta.svelte';
 
 	let {
@@ -25,8 +25,8 @@
 		alPasoAnterior,
 		alAbrir
 	}: {
-		tarea: Tarea;
-		estado: Estado;
+		tarea: Task;
+		estado: Status;
 		/** Spec §6.1 (Contraste): tachada, en peso normal y atenuada, con el checkbox marcado. */
 		completada: boolean;
 		/** «Tocaba …» o «Vuelve …» (§6.1), ya armado por el core; sin él, la fila no lleva texto de fecha. */
@@ -34,13 +34,13 @@
 		/** «Primer paso: …» (§6.1), ya armado por el core; sin él, la fila no lleva esa línea. */
 		textoDePrimerPaso?: string;
 		/** «Paso anterior» y «Hecho» (§6.1), según el core; sin ellos, la línea no lleva botones. */
-		botonesDePaso?: BotonesDePaso;
+		botonesDePaso?: StepButtons;
 		/** «Mínima: …» y si «Hice la mínima» está habilitado (§6.1), según el core; sin ella, la fila no lleva esa línea. */
-		minima?: LineaDeMinima;
+		minima?: MinimalLine;
 		/** Spec §6.1 y §5.5: deshabilitado si tocarlo completaría fuera de la ventana del horario. */
 		habilitado: boolean;
 		/** Las etiquetas de la tarea, ya en orden (§4.3). */
-		etiquetas: Etiqueta[];
+		etiquetas: Label[];
 		alTocarCheckbox: () => void;
 		alMinima: () => void;
 		alHecho: () => void;
@@ -48,8 +48,8 @@
 		alAbrir: () => void;
 	} = $props();
 
-	const nombre = $derived(nombreDeTarea(tarea));
-	const nivel = $derived(textoDeEsfuerzo(tarea.esfuerzo));
+	const nombre = $derived(taskName(tarea));
+	const nivel = $derived(effortText(tarea.effort));
 
 	function tocar(evento: Event) {
 		// Marcado se deriva de los completados: el checkbox vuelve a su valor hasta que llegan.
@@ -58,7 +58,7 @@
 	}
 </script>
 
-<li class="fila" class:en-espera={estado.tipo === 'en espera'} class:pausada={estado.tipo === 'pausada'} class:completada>
+<li class="fila" class:en-espera={estado.kind === 'en espera'} class:pausada={estado.kind === 'pausada'} class:completada>
 	<label class="area-checkbox">
 		<input type="checkbox" checked={completada} disabled={!habilitado} aria-label={`Completar ${nombre}`} onchange={tocar} />
 	</label>
@@ -69,17 +69,17 @@
 			<div class="linea-paso">
 				<p class="primer-paso">{textoDePrimerPaso}</p>
 				{#if botonesDePaso}
-					{#if botonesDePaso.pasoAnterior}
+					{#if botonesDePaso.previousStep}
 						<button type="button" class="boton-paso" onclick={alPasoAnterior}>Paso anterior</button>
 					{/if}
-					<button type="button" class="boton-paso" disabled={!botonesDePaso.hechoHabilitado} onclick={alHecho}>Hecho</button>
+					<button type="button" class="boton-paso" disabled={!botonesDePaso.doneEnabled} onclick={alHecho}>Hecho</button>
 				{/if}
 			</div>
 		{/if}
 		{#if minima}
 			<div class="linea-paso">
-				<p class="primer-paso">{minima.texto}</p>
-				<button type="button" class="boton-paso" disabled={!minima.habilitado} onclick={alMinima}>Hice la mínima</button>
+				<p class="primer-paso">{minima.text}</p>
+				<button type="button" class="boton-paso" disabled={!minima.enabled} onclick={alMinima}>Hice la mínima</button>
 			</div>
 		{/if}
 		{#if etiquetas.length > 0}
@@ -93,17 +93,17 @@
 		{#if nivel}
 			<span class="esfuerzo">{nivel}</span>
 		{/if}
-		{#if tarea.horario}
-			<span class="horario">{textoDelHorario(tarea.horario)}</span>
+		{#if tarea.schedule}
+			<span class="horario">{scheduleText(tarea.schedule)}</span>
 		{/if}
-		{#if estado.tipo === 'pausada'}
+		{#if estado.kind === 'pausada'}
 			<span class="estado-pausada">Pausada</span>
 		{/if}
 		{#if textoDeFecha}
 			<span class="texto-de-fecha">{textoDeFecha}</span>
 		{/if}
-		{#if estado.tipo === 'en espera'}
-			{@const porcentaje = porcentajeDeProgreso(estado.progreso)}
+		{#if estado.kind === 'en espera'}
+			{@const porcentaje = progressPercentage(estado.progress)}
 			<div
 				class="barra"
 				role="progressbar"

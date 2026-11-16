@@ -9,7 +9,7 @@
 import { version } from '$app/env';
 import { immutable, assets } from '$app/manifest';
 import { asset } from '$app/paths';
-import { CACHE_DE_FUENTES, esArchivoDeFuente } from '#lib/core/bundled-fonts.ts';
+import { FONT_CACHE, isFontFile } from '#lib/core/bundled-fonts.ts';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 const CACHE = `tareas-hogar-${version}`;
@@ -22,7 +22,7 @@ const files = assets.map(({ path }) => asset(path));
 
 sw.addEventListener('install', (evento) => {
 	evento.waitUntil(
-		caches.open(CACHE).then((cache) => cache.addAll([APP, ...build, ...files.filter((archivo) => !esArchivoDeFuente(archivo))]))
+		caches.open(CACHE).then((cache) => cache.addAll([APP, ...build, ...files.filter((archivo) => !isFontFile(archivo))]))
 	);
 });
 
@@ -30,7 +30,7 @@ sw.addEventListener('activate', (evento) => {
 	evento.waitUntil(
 		caches
 			.keys()
-			.then((claves) => Promise.all(claves.filter((clave) => clave !== CACHE && clave !== CACHE_DE_FUENTES).map((clave) => caches.delete(clave))))
+			.then((claves) => Promise.all(claves.filter((clave) => clave !== CACHE && clave !== FONT_CACHE).map((clave) => caches.delete(clave))))
 	);
 });
 
@@ -39,7 +39,7 @@ sw.addEventListener('fetch', (evento) => {
 	const url = new URL(request.url);
 	// HEAD también: el selector de emoji consulta el ETag de su catálogo, que está en la caché.
 	if (!['GET', 'HEAD'].includes(request.method) || url.origin !== sw.location.origin) return;
-	if (esArchivoDeFuente(url.pathname)) return;
+	if (isFontFile(url.pathname)) return;
 	evento.respondWith(responder(request, url));
 });
 

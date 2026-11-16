@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { ErroresDeCreacion } from '#lib/core/creation.ts';
-	import type { DatosDeTarea } from '#lib/core/task-data.ts';
-	import { OPCIONES_DE_ESFUERZO } from '#lib/core/effort.ts';
-	import type { PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-tabs.ts';
-	import type { Esfuerzo } from '#lib/core/task.ts';
+	import type { CreationErrors } from '#lib/core/creation.ts';
+	import type { TaskData } from '#lib/core/task-data.ts';
+	import { EFFORT_OPTIONS } from '#lib/core/effort.ts';
+	import type { PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
+	import type { Effort } from '#lib/core/task.ts';
 	import { tick } from 'svelte';
 	import CampoEtiquetas from './CampoEtiquetas.svelte';
 	import Icono from './iconos/Icono.svelte';
@@ -27,18 +27,18 @@
 		sinConfirmar = $bindable(),
 		alAbrirSelector
 	}: {
-		presentacion: PresentacionDelPanel;
-		abierta: SeccionDelPanel;
+		presentacion: PanelPresentation;
+		abierta: PanelSection;
 		/** Los valores con que abrió el panel; sin ellos, arranca vacío. */
-		valores?: DatosDeTarea;
+		valores?: TaskData;
 		pausa?: 'pausar' | 'reanudar';
 		textoPospuesta?: string;
 		ultimaVez?: string;
-		errores: ErroresDeCreacion;
+		errores: CreationErrors;
 		/** El error de un campo dura lo que dura su mensaje: al corregirlo se va. */
-		limpiar: (campo: keyof ErroresDeCreacion) => void;
+		limpiar: (campo: keyof CreationErrors) => void;
 		emoji: string;
-		esfuerzo: Esfuerzo | '';
+		esfuerzo: Effort | '';
 		/** Los pasos más (2, 3…), uno por campo (§6.2). */
 		pasos: string[];
 		etiquetas: string[];
@@ -75,10 +75,10 @@
 				id="campo-titulo"
 				name="titulo"
 				autocomplete="off"
-				value={valores?.titulo ?? ''}
-				oninput={() => limpiar('titulo')}
-				aria-invalid={errores.titulo ? 'true' : undefined}
-				aria-describedby={errores.titulo ? 'error-titulo' : undefined}
+				value={valores?.title ?? ''}
+				oninput={() => limpiar('title')}
+				aria-invalid={errores.title ? 'true' : undefined}
+				aria-describedby={errores.title ? 'error-titulo' : undefined}
 			/>
 			{#if emoji}
 				<button type="button" class="emoji-boton elegido" aria-label="Cambiar emoji {emoji}" onclick={alAbrirSelector}>{emoji}</button>
@@ -86,7 +86,7 @@
 				<button type="button" class="emoji-boton" aria-label="Elegir emoji" onclick={alAbrirSelector}><Icono nombre="emoji" /></button>
 			{/if}
 		</div>
-		{#if errores.titulo}
+		{#if errores.title}
 			<p id="error-titulo" class="error">Escribí un título.</p>
 		{/if}
 		{#if emoji}
@@ -96,7 +96,7 @@
 
 	<div class="campo-formulario">
 		<label for="campo-primer-paso">Primer paso</label>
-		<input id="campo-primer-paso" name="primerPaso" autocomplete="off" value={valores?.primerPaso ?? ''} />
+		<input id="campo-primer-paso" name="primerPaso" autocomplete="off" value={valores?.firstStep ?? ''} />
 	</div>
 
 	{#each pasos as _paso, indice (indice)}
@@ -112,19 +112,19 @@
 
 	<div class="campo-formulario">
 		<label for="campo-version-minima">Versión mínima</label>
-		<input id="campo-version-minima" name="versionMinima" autocomplete="off" value={valores?.versionMinima ?? ''} />
+		<input id="campo-version-minima" name="versionMinima" autocomplete="off" value={valores?.minimalVersion ?? ''} />
 	</div>
 
 	<div class="campo-formulario">
 		<label for="campo-nota">Nota</label>
-		<textarea id="campo-nota" name="nota" rows="2" value={valores?.nota ?? ''}></textarea>
+		<textarea id="campo-nota" name="nota" rows="2" value={valores?.note ?? ''}></textarea>
 	</div>
 
 	<div class="campo-formulario">
 		<label for="campo-esfuerzo">Esfuerzo</label>
 		<select id="campo-esfuerzo" bind:value={esfuerzo}>
-			{#each OPCIONES_DE_ESFUERZO as opcion (opcion.texto)}
-				<option value={opcion.valor ?? ''}>{opcion.texto}</option>
+			{#each EFFORT_OPTIONS as opcion (opcion.text)}
+				<option value={opcion.value ?? ''}>{opcion.text}</option>
 			{/each}
 		</select>
 	</div>

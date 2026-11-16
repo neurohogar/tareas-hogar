@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { PALETA, type Color, type Etiqueta } from '#lib/core/label.ts';
-	import { ordenarEtiquetas } from '#lib/core/label-order.ts';
+	import { PALETTE, type Color, type Label } from '#lib/core/label.ts';
+	import { sortLabels } from '#lib/core/label-order.ts';
 	import ChipEtiqueta from './ChipEtiqueta.svelte';
 	import { MENSAJES_DE_NOMBRE } from './mensajes-de-etiqueta';
 	import { laSesion } from './sesion';
 
 	// Spec §6.4: renombrar, cambiar el color y borrar. No se crean etiquetas desde acá.
 	const sesion = laSesion();
-	const etiquetas = $derived(ordenarEtiquetas(sesion.etiquetas));
+	const etiquetas = $derived(sortLabels(sesion.etiquetas));
 
 
 	type Dialogo =
-		| { tipo: 'renombrar'; etiqueta: Etiqueta; nombre: string; error?: string }
-		| { tipo: 'color'; etiqueta: Etiqueta; color: Color }
-		| { tipo: 'borrar'; etiqueta: Etiqueta };
+		| { tipo: 'renombrar'; etiqueta: Label; nombre: string; error?: string }
+		| { tipo: 'color'; etiqueta: Label; color: Color }
+		| { tipo: 'borrar'; etiqueta: Label };
 
 	let dialogo = $state<Dialogo | undefined>(undefined);
 
@@ -32,7 +32,7 @@
 		dialogo = undefined;
 	}
 
-	function borrar(etiqueta: Etiqueta) {
+	function borrar(etiqueta: Label) {
 		dialogo = undefined;
 		sesion.borrarEtiqueta(etiqueta);
 	}
@@ -48,7 +48,7 @@
 				<ChipEtiqueta {etiqueta}>
 					{#snippet acciones()}
 						<span class="acciones">
-							<button type="button" onclick={() => (dialogo = { tipo: 'renombrar', etiqueta, nombre: etiqueta.nombre })}>Renombrar</button>
+							<button type="button" onclick={() => (dialogo = { tipo: 'renombrar', etiqueta, nombre: etiqueta.name })}>Renombrar</button>
 							<button type="button" onclick={() => (dialogo = { tipo: 'color', etiqueta, color: etiqueta.color })}>Cambiar color</button>
 							<button type="button" class="peligro" onclick={() => (dialogo = { tipo: 'borrar', etiqueta })}>Borrar</button>
 						</span>
@@ -83,9 +83,9 @@
 {:else if dialogo?.tipo === 'color'}
 	<div class="fondo" role="dialog" aria-modal="true" aria-labelledby="titulo-color">
 		<form class="caja" onsubmit={guardarColor}>
-			<h2 id="titulo-color">Color de «{dialogo.etiqueta.nombre}»</h2>
+			<h2 id="titulo-color">Color de «{dialogo.etiqueta.name}»</h2>
 			<div class="colores" role="radiogroup" aria-label="Color">
-				{#each PALETA as color (color)}
+				{#each PALETTE as color (color)}
 					<label class="color" style:--color-chip={`var(--etiqueta-${color})`}>
 						<input type="radio" name="color" value={color} bind:group={dialogo.color} />
 						{color}
@@ -102,7 +102,7 @@
 	{@const etiqueta = dialogo.etiqueta}
 	<div class="fondo" role="alertdialog" aria-modal="true" aria-labelledby="titulo-borrar" aria-describedby="aclaracion-borrar">
 		<div class="caja">
-			<p id="titulo-borrar">¿Borrar la etiqueta «{etiqueta.nombre}»?</p>
+			<p id="titulo-borrar">¿Borrar la etiqueta «{etiqueta.name}»?</p>
 			<p id="aclaracion-borrar" class="aclaracion">Las tareas no se borran.</p>
 			<div class="botones">
 				<button type="button" onclick={() => (dialogo = undefined)}>Cancelar</button>

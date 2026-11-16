@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import '#lib/ui/estilos.css';
 	import { observarUsuario, type Usuario } from '#lib/adapters/auth.ts';
-	import type { RespuestaDeAuth } from '#lib/core/loading-screen.ts';
+	import type { AuthResponse } from '#lib/core/loading-screen.ts';
 	import Login from '#lib/ui/Login.svelte';
 	import PantallaDeCarga, { type DatosRespondieron } from '#lib/ui/PantallaDeCarga.svelte';
 	import Sesion from '#lib/ui/Sesion.svelte';
@@ -11,7 +11,7 @@
 
 	/** undefined mientras Auth todavía no respondió. */
 	let usuario = $state<Usuario | null | undefined>(undefined);
-	const auth = $derived<RespuestaDeAuth>(usuario === undefined ? 'esperando' : usuario ? 'con-sesion' : 'sin-sesion');
+	const auth = $derived<AuthResponse>(usuario === undefined ? 'esperando' : usuario ? 'con-sesion' : 'sin-sesion');
 	let datos = $state.raw<DatosRespondieron>({ tareas: false, completados: false, etiquetas: false });
 	/** Spec §6.6: una sola vez por arranque; entrar con Google no la vuelve a mostrar. */
 	let cargando = $state(true);

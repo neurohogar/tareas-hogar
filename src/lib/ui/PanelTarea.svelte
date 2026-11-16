@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import type { ErroresDeCreacion } from '#lib/core/creation.ts';
-	import { DATOS_AL_CREAR, type DatosDeTarea } from '#lib/core/task-data.ts';
-	import { avisoDeAccion, descartarYActuar, guardarYActuar, type AccionEnAviso } from '#lib/core/action-notice.ts';
-	import { cambioDeAccion, queHaceLaAccion, type AccionDelPanel } from '#lib/core/panel-action.ts';
-	import { queHaceAtras, type LoDeArriba } from '#lib/core/panel-back.ts';
-	import { hayCambios, type FormularioDelPanel, type ValoresDelPanel } from '#lib/core/unsaved-changes.ts';
-	import { alCerrarElPanel, AVISO_DE_CIERRE, type BotonDelAviso } from '#lib/core/unsaved-changes-notice.ts';
-	import type { CambioDeTarea } from '#lib/core/task-document.ts';
-	import type { Etiqueta } from '#lib/core/label.ts';
-	import { nombreDeTarea } from '#lib/core/task-name.ts';
-	import type { DiaSemana, Esfuerzo, Tarea, Unidad } from '#lib/core/task.ts';
+	import type { CreationErrors } from '#lib/core/creation.ts';
+	import { DATA_ON_CREATE, type TaskData } from '#lib/core/task-data.ts';
+	import { actionNotice, discardAndAct, saveAndAct, type NoticeAction } from '#lib/core/action-notice.ts';
+	import { changeOfAction, whatTheActionDoes, type PanelAction } from '#lib/core/panel-action.ts';
+	import { whatBackDoes, type OnTop } from '#lib/core/panel-back.ts';
+	import { hasChanges, type PanelForm, type PanelValues } from '#lib/core/unsaved-changes.ts';
+	import { onClosePanel, CLOSE_NOTICE, type NoticeButton } from '#lib/core/unsaved-changes-notice.ts';
+	import type { TaskChange } from '#lib/core/task-document.ts';
+	import type { Label } from '#lib/core/label.ts';
+	import { taskName } from '#lib/core/task-name.ts';
+	import type { Weekday, Effort, Task, Unit } from '#lib/core/task.ts';
 	import { tomarAtras } from '#lib/adapters/atras.ts';
 	import { confirmarAlSalir } from '#lib/adapters/confirmacion-al-salir.ts';
 	import { nuevoId } from '#lib/adapters/ids.ts';
@@ -27,17 +27,17 @@
 	import { laSesion } from './sesion';
 	import { observarTeclado, type EstadoDelTeclado } from '#lib/adapters/teclado.ts';
 	import {
-		barraDeGuardarVisible,
-		camposConError,
-		destinoAlFallarGuardar,
-		PESTANA_AL_ABRIR,
-		presentacionDelPanel,
-		repeticionAlAbrir,
-		seccionesDelPanel,
-		seccionesMarcadas,
-		type DestinoDelError,
-		type OpcionDeRepeticion,
-		type SeccionDelPanel
+		saveBarVisible,
+		fieldsWithError,
+		destinationOnSaveFailure,
+		TAB_ON_OPEN,
+		panelPresentation,
+		repetitionOnOpen,
+		panelSections,
+		markedSections,
+		type ErrorDestination,
+		type RepetitionOption,
+		type PanelSection
 	} from '#lib/core/panel-tabs.ts';
 
 	let {
@@ -56,20 +56,20 @@
 	}: {
 		encabezado: string;
 		/** Los valores actuales de la tarea que se edita; sin ellos, el panel arranca vacío (crear). */
-		inicial?: DatosDeTarea;
+		inicial?: TaskData;
 		/** Solo al editar: la tarea como estaba al abrir el panel. */
-		tarea?: Tarea;
+		tarea?: Task;
 		/** Los nombres de las etiquetas que tiene la tarea que se edita. */
 		etiquetasIniciales?: string[];
 		/** Solo al editar: el texto de "Última vez" que calcula el core (§6.2). */
 		ultimaVez?: string;
 		/** Guarda el formulario; si algo es inválido devuelve los errores y el panel sigue abierto. */
-		alGuardar: (formulario: FormularioDelPanel) => ErroresDeCreacion | undefined;
+		alGuardar: (formulario: PanelForm) => CreationErrors | undefined;
 		alCerrar: () => void;
 		/** Solo al editar: borra la tarea, ya confirmado. */
 		alBorrar?: () => void;
 		/** Solo al editar: ejecuta una acción (con lo guardado, si pasó por el aviso) y cierra el panel. */
-		alActuar?: (cambio: CambioDeTarea, nuevas: Etiqueta[]) => void;
+		alActuar?: (cambio: TaskChange, nuevas: Label[]) => void;
 		/** Solo al editar una periódica (§6.2): el botón que ofrece el core. */
 		pausa?: 'pausar' | 'reanudar';
 		/** Solo al editar (§6.2): el botón que ofrece el core. */
@@ -82,28 +82,28 @@
 	// Cada control arranca con el valor de la tarea solo si es de su forma: los de las otras opciones
 	// de "Se repite" empiezan como al crear.
 	const valores = untrack(() => inicial);
-	const nombre = valores && nombreDeTarea(valores);
-	const fechaLimiteInicial = valores?.forma === 'puntual' ? (valores.fechaLimite ?? '') : '';
-	const cadaInicial = valores?.forma === 'relativa' ? String(valores.cada) : '';
-	const unidadInicial: Unidad = valores?.forma === 'relativa' ? valores.unidad : 'horas';
+	const nombre = valores && taskName(valores);
+	const fechaLimiteInicial = valores?.shape === 'puntual' ? (valores.dueDate ?? '') : '';
+	const cadaInicial = valores?.shape === 'relativa' ? String(valores.every) : '';
+	const unidadInicial: Unit = valores?.shape === 'relativa' ? valores.unit : 'horas';
 
-	let repeticion = $state<OpcionDeRepeticion>(repeticionAlAbrir(valores));
-	let diasSemana = $state<DiaSemana[]>(valores?.forma === 'calendario' ? [...valores.diasSemana] : []);
-	let diasMes = $state<number[]>(valores?.forma === 'calendario' ? [...valores.diasMes] : []);
+	let repeticion = $state<RepetitionOption>(repetitionOnOpen(valores));
+	let diasSemana = $state<Weekday[]>(valores?.shape === 'calendario' ? [...valores.weekdays] : []);
+	let diasMes = $state<number[]>(valores?.shape === 'calendario' ? [...valores.monthDays] : []);
 	let etiquetas = $state<string[]>(untrack(() => [...etiquetasIniciales]));
 	let errorDeEtiquetas = $state<string | undefined>(undefined);
 	/** El texto de Etiquetas que todavía no se confirmó. */
 	let sinConfirmar = $state('');
-	let errores = $state<ErroresDeCreacion>({});
+	let errores = $state<CreationErrors>({});
 	let confirmandoBorrado = $state(false);
 	let emoji = $state(untrack(() => inicial?.emoji ?? ''));
-	let esfuerzo = $state<Esfuerzo | ''>(untrack(() => inicial?.esfuerzo ?? ''));
+	let esfuerzo = $state<Effort | ''>(untrack(() => inicial?.effort ?? ''));
 	/** "Solo en un horario": apagado, la tarea no tiene horario (§6.2). */
-	let conHorario = $state(valores?.horario !== undefined);
+	let conHorario = $state(valores?.schedule !== undefined);
 	/** Los pasos más (2, 3…), uno por campo; Agregar paso suma uno vacío (§6.2). */
-	let pasos = $state<string[]>(untrack(() => [...(inicial?.pasos ?? [])]));
+	let pasos = $state<string[]>(untrack(() => [...(inicial?.steps ?? [])]));
 	/** Las filas Desde/Hasta: al menos una; Agregar horario suma una vacía (§6.2). */
-	let ventanas = $state<Ventana[]>(valores?.horario?.map(({ desde = '', hasta = '' }) => ({ desde, hasta })) ?? [{ desde: '', hasta: '' }]);
+	let ventanas = $state<Ventana[]>(valores?.schedule?.map(({ from: desde = '', to: hasta = '' }) => ({ desde, hasta })) ?? [{ desde: '', hasta: '' }]);
 
 	/** Los recientes del selector mientras está abierto; sin selector abierto, undefined. */
 	let recientes = $state<string[] | undefined>(undefined);
@@ -127,38 +127,38 @@
 	}
 
 	/** Solo cuentan los campos de la opción elegida en "Se repite". */
-	function datosDelFormulario(formulario: HTMLFormElement): DatosDeTarea {
+	function datosDelFormulario(formulario: HTMLFormElement): TaskData {
 		const campos = new FormData(formulario);
 		// La nota se lee del control, no de FormData, que cambia los saltos de línea por CRLF.
 		const nota = (formulario.elements.namedItem('nota') as HTMLTextAreaElement).value;
 		const primerPaso = String(campos.get('primerPaso') ?? '');
 		const versionMinima = String(campos.get('versionMinima') ?? '');
-		const horario = conHorario ? ventanas.map((ventana) => ({ ...ventana })) : undefined;
-		const comunes = { titulo: String(campos.get('titulo') ?? ''), emoji, nota, primerPaso, versionMinima, pasos: [...pasos], horario, ...(esfuerzo && { esfuerzo }) };
+		const horario = conHorario ? ventanas.map(({ desde, hasta }) => ({ from: desde, to: hasta })) : undefined;
+		const comunes = { title: String(campos.get('titulo') ?? ''), emoji, note: nota, firstStep: primerPaso, minimalVersion: versionMinima, steps: [...pasos], schedule: horario, ...(esfuerzo && { effort: esfuerzo }) };
 		if (repeticion === 'puntual') {
 			const campoFecha = formulario.elements.namedItem('fechaLimite') as HTMLInputElement;
-			return { forma: 'puntual', ...comunes, fechaLimite: fechaLimiteDe(campoFecha) };
+			return { shape: 'puntual', ...comunes, dueDate: fechaLimiteDe(campoFecha) };
 		}
 		if (repeticion === 'relativo') {
 			const cada = Number(campos.get('cada') || Number.NaN);
-			return { forma: 'relativa', ...comunes, cada, unidad: campos.get('unidad') as Unidad };
+			return { shape: 'relativa', ...comunes, every: cada, unit: campos.get('unidad') as Unit };
 		}
-		const dias = repeticion === 'semanal' ? { diasSemana, diasMes: [] } : { diasSemana: [], diasMes };
-		return { forma: 'calendario', ...comunes, ...dias };
+		const dias = repeticion === 'semanal' ? { weekdays: diasSemana, monthDays: [] } : { weekdays: [], monthDays: diasMes };
+		return { shape: 'calendario', ...comunes, ...dias };
 	}
 
 	let anchoDeVentana = $state(window.innerWidth);
 	const remEnPx = () => Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-	const presentacion = $derived(presentacionDelPanel(anchoDeVentana / remEnPx()));
-	const secciones = $derived(seccionesDelPanel(alBorrar ? 'editar' : 'crear'));
-	let abierta = $state<SeccionDelPanel>(PESTANA_AL_ABRIR);
+	const presentacion = $derived(panelPresentation(anchoDeVentana / remEnPx()));
+	const secciones = $derived(panelSections(alBorrar ? 'editar' : 'crear'));
+	let abierta = $state<PanelSection>(TAB_ON_OPEN);
 	let contenido: HTMLDivElement;
 
-	const conError = $derived(camposConError(errores, repeticion, errorDeEtiquetas !== undefined));
-	const marcadas = $derived(seccionesMarcadas(conError));
+	const conError = $derived(fieldsWithError(errores, repeticion, errorDeEtiquetas !== undefined));
+	const marcadas = $derived(markedSections(conError));
 
 	let teclado = $state<EstadoDelTeclado>({ abierto: false, solape: 0 });
-	const barraVisible = $derived(barraDeGuardarVisible(teclado.abierto));
+	const barraVisible = $derived(saveBarVisible(teclado.abierto));
 	onMount(() => observarTeclado((estado) => (teclado = estado)));
 
 	// El aviso de deshacer se ve sobre la barra de Guardar o, sin barra, sobre el teclado.
@@ -168,20 +168,20 @@
 		return () => raiz.removeProperty('--base-aviso');
 	});
 
-	async function elegirPestana(seccion: SeccionDelPanel) {
+	async function elegirPestana(seccion: PanelSection) {
 		abierta = seccion;
 		await tick();
 		contenido.scrollTop = 0;
 	}
 
-	async function irAlCampo({ pestana, campo }: DestinoDelError) {
+	async function irAlCampo({ tab: pestana, field: campo }: ErrorDestination) {
 		if (pestana) abierta = pestana;
 		await tick();
 		contenido.querySelector(`[data-campo="${campo}"]`)?.scrollIntoView({ block: 'center' });
 	}
 
 	/** El error de un campo dura lo que dura su mensaje: al corregirlo se va. */
-	function limpiar(campo: keyof ErroresDeCreacion) {
+	function limpiar(campo: keyof CreationErrors) {
 		const { [campo]: _quitado, ...resto } = errores;
 		errores = resto;
 	}
@@ -189,39 +189,39 @@
 	const sesion = laSesion();
 	let formulario: HTMLFormElement;
 	/** Los valores con que se abrió el panel; al crear, el formulario como se abre (§6.2). */
-	const alAbrir: ValoresDelPanel = { datos: valores ?? DATOS_AL_CREAR, etiquetas: untrack(() => [...etiquetasIniciales]) };
+	const alAbrir: PanelValues = { data: valores ?? DATA_ON_CREATE, labels: untrack(() => [...etiquetasIniciales]) };
 	let avisoDeCierre = $state(false);
 	/** La acción cuyo aviso está abierto, con lo escrito al elegirla. */
-	let accionAbierta = $state.raw<{ accion: AccionDelPanel; formulario: FormularioDelPanel } | undefined>(undefined);
+	let accionAbierta = $state.raw<{ accion: PanelAction; formulario: PanelForm } | undefined>(undefined);
 
-	function formularioActual(): FormularioDelPanel {
-		return { datos: datosDelFormulario(formulario), etiquetas: [...etiquetas], sinConfirmar };
+	function formularioActual(): PanelForm {
+		return { data: datosDelFormulario(formulario), labels: [...etiquetas], unconfirmed: sinConfirmar };
 	}
-	const hayCambiosAhora = () => hayCambios(alAbrir, formularioActual());
+	const hayCambiosAhora = () => hasChanges(alAbrir, formularioActual());
 
 	/** Lo que el core necesita para evaluar el aviso de una acción con la tarea y el ahora de este momento. */
-	function enAviso({ accion, formulario }: NonNullable<typeof accionAbierta>, ahora: Date): AccionEnAviso {
+	function enAviso({ accion, formulario }: NonNullable<typeof accionAbierta>, ahora: Date): NoticeAction {
 		const alAbrirElPanel = untrack(() => tarea!);
 		return {
-			accion,
-			tareaAlAbrir: alAbrirElPanel,
-			tarea: sesion.tareas.find(({ id }) => id === alAbrirElPanel.id) ?? alAbrirElPanel,
-			completados: sesion.completados,
-			ahora,
-			formulario,
-			existentes: sesion.etiquetas
+			action: accion,
+			taskOnOpen: alAbrirElPanel,
+			task: sesion.tareas.find(({ id }) => id === alAbrirElPanel.id) ?? alAbrirElPanel,
+			completions: sesion.completados,
+			now: ahora,
+			form: formulario,
+			existings: sesion.etiquetas
 		};
 	}
-	const avisoDeLaAccion = $derived(accionAbierta ? avisoDeAccion(enAviso(accionAbierta, sesion.ahora)) : undefined);
+	const avisoDeLaAccion = $derived(accionAbierta ? actionNotice(enAviso(accionAbierta, sesion.ahora)) : undefined);
 	// Si la acción ya no corresponde (otro dispositivo, o pasó el tiempo), el aviso se cierra y queda el panel con lo escrito.
 	$effect(() => {
 		if (accionAbierta && !avisoDeLaAccion) accionAbierta = undefined;
 	});
 
-	function mostrarErrores(nuevos: ErroresDeCreacion | undefined) {
+	function mostrarErrores(nuevos: CreationErrors | undefined) {
 		errores = nuevos ?? {};
-		if (errores.etiquetas) errorDeEtiquetas = MENSAJES_DE_NOMBRE[errores.etiquetas];
-		const destino = destinoAlFallarGuardar(conError, presentacion);
+		if (errores.labels) errorDeEtiquetas = MENSAJES_DE_NOMBRE[errores.labels];
+		const destino = destinationOnSaveFailure(conError, presentacion);
 		if (destino) void irAlCampo(destino);
 	}
 
@@ -231,23 +231,23 @@
 	}
 
 	function cerrar() {
-		if (alCerrarElPanel(hayCambiosAhora()) === 'cierra el panel') alCerrar();
+		if (onClosePanel(hayCambiosAhora()) === 'cierra el panel') alCerrar();
 		else avisoDeCierre = true;
 	}
 
-	function elegirEnAvisoDeCierre(efecto: BotonDelAviso['efecto']) {
+	function elegirEnAvisoDeCierre(efecto: NoticeButton['effect']) {
 		avisoDeCierre = false;
 		if (efecto === 'descartar') alCerrar();
 		else if (efecto === 'guardar') mostrarErrores(alGuardar(formularioActual()));
 	}
 
-	function elegirAccion(accion: AccionDelPanel) {
+	function elegirAccion(accion: PanelAction) {
 		const escrito = formularioActual();
-		if (queHaceLaAccion(accion, hayCambios(alAbrir, escrito)) === 'actúa') alActuar?.(cambioDeAccion(accion, horaActual()), []);
+		if (whatTheActionDoes(accion, hasChanges(alAbrir, escrito)) === 'actúa') alActuar?.(changeOfAction(accion, horaActual()), []);
 		else accionAbierta = { accion, formulario: escrito };
 	}
 
-	function elegirEnAvisoDeAccion(efecto: BotonDelAviso['efecto']) {
+	function elegirEnAvisoDeAccion(efecto: NoticeButton['effect']) {
 		const abierta = accionAbierta;
 		if (!abierta || efecto === 'seguir editando') {
 			accionAbierta = undefined;
@@ -256,19 +256,19 @@
 		const contexto = enAviso(abierta, horaActual());
 		if (efecto === 'descartar') {
 			accionAbierta = undefined;
-			const cambio = descartarYActuar(contexto);
+			const cambio = discardAndAct(contexto);
 			if (cambio) alActuar?.(cambio, []);
 			return;
 		}
-		const resultado = guardarYActuar(contexto, nuevoId);
-		if (resultado.resultado === 'guardado') alActuar?.(resultado.cambio, resultado.nuevas);
-		else if (resultado.resultado === 'rechazado') {
+		const resultado = saveAndAct(contexto, nuevoId);
+		if (resultado.result === 'guardado') alActuar?.(resultado.change, resultado.newLabels);
+		else if (resultado.result === 'rechazado') {
 			accionAbierta = undefined;
-			mostrarErrores(resultado.errores);
-		} else if (resultado.resultado === 'aviso cerrado') accionAbierta = undefined;
+			mostrarErrores(resultado.errors);
+		} else if (resultado.result === 'aviso cerrado') accionAbierta = undefined;
 	}
 
-	function loDeArriba(): LoDeArriba {
+	function loDeArriba(): OnTop {
 		if (sesion.anotando) return 'recuadro de Anotar';
 		if (avisoDeCierre) return 'aviso de cierre';
 		if (accionAbierta) return 'aviso de acción';
@@ -278,7 +278,7 @@
 
 	/** Atrás con el panel abierto (§6.2); devuelve si el panel sigue abierto. */
 	function alTocarAtras(): boolean {
-		const efecto = queHaceAtras({ encima: loDeArriba(), hayCambios: hayCambiosAhora(), tecladoAbierto: teclado.abierto });
+		const efecto = whatBackDoes({ top: loDeArriba(), hasChanges: hayCambiosAhora(), keyboardOpen: teclado.abierto });
 		if (efecto === 'cierra el teclado') (document.activeElement as HTMLElement | null)?.blur();
 		else if (efecto === 'cierra lo de arriba' && sesion.anotando) sesion.cerrarAnotar();
 		else if (efecto === 'cierra lo de arriba') {
@@ -366,7 +366,7 @@
 {/if}
 
 {#if avisoDeCierre}
-	<AvisoDeCambios aviso={AVISO_DE_CIERRE} alElegir={elegirEnAvisoDeCierre} />
+	<AvisoDeCambios aviso={CLOSE_NOTICE} alElegir={elegirEnAvisoDeCierre} />
 {/if}
 
 {#if avisoDeLaAccion}

@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { copiarAlPortapapeles } from '#lib/adapters/portapapeles.ts';
-	import type { Anotacion } from '#lib/core/annotation.ts';
-	import { anotacionesEnPantalla } from '#lib/core/annotations.ts';
-	import { textoDeAnotaciones } from '#lib/core/copied-annotations.ts';
+	import type { Annotation } from '#lib/core/annotation.ts';
+	import { annotationsOnScreen } from '#lib/core/annotations.ts';
+	import { annotationsText } from '#lib/core/copied-annotations.ts';
 	import AnotarConfirmacion from './AnotarConfirmacion.svelte';
 	import { laSesion } from './sesion';
 
 	// Spec §6.7: releer las anotaciones, corregir su texto, borrarlas y copiarlas.
 	const sesion = laSesion();
-	const grupos = $derived(anotacionesEnPantalla(sesion.tareas, sesion.anotaciones, sesion.ahora));
+	const grupos = $derived(annotationsOnScreen(sesion.tareas, sesion.anotaciones, sesion.ahora));
 
-	let editando = $state<{ anotacion: Anotacion; texto: string } | undefined>(undefined);
-	let porBorrar = $state.raw<Anotacion | undefined>(undefined);
+	let editando = $state<{ anotacion: Annotation; texto: string } | undefined>(undefined);
+	let porBorrar = $state.raw<Annotation | undefined>(undefined);
 	/** El aviso de la última copia (un solo texto a la vez); cada copia reinicia su cuenta de 5 s. */
 	let aviso = $state<{ texto: string; numero: number } | undefined>(undefined);
 	let copias = 0;
@@ -23,13 +23,13 @@
 		editando = undefined;
 	}
 
-	function borrar(anotacion: Anotacion) {
+	function borrar(anotacion: Annotation) {
 		porBorrar = undefined;
 		sesion.borrarAnotacion(anotacion);
 	}
 
 	async function copiar() {
-		const texto = textoDeAnotaciones(sesion.tareas, sesion.anotaciones);
+		const texto = annotationsText(sesion.tareas, sesion.anotaciones);
 		if (texto === undefined) return;
 		const copiado = await copiarAlPortapapeles(texto);
 		aviso = { texto: copiado ? 'Anotaciones copiadas' : 'No se pudo copiar', numero: ++copias };
@@ -39,20 +39,20 @@
 <section>
 	<h1>Anotaciones</h1>
 	<button type="button" class="copiar" onclick={copiar}>Copiar</button>
-	{#each grupos as { encabezado, entradas } (encabezado)}
+	{#each grupos as { header: encabezado, entries: entradas } (encabezado)}
 		<h2>{encabezado}</h2>
 		<ul class="lista">
-			{#each entradas as { anotacion, hora, nombreDeTarea } (anotacion.id)}
+			{#each entradas as { annotation: anotacion, hour: hora, taskName: nombreDeTarea } (anotacion.id)}
 				<li class="entrada">
 					<div class="datos">
 						<span class="hora">{hora}</span>
-						<span class="sentido">{anotacion.sentido}</span>
-						<span class="pantalla">{anotacion.pantalla}</span>
+						<span class="sentido">{anotacion.sense}</span>
+						<span class="pantalla">{anotacion.screen}</span>
 						{#if nombreDeTarea}<span class="tarea">{nombreDeTarea}</span>{/if}
-						{#if anotacion.texto}<span class="texto">{anotacion.texto}</span>{/if}
+						{#if anotacion.text}<span class="texto">{anotacion.text}</span>{/if}
 					</div>
 					<div class="acciones-entrada">
-						<button type="button" onclick={() => (editando = { anotacion, texto: anotacion.texto ?? '' })}>Editar texto</button>
+						<button type="button" onclick={() => (editando = { anotacion, texto: anotacion.text ?? '' })}>Editar texto</button>
 						<button type="button" class="borrar" onclick={() => (porBorrar = anotacion)}>Borrar</button>
 					</div>
 				</li>
@@ -84,7 +84,7 @@
 	{@const anotacion = porBorrar}
 	<div class="fondo" role="alertdialog" aria-modal="true" aria-labelledby="titulo-borrar-anotacion">
 		<div class="caja">
-			<p id="titulo-borrar-anotacion">¿Borrar la anotación «{anotacion.sentido}»?</p>
+			<p id="titulo-borrar-anotacion">¿Borrar la anotación «{anotacion.sense}»?</p>
 			<div class="acciones">
 				<button type="button" onclick={() => (porBorrar = undefined)}>Cancelar</button>
 				<button type="button" class="principal" onclick={() => borrar(anotacion)}>Borrar</button>

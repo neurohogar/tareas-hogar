@@ -19,14 +19,14 @@
 		segundosDesdeElArranque
 	} from '#lib/adapters/pantalla-de-carga.ts';
 	import {
-		pantallaDeCargaSeVa,
-		proximoLimiteDeLaPantalla,
-		recuerdoDeTopeDeNoto,
-		type EstadoDeLaEspera,
-		type RespuestaDeAuth
+		loadingScreenLeaves,
+		nextScreenLimit,
+		notoLimitMemory,
+		type WaitStatus,
+		type AuthResponse
 	} from '#lib/core/loading-screen.ts';
 
-	let { auth, datos, alIrse }: { auth: RespuestaDeAuth; datos: DatosRespondieron; alIrse: () => void } = $props();
+	let { auth, datos, alIrse }: { auth: AuthResponse; datos: DatosRespondieron; alIrse: () => void } = $props();
 
 	/** Hasta saber si están en el dispositivo, se esperan como si estuvieran. */
 	let fuentes = $state<EstadoDeLasFuentes>({ atkinson: 'guardada', noto: 'guardada' });
@@ -36,24 +36,24 @@
 	const recuerdaTopeDeNoto = leerRecuerdoDeTopeDeNoto();
 	let temporizador: ReturnType<typeof setTimeout> | undefined;
 
-	const estadoDeLaEspera = (): EstadoDeLaEspera => ({
-		segundosDesdeElArranque: segundosDesdeElArranque(),
+	const estadoDeLaEspera = (): WaitStatus => ({
+		secondsSinceStart: segundosDesdeElArranque(),
 		auth,
-		tareasRespondieron: datos.tareas,
-		completadosRespondieron: datos.completados,
-		etiquetasRespondieron: datos.etiquetas,
+		tasksResponded: datos.tareas,
+		completionsResponded: datos.completados,
+		labelsResponded: datos.etiquetas,
 		atkinson: fuentes.atkinson,
 		noto: fuentes.noto,
-		enLinea,
-		recuerdaTopeDeNoto
+		online: enLinea,
+		remembersNotoLimit: recuerdaTopeDeNoto
 	});
 
 	function irseSiCorresponde() {
 		if (seFue) return;
 		const estado = estadoDeLaEspera();
-		if (!pantallaDeCargaSeVa(estado)) return;
+		if (!loadingScreenLeaves(estado)) return;
 		seFue = true;
-		guardarRecuerdoDeTopeDeNoto(recuerdoDeTopeDeNoto(estado));
+		guardarRecuerdoDeTopeDeNoto(notoLimitMemory(estado));
 		quitarPantallaDeCarga();
 		alIrse();
 	}
@@ -61,7 +61,7 @@
 	/** Cada cambio de la espera se pregunta en el efecto; el paso del tiempo, al llegar el mínimo y el tope. */
 	function programarProximoLimite(): ReturnType<typeof setTimeout> | undefined {
 		const segundos = segundosDesdeElArranque();
-		const limite = proximoLimiteDeLaPantalla(segundos);
+		const limite = nextScreenLimit(segundos);
 		if (limite === undefined) return undefined;
 		return setTimeout(
 			() => {
@@ -86,6 +86,6 @@
 
 	// Spec §6.6: lo recordado se olvida cuando Noto queda guardado, también después de irse la pantalla.
 	$effect(() => {
-		if (seFue && fuentes.noto === 'lista') guardarRecuerdoDeTopeDeNoto(recuerdoDeTopeDeNoto(estadoDeLaEspera()));
+		if (seFue && fuentes.noto === 'lista') guardarRecuerdoDeTopeDeNoto(notoLimitMemory(estadoDeLaEspera()));
 	});
 </script>

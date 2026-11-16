@@ -1,35 +1,35 @@
 <script lang="ts">
 	import { guardarMostrarCompletadas, leerMostrarCompletadas } from '#lib/adapters/mostrar-completadas.ts';
 	import { guardarMostrarPausadas, leerMostrarPausadas } from '#lib/adapters/mostrar-pausadas.ts';
-	import { checkboxHabilitado } from '#lib/core/checkbox.ts';
-	import type { FormularioDelPanel } from '#lib/core/unsaved-changes.ts';
-	import { etiquetasDeTarea } from '#lib/core/task-labels.ts';
-	import { filtrarPorEtiqueta, filtroVigente } from '#lib/core/label-filter.ts';
-	import { filtrarSoloRapidas, textoDeListaVacia } from '#lib/core/quick-only.ts';
-	import { ordenarEtiquetas } from '#lib/core/label-order.ts';
-	import { filasDePendientes } from '#lib/core/pending.ts';
+	import { checkboxEnabled } from '#lib/core/checkbox.ts';
+	import type { PanelForm } from '#lib/core/unsaved-changes.ts';
+	import { taskLabels } from '#lib/core/task-labels.ts';
+	import { filterByLabel, activeFilter } from '#lib/core/label-filter.ts';
+	import { filterQuickOnly, emptyListText } from '#lib/core/quick-only.ts';
+	import { sortLabels } from '#lib/core/label-order.ts';
+	import { pendingRows } from '#lib/core/pending.ts';
 	import FilaTarea from './FilaTarea.svelte';
 	import PanelTarea from './PanelTarea.svelte';
 	import { laSesion } from './sesion';
 
 	const sesion = laSesion();
 	let creando = $state(false);
-	const etiquetas = $derived(ordenarEtiquetas(sesion.etiquetas));
-	const filtro = $derived(filtroVigente(sesion.filtro, sesion.etiquetas));
+	const etiquetas = $derived(sortLabels(sesion.etiquetas));
+	const filtro = $derived(activeFilter(sesion.filtro, sesion.etiquetas));
 	let mostrarCompletadas = $state(leerMostrarCompletadas());
 	let mostrarPausadas = $state(leerMostrarPausadas());
 	const filas = $derived(
-		filtrarSoloRapidas(
-			filtrarPorEtiqueta(
-				filasDePendientes(sesion.tareas, sesion.completados, sesion.ahora, mostrarCompletadas, mostrarPausadas),
+		filterQuickOnly(
+			filterByLabel(
+				pendingRows(sesion.tareas, sesion.completados, sesion.ahora, mostrarCompletadas, mostrarPausadas),
 				filtro
 			),
 			sesion.soloRapidas
 		)
 	);
-	const textoVacio = $derived(filas.length === 0 ? textoDeListaVacia(filtro, sesion.soloRapidas) : undefined);
+	const textoVacio = $derived(filas.length === 0 ? emptyListText(filtro, sesion.soloRapidas) : undefined);
 
-	function guardarNueva(formulario: FormularioDelPanel) {
+	function guardarNueva(formulario: PanelForm) {
 		const errores = sesion.crear(formulario);
 		if (!errores) creando = false;
 		return errores;
@@ -46,7 +46,7 @@
 					type="button"
 					aria-pressed={filtro === etiqueta.id}
 					style:--color-chip={`var(--etiqueta-${etiqueta.color})`}
-					onclick={() => sesion.elegirFiltro(etiqueta.id)}>{etiqueta.nombre}</button
+					onclick={() => sesion.elegirFiltro(etiqueta.id)}>{etiqueta.name}</button
 				>
 			{/each}
 		</div>
@@ -63,7 +63,7 @@
 		</label>
 	</div>
 	<ul class="lista">
-		{#each filas as { tarea, estado, completada, textoDeFecha, textoDePrimerPaso, botonesDePaso, minima } (tarea.id)}
+		{#each filas as { task: tarea, status: estado, completed: completada, dateText: textoDeFecha, firstStepText: textoDePrimerPaso, stepButtons: botonesDePaso, minimal: minima } (tarea.id)}
 			<FilaTarea
 				{tarea}
 				{estado}
@@ -72,8 +72,8 @@
 				{textoDePrimerPaso}
 				{botonesDePaso}
 				{minima}
-				habilitado={checkboxHabilitado(tarea, sesion.completados, sesion.ahora)}
-				etiquetas={etiquetasDeTarea(tarea, sesion.etiquetas)}
+				habilitado={checkboxEnabled(tarea, sesion.completados, sesion.ahora)}
+				etiquetas={taskLabels(tarea, sesion.etiquetas)}
 				alTocarCheckbox={() => sesion.tocarCheckbox(tarea)}
 				alMinima={() => sesion.hacerLaMinima(tarea)}
 				alHecho={() => sesion.tocarHecho(tarea)}

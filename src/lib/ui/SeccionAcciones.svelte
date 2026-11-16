@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { accionDeLaOpcion, type AccionDelPanel } from '#lib/core/panel-action.ts';
-	import { OPCIONES_DE_POSPONER } from '#lib/core/postponement.ts';
-	import type { PresentacionDelPanel, SeccionDelPanel } from '#lib/core/panel-tabs.ts';
+	import { optionAction, type PanelAction } from '#lib/core/panel-action.ts';
+	import { POSTPONE_OPTIONS } from '#lib/core/postponement.ts';
+	import type { PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
 	import Icono from './iconos/Icono.svelte';
 	import MarcoDeSeccion from './MarcoDeSeccion.svelte';
 
@@ -15,12 +15,12 @@
 		alElegir,
 		alPedirBorrado
 	}: {
-		presentacion: PresentacionDelPanel;
-		abierta: SeccionDelPanel;
+		presentacion: PanelPresentation;
+		abierta: PanelSection;
 		posponer?: 'posponer' | 'quitar';
 		pausa?: 'pausar' | 'reanudar';
 		/** Elige una acción; el panel decide si actúa o pide confirmación (§6.2). */
-		alElegir: (accion: AccionDelPanel) => void;
+		alElegir: (accion: PanelAction) => void;
 		/** Abre la confirmación de Borrar tarea. */
 		alPedirBorrado: () => void;
 	} = $props();
@@ -29,8 +29,8 @@
 <MarcoDeSeccion nombre="Acciones" {presentacion} {abierta}>
 	{#if posponer === 'posponer'}
 		<div class="grupo" role="group" aria-label="Posponer">
-			{#each OPCIONES_DE_POSPONER as { opcion, etiqueta } (opcion)}
-				<button type="button" class="accion" onclick={() => alElegir(accionDeLaOpcion(opcion))}>
+			{#each POSTPONE_OPTIONS as { option: opcion, label: etiqueta } (opcion)}
+				<button type="button" class="accion" onclick={() => alElegir(optionAction(opcion))}>
 					<Icono nombre={ICONOS_DE_POSPONER[opcion]} />{etiqueta}
 				</button>
 			{/each}
