@@ -61,7 +61,7 @@
 
 ## Artefactos
 
-- Gherkin: `features/version-minima.feature` (S1, S2, S3, S21), `features/version-minima-en-la-fila.feature` (S3, S11, S12, S13, S15), `features/hice-la-minima.feature` (S3, S4, S5, S7, S8, S9, S10, S11, S14, S22), `features/minima-en-el-historial.feature` (S6, S19), `features/version-minima-cambios-sin-guardar.feature` (S17; S18 la cubre solo QA); S16 y S20 las cubre solo QA (S16: el botón abre el aviso de deshacer y no el panel; S20: el diálogo de Borrar dice «Mínima»)
+- Gherkin: `features/version-minima.feature` (S1, S2, S3, S21), `features/version-minima-en-la-fila.feature` (S3, S11, S12, S13, S15), `features/hice-la-minima.feature` (S3, S4, S5, S7, S8, S9, S10, S11, S14, S16, S22), `features/minima-en-el-historial.feature` (S6, S19; S20 la cubre solo QA), `features/version-minima-cambios-sin-guardar.feature` (S17; S18 la cubre solo QA)
 - QA: `qa/version-minima.md` (S1 a S22; solo QA: S13 en lo visible (estilo, varias líneas, botón de texto, tocar el texto abre el panel y tocar el botón no lo abre ni pasa por Cambios sin guardar), S16, S17 en lo visible (etiqueta, sin texto de ejemplo, lugar y Enter guarda), S18 (el orden de la sección), S20, la parte de S3 que dice que no se ve en Anotaciones ni en el texto copiado, además de filtros y Solo rápidas, y S6 en lo visible)
 
 ## core
