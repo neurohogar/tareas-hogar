@@ -237,6 +237,8 @@ export interface Definicion {
   primerPaso?: string;
   /** Pasos más: por cada uno, Agregar paso y escribir en el campo Paso N que sigue. */
   pasos?: string[];
+  /** Versión mínima: el campo Versión mínima del panel (`""` lo vacía). */
+  versionMinima?: string;
   /** Esfuerzo: la opción del selector Esfuerzo, por su texto completo. */
   esfuerzo?: "Sin estimar" | "Rápida (≤ 5 min)" | "Media (≈ 15 min)" | "Larga";
   /** Etiquetas por agregar en el campo Etiquetas, en este orden (cada una: escribir y Enter). */
@@ -357,6 +359,8 @@ export async function completarPanel(page: Page, d: Definicion) {
     await page.getByRole("button", { name: "Agregar paso", exact: true }).click();
     await page.getByRole("textbox", { name: `Paso ${n}`, exact: true }).fill(texto);
   }
+  if (d.versionMinima !== undefined)
+    await page.getByRole("textbox", { name: "Versión mínima", exact: true }).fill(d.versionMinima);
   await abrirPestana(page, "Cuándo");
   if (d.tipo) await page.getByRole("radio", { name: d.tipo }).check();
   if (d.fecha !== undefined)
