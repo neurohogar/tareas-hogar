@@ -56,27 +56,21 @@ function cambioDeValor(campo: 'emoji' | 'nota' | 'primerPaso' | 'versionMinima' 
 	return antes === despues ? {} : { [campo]: nuloSiFalta(despues) };
 }
 
-/** El horario es un solo campo: si cambió, se escribe entero, o null si la tarea quedó sin horario (§7). */
-function cambioDeHorario(antes: Tarea, despues: Tarea): CambioDeTarea {
-	const horario = cambioDeCampo(antes.horario, despues.horario, claveDeHorario);
-	return 'valor' in horario ? { horario: horario.valor } : {};
-}
-
-/** Los pasos más son un solo campo: si cambiaron, se escriben enteros, o null si la tarea quedó sin ellos (§7). */
-function cambioDePasos(antes: Tarea, despues: Tarea): CambioDeTarea {
-	const pasos = cambioDeCampo(antes.pasos, despues.pasos, claveDePasos);
-	return 'valor' in pasos ? { pasos: pasos.valor } : {};
+/** Horario y pasos más son un solo campo cada uno: si cambió, se escribe entero, o null si la tarea quedó sin él (§7). */
+function cambioDeCampoEntero<T>(campo: 'horario' | 'pasos', antes: T | undefined, despues: T | undefined, clave: (valor: T) => string | number): CambioDeTarea {
+	const cambio = cambioDeCampo(antes, despues, clave);
+	return 'valor' in cambio ? { [campo]: cambio.valor } : {};
 }
 
 /** Los campos en que difieren las dos tareas; pasoActual no se edita en el panel (§6.2). */
 function cambioEntre(antes: Tarea, despues: Tarea): CambioDeTarea {
 	return {
-		...cambioDeHorario(antes, despues),
+		...cambioDeCampoEntero('horario', antes.horario, despues.horario, claveDeHorario),
 		...(antes.titulo !== despues.titulo && { titulo: despues.titulo }),
 		...cambioDeValor('emoji', antes.emoji, despues.emoji),
 		...cambioDeValor('nota', antes.nota, despues.nota),
 		...cambioDeValor('primerPaso', antes.primerPaso, despues.primerPaso),
-		...cambioDePasos(antes, despues),
+		...cambioDeCampoEntero('pasos', antes.pasos, despues.pasos, claveDePasos),
 		...cambioDeValor('versionMinima', antes.versionMinima, despues.versionMinima),
 		...cambioDeValor('esfuerzo', antes.esfuerzo, despues.esfuerzo),
 		...(antes.tipo === despues.tipo ? cambioDeCampos(antes, despues) : cambioDeTipo(despues))
