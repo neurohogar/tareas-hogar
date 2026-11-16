@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { copiarAlPortapapeles } from '#lib/adapters/portapapeles.ts';
+	import { copiarAlPortapapeles } from '#lib/adapters/clipboard.ts';
 	import type { Annotation } from '#lib/core/annotation.ts';
 	import { annotationsOnScreen } from '#lib/core/annotations.ts';
 	import { annotationsText } from '#lib/core/copied-annotations.ts';
-	import AnotarConfirmacion from './AnotarConfirmacion.svelte';
-	import { laSesion } from './sesion';
+	import AnotarConfirmacion from './AnnotateConfirmation.svelte';
+	import { laSesion } from './session';
 
 	// Spec §6.7: releer las anotaciones, corregir su texto, borrarlas y copiarlas.
 	const sesion = laSesion();

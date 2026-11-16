@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { connectionStrip } from '#lib/core/connection.ts';
-	import { enLineaReactivo } from './en-linea.svelte';
+	import { enLineaReactivo } from './online.svelte';
 
 	const enLinea = enLineaReactivo();
 	const texto = $derived(connectionStrip(enLinea.valor));

@@ -1,4 +1,4 @@
-// Lo que la sesión (Sesion.svelte) comparte con las pantallas: los datos que
+// Lo que la sesión (Session.svelte) comparte con las pantallas: los datos que
 // observa y las acciones sobre ellos. Las pantallas le preguntan al core qué
 // mostrar con esos datos.
 import { getContext, setContext } from 'svelte';

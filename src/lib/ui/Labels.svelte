@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { PALETTE, type Color, type Label } from '#lib/core/label.ts';
 	import { sortLabels } from '#lib/core/label-order.ts';
-	import ChipEtiqueta from './ChipEtiqueta.svelte';
-	import { MENSAJES_DE_NOMBRE } from './mensajes-de-etiqueta';
-	import { laSesion } from './sesion';
+	import ChipEtiqueta from './LabelChip.svelte';
+	import { MENSAJES_DE_NOMBRE } from './label-messages';
+	import { laSesion } from './session';
 
 	// Spec §6.4: renombrar, cambiar el color y borrar. No se crean etiquetas desde acá.
 	const sesion = laSesion();

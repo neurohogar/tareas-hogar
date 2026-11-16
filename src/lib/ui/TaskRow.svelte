@@ -7,7 +7,7 @@
 	import type { StepButtons } from '#lib/core/current-step.ts';
 	import type { MinimalLine } from '#lib/core/minimal-version.ts';
 	import type { Task } from '#lib/core/task.ts';
-	import ChipEtiqueta from './ChipEtiqueta.svelte';
+	import ChipEtiqueta from './LabelChip.svelte';
 
 	let {
 		tarea,

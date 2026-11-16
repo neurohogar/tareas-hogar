@@ -1,6 +1,6 @@
 // Traduce entre el modelo del core y Firestore (spec §7):
 // users/{uid}/tareas/{tareaId}, users/{uid}/completados/{completadoId} y
-// users/{uid}/etiquetas/{etiquetaId} (las anotaciones, en anotaciones.ts).
+// users/{uid}/etiquetas/{etiquetaId} (las anotaciones, en annotations.ts).
 // Los documentos tienen su propia forma: ningún tipo de Firestore sale de acá.
 import {
 	arrayRemove,

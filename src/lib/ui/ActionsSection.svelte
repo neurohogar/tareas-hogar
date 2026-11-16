@@ -2,8 +2,8 @@
 	import { optionAction, type PanelAction } from '#lib/core/panel-action.ts';
 	import { POSTPONE_OPTIONS } from '#lib/core/postponement.ts';
 	import type { PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
-	import Icono from './iconos/Icono.svelte';
-	import MarcoDeSeccion from './MarcoDeSeccion.svelte';
+	import Icono from './icons/Icon.svelte';
+	import MarcoDeSeccion from './SectionFrame.svelte';
 
 	const ICONOS_DE_POSPONER = { '1 hora': 'reloj', '3 horas': 'reloj', 'hasta mañana': 'manana' } as const;
 

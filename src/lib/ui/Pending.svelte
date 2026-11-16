@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { guardarMostrarCompletadas, leerMostrarCompletadas } from '#lib/adapters/mostrar-completadas.ts';
-	import { guardarMostrarPausadas, leerMostrarPausadas } from '#lib/adapters/mostrar-pausadas.ts';
+	import { guardarMostrarCompletadas, leerMostrarCompletadas } from '#lib/adapters/show-completed.ts';
+	import { guardarMostrarPausadas, leerMostrarPausadas } from '#lib/adapters/show-paused.ts';
 	import { checkboxEnabled } from '#lib/core/checkbox.ts';
 	import type { PanelForm } from '#lib/core/unsaved-changes.ts';
 	import { taskLabels } from '#lib/core/task-labels.ts';
@@ -8,9 +8,9 @@
 	import { filterQuickOnly, emptyListText } from '#lib/core/quick-only.ts';
 	import { sortLabels } from '#lib/core/label-order.ts';
 	import { pendingRows } from '#lib/core/pending.ts';
-	import FilaTarea from './FilaTarea.svelte';
-	import PanelTarea from './PanelTarea.svelte';
-	import { laSesion } from './sesion';
+	import FilaTarea from './TaskRow.svelte';
+	import PanelTarea from './TaskPanel.svelte';
+	import { laSesion } from './session';
 
 	const sesion = laSesion();
 	let creando = $state(false);

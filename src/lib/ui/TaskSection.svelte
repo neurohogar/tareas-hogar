@@ -5,10 +5,10 @@
 	import type { PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
 	import type { Effort } from '#lib/core/task.ts';
 	import { tick } from 'svelte';
-	import CampoEtiquetas from './CampoEtiquetas.svelte';
-	import Icono from './iconos/Icono.svelte';
-	import MarcoDeSeccion from './MarcoDeSeccion.svelte';
-	import { laSesion } from './sesion';
+	import CampoEtiquetas from './LabelsField.svelte';
+	import Icono from './icons/Icon.svelte';
+	import MarcoDeSeccion from './SectionFrame.svelte';
+	import { laSesion } from './session';
 
 	let {
 		presentacion,

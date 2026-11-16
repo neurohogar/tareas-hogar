@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import '#lib/ui/estilos.css';
+	import '#lib/ui/styles.css';
 	import { observarUsuario, type Usuario } from '#lib/adapters/auth.ts';
 	import type { AuthResponse } from '#lib/core/loading-screen.ts';
 	import Login from '#lib/ui/Login.svelte';
-	import PantallaDeCarga, { type DatosRespondieron } from '#lib/ui/PantallaDeCarga.svelte';
-	import Sesion from '#lib/ui/Sesion.svelte';
+	import PantallaDeCarga, { type DatosRespondieron } from '#lib/ui/LoadingScreen.svelte';
+	import Sesion from '#lib/ui/Session.svelte';
 
 	let { children } = $props();
 

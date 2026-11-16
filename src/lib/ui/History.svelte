@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { history, type HistoryEntry } from '#lib/core/history.ts';
 	import { taskName } from '#lib/core/task-name.ts';
-	import { laSesion } from './sesion';
+	import { laSesion } from './session';
 
 	const sesion = laSesion();
 	const grupos = $derived(history(sesion.tareas, sesion.completados, sesion.ahora));

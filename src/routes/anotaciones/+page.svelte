@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Anotaciones from '#lib/ui/Anotaciones.svelte';
+	import Anotaciones from '#lib/ui/Annotations.svelte';
 </script>
 
 <Anotaciones />

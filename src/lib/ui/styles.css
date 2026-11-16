@@ -1,4 +1,4 @@
-/* Fuente y emoji empaquetados (spec §6, OFL 1.1; licencias en static/fuentes). Los registra adapters/fuentes.ts. */
+/* Fuente y emoji empaquetados (spec §6, OFL 1.1; licencias en static/fuentes). Los registra adapters/fonts.ts. */
 :root {
 	color-scheme: light dark;
 	--fondo: #f7f5f0;

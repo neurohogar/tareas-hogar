@@ -2,8 +2,8 @@
 	import type { Label } from '#lib/core/label.ts';
 	import { chooseLabels, type ChosenLabel } from '#lib/core/typed-labels.ts';
 	import { addTyped, removeChosen, suggestions } from '#lib/core/label-panel.ts';
-	import ChipEtiqueta from './ChipEtiqueta.svelte';
-	import { MENSAJES_DE_NOMBRE } from './mensajes-de-etiqueta';
+	import ChipEtiqueta from './LabelChip.svelte';
+	import { MENSAJES_DE_NOMBRE } from './label-messages';
 
 	// Spec §6.2: el campo Etiquetas del panel. Guarda los nombres elegidos; las nuevas se crean al guardar la tarea.
 	let {

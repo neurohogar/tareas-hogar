@@ -7,9 +7,9 @@
 		guardarAnotacion,
 		limpiarAnotacionesHuerfanas,
 		observarAnotaciones
-	} from '#lib/adapters/anotaciones.ts';
+	} from '#lib/adapters/annotations.ts';
 	import { nuevoId } from '#lib/adapters/ids.ts';
-	import { ahora as horaActual, observarReloj } from '#lib/adapters/reloj.ts';
+	import { ahora as horaActual, observarReloj } from '#lib/adapters/clock.ts';
 	import {
 		borrarCompletado,
 		borrarEtiqueta,
@@ -24,7 +24,7 @@
 		observarCompletados,
 		observarEtiquetas,
 		observarTareas
-	} from '#lib/adapters/repositorio.ts';
+	} from '#lib/adapters/repository.ts';
 	import { noticeOnComplete, visibleNotice, completionToUndo, msUntilDue, noticeReturn, noticeText, type Notice } from '#lib/core/notice.ts';
 	import { annotate, editText, type Annotation, type CurrentScreen, type Sense } from '#lib/core/annotation.ts';
 	import { orphanAnnotations, deletion, orphanCompletions, taskExists } from '#lib/core/deletion.ts';
@@ -46,14 +46,14 @@
 	import type { TaskChange } from '#lib/core/task-document.ts';
 	import type { Completion, Task } from '#lib/core/task.ts';
 	import { lastTime } from '#lib/core/last-time.ts';
-	import { enLineaReactivo } from './en-linea.svelte.ts';
-	import AvisoDeshacer from './AvisoDeshacer.svelte';
-	import FranjaSinConexion from './FranjaSinConexion.svelte';
-	import Anotar from './Anotar.svelte';
-	import Navegacion from './Navegacion.svelte';
-	import PanelTarea from './PanelTarea.svelte';
-	import type { DatosRespondieron } from './PantallaDeCarga.svelte';
-	import { compartirSesion } from './sesion';
+	import { enLineaReactivo } from './online.svelte.ts';
+	import AvisoDeshacer from './UndoNotice.svelte';
+	import FranjaSinConexion from './NoConnectionStrip.svelte';
+	import Anotar from './Annotate.svelte';
+	import Navegacion from './Navigation.svelte';
+	import PanelTarea from './TaskPanel.svelte';
+	import type { DatosRespondieron } from './LoadingScreen.svelte';
+	import { compartirSesion } from './session';
 
 	let {
 		uid,

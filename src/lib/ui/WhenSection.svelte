@@ -10,7 +10,7 @@
 	import type { CreationErrors } from '#lib/core/creation.ts';
 	import type { RepetitionOption, PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
 	import { WEEKDAYS, MONTH_DAYS, type Weekday, type Unit } from '#lib/core/task.ts';
-	import MarcoDeSeccion from './MarcoDeSeccion.svelte';
+	import MarcoDeSeccion from './SectionFrame.svelte';
 
 	let {
 		presentacion,

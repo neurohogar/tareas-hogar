@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PanelSection } from '#lib/core/panel-tabs.ts';
-	import Icono from './iconos/Icono.svelte';
+	import Icono from './icons/Icon.svelte';
 
 	const ICONOS_DE_SECCION = { Tarea: 'tarea', Cuándo: 'cuando', Acciones: 'acciones' } as const;
 

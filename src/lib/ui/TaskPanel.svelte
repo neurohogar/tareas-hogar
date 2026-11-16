@@ -11,21 +11,21 @@
 	import type { Label } from '#lib/core/label.ts';
 	import { taskName } from '#lib/core/task-name.ts';
 	import type { Weekday, Effort, Task, Unit } from '#lib/core/task.ts';
-	import { tomarAtras } from '#lib/adapters/atras.ts';
-	import { confirmarAlSalir } from '#lib/adapters/confirmacion-al-salir.ts';
+	import { tomarAtras } from '#lib/adapters/back.ts';
+	import { confirmarAlSalir } from '#lib/adapters/confirm-on-leave.ts';
 	import { nuevoId } from '#lib/adapters/ids.ts';
-	import { leerRecientes, recordarReciente } from '#lib/adapters/recientes.ts';
-	import { ahora as horaActual } from '#lib/adapters/reloj.ts';
-	import AvisoDeCambios from './AvisoDeCambios.svelte';
-	import BarraDePestanas from './BarraDePestanas.svelte';
-	import { MENSAJES_DE_NOMBRE } from './mensajes-de-etiqueta';
-	import SeccionAcciones from './SeccionAcciones.svelte';
-	import SeccionCuando, { type Ventana } from './SeccionCuando.svelte';
-	import SeccionTarea from './SeccionTarea.svelte';
-	import SelectorEmoji from './SelectorEmoji.svelte';
-	import Icono from './iconos/Icono.svelte';
-	import { laSesion } from './sesion';
-	import { observarTeclado, type EstadoDelTeclado } from '#lib/adapters/teclado.ts';
+	import { leerRecientes, recordarReciente } from '#lib/adapters/recents.ts';
+	import { ahora as horaActual } from '#lib/adapters/clock.ts';
+	import AvisoDeCambios from './UnsavedChangesNotice.svelte';
+	import BarraDePestanas from './TabBar.svelte';
+	import { MENSAJES_DE_NOMBRE } from './label-messages';
+	import SeccionAcciones from './ActionsSection.svelte';
+	import SeccionCuando, { type Ventana } from './WhenSection.svelte';
+	import SeccionTarea from './TaskSection.svelte';
+	import SelectorEmoji from './EmojiPicker.svelte';
+	import Icono from './icons/Icon.svelte';
+	import { laSesion } from './session';
+	import { observarTeclado, type EstadoDelTeclado } from '#lib/adapters/keyboard.ts';
 	import {
 		saveBarVisible,
 		fieldsWithError,

@@ -4,7 +4,7 @@
 // la próxima vez que se abre la app. Sin avisar.
 //
 // Las fuentes no entran en la precarga: si un archivo falla, `addAll` cancela la
-// instalación entera (§8). Las baja y las guarda la página (adapters/fuentes.ts)
+// instalación entera (§8). Las baja y las guarda la página (adapters/fonts.ts)
 // en su propia caché, que sobrevive a las versiones que no las cambian (§6.6).
 import { version } from '$app/env';
 import { immutable, assets } from '$app/manifest';

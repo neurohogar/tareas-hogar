@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { tomarAtras } from '#lib/adapters/atras.ts';
+	import { tomarAtras } from '#lib/adapters/back.ts';
 	import type { Sense } from '#lib/core/annotation.ts';
-	import AnotarConfirmacion from './AnotarConfirmacion.svelte';
-	import { laSesion } from './sesion';
+	import AnotarConfirmacion from './AnnotateConfirmation.svelte';
+	import { laSesion } from './session';
 
 	// Spec §5.10: un botón chico, siempre arriba en el mismo lugar, y el recuadro de los dos toques.
 	const sesion = laSesion();

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { entrarConGoogle } from '#lib/adapters/auth.ts';
 	import { entryScreen } from '#lib/core/connection.ts';
-	import { enLineaReactivo } from './en-linea.svelte';
+	import { enLineaReactivo } from './online.svelte';
 
 	let error = $state('');
 	const enLinea = enLineaReactivo();
