@@ -5,6 +5,7 @@
 	import { textoDelHorario } from '#lib/core/horario.ts';
 	import { nombreDeTarea } from '#lib/core/nombre-de-tarea.ts';
 	import type { BotonesDePaso } from '#lib/core/paso-actual.ts';
+	import type { LineaDeMinima } from '#lib/core/version-minima.ts';
 	import type { Tarea } from '#lib/core/tarea.ts';
 	import ChipEtiqueta from './ChipEtiqueta.svelte';
 
@@ -15,9 +16,11 @@
 		textoDeFecha,
 		textoDePrimerPaso,
 		botonesDePaso,
+		minima,
 		habilitado,
 		etiquetas,
 		alTocarCheckbox,
+		alMinima,
 		alHecho,
 		alPasoAnterior,
 		alAbrir
@@ -32,11 +35,14 @@
 		textoDePrimerPaso?: string;
 		/** «Paso anterior» y «Hecho» (§6.1), según el core; sin ellos, la línea no lleva botones. */
 		botonesDePaso?: BotonesDePaso;
+		/** «Mínima: …» y si «Hice la mínima» está habilitado (§6.1), según el core; sin ella, la fila no lleva esa línea. */
+		minima?: LineaDeMinima;
 		/** Spec §6.1 y §5.5: deshabilitado si tocarlo completaría fuera de la ventana del horario. */
 		habilitado: boolean;
 		/** Las etiquetas de la tarea, ya en orden (§4.3). */
 		etiquetas: Etiqueta[];
 		alTocarCheckbox: () => void;
+		alMinima: () => void;
 		alHecho: () => void;
 		alPasoAnterior: () => void;
 		alAbrir: () => void;
@@ -68,6 +74,12 @@
 					{/if}
 					<button type="button" class="boton-paso" disabled={!botonesDePaso.hechoHabilitado} onclick={alHecho}>Hecho</button>
 				{/if}
+			</div>
+		{/if}
+		{#if minima}
+			<div class="linea-paso">
+				<p class="primer-paso">{minima.texto}</p>
+				<button type="button" class="boton-paso" disabled={!minima.habilitado} onclick={alMinima}>Hice la mínima</button>
 			</div>
 		{/if}
 		{#if etiquetas.length > 0}

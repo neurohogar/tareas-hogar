@@ -63,7 +63,7 @@
 		</label>
 	</div>
 	<ul class="lista">
-		{#each filas as { tarea, estado, completada, textoDeFecha, textoDePrimerPaso, botonesDePaso } (tarea.id)}
+		{#each filas as { tarea, estado, completada, textoDeFecha, textoDePrimerPaso, botonesDePaso, minima } (tarea.id)}
 			<FilaTarea
 				{tarea}
 				{estado}
@@ -71,9 +71,11 @@
 				{textoDeFecha}
 				{textoDePrimerPaso}
 				{botonesDePaso}
+				{minima}
 				habilitado={checkboxHabilitado(tarea, sesion.completados, sesion.ahora)}
 				etiquetas={etiquetasDeTarea(tarea, sesion.etiquetas)}
 				alTocarCheckbox={() => sesion.tocarCheckbox(tarea)}
+				alMinima={() => sesion.hacerLaMinima(tarea)}
 				alHecho={() => sesion.tocarHecho(tarea)}
 				alPasoAnterior={() => sesion.pasoAnterior(tarea)}
 				alAbrir={() => sesion.abrir(tarea)}

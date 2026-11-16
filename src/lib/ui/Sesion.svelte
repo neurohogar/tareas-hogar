@@ -25,12 +25,13 @@
 		observarEtiquetas,
 		observarTareas
 	} from '#lib/adapters/repositorio.ts';
-	import { avisoAlCompletar, avisoVisible, completadoADeshacer, msHastaQueVence, regresoDelAviso, type Aviso } from '#lib/core/aviso.ts';
+	import { avisoAlCompletar, avisoVisible, completadoADeshacer, msHastaQueVence, regresoDelAviso, textoDelAviso, type Aviso } from '#lib/core/aviso.ts';
 	import { anotar, editarTexto, type Anotacion, type PantallaActual, type Sentido } from '#lib/core/anotacion.ts';
 	import { anotacionesHuerfanas, borrado, completadosHuerfanos, existeTarea } from '#lib/core/borrado.ts';
 	import { borradoDeEtiqueta, referenciasRotas } from '#lib/core/borrado-de-etiqueta.ts';
 	import { accionDelCheckbox } from '#lib/core/checkbox.ts';
 	import { completar } from '#lib/core/completados.ts';
+	import { hacerLaMinima as hacerLaMinimaDelCore } from '#lib/core/version-minima.ts';
 	import { accionDeHecho, cambioAlBorrarCompletado, cambioAlCompletar, cambioDePasoAnterior } from '#lib/core/paso-actual.ts';
 	import { accionDePausa } from '#lib/core/pausa.ts';
 	import { accionDePosponer, textoDePosposicion } from '#lib/core/posposicion-en-panel.ts';
@@ -188,12 +189,19 @@
 		return () => clearTimeout(vencimiento);
 	});
 
-	function completarTarea(tarea: Tarea) {
-		ahora = horaActual();
-		const completado = completar(tarea, completados, nuevoId(), ahora);
+	function completarTarea(tarea: Tarea, completadoDe?: Completado) {
+		if (!completadoDe) ahora = horaActual();
+		const completado = completadoDe ?? completar(tarea, completados, nuevoId(), ahora);
 		aviso = avisoAlCompletar(tarea, completado, completados);
 		void guardarCompletado(uid, completado);
 		void guardarCambio(uid, tarea.id, cambioAlCompletar(tarea), []);
+	}
+
+	/** «Hice la mínima» (§6.1): lo que dice el core, con el mismo aviso y el mismo reinicio de paso que el checkbox. */
+	function hacerLaMinima(tarea: Tarea) {
+		ahora = horaActual();
+		const completado = hacerLaMinimaDelCore(tarea, completados, nuevoId(), ahora);
+		if (completado) completarTarea(tarea, completado);
 	}
 
 	/** Borra el completado y devuelve el paso de la tarea que dice el core (§5.4, Pasos: Deshacer). */
@@ -325,6 +333,7 @@
 		borrarEtiqueta: (etiqueta) => void borrarEtiqueta(uid, borradoDeEtiqueta(etiqueta.id, tareas)),
 		tocarCheckbox,
 		tocarHecho,
+		hacerLaMinima,
 		pasoAnterior: (tarea) => void guardarCambio(uid, tarea.id, cambioDePasoAnterior(tarea), []),
 		crear,
 		abrir: (tarea) => (editada = tarea),
@@ -339,7 +348,7 @@
 {@render children()}
 
 {#if avisoQueSeVe}
-	<AvisoDeshacer nombre={avisoQueSeVe.nombre} regreso={regresoDelAviso(avisoQueSeVe, ahora)} alDeshacer={deshacer} />
+	<AvisoDeshacer texto={textoDelAviso(avisoQueSeVe)} regreso={regresoDelAviso(avisoQueSeVe, ahora)} alDeshacer={deshacer} />
 {/if}
 
 {#if editada && editadaExiste}

@@ -111,6 +111,11 @@
 	<button type="button" class="texto" onclick={agregarPaso}>Agregar paso</button>
 
 	<div class="campo-formulario">
+		<label for="campo-version-minima">Versión mínima</label>
+		<input id="campo-version-minima" name="versionMinima" autocomplete="off" value={valores?.versionMinima ?? ''} />
+	</div>
+
+	<div class="campo-formulario">
 		<label for="campo-nota">Nota</label>
 		<textarea id="campo-nota" name="nota" rows="2" value={valores?.nota ?? ''}></textarea>
 	</div>

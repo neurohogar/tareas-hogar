@@ -52,6 +52,8 @@ interface TareaDoc {
 	nota?: string;
 	/** Sin el campo, la tarea no tiene primer paso. */
 	primerPaso?: string;
+	/** Campo independiente (§7); sin él, la tarea no tiene versión mínima. */
+	versionMinima?: string;
 	/** Un solo campo (§7), los pasos 2 en adelante; sin él, no hay más pasos. */
 	pasos?: string[];
 	/** Otro campo, independiente de pasos (§7); sin él, la tarea va en el paso 1. */
@@ -103,6 +105,8 @@ interface CompletadoDoc {
 	ocurrenciaCubierta?: string;
 	/** Paso en que iba la tarea al completarla; solo en tareas de dos pasos o más (§4.4). */
 	pasoAlCompletar?: number;
+	/** Solo se escribe en true: sin el campo, el completado fue entero (§4.4). */
+	fueMinima?: true;
 }
 
 const tareaRef = (uid: string, tareaId: string) => doc(db, 'users', uid, 'tareas', tareaId);
@@ -123,6 +127,7 @@ function tareaADoc(tarea: Tarea): TareaDoc {
 		...(tarea.emoji !== undefined && { emoji: tarea.emoji }),
 		...(tarea.nota !== undefined && { nota: tarea.nota }),
 		...(tarea.primerPaso !== undefined && { primerPaso: tarea.primerPaso }),
+		...(tarea.versionMinima !== undefined && { versionMinima: tarea.versionMinima }),
 		...(tarea.pasos && { pasos: [...tarea.pasos] }),
 		...(tarea.pasoActual !== undefined && { pasoActual: tarea.pasoActual }),
 		...(tarea.esfuerzo && { esfuerzo: tarea.esfuerzo }),
@@ -163,13 +168,14 @@ function etiquetaDesde(snapshot: QueryDocumentSnapshot<DocumentData>): Etiqueta 
 }
 
 /** Los campos del cambio como los escribe updateDoc: null quita el campo. */
-function camposDelCambio({ titulo, emoji, nota, primerPaso, pasos, pasoActual, esfuerzo, tipo, fechaLimite, recurrencia, horario, etiquetas, pausada, reanudadaEn, pospuesta }: CambioDeTarea): DocumentData {
+function camposDelCambio({ titulo, emoji, nota, primerPaso, versionMinima, pasos, pasoActual, esfuerzo, tipo, fechaLimite, recurrencia, horario, etiquetas, pausada, reanudadaEn, pospuesta }: CambioDeTarea): DocumentData {
 	const campos: DocumentData = {};
 	if (etiquetas !== undefined) campos.etiquetas = [...etiquetas];
 	if (titulo !== undefined) campos.titulo = titulo;
 	if (emoji !== undefined) campos.emoji = emoji === null ? deleteField() : emoji;
 	if (nota !== undefined) campos.nota = nota === null ? deleteField() : nota;
 	if (primerPaso !== undefined) campos.primerPaso = primerPaso === null ? deleteField() : primerPaso;
+	if (versionMinima !== undefined) campos.versionMinima = versionMinima === null ? deleteField() : versionMinima;
 	// pasos se reemplaza entero y pasoActual es otro campo (§7); null quita el campo.
 	if (pasos !== undefined) campos.pasos = pasos === null ? deleteField() : [...pasos];
 	if (pasoActual !== undefined) campos.pasoActual = pasoActual === null ? deleteField() : pasoActual;
@@ -196,6 +202,7 @@ function completadoADoc(completado: Completado): CompletadoDoc {
 	};
 	if (completado.ocurrenciaCubierta) documento.ocurrenciaCubierta = ocurrenciaEnTexto(completado.ocurrenciaCubierta);
 	if (completado.pasoAlCompletar !== undefined) documento.pasoAlCompletar = completado.pasoAlCompletar;
+	if (completado.fueMinima) documento.fueMinima = true;
 	return documento;
 }
 
@@ -204,6 +211,7 @@ function completadoDesde(snapshot: QueryDocumentSnapshot<DocumentData>): Complet
 	const completado: Completado = { id: snapshot.id, tareaId: datos.tareaId, completadoEn: datos.completadoEn.toDate() };
 	if (datos.ocurrenciaCubierta) completado.ocurrenciaCubierta = ocurrenciaDesdeTexto(datos.ocurrenciaCubierta);
 	if (datos.pasoAlCompletar !== undefined) completado.pasoAlCompletar = datos.pasoAlCompletar;
+	if (datos.fueMinima === true) completado.fueMinima = true;
 	return completado;
 }
 

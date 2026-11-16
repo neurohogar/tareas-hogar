@@ -1,10 +1,10 @@
 <script lang="ts">
-	let { nombre, regreso, alDeshacer }: { nombre: string; regreso?: string; alDeshacer: () => void } = $props();
+	let { texto, regreso, alDeshacer }: { texto: string; regreso?: string; alDeshacer: () => void } = $props();
 </script>
 
 <div class="aviso" role="status">
 	<div class="textos">
-		<span>Completaste «{nombre}»</span>
+		<span>{texto}</span>
 		{#if regreso}
 			<span class="regreso">{regreso}</span>
 		{/if}

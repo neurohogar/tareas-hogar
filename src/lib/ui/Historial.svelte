@@ -24,7 +24,7 @@
 				<li class="entrada">
 					<!-- El botón cubre la entrada fuera de Borrar: tocarla abre la edición de la tarea. -->
 					<button type="button" class="titulo" onclick={() => sesion.abrir(entrada.tarea)}>{nombreDeTarea(entrada.tarea)}</button>
-					<span class="hora">{entrada.hora}</span>
+					<span class="hora">{entrada.textoDeHora}</span>
 					<button type="button" class="borrar" onclick={() => (porBorrar = { entrada, encabezado })}>Borrar</button>
 				</li>
 			{/each}
@@ -38,7 +38,7 @@
 	{@const { entrada, encabezado } = porBorrar}
 	<div class="fondo" role="alertdialog" aria-modal="true" aria-labelledby="titulo-borrar-completado">
 		<div class="caja">
-			<p id="titulo-borrar-completado">¿Borrar «{nombreDeTarea(entrada.tarea)}» de {encabezado}, {entrada.hora}?</p>
+			<p id="titulo-borrar-completado">¿Borrar «{nombreDeTarea(entrada.tarea)}» de {encabezado}, {entrada.textoDeHora}?</p>
 			<div class="acciones">
 				<button type="button" onclick={() => (porBorrar = undefined)}>Cancelar</button>
 				<button type="button" class="principal" onclick={() => borrar(entrada)}>Borrar</button>

@@ -132,8 +132,9 @@
 		// La nota se lee del control, no de FormData, que cambia los saltos de línea por CRLF.
 		const nota = (formulario.elements.namedItem('nota') as HTMLTextAreaElement).value;
 		const primerPaso = String(campos.get('primerPaso') ?? '');
+		const versionMinima = String(campos.get('versionMinima') ?? '');
 		const horario = conHorario ? ventanas.map((ventana) => ({ ...ventana })) : undefined;
-		const comunes = { titulo: String(campos.get('titulo') ?? ''), emoji, nota, primerPaso, pasos: [...pasos], horario, ...(esfuerzo && { esfuerzo }) };
+		const comunes = { titulo: String(campos.get('titulo') ?? ''), emoji, nota, primerPaso, versionMinima, pasos: [...pasos], horario, ...(esfuerzo && { esfuerzo }) };
 		if (repeticion === 'puntual') {
 			const campoFecha = formulario.elements.namedItem('fechaLimite') as HTMLInputElement;
 			return { forma: 'puntual', ...comunes, fechaLimite: fechaLimiteDe(campoFecha) };
