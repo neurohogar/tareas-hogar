@@ -3,7 +3,7 @@ import { leerEmoji, type LecturaDeEmoji } from './emoji';
 import type { ErrorDeNombre } from './etiqueta';
 import { leerHorario, type ErrorDeHorario, type HorarioEscrito, type LecturaDeHorario } from './horario';
 import { camposDeTexto } from './campos-de-texto';
-import { normalizarNota } from './nota';
+import { recortarTexto } from './texto-libre';
 import { normalizarPasos } from './pasos';
 import type { Esfuerzo, Recurrencia, Tarea, TareaPeriodica } from './tarea';
 
@@ -32,7 +32,7 @@ const camposDeEmoji = (lectura: LecturaDeEmoji) => (lectura.ok && lectura.emoji 
 const camposDeHorario = (lectura: LecturaDeHorario) => (lectura.ok && lectura.horario ? { horario: lectura.horario } : {});
 
 /** Spec §4.1: la nota y la versión mínima se recortan; vacías o solo espacios son sin el campo. */
-const camposDeTextoLibre = (nota: string, versionMinima: string) => camposDeTexto({ nota: normalizarNota(nota), versionMinima: normalizarNota(versionMinima) });
+const camposDeTextoLibre = (nota: string, versionMinima: string) => camposDeTexto({ nota: recortarTexto(nota), versionMinima: recortarTexto(versionMinima) });
 
 /** Lo que distingue a un tipo de tarea, sin lo común (id, título, creadaEn). */
 type DatosDelTipo<T extends Tarea> = Omit<T, 'id' | 'titulo' | 'emoji' | 'nota' | 'primerPaso' | 'pasos' | 'versionMinima' | 'esfuerzo' | 'horario' | 'creadaEn' | 'etiquetas'>;
@@ -46,13 +46,13 @@ export interface DatosComunes {
 	titulo: string;
 	/** Tal como se escribió: leerEmoji lo valida (§4.1). */
 	emoji?: string;
-	/** Tal como se escribió: normalizarNota la recorta (§4.1). */
+	/** Tal como se escribió: recortarTexto lo recorta (§4.1). */
 	nota?: string;
 	/** Tal como se escribió: normalizarPasos lo recorta junto con los pasos más (§4.1). */
 	primerPaso?: string;
 	/** Los pasos 2 en adelante, tal como se escribieron, vacíos incluidos (§4.1, Pasos). */
 	pasos?: readonly string[];
-	/** Tal como se escribió: normalizarNota la recorta (§4.1, Versión mínima). */
+	/** Tal como se escribió: recortarTexto lo recorta (§4.1, Versión mínima). */
 	versionMinima?: string;
 	/** Tal como se escribió; sin él, la tarea no tiene horario. leerHorario lo valida (§4.1). */
 	horario?: HorarioEscrito;

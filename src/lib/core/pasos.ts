@@ -1,6 +1,6 @@
 // Spec §4.1 (Pasos): la lista de pasos de una tarea. El primer paso es el
 // paso 1 y `pasos` guarda los pasos 2, 3… en el orden escrito.
-import { normalizarNota } from './nota';
+import { recortarTexto } from './texto-libre';
 import type { Tarea } from './tarea';
 
 /** Los campos de la lista de pasos, como se guardan: sin el campo, no hay. */
@@ -19,7 +19,7 @@ const conTexto = (paso: string | undefined): paso is string => paso !== undefine
  * paso. Sin pasos más allá del primero, no hay campo pasos. Nunca inválido.
  */
 export function normalizarPasos(primerPaso = '', pasos: readonly string[] = []): CamposDePasos {
-	const [primero, ...resto] = [primerPaso, ...pasos].map(normalizarNota).filter(conTexto);
+	const [primero, ...resto] = [primerPaso, ...pasos].map(recortarTexto).filter(conTexto);
 	return { ...(primero && { primerPaso: primero }), ...(resto.length > 0 && { pasos: resto }) };
 }
 

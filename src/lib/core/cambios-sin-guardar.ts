@@ -5,7 +5,7 @@ import { crearSegunDatos, type DatosDeTarea } from './datos-de-tarea';
 import { leerEmoji } from './emoji';
 import { mismoNombre } from './etiqueta';
 import { leerHorario, type HorarioEscrito } from './horario';
-import { normalizarNota } from './nota';
+import { recortarTexto } from './texto-libre';
 import { normalizarPasos } from './pasos';
 
 /** Lo que Guardar considera del panel: los datos y los nombres de las etiquetas elegidas. */
@@ -39,7 +39,7 @@ function claveDeHorario(horario: HorarioEscrito | undefined) {
 
 /** Sin el campo y vacío son lo mismo (nota y versión mínima, §4.1). */
 function claveDeTextoLibre(texto = '') {
-	return normalizarNota(texto);
+	return recortarTexto(texto);
 }
 
 function claveDeEmoji(emoji = '') {
