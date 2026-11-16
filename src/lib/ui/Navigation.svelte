@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { page } from '$app/state';
 
-	const PESTANAS = [
-		{ ruta: '/', nombre: 'Pendientes' },
-		{ ruta: '/historial', nombre: 'Historial' },
-		{ ruta: '/etiquetas', nombre: 'Etiquetas' },
-		{ ruta: '/anotaciones', nombre: 'Anotaciones' }
+	const TABS = [
+		{ path: '/', name: 'Pendientes' },
+		{ path: '/historial', name: 'Historial' },
+		{ path: '/etiquetas', name: 'Etiquetas' },
+		{ path: '/anotaciones', name: 'Anotaciones' }
 	];
 </script>
 
 <nav class="navegacion" aria-label="Pantallas">
-	{#each PESTANAS as { ruta, nombre } (ruta)}
-		<a href={ruta} aria-current={page.url.pathname === ruta ? 'page' : undefined}>{nombre}</a>
+	{#each TABS as { path, name } (path)}
+		<a href={path} aria-current={page.url.pathname === path ? 'page' : undefined}>{name}</a>
 	{/each}
 </nav>
 

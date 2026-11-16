@@ -2,17 +2,17 @@
 	import { onMount } from 'svelte';
 
 	// Texto breve e informativo, sin botones, que se va solo (§5.10, §6.7).
-	let { texto, alIrse }: { texto: string; alIrse: () => void } = $props();
+	let { text, onLeave }: { text: string; onLeave: () => void } = $props();
 
-	const DURACION_MS = 5_000;
+	const DURATION_MS = 5_000;
 
 	onMount(() => {
-		const vencimiento = setTimeout(alIrse, DURACION_MS);
-		return () => clearTimeout(vencimiento);
+		const expiry = setTimeout(onLeave, DURATION_MS);
+		return () => clearTimeout(expiry);
 	});
 </script>
 
-<div class="confirmacion" role="status">{texto}</div>
+<div class="confirmacion" role="status">{text}</div>
 
 <style>
 	.confirmacion {

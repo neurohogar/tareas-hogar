@@ -2,56 +2,56 @@
 	import type { Label } from '#lib/core/label.ts';
 	import { chooseLabels, type ChosenLabel } from '#lib/core/typed-labels.ts';
 	import { addTyped, removeChosen, suggestions } from '#lib/core/label-panel.ts';
-	import ChipEtiqueta from './LabelChip.svelte';
-	import { MENSAJES_DE_NOMBRE } from './label-messages';
+	import LabelChip from './LabelChip.svelte';
+	import { NAME_MESSAGES } from './label-messages';
 
 	// Spec §6.2: el campo Etiquetas del panel. Guarda los nombres elegidos; las nuevas se crean al guardar la tarea.
 	let {
-		nombres = $bindable(),
-		existentes,
+		names = $bindable(),
+		existing,
 		error = $bindable(),
-		escrito = $bindable('')
-	}: { nombres: string[]; existentes: Label[]; error: string | undefined; escrito?: string } = $props();
+		typed = $bindable('')
+	}: { names: string[]; existing: Label[]; error: string | undefined; typed?: string } = $props();
 
-	const opciones = $derived(suggestions(escrito, existentes, nombres));
-	const abierta = $derived(escrito.trim() !== '');
+	const options = $derived(suggestions(typed, existing, names));
+	const listOpen = $derived(typed.trim() !== '');
 	/** Los chips, con el color que tendrán las nuevas al guardar. */
-	const elegidas = $derived.by((): ChosenLabel[] => {
-		const eleccion = chooseLabels(nombres, existentes);
-		return eleccion.ok ? eleccion.chosenItems : [];
+	const chosenLabels = $derived.by((): ChosenLabel[] => {
+		const choice = chooseLabels(names, existing);
+		return choice.ok ? choice.chosenItems : [];
 	});
 
-	function agregar(nombre: string) {
-		const resultado = addTyped(nombre, existentes, nombres);
-		if (!resultado.ok) {
-			error = MENSAJES_DE_NOMBRE[resultado.error];
+	function add(name: string) {
+		const result = addTyped(name, existing, names);
+		if (!result.ok) {
+			error = NAME_MESSAGES[result.error];
 			return;
 		}
-		nombres = resultado.names;
-		escrito = '';
+		names = result.names;
+		typed = '';
 		error = undefined;
 	}
 
-	function alTeclear(evento: KeyboardEvent) {
-		if (evento.key !== 'Enter') return;
-		evento.preventDefault();
-		agregar(escrito);
+	function onType(event: KeyboardEvent) {
+		if (event.key !== 'Enter') return;
+		event.preventDefault();
+		add(typed);
 	}
 </script>
 
 <div class="campo">
 	<label for="campo-etiquetas">Etiquetas</label>
-	{#if elegidas.length > 0}
+	{#if chosenLabels.length > 0}
 		<ul class="chips" aria-label="Etiquetas de la tarea">
-			{#each elegidas as etiqueta (etiqueta.name)}
-				<ChipEtiqueta {etiqueta}>
+			{#each chosenLabels as label (label.name)}
+				<LabelChip {label}>
 					<button
 						type="button"
 						class="quitar"
-						aria-label={`Quitar «${etiqueta.name}»`}
-						onclick={() => (nombres = removeChosen(etiqueta.name, nombres))}>×</button
+						aria-label={`Quitar «${label.name}»`}
+						onclick={() => (names = removeChosen(label.name, names))}>×</button
 					>
-				</ChipEtiqueta>
+				</LabelChip>
 			{/each}
 		</ul>
 	{/if}
@@ -60,24 +60,24 @@
 		role="combobox"
 		autocomplete="off"
 		aria-autocomplete="list"
-		aria-expanded={abierta}
+		aria-expanded={listOpen}
 		aria-controls="sugerencias-etiquetas"
 		aria-invalid={error ? 'true' : undefined}
 		aria-describedby={error ? 'error-etiquetas' : undefined}
-		bind:value={escrito}
+		bind:value={typed}
 		oninput={() => (error = undefined)}
-		onkeydown={alTeclear}
+		onkeydown={onType}
 	/>
-	{#if abierta}
+	{#if listOpen}
 		<ul id="sugerencias-etiquetas" class="sugerencias" role="listbox" aria-label="Sugerencias de etiquetas">
-			{#each opciones.labels as etiqueta (etiqueta.id)}
+			{#each options.labels as label (label.id)}
 				<!-- svelte-ignore a11y_click_events_have_key_events: Enter en el campo elige con el teclado -->
-				<li role="option" aria-selected="false" tabindex="-1" onclick={() => agregar(etiqueta.name)}>{etiqueta.name}</li>
+				<li role="option" aria-selected="false" tabindex="-1" onclick={() => add(label.name)}>{label.name}</li>
 			{/each}
-			{#if opciones.create !== undefined}
-				{@const crear = opciones.create}
+			{#if options.create !== undefined}
+				{@const create = options.create}
 				<!-- svelte-ignore a11y_click_events_have_key_events: Enter en el campo elige con el teclado -->
-				<li role="option" aria-selected="false" tabindex="-1" onclick={() => agregar(crear)}>Crear «{crear}»</li>
+				<li role="option" aria-selected="false" tabindex="-1" onclick={() => add(create)}>Crear «{create}»</li>
 			{/if}
 		</ul>
 	{/if}

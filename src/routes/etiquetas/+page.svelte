@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Etiquetas from '#lib/ui/Labels.svelte';
+	import Labels from '#lib/ui/Labels.svelte';
 </script>
 
-<Etiquetas />
+<Labels />

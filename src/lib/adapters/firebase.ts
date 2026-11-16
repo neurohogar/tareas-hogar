@@ -23,8 +23,8 @@ export const db = initializeFirestore(app, {
 	localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
 
-const usaEmuladores = env.DEV || env.MODE === 'qa';
-if (usaEmuladores) {
+const usesEmulators = env.DEV || env.MODE === 'qa';
+if (usesEmulators) {
 	connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
 	connectFirestoreEmulator(db, '127.0.0.1', 8080);
 }

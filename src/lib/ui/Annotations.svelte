@@ -1,59 +1,59 @@
 <script lang="ts">
-	import { copiarAlPortapapeles } from '#lib/adapters/clipboard.ts';
+	import { copyToClipboard } from '#lib/adapters/clipboard.ts';
 	import type { Annotation } from '#lib/core/annotation.ts';
 	import { annotationsOnScreen } from '#lib/core/annotations.ts';
 	import { annotationsText } from '#lib/core/copied-annotations.ts';
-	import AnotarConfirmacion from './AnnotateConfirmation.svelte';
-	import { laSesion } from './session';
+	import AnnotateConfirmation from './AnnotateConfirmation.svelte';
+	import { useSession } from './session';
 
 	// Spec §6.7: releer las anotaciones, corregir su texto, borrarlas y copiarlas.
-	const sesion = laSesion();
-	const grupos = $derived(annotationsOnScreen(sesion.tareas, sesion.anotaciones, sesion.ahora));
+	const session = useSession();
+	const groups = $derived(annotationsOnScreen(session.tasks, session.annotations, session.now));
 
-	let editando = $state<{ anotacion: Annotation; texto: string } | undefined>(undefined);
-	let porBorrar = $state.raw<Annotation | undefined>(undefined);
+	let editing = $state<{ annotation: Annotation; text: string } | undefined>(undefined);
+	let toDelete = $state.raw<Annotation | undefined>(undefined);
 	/** El aviso de la última copia (un solo texto a la vez); cada copia reinicia su cuenta de 5 s. */
-	let aviso = $state<{ texto: string; numero: number } | undefined>(undefined);
-	let copias = 0;
+	let notice = $state<{ text: string; count: number } | undefined>(undefined);
+	let copies = 0;
 
-	function guardarTexto(evento: SubmitEvent) {
-		evento.preventDefault();
-		if (!editando) return;
-		sesion.editarTextoDeAnotacion(editando.anotacion, editando.texto);
-		editando = undefined;
+	function saveText(event: SubmitEvent) {
+		event.preventDefault();
+		if (!editing) return;
+		session.editAnnotationText(editing.annotation, editing.text);
+		editing = undefined;
 	}
 
-	function borrar(anotacion: Annotation) {
-		porBorrar = undefined;
-		sesion.borrarAnotacion(anotacion);
+	function deleteAnnotation(annotation: Annotation) {
+		toDelete = undefined;
+		session.deleteAnnotation(annotation);
 	}
 
-	async function copiar() {
-		const texto = annotationsText(sesion.tareas, sesion.anotaciones);
-		if (texto === undefined) return;
-		const copiado = await copiarAlPortapapeles(texto);
-		aviso = { texto: copiado ? 'Anotaciones copiadas' : 'No se pudo copiar', numero: ++copias };
+	async function copy() {
+		const text = annotationsText(session.tasks, session.annotations);
+		if (text === undefined) return;
+		const copied = await copyToClipboard(text);
+		notice = { text: copied ? 'Anotaciones copiadas' : 'No se pudo copiar', count: ++copies };
 	}
 </script>
 
 <section>
 	<h1>Anotaciones</h1>
-	<button type="button" class="copiar" onclick={copiar}>Copiar</button>
-	{#each grupos as { header: encabezado, entries: entradas } (encabezado)}
-		<h2>{encabezado}</h2>
+	<button type="button" class="copiar" onclick={copy}>Copiar</button>
+	{#each groups as { header, entries } (header)}
+		<h2>{header}</h2>
 		<ul class="lista">
-			{#each entradas as { annotation: anotacion, hour: hora, taskName: nombreDeTarea } (anotacion.id)}
+			{#each entries as { annotation, hour, taskName } (annotation.id)}
 				<li class="entrada">
 					<div class="datos">
-						<span class="hora">{hora}</span>
-						<span class="sentido">{anotacion.sense}</span>
-						<span class="pantalla">{anotacion.screen}</span>
-						{#if nombreDeTarea}<span class="tarea">{nombreDeTarea}</span>{/if}
-						{#if anotacion.text}<span class="texto">{anotacion.text}</span>{/if}
+						<span class="hora">{hour}</span>
+						<span class="sentido">{annotation.sense}</span>
+						<span class="pantalla">{annotation.screen}</span>
+						{#if taskName}<span class="tarea">{taskName}</span>{/if}
+						{#if annotation.text}<span class="texto">{annotation.text}</span>{/if}
 					</div>
 					<div class="acciones-entrada">
-						<button type="button" onclick={() => (editando = { anotacion, texto: anotacion.text ?? '' })}>Editar texto</button>
-						<button type="button" class="borrar" onclick={() => (porBorrar = anotacion)}>Borrar</button>
+						<button type="button" onclick={() => (editing = { annotation, text: annotation.text ?? '' })}>Editar texto</button>
+						<button type="button" class="borrar" onclick={() => (toDelete = annotation)}>Borrar</button>
 					</div>
 				</li>
 			{/each}
@@ -63,16 +63,16 @@
 	{/each}
 </section>
 
-{#if editando}
+{#if editing}
 	<div class="fondo">
 		<div class="caja" role="dialog" aria-modal="true" aria-label="Editar texto">
-			<form onsubmit={guardarTexto}>
+			<form onsubmit={saveText}>
 				<label class="campo">
 					Texto
-					<input type="text" bind:value={editando.texto} />
+					<input type="text" bind:value={editing.text} />
 				</label>
 				<div class="acciones">
-					<button type="button" onclick={() => (editando = undefined)}>Cancelar</button>
+					<button type="button" onclick={() => (editing = undefined)}>Cancelar</button>
 					<button type="submit" class="principal">Guardar</button>
 				</div>
 			</form>
@@ -80,22 +80,22 @@
 	</div>
 {/if}
 
-{#if porBorrar}
-	{@const anotacion = porBorrar}
+{#if toDelete}
+	{@const annotation = toDelete}
 	<div class="fondo" role="alertdialog" aria-modal="true" aria-labelledby="titulo-borrar-anotacion">
 		<div class="caja">
-			<p id="titulo-borrar-anotacion">¿Borrar la anotación «{anotacion.sense}»?</p>
+			<p id="titulo-borrar-anotacion">¿Borrar la anotación «{annotation.sense}»?</p>
 			<div class="acciones">
-				<button type="button" onclick={() => (porBorrar = undefined)}>Cancelar</button>
-				<button type="button" class="principal" onclick={() => borrar(anotacion)}>Borrar</button>
+				<button type="button" onclick={() => (toDelete = undefined)}>Cancelar</button>
+				<button type="button" class="principal" onclick={() => deleteAnnotation(annotation)}>Borrar</button>
 			</div>
 		</div>
 	</div>
 {/if}
 
-{#if aviso}
-	{#key aviso.numero}
-		<AnotarConfirmacion texto={aviso.texto} alIrse={() => (aviso = undefined)} />
+{#if notice}
+	{#key notice.count}
+		<AnnotateConfirmation text={notice.text} onLeave={() => (notice = undefined)} />
 	{/key}
 {/if}
 

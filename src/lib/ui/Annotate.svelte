@@ -1,63 +1,63 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { tomarAtras } from '#lib/adapters/back.ts';
+	import { takeBack } from '#lib/adapters/back.ts';
 	import type { Sense } from '#lib/core/annotation.ts';
-	import AnotarConfirmacion from './AnnotateConfirmation.svelte';
-	import { laSesion } from './session';
+	import AnnotateConfirmation from './AnnotateConfirmation.svelte';
+	import { useSession } from './session';
 
 	// Spec §5.10: un botón chico, siempre arriba en el mismo lugar, y el recuadro de los dos toques.
-	const sesion = laSesion();
-	let texto = $state('');
-	let campo = $state<HTMLInputElement>();
+	const session = useSession();
+	let text = $state('');
+	let field = $state<HTMLInputElement>();
 	/** Cuántas veces se guardó: cada una muestra su confirmación. */
-	let guardadas = $state(0);
-	let confirmando = $state(false);
+	let savedCount = $state(0);
+	let confirming = $state(false);
 
-	function abrir() {
-		texto = '';
-		sesion.abrirAnotar();
-		void tick().then(() => campo?.focus());
+	function openBox() {
+		text = '';
+		session.openAnnotate();
+		void tick().then(() => field?.focus());
 	}
 
-	function elegir(sentido: Sense) {
-		sesion.anotar(sentido, texto);
-		confirmando = true;
-		guardadas++;
+	function choose(sense: Sense) {
+		session.annotate(sense, text);
+		confirming = true;
+		savedCount++;
 	}
 
 	// Con el panel abierto, Atrás lo maneja el panel; si no, el recuadro toma su propia entrada (§6.2).
 	$effect(() => {
-		if (!sesion.anotando || sesion.hayPanel) return;
-		const capa = tomarAtras(() => {
-			sesion.cerrarAnotar();
+		if (!session.annotating || session.hasPanel) return;
+		const layer = takeBack(() => {
+			session.closeAnnotate();
 			return false;
 		});
-		return () => capa.soltar();
+		return () => layer.release();
 	});
 </script>
 
-<svelte:window onkeydown={(evento) => evento.key === 'Escape' && sesion.anotando && sesion.cerrarAnotar()} />
+<svelte:window onkeydown={(event) => event.key === 'Escape' && session.annotating && session.closeAnnotate()} />
 
-<button type="button" class="anotar" onclick={abrir}>Anotar</button>
+<button type="button" class="anotar" onclick={openBox}>Anotar</button>
 
-{#if sesion.anotando}
+{#if session.annotating}
 	<div class="fondo">
 		<div class="caja" role="dialog" aria-modal="true" aria-label="Anotar">
 			<label class="campo">
 				Texto
-				<input type="text" bind:this={campo} bind:value={texto} onkeydown={(evento) => evento.key === 'Enter' && evento.preventDefault()} />
+				<input type="text" bind:this={field} bind:value={text} onkeydown={(event) => event.key === 'Enter' && event.preventDefault()} />
 			</label>
 			<div class="acciones">
-				<button type="button" onclick={() => elegir('Me sirvió')}>Me sirvió</button>
-				<button type="button" onclick={() => elegir('Me molestó')}>Me molestó</button>
+				<button type="button" onclick={() => choose('Me sirvió')}>Me sirvió</button>
+				<button type="button" onclick={() => choose('Me molestó')}>Me molestó</button>
 			</div>
 		</div>
 	</div>
 {/if}
 
-{#key guardadas}
-	{#if confirmando}
-		<AnotarConfirmacion texto="Anotación guardada" alIrse={() => (confirmando = false)} />
+{#key savedCount}
+	{#if confirming}
+		<AnnotateConfirmation text="Anotación guardada" onLeave={() => (confirming = false)} />
 	{/if}
 {/key}
 

@@ -1,19 +1,19 @@
 <script lang="ts">
 	import { connectionStrip } from '#lib/core/connection.ts';
-	import { enLineaReactivo } from './online.svelte';
+	import { onlineState } from './online.svelte';
 
-	const enLinea = enLineaReactivo();
-	const texto = $derived(connectionStrip(enLinea.valor));
+	const online = onlineState();
+	const text = $derived(connectionStrip(online.value));
 
 	// Mientras se ve, el panel a pantalla completa empieza debajo de ella.
 	$effect(() => {
-		if (!texto) return;
+		if (!text) return;
 		document.documentElement.style.setProperty('--alto-franja', '1.5rem');
 		return () => document.documentElement.style.removeProperty('--alto-franja');
 	});
 </script>
 
-{#if texto}<div class="franja" role="status">{texto}</div>{/if}
+{#if text}<div class="franja" role="status">{text}</div>{/if}
 
 <style>
 	.franja {

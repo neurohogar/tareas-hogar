@@ -1,34 +1,34 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import '#lib/ui/styles.css';
-	import { observarUsuario, type Usuario } from '#lib/adapters/auth.ts';
+	import { observeUser, type User } from '#lib/adapters/auth.ts';
 	import type { AuthResponse } from '#lib/core/loading-screen.ts';
 	import Login from '#lib/ui/Login.svelte';
-	import PantallaDeCarga, { type DatosRespondieron } from '#lib/ui/LoadingScreen.svelte';
-	import Sesion from '#lib/ui/Session.svelte';
+	import LoadingScreen, { type CollectionsResponded } from '#lib/ui/LoadingScreen.svelte';
+	import Session from '#lib/ui/Session.svelte';
 
 	let { children } = $props();
 
 	/** undefined mientras Auth todavía no respondió. */
-	let usuario = $state<Usuario | null | undefined>(undefined);
-	const auth = $derived<AuthResponse>(usuario === undefined ? 'esperando' : usuario ? 'con-sesion' : 'sin-sesion');
-	let datos = $state.raw<DatosRespondieron>({ tareas: false, completados: false, etiquetas: false });
+	let user = $state<User | null | undefined>(undefined);
+	const auth = $derived<AuthResponse>(user === undefined ? 'esperando' : user ? 'con-sesion' : 'sin-sesion');
+	let data = $state.raw<CollectionsResponded>({ tasks: false, completions: false, labels: false });
 	/** Spec §6.6: una sola vez por arranque; entrar con Google no la vuelve a mostrar. */
-	let cargando = $state(true);
+	let loading = $state(true);
 
-	onMount(() => observarUsuario((actual) => (usuario = actual)));
+	onMount(() => observeUser((current) => (user = current)));
 </script>
 
-<PantallaDeCarga {auth} {datos} alIrse={() => (cargando = false)} />
+<LoadingScreen {auth} {data} onLeave={() => (loading = false)} />
 
 <!-- Lo que se monta detrás de la pantalla de carga no se ve ni se puede tocar hasta que se va. -->
-<main style:visibility={cargando ? 'hidden' : undefined}>
-	{#if usuario === null}
+<main style:visibility={loading ? 'hidden' : undefined}>
+	{#if user === null}
 		<Login />
-	{:else if usuario}
+	{:else if user}
 		<!-- La sesión vive en el layout: los datos y el aviso siguen al cambiar de pantalla. -->
-		{#key usuario.uid}
-			<Sesion uid={usuario.uid} alResponderDatos={(respondieron) => (datos = respondieron)}>{@render children()}</Sesion>
+		{#key user.uid}
+			<Session uid={user.uid} onCollectionsResponded={(responded) => (data = responded)}>{@render children()}</Session>
 		{/key}
 	{/if}
 </main>

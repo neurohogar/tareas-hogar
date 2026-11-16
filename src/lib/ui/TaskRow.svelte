@@ -7,112 +7,112 @@
 	import type { StepButtons } from '#lib/core/current-step.ts';
 	import type { MinimalLine } from '#lib/core/minimal-version.ts';
 	import type { Task } from '#lib/core/task.ts';
-	import ChipEtiqueta from './LabelChip.svelte';
+	import LabelChip from './LabelChip.svelte';
 
 	let {
-		tarea,
-		estado,
-		completada,
-		textoDeFecha,
-		textoDePrimerPaso,
-		botonesDePaso,
-		minima,
-		habilitado,
-		etiquetas,
-		alTocarCheckbox,
-		alMinima,
-		alHecho,
-		alPasoAnterior,
-		alAbrir
+		task,
+		status,
+		completed,
+		dateText,
+		firstStepText,
+		stepButtons,
+		minimal,
+		enabled,
+		labels,
+		onCheckboxTap,
+		onMinimal,
+		onDone,
+		onPreviousStep,
+		onOpen
 	}: {
-		tarea: Task;
-		estado: Status;
+		task: Task;
+		status: Status;
 		/** Spec §6.1 (Contraste): tachada, en peso normal y atenuada, con el checkbox marcado. */
-		completada: boolean;
+		completed: boolean;
 		/** «Tocaba …» o «Vuelve …» (§6.1), ya armado por el core; sin él, la fila no lleva texto de fecha. */
-		textoDeFecha?: string;
+		dateText?: string;
 		/** «Primer paso: …» (§6.1), ya armado por el core; sin él, la fila no lleva esa línea. */
-		textoDePrimerPaso?: string;
+		firstStepText?: string;
 		/** «Paso anterior» y «Hecho» (§6.1), según el core; sin ellos, la línea no lleva botones. */
-		botonesDePaso?: StepButtons;
+		stepButtons?: StepButtons;
 		/** «Mínima: …» y si «Hice la mínima» está habilitado (§6.1), según el core; sin ella, la fila no lleva esa línea. */
-		minima?: MinimalLine;
+		minimal?: MinimalLine;
 		/** Spec §6.1 y §5.5: deshabilitado si tocarlo completaría fuera de la ventana del horario. */
-		habilitado: boolean;
+		enabled: boolean;
 		/** Las etiquetas de la tarea, ya en orden (§4.3). */
-		etiquetas: Label[];
-		alTocarCheckbox: () => void;
-		alMinima: () => void;
-		alHecho: () => void;
-		alPasoAnterior: () => void;
-		alAbrir: () => void;
+		labels: Label[];
+		onCheckboxTap: () => void;
+		onMinimal: () => void;
+		onDone: () => void;
+		onPreviousStep: () => void;
+		onOpen: () => void;
 	} = $props();
 
-	const nombre = $derived(taskName(tarea));
-	const nivel = $derived(effortText(tarea.effort));
+	const name = $derived(taskName(task));
+	const level = $derived(effortText(task.effort));
 
-	function tocar(evento: Event) {
+	function tap(event: Event) {
 		// Marcado se deriva de los completados: el checkbox vuelve a su valor hasta que llegan.
-		(evento.currentTarget as HTMLInputElement).checked = completada;
-		alTocarCheckbox();
+		(event.currentTarget as HTMLInputElement).checked = completed;
+		onCheckboxTap();
 	}
 </script>
 
-<li class="fila" class:en-espera={estado.kind === 'en espera'} class:pausada={estado.kind === 'pausada'} class:completada>
+<li class="fila" class:en-espera={status.kind === 'en espera'} class:pausada={status.kind === 'pausada'} class:completed>
 	<label class="area-checkbox">
-		<input type="checkbox" checked={completada} disabled={!habilitado} aria-label={`Completar ${nombre}`} onchange={tocar} />
+		<input type="checkbox" checked={completed} disabled={!enabled} aria-label={`Completar ${name}`} onchange={tap} />
 	</label>
 	<div class="contenido">
 		<!-- El botón cubre toda la fila fuera del checkbox: tocarla abre la edición. -->
-		<button type="button" class="titulo" onclick={alAbrir}>{nombre}</button>
-		{#if textoDePrimerPaso}
+		<button type="button" class="titulo" onclick={onOpen}>{name}</button>
+		{#if firstStepText}
 			<div class="linea-paso">
-				<p class="primer-paso">{textoDePrimerPaso}</p>
-				{#if botonesDePaso}
-					{#if botonesDePaso.previousStep}
-						<button type="button" class="boton-paso" onclick={alPasoAnterior}>Paso anterior</button>
+				<p class="primer-paso">{firstStepText}</p>
+				{#if stepButtons}
+					{#if stepButtons.previousStep}
+						<button type="button" class="boton-paso" onclick={onPreviousStep}>Paso anterior</button>
 					{/if}
-					<button type="button" class="boton-paso" disabled={!botonesDePaso.doneEnabled} onclick={alHecho}>Hecho</button>
+					<button type="button" class="boton-paso" disabled={!stepButtons.doneEnabled} onclick={onDone}>Hecho</button>
 				{/if}
 			</div>
 		{/if}
-		{#if minima}
+		{#if minimal}
 			<div class="linea-paso">
-				<p class="primer-paso">{minima.text}</p>
-				<button type="button" class="boton-paso" disabled={!minima.enabled} onclick={alMinima}>Hice la mínima</button>
+				<p class="primer-paso">{minimal.text}</p>
+				<button type="button" class="boton-paso" disabled={!minimal.enabled} onclick={onMinimal}>Hice la mínima</button>
 			</div>
 		{/if}
-		{#if etiquetas.length > 0}
+		{#if labels.length > 0}
 			<!-- Debajo del botón de la fila: tocar un chip es tocar la fila, no filtra. -->
 			<ul class="chips" aria-label="Etiquetas">
-				{#each etiquetas as etiqueta (etiqueta.id)}
-					<ChipEtiqueta {etiqueta} />
+				{#each labels as label (label.id)}
+					<LabelChip {label} />
 				{/each}
 			</ul>
 		{/if}
-		{#if nivel}
-			<span class="esfuerzo">{nivel}</span>
+		{#if level}
+			<span class="esfuerzo">{level}</span>
 		{/if}
-		{#if tarea.schedule}
-			<span class="horario">{scheduleText(tarea.schedule)}</span>
+		{#if task.schedule}
+			<span class="horario">{scheduleText(task.schedule)}</span>
 		{/if}
-		{#if estado.kind === 'pausada'}
+		{#if status.kind === 'pausada'}
 			<span class="estado-pausada">Pausada</span>
 		{/if}
-		{#if textoDeFecha}
-			<span class="texto-de-fecha">{textoDeFecha}</span>
+		{#if dateText}
+			<span class="texto-de-fecha">{dateText}</span>
 		{/if}
-		{#if estado.kind === 'en espera'}
-			{@const porcentaje = progressPercentage(estado.progress)}
+		{#if status.kind === 'en espera'}
+			{@const percentage = progressPercentage(status.progress)}
 			<div
 				class="barra"
 				role="progressbar"
-				aria-label={`Tiempo hasta que vuelve ${nombre}`}
+				aria-label={`Tiempo hasta que vuelve ${name}`}
 				aria-valuemin={0}
 				aria-valuemax={100}
-				aria-valuenow={porcentaje}
+				aria-valuenow={percentage}
 			>
-				<div class="relleno" style:width={`${porcentaje}%`}></div>
+				<div class="relleno" style:width={`${percentage}%`}></div>
 			</div>
 		{/if}
 	</div>
@@ -216,7 +216,7 @@
 		cursor: pointer;
 	}
 
-	.completada .titulo {
+	.completed .titulo {
 		font-weight: 400;
 		text-decoration-line: line-through;
 		opacity: 0.6;

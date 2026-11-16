@@ -4,23 +4,23 @@
 
 	/** El contenedor de una sección del panel: tabpanel en pestañas, bloque con título en secciones seguidas. */
 	let {
-		nombre,
-		presentacion,
-		abierta,
+		name,
+		presentation,
+		openSection,
 		children
-	}: { nombre: PanelSection; presentacion: PanelPresentation; abierta: PanelSection; children: Snippet } = $props();
+	}: { name: PanelSection; presentation: PanelPresentation; openSection: PanelSection; children: Snippet } = $props();
 
-	const enPestanas = $derived(presentacion === 'pestanas');
+	const inTabs = $derived(presentation === 'pestanas');
 </script>
 
 <section
 	class="seccion"
-	id="seccion-{nombre}"
-	role={enPestanas ? 'tabpanel' : undefined}
-	aria-labelledby={enPestanas ? `pestana-${nombre}` : `titulo-${nombre}`}
-	hidden={enPestanas && abierta !== nombre}
+	id="seccion-{name}"
+	role={inTabs ? 'tabpanel' : undefined}
+	aria-labelledby={inTabs ? `pestana-${name}` : `titulo-${name}`}
+	hidden={inTabs && openSection !== name}
 >
-	{#if !enPestanas}<h3 id="titulo-{nombre}">{nombre}</h3>{/if}
+	{#if !inTabs}<h3 id="titulo-{name}">{name}</h3>{/if}
 	{@render children()}
 </section>
 

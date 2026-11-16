@@ -1,34 +1,34 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	// El catálogo en español viaja con el build (nada se pide a un CDN) y el service worker lo precachea.
-	import datosEnEspanol from 'emoji-picker-element-data/es/cldr/data.json?url';
+	import spanishData from 'emoji-picker-element-data/es/cldr/data.json?url';
 
 	/** La librería busca desde dos caracteres. */
-	const MINIMO_DE_BUSQUEDA = 2;
+	const MIN_SEARCH_LENGTH = 2;
 
 	let {
-		recientes,
-		alElegir,
-		alCerrar
+		recents,
+		onChoose,
+		onClose
 	}: {
 		/** Los últimos emojis elegidos en este dispositivo, del más reciente al más viejo. */
-		recientes: string[];
-		alElegir: (emoji: string) => void;
-		alCerrar: () => void;
+		recents: string[];
+		onChoose: (emoji: string) => void;
+		onClose: () => void;
 	} = $props();
 
 	let panel: HTMLDivElement;
-	let contenedor: HTMLDivElement;
-	let cargando = $state(true);
-	let sinResultados = $state(false);
+	let container: HTMLDivElement;
+	let loading = $state(true);
+	let noResults = $state(false);
 
 	/** La librería no avisa cuando una búsqueda no encuentra nada: se deduce de su grilla. */
-	function vigilarBusqueda(selector: HTMLElement) {
-		const raiz = selector.shadowRoot;
-		if (!raiz) return;
-		const hayBusqueda = () => (raiz.querySelector<HTMLInputElement>('input.search')?.value.trim().length ?? 0) >= MINIMO_DE_BUSQUEDA;
-		const hayResultados = () => raiz.querySelector('.tabpanel button.emoji') !== null;
-		new MutationObserver(() => (sinResultados = hayBusqueda() && !hayResultados())).observe(raiz, { subtree: true, childList: true });
+	function watchSearch(pickerElement: HTMLElement) {
+		const root = pickerElement.shadowRoot;
+		if (!root) return;
+		const hasSearch = () => (root.querySelector<HTMLInputElement>('input.search')?.value.trim().length ?? 0) >= MIN_SEARCH_LENGTH;
+		const hasResults = () => root.querySelector('.tabpanel button.emoji') !== null;
+		new MutationObserver(() => (noResults = hasSearch() && !hasResults())).observe(root, { subtree: true, childList: true });
 	}
 
 	// La librería se carga de forma diferida: solo pesa cuando se abre el selector.
@@ -37,45 +37,45 @@
 			import('emoji-picker-element'),
 			import('emoji-picker-element/i18n/es')
 		]);
-		const selector = new Picker({ dataSource: datosEnEspanol, locale: 'es', i18n });
-		selector.addEventListener('emoji-click', (evento) => alElegir(evento.detail.unicode ?? ''));
-		contenedor.append(selector);
-		cargando = false;
-		vigilarBusqueda(selector);
+		const pickerElement = new Picker({ dataSource: spanishData, locale: 'es', i18n });
+		pickerElement.addEventListener('emoji-click', (event) => onChoose(event.detail.unicode ?? ''));
+		container.append(pickerElement);
+		loading = false;
+		watchSearch(pickerElement);
 		// Focus goes to the dialog, not the search field, so the on-screen keyboard stays down until it is tapped (spec §6).
 		panel.focus();
 	});
 
-	function alTeclear(evento: KeyboardEvent) {
-		if (evento.key !== 'Escape') return;
-		evento.stopPropagation();
-		alCerrar();
+	function onType(event: KeyboardEvent) {
+		if (event.key !== 'Escape') return;
+		event.stopPropagation();
+		onClose();
 	}
 </script>
 
-<svelte:window onkeydown={alTeclear} />
+<svelte:window onkeydown={onType} />
 
 <div class="panel" role="dialog" aria-modal="true" aria-label="Elegir emoji" tabindex="-1" bind:this={panel}>
 	<div class="caja">
 		<div class="encabezado">
 			<h2>Elegir emoji</h2>
-			<button type="button" class="cerrar" onclick={alCerrar}>Cerrar</button>
+			<button type="button" class="cerrar" onclick={onClose}>Cerrar</button>
 		</div>
-		{#if recientes.length > 0}
+		{#if recents.length > 0}
 			<section aria-labelledby="titulo-recientes">
 				<h3 id="titulo-recientes">Recientes</h3>
 				<ul>
-					{#each recientes as emoji (emoji)}
-						<li><button type="button" aria-label={emoji} onclick={() => alElegir(emoji)}>{emoji}</button></li>
+					{#each recents as emoji (emoji)}
+						<li><button type="button" aria-label={emoji} onclick={() => onChoose(emoji)}>{emoji}</button></li>
 					{/each}
 				</ul>
 			</section>
 		{/if}
-		{#if cargando}
+		{#if loading}
 			<p class="cargando">Cargando…</p>
 		{/if}
-		<div class="catalogo" bind:this={contenedor}></div>
-		{#if sinResultados}
+		<div class="catalogo" bind:this={container}></div>
+		{#if noResults}
 			<p class="cargando" role="status">No se encontró ningún emoji.</p>
 		{/if}
 	</div>

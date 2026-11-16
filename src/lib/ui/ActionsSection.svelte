@@ -2,49 +2,49 @@
 	import { optionAction, type PanelAction } from '#lib/core/panel-action.ts';
 	import { POSTPONE_OPTIONS } from '#lib/core/postponement.ts';
 	import type { PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
-	import Icono from './icons/Icon.svelte';
-	import MarcoDeSeccion from './SectionFrame.svelte';
+	import Icon from './icons/Icon.svelte';
+	import SectionFrame from './SectionFrame.svelte';
 
-	const ICONOS_DE_POSPONER = { '1 hora': 'reloj', '3 horas': 'reloj', 'hasta mañana': 'manana' } as const;
+	const POSTPONE_ICONS = { '1 hora': 'clock', '3 horas': 'clock', 'hasta mañana': 'tomorrow' } as const;
 
 	let {
-		presentacion,
-		abierta,
-		posponer,
-		pausa,
-		alElegir,
-		alPedirBorrado
+		presentation,
+		openSection,
+		postpone,
+		pause,
+		onChoose,
+		onRequestDelete
 	}: {
-		presentacion: PanelPresentation;
-		abierta: PanelSection;
-		posponer?: 'posponer' | 'quitar';
-		pausa?: 'pausar' | 'reanudar';
+		presentation: PanelPresentation;
+		openSection: PanelSection;
+		postpone?: 'posponer' | 'quitar';
+		pause?: 'pausar' | 'reanudar';
 		/** Elige una acción; el panel decide si actúa o pide confirmación (§6.2). */
-		alElegir: (accion: PanelAction) => void;
+		onChoose: (action: PanelAction) => void;
 		/** Abre la confirmación de Borrar tarea. */
-		alPedirBorrado: () => void;
+		onRequestDelete: () => void;
 	} = $props();
 </script>
 
-<MarcoDeSeccion nombre="Acciones" {presentacion} {abierta}>
-	{#if posponer === 'posponer'}
+<SectionFrame name="Acciones" {presentation} {openSection}>
+	{#if postpone === 'posponer'}
 		<div class="grupo" role="group" aria-label="Posponer">
-			{#each POSTPONE_OPTIONS as { option: opcion, label: etiqueta } (opcion)}
-				<button type="button" class="accion" onclick={() => alElegir(optionAction(opcion))}>
-					<Icono nombre={ICONOS_DE_POSPONER[opcion]} />{etiqueta}
+			{#each POSTPONE_OPTIONS as { option, label } (option)}
+				<button type="button" class="accion" onclick={() => onChoose(optionAction(option))}>
+					<Icon name={POSTPONE_ICONS[option]} />{label}
 				</button>
 			{/each}
 		</div>
-	{:else if posponer === 'quitar'}
-		<button type="button" class="accion" onclick={() => alElegir('quitar posponer')}><Icono nombre="quitar-posponer" />Quitar posponer</button>
+	{:else if postpone === 'quitar'}
+		<button type="button" class="accion" onclick={() => onChoose('quitar posponer')}><Icon name="unpostpone" />Quitar posponer</button>
 	{/if}
-	{#if pausa}
-		<button type="button" class="accion" onclick={() => alElegir(pausa)}>
-			<Icono nombre={pausa === 'pausar' ? 'pausar' : 'reanudar'} />{pausa === 'pausar' ? 'Pausar' : 'Reanudar'}
+	{#if pause}
+		<button type="button" class="accion" onclick={() => onChoose(pause)}>
+			<Icon name={pause === 'pausar' ? 'pause' : 'resume'} />{pause === 'pausar' ? 'Pausar' : 'Reanudar'}
 		</button>
 	{/if}
-	<button type="button" class="accion borrar" onclick={alPedirBorrado}><Icono nombre="borrar" />Borrar tarea</button>
-</MarcoDeSeccion>
+	<button type="button" class="accion borrar" onclick={onRequestDelete}><Icon name="delete" />Borrar tarea</button>
+</SectionFrame>
 
 <style>
 	.grupo {

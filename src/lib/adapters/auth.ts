@@ -2,14 +2,14 @@ import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from 'firebas
 import { auth } from './firebase';
 
 /** Lo único que la UI necesita del usuario de Firebase Auth. */
-export interface Usuario {
+export interface User {
 	uid: string;
 }
 
-export function observarUsuario(alCambiar: (usuario: Usuario | null) => void): () => void {
-	return onAuthStateChanged(auth, (usuario) => alCambiar(usuario && { uid: usuario.uid }));
+export function observeUser(onChange: (user: User | null) => void): () => void {
+	return onAuthStateChanged(auth, (user) => onChange(user && { uid: user.uid }));
 }
 
-export async function entrarConGoogle(): Promise<void> {
+export async function signInWithGoogle(): Promise<void> {
 	await signInWithPopup(auth, new GoogleAuthProvider());
 }

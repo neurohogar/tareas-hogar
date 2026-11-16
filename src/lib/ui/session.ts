@@ -9,60 +9,60 @@ import type { Color, Label } from '#lib/core/label.ts';
 import type { RenameError } from '#lib/core/label-management.ts';
 import type { Completion, Task } from '#lib/core/task.ts';
 
-export interface Sesion {
-	readonly tareas: Task[];
-	readonly completados: Completion[];
-	readonly etiquetas: Label[];
-	readonly anotaciones: Annotation[];
+export interface Session {
+	readonly tasks: Task[];
+	readonly completions: Completion[];
+	readonly labels: Label[];
+	readonly annotations: Annotation[];
 	/** El recuadro de Anotar (§5.10) está abierto. */
-	readonly anotando: boolean;
+	readonly annotating: boolean;
 	/** Hay un panel de edición abierto (al crear o al editar). */
-	readonly hayPanel: boolean;
-	abrirAnotar(): void;
-	cerrarAnotar(): void;
+	readonly hasPanel: boolean;
+	openAnnotate(): void;
+	closeAnnotate(): void;
 	/** Segundo toque de Anotar: guarda la anotación con el contexto que toma el core. */
-	anotar(sentido: Sense, texto: string): void;
+	annotate(sense: Sense, text: string): void;
 	/** Un panel de edición se abre (con la tarea, al editar); devuelve cómo avisar que se cerró. */
-	panelAbierto(tareaId: string | undefined): () => void;
+	panelOpened(taskId: string | undefined): () => void;
 	/** Editar texto de una anotación (§6.7). */
-	editarTextoDeAnotacion(anotacion: Annotation, texto: string): void;
+	editAnnotationText(annotation: Annotation, text: string): void;
 	/** Borra una anotación, ya confirmado. */
-	borrarAnotacion(anotacion: Annotation): void;
+	deleteAnnotation(annotation: Annotation): void;
 	/** La hora actual; se actualiza sola. */
-	readonly ahora: Date;
+	readonly now: Date;
 	/** El id de la etiqueta elegida en el filtro de Pendientes; sin él, "Todas". */
-	readonly filtro: string | undefined;
-	elegirFiltro(etiquetaId: string | undefined): void;
+	readonly filter: string | undefined;
+	chooseFilter(labelId: string | undefined): void;
 	/** Solo rápidas de Pendientes (§6.1): sigue al cambiar de pantalla, no al recargar. */
-	readonly soloRapidas: boolean;
-	alternarSoloRapidas(): void;
+	readonly quickOnly: boolean;
+	toggleQuickOnly(): void;
 	/** Tocar el checkbox de la fila (§6.1): completa la tarea (con el aviso) o borra su último completado. */
-	tocarCheckbox(tarea: Task): void;
+	tapCheckbox(task: Task): void;
 	/** «Hice la mínima» de la fila (§6.1): completa la tarea como el checkbox, recordando que fue la mínima. */
-	hacerLaMinima(tarea: Task): void;
+	doTheMinimal(task: Task): void;
 	/** «Hecho» de la fila (§6.1): pasa al paso siguiente o, en el último, completa la tarea como el checkbox. */
-	tocarHecho(tarea: Task): void;
+	tapDone(task: Task): void;
 	/** «Paso anterior» de la fila (§6.1). */
-	pasoAnterior(tarea: Task): void;
+	previousStep(task: Task): void;
 	/** Crea una tarea con el formulario del panel; si algo es inválido devuelve los errores. */
-	crear(formulario: PanelForm): CreationErrors | undefined;
+	create(form: PanelForm): CreationErrors | undefined;
 	/** Abre el panel Editar tarea. */
-	abrir(tarea: Task): void;
+	openTask(task: Task): void;
 	/** Borra un completado (deshacer desde el Historial), ya confirmado. */
-	borrarCompletado(completado: Completion): void;
+	deleteCompletion(completion: Completion): void;
 	/** Renombra la etiqueta; si el nombre es inválido o repetido devuelve el error. */
-	renombrarEtiqueta(etiqueta: Label, escrito: string): RenameError | undefined;
-	recolorearEtiqueta(etiqueta: Label, color: Color): void;
+	renameLabel(label: Label, typed: string): RenameError | undefined;
+	recolorLabel(label: Label, color: Color): void;
 	/** Borra la etiqueta (ya confirmado): se quita de todas las tareas. */
-	borrarEtiqueta(etiqueta: Label): void;
+	deleteLabel(label: Label): void;
 }
 
-const CLAVE = Symbol('sesion');
+const KEY = Symbol('sesion');
 
-export function compartirSesion(sesion: Sesion): void {
-	setContext(CLAVE, sesion);
+export function shareSession(session: Session): void {
+	setContext(KEY, session);
 }
 
-export function laSesion(): Sesion {
-	return getContext<Sesion>(CLAVE);
+export function useSession(): Session {
+	return getContext<Session>(KEY);
 }

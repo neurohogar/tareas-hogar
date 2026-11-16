@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { entrarConGoogle } from '#lib/adapters/auth.ts';
+	import { signInWithGoogle } from '#lib/adapters/auth.ts';
 	import { entryScreen } from '#lib/core/connection.ts';
-	import { enLineaReactivo } from './online.svelte';
+	import { onlineState } from './online.svelte';
 
 	let error = $state('');
-	const enLinea = enLineaReactivo();
-	const entrada = $derived(entryScreen(enLinea.valor));
+	const online = onlineState();
+	const entry = $derived(entryScreen(online.value));
 
-	async function entrar() {
+	async function signIn() {
 		error = '';
 		try {
-			await entrarConGoogle();
+			await signInWithGoogle();
 		} catch {
 			error = 'No se pudo iniciar sesión. Probá de nuevo.';
 		}
@@ -19,8 +19,8 @@
 
 <section class="login">
 	<h1>Tareas Hogar</h1>
-	<button type="button" onclick={entrar} disabled={!entrada.buttonEnabled}>Entrar con Google</button>
-	{#if entrada.message}<p>{entrada.message}</p>{/if}
+	<button type="button" onclick={signIn} disabled={!entry.buttonEnabled}>Entrar con Google</button>
+	{#if entry.message}<p>{entry.message}</p>{/if}
 	{#if error}<p role="alert">{error}</p>{/if}
 </section>
 

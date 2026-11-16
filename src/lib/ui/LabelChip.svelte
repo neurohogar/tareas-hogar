@@ -5,24 +5,24 @@
 	// Un chip es un elemento de lista: su nombre accesible es el de la etiqueta y su descripción, el color
 	// (title: el texto del chip queda solo con el nombre).
 	let {
-		etiqueta,
+		label,
 		children,
-		acciones
+		actions
 	}: {
-		etiqueta: Pick<NewLabel, 'name' | 'color'>;
+		label: Pick<NewLabel, 'name' | 'color'>;
 		/** Dentro del chip, después del nombre. */
 		children?: Snippet;
 		/** Al lado del chip. */
-		acciones?: Snippet;
+		actions?: Snippet;
 	} = $props();
 </script>
 
-<li class="elemento" aria-label={etiqueta.name} title={etiqueta.color}>
-	<span class="chip" style:--color-chip={`var(--etiqueta-${etiqueta.color})`}>
-		<span class="nombre">{etiqueta.name}</span>
+<li class="elemento" aria-label={label.name} title={label.color}>
+	<span class="chip" style:--color-chip={`var(--etiqueta-${label.color})`}>
+		<span class="nombre">{label.name}</span>
 		{@render children?.()}
 	</span>
-	{@render acciones?.()}
+	{@render actions?.()}
 </li>
 
 <style>

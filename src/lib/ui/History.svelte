@@ -1,31 +1,31 @@
 <script lang="ts">
 	import { history, type HistoryEntry } from '#lib/core/history.ts';
 	import { taskName } from '#lib/core/task-name.ts';
-	import { laSesion } from './session';
+	import { useSession } from './session';
 
-	const sesion = laSesion();
-	const grupos = $derived(history(sesion.tareas, sesion.completados, sesion.ahora));
+	const session = useSession();
+	const groups = $derived(history(session.tasks, session.completions, session.now));
 
 	/** La entrada cuyo Borrar espera confirmación, con el encabezado de su día al tocarlo. */
-	let porBorrar = $state.raw<{ entrada: HistoryEntry; encabezado: string } | undefined>(undefined);
+	let toDelete = $state.raw<{ entry: HistoryEntry; header: string } | undefined>(undefined);
 
-	function borrar(entrada: HistoryEntry) {
-		porBorrar = undefined;
-		sesion.borrarCompletado(entrada.completion);
+	function deleteCompletion(entry: HistoryEntry) {
+		toDelete = undefined;
+		session.deleteCompletion(entry.completion);
 	}
 </script>
 
 <section>
 	<h1>Historial</h1>
-	{#each grupos as { header: encabezado, entries: entradas } (encabezado)}
-		<h2>{encabezado}</h2>
+	{#each groups as { header, entries } (header)}
+		<h2>{header}</h2>
 		<ul class="lista">
-			{#each entradas as entrada (entrada.completion.id)}
+			{#each entries as entry (entry.completion.id)}
 				<li class="entrada">
 					<!-- El botón cubre la entrada fuera de Borrar: tocarla abre la edición de la tarea. -->
-					<button type="button" class="titulo" onclick={() => sesion.abrir(entrada.task)}>{taskName(entrada.task)}</button>
-					<span class="hora">{entrada.timeText}</span>
-					<button type="button" class="borrar" onclick={() => (porBorrar = { entrada, encabezado })}>Borrar</button>
+					<button type="button" class="titulo" onclick={() => session.openTask(entry.task)}>{taskName(entry.task)}</button>
+					<span class="hora">{entry.timeText}</span>
+					<button type="button" class="borrar" onclick={() => (toDelete = { entry, header })}>Borrar</button>
 				</li>
 			{/each}
 		</ul>
@@ -34,14 +34,14 @@
 	{/each}
 </section>
 
-{#if porBorrar}
-	{@const { entrada, encabezado } = porBorrar}
+{#if toDelete}
+	{@const { entry, header } = toDelete}
 	<div class="fondo" role="alertdialog" aria-modal="true" aria-labelledby="titulo-borrar-completado">
 		<div class="caja">
-			<p id="titulo-borrar-completado">¿Borrar «{taskName(entrada.task)}» de {encabezado}, {entrada.timeText}?</p>
+			<p id="titulo-borrar-completado">¿Borrar «{taskName(entry.task)}» de {header}, {entry.timeText}?</p>
 			<div class="acciones">
-				<button type="button" onclick={() => (porBorrar = undefined)}>Cancelar</button>
-				<button type="button" class="principal" onclick={() => borrar(entrada)}>Borrar</button>
+				<button type="button" onclick={() => (toDelete = undefined)}>Cancelar</button>
+				<button type="button" class="principal" onclick={() => deleteCompletion(entry)}>Borrar</button>
 			</div>
 		</div>
 	</div>

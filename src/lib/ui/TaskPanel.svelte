@@ -11,21 +11,21 @@
 	import type { Label } from '#lib/core/label.ts';
 	import { taskName } from '#lib/core/task-name.ts';
 	import type { Weekday, Effort, Task, Unit } from '#lib/core/task.ts';
-	import { tomarAtras } from '#lib/adapters/back.ts';
-	import { confirmarAlSalir } from '#lib/adapters/confirm-on-leave.ts';
-	import { nuevoId } from '#lib/adapters/ids.ts';
-	import { leerRecientes, recordarReciente } from '#lib/adapters/recents.ts';
-	import { ahora as horaActual } from '#lib/adapters/clock.ts';
-	import AvisoDeCambios from './UnsavedChangesNotice.svelte';
-	import BarraDePestanas from './TabBar.svelte';
-	import { MENSAJES_DE_NOMBRE } from './label-messages';
-	import SeccionAcciones from './ActionsSection.svelte';
-	import SeccionCuando, { type Ventana } from './WhenSection.svelte';
-	import SeccionTarea from './TaskSection.svelte';
-	import SelectorEmoji from './EmojiPicker.svelte';
-	import Icono from './icons/Icon.svelte';
-	import { laSesion } from './session';
-	import { observarTeclado, type EstadoDelTeclado } from '#lib/adapters/keyboard.ts';
+	import { takeBack } from '#lib/adapters/back.ts';
+	import { confirmOnLeave } from '#lib/adapters/confirm-on-leave.ts';
+	import { newId } from '#lib/adapters/ids.ts';
+	import { readRecents, rememberRecent } from '#lib/adapters/recents.ts';
+	import { now as currentTime } from '#lib/adapters/clock.ts';
+	import UnsavedChangesNotice from './UnsavedChangesNotice.svelte';
+	import TabBar from './TabBar.svelte';
+	import { NAME_MESSAGES } from './label-messages';
+	import ActionsSection from './ActionsSection.svelte';
+	import WhenSection, { type WindowRow } from './WhenSection.svelte';
+	import TaskSection from './TaskSection.svelte';
+	import EmojiPicker from './EmojiPicker.svelte';
+	import Icon from './icons/Icon.svelte';
+	import { useSession } from './session';
+	import { observeKeyboard, type KeyboardState } from '#lib/adapters/keyboard.ts';
 	import {
 		saveBarVisible,
 		fieldsWithError,
@@ -41,345 +41,345 @@
 	} from '#lib/core/panel-tabs.ts';
 
 	let {
-		encabezado,
-		inicial,
-		tarea,
-		etiquetasIniciales = [],
-		ultimaVez,
-		alGuardar,
-		alCerrar,
-		alBorrar,
-		alActuar,
-		pausa,
-		posponer,
-		textoPospuesta
+		header,
+		initial,
+		task,
+		initialLabels = [],
+		lastTime,
+		onSave,
+		onClose,
+		onDelete,
+		onAct,
+		pause,
+		postpone,
+		postponedText
 	}: {
-		encabezado: string;
+		header: string;
 		/** Los valores actuales de la tarea que se edita; sin ellos, el panel arranca vacío (crear). */
-		inicial?: TaskData;
+		initial?: TaskData;
 		/** Solo al editar: la tarea como estaba al abrir el panel. */
-		tarea?: Task;
+		task?: Task;
 		/** Los nombres de las etiquetas que tiene la tarea que se edita. */
-		etiquetasIniciales?: string[];
+		initialLabels?: string[];
 		/** Solo al editar: el texto de "Última vez" que calcula el core (§6.2). */
-		ultimaVez?: string;
+		lastTime?: string;
 		/** Guarda el formulario; si algo es inválido devuelve los errores y el panel sigue abierto. */
-		alGuardar: (formulario: PanelForm) => CreationErrors | undefined;
-		alCerrar: () => void;
+		onSave: (form: PanelForm) => CreationErrors | undefined;
+		onClose: () => void;
 		/** Solo al editar: borra la tarea, ya confirmado. */
-		alBorrar?: () => void;
+		onDelete?: () => void;
 		/** Solo al editar: ejecuta una acción (con lo guardado, si pasó por el aviso) y cierra el panel. */
-		alActuar?: (cambio: TaskChange, nuevas: Label[]) => void;
+		onAct?: (change: TaskChange, newLabels: Label[]) => void;
 		/** Solo al editar una periódica (§6.2): el botón que ofrece el core. */
-		pausa?: 'pausar' | 'reanudar';
+		pause?: 'pausar' | 'reanudar';
 		/** Solo al editar (§6.2): el botón que ofrece el core. */
-		posponer?: 'posponer' | 'quitar';
+		postpone?: 'posponer' | 'quitar';
 		/** "Pospuesta hasta HH:MM" que arma el core, si la tarea está pospuesta. */
-		textoPospuesta?: string;
+		postponedText?: string;
 	} = $props();
 
 	// Los valores con que abre el panel: se toman una vez, aunque la tarea cambie mientras está abierto.
 	// Cada control arranca con el valor de la tarea solo si es de su forma: los de las otras opciones
 	// de "Se repite" empiezan como al crear.
-	const valores = untrack(() => inicial);
-	const nombre = valores && taskName(valores);
-	const fechaLimiteInicial = valores?.shape === 'puntual' ? (valores.dueDate ?? '') : '';
-	const cadaInicial = valores?.shape === 'relativa' ? String(valores.every) : '';
-	const unidadInicial: Unit = valores?.shape === 'relativa' ? valores.unit : 'horas';
+	const values = untrack(() => initial);
+	const name = values && taskName(values);
+	const initialDueDate = values?.shape === 'puntual' ? (values.dueDate ?? '') : '';
+	const initialEvery = values?.shape === 'relativa' ? String(values.every) : '';
+	const initialUnit: Unit = values?.shape === 'relativa' ? values.unit : 'horas';
 
-	let repeticion = $state<RepetitionOption>(repetitionOnOpen(valores));
-	let diasSemana = $state<Weekday[]>(valores?.shape === 'calendario' ? [...valores.weekdays] : []);
-	let diasMes = $state<number[]>(valores?.shape === 'calendario' ? [...valores.monthDays] : []);
-	let etiquetas = $state<string[]>(untrack(() => [...etiquetasIniciales]));
-	let errorDeEtiquetas = $state<string | undefined>(undefined);
+	let repetition = $state<RepetitionOption>(repetitionOnOpen(values));
+	let weekdays = $state<Weekday[]>(values?.shape === 'calendario' ? [...values.weekdays] : []);
+	let monthDays = $state<number[]>(values?.shape === 'calendario' ? [...values.monthDays] : []);
+	let labels = $state<string[]>(untrack(() => [...initialLabels]));
+	let labelsError = $state<string | undefined>(undefined);
 	/** El texto de Etiquetas que todavía no se confirmó. */
-	let sinConfirmar = $state('');
-	let errores = $state<CreationErrors>({});
-	let confirmandoBorrado = $state(false);
-	let emoji = $state(untrack(() => inicial?.emoji ?? ''));
-	let esfuerzo = $state<Effort | ''>(untrack(() => inicial?.effort ?? ''));
+	let unconfirmed = $state('');
+	let errors = $state<CreationErrors>({});
+	let confirmingDelete = $state(false);
+	let emoji = $state(untrack(() => initial?.emoji ?? ''));
+	let effort = $state<Effort | ''>(untrack(() => initial?.effort ?? ''));
 	/** "Solo en un horario": apagado, la tarea no tiene horario (§6.2). */
-	let conHorario = $state(valores?.schedule !== undefined);
+	let withSchedule = $state(values?.schedule !== undefined);
 	/** Los pasos más (2, 3…), uno por campo; Agregar paso suma uno vacío (§6.2). */
-	let pasos = $state<string[]>(untrack(() => [...(inicial?.steps ?? [])]));
+	let steps = $state<string[]>(untrack(() => [...(initial?.steps ?? [])]));
 	/** Las filas Desde/Hasta: al menos una; Agregar horario suma una vacía (§6.2). */
-	let ventanas = $state<Ventana[]>(valores?.schedule?.map(({ from: desde = '', to: hasta = '' }) => ({ desde, hasta })) ?? [{ desde: '', hasta: '' }]);
+	let windowRows = $state<WindowRow[]>(values?.schedule?.map(({ from = '', to = '' }) => ({ from, to })) ?? [{ from: '', to: '' }]);
 
 	/** Los recientes del selector mientras está abierto; sin selector abierto, undefined. */
-	let recientes = $state<string[] | undefined>(undefined);
+	let recents = $state<string[] | undefined>(undefined);
 
-	function abrirSelector() {
-		recientes = leerRecientes();
+	function openPicker() {
+		recents = readRecents();
 	}
 
-	function elegirEmoji(elegido: string) {
-		emoji = elegido;
-		recordarReciente(elegido);
-		recientes = undefined;
+	function chooseEmoji(chosen: string) {
+		emoji = chosen;
+		rememberRecent(chosen);
+		recents = undefined;
 	}
 
 	/**
 	 * Un campo de fecha vacío es "sin fecha límite"; uno incompleto (badInput)
 	 * también tiene valor vacío, pero se le pasa al core para que lo rechace.
 	 */
-	function fechaLimiteDe(campo: HTMLInputElement): string | undefined {
-		return campo.value === '' && !campo.validity.badInput ? undefined : campo.value;
+	function dueDateOf(field: HTMLInputElement): string | undefined {
+		return field.value === '' && !field.validity.badInput ? undefined : field.value;
 	}
 
 	/** Solo cuentan los campos de la opción elegida en "Se repite". */
-	function datosDelFormulario(formulario: HTMLFormElement): TaskData {
-		const campos = new FormData(formulario);
+	function taskDataFromForm(form: HTMLFormElement): TaskData {
+		const fields = new FormData(form);
 		// La nota se lee del control, no de FormData, que cambia los saltos de línea por CRLF.
-		const nota = (formulario.elements.namedItem('nota') as HTMLTextAreaElement).value;
-		const primerPaso = String(campos.get('primerPaso') ?? '');
-		const versionMinima = String(campos.get('versionMinima') ?? '');
-		const horario = conHorario ? ventanas.map(({ desde, hasta }) => ({ from: desde, to: hasta })) : undefined;
-		const comunes = { title: String(campos.get('titulo') ?? ''), emoji, note: nota, firstStep: primerPaso, minimalVersion: versionMinima, steps: [...pasos], schedule: horario, ...(esfuerzo && { effort: esfuerzo }) };
-		if (repeticion === 'puntual') {
-			const campoFecha = formulario.elements.namedItem('fechaLimite') as HTMLInputElement;
-			return { shape: 'puntual', ...comunes, dueDate: fechaLimiteDe(campoFecha) };
+		const note = (form.elements.namedItem('nota') as HTMLTextAreaElement).value;
+		const firstStep = String(fields.get('primerPaso') ?? '');
+		const minimalVersion = String(fields.get('versionMinima') ?? '');
+		const schedule = withSchedule ? windowRows.map(({ from, to }) => ({ from, to })) : undefined;
+		const common = { title: String(fields.get('titulo') ?? ''), emoji, note, firstStep, minimalVersion, steps: [...steps], schedule, ...(effort && { effort }) };
+		if (repetition === 'puntual') {
+			const dateField = form.elements.namedItem('fechaLimite') as HTMLInputElement;
+			return { shape: 'puntual', ...common, dueDate: dueDateOf(dateField) };
 		}
-		if (repeticion === 'relativo') {
-			const cada = Number(campos.get('cada') || Number.NaN);
-			return { shape: 'relativa', ...comunes, every: cada, unit: campos.get('unidad') as Unit };
+		if (repetition === 'relativo') {
+			const every = Number(fields.get('cada') || Number.NaN);
+			return { shape: 'relativa', ...common, every, unit: fields.get('unidad') as Unit };
 		}
-		const dias = repeticion === 'semanal' ? { weekdays: diasSemana, monthDays: [] } : { weekdays: [], monthDays: diasMes };
-		return { shape: 'calendario', ...comunes, ...dias };
+		const days = repetition === 'semanal' ? { weekdays, monthDays: [] } : { weekdays: [], monthDays };
+		return { shape: 'calendario', ...common, ...days };
 	}
 
-	let anchoDeVentana = $state(window.innerWidth);
-	const remEnPx = () => Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-	const presentacion = $derived(panelPresentation(anchoDeVentana / remEnPx()));
-	const secciones = $derived(panelSections(alBorrar ? 'editar' : 'crear'));
-	let abierta = $state<PanelSection>(TAB_ON_OPEN);
-	let contenido: HTMLDivElement;
+	let windowWidth = $state(window.innerWidth);
+	const remInPx = () => Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+	const presentation = $derived(panelPresentation(windowWidth / remInPx()));
+	const sections = $derived(panelSections(onDelete ? 'editar' : 'crear'));
+	let openSection = $state<PanelSection>(TAB_ON_OPEN);
+	let content: HTMLDivElement;
 
-	const conError = $derived(fieldsWithError(errores, repeticion, errorDeEtiquetas !== undefined));
-	const marcadas = $derived(markedSections(conError));
+	const withError = $derived(fieldsWithError(errors, repetition, labelsError !== undefined));
+	const marked = $derived(markedSections(withError));
 
-	let teclado = $state<EstadoDelTeclado>({ abierto: false, solape: 0 });
-	const barraVisible = $derived(saveBarVisible(teclado.abierto));
-	onMount(() => observarTeclado((estado) => (teclado = estado)));
+	let keyboard = $state<KeyboardState>({ open: false, overlap: 0 });
+	const barVisible = $derived(saveBarVisible(keyboard.open));
+	onMount(() => observeKeyboard((status) => (keyboard = status)));
 
 	// El aviso de deshacer se ve sobre la barra de Guardar o, sin barra, sobre el teclado.
 	$effect(() => {
-		const raiz = document.documentElement.style;
-		raiz.setProperty('--base-aviso', teclado.abierto ? `calc(${teclado.solape}px + 1rem)` : '5.5rem');
-		return () => raiz.removeProperty('--base-aviso');
+		const root = document.documentElement.style;
+		root.setProperty('--base-aviso', keyboard.open ? `calc(${keyboard.overlap}px + 1rem)` : '5.5rem');
+		return () => root.removeProperty('--base-aviso');
 	});
 
-	async function elegirPestana(seccion: PanelSection) {
-		abierta = seccion;
+	async function chooseTab(section: PanelSection) {
+		openSection = section;
 		await tick();
-		contenido.scrollTop = 0;
+		content.scrollTop = 0;
 	}
 
-	async function irAlCampo({ tab: pestana, field: campo }: ErrorDestination) {
-		if (pestana) abierta = pestana;
+	async function goToField({ tab, field }: ErrorDestination) {
+		if (tab) openSection = tab;
 		await tick();
-		contenido.querySelector(`[data-campo="${campo}"]`)?.scrollIntoView({ block: 'center' });
+		content.querySelector(`[data-campo="${field}"]`)?.scrollIntoView({ block: 'center' });
 	}
 
 	/** El error de un campo dura lo que dura su mensaje: al corregirlo se va. */
-	function limpiar(campo: keyof CreationErrors) {
-		const { [campo]: _quitado, ...resto } = errores;
-		errores = resto;
+	function clearError(field: keyof CreationErrors) {
+		const { [field]: _removed, ...rest } = errors;
+		errors = rest;
 	}
 
-	const sesion = laSesion();
-	let formulario: HTMLFormElement;
+	const session = useSession();
+	let form: HTMLFormElement;
 	/** Los valores con que se abrió el panel; al crear, el formulario como se abre (§6.2). */
-	const alAbrir: PanelValues = { data: valores ?? DATA_ON_CREATE, labels: untrack(() => [...etiquetasIniciales]) };
-	let avisoDeCierre = $state(false);
+	const onOpen: PanelValues = { data: values ?? DATA_ON_CREATE, labels: untrack(() => [...initialLabels]) };
+	let closeNoticeOpen = $state(false);
 	/** La acción cuyo aviso está abierto, con lo escrito al elegirla. */
-	let accionAbierta = $state.raw<{ accion: PanelAction; formulario: PanelForm } | undefined>(undefined);
+	let openAction = $state.raw<{ action: PanelAction; form: PanelForm } | undefined>(undefined);
 
-	function formularioActual(): PanelForm {
-		return { data: datosDelFormulario(formulario), labels: [...etiquetas], unconfirmed: sinConfirmar };
+	function currentForm(): PanelForm {
+		return { data: taskDataFromForm(form), labels: [...labels], unconfirmed };
 	}
-	const hayCambiosAhora = () => hasChanges(alAbrir, formularioActual());
+	const hasChangesNow = () => hasChanges(onOpen, currentForm());
 
 	/** Lo que el core necesita para evaluar el aviso de una acción con la tarea y el ahora de este momento. */
-	function enAviso({ accion, formulario }: NonNullable<typeof accionAbierta>, ahora: Date): NoticeAction {
-		const alAbrirElPanel = untrack(() => tarea!);
+	function noticeContext({ action, form }: NonNullable<typeof openAction>, now: Date): NoticeAction {
+		const taskWhenOpened = untrack(() => task!);
 		return {
-			action: accion,
-			taskOnOpen: alAbrirElPanel,
-			task: sesion.tareas.find(({ id }) => id === alAbrirElPanel.id) ?? alAbrirElPanel,
-			completions: sesion.completados,
-			now: ahora,
-			form: formulario,
-			existings: sesion.etiquetas
+			action,
+			taskOnOpen: taskWhenOpened,
+			task: session.tasks.find(({ id }) => id === taskWhenOpened.id) ?? taskWhenOpened,
+			completions: session.completions,
+			now,
+			form,
+			existings: session.labels
 		};
 	}
-	const avisoDeLaAccion = $derived(accionAbierta ? actionNotice(enAviso(accionAbierta, sesion.ahora)) : undefined);
+	const shownActionNotice = $derived(openAction ? actionNotice(noticeContext(openAction, session.now)) : undefined);
 	// Si la acción ya no corresponde (otro dispositivo, o pasó el tiempo), el aviso se cierra y queda el panel con lo escrito.
 	$effect(() => {
-		if (accionAbierta && !avisoDeLaAccion) accionAbierta = undefined;
+		if (openAction && !shownActionNotice) openAction = undefined;
 	});
 
-	function mostrarErrores(nuevos: CreationErrors | undefined) {
-		errores = nuevos ?? {};
-		if (errores.labels) errorDeEtiquetas = MENSAJES_DE_NOMBRE[errores.labels];
-		const destino = destinationOnSaveFailure(conError, presentacion);
-		if (destino) void irAlCampo(destino);
+	function showErrors(newErrors: CreationErrors | undefined) {
+		errors = newErrors ?? {};
+		if (errors.labels) labelsError = NAME_MESSAGES[errors.labels];
+		const destination = destinationOnSaveFailure(withError, presentation);
+		if (destination) void goToField(destination);
 	}
 
-	function guardar(evento: SubmitEvent) {
-		evento.preventDefault();
-		mostrarErrores(alGuardar(formularioActual()));
+	function submit(event: SubmitEvent) {
+		event.preventDefault();
+		showErrors(onSave(currentForm()));
 	}
 
-	function cerrar() {
-		if (onClosePanel(hayCambiosAhora()) === 'cierra el panel') alCerrar();
-		else avisoDeCierre = true;
+	function close() {
+		if (onClosePanel(hasChangesNow()) === 'cierra el panel') onClose();
+		else closeNoticeOpen = true;
 	}
 
-	function elegirEnAvisoDeCierre(efecto: NoticeButton['effect']) {
-		avisoDeCierre = false;
-		if (efecto === 'descartar') alCerrar();
-		else if (efecto === 'guardar') mostrarErrores(alGuardar(formularioActual()));
+	function chooseInCloseNotice(effect: NoticeButton['effect']) {
+		closeNoticeOpen = false;
+		if (effect === 'descartar') onClose();
+		else if (effect === 'guardar') showErrors(onSave(currentForm()));
 	}
 
-	function elegirAccion(accion: PanelAction) {
-		const escrito = formularioActual();
-		if (whatTheActionDoes(accion, hasChanges(alAbrir, escrito)) === 'actúa') alActuar?.(changeOfAction(accion, horaActual()), []);
-		else accionAbierta = { accion, formulario: escrito };
+	function chooseAction(action: PanelAction) {
+		const typed = currentForm();
+		if (whatTheActionDoes(action, hasChanges(onOpen, typed)) === 'actúa') onAct?.(changeOfAction(action, currentTime()), []);
+		else openAction = { action, form: typed };
 	}
 
-	function elegirEnAvisoDeAccion(efecto: NoticeButton['effect']) {
-		const abierta = accionAbierta;
-		if (!abierta || efecto === 'seguir editando') {
-			accionAbierta = undefined;
+	function chooseInActionNotice(effect: NoticeButton['effect']) {
+		const openSection = openAction;
+		if (!openSection || effect === 'seguir editando') {
+			openAction = undefined;
 			return;
 		}
-		const contexto = enAviso(abierta, horaActual());
-		if (efecto === 'descartar') {
-			accionAbierta = undefined;
-			const cambio = discardAndAct(contexto);
-			if (cambio) alActuar?.(cambio, []);
+		const context = noticeContext(openSection, currentTime());
+		if (effect === 'descartar') {
+			openAction = undefined;
+			const change = discardAndAct(context);
+			if (change) onAct?.(change, []);
 			return;
 		}
-		const resultado = saveAndAct(contexto, nuevoId);
-		if (resultado.result === 'guardado') alActuar?.(resultado.change, resultado.newLabels);
-		else if (resultado.result === 'rechazado') {
-			accionAbierta = undefined;
-			mostrarErrores(resultado.errors);
-		} else if (resultado.result === 'aviso cerrado') accionAbierta = undefined;
+		const result = saveAndAct(context, newId);
+		if (result.result === 'guardado') onAct?.(result.change, result.newLabels);
+		else if (result.result === 'rechazado') {
+			openAction = undefined;
+			showErrors(result.errors);
+		} else if (result.result === 'aviso cerrado') openAction = undefined;
 	}
 
-	function loDeArriba(): OnTop {
-		if (sesion.anotando) return 'recuadro de Anotar';
-		if (avisoDeCierre) return 'aviso de cierre';
-		if (accionAbierta) return 'aviso de acción';
-		if (confirmandoBorrado) return 'confirmación de Borrar tarea';
-		return recientes ? 'selector de emoji' : 'nada';
+	function whatIsOnTop(): OnTop {
+		if (session.annotating) return 'recuadro de Anotar';
+		if (closeNoticeOpen) return 'aviso de cierre';
+		if (openAction) return 'aviso de acción';
+		if (confirmingDelete) return 'confirmación de Borrar tarea';
+		return recents ? 'selector de emoji' : 'nada';
 	}
 
 	/** Atrás con el panel abierto (§6.2); devuelve si el panel sigue abierto. */
-	function alTocarAtras(): boolean {
-		const efecto = whatBackDoes({ top: loDeArriba(), hasChanges: hayCambiosAhora(), keyboardOpen: teclado.abierto });
-		if (efecto === 'cierra el teclado') (document.activeElement as HTMLElement | null)?.blur();
-		else if (efecto === 'cierra lo de arriba' && sesion.anotando) sesion.cerrarAnotar();
-		else if (efecto === 'cierra lo de arriba') {
-			avisoDeCierre = false;
-			accionAbierta = undefined;
-			confirmandoBorrado = false;
-			recientes = undefined;
-		} else if (efecto === 'abre el aviso de cierre') avisoDeCierre = true;
+	function onBackTap(): boolean {
+		const effect = whatBackDoes({ top: whatIsOnTop(), hasChanges: hasChangesNow(), keyboardOpen: keyboard.open });
+		if (effect === 'cierra el teclado') (document.activeElement as HTMLElement | null)?.blur();
+		else if (effect === 'cierra lo de arriba' && session.annotating) session.closeAnnotate();
+		else if (effect === 'cierra lo de arriba') {
+			closeNoticeOpen = false;
+			openAction = undefined;
+			confirmingDelete = false;
+			recents = undefined;
+		} else if (effect === 'abre el aviso de cierre') closeNoticeOpen = true;
 		else {
-			alCerrar();
+			onClose();
 			return false;
 		}
 		return true;
 	}
 
 	onMount(() => {
-		const capa = tomarAtras(alTocarAtras);
-		const dejarDePedir = confirmarAlSalir(hayCambiosAhora);
-		const soltarPanel = sesion.panelAbierto(tarea?.id);
+		const layer = takeBack(onBackTap);
+		const stopConfirming = confirmOnLeave(hasChangesNow);
+		const releasePanel = session.panelOpened(task?.id);
 		return () => {
-			soltarPanel();
-			capa.soltar();
-			dejarDePedir();
+			releasePanel();
+			layer.release();
+			stopConfirming();
 		};
 	});
 </script>
 
-<svelte:window bind:innerWidth={anchoDeVentana} />
+<svelte:window bind:innerWidth={windowWidth} />
 
-<div class="panel panel-principal" inert={avisoDeCierre || accionAbierta !== undefined || confirmandoBorrado} style:bottom={teclado.solape > 0 ? `${teclado.solape}px` : undefined} role="dialog" aria-modal="true" aria-labelledby="titulo-panel">
-	<form class="hoja" bind:this={formulario} class:completa={presentacion === 'pestanas'} novalidate onsubmit={guardar}>
+<div class="panel panel-principal" inert={closeNoticeOpen || openAction !== undefined || confirmingDelete} style:bottom={keyboard.overlap > 0 ? `${keyboard.overlap}px` : undefined} role="dialog" aria-modal="true" aria-labelledby="titulo-panel">
+	<form class="hoja" bind:this={form} class:completa={presentation === 'pestanas'} novalidate onsubmit={submit}>
 		<header>
-			<h2 id="titulo-panel">{encabezado}</h2>
-			<button type="button" class="cerrar" aria-label="Cerrar" onclick={cerrar}><Icono nombre="cerrar" /></button>
+			<h2 id="titulo-panel">{header}</h2>
+			<button type="button" class="cerrar" aria-label="Cerrar" onclick={close}><Icon name="close" /></button>
 		</header>
-		{#if presentacion === 'pestanas'}
-			<BarraDePestanas {secciones} {abierta} {marcadas} alElegir={elegirPestana} />
+		{#if presentation === 'pestanas'}
+			<TabBar {sections} {openSection} {marked} onChoose={chooseTab} />
 		{/if}
 
-		<div class="contenido" bind:this={contenido}>
-			<SeccionTarea
-				{presentacion}
-				{abierta}
-				{valores}
-				{pausa}
-				{textoPospuesta}
-				{ultimaVez}
-				{errores}
-				{limpiar}
+		<div class="contenido" bind:this={content}>
+			<TaskSection
+				{presentation}
+				{openSection}
+				{values}
+				{pause}
+				{postponedText}
+				{lastTime}
+				{errors}
+				{clearError}
 				bind:emoji
-				bind:esfuerzo
-				bind:pasos
-				bind:etiquetas
-				bind:errorDeEtiquetas
-				bind:sinConfirmar
-				alAbrirSelector={abrirSelector}
+				bind:effort
+				bind:steps
+				bind:labels
+				bind:labelsError
+				bind:unconfirmed
+				onOpenPicker={openPicker}
 			/>
-			<SeccionCuando
-				{presentacion}
-				{abierta}
-				{errores}
-				{limpiar}
-				bind:repeticion
-				bind:diasSemana
-				bind:diasMes
-				bind:conHorario
-				bind:ventanas
-				{fechaLimiteInicial}
-				{cadaInicial}
-				{unidadInicial}
+			<WhenSection
+				{presentation}
+				{openSection}
+				{errors}
+				{clearError}
+				bind:repetition
+				bind:weekdays
+				bind:monthDays
+				bind:withSchedule
+				bind:windowRows
+				{initialDueDate}
+				{initialEvery}
+				{initialUnit}
 			/>
-			{#if secciones.includes('Acciones')}
-				<SeccionAcciones {presentacion} {abierta} {posponer} {pausa} alElegir={elegirAccion} alPedirBorrado={() => (confirmandoBorrado = true)} />
+			{#if sections.includes('Acciones')}
+				<ActionsSection {presentation} {openSection} {postpone} {pause} onChoose={chooseAction} onRequestDelete={() => (confirmingDelete = true)} />
 			{/if}
 		</div>
 
-		<div class="barra-guardar" hidden={!barraVisible}>
+		<div class="barra-guardar" hidden={!barVisible}>
 			<button type="submit" class="principal-boton">Guardar</button>
 		</div>
 	</form>
 </div>
 
-{#if recientes}
-	<SelectorEmoji {recientes} alElegir={elegirEmoji} alCerrar={() => (recientes = undefined)} />
+{#if recents}
+	<EmojiPicker {recents} onChoose={chooseEmoji} onClose={() => (recents = undefined)} />
 {/if}
 
-{#if avisoDeCierre}
-	<AvisoDeCambios aviso={CLOSE_NOTICE} alElegir={elegirEnAvisoDeCierre} />
+{#if closeNoticeOpen}
+	<UnsavedChangesNotice notice={CLOSE_NOTICE} onChoose={chooseInCloseNotice} />
 {/if}
 
-{#if avisoDeLaAccion}
-	<AvisoDeCambios aviso={avisoDeLaAccion} alElegir={elegirEnAvisoDeAccion} />
+{#if shownActionNotice}
+	<UnsavedChangesNotice notice={shownActionNotice} onChoose={chooseInActionNotice} />
 {/if}
 
-{#if alBorrar && confirmandoBorrado}
+{#if onDelete && confirmingDelete}
 	<div class="panel confirmacion" role="alertdialog" aria-modal="true" aria-labelledby="titulo-confirmacion">
 		<div class="caja">
-			<p id="titulo-confirmacion">¿Borrar «{nombre}»? También se borra su historial.</p>
+			<p id="titulo-confirmacion">¿Borrar «{name}»? También se borra su historial.</p>
 			<div class="acciones confirmar">
-				<button type="button" onclick={() => (confirmandoBorrado = false)}>Cancelar</button>
-				<button type="button" class="principal" onclick={alBorrar}>Borrar</button>
+				<button type="button" onclick={() => (confirmingDelete = false)}>Cancelar</button>
+				<button type="button" class="principal" onclick={onDelete}>Borrar</button>
 			</div>
 		</div>
 	</div>

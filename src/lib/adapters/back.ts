@@ -3,32 +3,32 @@
  * historial al abrir, así Atrás no sale de la pantalla. Cerrar el panel por otro camino
  * (la X, Guardar, una acción) la consume, sin dejar un Atrás de más.
  */
-export interface CapaDeAtras {
+export interface BackLayer {
 	/** El panel se cerró: suelta la entrada si Atrás no la consumió. */
-	soltar(): void;
+	release(): void;
 }
 
-const ENTRADA = { panelAbierto: true };
+const ENTRY = { panelOpened: true };
 
 /**
  * `alTocarAtras` decide qué hace Atrás y dice si el panel sigue abierto: si sigue, se vuelve a tomar
  * la entrada para el próximo Atrás; si se cierra, la entrada ya está consumida.
  */
-export function tomarAtras(alTocarAtras: () => boolean): CapaDeAtras {
-	let consumida = false;
-	history.pushState(ENTRADA, '');
+export function takeBack(onBackTap: () => boolean): BackLayer {
+	let consumed = false;
+	history.pushState(ENTRY, '');
 
-	const alRetroceder = () => {
-		if (alTocarAtras()) history.pushState(ENTRADA, '');
-		else consumida = true;
+	const onGoBack = () => {
+		if (onBackTap()) history.pushState(ENTRY, '');
+		else consumed = true;
 	};
-	addEventListener('popstate', alRetroceder);
+	addEventListener('popstate', onGoBack);
 
 	return {
-		soltar() {
-			removeEventListener('popstate', alRetroceder);
-			if (!consumida) history.back();
-			consumida = true;
+		release() {
+			removeEventListener('popstate', onGoBack);
+			if (!consumed) history.back();
+			consumed = true;
 		}
 	};
 }

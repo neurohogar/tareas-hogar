@@ -1,41 +1,41 @@
 <script lang="ts">
 	import type { PanelSection } from '#lib/core/panel-tabs.ts';
-	import Icono from './icons/Icon.svelte';
+	import Icon from './icons/Icon.svelte';
 
-	const ICONOS_DE_SECCION = { Tarea: 'tarea', Cuándo: 'cuando', Acciones: 'acciones' } as const;
+	const SECTION_ICONS = { Tarea: 'task', Cuándo: 'when', Acciones: 'actions' } as const;
 
 	let {
-		secciones,
-		abierta,
-		marcadas,
-		alElegir
-	}: { secciones: readonly PanelSection[]; abierta: PanelSection; marcadas: readonly PanelSection[]; alElegir: (seccion: PanelSection) => void } = $props();
+		sections,
+		openSection,
+		marked,
+		onChoose
+	}: { sections: readonly PanelSection[]; openSection: PanelSection; marked: readonly PanelSection[]; onChoose: (section: PanelSection) => void } = $props();
 
-	function mover(evento: KeyboardEvent, indice: number) {
-		const paso = evento.key === 'ArrowRight' ? 1 : evento.key === 'ArrowLeft' ? -1 : 0;
-		if (paso === 0) return;
-		evento.preventDefault();
-		const siguiente = secciones[(indice + paso + secciones.length) % secciones.length];
-		alElegir(siguiente);
-		document.getElementById(`pestana-${siguiente}`)?.focus();
+	function move(event: KeyboardEvent, index: number) {
+		const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+		if (step === 0) return;
+		event.preventDefault();
+		const next = sections[(index + step + sections.length) % sections.length];
+		onChoose(next);
+		document.getElementById(`pestana-${next}`)?.focus();
 	}
 </script>
 
 <div class="pestanas" role="tablist" aria-label="Secciones">
-	{#each secciones as seccion, indice (seccion)}
+	{#each sections as section, index (section)}
 		<button
 			type="button"
 			role="tab"
-			id="pestana-{seccion}"
-			aria-selected={abierta === seccion}
-			aria-controls="seccion-{seccion}"
-			tabindex={abierta === seccion ? 0 : -1}
-			onclick={() => alElegir(seccion)}
-			onkeydown={(evento) => mover(evento, indice)}
+			id="pestana-{section}"
+			aria-selected={openSection === section}
+			aria-controls="seccion-{section}"
+			tabindex={openSection === section ? 0 : -1}
+			onclick={() => onChoose(section)}
+			onkeydown={(event) => move(event, index)}
 		>
-			<Icono nombre={ICONOS_DE_SECCION[seccion]} />
-			{seccion}
-			{#if marcadas.includes(seccion)}<span class="marca" role="img" aria-label="con errores"></span>{/if}
+			<Icon name={SECTION_ICONS[section]} />
+			{section}
+			{#if marked.includes(section)}<span class="marca" role="img" aria-label="con errores"></span>{/if}
 		</button>
 	{/each}
 </div>

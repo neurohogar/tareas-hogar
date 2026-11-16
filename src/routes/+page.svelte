@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Pendientes from '#lib/ui/Pending.svelte';
+	import Pending from '#lib/ui/Pending.svelte';
 </script>
 
-<Pendientes />
+<Pending />

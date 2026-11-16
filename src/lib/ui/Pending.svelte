@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { guardarMostrarCompletadas, leerMostrarCompletadas } from '#lib/adapters/show-completed.ts';
-	import { guardarMostrarPausadas, leerMostrarPausadas } from '#lib/adapters/show-paused.ts';
+	import { saveShowCompleted, readShowCompleted } from '#lib/adapters/show-completed.ts';
+	import { saveShowPaused, readShowPaused } from '#lib/adapters/show-paused.ts';
 	import { checkboxEnabled } from '#lib/core/checkbox.ts';
 	import type { PanelForm } from '#lib/core/unsaved-changes.ts';
 	import { taskLabels } from '#lib/core/task-labels.ts';
@@ -8,88 +8,88 @@
 	import { filterQuickOnly, emptyListText } from '#lib/core/quick-only.ts';
 	import { sortLabels } from '#lib/core/label-order.ts';
 	import { pendingRows } from '#lib/core/pending.ts';
-	import FilaTarea from './TaskRow.svelte';
-	import PanelTarea from './TaskPanel.svelte';
-	import { laSesion } from './session';
+	import TaskRow from './TaskRow.svelte';
+	import TaskPanel from './TaskPanel.svelte';
+	import { useSession } from './session';
 
-	const sesion = laSesion();
-	let creando = $state(false);
-	const etiquetas = $derived(sortLabels(sesion.etiquetas));
-	const filtro = $derived(activeFilter(sesion.filtro, sesion.etiquetas));
-	let mostrarCompletadas = $state(leerMostrarCompletadas());
-	let mostrarPausadas = $state(leerMostrarPausadas());
-	const filas = $derived(
+	const session = useSession();
+	let creating = $state(false);
+	const labels = $derived(sortLabels(session.labels));
+	const filter = $derived(activeFilter(session.filter, session.labels));
+	let showCompleted = $state(readShowCompleted());
+	let showPaused = $state(readShowPaused());
+	const rows = $derived(
 		filterQuickOnly(
 			filterByLabel(
-				pendingRows(sesion.tareas, sesion.completados, sesion.ahora, mostrarCompletadas, mostrarPausadas),
-				filtro
+				pendingRows(session.tasks, session.completions, session.now, showCompleted, showPaused),
+				filter
 			),
-			sesion.soloRapidas
+			session.quickOnly
 		)
 	);
-	const textoVacio = $derived(filas.length === 0 ? emptyListText(filtro, sesion.soloRapidas) : undefined);
+	const emptyText = $derived(rows.length === 0 ? emptyListText(filter, session.quickOnly) : undefined);
 
-	function guardarNueva(formulario: PanelForm) {
-		const errores = sesion.crear(formulario);
-		if (!errores) creando = false;
-		return errores;
+	function saveNew(form: PanelForm) {
+		const errors = session.create(form);
+		if (!errors) creating = false;
+		return errors;
 	}
 </script>
 
 <section>
 	<h1>Pendientes</h1>
-	{#if etiquetas.length > 0}
+	{#if labels.length > 0}
 		<div class="filtro" role="group" aria-label="Filtrar por etiqueta">
-			<button type="button" aria-pressed={filtro === undefined} onclick={() => sesion.elegirFiltro(undefined)}>Todas</button>
-			{#each etiquetas as etiqueta (etiqueta.id)}
+			<button type="button" aria-pressed={filter === undefined} onclick={() => session.chooseFilter(undefined)}>Todas</button>
+			{#each labels as label (label.id)}
 				<button
 					type="button"
-					aria-pressed={filtro === etiqueta.id}
-					style:--color-chip={`var(--etiqueta-${etiqueta.color})`}
-					onclick={() => sesion.elegirFiltro(etiqueta.id)}>{etiqueta.name}</button
+					aria-pressed={filter === label.id}
+					style:--color-chip={`var(--etiqueta-${label.color})`}
+					onclick={() => session.chooseFilter(label.id)}>{label.name}</button
 				>
 			{/each}
 		</div>
 	{/if}
 	<div class="controles">
-		<button type="button" class="solo-rapidas" aria-pressed={sesion.soloRapidas} onclick={() => sesion.alternarSoloRapidas()}>Solo rápidas</button>
+		<button type="button" class="solo-rapidas" aria-pressed={session.quickOnly} onclick={() => session.toggleQuickOnly()}>Solo rápidas</button>
 		<label class="mostrar-completadas">
-			<input type="checkbox" bind:checked={mostrarCompletadas} onchange={(evento) => guardarMostrarCompletadas(evento.currentTarget.checked)} />
+			<input type="checkbox" bind:checked={showCompleted} onchange={(event) => saveShowCompleted(event.currentTarget.checked)} />
 			Completadas
 		</label>
 		<label class="mostrar-completadas">
-			<input type="checkbox" bind:checked={mostrarPausadas} onchange={(evento) => guardarMostrarPausadas(evento.currentTarget.checked)} />
+			<input type="checkbox" bind:checked={showPaused} onchange={(event) => saveShowPaused(event.currentTarget.checked)} />
 			Pausadas
 		</label>
 	</div>
 	<ul class="lista">
-		{#each filas as { task: tarea, status: estado, completed: completada, dateText: textoDeFecha, firstStepText: textoDePrimerPaso, stepButtons: botonesDePaso, minimal: minima } (tarea.id)}
-			<FilaTarea
-				{tarea}
-				{estado}
-				{completada}
-				{textoDeFecha}
-				{textoDePrimerPaso}
-				{botonesDePaso}
-				{minima}
-				habilitado={checkboxEnabled(tarea, sesion.completados, sesion.ahora)}
-				etiquetas={taskLabels(tarea, sesion.etiquetas)}
-				alTocarCheckbox={() => sesion.tocarCheckbox(tarea)}
-				alMinima={() => sesion.hacerLaMinima(tarea)}
-				alHecho={() => sesion.tocarHecho(tarea)}
-				alPasoAnterior={() => sesion.pasoAnterior(tarea)}
-				alAbrir={() => sesion.abrir(tarea)}
+		{#each rows as { task, status, completed, dateText, firstStepText, stepButtons, minimal } (task.id)}
+			<TaskRow
+				{task}
+				{status}
+				{completed}
+				{dateText}
+				{firstStepText}
+				{stepButtons}
+				{minimal}
+				enabled={checkboxEnabled(task, session.completions, session.now)}
+				labels={taskLabels(task, session.labels)}
+				onCheckboxTap={() => session.tapCheckbox(task)}
+				onMinimal={() => session.doTheMinimal(task)}
+				onDone={() => session.tapDone(task)}
+				onPreviousStep={() => session.previousStep(task)}
+				onOpen={() => session.openTask(task)}
 			/>
 		{/each}
 	</ul>
-	{#if textoVacio}
-		<p class="vacio">{textoVacio}</p>
+	{#if emptyText}
+		<p class="vacio">{emptyText}</p>
 	{/if}
-	<button type="button" class="nueva" title="Nueva tarea" onclick={() => (creando = true)}>+</button>
+	<button type="button" class="nueva" title="Nueva tarea" onclick={() => (creating = true)}>+</button>
 </section>
 
-{#if creando}
-	<PanelTarea encabezado="Nueva tarea" alGuardar={guardarNueva} alCerrar={() => (creando = false)} />
+{#if creating}
+	<TaskPanel header="Nueva tarea" onSave={saveNew} onClose={() => (creating = false)} />
 {/if}
 
 <style>

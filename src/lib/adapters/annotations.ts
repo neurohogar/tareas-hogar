@@ -4,7 +4,7 @@ import { collection, deleteDoc, deleteField, doc, FirestoreError, getDocFromServ
 import type { Annotation, AnnotationScreen, Sense } from '#lib/core/annotation.ts';
 import { db } from './firebase';
 
-interface AnotacionDoc {
+interface AnnotationDoc {
 	sentido: Sense;
 	anotadaEn: Timestamp;
 	pantalla: AnnotationScreen;
@@ -14,37 +14,37 @@ interface AnotacionDoc {
 	texto?: string;
 }
 
-const anotacionRef = (uid: string, anotacionId: string) => doc(db, 'users', uid, 'anotaciones', anotacionId);
-const tareaRef = (uid: string, tareaId: string) => doc(db, 'users', uid, 'tareas', tareaId);
+const annotationRef = (uid: string, annotationId: string) => doc(db, 'users', uid, 'anotaciones', annotationId);
+const taskRef = (uid: string, taskId: string) => doc(db, 'users', uid, 'tareas', taskId);
 
-function anotacionADoc({ sense: sentido, annotatedAt: anotadaEn, screen: pantalla, taskId: tareaId, text: texto }: Annotation): AnotacionDoc {
+function annotationToDoc({ sense, annotatedAt, screen, taskId, text }: Annotation): AnnotationDoc {
 	return {
-		sentido,
-		anotadaEn: Timestamp.fromDate(anotadaEn),
-		pantalla,
-		...(tareaId !== undefined && { tareaId }),
-		...(texto !== undefined && { texto })
+		sentido: sense,
+		anotadaEn: Timestamp.fromDate(annotatedAt),
+		pantalla: screen,
+		...(taskId !== undefined && { tareaId: taskId }),
+		...(text !== undefined && { texto: text })
 	};
 }
 
-function anotacionDesde(snapshot: QueryDocumentSnapshot<DocumentData>): Annotation {
-	const datos = snapshot.data() as AnotacionDoc;
+function annotationFromSnapshot(snapshot: QueryDocumentSnapshot<DocumentData>): Annotation {
+	const data = snapshot.data() as AnnotationDoc;
 	return {
 		id: snapshot.id,
-		sense: datos.sentido,
-		annotatedAt: datos.anotadaEn.toDate(),
-		screen: datos.pantalla,
-		...(datos.tareaId !== undefined && { taskId: datos.tareaId }),
-		...(typeof datos.texto === 'string' && { text: datos.texto })
+		sense: data.sentido,
+		annotatedAt: data.anotadaEn.toDate(),
+		screen: data.pantalla,
+		...(data.tareaId !== undefined && { taskId: data.tareaId }),
+		...(typeof data.texto === 'string' && { text: data.texto })
 	};
 }
 
-export function observarAnotaciones(uid: string, alCambiar: (anotaciones: Annotation[]) => void): () => void {
-	return onSnapshot(collection(db, 'users', uid, 'anotaciones'), (consulta) => alCambiar(consulta.docs.map(anotacionDesde)));
+export function observeAnnotations(uid: string, onChange: (annotations: Annotation[]) => void): () => void {
+	return onSnapshot(collection(db, 'users', uid, 'anotaciones'), (query) => onChange(query.docs.map(annotationFromSnapshot)));
 }
 
-export async function guardarAnotacion(uid: string, anotacion: Annotation): Promise<void> {
-	await setDoc(anotacionRef(uid, anotacion.id), anotacionADoc(anotacion));
+export async function saveAnnotation(uid: string, annotation: Annotation): Promise<void> {
+	await setDoc(annotationRef(uid, annotation.id), annotationToDoc(annotation));
 }
 
 /**
@@ -52,16 +52,16 @@ export async function guardarAnotacion(uid: string, anotacion: Annotation): Prom
  * lo quita). update falla si la anotación ya no existe: gana el borrado, la
  * edición se descarta.
  */
-export async function cambiarTextoDeAnotacion(uid: string, anotacionId: string, texto: string | undefined): Promise<void> {
+export async function changeAnnotationText(uid: string, annotationId: string, text: string | undefined): Promise<void> {
 	try {
-		await updateDoc(anotacionRef(uid, anotacionId), { texto: texto === undefined ? deleteField() : texto });
+		await updateDoc(annotationRef(uid, annotationId), { texto: text === undefined ? deleteField() : text });
 	} catch (error) {
 		if (!(error instanceof FirestoreError && error.code === 'not-found')) throw error;
 	}
 }
 
-export async function borrarAnotacion(uid: string, anotacionId: string): Promise<void> {
-	await deleteDoc(anotacionRef(uid, anotacionId));
+export async function deleteAnnotation(uid: string, annotationId: string): Promise<void> {
+	await deleteDoc(annotationRef(uid, annotationId));
 }
 
 /**
@@ -69,16 +69,16 @@ export async function borrarAnotacion(uid: string, anotacionId: string): Promise
  * borrar una confirma con el servidor que su tarea no existe; sin conexión
  * falla. Devuelve los ids de las que fallaron.
  */
-export async function limpiarAnotacionesHuerfanas(uid: string, huerfanas: readonly Annotation[]): Promise<string[]> {
-	const fallaron: string[] = [];
-	for (const anotacion of huerfanas) {
-		if (anotacion.taskId === undefined) continue;
+export async function cleanOrphanAnnotations(uid: string, orphans: readonly Annotation[]): Promise<string[]> {
+	const failed: string[] = [];
+	for (const annotation of orphans) {
+		if (annotation.taskId === undefined) continue;
 		try {
-			const tarea = await getDocFromServer(tareaRef(uid, anotacion.taskId));
-			if (!tarea.exists()) await deleteDoc(anotacionRef(uid, anotacion.id));
+			const task = await getDocFromServer(taskRef(uid, annotation.taskId));
+			if (!task.exists()) await deleteDoc(annotationRef(uid, annotation.id));
 		} catch {
-			fallaron.push(anotacion.id);
+			failed.push(annotation.id);
 		}
 	}
-	return fallaron;
+	return failed;
 }

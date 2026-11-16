@@ -1,19 +1,19 @@
 /** Lo que se sabe del teclado en pantalla: si está abierto y cuánto tapa del borde inferior de la ventana. */
-export interface EstadoDelTeclado {
-	abierto: boolean;
+export interface KeyboardState {
+	open: boolean;
 	/** Píxeles que el teclado tapa debajo del viewport visual (0 si el navegador ya achicó la ventana). */
-	solape: number;
+	overlap: number;
 }
 
 /** El teclado achica el viewport visual por lo menos a esta fracción de su alto normal. */
-const FRACCION_CON_TECLADO = 0.75;
-const TIPOS_SIN_TECLADO = new Set(['checkbox', 'radio', 'button', 'submit', 'reset', 'range', 'color', 'file', 'image', 'date', 'time', 'datetime-local', 'month', 'week']);
+const KEYBOARD_FRACTION = 0.75;
+const NON_KEYBOARD_TYPES = new Set(['checkbox', 'radio', 'button', 'submit', 'reset', 'range', 'color', 'file', 'image', 'date', 'time', 'datetime-local', 'month', 'week']);
 
 /** Un campo donde se escribe con el teclado en pantalla (no los selectores de fecha y hora ni los botones). */
-function esCampoDeTexto(elemento: Element | null): boolean {
-	if (elemento instanceof HTMLTextAreaElement) return true;
-	if (elemento instanceof HTMLInputElement) return !TIPOS_SIN_TECLADO.has(elemento.type);
-	return elemento instanceof HTMLElement && elemento.isContentEditable;
+function isTextField(element: Element | null): boolean {
+	if (element instanceof HTMLTextAreaElement) return true;
+	if (element instanceof HTMLInputElement) return !NON_KEYBOARD_TYPES.has(element.type);
+	return element instanceof HTMLElement && element.isContentEditable;
 }
 
 /**
@@ -21,37 +21,37 @@ function esCampoDeTexto(elemento: Element | null): boolean {
  * enfocado y el viewport visual se achicó respecto de su mayor alto con el ancho actual.
  * Devuelve cómo dejar de avisar.
  */
-export function observarTeclado(alCambiar: (estado: EstadoDelTeclado) => void): () => void {
+export function observeKeyboard(onChange: (status: KeyboardState) => void): () => void {
 	const visual = window.visualViewport;
-	let anchoBase = 0;
-	let altoBase = 0;
-	let ultimo: EstadoDelTeclado | undefined;
+	let baseWidth = 0;
+	let baseHeight = 0;
+	let last: KeyboardState | undefined;
 
-	const avisar = () => {
-		const ancho = visual?.width ?? window.innerWidth;
-		const alto = visual?.height ?? window.innerHeight;
-		if (ancho !== anchoBase) {
-			anchoBase = ancho;
-			altoBase = 0;
+	const notify = () => {
+		const width = visual?.width ?? window.innerWidth;
+		const height = visual?.height ?? window.innerHeight;
+		if (width !== baseWidth) {
+			baseWidth = width;
+			baseHeight = 0;
 		}
-		altoBase = Math.max(altoBase, alto, window.innerHeight);
-		const achicado = alto < altoBase * FRACCION_CON_TECLADO;
-		const abierto = achicado && esCampoDeTexto(document.activeElement);
-		const solape = abierto ? Math.max(0, window.innerHeight - alto - (visual?.offsetTop ?? 0)) : 0;
-		if (ultimo?.abierto === abierto && ultimo.solape === solape) return;
-		ultimo = { abierto, solape };
-		alCambiar(ultimo);
+		baseHeight = Math.max(baseHeight, height, window.innerHeight);
+		const shrunk = height < baseHeight * KEYBOARD_FRACTION;
+		const open = shrunk && isTextField(document.activeElement);
+		const overlap = open ? Math.max(0, window.innerHeight - height - (visual?.offsetTop ?? 0)) : 0;
+		if (last?.open === open && last.overlap === overlap) return;
+		last = { open, overlap };
+		onChange(last);
 	};
 
-	avisar();
-	visual?.addEventListener('resize', avisar);
-	window.addEventListener('resize', avisar);
-	document.addEventListener('focusin', avisar);
-	document.addEventListener('focusout', avisar);
+	notify();
+	visual?.addEventListener('resize', notify);
+	window.addEventListener('resize', notify);
+	document.addEventListener('focusin', notify);
+	document.addEventListener('focusout', notify);
 	return () => {
-		visual?.removeEventListener('resize', avisar);
-		window.removeEventListener('resize', avisar);
-		document.removeEventListener('focusin', avisar);
-		document.removeEventListener('focusout', avisar);
+		visual?.removeEventListener('resize', notify);
+		window.removeEventListener('resize', notify);
+		document.removeEventListener('focusin', notify);
+		document.removeEventListener('focusout', notify);
 	};
 }

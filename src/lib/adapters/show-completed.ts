@@ -2,20 +2,20 @@
 // del dispositivo, en el almacenamiento local del navegador (no se sincroniza).
 // Si no está disponible, vale lo que dure la sesión, desde el valor inicial.
 
-const CLAVE = 'tareas-hogar:mostrar-completadas';
+const KEY = 'tareas-hogar:mostrar-completadas';
 
 /** El valor guardado; apagado (el valor inicial) si no hay uno o no se puede leer. */
-export function leerMostrarCompletadas(): boolean {
+export function readShowCompleted(): boolean {
 	try {
-		return localStorage.getItem(CLAVE) === 'true';
+		return localStorage.getItem(KEY) === 'true';
 	} catch {
 		return false;
 	}
 }
 
-export function guardarMostrarCompletadas(mostrar: boolean): void {
+export function saveShowCompleted(show: boolean): void {
 	try {
-		localStorage.setItem(CLAVE, String(mostrar));
+		localStorage.setItem(KEY, String(show));
 	} catch {
 		// Sin almacenamiento, el valor dura lo que dure la sesión.
 	}

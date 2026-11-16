@@ -3,18 +3,18 @@
 	import { CHANGES_MESSAGE, type ChangesNotice, type NoticeButton } from '#lib/core/unsaved-changes-notice.ts';
 
 	// Spec §6.2: el aviso de cierre o de una acción, sobre el panel. El texto y los botones los decide el core.
-	let { aviso, alElegir }: { aviso: ChangesNotice; alElegir: (efecto: NoticeButton['effect']) => void } = $props();
+	let { notice, onChoose }: { notice: ChangesNotice; onChoose: (effect: NoticeButton['effect']) => void } = $props();
 
-	let caja: HTMLDivElement;
-	onMount(() => caja.querySelector('button')?.focus());
+	let box: HTMLDivElement;
+	onMount(() => box.querySelector('button')?.focus());
 </script>
 
 <div class="panel" role="alertdialog" aria-modal="true" aria-label={CHANGES_MESSAGE} aria-describedby="mensaje-de-cambios">
-	<div class="caja" bind:this={caja}>
-		<p id="mensaje-de-cambios">{aviso.message}</p>
+	<div class="caja" bind:this={box}>
+		<p id="mensaje-de-cambios">{notice.message}</p>
 		<div class="acciones">
-			{#each aviso.buttons as boton, indice (boton.text)}
-				<button type="button" class:principal={indice === aviso.buttons.length - 1 && boton.effect === 'guardar'} onclick={() => alElegir(boton.effect)}>{boton.text}</button>
+			{#each notice.buttons as button, index (button.text)}
+				<button type="button" class:principal={index === notice.buttons.length - 1 && button.effect === 'guardar'} onclick={() => onChoose(button.effect)}>{button.text}</button>
 			{/each}
 		</div>
 	</div>

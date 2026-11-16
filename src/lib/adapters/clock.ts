@@ -1,9 +1,9 @@
-export function ahora(): Date {
+export function now(): Date {
 	return new Date();
 }
 
 /** Avisa periódicamente la hora actual, para que los estados se recalculen solos. */
-export function observarReloj(alCambiar: (ahora: Date) => void, cadaMs = 1000): () => void {
-	const intervalo = setInterval(() => alCambiar(new Date()), cadaMs);
-	return () => clearInterval(intervalo);
+export function observeClock(onChange: (now: Date) => void, everyMs = 1000): () => void {
+	const interval = setInterval(() => onChange(new Date()), everyMs);
+	return () => clearInterval(interval);
 }

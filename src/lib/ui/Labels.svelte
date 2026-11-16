@@ -1,112 +1,112 @@
 <script lang="ts">
 	import { PALETTE, type Color, type Label } from '#lib/core/label.ts';
 	import { sortLabels } from '#lib/core/label-order.ts';
-	import ChipEtiqueta from './LabelChip.svelte';
-	import { MENSAJES_DE_NOMBRE } from './label-messages';
-	import { laSesion } from './session';
+	import LabelChip from './LabelChip.svelte';
+	import { NAME_MESSAGES } from './label-messages';
+	import { useSession } from './session';
 
 	// Spec §6.4: renombrar, cambiar el color y borrar. No se crean etiquetas desde acá.
-	const sesion = laSesion();
-	const etiquetas = $derived(sortLabels(sesion.etiquetas));
+	const session = useSession();
+	const labels = $derived(sortLabels(session.labels));
 
 
-	type Dialogo =
-		| { tipo: 'renombrar'; etiqueta: Label; nombre: string; error?: string }
-		| { tipo: 'color'; etiqueta: Label; color: Color }
-		| { tipo: 'borrar'; etiqueta: Label };
+	type Dialog =
+		| { kind: 'renombrar'; label: Label; name: string; error?: string }
+		| { kind: 'color'; label: Label; color: Color }
+		| { kind: 'borrar'; label: Label };
 
-	let dialogo = $state<Dialogo | undefined>(undefined);
+	let dialog = $state<Dialog | undefined>(undefined);
 
-	function guardarNombre(evento: SubmitEvent) {
-		evento.preventDefault();
-		if (dialogo?.tipo !== 'renombrar') return;
-		const error = sesion.renombrarEtiqueta(dialogo.etiqueta, dialogo.nombre);
-		if (error) dialogo.error = MENSAJES_DE_NOMBRE[error];
-		else dialogo = undefined;
+	function saveName(event: SubmitEvent) {
+		event.preventDefault();
+		if (dialog?.kind !== 'renombrar') return;
+		const error = session.renameLabel(dialog.label, dialog.name);
+		if (error) dialog.error = NAME_MESSAGES[error];
+		else dialog = undefined;
 	}
 
-	function guardarColor(evento: SubmitEvent) {
-		evento.preventDefault();
-		if (dialogo?.tipo !== 'color') return;
-		sesion.recolorearEtiqueta(dialogo.etiqueta, dialogo.color);
-		dialogo = undefined;
+	function saveColor(event: SubmitEvent) {
+		event.preventDefault();
+		if (dialog?.kind !== 'color') return;
+		session.recolorLabel(dialog.label, dialog.color);
+		dialog = undefined;
 	}
 
-	function borrar(etiqueta: Label) {
-		dialogo = undefined;
-		sesion.borrarEtiqueta(etiqueta);
+	function deleteLabel(label: Label) {
+		dialog = undefined;
+		session.deleteLabel(label);
 	}
 </script>
 
 <section>
 	<h1>Etiquetas</h1>
-	{#if etiquetas.length === 0}
+	{#if labels.length === 0}
 		<p class="vacio">Todavía no hay etiquetas</p>
 	{:else}
 		<ul class="lista">
-			{#each etiquetas as etiqueta (etiqueta.id)}
-				<ChipEtiqueta {etiqueta}>
-					{#snippet acciones()}
+			{#each labels as label (label.id)}
+				<LabelChip {label}>
+					{#snippet actions()}
 						<span class="acciones">
-							<button type="button" onclick={() => (dialogo = { tipo: 'renombrar', etiqueta, nombre: etiqueta.name })}>Renombrar</button>
-							<button type="button" onclick={() => (dialogo = { tipo: 'color', etiqueta, color: etiqueta.color })}>Cambiar color</button>
-							<button type="button" class="peligro" onclick={() => (dialogo = { tipo: 'borrar', etiqueta })}>Borrar</button>
+							<button type="button" onclick={() => (dialog = { kind: 'renombrar', label, name: label.name })}>Renombrar</button>
+							<button type="button" onclick={() => (dialog = { kind: 'color', label, color: label.color })}>Cambiar color</button>
+							<button type="button" class="peligro" onclick={() => (dialog = { kind: 'borrar', label })}>Borrar</button>
 						</span>
 					{/snippet}
-				</ChipEtiqueta>
+				</LabelChip>
 			{/each}
 		</ul>
 	{/if}
 </section>
 
-{#if dialogo?.tipo === 'renombrar'}
+{#if dialog?.kind === 'renombrar'}
 	<div class="fondo" role="dialog" aria-modal="true" aria-labelledby="titulo-renombrar">
-		<form class="caja" novalidate onsubmit={guardarNombre}>
+		<form class="caja" novalidate onsubmit={saveName}>
 			<h2 id="titulo-renombrar">Renombrar etiqueta</h2>
 			<label for="campo-nombre">Nombre</label>
 			<input
 				id="campo-nombre"
 				autocomplete="off"
-				bind:value={dialogo.nombre}
-				aria-invalid={dialogo.error ? 'true' : undefined}
-				aria-describedby={dialogo.error ? 'error-nombre' : undefined}
+				bind:value={dialog.name}
+				aria-invalid={dialog.error ? 'true' : undefined}
+				aria-describedby={dialog.error ? 'error-nombre' : undefined}
 			/>
-			{#if dialogo.error}
-				<p id="error-nombre" class="error">{dialogo.error}</p>
+			{#if dialog.error}
+				<p id="error-nombre" class="error">{dialog.error}</p>
 			{/if}
 			<div class="botones">
-				<button type="button" onclick={() => (dialogo = undefined)}>Cancelar</button>
+				<button type="button" onclick={() => (dialog = undefined)}>Cancelar</button>
 				<button type="submit" class="principal">Guardar</button>
 			</div>
 		</form>
 	</div>
-{:else if dialogo?.tipo === 'color'}
+{:else if dialog?.kind === 'color'}
 	<div class="fondo" role="dialog" aria-modal="true" aria-labelledby="titulo-color">
-		<form class="caja" onsubmit={guardarColor}>
-			<h2 id="titulo-color">Color de «{dialogo.etiqueta.name}»</h2>
+		<form class="caja" onsubmit={saveColor}>
+			<h2 id="titulo-color">Color de «{dialog.label.name}»</h2>
 			<div class="colores" role="radiogroup" aria-label="Color">
 				{#each PALETTE as color (color)}
 					<label class="color" style:--color-chip={`var(--etiqueta-${color})`}>
-						<input type="radio" name="color" value={color} bind:group={dialogo.color} />
+						<input type="radio" name="color" value={color} bind:group={dialog.color} />
 						{color}
 					</label>
 				{/each}
 			</div>
 			<div class="botones">
-				<button type="button" onclick={() => (dialogo = undefined)}>Cancelar</button>
+				<button type="button" onclick={() => (dialog = undefined)}>Cancelar</button>
 				<button type="submit" class="principal">Guardar</button>
 			</div>
 		</form>
 	</div>
-{:else if dialogo?.tipo === 'borrar'}
-	{@const etiqueta = dialogo.etiqueta}
+{:else if dialog?.kind === 'borrar'}
+	{@const label = dialog.label}
 	<div class="fondo" role="alertdialog" aria-modal="true" aria-labelledby="titulo-borrar" aria-describedby="aclaracion-borrar">
 		<div class="caja">
-			<p id="titulo-borrar">¿Borrar la etiqueta «{etiqueta.name}»?</p>
+			<p id="titulo-borrar">¿Borrar la etiqueta «{label.name}»?</p>
 			<p id="aclaracion-borrar" class="aclaracion">Las tareas no se borran.</p>
 			<div class="botones">
-				<button type="button" onclick={() => (dialogo = undefined)}>Cancelar</button>
-				<button type="button" class="principal" onclick={() => borrar(etiqueta)}>Borrar</button>
+				<button type="button" onclick={() => (dialog = undefined)}>Cancelar</button>
+				<button type="button" class="principal" onclick={() => deleteLabel(label)}>Borrar</button>
 			</div>
 		</div>
 	</div>

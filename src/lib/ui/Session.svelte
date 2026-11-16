@@ -2,28 +2,28 @@
 	import { onMount, type Snippet } from 'svelte';
 	import { page } from '$app/state';
 	import {
-		borrarAnotacion,
-		cambiarTextoDeAnotacion,
-		guardarAnotacion,
-		limpiarAnotacionesHuerfanas,
-		observarAnotaciones
+		deleteAnnotation,
+		changeAnnotationText,
+		saveAnnotation,
+		cleanOrphanAnnotations,
+		observeAnnotations
 	} from '#lib/adapters/annotations.ts';
-	import { nuevoId } from '#lib/adapters/ids.ts';
-	import { ahora as horaActual, observarReloj } from '#lib/adapters/clock.ts';
+	import { newId } from '#lib/adapters/ids.ts';
+	import { now as currentTime, observeClock } from '#lib/adapters/clock.ts';
 	import {
-		borrarCompletado,
-		borrarEtiqueta,
-		borrarTarea,
-		cambiarEtiqueta,
-		fusionarEtiquetas,
-		guardarCambio,
-		guardarCompletado,
-		guardarTarea,
-		limpiarHuerfanos,
-		limpiarReferencias,
-		observarCompletados,
-		observarEtiquetas,
-		observarTareas
+		deleteCompletion,
+		deleteLabel,
+		deleteTask,
+		changeLabel,
+		mergeLabels,
+		saveChange,
+		saveCompletion,
+		saveTask,
+		cleanOrphanCompletions,
+		cleanReferences,
+		observeCompletions,
+		observeLabels,
+		observeTasks
 	} from '#lib/adapters/repository.ts';
 	import { noticeOnComplete, visibleNotice, completionToUndo, msUntilDue, noticeReturn, noticeText, type Notice } from '#lib/core/notice.ts';
 	import { annotate, editText, type Annotation, type CurrentScreen, type Sense } from '#lib/core/annotation.ts';
@@ -31,7 +31,7 @@
 	import { labelDeletion, brokenReferences } from '#lib/core/label-deletion.ts';
 	import { checkboxAction } from '#lib/core/checkbox.ts';
 	import { complete } from '#lib/core/completions.ts';
-	import { doTheMinimal as hacerLaMinimaDelCore } from '#lib/core/minimal-version.ts';
+	import { doTheMinimal as doTheMinimalFromCore } from '#lib/core/minimal-version.ts';
 	import { doneAction, changeOnDeleteCompletion, changeOnComplete, previousStepChange } from '#lib/core/current-step.ts';
 	import { pauseAction } from '#lib/core/pause.ts';
 	import { postponeAction, postponementText } from '#lib/core/postponement-in-panel.ts';
@@ -46,89 +46,89 @@
 	import type { TaskChange } from '#lib/core/task-document.ts';
 	import type { Completion, Task } from '#lib/core/task.ts';
 	import { lastTime } from '#lib/core/last-time.ts';
-	import { enLineaReactivo } from './online.svelte.ts';
-	import AvisoDeshacer from './UndoNotice.svelte';
-	import FranjaSinConexion from './NoConnectionStrip.svelte';
-	import Anotar from './Annotate.svelte';
-	import Navegacion from './Navigation.svelte';
-	import PanelTarea from './TaskPanel.svelte';
-	import type { DatosRespondieron } from './LoadingScreen.svelte';
-	import { compartirSesion } from './session';
+	import { onlineState } from './online.svelte.ts';
+	import UndoNotice from './UndoNotice.svelte';
+	import NoConnectionStrip from './NoConnectionStrip.svelte';
+	import Annotate from './Annotate.svelte';
+	import Navigation from './Navigation.svelte';
+	import TaskPanel from './TaskPanel.svelte';
+	import type { CollectionsResponded } from './LoadingScreen.svelte';
+	import { shareSession } from './session';
 
 	let {
 		uid,
-		alResponderDatos,
+		onCollectionsResponded,
 		children
-	}: { uid: string; alResponderDatos: (respondieron: DatosRespondieron) => void; children: Snippet } = $props();
+	}: { uid: string; onCollectionsResponded: (responded: CollectionsResponded) => void; children: Snippet } = $props();
 
-	let tareas = $state<Task[]>([]);
-	let completados = $state<Completion[]>([]);
-	let etiquetas = $state<Label[]>([]);
-	let anotaciones = $state<Annotation[]>([]);
-	let anotacionesCargadas = $state(false);
+	let tasks = $state<Task[]>([]);
+	let completions = $state<Completion[]>([]);
+	let labels = $state<Label[]>([]);
+	let annotations = $state<Annotation[]>([]);
+	let annotationsLoaded = $state(false);
 	/** El recuadro de Anotar (§5.10) y el panel de edición abierto, si lo hay (con su tarea al editar). */
-	let anotando = $state(false);
-	let panel = $state.raw<{ tareaId?: string } | undefined>(undefined);
-	const anotacionesEnLimpieza = new Set<string>();
+	let annotating = $state(false);
+	let panel = $state.raw<{ taskId?: string } | undefined>(undefined);
+	const annotationsBeingCleaned = new Set<string>();
 	/** Hasta que las colecciones respondieron, faltar una tarea o una etiqueta no significa que se borró. */
-	let tareasCargadas = $state(false);
-	let completadosCargados = $state(false);
-	let etiquetasCargadas = $state(false);
+	let tasksLoaded = $state(false);
+	let completionsLoaded = $state(false);
+	let labelsLoaded = $state(false);
 	/** El filtro de Pendientes (id de etiqueta; sin él, "Todas"): sigue al cambiar de pantalla, no al recargar. */
-	let filtro = $state<string | undefined>(undefined);
-	let soloRapidas = $state(false);
-	let ahora = $state(horaActual());
+	let filter = $state<string | undefined>(undefined);
+	let quickOnly = $state(false);
+	let now = $state(currentTime());
 	/** El aviso del último completado de este dispositivo; sigue al cambiar de pantalla. */
-	let aviso = $state.raw<Notice | undefined>(undefined);
-	const avisoQueSeVe = $derived(visibleNotice(aviso, ahora));
+	let notice = $state.raw<Notice | undefined>(undefined);
+	const displayedNotice = $derived(visibleNotice(notice, now));
 	/**
 	 * La tarea abierta en el panel de edición, como estaba al abrirlo: la edición
 	 * se compara con ella, así solo se escriben los campos que cambié.
 	 */
-	let editada = $state.raw<Task | undefined>(undefined);
+	let edited = $state.raw<Task | undefined>(undefined);
 	/** Si la tarea se borra (por ejemplo, en otro dispositivo) el panel se cierra solo. */
-	const editadaExiste = $derived(editada !== undefined && taskExists(tareas, editada.id));
+	const editedExists = $derived(edited !== undefined && taskExists(tasks, edited.id));
 	/** Huérfanos que ya se mandaron a limpiar, para no repetirlos en cada snapshot. */
-	const huerfanosEnLimpieza = new Set<string>();
+	const orphansBeingCleaned = new Set<string>();
 	/** Referencias rotas y etiquetas duplicadas que ya se mandaron a resolver. */
-	const referenciasEnLimpieza = new Set<string>();
-	const etiquetasEnFusion = new Set<string>();
+	const referencesBeingCleaned = new Set<string>();
+	const labelsBeingMerged = new Set<string>();
 
 	onMount(() => {
-		const cancelar = [
-			observarTareas(uid, (actuales) => {
-				tareas = actuales;
-				tareasCargadas = true;
+		const unsubscribers = [
+			observeTasks(uid, (currentItems) => {
+				tasks = currentItems;
+				tasksLoaded = true;
 			}),
-			observarCompletados(uid, (actuales) => {
-				completados = actuales;
-				completadosCargados = true;
+			observeCompletions(uid, (currentItems) => {
+				completions = currentItems;
+				completionsLoaded = true;
 			}),
-			observarEtiquetas(uid, (actuales) => {
-				etiquetas = actuales;
-				etiquetasCargadas = true;
+			observeLabels(uid, (currentItems) => {
+				labels = currentItems;
+				labelsLoaded = true;
 			}),
-			observarAnotaciones(uid, (actuales) => {
-				anotaciones = actuales;
-				anotacionesCargadas = true;
+			observeAnnotations(uid, (currentItems) => {
+				annotations = currentItems;
+				annotationsLoaded = true;
 			}),
-			observarReloj((actual) => (ahora = actual))
+			observeClock((current) => (now = current))
 		];
-		return () => cancelar.forEach((cancelarUno) => cancelarUno());
+		return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
 	});
 
 	// Spec §6.6: la pantalla de carga espera la primera respuesta de cada colección.
 	$effect(() => {
-		alResponderDatos({ tareas: tareasCargadas, completados: completadosCargados, etiquetas: etiquetasCargadas });
+		onCollectionsResponded({ tasks: tasksLoaded, completions: completionsLoaded, labels: labelsLoaded });
 	});
 
 	/** Cambia al volver la conexión: los efectos de limpieza la leen para reintentar. */
-	const conexion = enLineaReactivo();
+	const connection = onlineState();
 
 	/** Sube cuando un intento termina habiendo cambiado los datos (o la conexión) durante él: los efectos de limpieza la leen y se reevalúan. */
-	let reevaluar = $state(0);
+	let reevaluate = $state(0);
 	/** Conjuntos `…EnLimpieza` cuyo efecto corrió mientras había un intento en curso, saltando elementos. */
-	const saltearon = new WeakSet<Set<string>>();
+	const skipped = new WeakSet<Set<string>>();
 
 	/**
 	 * §7: intenta los elementos sin intento en curso; al terminar (falle o no) los saca
@@ -136,239 +136,239 @@
 	 * Si el efecto corrió durante el intento (cambiaron los datos) y saltó elementos, al terminar
 	 * se reevalúa una vez; un fallo sin cambio de datos ni de conexión no reintenta (sin bucle).
 	 */
-	function limpiar<T>(elementos: T[], clave: (elemento: T) => string, enCurso: Set<string>, intentar: (lote: T[]) => Promise<readonly string[]>) {
-		const ids = new Set(itemsToAttempt(elementos.map(clave), enCurso));
-		const lote = elementos.filter((elemento) => ids.has(clave(elemento)));
-		if (lote.length < elementos.length) saltearon.add(enCurso);
-		if (lote.length === 0) return;
-		ids.forEach((id) => enCurso.add(id));
-		const intentados = [...ids];
-		void intentar(lote)
-			.catch(() => intentados)
-			.then((fallaron) => {
-				const { cleaned: limpios, pendings: pendientes } = attemptResult(intentados, fallaron);
-				[...limpios, ...pendientes].forEach((id) => enCurso.delete(id));
-				if (saltearon.delete(enCurso) && retriesWith('cambian los datos')) reevaluar++;
+	function cleanUp<T>(elements: T[], key: (element: T) => string, inProgress: Set<string>, attempt: (batch: T[]) => Promise<readonly string[]>) {
+		const ids = new Set(itemsToAttempt(elements.map(key), inProgress));
+		const batch = elements.filter((element) => ids.has(key(element)));
+		if (batch.length < elements.length) skipped.add(inProgress);
+		if (batch.length === 0) return;
+		ids.forEach((id) => inProgress.add(id));
+		const attempted = [...ids];
+		void attempt(batch)
+			.catch(() => attempted)
+			.then((failed) => {
+				const { cleaned, pendings } = attemptResult(attempted, failed);
+				[...cleaned, ...pendings].forEach((id) => inProgress.delete(id));
+				if (skipped.delete(inProgress) && retriesWith('cambian los datos')) reevaluate++;
 			});
 	}
 
 	$effect(() => {
-		if (!tareasCargadas || !completadosCargados) return;
-		void [conexion.valor, reevaluar];
-		limpiar(orphanCompletions(tareas, completados), ({ id }) => id, huerfanosEnLimpieza, (lote) => limpiarHuerfanos(uid, lote));
+		if (!tasksLoaded || !completionsLoaded) return;
+		void [connection.value, reevaluate];
+		cleanUp(orphanCompletions(tasks, completions), ({ id }) => id, orphansBeingCleaned, (batch) => cleanOrphanCompletions(uid, batch));
 	});
 
 	// Spec §7: las anotaciones huérfanas se ignoran y se limpian.
 	$effect(() => {
-		if (!tareasCargadas || !anotacionesCargadas) return;
-		void [conexion.valor, reevaluar];
-		limpiar(orphanAnnotations(tareas, anotaciones), ({ id }) => id, anotacionesEnLimpieza, (lote) => limpiarAnotacionesHuerfanas(uid, lote));
+		if (!tasksLoaded || !annotationsLoaded) return;
+		void [connection.value, reevaluate];
+		cleanUp(orphanAnnotations(tasks, annotations), ({ id }) => id, annotationsBeingCleaned, (batch) => cleanOrphanAnnotations(uid, batch));
 	});
 
 	// Spec §7: las referencias a etiquetas borradas se ignoran y se limpian.
 	$effect(() => {
-		if (!tareasCargadas || !etiquetasCargadas) return;
-		void [conexion.valor, reevaluar];
-		limpiar(brokenReferences(tareas, etiquetas), ({ taskId: tareaId }) => tareaId, referenciasEnLimpieza, (lote) => limpiarReferencias(uid, lote));
+		if (!tasksLoaded || !labelsLoaded) return;
+		void [connection.value, reevaluate];
+		cleanUp(brokenReferences(tasks, labels), ({ taskId }) => taskId, referencesBeingCleaned, (batch) => cleanReferences(uid, batch));
 	});
 
 	// Spec §7: las etiquetas duplicadas se fusionan al detectarlas.
 	$effect(() => {
-		if (!tareasCargadas || !etiquetasCargadas) return;
-		void [conexion.valor, reevaluar];
-		const fusion = mergeOfDuplicates(etiquetas, tareas);
-		limpiar(fusion.deletedItems, (id) => id, etiquetasEnFusion, (borradas) =>
-			fusionarEtiquetas(uid, { deletedItems: borradas, references: fusion.references.filter(({ remove: quitar }) => quitar.some((id) => borradas.includes(id))) })
+		if (!tasksLoaded || !labelsLoaded) return;
+		void [connection.value, reevaluate];
+		const merge = mergeOfDuplicates(labels, tasks);
+		cleanUp(merge.deletedItems, (id) => id, labelsBeingMerged, (deletedItems) =>
+			mergeLabels(uid, { deletedItems, references: merge.references.filter(({ remove }) => remove.some((id) => deletedItems.includes(id))) })
 		);
 	});
 
 	// El aviso desaparece justo a los 5 segundos, sin esperar al próximo tic del reloj.
 	$effect(() => {
-		if (!avisoQueSeVe) return;
-		const vencimiento = setTimeout(() => (ahora = horaActual()), msUntilDue(avisoQueSeVe, ahora));
-		return () => clearTimeout(vencimiento);
+		if (!displayedNotice) return;
+		const expiry = setTimeout(() => (now = currentTime()), msUntilDue(displayedNotice, now));
+		return () => clearTimeout(expiry);
 	});
 
-	function completarTarea(tarea: Task, completadoDe?: Completion) {
-		if (!completadoDe) ahora = horaActual();
-		const completado = completadoDe ?? complete(tarea, completados, nuevoId(), ahora);
-		aviso = noticeOnComplete(tarea, completado, completados);
-		void guardarCompletado(uid, completado);
-		void guardarCambio(uid, tarea.id, changeOnComplete(tarea), []);
+	function completeTask(task: Task, existingCompletion?: Completion) {
+		if (!existingCompletion) now = currentTime();
+		const completion = existingCompletion ?? complete(task, completions, newId(), now);
+		notice = noticeOnComplete(task, completion, completions);
+		void saveCompletion(uid, completion);
+		void saveChange(uid, task.id, changeOnComplete(task), []);
 	}
 
 	/** «Hice la mínima» (§6.1): lo que dice el core, con el mismo aviso y el mismo reinicio de paso que el checkbox. */
-	function hacerLaMinima(tarea: Task) {
-		ahora = horaActual();
-		const completado = hacerLaMinimaDelCore(tarea, completados, nuevoId(), ahora);
-		if (completado) completarTarea(tarea, completado);
+	function doTheMinimal(task: Task) {
+		now = currentTime();
+		const completion = doTheMinimalFromCore(task, completions, newId(), now);
+		if (completion) completeTask(task, completion);
 	}
 
 	/** Borra el completado y devuelve el paso de la tarea que dice el core (§5.4, Pasos: Deshacer). */
-	function borrarYDevolverPaso(completado: Completion) {
-		const tarea = tareas.find(({ id }) => id === completado.taskId);
-		void borrarCompletado(uid, completado.id);
+	function deleteAndRestoreStep(completion: Completion) {
+		const task = tasks.find(({ id }) => id === completion.taskId);
+		void deleteCompletion(uid, completion.id);
 		// La tarea que se ve puede no reflejar todavía el reinicio al paso 1 de completarla (esa escritura
 		// sigue en camino): se la toma sin paso guardado conocido (0 no es ningún paso), así el core
 		// siempre da el paso a escribir en lugar de creer que la tarea ya está en él.
-		if (tarea) void guardarCambio(uid, tarea.id, changeOnDeleteCompletion({ ...tarea, currentStep: 0 }, completados, completado), []);
+		if (task) void saveChange(uid, task.id, changeOnDeleteCompletion({ ...task, currentStep: 0 }, completions, completion), []);
 	}
 
 	/** «Hecho» de la fila (§6.1): pasa al paso siguiente o, en el último, completa como el checkbox. */
-	function tocarHecho(tarea: Task) {
-		const accion = doneAction(tarea, completados, horaActual());
-		if (accion.kind === 'avanzar') void guardarCambio(uid, tarea.id, accion.change, []);
-		else if (accion.kind === 'completar') completarTarea(tarea);
+	function tapDone(task: Task) {
+		const action = doneAction(task, completions, currentTime());
+		if (action.kind === 'avanzar') void saveChange(uid, task.id, action.change, []);
+		else if (action.kind === 'completar') completeTask(task);
 	}
 
 	/** Sin aviso al borrar: el checkbox ya deshace (§6.1). */
-	function tocarCheckbox(tarea: Task) {
-		const accion = checkboxAction(tarea, completados, horaActual());
-		if (accion.kind === 'completar') completarTarea(tarea);
-		else if (accion.kind === 'borrar') borrarYDevolverPaso(accion.completion);
+	function tapCheckbox(task: Task) {
+		const action = checkboxAction(task, completions, currentTime());
+		if (action.kind === 'completar') completeTask(task);
+		else if (action.kind === 'borrar') deleteAndRestoreStep(action.completion);
 	}
 
-	function deshacer() {
-		const completado = completionToUndo(aviso, horaActual());
-		aviso = undefined;
-		if (completado) borrarYDevolverPaso(completado);
+	function undo() {
+		const completion = completionToUndo(notice, currentTime());
+		notice = undefined;
+		if (completion) deleteAndRestoreStep(completion);
 	}
 
 	/** Las etiquetas de ahora y cómo nombrar las nuevas, para guardar el panel. */
-	const etiquetasAlGuardar = () => ({ existings: etiquetas, newId: nuevoId });
+	const labelsOnSave = () => ({ existings: labels, newId });
 
-	function crear(formulario: PanelForm) {
-		const resultado = createFromPanel(formulario, nuevoId(), horaActual(), etiquetasAlGuardar());
-		if (!resultado.ok) return resultado.errors;
-		void guardarTarea(uid, resultado.task, resultado.newLabels);
+	function create(form: PanelForm) {
+		const result = createFromPanel(form, newId(), currentTime(), labelsOnSave());
+		if (!result.ok) return result.errors;
+		void saveTask(uid, result.task, result.newLabels);
 	}
 
-	function guardarEdicion(tarea: Task, formulario: PanelForm) {
-		const resultado = editFromPanel(tarea, formulario, etiquetasAlGuardar(), horaActual());
-		if (!resultado.ok) return resultado.errors;
-		editada = undefined;
-		void guardarCambio(uid, tarea.id, resultado.change, resultado.newLabels);
+	function saveEdit(task: Task, form: PanelForm) {
+		const result = editFromPanel(task, form, labelsOnSave(), currentTime());
+		if (!result.ok) return result.errors;
+		edited = undefined;
+		void saveChange(uid, task.id, result.change, result.newLabels);
 	}
 
 	/** Spec §6.2: pausar, reanudar, posponer y quitar posponer actúan y cierran el panel. */
-	function actuar(tarea: Task, cambio: TaskChange, nuevas: Label[]) {
-		editada = undefined;
-		void guardarCambio(uid, tarea.id, cambio, nuevas);
+	function act(task: Task, change: TaskChange, newLabels: Label[]) {
+		edited = undefined;
+		void saveChange(uid, task.id, change, newLabels);
 	}
 
-	function renombrarEtiqueta(etiqueta: Label, escrito: string) {
-		const resultado = rename(etiqueta, escrito, etiquetas);
-		if (!resultado.ok) return resultado.error;
-		void cambiarEtiqueta(uid, etiqueta.id, resultado.change);
+	function renameLabel(label: Label, typed: string) {
+		const result = rename(label, typed, labels);
+		if (!result.ok) return result.error;
+		void changeLabel(uid, label.id, result.change);
 	}
 
-	function borrarEditada(tarea: Task) {
-		editada = undefined;
-		void borrarTarea(uid, deletion(tarea.id, completados, anotaciones));
+	function deleteEdited(task: Task) {
+		edited = undefined;
+		void deleteTask(uid, deletion(task.id, completions, annotations));
 	}
 
-	const PANTALLAS: Record<string, CurrentScreen> = { '/historial': 'Historial', '/etiquetas': 'Etiquetas', '/anotaciones': 'Anotaciones' };
+	const SCREENS: Record<string, CurrentScreen> = { '/historial': 'Historial', '/etiquetas': 'Etiquetas', '/anotaciones': 'Anotaciones' };
 
 	/** Segundo toque (§5.10): el core toma el contexto de la pantalla, el panel y el aviso. */
-	function anotarAhora(sentido: Sense, texto: string) {
-		ahora = horaActual();
-		const pantalla = PANTALLAS[page.url.pathname] ?? 'Pendientes';
-		const anotacion = annotate(nuevoId(), sentido, ahora, { screen: pantalla, ...(panel && { panel: { ...(panel.tareaId !== undefined && { taskId: panel.tareaId }) } }), ...(aviso && { notice: aviso }) }, texto);
-		anotando = false;
-		void guardarAnotacion(uid, anotacion);
+	function annotateNow(sense: Sense, text: string) {
+		now = currentTime();
+		const screen = SCREENS[page.url.pathname] ?? 'Pendientes';
+		const annotation = annotate(newId(), sense, now, { screen, ...(panel && { panel: { ...(panel.taskId !== undefined && { taskId: panel.taskId }) } }), ...(notice && { notice }) }, text);
+		annotating = false;
+		void saveAnnotation(uid, annotation);
 	}
 
 	/** Editar texto (§6.7): el core decide cómo queda el texto; la anotación que ya no está no se revive. */
-	function editarTextoDeAnotacion(anotacion: Annotation, texto: string) {
-		const editada = editText(anotaciones, anotacion.id, texto).find(({ id }) => id === anotacion.id);
-		if (editada) void cambiarTextoDeAnotacion(uid, editada.id, editada.text);
+	function editAnnotationText(annotation: Annotation, text: string) {
+		const edited = editText(annotations, annotation.id, text).find(({ id }) => id === annotation.id);
+		if (edited) void changeAnnotationText(uid, edited.id, edited.text);
 	}
 
-	function panelAbierto(tareaId: string | undefined) {
-		const este = tareaId === undefined ? {} : { tareaId };
-		panel = este;
+	function panelOpened(taskId: string | undefined) {
+		const thisPanel = taskId === undefined ? {} : { taskId };
+		panel = thisPanel;
 		return () => {
-			if (panel === este) panel = undefined;
+			if (panel === thisPanel) panel = undefined;
 		};
 	}
 
-	compartirSesion({
-		get anotaciones() {
-			return anotaciones;
+	shareSession({
+		get annotations() {
+			return annotations;
 		},
-		get hayPanel() {
+		get hasPanel() {
 			return panel !== undefined;
 		},
-		get anotando() {
-			return anotando;
+		get annotating() {
+			return annotating;
 		},
-		abrirAnotar: () => (anotando = true),
-		cerrarAnotar: () => (anotando = false),
-		anotar: anotarAhora,
-		panelAbierto,
-		editarTextoDeAnotacion,
-		borrarAnotacion: (anotacion) => void borrarAnotacion(uid, anotacion.id),
-		get tareas() {
-			return tareas;
+		openAnnotate: () => (annotating = true),
+		closeAnnotate: () => (annotating = false),
+		annotate: annotateNow,
+		panelOpened,
+		editAnnotationText,
+		deleteAnnotation: (annotation) => void deleteAnnotation(uid, annotation.id),
+		get tasks() {
+			return tasks;
 		},
-		get completados() {
-			return completados;
+		get completions() {
+			return completions;
 		},
-		get ahora() {
-			return ahora;
+		get now() {
+			return now;
 		},
-		get etiquetas() {
-			return etiquetas;
+		get labels() {
+			return labels;
 		},
-		get filtro() {
-			return filtro;
+		get filter() {
+			return filter;
 		},
-		elegirFiltro: (etiquetaId) => (filtro = etiquetaId),
-		get soloRapidas() {
-			return soloRapidas;
+		chooseFilter: (labelId) => (filter = labelId),
+		get quickOnly() {
+			return quickOnly;
 		},
-		alternarSoloRapidas: () => (soloRapidas = !soloRapidas),
-		renombrarEtiqueta,
-		recolorearEtiqueta: (etiqueta, color) => void cambiarEtiqueta(uid, etiqueta.id, { color }),
-		borrarEtiqueta: (etiqueta) => void borrarEtiqueta(uid, labelDeletion(etiqueta.id, tareas)),
-		tocarCheckbox,
-		tocarHecho,
-		hacerLaMinima,
-		pasoAnterior: (tarea) => void guardarCambio(uid, tarea.id, previousStepChange(tarea), []),
-		crear,
-		abrir: (tarea) => (editada = tarea),
-		borrarCompletado: borrarYDevolverPaso
+		toggleQuickOnly: () => (quickOnly = !quickOnly),
+		renameLabel,
+		recolorLabel: (label, color) => void changeLabel(uid, label.id, { color }),
+		deleteLabel: (label) => void deleteLabel(uid, labelDeletion(label.id, tasks)),
+		tapCheckbox,
+		tapDone,
+		doTheMinimal,
+		previousStep: (task) => void saveChange(uid, task.id, previousStepChange(task), []),
+		create,
+		openTask: (task) => (edited = task),
+		deleteCompletion: deleteAndRestoreStep
 	});
 </script>
 
-<FranjaSinConexion />
-<Navegacion />
-<Anotar />
+<NoConnectionStrip />
+<Navigation />
+<Annotate />
 
 {@render children()}
 
-{#if avisoQueSeVe}
-	<AvisoDeshacer texto={noticeText(avisoQueSeVe)} regreso={noticeReturn(avisoQueSeVe, ahora)} alDeshacer={deshacer} />
+{#if displayedNotice}
+	<UndoNotice text={noticeText(displayedNotice)} returnText={noticeReturn(displayedNotice, now)} onUndo={undo} />
 {/if}
 
-{#if editada && editadaExiste}
-	{@const abierta = editada}
+{#if edited && editedExists}
+	{@const openedTask = edited}
 	<!-- Las acciones se deciden con la tarea de ahora: si otro dispositivo la cambia, el panel las actualiza (§6.2). -->
-	{@const vigente = tareas.find(({ id }) => id === abierta.id) ?? abierta}
-	{#key abierta}
-		<PanelTarea
-			encabezado="Editar tarea"
-			inicial={taskData(abierta)}
-			etiquetasIniciales={taskLabels(abierta, etiquetas).map(({ name: nombre }) => nombre)}
-			ultimaVez={lastTime(abierta.id, completados, ahora)}
-			tarea={abierta}
-			alGuardar={(formulario) => guardarEdicion(abierta, formulario)}
-			alCerrar={() => (editada = undefined)}
-			alBorrar={() => borrarEditada(abierta)}
-			alActuar={(cambio, nuevas) => actuar(abierta, cambio, nuevas)}
-			pausa={pauseAction(vigente)}
-			posponer={postponeAction(vigente, completados, ahora)}
-			textoPospuesta={postponementText(vigente, ahora)}
+	{@const active = tasks.find(({ id }) => id === openedTask.id) ?? openedTask}
+	{#key openedTask}
+		<TaskPanel
+			header="Editar tarea"
+			initial={taskData(openedTask)}
+			initialLabels={taskLabels(openedTask, labels).map(({ name }) => name)}
+			lastTime={lastTime(openedTask.id, completions, now)}
+			task={openedTask}
+			onSave={(form) => saveEdit(openedTask, form)}
+			onClose={() => (edited = undefined)}
+			onDelete={() => deleteEdited(openedTask)}
+			onAct={(change, newLabels) => act(openedTask, change, newLabels)}
+			pause={pauseAction(active)}
+			postpone={postponeAction(active, completions, now)}
+			postponedText={postponementText(active, now)}
 		/>
 	{/key}
 {/if}

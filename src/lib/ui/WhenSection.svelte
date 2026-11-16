@@ -1,8 +1,8 @@
 <script module lang="ts">
 	/** Una fila Desde/Hasta de "Solo en un horario". */
-	export interface Ventana {
-		desde: string;
-		hasta: string;
+	export interface WindowRow {
+		from: string;
+		to: string;
 	}
 </script>
 
@@ -10,104 +10,104 @@
 	import type { CreationErrors } from '#lib/core/creation.ts';
 	import type { RepetitionOption, PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
 	import { WEEKDAYS, MONTH_DAYS, type Weekday, type Unit } from '#lib/core/task.ts';
-	import MarcoDeSeccion from './SectionFrame.svelte';
+	import SectionFrame from './SectionFrame.svelte';
 
 	let {
-		presentacion,
-		abierta,
-		errores,
-		limpiar,
-		repeticion = $bindable(),
-		diasSemana = $bindable(),
-		diasMes = $bindable(),
-		conHorario = $bindable(),
-		ventanas = $bindable(),
-		fechaLimiteInicial,
-		cadaInicial,
-		unidadInicial
+		presentation,
+		openSection,
+		errors,
+		clearError,
+		repetition = $bindable(),
+		weekdays = $bindable(),
+		monthDays = $bindable(),
+		withSchedule = $bindable(),
+		windowRows = $bindable(),
+		initialDueDate,
+		initialEvery,
+		initialUnit
 	}: {
-		presentacion: PanelPresentation;
-		abierta: PanelSection;
-		errores: CreationErrors;
+		presentation: PanelPresentation;
+		openSection: PanelSection;
+		errors: CreationErrors;
 		/** El error de un campo dura lo que dura su mensaje: al corregirlo se va. */
-		limpiar: (campo: keyof CreationErrors) => void;
-		repeticion: RepetitionOption;
-		diasSemana: Weekday[];
-		diasMes: number[];
+		clearError: (field: keyof CreationErrors) => void;
+		repetition: RepetitionOption;
+		weekdays: Weekday[];
+		monthDays: number[];
 		/** "Solo en un horario": apagado, la tarea no tiene horario (§6.2). */
-		conHorario: boolean;
+		withSchedule: boolean;
 		/** Las filas Desde/Hasta: al menos una; Agregar horario suma una vacía (§6.2). */
-		ventanas: Ventana[];
-		fechaLimiteInicial: string;
-		cadaInicial: string;
-		unidadInicial: Unit;
+		windowRows: WindowRow[];
+		initialDueDate: string;
+		initialEvery: string;
+		initialUnit: Unit;
 	} = $props();
 
-	const REPETICIONES: { valor: RepetitionOption; nombre: string }[] = [
-		{ valor: 'puntual', nombre: 'No se repite' },
-		{ valor: 'relativo', nombre: 'Intervalo' },
-		{ valor: 'semanal', nombre: 'Días de la semana' },
-		{ valor: 'mensual', nombre: 'Días del mes' }
+	const REPETITIONS: { value: RepetitionOption; name: string }[] = [
+		{ value: 'puntual', name: 'No se repite' },
+		{ value: 'relativo', name: 'Intervalo' },
+		{ value: 'semanal', name: 'Días de la semana' },
+		{ value: 'mensual', name: 'Días del mes' }
 	];
-	const ERRORES_DE_HORARIO: Record<NonNullable<CreationErrors['schedule']>, string> = {
+	const SCHEDULE_ERRORS: Record<NonNullable<CreationErrors['schedule']>, string> = {
 		finNoPosterior: 'La hora de fin tiene que ser posterior a la de inicio',
 		incompleto: 'Completá las dos horas',
 		superpuestos: 'Los horarios no se pueden superponer',
 		variasEnHoras: 'Con varios horarios, el intervalo tiene que ser en días'
 	};
-	const ERRORES_DE_DIAS: Record<NonNullable<CreationErrors['days']>, string> = {
+	const DAYS_ERRORS: Record<NonNullable<CreationErrors['days']>, string> = {
 		faltan: 'Elegí al menos un día.',
 		diaDelMesInvalido: 'Los días del mes van del 1 al 31.',
 		combinados: 'Elegí días de la semana o días del mes, no los dos.'
 	};
 
-	function agregarVentana() {
-		ventanas = [...ventanas, { desde: '', hasta: '' }];
-		limpiar('schedule');
+	function addWindowRow() {
+		windowRows = [...windowRows, { from: '', to: '' }];
+		clearError('schedule');
 	}
 
-	function quitarVentana(indice: number) {
-		ventanas = ventanas.filter((_, i) => i !== indice);
-		limpiar('schedule');
+	function removeWindowRow(index: number) {
+		windowRows = windowRows.filter((_, i) => i !== index);
+		clearError('schedule');
 	}
 
 	/** La primera fila conserva los ids de siempre; las demás llevan su número. */
-	const idDeCampo = (campo: 'desde' | 'hasta', indice: number) => (indice === 0 ? `campo-${campo}` : `campo-${campo}-${indice + 1}`);
+	const fieldId = (field: 'desde' | 'hasta', index: number) => (index === 0 ? `campo-${field}` : `campo-${field}-${index + 1}`);
 
-	function alternar<T>(elegidos: T[], valor: T): T[] {
-		return elegidos.includes(valor) ? elegidos.filter((elegido) => elegido !== valor) : [...elegidos, valor];
+	function toggle<T>(selectedItems: T[], value: T): T[] {
+		return selectedItems.includes(value) ? selectedItems.filter((chosen) => chosen !== value) : [...selectedItems, value];
 	}
 </script>
 
-<MarcoDeSeccion nombre="Cuándo" {presentacion} {abierta}>
+<SectionFrame name="Cuándo" {presentation} {openSection}>
 	<fieldset>
 		<legend>Se repite</legend>
 		<div class="opciones">
-			{#each REPETICIONES as opcion (opcion.valor)}
+			{#each REPETITIONS as option (option.value)}
 				<label class="opcion">
-					<input type="radio" name="repeticion" value={opcion.valor} bind:group={repeticion} />
-					{opcion.nombre}
+					<input type="radio" name="repeticion" value={option.value} bind:group={repetition} />
+					{option.name}
 				</label>
 			{/each}
 		</div>
 
-		{#if repeticion === 'puntual'}
+		{#if repetition === 'puntual'}
 			<div class="campo-formulario" data-campo="fecha límite">
 				<label for="campo-fecha-limite">Fecha límite</label>
 				<input
 					id="campo-fecha-limite"
 					name="fechaLimite"
 					type="date"
-					value={fechaLimiteInicial}
-					oninput={() => limpiar('dueDate')}
-					aria-invalid={errores.dueDate ? 'true' : undefined}
-					aria-describedby={errores.dueDate ? 'error-fecha-limite' : undefined}
+					value={initialDueDate}
+					oninput={() => clearError('dueDate')}
+					aria-invalid={errors.dueDate ? 'true' : undefined}
+					aria-describedby={errors.dueDate ? 'error-fecha-limite' : undefined}
 				/>
-				{#if errores.dueDate}
+				{#if errors.dueDate}
 					<p id="error-fecha-limite" class="error">Ingresá una fecha completa y que exista, o dejala vacía.</p>
 				{/if}
 			</div>
-		{:else if repeticion === 'relativo'}
+		{:else if repetition === 'relativo'}
 			<div class="relativo" data-campo="Cada">
 				<label for="campo-cada">Cada</label>
 				<input
@@ -117,17 +117,17 @@
 					inputmode="numeric"
 					min="1"
 					step="1"
-					value={cadaInicial}
-					oninput={() => limpiar('every')}
-					aria-invalid={errores.every ? 'true' : undefined}
-					aria-describedby={errores.every ? 'error-cada' : undefined}
+					value={initialEvery}
+					oninput={() => clearError('every')}
+					aria-invalid={errors.every ? 'true' : undefined}
+					aria-describedby={errors.every ? 'error-cada' : undefined}
 				/>
 				<label for="campo-unidad" class="oculto">Unidad</label>
-				<select id="campo-unidad" name="unidad" value={unidadInicial}>
+				<select id="campo-unidad" name="unidad" value={initialUnit}>
 					<option value="horas">horas</option>
 					<option value="dias">días</option>
 				</select>
-				{#if errores.every}
+				{#if errors.every}
 					<p id="error-cada" class="error">Cada tiene que ser un número entero, 1 o más.</p>
 				{/if}
 			</div>
@@ -135,78 +135,78 @@
 			<div data-campo="días">
 				<div
 					class="dias"
-					class:semana={repeticion === 'semanal'}
+					class:semana={repetition === 'semanal'}
 					role="group"
-					aria-label={repeticion === 'semanal' ? 'Días de la semana' : 'Días del mes'}
-					aria-describedby={errores.days ? 'error-dias' : undefined}
+					aria-label={repetition === 'semanal' ? 'Días de la semana' : 'Días del mes'}
+					aria-describedby={errors.days ? 'error-dias' : undefined}
 				>
-					{#if repeticion === 'semanal'}
-						{#each WEEKDAYS as dia (dia)}
+					{#if repetition === 'semanal'}
+						{#each WEEKDAYS as day (day)}
 							<button
 								type="button"
-								aria-pressed={diasSemana.includes(dia)}
+								aria-pressed={weekdays.includes(day)}
 								onclick={() => {
-									diasSemana = alternar(diasSemana, dia);
-									limpiar('days');
-								}}>{dia}</button
+									weekdays = toggle(weekdays, day);
+									clearError('days');
+								}}>{day}</button
 							>
 						{/each}
 					{:else}
-						{#each MONTH_DAYS as dia (dia)}
+						{#each MONTH_DAYS as day (day)}
 							<button
 								type="button"
-								aria-pressed={diasMes.includes(dia)}
+								aria-pressed={monthDays.includes(day)}
 								onclick={() => {
-									diasMes = alternar(diasMes, dia);
-									limpiar('days');
-								}}>{dia}</button
+									monthDays = toggle(monthDays, day);
+									clearError('days');
+								}}>{day}</button
 							>
 						{/each}
 					{/if}
 				</div>
-				{#if errores.days}
-					<p id="error-dias" class="error">{ERRORES_DE_DIAS[errores.days]}</p>
+				{#if errors.days}
+					<p id="error-dias" class="error">{DAYS_ERRORS[errors.days]}</p>
 				{/if}
 			</div>
 		{/if}
 	</fieldset>
 
-	<div class="horario" data-campo="horario" role="group" aria-label="Horario" aria-describedby={errores.schedule ? 'error-horario' : undefined}>
+	<div class="horario" data-campo="horario" role="group" aria-label="Horario" aria-describedby={errors.schedule ? 'error-horario' : undefined}>
 		<label class="opcion">
-			<input type="checkbox" bind:checked={conHorario} />
+			<input type="checkbox" bind:checked={withSchedule} />
 			Solo en un horario
 		</label>
-		{#if conHorario}
-			{#each ventanas as ventana, indice (indice)}
+		{#if withSchedule}
+			{#each windowRows as windowRow, index (index)}
 				<div class="horas">
-					<label for={idDeCampo('desde', indice)}>Desde</label>
+					<label for={fieldId('desde', index)}>Desde</label>
 					<input
-						id={idDeCampo('desde', indice)}
+						id={fieldId('desde', index)}
 						type="time"
-						bind:value={ventana.desde}
-						oninput={() => limpiar('schedule')}
-						aria-invalid={errores.schedule ? 'true' : undefined}
+						bind:value={windowRow.from}
+						oninput={() => clearError('schedule')}
+						aria-invalid={errors.schedule ? 'true' : undefined}
 					/>
-					<label for={idDeCampo('hasta', indice)}>Hasta</label>
+					<label for={fieldId('hasta', index)}>Hasta</label>
 					<input
-						id={idDeCampo('hasta', indice)}
+						id={fieldId('hasta', index)}
 						type="time"
-						bind:value={ventana.hasta}
-						oninput={() => limpiar('schedule')}
-						aria-invalid={errores.schedule ? 'true' : undefined}
+						bind:value={windowRow.to}
+						oninput={() => clearError('schedule')}
+						aria-invalid={errors.schedule ? 'true' : undefined}
 					/>
-					{#if ventanas.length > 1}
-						<button type="button" class="texto" onclick={() => quitarVentana(indice)}>Quitar</button>
+					{#if windowRows.length > 1}
+						<button type="button" class="texto" onclick={() => removeWindowRow(index)}>Quitar</button>
 					{/if}
 				</div>
 			{/each}
-			<button type="button" class="texto" onclick={agregarVentana}>Agregar horario</button>
+			<button type="button" class="texto" onclick={addWindowRow}>Agregar horario</button>
 		{/if}
-		{#if errores.schedule}
-			<p id="error-horario" class="error">{ERRORES_DE_HORARIO[errores.schedule]}</p>
+		{#if errors.schedule}
+			<p id="error-horario" class="error">{SCHEDULE_ERRORS[errors.schedule]}</p>
 		{/if}
 	</div>
-</MarcoDeSeccion>
+</SectionFrame>
 
 <style>
 	fieldset {

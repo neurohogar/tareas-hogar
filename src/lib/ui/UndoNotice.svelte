@@ -1,15 +1,15 @@
 <script lang="ts">
-	let { texto, regreso, alDeshacer }: { texto: string; regreso?: string; alDeshacer: () => void } = $props();
+	let { text, returnText, onUndo }: { text: string; returnText?: string; onUndo: () => void } = $props();
 </script>
 
 <div class="aviso" role="status">
 	<div class="textos">
-		<span>{texto}</span>
-		{#if regreso}
-			<span class="regreso">{regreso}</span>
+		<span>{text}</span>
+		{#if returnText}
+			<span class="regreso">{returnText}</span>
 		{/if}
 	</div>
-	<button type="button" onclick={alDeshacer}>Deshacer</button>
+	<button type="button" onclick={onUndo}>Deshacer</button>
 </div>
 
 <style>

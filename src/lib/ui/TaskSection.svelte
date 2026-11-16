@@ -5,67 +5,67 @@
 	import type { PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
 	import type { Effort } from '#lib/core/task.ts';
 	import { tick } from 'svelte';
-	import CampoEtiquetas from './LabelsField.svelte';
-	import Icono from './icons/Icon.svelte';
-	import MarcoDeSeccion from './SectionFrame.svelte';
-	import { laSesion } from './session';
+	import LabelsField from './LabelsField.svelte';
+	import Icon from './icons/Icon.svelte';
+	import SectionFrame from './SectionFrame.svelte';
+	import { useSession } from './session';
 
 	let {
-		presentacion,
-		abierta,
-		valores,
-		pausa,
-		textoPospuesta,
-		ultimaVez,
-		errores,
-		limpiar,
+		presentation,
+		openSection,
+		values,
+		pause,
+		postponedText,
+		lastTime,
+		errors,
+		clearError,
 		emoji = $bindable(),
-		esfuerzo = $bindable(),
-		pasos = $bindable(),
-		etiquetas = $bindable(),
-		errorDeEtiquetas = $bindable(),
-		sinConfirmar = $bindable(),
-		alAbrirSelector
+		effort = $bindable(),
+		steps = $bindable(),
+		labels = $bindable(),
+		labelsError = $bindable(),
+		unconfirmed = $bindable(),
+		onOpenPicker
 	}: {
-		presentacion: PanelPresentation;
-		abierta: PanelSection;
+		presentation: PanelPresentation;
+		openSection: PanelSection;
 		/** Los valores con que abrió el panel; sin ellos, arranca vacío. */
-		valores?: TaskData;
-		pausa?: 'pausar' | 'reanudar';
-		textoPospuesta?: string;
-		ultimaVez?: string;
-		errores: CreationErrors;
+		values?: TaskData;
+		pause?: 'pausar' | 'reanudar';
+		postponedText?: string;
+		lastTime?: string;
+		errors: CreationErrors;
 		/** El error de un campo dura lo que dura su mensaje: al corregirlo se va. */
-		limpiar: (campo: keyof CreationErrors) => void;
+		clearError: (field: keyof CreationErrors) => void;
 		emoji: string;
-		esfuerzo: Effort | '';
+		effort: Effort | '';
 		/** Los pasos más (2, 3…), uno por campo (§6.2). */
-		pasos: string[];
-		etiquetas: string[];
-		errorDeEtiquetas: string | undefined;
+		steps: string[];
+		labels: string[];
+		labelsError: string | undefined;
 		/** El texto escrito en Etiquetas que todavía no se confirmó. */
-		sinConfirmar: string;
-		alAbrirSelector: () => void;
+		unconfirmed: string;
+		onOpenPicker: () => void;
 	} = $props();
 
-	const sesion = laSesion();
+	const session = useSession();
 
-	async function agregarPaso() {
-		pasos = [...pasos, ''];
+	async function addStep() {
+		steps = [...steps, ''];
 		await tick();
-		document.getElementById(`campo-paso-${pasos.length + 1}`)?.focus();
+		document.getElementById(`campo-paso-${steps.length + 1}`)?.focus();
 	}
 </script>
 
-<MarcoDeSeccion nombre="Tarea" {presentacion} {abierta}>
-	{#if pausa === 'reanudar'}
+<SectionFrame name="Tarea" {presentation} {openSection}>
+	{#if pause === 'reanudar'}
 		<p class="pausada">Pausada</p>
 	{/if}
-	{#if textoPospuesta}
-		<p class="pausada">{textoPospuesta}</p>
+	{#if postponedText}
+		<p class="pausada">{postponedText}</p>
 	{/if}
-	{#if ultimaVez !== undefined}
-		<p class="ultima-vez">Última vez: {ultimaVez}</p>
+	{#if lastTime !== undefined}
+		<p class="ultima-vez">Última vez: {lastTime}</p>
 	{/if}
 
 	<div class="campo-formulario" data-campo="Título">
@@ -75,18 +75,18 @@
 				id="campo-titulo"
 				name="titulo"
 				autocomplete="off"
-				value={valores?.title ?? ''}
-				oninput={() => limpiar('title')}
-				aria-invalid={errores.title ? 'true' : undefined}
-				aria-describedby={errores.title ? 'error-titulo' : undefined}
+				value={values?.title ?? ''}
+				oninput={() => clearError('title')}
+				aria-invalid={errors.title ? 'true' : undefined}
+				aria-describedby={errors.title ? 'error-titulo' : undefined}
 			/>
 			{#if emoji}
-				<button type="button" class="emoji-boton elegido" aria-label="Cambiar emoji {emoji}" onclick={alAbrirSelector}>{emoji}</button>
+				<button type="button" class="emoji-boton elegido" aria-label="Cambiar emoji {emoji}" onclick={onOpenPicker}>{emoji}</button>
 			{:else}
-				<button type="button" class="emoji-boton" aria-label="Elegir emoji" onclick={alAbrirSelector}><Icono nombre="emoji" /></button>
+				<button type="button" class="emoji-boton" aria-label="Elegir emoji" onclick={onOpenPicker}><Icon name="emoji" /></button>
 			{/if}
 		</div>
-		{#if errores.title}
+		{#if errors.title}
 			<p id="error-titulo" class="error">Escribí un título.</p>
 		{/if}
 		{#if emoji}
@@ -96,43 +96,43 @@
 
 	<div class="campo-formulario">
 		<label for="campo-primer-paso">Primer paso</label>
-		<input id="campo-primer-paso" name="primerPaso" autocomplete="off" value={valores?.firstStep ?? ''} />
+		<input id="campo-primer-paso" name="primerPaso" autocomplete="off" value={values?.firstStep ?? ''} />
 	</div>
 
-	{#each pasos as _paso, indice (indice)}
+	{#each steps as _step, index (index)}
 		<div class="campo-formulario">
-			<label for={`campo-paso-${indice + 2}`}>Paso {indice + 2}</label>
+			<label for={`campo-paso-${index + 2}`}>Paso {index + 2}</label>
 			<div class="paso">
-				<input id={`campo-paso-${indice + 2}`} autocomplete="off" bind:value={pasos[indice]} />
-				<button type="button" class="texto" onclick={() => (pasos = pasos.filter((_, i) => i !== indice))}>Quitar</button>
+				<input id={`campo-paso-${index + 2}`} autocomplete="off" bind:value={steps[index]} />
+				<button type="button" class="texto" onclick={() => (steps = steps.filter((_, i) => i !== index))}>Quitar</button>
 			</div>
 		</div>
 	{/each}
-	<button type="button" class="texto" onclick={agregarPaso}>Agregar paso</button>
+	<button type="button" class="texto" onclick={addStep}>Agregar paso</button>
 
 	<div class="campo-formulario">
 		<label for="campo-version-minima">Versión mínima</label>
-		<input id="campo-version-minima" name="versionMinima" autocomplete="off" value={valores?.minimalVersion ?? ''} />
+		<input id="campo-version-minima" name="versionMinima" autocomplete="off" value={values?.minimalVersion ?? ''} />
 	</div>
 
 	<div class="campo-formulario">
 		<label for="campo-nota">Nota</label>
-		<textarea id="campo-nota" name="nota" rows="2" value={valores?.note ?? ''}></textarea>
+		<textarea id="campo-nota" name="nota" rows="2" value={values?.note ?? ''}></textarea>
 	</div>
 
 	<div class="campo-formulario">
 		<label for="campo-esfuerzo">Esfuerzo</label>
-		<select id="campo-esfuerzo" bind:value={esfuerzo}>
-			{#each EFFORT_OPTIONS as opcion (opcion.text)}
-				<option value={opcion.value ?? ''}>{opcion.text}</option>
+		<select id="campo-esfuerzo" bind:value={effort}>
+			{#each EFFORT_OPTIONS as option (option.text)}
+				<option value={option.value ?? ''}>{option.text}</option>
 			{/each}
 		</select>
 	</div>
 
 	<div data-campo="Etiquetas">
-		<CampoEtiquetas bind:nombres={etiquetas} bind:error={errorDeEtiquetas} bind:escrito={sinConfirmar} existentes={sesion.etiquetas} />
+		<LabelsField bind:names={labels} bind:error={labelsError} bind:typed={unconfirmed} existing={session.labels} />
 	</div>
-</MarcoDeSeccion>
+</SectionFrame>
 
 <style>
 	.titulo {

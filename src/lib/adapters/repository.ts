@@ -33,9 +33,9 @@ import type { ReferencesChange } from '#lib/core/label-references.ts';
 import type { Completion, Weekday, Effort, Recurrence, Schedule, Task, Unit, TimeWindow } from '#lib/core/task.ts';
 import { db } from './firebase';
 
-type Cancelar = () => void;
+type Unsubscribe = () => void;
 
-type RecurrenciaDoc =
+type RecurrenceDoc =
 	| { modo: 'relativo'; cada: number; unidad: Unit }
 	| { modo: 'calendario'; diasSemana: Weekday[] }
 	| { modo: 'calendario'; diasMes: number[] };
@@ -44,7 +44,7 @@ type RecurrenciaDoc =
  * Tras dos ediciones concurrentes puede quedar un campo que no corresponde al
  * tipo; el core lo ignora (tareaDesdeDocumento).
  */
-interface TareaDoc {
+interface TaskDoc {
 	titulo: string;
 	/** Sin el campo, la tarea no tiene emoji. */
 	emoji?: string;
@@ -63,12 +63,12 @@ interface TareaDoc {
 	tipo: Task['kind'];
 	/** Fecha AAAA-MM-DD; sin el campo, la puntual no tiene fecha límite. */
 	fechaLimite?: string;
-	recurrencia?: RecurrenciaDoc;
+	recurrencia?: RecurrenceDoc;
 	/**
 	 * Un solo campo (§7): la lista de ventanas { desde, hasta } en "HH:MM" o, en
 	 * el formato anterior, una sola ventana; sin el campo, la tarea no tiene horario.
 	 */
-	horario?: VentanaDoc[] | VentanaDoc;
+	horario?: TimeWindowDoc[] | TimeWindowDoc;
 	/** Ids de etiqueta; sin el campo, ninguna. */
 	etiquetas?: string[];
 	creadaEn: Timestamp;
@@ -80,27 +80,27 @@ interface TareaDoc {
 	pospuesta?: { desde: Timestamp; hasta: Timestamp };
 }
 
-interface VentanaDoc {
+interface TimeWindowDoc {
 	desde: string;
 	hasta: string;
 }
 
 /** Traduce campo por campo: el documento guarda desde y hasta, el core from y to. */
-const ventanaADoc = ({ from, to }: TimeWindow): VentanaDoc => ({ desde: from, hasta: to });
+const timeWindowToDoc = ({ from, to }: TimeWindow): TimeWindowDoc => ({ desde: from, hasta: to });
 
-const ventanaDesdeDoc = ({ desde, hasta }: VentanaDoc): TimeWindow => ({ from: desde, to: hasta });
+const timeWindowFromDoc = ({ desde: from, hasta: to }: TimeWindowDoc): TimeWindow => ({ from, to });
 
 /** Se escribe siempre como lista; el core lee también el formato anterior (§4.1). */
-const copiarHorario = (horario: Schedule): VentanaDoc[] => horario.map(ventanaADoc);
+const copySchedule = (schedule: Schedule): TimeWindowDoc[] => schedule.map(timeWindowToDoc);
 
-const leerHorarioDoc = (horario: VentanaDoc[] | VentanaDoc) => (Array.isArray(horario) ? horario.map(ventanaDesdeDoc) : ventanaDesdeDoc(horario));
+const readScheduleDoc = (schedule: TimeWindowDoc[] | TimeWindowDoc) => (Array.isArray(schedule) ? schedule.map(timeWindowFromDoc) : timeWindowFromDoc(schedule));
 
-interface EtiquetaDoc {
+interface LabelDoc {
 	nombre: string;
 	color: Color;
 }
 
-interface CompletadoDoc {
+interface CompletionDoc {
 	tareaId: string;
 	completadoEn: Timestamp;
 	/** Fecha AAAA-MM-DD, o fecha y hora AAAA-MM-DDTHH:MM con horario (§4.4). */
@@ -111,161 +111,161 @@ interface CompletadoDoc {
 	fueMinima?: true;
 }
 
-const tareaRef = (uid: string, tareaId: string) => doc(db, 'users', uid, 'tareas', tareaId);
-const completadoRef = (uid: string, completadoId: string) => doc(db, 'users', uid, 'completados', completadoId);
-const etiquetaRef = (uid: string, etiquetaId: string) => doc(db, 'users', uid, 'etiquetas', etiquetaId);
+const taskRef = (uid: string, taskId: string) => doc(db, 'users', uid, 'tareas', taskId);
+const completionRef = (uid: string, completionId: string) => doc(db, 'users', uid, 'completados', completionId);
+const labelRef = (uid: string, labelId: string) => doc(db, 'users', uid, 'etiquetas', labelId);
 
 /** Traduce campo por campo: el documento guarda modo, cada, unidad, diasSemana y diasMes. */
-function recurrenciaADoc(recurrence: Recurrence): RecurrenciaDoc {
+function recurrenceToDoc(recurrence: Recurrence): RecurrenceDoc {
 	if (recurrence.mode === 'relativo') return { modo: 'relativo', cada: recurrence.every, unidad: recurrence.unit };
 	if ('weekdays' in recurrence) return { modo: 'calendario', diasSemana: [...recurrence.weekdays] };
 	return { modo: 'calendario', diasMes: [...recurrence.monthDays] };
 }
 
-function recurrenciaDesdeDoc(recurrencia: RecurrenciaDoc): Recurrence {
-	if (recurrencia.modo === 'relativo') return { mode: 'relativo', every: recurrencia.cada, unit: recurrencia.unidad };
-	if ('diasSemana' in recurrencia) return { mode: 'calendario', weekdays: [...recurrencia.diasSemana] };
-	return { mode: 'calendario', monthDays: [...recurrencia.diasMes] };
+function recurrenceFromDoc(recurrence: RecurrenceDoc): Recurrence {
+	if (recurrence.modo === 'relativo') return { mode: 'relativo', every: recurrence.cada, unit: recurrence.unidad };
+	if ('diasSemana' in recurrence) return { mode: 'calendario', weekdays: [...recurrence.diasSemana] };
+	return { mode: 'calendario', monthDays: [...recurrence.diasMes] };
 }
 
-function tareaADoc(tarea: Task): TareaDoc {
-	const creadaEn = Timestamp.fromDate(tarea.createdAt);
-	const comunes = {
-		titulo: tarea.title,
-		...(tarea.emoji !== undefined && { emoji: tarea.emoji }),
-		...(tarea.note !== undefined && { nota: tarea.note }),
-		...(tarea.firstStep !== undefined && { primerPaso: tarea.firstStep }),
-		...(tarea.minimalVersion !== undefined && { versionMinima: tarea.minimalVersion }),
-		...(tarea.steps && { pasos: [...tarea.steps] }),
-		...(tarea.currentStep !== undefined && { pasoActual: tarea.currentStep }),
-		...(tarea.effort && { esfuerzo: tarea.effort }),
-		...(tarea.labels && { etiquetas: [...tarea.labels] }),
-		...(tarea.schedule && { horario: copiarHorario(tarea.schedule) }),
-		creadaEn
+function taskToDoc(task: Task): TaskDoc {
+	const createdAt = Timestamp.fromDate(task.createdAt);
+	const common = {
+		titulo: task.title,
+		...(task.emoji !== undefined && { emoji: task.emoji }),
+		...(task.note !== undefined && { nota: task.note }),
+		...(task.firstStep !== undefined && { primerPaso: task.firstStep }),
+		...(task.minimalVersion !== undefined && { versionMinima: task.minimalVersion }),
+		...(task.steps && { pasos: [...task.steps] }),
+		...(task.currentStep !== undefined && { pasoActual: task.currentStep }),
+		...(task.effort && { esfuerzo: task.effort }),
+		...(task.labels && { etiquetas: [...task.labels] }),
+		...(task.schedule && { horario: copySchedule(task.schedule) }),
+		creadaEn: createdAt
 	};
-	if (tarea.kind === 'periodica') return { ...comunes, tipo: 'periodica', recurrencia: recurrenciaADoc(tarea.recurrence) };
-	const documento: TareaDoc = { ...comunes, tipo: 'puntual' };
-	if (tarea.dueDate) documento.fechaLimite = isoDay(tarea.dueDate);
-	return documento;
+	if (task.kind === 'periodica') return { ...common, tipo: 'periodica', recurrencia: recurrenceToDoc(task.recurrence) };
+	const docData: TaskDoc = { ...common, tipo: 'puntual' };
+	if (task.dueDate) docData.fechaLimite = isoDay(task.dueDate);
+	return docData;
 }
 
-function tareaDesde(snapshot: QueryDocumentSnapshot<DocumentData>): Task {
-	const datos = snapshot.data() as TareaDoc;
+function taskFromSnapshot(snapshot: QueryDocumentSnapshot<DocumentData>): Task {
+	const data = snapshot.data() as TaskDoc;
 	return taskFromDocument({
 		id: snapshot.id,
-		title: datos.titulo,
-		...textFields({ emoji: datos.emoji, note: datos.nota, firstStep: datos.primerPaso, minimalVersion: datos.versionMinima }),
-		...(datos.pasos && { steps: [...datos.pasos] }),
-		...(datos.pasoActual !== undefined && { currentStep: datos.pasoActual }),
-		...(datos.esfuerzo && { effort: datos.esfuerzo }),
-		kind: datos.tipo,
-		createdAt: datos.creadaEn.toDate(),
-		...(datos.fechaLimite && { dueDate: dayFromIso(datos.fechaLimite) }),
-		...(datos.recurrencia && { recurrence: recurrenciaDesdeDoc(datos.recurrencia) }),
-		...(datos.horario && { schedule: leerHorarioDoc(datos.horario) }),
-		...(datos.etiquetas && { labels: [...datos.etiquetas] }),
-		...(datos.pausada && { paused: datos.pausada }),
-		...(datos.reanudadaEn && { resumedAt: datos.reanudadaEn.toDate() }),
-		...(datos.pospuesta && { postponed: { from: datos.pospuesta.desde.toDate(), to: datos.pospuesta.hasta.toDate() } })
+		title: data.titulo,
+		...textFields({ emoji: data.emoji, note: data.nota, firstStep: data.primerPaso, minimalVersion: data.versionMinima }),
+		...(data.pasos && { steps: [...data.pasos] }),
+		...(data.pasoActual !== undefined && { currentStep: data.pasoActual }),
+		...(data.esfuerzo && { effort: data.esfuerzo }),
+		kind: data.tipo,
+		createdAt: data.creadaEn.toDate(),
+		...(data.fechaLimite && { dueDate: dayFromIso(data.fechaLimite) }),
+		...(data.recurrencia && { recurrence: recurrenceFromDoc(data.recurrencia) }),
+		...(data.horario && { schedule: readScheduleDoc(data.horario) }),
+		...(data.etiquetas && { labels: [...data.etiquetas] }),
+		...(data.pausada && { paused: data.pausada }),
+		...(data.reanudadaEn && { resumedAt: data.reanudadaEn.toDate() }),
+		...(data.pospuesta && { postponed: { from: data.pospuesta.desde.toDate(), to: data.pospuesta.hasta.toDate() } })
 	});
 }
 
-function etiquetaDesde(snapshot: QueryDocumentSnapshot<DocumentData>): Label {
-	const { nombre, color } = snapshot.data() as EtiquetaDoc;
-	return { id: snapshot.id, name: nombre, color };
+function labelFromSnapshot(snapshot: QueryDocumentSnapshot<DocumentData>): Label {
+	const { nombre: name, color } = snapshot.data() as LabelDoc;
+	return { id: snapshot.id, name, color };
 }
 
 /** Los campos del cambio como los escribe updateDoc: null quita el campo. */
-function camposDelCambio({ title: titulo, emoji, note: nota, firstStep: primerPaso, minimalVersion: versionMinima, steps: pasos, currentStep: pasoActual, effort: esfuerzo, kind: tipo, dueDate: fechaLimite, recurrence: recurrencia, schedule: horario, labels: etiquetas, paused: pausada, resumedAt: reanudadaEn, postponed: pospuesta }: TaskChange): DocumentData {
-	const campos: DocumentData = {};
-	if (etiquetas !== undefined) campos.etiquetas = [...etiquetas];
-	if (titulo !== undefined) campos.titulo = titulo;
-	if (emoji !== undefined) campos.emoji = emoji === null ? deleteField() : emoji;
-	if (nota !== undefined) campos.nota = nota === null ? deleteField() : nota;
-	if (primerPaso !== undefined) campos.primerPaso = primerPaso === null ? deleteField() : primerPaso;
-	if (versionMinima !== undefined) campos.versionMinima = versionMinima === null ? deleteField() : versionMinima;
+function changeFields({ title, emoji, note, firstStep, minimalVersion, steps, currentStep, effort, kind, dueDate, recurrence, schedule, labels, paused, resumedAt, postponed }: TaskChange): DocumentData {
+	const fields: DocumentData = {};
+	if (labels !== undefined) fields.etiquetas = [...labels];
+	if (title !== undefined) fields.titulo = title;
+	if (emoji !== undefined) fields.emoji = emoji === null ? deleteField() : emoji;
+	if (note !== undefined) fields.nota = note === null ? deleteField() : note;
+	if (firstStep !== undefined) fields.primerPaso = firstStep === null ? deleteField() : firstStep;
+	if (minimalVersion !== undefined) fields.versionMinima = minimalVersion === null ? deleteField() : minimalVersion;
 	// pasos se reemplaza entero y pasoActual es otro campo (§7); null quita el campo.
-	if (pasos !== undefined) campos.pasos = pasos === null ? deleteField() : [...pasos];
-	if (pasoActual !== undefined) campos.pasoActual = pasoActual === null ? deleteField() : pasoActual;
-	if (esfuerzo !== undefined) campos.esfuerzo = esfuerzo === null ? deleteField() : esfuerzo;
-	if (tipo !== undefined) campos.tipo = tipo;
-	if (fechaLimite !== undefined) campos.fechaLimite = fechaLimite === null ? deleteField() : isoDay(fechaLimite);
-	if (recurrencia !== undefined) campos.recurrencia = recurrencia === null ? deleteField() : recurrenciaADoc(recurrencia);
+	if (steps !== undefined) fields.pasos = steps === null ? deleteField() : [...steps];
+	if (currentStep !== undefined) fields.pasoActual = currentStep === null ? deleteField() : currentStep;
+	if (effort !== undefined) fields.esfuerzo = effort === null ? deleteField() : effort;
+	if (kind !== undefined) fields.tipo = kind;
+	if (dueDate !== undefined) fields.fechaLimite = dueDate === null ? deleteField() : isoDay(dueDate);
+	if (recurrence !== undefined) fields.recurrencia = recurrence === null ? deleteField() : recurrenceToDoc(recurrence);
 	// update reemplaza el campo entero: las ventanas se escriben juntas (§7).
-	if (horario !== undefined) campos.horario = horario === null ? deleteField() : copiarHorario(horario);
+	if (schedule !== undefined) fields.horario = schedule === null ? deleteField() : copySchedule(schedule);
 	// pausada y reanudadaEn viajan juntos en el mismo update (§7).
-	if (pausada !== undefined) campos.pausada = pausada === null ? deleteField() : pausada;
-	if (reanudadaEn !== undefined) campos.reanudadaEn = Timestamp.fromDate(reanudadaEn);
+	if (paused !== undefined) fields.pausada = paused === null ? deleteField() : paused;
+	if (resumedAt !== undefined) fields.reanudadaEn = Timestamp.fromDate(resumedAt);
 	// pospuesta se escribe entera: desde y hasta juntos (§7).
-	if (pospuesta !== undefined) {
-		campos.pospuesta = pospuesta === null ? deleteField() : { desde: Timestamp.fromDate(pospuesta.from), hasta: Timestamp.fromDate(pospuesta.to) };
+	if (postponed !== undefined) {
+		fields.pospuesta = postponed === null ? deleteField() : { desde: Timestamp.fromDate(postponed.from), hasta: Timestamp.fromDate(postponed.to) };
 	}
-	return campos;
+	return fields;
 }
 
-function completadoADoc(completado: Completion): CompletadoDoc {
-	const documento: CompletadoDoc = {
-		tareaId: completado.taskId,
-		completadoEn: Timestamp.fromDate(completado.completedAt)
+function completionToDoc(completion: Completion): CompletionDoc {
+	const docData: CompletionDoc = {
+		tareaId: completion.taskId,
+		completadoEn: Timestamp.fromDate(completion.completedAt)
 	};
-	if (completado.coveredOccurrence) documento.ocurrenciaCubierta = occurrenceInText(completado.coveredOccurrence);
-	if (completado.stepAtCompletion !== undefined) documento.pasoAlCompletar = completado.stepAtCompletion;
-	if (completado.wasMinimal) documento.fueMinima = true;
-	return documento;
+	if (completion.coveredOccurrence) docData.ocurrenciaCubierta = occurrenceInText(completion.coveredOccurrence);
+	if (completion.stepAtCompletion !== undefined) docData.pasoAlCompletar = completion.stepAtCompletion;
+	if (completion.wasMinimal) docData.fueMinima = true;
+	return docData;
 }
 
-function completadoDesde(snapshot: QueryDocumentSnapshot<DocumentData>): Completion {
-	const datos = snapshot.data() as CompletadoDoc;
-	const completado: Completion = { id: snapshot.id, taskId: datos.tareaId, completedAt: datos.completadoEn.toDate() };
-	if (datos.ocurrenciaCubierta) completado.coveredOccurrence = occurrenceFromText(datos.ocurrenciaCubierta);
-	if (datos.pasoAlCompletar !== undefined) completado.stepAtCompletion = datos.pasoAlCompletar;
-	if (datos.fueMinima === true) completado.wasMinimal = true;
-	return completado;
+function completionFromSnapshot(snapshot: QueryDocumentSnapshot<DocumentData>): Completion {
+	const data = snapshot.data() as CompletionDoc;
+	const completion: Completion = { id: snapshot.id, taskId: data.tareaId, completedAt: data.completadoEn.toDate() };
+	if (data.ocurrenciaCubierta) completion.coveredOccurrence = occurrenceFromText(data.ocurrenciaCubierta);
+	if (data.pasoAlCompletar !== undefined) completion.stepAtCompletion = data.pasoAlCompletar;
+	if (data.fueMinima === true) completion.wasMinimal = true;
+	return completion;
 }
 
-export function observarTareas(uid: string, alCambiar: (tareas: Task[]) => void): Cancelar {
-	return onSnapshot(collection(db, 'users', uid, 'tareas'), (consulta) =>
-		alCambiar(consulta.docs.map(tareaDesde))
+export function observeTasks(uid: string, onChange: (tasks: Task[]) => void): Unsubscribe {
+	return onSnapshot(collection(db, 'users', uid, 'tareas'), (query) =>
+		onChange(query.docs.map(taskFromSnapshot))
 	);
 }
 
-export function observarCompletados(uid: string, alCambiar: (completados: Completion[]) => void): Cancelar {
-	return onSnapshot(collection(db, 'users', uid, 'completados'), (consulta) =>
-		alCambiar(consulta.docs.map(completadoDesde))
+export function observeCompletions(uid: string, onChange: (completions: Completion[]) => void): Unsubscribe {
+	return onSnapshot(collection(db, 'users', uid, 'completados'), (query) =>
+		onChange(query.docs.map(completionFromSnapshot))
 	);
 }
 
-export function observarEtiquetas(uid: string, alCambiar: (etiquetas: Label[]) => void): Cancelar {
-	return onSnapshot(collection(db, 'users', uid, 'etiquetas'), (consulta) => alCambiar(consulta.docs.map(etiquetaDesde)));
+export function observeLabels(uid: string, onChange: (labels: Label[]) => void): Unsubscribe {
+	return onSnapshot(collection(db, 'users', uid, 'etiquetas'), (query) => onChange(query.docs.map(labelFromSnapshot)));
 }
 
-const etiquetaADoc = ({ name: nombre, color }: Label): EtiquetaDoc => ({ nombre, color });
+const labelToDoc = ({ name, color }: Label): LabelDoc => ({ nombre: name, color });
 
 /** Un lote que empieza creando las etiquetas nuevas de un guardado del panel (§4.3). */
-function loteConEtiquetas(uid: string, nuevas: readonly Label[]): WriteBatch {
-	const lote = writeBatch(db);
-	for (const etiqueta of nuevas) lote.set(etiquetaRef(uid, etiqueta.id), etiquetaADoc(etiqueta));
-	return lote;
+function batchWithLabels(uid: string, newLabels: readonly Label[]): WriteBatch {
+	const batch = writeBatch(db);
+	for (const label of newLabels) batch.set(labelRef(uid, label.id), labelToDoc(label));
+	return batch;
 }
 
 /** Spec §4.3: la tarea nueva y las etiquetas que se crean al guardarla, en un solo writeBatch. */
-export async function guardarTarea(uid: string, tarea: Task, nuevas: readonly Label[]): Promise<void> {
-	const lote = loteConEtiquetas(uid, nuevas);
-	lote.set(tareaRef(uid, tarea.id), tareaADoc(tarea), { merge: true });
-	await lote.commit();
+export async function saveTask(uid: string, task: Task, newLabels: readonly Label[]): Promise<void> {
+	const batch = batchWithLabels(uid, newLabels);
+	batch.set(taskRef(uid, task.id), taskToDoc(task), { merge: true });
+	await batch.commit();
 }
 
 /** Ignora el rechazo de una escritura sobre un documento que ya no existe: gana el borrado (§7). */
-async function salvoBorrado(escritura: Promise<void>): Promise<void> {
+async function exceptDeleted(write: Promise<void>): Promise<void> {
 	try {
-		await escritura;
+		await write;
 	} catch (error) {
 		if (!(error instanceof FirestoreError && error.code === 'not-found')) throw error;
 	}
 }
 
-export async function guardarCompletado(uid: string, completado: Completion): Promise<void> {
-	await setDoc(completadoRef(uid, completado.id), completadoADoc(completado));
+export async function saveCompletion(uid: string, completion: Completion): Promise<void> {
+	await setDoc(completionRef(uid, completion.id), completionToDoc(completion));
 }
 
 /**
@@ -275,17 +275,17 @@ export async function guardarCompletado(uid: string, completado: Completion): Pr
  * merge) y falla si la tarea ya no existe: gana el borrado, la edición se
  * descarta y no se crea ninguna etiqueta.
  */
-export async function guardarCambio(uid: string, tareaId: string, cambio: TaskChange, nuevas: readonly Label[]): Promise<void> {
-	const campos = camposDelCambio(cambio);
-	if (Object.keys(campos).length === 0) return;
-	const lote = loteConEtiquetas(uid, nuevas);
-	lote.update(tareaRef(uid, tareaId), campos);
-	await salvoBorrado(lote.commit());
+export async function saveChange(uid: string, taskId: string, change: TaskChange, newLabels: readonly Label[]): Promise<void> {
+	const fields = changeFields(change);
+	if (Object.keys(fields).length === 0) return;
+	const batch = batchWithLabels(uid, newLabels);
+	batch.update(taskRef(uid, taskId), fields);
+	await exceptDeleted(batch.commit());
 }
 
 /** Spec §7: nombre y color son campos independientes; un cambio de una etiqueta borrada no la revive. */
-export async function cambiarEtiqueta(uid: string, etiquetaId: string, cambio: LabelChange): Promise<void> {
-	await salvoBorrado(updateDoc(etiquetaRef(uid, etiquetaId), { ...('name' in cambio && { nombre: cambio.name }), ...('color' in cambio && { color: cambio.color }) }));
+export async function changeLabel(uid: string, labelId: string, change: LabelChange): Promise<void> {
+	await exceptDeleted(updateDoc(labelRef(uid, labelId), { ...('name' in change && { nombre: change.name }), ...('color' in change && { color: change.color }) }));
 }
 
 /**
@@ -293,22 +293,22 @@ export async function cambiarEtiqueta(uid: string, etiquetaId: string, cambio: L
  * arrayUnion tocan solo los ids nombrados, sin reemplazar el campo. Los dos en
  * un writeBatch, en el orden del core; una tarea que ya no existe se saltea.
  */
-async function cambiarReferencias(uid: string, { taskId: tareaId, remove: quitar, put: poner }: ReferencesChange): Promise<void> {
-	const lote = writeBatch(db);
-	if (quitar.length > 0) lote.update(tareaRef(uid, tareaId), { etiquetas: arrayRemove(...quitar) });
-	if (poner.length > 0) lote.update(tareaRef(uid, tareaId), { etiquetas: arrayUnion(...poner) });
-	await salvoBorrado(lote.commit());
+async function changeReferences(uid: string, { taskId, remove, put }: ReferencesChange): Promise<void> {
+	const batch = writeBatch(db);
+	if (remove.length > 0) batch.update(taskRef(uid, taskId), { etiquetas: arrayRemove(...remove) });
+	if (put.length > 0) batch.update(taskRef(uid, taskId), { etiquetas: arrayUnion(...put) });
+	await exceptDeleted(batch.commit());
 }
 
 /** Spec §4.3: borra la etiqueta y la quita de las tareas que la tienen. */
-export async function borrarEtiqueta(uid: string, { labelId: etiquetaId, references: referencias }: LabelDeletion): Promise<void> {
-	await deleteDoc(etiquetaRef(uid, etiquetaId));
-	await Promise.all(referencias.map((cambio) => cambiarReferencias(uid, cambio)));
+export async function deleteLabel(uid: string, { labelId, references }: LabelDeletion): Promise<void> {
+	await deleteDoc(labelRef(uid, labelId));
+	await Promise.all(references.map((change) => changeReferences(uid, change)));
 }
 
 /** Si la etiqueta no existe en el servidor; sin conexión, getDocFromServer falla con FirestoreError. */
-async function borradaEnElServidor(uid: string, etiquetaId: string): Promise<boolean> {
-	return !(await getDocFromServer(etiquetaRef(uid, etiquetaId))).exists();
+async function deletedOnServer(uid: string, labelId: string): Promise<boolean> {
+	return !(await getDocFromServer(labelRef(uid, labelId))).exists();
 }
 
 /**
@@ -316,19 +316,19 @@ async function borradaEnElServidor(uid: string, etiquetaId: string): Promise<boo
  * servidor que cada etiqueta no existe (las colecciones se sincronizan por
  * separado); sin conexión no limpia nada.
  */
-export async function limpiarReferencias(uid: string, rotas: readonly ReferencesChange[]): Promise<string[]> {
-	const fallaron: string[] = [];
-	for (const cambio of rotas) {
+export async function cleanReferences(uid: string, broken: readonly ReferencesChange[]): Promise<string[]> {
+	const failed: string[] = [];
+	for (const change of broken) {
 		try {
-			const borradas = await Promise.all(cambio.remove.map((id) => borradaEnElServidor(uid, id)));
-			const quitar = cambio.remove.filter((_, indice) => borradas[indice]);
-			if (quitar.length > 0) await cambiarReferencias(uid, { ...cambio, remove: quitar });
+			const deletedItems = await Promise.all(change.remove.map((id) => deletedOnServer(uid, id)));
+			const remove = change.remove.filter((_, index) => deletedItems[index]);
+			if (remove.length > 0) await changeReferences(uid, { ...change, remove });
 		} catch (error) {
 			if (!(error instanceof FirestoreError)) throw error;
-			fallaron.push(cambio.taskId);
+			failed.push(change.taskId);
 		}
 	}
-	return fallaron;
+	return failed;
 }
 
 /**
@@ -336,33 +336,33 @@ export async function limpiarReferencias(uid: string, rotas: readonly References
  * después se borran las otras. Cada una se intenta por separado; una etiqueta
  * cuyas tareas no pasaron no se borra. Devuelve los ids de las que fallaron.
  */
-export async function fusionarEtiquetas(uid: string, { deletedItems: borradas, references: referencias }: LabelMerge): Promise<string[]> {
-	const sinPasar = new Set<string>();
-	for (const cambio of referencias) {
+export async function mergeLabels(uid: string, { deletedItems, references }: LabelMerge): Promise<string[]> {
+	const notMoved = new Set<string>();
+	for (const change of references) {
 		try {
-			await cambiarReferencias(uid, cambio);
+			await changeReferences(uid, change);
 		} catch {
-			cambio.remove.forEach((id) => sinPasar.add(id));
+			change.remove.forEach((id) => notMoved.add(id));
 		}
 	}
-	const fallaron = borradas.filter((id) => sinPasar.has(id));
-	for (const etiquetaId of borradas.filter((id) => !sinPasar.has(id))) {
+	const failed = deletedItems.filter((id) => notMoved.has(id));
+	for (const labelId of deletedItems.filter((id) => !notMoved.has(id))) {
 		try {
-			await deleteDoc(etiquetaRef(uid, etiquetaId));
+			await deleteDoc(labelRef(uid, labelId));
 		} catch {
-			fallaron.push(etiquetaId);
+			failed.push(labelId);
 		}
 	}
-	return fallaron;
+	return failed;
 }
 
 /** Spec §7: la tarea, sus completados y sus anotaciones se borran en un solo writeBatch. */
-export async function borrarTarea(uid: string, { taskId: tareaId, completionIds: completadoIds, annotationIds: anotacionIds }: Deletion): Promise<void> {
-	const lote = writeBatch(db);
-	lote.delete(tareaRef(uid, tareaId));
-	for (const completadoId of completadoIds) lote.delete(completadoRef(uid, completadoId));
-	for (const anotacionId of anotacionIds) lote.delete(doc(db, 'users', uid, 'anotaciones', anotacionId));
-	await lote.commit();
+export async function deleteTask(uid: string, { taskId, completionIds, annotationIds }: Deletion): Promise<void> {
+	const batch = writeBatch(db);
+	batch.delete(taskRef(uid, taskId));
+	for (const completionId of completionIds) batch.delete(completionRef(uid, completionId));
+	for (const annotationId of annotationIds) batch.delete(doc(db, 'users', uid, 'anotaciones', annotationId));
+	await batch.commit();
 }
 
 /**
@@ -370,23 +370,23 @@ export async function borrarTarea(uid: string, { taskId: tareaId, completionIds:
  * el servidor que su tarea no existe (las dos colecciones se sincronizan por
  * separado); sin conexión no limpia nada.
  */
-export async function limpiarHuerfanos(uid: string, huerfanos: readonly Completion[]): Promise<string[]> {
-	const fallaron: string[] = [];
-	for (const completado of huerfanos) {
+export async function cleanOrphanCompletions(uid: string, orphans: readonly Completion[]): Promise<string[]> {
+	const failed: string[] = [];
+	for (const completion of orphans) {
 		try {
-			const tarea = await getDocFromServer(tareaRef(uid, completado.taskId));
-			if (!tarea.exists()) await deleteDoc(completadoRef(uid, completado.id));
+			const task = await getDocFromServer(taskRef(uid, completion.taskId));
+			if (!task.exists()) await deleteDoc(completionRef(uid, completion.id));
 		} catch {
-			fallaron.push(completado.id);
+			failed.push(completion.id);
 		}
 	}
-	return fallaron;
+	return failed;
 }
 
 /**
  * Spec §5.4: borra un completado (deshacer). Si ya no existe (otro dispositivo
  * lo borró, o borró su tarea), no hace nada: deleteDoc no falla ni crea nada.
  */
-export async function borrarCompletado(uid: string, completadoId: string): Promise<void> {
-	await deleteDoc(completadoRef(uid, completadoId));
+export async function deleteCompletion(uid: string, completionId: string): Promise<void> {
+	await deleteDoc(completionRef(uid, completionId));
 }
