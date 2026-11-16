@@ -30,6 +30,11 @@ export function avisoAlCompletar(tarea: Tarea, completado: Completado, completad
 	return { nombre: nombreDeTarea(tarea), completado, ...(vuelve && { vuelve }) };
 }
 
+/** Spec §5.4: «Completaste «nombre»», con « · mínima» si el completado fue la mínima. */
+export function textoDelAviso({ nombre, completado }: Aviso): string {
+	return `Completaste «${nombre}»${completado.fueMinima ? ' · mínima' : ''}`;
+}
+
 /** Spec §5.4: la línea debajo de «Completaste …», «Vuelve …» (§6.1) contado desde ahora; ninguna si la tarea no vuelve. */
 export function regresoDelAviso(aviso: Aviso, ahora: Date): string | undefined {
 	return aviso.vuelve && fraseDeFecha('Vuelve', aviso.vuelve, ahora);

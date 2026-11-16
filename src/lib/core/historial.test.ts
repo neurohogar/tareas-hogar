@@ -49,7 +49,7 @@ describe('historial', () => {
 		const renombrada = tarea('regar', 'Plantas');
 
 		expect(historial([renombrada], [regada], ahora)).toStrictEqual([
-			{ encabezado: 'Hoy', entradas: [{ completado: regada, tarea: renombrada, hora: '08:00' }] }
+			{ encabezado: 'Hoy', entradas: [{ completado: regada, tarea: renombrada, hora: '08:00', textoDeHora: '08:00' }] }
 		]);
 	});
 

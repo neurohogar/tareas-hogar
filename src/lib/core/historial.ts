@@ -9,6 +9,8 @@ export interface EntradaDelHistorial {
 	tarea: Tarea;
 	/** "HH:MM" de completadoEn. */
 	hora: string;
+	/** Spec §6.3: la hora, con « Mínima» después si el completado fue la mínima ("08:05 Mínima"). */
+	textoDeHora: string;
 }
 
 export interface GrupoDelHistorial {
@@ -36,7 +38,8 @@ export function historial(tareas: readonly Tarea[], completados: readonly Comple
 		const tarea = porId.get(completado.tareaId);
 		if (!tarea) continue;
 		const encabezado = encabezadoDelDia(completado.completadoEn, ahora);
-		const entrada = { completado, tarea, hora: horaEnTexto(completado.completadoEn) };
+		const hora = horaEnTexto(completado.completadoEn);
+		const entrada = { completado, tarea, hora, textoDeHora: completado.fueMinima ? `${hora} Mínima` : hora };
 		// Cada día tiene un encabezado distinto: entradas seguidas con el mismo encabezado son del mismo día.
 		const ultimo = grupos.at(-1);
 		if (ultimo?.encabezado === encabezado) ultimo.entradas.push(entrada);

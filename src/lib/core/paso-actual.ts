@@ -17,8 +17,8 @@ export interface BotonesDePaso {
 	hechoHabilitado: boolean;
 }
 
-/** Spec §6.1: la línea del paso solo se ve en las filas pendiente o atrasada. */
-const lineaVisible = ({ tipo }: Pick<Estado, 'tipo'>) => tipo === 'pendiente' || tipo === 'atrasada';
+/** Spec §6.1: la línea del paso y la de la mínima solo se ven en las filas pendiente o atrasada. */
+export const lineaVisible = ({ tipo }: Pick<Estado, 'tipo'>) => tipo === 'pendiente' || tipo === 'atrasada';
 
 /** Sin el campo es el paso 1 (§4.1): ir al 1 lo quita; si ya va en ese paso guardado, no se escribe nada. */
 function cambioAPaso({ pasoActual }: Tarea, paso: number): CambioDeTarea {
@@ -59,7 +59,7 @@ export function botonesDePaso(tarea: Tarea, estado: Pick<Estado, 'tipo'>, comple
 	return { pasoAnterior: pasoEnQueVa(tarea) > 1, hechoHabilitado: accionDeHecho(tarea, completados, ahora).tipo !== 'ninguna' };
 }
 
-/** Spec §4.1 (Pasos: Completar): completar la tarea, por el checkbox o por «Hecho», la vuelve al paso 1. */
+/** Spec §4.1 (Pasos: Completar): completar la tarea, por el checkbox, por «Hecho» o por «Hice la mínima», la vuelve al paso 1. */
 export function cambioAlCompletar(tarea: Tarea): CambioDeTarea {
 	return cambioAPaso(tarea, 1);
 }

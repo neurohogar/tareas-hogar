@@ -63,6 +63,8 @@ export interface TareaPeriodica {
 	pasos?: string[];
 	/** Spec §4.1 (Pasos): el número del paso en que va la tarea; sin el campo, el paso 1. */
 	pasoActual?: number;
+	/** Spec §4.1 (Versión mínima): una línea, ya recortada; sin el campo, la tarea no tiene versión mínima. */
+	versionMinima?: string;
 	/** Spec §4.1: sin el campo, sin estimar. */
 	esfuerzo?: Esfuerzo;
 	/** Spec §4.1: ids de etiqueta, sin repetir; sin el campo, ninguna. */
@@ -93,6 +95,8 @@ export interface TareaPuntual {
 	pasos?: string[];
 	/** Spec §4.1 (Pasos): el número del paso en que va la tarea; sin el campo, el paso 1. */
 	pasoActual?: number;
+	/** Spec §4.1 (Versión mínima): una línea, ya recortada; sin el campo, la tarea no tiene versión mínima. */
+	versionMinima?: string;
 	/** Spec §4.1: sin el campo, sin estimar. */
 	esfuerzo?: Esfuerzo;
 	/** Spec §4.1: ids de etiqueta, sin repetir; sin el campo, ninguna. */
@@ -127,6 +131,8 @@ export interface Completado {
 	ocurrenciaCubierta?: OcurrenciaCubierta;
 	/** Spec §4.4: el paso en que iba la tarea al completarla; solo en tareas de dos pasos o más. */
 	pasoAlCompletar?: number;
+	/** Spec §4.4: true si fue «Hice la mínima»; sin el campo, el completado fue entero. Se fija al completar. */
+	fueMinima?: boolean;
 }
 
 /** Spec §4.1: los ids de etiqueta de la tarea; sin el campo, ninguna. */

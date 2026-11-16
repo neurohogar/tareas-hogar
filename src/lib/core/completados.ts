@@ -23,10 +23,11 @@ function ocurrenciaDe({ recurrencia, creadaEn, horario, reanudadaEn }: TareaPeri
  * Guarda la ocurrencia que cubre, si cubre una, según lo que ya cubrieron los
  * completados de la tarea (de entre todos los del usuario); de una reanudada,
  * como recién creada en reanudadaEn (§5.8). De una tarea de dos pasos o más,
- * guarda el paso en que iba (§4.1, Pasos: Completar).
+ * guarda el paso en que iba (§4.1, Pasos: Completar). Con «Hice la mínima»
+ * (`fueMinima`), el completado lo recuerda; uno entero no lleva el campo.
  */
-export function completar(guardada: Tarea, completados: readonly Completado[], id: string, ahora: Date): Completado {
-	const completado: Completado = { id, tareaId: guardada.id, completadoEn: ahora, ...pasoAlCompletar(guardada) };
+export function completar(guardada: Tarea, completados: readonly Completado[], id: string, ahora: Date, fueMinima = false): Completado {
+	const completado: Completado = { id, tareaId: guardada.id, completadoEn: ahora, ...pasoAlCompletar(guardada), ...(fueMinima && { fueMinima }) };
 	const { tarea, propios } = comoRecienCreada(guardada, completadosDeTarea(completados, guardada.id));
 	if (tarea.tipo === 'puntual') return completado;
 	const ocurrenciaCubierta = ocurrenciaDe(tarea, propios, ahora);

@@ -26,7 +26,7 @@ const MOMENTO_DE_PRUEBA = new Date(0);
 
 /** Lo de "Se repite" como lo guardaría Guardar; si es inválido, tal como se escribió. */
 function claveDeRepeticion(datos: DatosDeTarea) {
-	const soloRepeticion = { ...datos, titulo: TITULO_DE_PRUEBA, emoji: undefined, nota: undefined, primerPaso: undefined, pasos: undefined, horario: undefined, esfuerzo: undefined };
+	const soloRepeticion = { ...datos, titulo: TITULO_DE_PRUEBA, emoji: undefined, nota: undefined, primerPaso: undefined, pasos: undefined, versionMinima: undefined, horario: undefined, esfuerzo: undefined };
 	const creada = crearSegunDatos(soloRepeticion, ID_DE_PRUEBA, MOMENTO_DE_PRUEBA);
 	return creada.ok ? creada.tarea : soloRepeticion;
 }
@@ -37,9 +37,9 @@ function claveDeHorario(horario: HorarioEscrito | undefined) {
 	return lectura.ok ? lectura.horario : horario;
 }
 
-/** Sin nota y nota vacía son lo mismo. */
-function claveDeNota(nota = '') {
-	return normalizarNota(nota);
+/** Sin el campo y vacío son lo mismo (nota y versión mínima, §4.1). */
+function claveDeTextoLibre(texto = '') {
+	return normalizarNota(texto);
 }
 
 function claveDeEmoji(emoji = '') {
@@ -49,7 +49,7 @@ function claveDeEmoji(emoji = '') {
 
 /** Dos datos con la misma clave son los mismos para Guardar. */
 function claveDeDatos(datos: DatosDeTarea): string {
-	return JSON.stringify([datos.titulo.trim(), claveDeEmoji(datos.emoji), claveDeNota(datos.nota), normalizarPasos(datos.primerPaso, datos.pasos), datos.esfuerzo, claveDeHorario(datos.horario), claveDeRepeticion(datos)]);
+	return JSON.stringify([datos.titulo.trim(), claveDeEmoji(datos.emoji), claveDeTextoLibre(datos.nota), normalizarPasos(datos.primerPaso, datos.pasos), claveDeTextoLibre(datos.versionMinima), datos.esfuerzo, claveDeHorario(datos.horario), claveDeRepeticion(datos)]);
 }
 
 /** Las etiquetas son un conjunto de nombres, sin distinguir mayúsculas (§4.3). */

@@ -12,15 +12,17 @@ import { botonesDePaso, textoDelPaso, type BotonesDePaso } from './paso-actual';
 import type { Completado, Tarea } from './tarea';
 import { textoDeFecha } from './texto-de-fecha-de-tarea';
 import { instanteDeUrgencia } from './urgencia';
+import { lineaDeMinima, type LineaDeMinima } from './version-minima';
 
 /**
  * Una fila de Pendientes; si está completada, se ve tachada y con el checkbox
  * marcado. textoDeFecha: «Tocaba …» o «Vuelve …», si la fila lo lleva (§6.1).
  * textoDePrimerPaso: la línea del paso en que va la tarea, «Primer paso: …» o
  * «Paso: …», y botonesDePaso, los de una tarea de dos pasos o más; los dos,
- * solo en las filas pendiente o atrasada (§6.1).
+ * solo en las filas pendiente o atrasada (§6.1). minima: la línea «Mínima: …»
+ * y si «Hice la mínima» está habilitado, en esas mismas filas.
  */
-export type FilaDePendientes = { tarea: Tarea; textoDeFecha?: string; textoDePrimerPaso?: string; botonesDePaso?: BotonesDePaso } & EnPendientes;
+export type FilaDePendientes = { tarea: Tarea; textoDeFecha?: string; textoDePrimerPaso?: string; botonesDePaso?: BotonesDePaso; minima?: LineaDeMinima } & EnPendientes;
 
 /**
  * Spec §6.1: las filas de la lista Pendientes. Primero las no completadas,
@@ -49,7 +51,8 @@ export function filasDePendientes(
 	const conPaso = (tarea: Tarea, estado: FilaDePendientes['estado']) => {
 		const texto = textoDelPaso(tarea, estado);
 		const botones = botonesDePaso(tarea, estado, completados, ahora);
-		return { ...(texto !== undefined && { textoDePrimerPaso: texto }), ...(botones && { botonesDePaso: botones }) };
+		const minima = lineaDeMinima(tarea, estado, completados, ahora);
+		return { ...(texto !== undefined && { textoDePrimerPaso: texto }), ...(botones && { botonesDePaso: botones }), ...(minima && { minima }) };
 	};
 	const filas = noCompletadas
 		.sort(compararPorUrgencia)

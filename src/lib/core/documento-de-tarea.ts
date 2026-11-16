@@ -16,6 +16,7 @@ export interface DocumentoDeTarea {
 	primerPaso?: string;
 	pasos?: string[];
 	pasoActual?: number;
+	versionMinima?: string;
 	esfuerzo?: Esfuerzo;
 	tipo: Tarea['tipo'];
 	creadaEn: Date;
@@ -44,6 +45,7 @@ export interface CambioDeTarea {
 	pasos?: string[] | null;
 	/** Otro campo, independiente de pasos (§7); null es el paso 1. */
 	pasoActual?: number | null;
+	versionMinima?: string | null;
 	esfuerzo?: Esfuerzo | null;
 	tipo?: Tarea['tipo'];
 	fechaLimite?: Date | null;
@@ -61,8 +63,8 @@ export interface CambioDeTarea {
 
 /** La tarea que describe el documento: un campo que no corresponde al tipo se ignora. */
 export function tareaDesdeDocumento(documento: DocumentoDeTarea): Tarea {
-	const { id, titulo, emoji, nota, primerPaso, esfuerzo, tipo, creadaEn, fechaLimite, recurrencia, horario, etiquetas, pospuesta } = documento;
-	const comunes = { id, titulo, ...camposDeTexto({ emoji, nota, primerPaso }), ...camposDePasos(documento), ...camposDeEsfuerzo(esfuerzo), ...(etiquetas && { etiquetas }), ...(horario && { horario: horarioGuardado(horario) }), ...(pospuesta && { pospuesta }) };
+	const { id, titulo, emoji, nota, primerPaso, versionMinima, esfuerzo, tipo, creadaEn, fechaLimite, recurrencia, horario, etiquetas, pospuesta } = documento;
+	const comunes = { id, titulo, ...camposDeTexto({ emoji, nota, primerPaso, versionMinima }), ...camposDePasos(documento), ...camposDeEsfuerzo(esfuerzo), ...(etiquetas && { etiquetas }), ...(horario && { horario: horarioGuardado(horario) }), ...(pospuesta && { pospuesta }) };
 	if (tipo === 'puntual') return { ...comunes, tipo, ...(fechaLimite && { fechaLimite }), creadaEn };
 	if (!recurrencia) throw new Error(`La tarea periódica ${id} no tiene recurrencia`);
 	return { ...comunes, tipo, recurrencia, creadaEn, ...camposDePausa(documento) };

@@ -51,8 +51,8 @@ function cambioDeCampos(antes: Tarea, despues: Tarea): CambioDeTarea {
 	return cambio;
 }
 
-/** Emoji, nota, primer paso y esfuerzo: si cambiaron, el valor nuevo, o null si la tarea quedó sin el campo. */
-function cambioDeValor(campo: 'emoji' | 'nota' | 'primerPaso' | 'esfuerzo', antes: string | undefined, despues: string | undefined) {
+/** Emoji, nota, primer paso, versión mínima y esfuerzo: si cambiaron, el valor nuevo, o null si la tarea quedó sin el campo. */
+function cambioDeValor(campo: 'emoji' | 'nota' | 'primerPaso' | 'versionMinima' | 'esfuerzo', antes: string | undefined, despues: string | undefined) {
 	return antes === despues ? {} : { [campo]: nuloSiFalta(despues) };
 }
 
@@ -77,6 +77,7 @@ function cambioEntre(antes: Tarea, despues: Tarea): CambioDeTarea {
 		...cambioDeValor('nota', antes.nota, despues.nota),
 		...cambioDeValor('primerPaso', antes.primerPaso, despues.primerPaso),
 		...cambioDePasos(antes, despues),
+		...cambioDeValor('versionMinima', antes.versionMinima, despues.versionMinima),
 		...cambioDeValor('esfuerzo', antes.esfuerzo, despues.esfuerzo),
 		...(antes.tipo === despues.tipo ? cambioDeCampos(antes, despues) : cambioDeTipo(despues))
 	};
