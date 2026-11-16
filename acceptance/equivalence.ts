@@ -81,12 +81,13 @@ function loNombraUnThen(feature: Feature, scenario: Scenario, columna: string): 
 
 /** Los Then de Pendientes (§6.1) y la parte de la vista que cada uno afirma. */
 const THENS_DE_PENDIENTES: [RegExp, keyof VistaDePendientes][] = [
+	[/^Pendientes no muestra ninguna tarea$/, 'orden'],
 	[/^Pendientes muestra en orden <([A-Za-z0-9_]+)>$/, 'orden'],
 	[/^Pendientes muestra como completadas <([A-Za-z0-9_]+)>$/, 'completadas'],
 	[/^Pendientes muestra como pausadas <([A-Za-z0-9_]+)>$/, 'pausadas']
 ];
 
-function thenDePendientes(texto: string): { columna: string; parte: keyof VistaDePendientes } | undefined {
+function thenDePendientes(texto: string): { columna?: string; parte: keyof VistaDePendientes } | undefined {
 	for (const [patron, parte] of THENS_DE_PENDIENTES) {
 		const coincide = patron.exec(texto);
 		if (coincide) return { columna: coincide[1], parte };
@@ -109,8 +110,20 @@ function esEquivalenteDeOrden(feature: Feature, scenario: Scenario, candidata: C
 	const original = scenario.examples[candidata.example];
 	const entradas = pasos.filter(({ enThen }) => !enThen).map(({ step }) => step);
 	const esperada = ordenDePendientes(entradas, original);
-	if (esperada === undefined || thens.some((then) => then && esperada[then.parte] !== comoLista(original[then.columna]))) return false;
+	if (esperada === undefined || thens.some((then) => then && esperada[then.parte] !== (then.columna === undefined ? '' : comoLista(original[then.columna])))) return false;
 	return JSON.stringify(ordenDePendientes(entradas, { ...original, [candidata.key]: candidata.mutated })) === JSON.stringify(esperada);
+}
+
+/** Thens que el oráculo de edición verifica contra el valor que nombran: si ese valor cambia, lo observado cambia. */
+const THEN_QUE_VERIFICA_LO_QUE_NOMBRA = /^la tarea (?:\S+ )?conserva un solo completado, del <[A-Za-z0-9_]+>$/;
+
+/**
+ * Una columna que solo nombran Thens verificados y que también da un paso de entrada llega mutada a los dos lados:
+ * el oráculo compara el valor del Then con el de la entrada, así que si siguen coincidiendo, nada cambia.
+ */
+function loNombranSoloThenVerificadosYUnaEntrada(pasos: ReturnType<typeof pasosDe>, columna: string): boolean {
+	const nombran = pasos.filter(({ step }) => step.text.includes(`<${columna}>`));
+	return nombran.some(({ enThen }) => !enThen) && nombran.filter(({ enThen }) => enThen).every(({ step }) => THEN_QUE_VERIFICA_LO_QUE_NOMBRA.test(step.text));
 }
 
 /**
@@ -119,8 +132,8 @@ function esEquivalenteDeOrden(feature: Feature, scenario: Scenario, candidata: C
  * observa cada Then con el valor original.
  */
 function esEquivalenteDeEdicion(feature: Feature, scenario: Scenario, candidata: Candidata): boolean {
-	if (loNombraUnThen(feature, scenario, candidata.key)) return false;
 	const pasos = pasosDe(feature, scenario);
+	if (loNombraUnThen(feature, scenario, candidata.key) && !loNombranSoloThenVerificadosYUnaEntrada(pasos, candidata.key)) return false;
 	const entradas = pasos.filter(({ enThen }) => !enThen).map(({ step }) => step);
 	const thens = pasos.filter(({ enThen }) => enThen).map(({ step }) => step);
 	const original = scenario.examples[candidata.example];

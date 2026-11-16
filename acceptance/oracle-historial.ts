@@ -48,6 +48,8 @@ export interface EntradaDelOraculo {
 	id?: string;
 	/** El título actual de la tarea. */
 	titulo: string;
+	/** §4.4: el completado fue «Hice la mínima». */
+	minima?: boolean;
 }
 
 /** §6.3: del más reciente al más antiguo; con el mismo completadoEn, el de id menor. */
@@ -62,15 +64,16 @@ function ordenadas(entradas: EntradaDelOraculo[]): EntradaDelOraculo[] | undefin
 
 /**
  * El texto que el Historial muestra: grupos "<encabezado>: <entradas>" separados por "; ",
- * entradas "<título> <HH:MM>" separadas por ", ". Vacío si no hay entradas.
+ * entradas "<título> <HH:MM>[ Mínima]" separadas por ", ". Vacío si no hay entradas.
  */
 export function textoDelHistorial(entradas: EntradaDelOraculo[], ahora: number): string | undefined {
 	const orden = ordenadas(entradas);
 	if (!orden) return undefined;
 	const grupos: { encabezado: string; textos: string[] }[] = [];
-	for (const { completadoEn, titulo } of orden) {
+	for (const { completadoEn, titulo, minima } of orden) {
 		const encabezado = encabezadoDeDia(completadoEn, ahora);
-		const texto = `${titulo} ${horaDe(completadoEn)}`;
+		// §6.3: la palabra «Mínima» después de la hora si fue la mínima; nunca el texto de la versión mínima.
+		const texto = `${titulo} ${horaDe(completadoEn)}${minima ? ' Mínima' : ''}`;
 		const ultimo = grupos.at(-1);
 		if (ultimo?.encabezado === encabezado) ultimo.textos.push(texto);
 		else grupos.push({ encabezado, textos: [texto] });

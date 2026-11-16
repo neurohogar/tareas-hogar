@@ -96,10 +96,10 @@ const DEFINICIONES: { texto: string; datos: (titulo: string, ...valores: string[
 	}
 ];
 
-/** Cambiar el tipo en el panel deja como estaban el emoji, la nota, los pasos, el esfuerzo y el horario. */
-function camposQueConserva(tarea: Tarea): Pick<DatosDeTarea, 'emoji' | 'nota' | 'primerPaso' | 'pasos' | 'esfuerzo' | 'horario'> {
-	const { emoji, nota, primerPaso, pasos, esfuerzo, horario } = datosDeTarea(tarea);
-	return { ...(emoji && { emoji }), ...(nota && { nota }), ...(primerPaso && { primerPaso }), ...(pasos && { pasos }), ...(esfuerzo && { esfuerzo }), ...(horario && { horario }) };
+/** Cambiar el tipo en el panel deja como estaban el emoji, la nota, los pasos, la versión mínima, el esfuerzo y el horario. */
+function camposQueConserva(tarea: Tarea): Pick<DatosDeTarea, 'emoji' | 'nota' | 'primerPaso' | 'pasos' | 'versionMinima' | 'esfuerzo' | 'horario'> {
+	const { emoji, nota, primerPaso, pasos, versionMinima, esfuerzo, horario } = datosDeTarea(tarea);
+	return { ...(emoji && { emoji }), ...(nota && { nota }), ...(primerPaso && { primerPaso }), ...(pasos && { pasos }), ...(versionMinima && { versionMinima }), ...(esfuerzo && { esfuerzo }), ...(horario && { horario }) };
 }
 
 const pasosDeEditarA: StepDefinition[] = EDITORES.flatMap((editor) =>
@@ -116,14 +116,16 @@ const conTitulo = (titulo: string) => (tarea: Tarea) => ({ ...datosDeTarea(tarea
 
 /**
  * La tarea tiene un solo completado, de ese momento. Si es de calendario lleva
- * además su ocurrenciaCubierta (§5.3), que este paso no afirma; ningún otro campo.
+ * además su ocurrenciaCubierta (§5.3) y, si fue la mínima, su fueMinima (§4.4), que este paso no afirma; ningún otro campo.
  */
 function elUnicoCompletadoEs(world: World, tarea: Tarea, completada: string): void {
 	const completados = completadosDeTarea(world.completados, tarea.id);
 	expect(completados).toHaveLength(1);
-	const { ocurrenciaCubierta, ...resto } = completados[0];
+	const { ocurrenciaCubierta, fueMinima, ...resto } = completados[0];
 	expect(resto).toStrictEqual({ id: expect.any(String), tareaId: tarea.id, completadoEn: fechaHora(completada) });
 	if (ocurrenciaCubierta !== undefined) expect(ocurrenciaCubierta).toBeInstanceOf(Date);
+	// Si fue la mínima (§4.4), lo afirman los pasos de la mínima; solo se escribe en true.
+	if (fueMinima !== undefined) expect(fueMinima).toBe(true);
 }
 
 /** La tarea con ese título, aunque ya se haya borrado. */

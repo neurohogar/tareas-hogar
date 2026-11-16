@@ -107,6 +107,7 @@ const CAMPOS: Record<string, { lee: (f: FormularioDelPanel) => string | undefine
 	Título: { lee: (f) => f.datos.titulo, escribe: (f, titulo) => ({ ...f, datos: { ...f.datos, titulo } }) },
 	Nota: { lee: (f) => f.datos.nota, escribe: (f, nota) => ({ ...f, datos: { ...f.datos, nota } }) },
 	'Primer paso': { lee: (f) => f.datos.primerPaso, escribe: (f, primerPaso) => ({ ...f, datos: { ...f.datos, primerPaso } }) },
+	'Versión mínima': { lee: (f) => f.datos.versionMinima, escribe: (f, versionMinima) => ({ ...f, datos: { ...f.datos, versionMinima } }) },
 	'Etiquetas sin confirmar': { lee: (f) => f.sinConfirmar, escribe: (f, sinConfirmar) => ({ ...f, sinConfirmar }) }
 };
 
@@ -140,7 +141,7 @@ function cambioLosPasos(world: World, cambiar: (pasos: readonly string[], formul
 	cambios.formulario = { ...formulario, datos: { ...formulario.datos, pasos: cambiar(formulario.datos.pasos ?? [], formulario) } };
 }
 
-const comunesDe = ({ titulo, emoji, nota, primerPaso, pasos, horario, esfuerzo }: DatosDeTarea): DatosComunes => ({ titulo, emoji, nota, primerPaso, pasos, horario, esfuerzo });
+const comunesDe = ({ titulo, emoji, nota, primerPaso, pasos, versionMinima, horario, esfuerzo }: DatosDeTarea): DatosComunes => ({ titulo, emoji, nota, primerPaso, pasos, versionMinima, horario, esfuerzo });
 
 /** Los campos de cada opción de "Se repite": los de la tarea si es de esa forma; si no, como al crear (§6.2). */
 const SE_REPITE: Record<string, { forma: DatosDeTarea['forma']; vacios: Partial<DatosDeTarea> }> = {
@@ -307,6 +308,10 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con nota ${P}$`),
 		run: (world, titulo, nota) => abroParaEditar(world, { titulo, nota })
+	},
+	{
+		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con versión mínima ${P}$`),
+		run: (world, titulo, versionMinima) => abroParaEditar(world, { titulo, versionMinima })
 	},
 	{
 		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con primer paso ${P}$`),

@@ -577,6 +577,8 @@ const REGLAS: Regla[] = [
 	[/^una tarea periódica relativa nunca completada$/, () => undefined],
 	// §4.1 y §5: el primer paso no tiene estado: no cambia el estado de la tarea.
 	[/^el primer paso de la tarea es (.*)$/, () => undefined],
+	// §4.1 y §5: la versión mínima no tiene estado: no cambia el estado de la tarea.
+	[/^la versión mínima de la tarea es (.*)$/, () => undefined],
 	[/^la tarea fue completada el (\S+)$/, (s, [t]) => registrar(s, t)],
 	[/^completo la tarea el (\S+)$/, (s, [t]) => completar(s, t)],
 	[/^consulto el estado el (\S+)$/, (s, [t]) => ((s.ahora = MOMENTO(t)), s.ahora !== undefined)],
@@ -1057,6 +1059,8 @@ export const soloLasRapidas = (tareas: TareaDelOrden[]) => tareas.filter((t) => 
 export const REGLAS_DEL_ORDEN: ReglaDeOrden[] = [
 	// §4.1 y §6.1: el primer paso no cambia el orden de la lista; la tarea tiene que existir.
 	[/^el primer paso de la tarea (\S+) es (.*)$/, (ts, [t]) => conTitulo(ts, t) !== undefined],
+	// §4.1 y §6.1: la versión mínima no cambia el orden de la lista; la tarea tiene que existir.
+	[/^la versión mínima de la tarea (\S+) es (.*)$/, (ts, [t]) => conTitulo(ts, t) !== undefined],
 	[
 		/^la tarea (\S+) tiene esfuerzo (.+)$/,
 		(ts, [t, e]) => {
@@ -1124,7 +1128,8 @@ export const REGLAS_DEL_ORDEN: ReglaDeOrden[] = [
 	],
 	// De calendario, el oráculo del orden no calcula la ocurrencia que cubre (§5.3): no lo modela.
 	[
-		/^(?:la tarea (\S+) fue completada|completo la tarea (\S+)) el (\S+)$/,
+		// §4.4 y §6.1: un completado de la mínima cuenta como cualquier otro para la lista.
+		/^(?:la tarea (\S+) fue completada|completo la tarea (\S+)) el (\S+)(?: con la mínima)?$/,
 		(ts, [fue, completo, m]) => {
 			const momento = MOMENTO(m);
 			const tarea = conTitulo(ts, fue ?? completo);

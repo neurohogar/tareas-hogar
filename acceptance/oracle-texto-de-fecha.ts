@@ -172,8 +172,11 @@ const tituloDelPaso = (texto: string) => TITULO_EN_EL_PASO.exec(texto)?.[2];
 /** Los pasos de la tarea (§4.1, Pasos) los modela el oráculo de edición, que sigue el avance y los completados. */
 const PASO_DE_LOS_PASOS = /^(?:los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|vacío el paso |la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está )/;
 
+/** La versión mínima (§4.1, §6.1) y su botón los modela el oráculo de edición, que sigue los completados y el aviso. */
+const PASO_DE_LA_MINIMA = /^(?:la versión mínima de la tarea |toco Hice la mínima |la fila de la tarea (?:muestra la mínima |no muestra mínima$)|el botón Hice la mínima )/;
+
 export const esEscenarioDeTextoDeFecha = (textos: string[]) =>
-	!textos.some((texto) => PASO_DE_LOS_PASOS.test(texto)) &&
+	!textos.some((texto) => PASO_DE_LOS_PASOS.test(texto) || PASO_DE_LA_MINIMA.test(texto)) &&
 	!(textos.some((texto) => THEN_DE_PRIMER_PASO.test(texto)) && textos.some((texto) => PASO_DE_EDICION.test(texto))) &&
 	textos.some((texto) => THEN_DE_FILA.test(texto) || THEN_DE_PRIMER_PASO.test(texto) || THEN_DE_FILA_DE_TITULO.test(texto) || THEN_DE_AVISO.test(texto));
 

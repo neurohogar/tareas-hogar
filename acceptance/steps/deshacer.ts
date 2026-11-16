@@ -75,9 +75,11 @@ export const deshacerSteps: StepDefinition[] = [
 			const aviso = elAvisoConsultado(world);
 			expect(aviso?.nombre).toBe(titulo);
 			// El paso en que iba la tarea (§4.4) lo afirman los pasos de los pasos; acá, ningún otro campo.
-			const { pasoAlCompletar, ...resto } = aviso?.completado ?? {};
+			const { pasoAlCompletar, fueMinima, ...resto } = aviso?.completado ?? {};
 			expect(resto).toStrictEqual({ id: expect.any(String), tareaId: tarea.id, completadoEn: fechaHora(momento) });
 			if (pasoAlCompletar !== undefined) expect(pasoAlCompletar).toBeGreaterThanOrEqual(1);
+			// Que fue la mínima (§4.4) lo afirman los pasos de la mínima; solo se escribe en true.
+			if (fueMinima !== undefined) expect(fueMinima).toBe(true);
 			expect(world.completados).toContainEqual(aviso?.completado);
 		}
 	},

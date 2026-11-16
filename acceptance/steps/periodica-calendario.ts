@@ -148,12 +148,15 @@ export const periodicaCalendarioSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^se registró un completado que cubre el ${P}$`),
 		run: (world, cubierta) => {
-			expect(world.nuevoCompletado).toStrictEqual({
+			const { fueMinima, ...resto } = world.nuevoCompletado ?? {};
+			expect(resto).toStrictEqual({
 				id: expect.any(String),
 				tareaId: laTarea(world).id,
 				completadoEn: world.momentoDelNuevoCompletado,
 				ocurrenciaCubierta: ocurrencia(cubierta)
 			});
+			// Que fue la mínima (§4.4) lo afirman los pasos de la mínima; solo se escribe en true.
+			if (fueMinima !== undefined) expect(fueMinima).toBe(true);
 		}
 	}
 ];

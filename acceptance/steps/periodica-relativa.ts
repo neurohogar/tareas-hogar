@@ -4,7 +4,7 @@ import { completar } from '../../src/lib/core/completados';
 import { aplicarCambio } from '../../src/lib/core/documento-de-tarea';
 import { cambioAlCompletar } from '../../src/lib/core/paso-actual';
 import { estadoDeTarea } from '../../src/lib/core/estado-de-tarea';
-import type { Tarea } from '../../src/lib/core/tarea';
+import type { Completado, Tarea } from '../../src/lib/core/tarea';
 import { ANTES_DEL_ESCENARIO, crearEnWorld } from './crear';
 import { P, TITULO, fechaHora, numero, unidad } from './valores';
 import {
@@ -23,18 +23,26 @@ export const CUALQUIER_MOMENTO = [
 	new Date(2099, 11, 31, 23, 59, 59)
 ];
 
-export function registrarCompletado(world: World, momento: Date, tarea: Tarea = laTarea(world)) {
-	const completado = completar(tarea, world.completados, nuevoId(world, 'completado'), momento);
+export function registrarCompletado(world: World, momento: Date, tarea: Tarea = laTarea(world), fueMinima = false) {
+	const completado = completar(tarea, world.completados, nuevoId(world, 'completado'), momento, fueMinima);
 	world.completados = [...world.completados, completado];
 	return completado;
 }
 
-/** Completo desde este dispositivo: es mi cambio y abre el aviso (§5.4). */
-export function completoYo(world: World, momento: Date, tarea: Tarea): void {
+/** Cómo se arma el completado nuevo: entero por el checkbox; «Hice la mínima» lo decide el core y puede no completar. */
+export type Completa = (tarea: Tarea, completados: readonly Completado[], id: string, ahora: Date) => Completado | undefined;
+
+const completaEntero: Completa = (tarea, completados, id, ahora) => completar(tarea, completados, id, ahora);
+
+/** Completo desde este dispositivo: es mi cambio y abre el aviso (§5.4). Si `completa` no completa, no cambia nada. */
+export function completoYo(world: World, momento: Date, tarea: Tarea, completa: Completa = completaEntero): void {
+	const completado = completa(tarea, world.completados, nuevoId(world, 'completado'), momento);
+	if (!completado) return;
 	recordarAntesDeMiCambio(world);
 	world.completadosAnteriores = structuredClone(world.completados);
 	world.momentoDelNuevoCompletado = momento;
-	world.nuevoCompletado = registrarCompletado(world, momento, tarea);
+	world.completados = [...world.completados, completado];
+	world.nuevoCompletado = completado;
 	world.aviso = avisoAlCompletar(tarea, world.nuevoCompletado);
 	// Completar, por el checkbox o por «Hecho», vuelve la tarea al paso 1 (§4.1, Pasos).
 	world.documentos = aplicarCambio(world.documentos, tarea.id, cambioAlCompletar(tarea));

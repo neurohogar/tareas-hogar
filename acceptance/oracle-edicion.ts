@@ -52,6 +52,7 @@ import {
 	type Ventana
 } from './oracle';
 import { avisoSeVe, textoDelHistorial, textoDeUltimaVez, type EntradaDelOraculo } from './oracle-historial';
+import { regresoDelAvisoDe } from './oracle-texto-de-fecha';
 
 class Indeciso extends Error {}
 const indeciso = (motivo: string): never => {
@@ -72,6 +73,8 @@ interface Documento {
 	pasos?: string[];
 	/** §4.1 (Pasos): el paso en que va la tarea; sin el campo, el paso 1. Otro campo independiente (§7). */
 	pasoActual?: number;
+	/** §4.1 (Versión mínima): una línea, recortada; sin el campo, sin versión mínima. Un campo independiente (§7). */
+	versionMinima?: string;
 	/** §4.1: rapida, media o larga; sin el campo, sin estimar. Un campo independiente (§7). */
 	esfuerzo?: string;
 	tipo: 'puntual' | 'periodica';
@@ -98,6 +101,8 @@ interface Completado {
 	ident?: string;
 	/** §4.4: el paso en que iba la tarea al completarla; solo en tareas de dos pasos o más. */
 	paso?: number;
+	/** §4.4: `true` si fue «Hice la mínima»; sin el campo, fue entero. Se fija al completar. */
+	minima?: boolean;
 }
 
 /** El aviso del último completado de este dispositivo (§5.4): nombra la tarea como se llamaba al completarla. */
@@ -136,6 +141,10 @@ interface Mundo extends Guardado {
 	aviso?: Aviso;
 	/** Lo que mostraba el aviso en el último momento consultado. */
 	avisoVisto?: string;
+	/** El texto del aviso en el último momento consultado (§5.4); sin aviso, 'sin aviso'. */
+	avisoTexto?: string;
+	/** El momento en que se consultó el aviso por última vez. */
+	avisoEn?: number;
 	historial?: string;
 	/** Lo que mostraba "Última vez" en el último momento consultado (§6.2). */
 	ultimaVez?: string;
@@ -149,6 +158,7 @@ interface Datos {
 	nota?: string;
 	primerPaso?: string;
 	pasos?: string[];
+	versionMinima?: string;
 	esfuerzo?: string;
 	tipo: 'puntual' | 'periodica';
 	limite?: Date;
@@ -175,7 +185,7 @@ function claveDeRecurrencia(r: Recurrencia | undefined): string {
 const claveDeHorario = (h: Ventana[] | undefined) => (h === undefined ? '-' : h.map((v) => `${v.desde}-${v.hasta}`).join(' '));
 
 const claveDeDocumento = (d: Documento) =>
-	JSON.stringify([d.id, d.titulo, d.emoji, d.nota, d.primerPaso, d.pasos, d.pasoActual, d.esfuerzo, d.tipo, d.limite?.getTime(), claveDeRecurrencia(d.recurrencia), claveDeHorario(d.horario), d.creada, d.pausada, d.reanudada, d.pospuesta]);
+	JSON.stringify([d.id, d.titulo, d.emoji, d.nota, d.primerPaso, d.pasos, d.pasoActual, d.versionMinima, d.esfuerzo, d.tipo, d.limite?.getTime(), claveDeRecurrencia(d.recurrencia), claveDeHorario(d.horario), d.creada, d.pausada, d.reanudada, d.pospuesta]);
 
 const momento = (valor: string) => fecha(valor) ?? indeciso(`fecha y hora ${valor}`);
 const diaDe = (valor: string) => dia(valor) ?? indeciso(`fecha ${valor}`);
@@ -239,6 +249,8 @@ interface Escritos {
 	primerPaso?: string;
 	/** Los pasos más, tal como se escribieron (§4.1, Pasos). */
 	pasos?: string[];
+	/** §4.1 (Versión mínima): una línea; Guardar la recorta y vacío es sin versión mínima; nunca es inválida. */
+	versionMinima?: string;
 }
 
 /**
@@ -250,11 +262,12 @@ function pasosEscritos(primerPaso: string | undefined, pasos: string[] | undefin
 	return { primerPaso: lista[0], pasos: lista.length > 1 ? lista.slice(1) : undefined };
 }
 
-function conEscritos(datos: Datos, { emoji, nota, primerPaso, pasos }: Escritos): Datos {
+function conEscritos(datos: Datos, { emoji, nota, primerPaso, pasos, versionMinima }: Escritos): Datos {
 	return {
 		...datos,
 		emoji: emoji?.trim() || undefined,
 		nota: nota?.trim() || undefined,
+		versionMinima: versionMinima?.trim() || undefined,
 		...pasosEscritos(primerPaso, pasos),
 		motivos: [...motivosEmoji(emoji ?? ''), ...datos.motivos]
 	};
@@ -267,7 +280,7 @@ function conValidacion(datos: Datos): Datos {
 
 /** Los campos de texto, el esfuerzo y el horario de la tarea que se edita siguen igual salvo los que la edición escribe. */
 const conservando = (base: Documento, datos: Datos, escritos: Escritos = {}): Datos => ({
-	...conEscritos(datos, { emoji: base.emoji, nota: base.nota, primerPaso: base.primerPaso, pasos: base.pasos, ...escritos }),
+	...conEscritos(datos, { emoji: base.emoji, nota: base.nota, primerPaso: base.primerPaso, pasos: base.pasos, versionMinima: base.versionMinima, ...escritos }),
 	esfuerzo: base.esfuerzo,
 	horario: base.horario,
 	ventanasEscritas: base.horario?.length ?? 0
@@ -309,7 +322,7 @@ function datosDe(texto: string, titulo: string): Datos {
 
 /** Los valores actuales de una tarea, como los carga el panel al editar. */
 function datosDeDocumento(d: Documento): Datos {
-	const campos = { titulo: d.titulo, emoji: d.emoji, nota: d.nota, primerPaso: d.primerPaso, pasos: d.pasos, esfuerzo: d.esfuerzo, horario: d.horario, ventanasEscritas: d.horario?.length ?? 0, motivos: [] };
+	const campos = { titulo: d.titulo, emoji: d.emoji, nota: d.nota, primerPaso: d.primerPaso, pasos: d.pasos, versionMinima: d.versionMinima, esfuerzo: d.esfuerzo, horario: d.horario, ventanasEscritas: d.horario?.length ?? 0, motivos: [] };
 	if (d.tipo === 'puntual') return { ...campos, tipo: 'puntual', limite: d.limite };
 	return { ...campos, tipo: 'periodica', recurrencia: d.recurrencia };
 }
@@ -355,6 +368,7 @@ function crear(m: Mundo, datos: Datos, creada: number | undefined): void {
 			nota: datos.nota,
 			primerPaso: datos.primerPaso,
 			pasos: datos.pasos,
+			versionMinima: datos.versionMinima,
 			esfuerzo: datos.esfuerzo,
 			tipo: datos.tipo,
 			limite: datos.limite,
@@ -381,6 +395,7 @@ function cambioDe(base: Documento, nuevo: Datos): Record<string, unknown> {
 	if (base.primerPaso !== nuevo.primerPaso) cambio.primerPaso = nuevo.primerPaso ?? null;
 	// §7: `pasos` es un solo campo que se reemplaza entero, solo si cambió; la edición nunca escribe `pasoActual`.
 	if (JSON.stringify(base.pasos) !== JSON.stringify(nuevo.pasos)) cambio.pasos = nuevo.pasos ?? null;
+	if (base.versionMinima !== nuevo.versionMinima) cambio.versionMinima = nuevo.versionMinima ?? null;
 	if (base.esfuerzo !== nuevo.esfuerzo) cambio.esfuerzo = nuevo.esfuerzo ?? null;
 	if (claveDeHorario(base.horario) !== claveDeHorario(nuevo.horario)) cambio.horario = nuevo.horario ?? null;
 	if (base.tipo !== nuevo.tipo) {
@@ -485,11 +500,11 @@ function cubiertaDelNuevo(tarea: Documento, conocidos: Completado[], en: number)
 	return { cubierta: ocurrenciaQueCubre(recurrencia, p, inicioDelDia(en)) ?? indeciso('sin ocurrencia') };
 }
 
-function completar(m: Mundo, tarea: Documento, conocidos: Completado[], en: number, ident?: string): Completado {
+function completar(m: Mundo, tarea: Documento, conocidos: Completado[], en: number, ident?: string, minima = false): Completado {
 	const cubierta = cubiertaDelNuevo(tarea, conocidos, en);
 	// §4.4: el completado de una tarea de dos pasos o más guarda el paso en que iba.
 	const paso = variosPasos(tarea) ? { paso: pasoEnQueVa(tarea) } : {};
-	const completado = { id: m.siguiente++, tareaId: tarea.id, en, ...cubierta, ...paso, ...(ident && { ident }) };
+	const completado = { id: m.siguiente++, tareaId: tarea.id, en, ...cubierta, ...paso, ...(ident && { ident }), ...(minima && { minima }) };
 	m.completados = [...m.completados, completado];
 	return completado;
 }
@@ -514,9 +529,9 @@ function irAlPaso(m: Mundo, id: number, paso: number): void {
 }
 
 /** Completo desde este dispositivo: es mi cambio (el otro dispositivo no lo ve) y abre el aviso (§5.4). */
-function completoYo(m: Mundo, tarea: Documento, en: number): void {
+function completoYo(m: Mundo, tarea: Documento, en: number, minima = false): void {
 	m.antes = copiar(m);
-	m.nuevo = completar(m, tarea, m.completados, en);
+	m.nuevo = completar(m, tarea, m.completados, en, undefined, minima);
 	m.aviso = { titulo: nombreDe(tarea), completado: m.nuevo };
 	// §4.1 (Pasos: Completar): completar, por el checkbox o por «Hecho», vuelve la tarea al paso 1.
 	irAlPaso(m, tarea.id, 1);
@@ -563,12 +578,26 @@ function consultarAviso(m: Mundo, ahora: number): string {
 	return visible ? JSON.stringify([visible.titulo, visible.completado.en]) : 'sin aviso';
 }
 
+/** §5.4: «Completaste «nombre»», con « · mínima» si el completado fue la mínima. */
+function textoDelAviso(m: Mundo, ahora: number): string {
+	const visible = m.aviso && avisoSeVe(m.aviso.completado.en, ahora) ? m.aviso : undefined;
+	return visible ? `Completaste «${visible.titulo}»${visible.completado.minima ? ' · mínima' : ''}` : 'sin aviso';
+}
+
+/** §5.4 y §6.1: el «Vuelve …» del aviso visible en el último momento consultado; sin aviso a la vista, 'sin aviso'. */
+function regresoDelAviso(m: Mundo): string {
+	const ahora = m.avisoEn ?? indeciso('sin consulta del aviso');
+	if (!m.aviso || !avisoSeVe(m.aviso.completado.en, ahora)) return 'sin aviso';
+	const tarea = m.documentos.find((d) => d.id === m.aviso?.completado.tareaId) ?? indeciso('la tarea del aviso ya no existe');
+	return regresoDelAvisoDe(situacionDe(m, derivada(tarea), ahora), ahora) ?? indeciso('regreso del aviso');
+}
+
 // ---- Historial (§6.3) ----
 
 function consultarHistorial(m: Mundo, ahora: number): string {
 	const entradas = m.completados.flatMap((c): EntradaDelOraculo[] => {
 		const tarea = m.documentos.find((d) => d.id === c.tareaId);
-		return tarea ? [{ completadoEn: c.en, id: c.ident, titulo: nombreDe(tarea) }] : [];
+		return tarea ? [{ completadoEn: c.en, id: c.ident, titulo: nombreDe(tarea), minima: c.minima }] : [];
 	});
 	return textoDelHistorial(entradas, ahora) ?? indeciso('empate sin desempate en el Historial');
 }
@@ -666,8 +695,8 @@ function elMasReciente(comps: Completado[]): Completado {
 }
 
 /** §5.5: completar fuera de la ventana del horario no es posible: el checkbox está deshabilitado y no hace nada. */
-function completoSiSePuede(m: Mundo, tarea: Documento, en: number): void {
-	if (!tarea.horario || dentroDeVentana(tarea.horario, en)) completoYo(m, tarea, en);
+function completoSiSePuede(m: Mundo, tarea: Documento, en: number, minima = false): void {
+	if (!tarea.horario || dentroDeVentana(tarea.horario, en)) completoYo(m, tarea, en, minima);
 }
 
 /**
@@ -739,6 +768,9 @@ const CREACIONES: Paso[] = [
 	// §4.1: un primer paso ya guardado (no es un cambio de este dispositivo); se guarda recortado.
 	[/^el primer paso de la tarea es (.*)$/, (m, [p]) => void (unica(m).primerPaso = p.trim() || undefined)],
 	[/^el primer paso de la tarea (\S+) es (.*)$/, (m, [t, p]) => void (conTitulo(m, t).primerPaso = p.trim() || undefined)],
+	// §4.1 (Versión mínima): una ya guardada (no es un cambio de este dispositivo); se guarda recortada.
+	[/^la versión mínima de la tarea es (.*)$/, (m, [v]) => void (unica(m).versionMinima = v.trim() || undefined)],
+	[/^la versión mínima de la tarea (\S+) es (.*)$/, (m, [t, v]) => void (conTitulo(m, t).versionMinima = v.trim() || undefined)],
 	// §4.1 (Pasos): los pasos ya guardados (no es un cambio de este dispositivo), con el primer paso y los pasos más.
 	[/^los pasos de la tarea son (.*)$/, (m, [p]) => guardarPasos(unica(m), p)],
 	[/^los pasos de la tarea (\S+) son (.*)$/, (m, [t, p]) => guardarPasos(conTitulo(m, t), p)],
@@ -794,6 +826,16 @@ function guardarCompletadoDel(m: Mundo, tarea: Documento, en: number, cubierta: 
 }
 
 const COMPLETADOS: Paso[] = [
+	// §4.4: un completado de la mínima, ya guardado (sin aviso y sin tocar el paso en que va la tarea).
+	[
+		/^la tarea fue completada el (\S+) en el paso (\S+) con la mínima$/,
+		(m, [t, paso]) => {
+			const completado = completar(m, unica(m), m.completados, momento(t), undefined, true);
+			completado.paso = numeroDePaso(paso);
+		}
+	],
+	[/^la tarea fue completada el (\S+) con la mínima$/, (m, [t]) => void completar(m, unica(m), m.completados, momento(t), undefined, true)],
+	[/^la tarea (\S+) fue completada el (\S+) con la mínima$/, (m, [t, e]) => void completar(m, conTitulo(m, t), m.completados, momento(e), undefined, true)],
 	// §4.4: un completado que guarda el paso en que iba la tarea, sin tocar el paso en que va hoy.
 	[
 		/^la tarea fue completada el (\S+) en el paso (\S+)$/,
@@ -851,6 +893,23 @@ const edicionesDePrimerPaso = (): Paso[] => [
 	[new RegExp(`^${OTRO} quita el primer paso$`), (m) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), { primerPaso: '' }))]
 ];
 
+/** Cambios de la versión mínima (§4.1, §6.2): lo escrito en el campo; quitarla es vaciarlo. */
+const CAMBIOS_DE_VERSION_MINIMA: [string, (c: string[]) => Escritos][] = [
+	['la versión mínima a (.*) con espacios al inicio y al final', ([v]) => ({ versionMinima: `  ${v}  ` })],
+	['la versión mínima a una de solo espacios', () => ({ versionMinima: SOLO_ESPACIOS })],
+	['la versión mínima a una de (\\S+) caracteres', ([l]) => ({ versionMinima: 'x'.repeat(numero(l)) })],
+	['la versión mínima a (.*)', ([v]) => ({ versionMinima: v })]
+];
+
+const edicionesDeVersionMinima = (): Paso[] => [
+	...CAMBIOS_DE_VERSION_MINIMA.flatMap(([texto, escritos]): Paso[] => [
+		[new RegExp(`^edito ${texto}$`), (m, c) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), escritos(c)))],
+		[new RegExp(`^${OTRO} edita ${texto}$`), (m, c) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), escritos(c)))]
+	]),
+	[/^quito la versión mínima$/, (m) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), { versionMinima: '' }))],
+	[new RegExp(`^${OTRO} quita la versión mínima$`), (m) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), { versionMinima: '' }))]
+];
+
 /** Cambios de un paso (§4.1, Pasos): lo escrito en su campo; vaciarlo lo descarta y los de abajo suben. */
 const CAMBIOS_DE_PASO: [string, (c: string[]) => string][] = [
 	['(.*) con espacios al inicio y al final', ([p]) => `  ${p}  `],
@@ -906,7 +965,31 @@ function tocaHechoElOtro(m: Mundo, en: number): void {
 	irAlPaso(m, d.id, 1);
 }
 
+/**
+ * §6.1: «Hice la mínima» está en las filas pendiente y atrasada con versión mínima; completa como el checkbox, con el
+ * completado de la mínima, y deshabilitado (fuera de la ventana, §5.5) no hace nada.
+ */
+function tocoLaMinima(m: Mundo, tarea: Documento, en: number): void {
+	m.tocadoEn ??= en;
+	const d = derivada(tarea);
+	if (d.versionMinima === undefined || !seVeLaLinea(estadoDeLaFila(m, d, en))) indeciso('«Hice la mínima» no se ve');
+	completoSiSePuede(m, d, en, true);
+}
+
+/** El otro dispositivo decide con la tarea que veía, y su completado llega a lo guardado hoy (§7). */
+function tocaLaMinimaElOtro(m: Mundo, en: number): void {
+	const visto = loQueVioElOtro(m);
+	const d = derivada(unica(visto));
+	if (d.versionMinima === undefined || !seVeLaLinea(estadoDeLaFila(visto, d, en))) indeciso('«Hice la mínima» no se ve');
+	if (d.horario && !dentroDeVentana(d.horario, en)) return;
+	completar(m, d, visto.completados, en, undefined, true);
+	irAlPaso(m, d.id, 1);
+}
+
 const PASOS_DE_LA_FILA: Paso[] = [
+	[/^toco Hice la mínima el (\S+)$/, (m, [e]) => tocoLaMinima(m, unica(m), momento(e))],
+	[/^toco Hice la mínima en la tarea (\S+) el (\S+)$/, (m, [t, e]) => tocoLaMinima(m, conTitulo(m, t), momento(e))],
+	[new RegExp(`^${OTRO} toca Hice la mínima el (\\S+)$`), (m, [e]) => tocaLaMinimaElOtro(m, momento(e))],
 	[/^toco Hecho el (\S+)$/, (m, [e]) => tocoHecho(m, unica(m), momento(e))],
 	[/^toco Hecho en la tarea (\S+) el (\S+)$/, (m, [t, e]) => tocoHecho(m, conTitulo(m, t), momento(e))],
 	[
@@ -1005,6 +1088,7 @@ const EDICIONES: Paso[] = [
 	[new RegExp(`^${OTRO} guarda la tarea sin cambios$`), (m) => editaElOtro(m, datosDeDocumento)],
 	...edicionesDeEmojiYNota(),
 	...edicionesDePrimerPaso(),
+	...edicionesDeVersionMinima(),
 	...edicionesDePasos(),
 	...PASOS_DE_LA_FILA
 ];
@@ -1132,7 +1216,14 @@ function consultarPendientes(m: Mundo, ahora: number | undefined): void {
 }
 
 const CONSULTAS: Paso[] = [
-	[/^consulto el aviso el (\S+)$/, (m, [t]) => void (m.avisoVisto = consultarAviso(m, momento(t)))],
+	[
+		/^consulto el aviso el (\S+)$/,
+		(m, [t]) => {
+			m.avisoVisto = consultarAviso(m, momento(t));
+			m.avisoTexto = textoDelAviso(m, momento(t));
+			m.avisoEn = momento(t);
+		}
+	],
 	[/^consulto el Historial el (\S+)$/, (m, [t]) => void (m.historial = consultarHistorial(m, momento(t)))],
 	[/^consulto la última vez el (\S+)$/, (m, [t]) => void (m.ultimaVez = consultarUltimaVez(m, momento(t)))],
 	[
@@ -1174,11 +1265,12 @@ const claveDePosposicion = (p: Posposicion | undefined) => (p ? `${p.desde} ${p.
 /** §5.8: una pausada no tiene estado, no está completada y su checkbox está deshabilitado. */
 const estaPausada = (m: Mundo) => laTarea(m).pausada === true;
 const elNuevo = (m: Mundo) => m.nuevo ?? indeciso('no se completó');
-const unSoloCompletadoDe = (m: Mundo, d: Documento) =>
-	JSON.stringify(completadosDe(m, d.id).map((c) => [c.en, c.cubierta !== undefined || c.inicioCubierto !== undefined]));
+/** Lo que queda de la tarea: si cada completado es del momento que el paso nombra, y si cubre una ocurrencia. */
+const unSoloCompletadoDe = (m: Mundo, d: Documento, nombrado: string) =>
+	JSON.stringify(completadosDe(m, d.id).map((c) => [c.en === momento(nombrado), c.cubierta !== undefined || c.inicioCubierto !== undefined]));
 
 /** §6.1: la fila de la tarea en ese momento (o en cualquiera): pausada, en espera por la posposición o el estado de §5. */
-function estadoDeLaFila(m: Mundo, tarea: Documento, en: number | undefined): string {
+function estadoDeLaFila(m: Guardado, tarea: Documento, en: number | undefined): string {
 	if (tarea.tipo === 'periodica' && tarea.pausada) return 'pausada';
 	if (en === undefined && tarea.pospuesta) indeciso('posposición en cualquier momento');
 	const s = situacionDe(m, tarea, en);
@@ -1216,7 +1308,19 @@ function laFilaDeLosPasos(m: Mundo): FilaDeLosPasos {
 	return { linea, botones: paso > 1 ? 'Paso anterior y Hecho' : 'Hecho', hecho: () => (paso < pasos.length ? 'habilitado' : checkbox()) };
 }
 
-const DE_LA_FILA_DE_LOS_PASOS = /^(?:la fila de la tarea (?:muestra el paso |muestra los botones |no muestra botones de paso$|no muestra primer paso$)|el botón Hecho de la tarea está |el checkbox de la tarea está )/;
+/**
+ * §6.1: la línea de la mínima y su botón: se ven solo en las filas pendiente y atrasada con versión mínima; el botón
+ * está habilitado como el checkbox que completaría (§5.5).
+ */
+function laFilaDeLaMinima(m: Mundo): { linea: string; boton: () => string } {
+	if (!m.consultoPendientes) indeciso('sin consulta de Pendientes');
+	const tarea = unica(m);
+	if (tarea.versionMinima === undefined || !seVeLaLinea(estadoDeLaFila(m, tarea, m.pendientesEn))) return { linea: 'sin mínima', boton: () => 'sin mínima' };
+	const checkbox = () => clasificarSituacion(situacionDe(m, tarea, m.pendientesEn), { progreso: false, checkbox: true, soloCheckbox: true })?.replace('checkbox ', '') ?? indeciso('checkbox');
+	return { linea: `Mínima: ${tarea.versionMinima}`, boton: checkbox };
+}
+
+const DE_LA_FILA_DE_LOS_PASOS = /^(?:la fila de la tarea (?:muestra el paso |muestra los botones |no muestra botones de paso$|no muestra primer paso$|muestra la mínima |no muestra mínima$)|el botón Hecho de la tarea está |el botón Hice la mínima de la tarea está |el checkbox de la tarea está )/;
 
 type Observacion = [RegExp, (m: Mundo, c: string[]) => string];
 
@@ -1264,6 +1368,14 @@ const OBSERVACIONES: Observacion[] = [
 	[/^el último completado de la tarea guarda el paso (\S+)$/, (m) => String(elMasReciente(completadosDe(m, unica(m).id)).paso)],
 	[/^el último completado de la tarea no guarda paso$/, (m) => String(elMasReciente(completadosDe(m, unica(m).id)).paso === undefined)],
 	[/^la tarea no tiene primer paso$/, (m) => String(unica(m).primerPaso === undefined)],
+	[/^la tarea tiene versión mínima (.*)$/, (m) => unica(m).versionMinima ?? '-'],
+	[/^la tarea no tiene versión mínima$/, (m) => String(unica(m).versionMinima === undefined)],
+	[/^la tarea tiene una versión mínima de (\S+) caracteres$/, (m) => String(unica(m).versionMinima?.length)],
+	[/^la fila de la tarea (?:muestra la mínima .*|no muestra mínima)$/, (m) => laFilaDeLaMinima(m).linea],
+	[/^el botón Hice la mínima de la tarea está (?:habilitado|deshabilitado)$/, (m) => laFilaDeLaMinima(m).boton()],
+	[/^el último completado de la tarea fue (?:la mínima|entero)$/, (m) => String(elMasReciente(completadosDe(m, unica(m).id)).minima === true)],
+	[/^la tarea tiene dos completados, uno entero y uno de la mínima$/, (m) => JSON.stringify(completadosDe(m, unica(m).id).map((c) => c.minima === true).sort())],
+	[/^el aviso del completado dice (.*)$/, (m) => m.avisoTexto ?? indeciso('sin consulta del aviso')],
 	[/^la tarea tiene un primer paso de (\S+) caracteres$/, (m) => String(unica(m).primerPaso?.length)],
 	[/^su esfuerzo es (.+)$/, (m) => unica(m).esfuerzo ?? 'sin estimar'],
 	[/^la nota de la tarea tiene dos líneas: .*$/, (m) => JSON.stringify(unica(m).nota?.split('\n'))],
@@ -1276,8 +1388,9 @@ const OBSERVACIONES: Observacion[] = [
 	],
 	[/^la tarea sigue creada el (\S+)$/, (m) => String(unica(m).creada)],
 	[/^la tarea conserva su id$/, (m) => String(unica(m).id === unica(loQueVioElOtro(m)).id)],
-	[/^la tarea conserva un solo completado, del (\S+)$/, (m) => unSoloCompletadoDe(m, unica(m))],
-	[/^la tarea (\S+) conserva un solo completado, del (\S+)$/, (m, [t]) => unSoloCompletadoDe(m, conTitulo(m, t))],
+	[/^la tarea conserva un solo completado, del (\S+)$/, (m, [e]) => unSoloCompletadoDe(m, unica(m), e)],
+	[/^la tarea (\S+) conserva un solo completado, del (\S+)$/, (m, [t, e]) => unSoloCompletadoDe(m, conTitulo(m, t), e)],
+	[/^el aviso del completado (?:muestra el regreso .*|no muestra regreso)$/, (m) => regresoDelAviso(m)],
 	[/^la tarea no tiene completados$/, (m) => String(completadosDe(m, unica(m).id).length === 0)],
 	[/^el aviso ofrece deshacer el completado de (\S+) del (\S+)$/, (m) => m.avisoVisto ?? indeciso('sin consulta del aviso')],
 	[/^no hay aviso$/, (m) => String((m.avisoVisto ?? indeciso('sin consulta del aviso')) === 'sin aviso')],
@@ -1317,7 +1430,7 @@ const OBSERVACIONES: Observacion[] = [
 
 /** Los pasos propios de este oráculo: escenarios que editan, borran o modifican concurrentemente. */
 const ES_DE_EDICION =
-	/^(?:edito |vacío el paso |los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está |elijo |quito el emoji$|quito el horario$|quito el primer paso$|el primer paso de la tarea |pongo |borro |toco Deshacer |toco el checkbox |consulto el aviso |consulto el Historial |consulto la última vez |otro dispositivo, sin ver ese cambio,)/;
+	/^(?:edito |vacío el paso |los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está |elijo |quito el emoji$|quito el horario$|quito el primer paso$|el primer paso de la tarea |la versión mínima de la tarea |quito la versión mínima$|toco Hice la mínima |la fila de la tarea (?:muestra la mínima |no muestra mínima$)|el botón Hice la mínima |pongo |borro |toco Deshacer |toco el checkbox |consulto el aviso |consulto el Historial |consulto la última vez |otro dispositivo, sin ver ese cambio,)/;
 
 export const esEscenarioDeEdicion = (textos: string[]) => textos.some((texto) => ES_DE_EDICION.test(texto));
 

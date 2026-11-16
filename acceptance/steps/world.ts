@@ -8,6 +8,7 @@ import type { ErroresDeCreacion } from '../../src/lib/core/creacion';
 import { tareaDesdeDocumento, type DocumentoDeTarea } from '../../src/lib/core/documento-de-tarea';
 import type { Estado } from '../../src/lib/core/estado';
 import type { BotonesDePaso } from '../../src/lib/core/paso-actual';
+import type { LineaDeMinima } from '../../src/lib/core/version-minima';
 import type { Etiqueta } from '../../src/lib/core/etiqueta';
 import type { ErrorDeRenombrado } from '../../src/lib/core/gestion-de-etiquetas';
 import type { GrupoDelHistorial } from '../../src/lib/core/historial';
@@ -139,6 +140,8 @@ export interface FilaConsultada {
 	textoDePrimerPaso: string | undefined;
 	/** Los botones «Paso anterior» y «Hecho» de la línea del paso (§6.1); sin ellos, la fila no los muestra. */
 	botonesDePaso: BotonesDePaso | undefined;
+	/** La línea «Mínima: …» de la fila y si «Hice la mínima» está habilitado (§6.1); sin ella, la fila no la muestra. */
+	minima: LineaDeMinima | undefined;
 }
 
 /** El sujeto de los pasos del otro dispositivo: actúa sobre lo guardado antes de mi último cambio. */

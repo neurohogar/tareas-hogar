@@ -8,7 +8,7 @@ import { laTareaTitulada, tareasDe, type StepDefinition, type World } from './wo
 /** "Hoy: Pagar 10:00, Regar 08:05; Ayer: Basura 21:30": grupos con "; ", entradas con ", ". */
 function enTexto(grupos: GrupoDelHistorial[]): string {
 	return grupos
-		.map(({ encabezado, entradas }) => `${encabezado}: ${entradas.map(({ tarea, hora }) => `${tarea.titulo} ${hora}`).join(', ')}`)
+		.map(({ encabezado, entradas }) => `${encabezado}: ${entradas.map(({ tarea, textoDeHora }) => `${tarea.titulo} ${textoDeHora}`).join(', ')}`)
 		.join('; ');
 }
 

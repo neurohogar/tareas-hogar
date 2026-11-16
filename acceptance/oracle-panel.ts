@@ -139,6 +139,8 @@ interface Formulario {
 	primerPaso: string;
 	/** §4.1 (Pasos): los pasos más, uno por campo «Paso 2», «Paso 3»…; Guardar los recorta y descarta los vacíos. */
 	pasos: string[];
+	/** §4.1 (Versión mínima): una línea; Guardar la recorta y vacío es sin versión mínima. */
+	versionMinima: string;
 	repite: string;
 	esfuerzo: string;
 	/** Las ventanas tal como se escribieron; '' es una fila vacía. */
@@ -172,7 +174,7 @@ interface MundoDeCambios {
 	eligioEmoji: boolean;
 }
 
-const FORMULARIO_AL_CREAR: Formulario = { titulo: '', nota: '', primerPaso: '', pasos: [], repite: 'No se repite', esfuerzo: 'Sin estimar', horarios: [], emoji: '', etiquetas: [], sinConfirmar: '' };
+const FORMULARIO_AL_CREAR: Formulario = { titulo: '', nota: '', primerPaso: '', pasos: [], versionMinima: '', repite: 'No se repite', esfuerzo: 'Sin estimar', horarios: [], emoji: '', etiquetas: [], sinConfirmar: '' };
 const LO_DE_ARRIBA = ['nada', 'el aviso de cierre', 'el aviso de acción', 'la confirmación de Borrar tarea', 'el selector de emoji', 'las sugerencias de Etiquetas'];
 /** §6.2 Atrás: lo que no cuenta como algo abierto encima del panel. */
 const NO_CUENTA_COMO_ABIERTO = ['nada', 'las sugerencias de Etiquetas'];
@@ -194,9 +196,9 @@ const claveDeHorarios = (horarios: string[]) => [...horarios].sort().join(' ');
 /** §4.1 (Pasos): Guardar recorta cada paso, descarta los vacíos y los de abajo suben. */
 const pasosGuardados = (f: Formulario) => [f.primerPaso, ...f.pasos].map((paso) => paso.trim()).filter((paso) => paso !== '');
 
-/** §6.2: Guardar recorta el título, la nota y los pasos y ordena las ventanas; las etiquetas no dependen del orden. */
+/** §6.2: Guardar recorta el título, la nota, los pasos y la versión mínima y ordena las ventanas; las etiquetas no dependen del orden. */
 const claveDeFormulario = (f: Formulario) =>
-	JSON.stringify([f.titulo.trim(), f.nota.trim(), pasosGuardados(f), f.repite, f.esfuerzo, claveDeHorarios(f.horarios), f.emoji, [...f.etiquetas].sort()]);
+	JSON.stringify([f.titulo.trim(), f.nota.trim(), pasosGuardados(f), f.versionMinima.trim(), f.repite, f.esfuerzo, claveDeHorarios(f.horarios), f.emoji, [...f.etiquetas].sort()]);
 
 /** §6.2: lo que Guardar cambiaría, más el texto sin confirmar de Etiquetas salvo solo espacios. */
 function hayCambios(m: MundoDeCambios): boolean {
@@ -377,6 +379,7 @@ function escribirEn(m: MundoDeCambios, campo: string, valor: string): void {
 	if (campo === 'Título') f.titulo = valor;
 	else if (campo === 'Nota') f.nota = valor;
 	else if (campo === 'Primer paso') f.primerPaso = valor;
+	else if (campo === 'Versión mínima') f.versionMinima = valor;
 	else if (LUGAR_DE_PASO.test(campo)) f.pasos[lugarDelPaso(f, campo)] = valor;
 	else if (campo === 'Etiquetas sin confirmar') f.sinConfirmar = valor;
 	else indeciso(`campo ${campo}`);
@@ -393,6 +396,7 @@ const laTareaDelOtro = (m: MundoDeCambios) => m.tarea ?? indeciso('otro disposit
 
 const PASOS_DE_CAMBIOS: [RegExp, (m: MundoDeCambios, ...grupos: string[]) => void][] = [
 	[/^abro el panel para editar la tarea (.+) con nota (.+)$/, (m, titulo, nota) => abrirParaEditar(m, { titulo, nota })],
+	[/^abro el panel para editar la tarea (.+) con versión mínima (.+)$/, (m, titulo, versionMinima) => abrirParaEditar(m, { titulo, versionMinima })],
 	[/^abro el panel para editar la tarea (.+) con primer paso (.+)$/, (m, titulo, primerPaso) => abrirParaEditar(m, { titulo, primerPaso })],
 	[
 		/^abro el panel para editar la tarea (.+) con los pasos (.+)$/,
@@ -513,7 +517,7 @@ function elAvisoAbierto(m: MundoDeCambios): { mensaje: string; botones: string[]
 	return (m.encima === 'el aviso de acción' ? avisoDeLaAccion(m) : undefined) ?? indeciso('no hay aviso');
 }
 
-const CAMPO_ESCRITO: Record<string, (f: Formulario) => string> = { Título: (f) => f.titulo, Nota: (f) => f.nota, 'Primer paso': (f) => f.primerPaso, 'Etiquetas sin confirmar': (f) => f.sinConfirmar };
+const CAMPO_ESCRITO: Record<string, (f: Formulario) => string> = { Título: (f) => f.titulo, Nota: (f) => f.nota, 'Primer paso': (f) => f.primerPaso, 'Versión mínima': (f) => f.versionMinima, 'Etiquetas sin confirmar': (f) => f.sinConfirmar };
 
 const siHayTarea = (m: MundoDeCambios, ver: (t: TareaGuardada) => string) => (m.tarea ? ver(m.tarea) : 'sin tarea');
 const instante = (valor: string) => String(fecha(valor) ?? indeciso(`fecha ${valor}`));
