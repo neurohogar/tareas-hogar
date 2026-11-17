@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasChanges, type PanelValues } from './unsaved-changes';
+import { hasChanges } from './unsaved-changes';
 import { DATA_ON_CREATE, taskData, type TaskData } from './task-data';
 import type { Task } from './task';
 
@@ -18,19 +18,17 @@ const WITH_SCHEDULES: TaskData = {
 /** Como abre el panel al crear: nada escrito. */
 const ON_CREATE: TaskData = { shape: 'puntual', title: '', emoji: '', note: '', dueDate: undefined };
 
-const open = (data: TaskData, labels: readonly string[] = []): PanelValues => ({ data, labels });
-const doesChange = (onOpen: TaskData, data: TaskData, unconfirmed = '') => hasChanges(open(onOpen), { data, labels: [], unconfirmed });
+const doesChange = (onOpen: TaskData, data: TaskData) => hasChanges({ data: onOpen }, { data });
 
 describe('hayCambios (spec §6.2): Guardar cambiaría algo respecto de los valores al abrir', () => {
 	it('los mismos valores no son un cambio', () => {
 		expect(doesChange(ONE_OFF, { ...ONE_OFF })).toBe(false);
 	});
 
-	it('otro título, otra nota, otro emoji u otro esfuerzo son un cambio', () => {
+	it('otro título, otra nota u otro emoji son un cambio', () => {
 		expect(doesChange(ONE_OFF, { ...ONE_OFF, title: 'Pagar luz' })).toBe(true);
 		expect(doesChange(ONE_OFF, { ...ONE_OFF, note: 'Gas' })).toBe(true);
 		expect(doesChange(ONE_OFF, { ...ONE_OFF, emoji: '🌱' })).toBe(true);
-		expect(doesChange(ONE_OFF, { ...ONE_OFF, effort: 'media' })).toBe(true);
 	});
 
 	it('los espacios que Guardar recorta no cuentan', () => {
@@ -116,32 +114,6 @@ describe('hayCambios (spec §6.2): Guardar cambiaría algo respecto de los valor
 		});
 	});
 
-	describe('Etiquetas', () => {
-		const withLabels = (onOpen: readonly string[], labels: readonly string[]) => hasChanges(open(ONE_OFF, onOpen), { data: ONE_OFF, labels, unconfirmed: '' });
-
-		it('agregar o quitar una etiqueta es un cambio', () => {
-			expect(withLabels([], ['casa'])).toBe(true);
-			expect(withLabels(['casa'], [])).toBe(true);
-			expect(withLabels(['casa'], ['auto'])).toBe(true);
-		});
-
-		it('agregarla y quitarla, cambiarlas de orden o de mayúsculas no cambia nada', () => {
-			expect(withLabels(['casa', 'auto'], ['auto', 'casa'])).toBe(false);
-			expect(withLabels(['casa'], ['Casa'])).toBe(false);
-		});
-	});
-
-	describe('Texto sin confirmar en Etiquetas (única excepción)', () => {
-		it('cuenta aunque Guardar no cambie nada por él', () => {
-			expect(doesChange(ONE_OFF, ONE_OFF, 'casa')).toBe(true);
-			expect(doesChange(ONE_OFF, ONE_OFF, '  casa  ')).toBe(true);
-		});
-
-		it('solo espacios no cuenta', () => {
-			expect(doesChange(ONE_OFF, ONE_OFF, '   ')).toBe(false);
-		});
-	});
-
 	describe('Al crear', () => {
 		it('se mide contra No se repite, la opción que viene elegida (S23, S5)', () => {
 			const interval: TaskData = { ...ON_CREATE, shape: 'relativa', every: Number.NaN, unit: 'horas' };
@@ -153,14 +125,12 @@ describe('hayCambios (spec §6.2): Guardar cambiaría algo respecto de los valor
 			expect(doesChange(ON_CREATE, ON_CREATE)).toBe(false);
 			expect(doesChange(ON_CREATE, { ...ON_CREATE, title: '   ' })).toBe(false);
 			expect(doesChange(ON_CREATE, { ...ON_CREATE, note: '   ' })).toBe(false);
-			expect(doesChange(ON_CREATE, ON_CREATE, '   ')).toBe(false);
 		});
 
 		it('cargar cualquier campo es un cambio', () => {
 			expect(doesChange(ON_CREATE, { ...ON_CREATE, title: 'Pagar' })).toBe(true);
-			expect(doesChange(ON_CREATE, { ...ON_CREATE, effort: 'media' })).toBe(true);
+			expect(doesChange(ON_CREATE, { ...ON_CREATE, emoji: '🌱' })).toBe(true);
 			expect(doesChange(ON_CREATE, { ...ON_CREATE, shape: 'relativa', every: Number.NaN, unit: 'horas' })).toBe(true);
-			expect(doesChange(ON_CREATE, ON_CREATE, 'casa')).toBe(true);
 		});
 	});
 

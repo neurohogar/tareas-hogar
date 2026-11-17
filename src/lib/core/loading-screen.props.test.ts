@@ -18,7 +18,6 @@ const wait = fc.record<WaitStatus>({
 	auth: fc.constantFrom('esperando', 'con-sesion', 'sin-sesion'),
 	tasksResponded: fc.boolean(),
 	completionsResponded: fc.boolean(),
-	labelsResponded: fc.boolean(),
 	atkinson: font,
 	noto: font,
 	online: fc.boolean(),

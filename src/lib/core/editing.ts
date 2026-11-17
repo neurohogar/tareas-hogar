@@ -51,8 +51,8 @@ function fieldsChange(before: Task, after: Task): TaskChange {
 	return change;
 }
 
-/** Emoji, nota, primer paso, versión mínima y esfuerzo: si cambiaron, el valor nuevo, o null si la tarea quedó sin el campo. */
-function valueChange(field: 'emoji' | 'note' | 'firstStep' | 'minimalVersion' | 'effort', before: string | undefined, after: string | undefined) {
+/** Emoji, nota, primer paso y versión mínima: si cambiaron, el valor nuevo, o null si la tarea quedó sin el campo. */
+function valueChange(field: 'emoji' | 'note' | 'firstStep' | 'minimalVersion', before: string | undefined, after: string | undefined) {
 	return before === after ? {} : { [field]: nullIfMissing(after) };
 }
 
@@ -72,7 +72,6 @@ function changeBetween(before: Task, after: Task): TaskChange {
 		...valueChange('firstStep', before.firstStep, after.firstStep),
 		...wholeFieldChange('steps', before.steps, after.steps, stepsKey),
 		...valueChange('minimalVersion', before.minimalVersion, after.minimalVersion),
-		...valueChange('effort', before.effort, after.effort),
 		...(before.kind === after.kind ? fieldsChange(before, after) : kindChange(after))
 	};
 }

@@ -2,9 +2,6 @@
 
 export type Unit = 'horas' | 'dias';
 
-/** Spec §4.1: rápida (≤ 5 min), media (≈ 15 min) o larga. */
-export type Effort = 'rapida' | 'media' | 'larga';
-
 export interface RelativeRecurrence {
 	mode: 'relativo';
 	every: number;
@@ -65,10 +62,6 @@ export interface RecurringTask {
 	currentStep?: number;
 	/** Spec §4.1 (Versión mínima): una línea, ya recortada; sin el campo, la tarea no tiene versión mínima. */
 	minimalVersion?: string;
-	/** Spec §4.1: sin el campo, sin estimar. */
-	effort?: Effort;
-	/** Spec §4.1: ids de etiqueta, sin repetir; sin el campo, ninguna. */
-	labels?: string[];
 	kind: 'periodica';
 	recurrence: Recurrence;
 	/** Spec §4.1 y §5.5: sin el campo, se puede completar a cualquier hora. */
@@ -97,10 +90,6 @@ export interface OneOffTask {
 	currentStep?: number;
 	/** Spec §4.1 (Versión mínima): una línea, ya recortada; sin el campo, la tarea no tiene versión mínima. */
 	minimalVersion?: string;
-	/** Spec §4.1: sin el campo, sin estimar. */
-	effort?: Effort;
-	/** Spec §4.1: ids de etiqueta, sin repetir; sin el campo, ninguna. */
-	labels?: string[];
 	kind: 'puntual';
 	dueDate?: Date;
 	/** Spec §4.1 y §5.5: sin el campo, se puede completar a cualquier hora. */
@@ -134,8 +123,3 @@ export interface Completion {
 	/** Spec §4.4: true si fue «Hice la mínima»; sin el campo, el completado fue entero. Se fija al completar. */
 	wasMinimal?: boolean;
 }
-
-/** Spec §4.1: los ids de etiqueta de la tarea; sin el campo, ninguna. */
-export const labelIds = ({ labels = [] }: Task): readonly string[] => labels;
-
-export const hasLabel = (task: Task, labelId: string): boolean => labelIds(task).includes(labelId);

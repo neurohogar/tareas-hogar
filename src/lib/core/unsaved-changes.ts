@@ -3,20 +3,13 @@
 // confirmación del navegador. Se apoya en las normalizaciones de Guardar.
 import { createFromData, type TaskData } from './task-data';
 import { readEmoji } from './emoji';
-import { sameName } from './label';
 import { readSchedule, type TypedSchedule } from './schedule';
 import { trimText } from './free-text';
 import { normalizeSteps } from './steps';
 
-/** Lo que Guardar considera del panel: los datos y los nombres de las etiquetas elegidas. */
-export interface PanelValues {
+/** El panel tal como está: lo que Guardar considera de él, que son los datos de la tarea. */
+export interface PanelForm {
 	data: TaskData;
-	labels: readonly string[];
-}
-
-/** El panel tal como está: además, el texto sin confirmar del campo Etiquetas. */
-export interface PanelForm extends PanelValues {
-	unconfirmed: string;
 }
 
 /** Con qué se prueba lo de "Se repite" por separado: su validez no depende de estos valores. */
@@ -26,7 +19,7 @@ const TEST_MOMENT = new Date(0);
 
 /** Lo de "Se repite" como lo guardaría Guardar; si es inválido, tal como se escribió. */
 function repetitionKey(data: TaskData) {
-	const onlyRepetition = { ...data, title: TEST_TITLE, emoji: undefined, note: undefined, firstStep: undefined, steps: undefined, minimalVersion: undefined, schedule: undefined, effort: undefined };
+	const onlyRepetition = { ...data, title: TEST_TITLE, emoji: undefined, note: undefined, firstStep: undefined, steps: undefined, minimalVersion: undefined, schedule: undefined };
 	const created = createFromData(onlyRepetition, TEST_ID, TEST_MOMENT);
 	return created.ok ? created.task : onlyRepetition;
 }
@@ -49,21 +42,14 @@ function emojiKey(emoji = '') {
 
 /** Dos datos con la misma clave son los mismos para Guardar. */
 function dataKey(data: TaskData): string {
-	return JSON.stringify([data.title.trim(), emojiKey(data.emoji), freeTextKey(data.note), normalizeSteps(data.firstStep, data.steps), freeTextKey(data.minimalVersion), data.effort, scheduleKey(data.schedule), repetitionKey(data)]);
-}
-
-/** Las etiquetas son un conjunto de nombres, sin distinguir mayúsculas (§4.3). */
-function sameLabels(a: readonly string[], b: readonly string[]): boolean {
-	const included = (ones: readonly string[], otherOnes: readonly string[]) => ones.every((name) => otherOnes.some((another) => sameName(name, another)));
-	return included(a, b) && included(b, a);
+	return JSON.stringify([data.title.trim(), emojiKey(data.emoji), freeTextKey(data.note), normalizeSteps(data.firstStep, data.steps), freeTextKey(data.minimalVersion), scheduleKey(data.schedule), repetitionKey(data)]);
 }
 
 /**
- * Spec §6.2: Guardar cambiaría algo respecto de los valores al abrir el panel
- * (no los de otro dispositivo), o hay texto sin confirmar en Etiquetas, salvo
- * solo espacios. Al crear, `alAbrir` es el formulario como se abrió.
+ * Spec §6.2: hay cambios si y solo si Guardar cambiaría algo respecto de los
+ * valores al abrir el panel (no los de otro dispositivo). Al crear, `onOpen`
+ * es el formulario como se abrió.
  */
-export function hasChanges(onOpen: PanelValues, current: PanelForm): boolean {
-	if (current.unconfirmed.trim() !== '') return true;
-	return dataKey(onOpen.data) !== dataKey(current.data) || !sameLabels(onOpen.labels, current.labels);
+export function hasChanges(onOpen: PanelForm, current: PanelForm): boolean {
+	return dataKey(onOpen.data) !== dataKey(current.data);
 }

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { annotate, editText, normalizeAnnotationText, type Annotation, type CurrentScreen, type Sense } from './annotation';
 
 const sense = fc.constantFrom<Sense>('Me sirvió', 'Me molestó');
-const screen = fc.constantFrom<CurrentScreen>('Pendientes', 'Historial', 'Etiquetas', 'Anotaciones');
+const screen = fc.constantFrom<CurrentScreen>('Pendientes', 'Historial', 'Anotaciones');
 const instant = fc.date({ noInvalidDate: true });
 const text = fc.string({ unit: fc.constantFrom('a', 'b', ' ', '\n', '\r', '\t', 'é'), maxLength: 12 });
 const panel = fc.option(fc.record({ taskId: fc.option(fc.constantFrom('t1', 't2'), { nil: undefined }) }), { nil: undefined });

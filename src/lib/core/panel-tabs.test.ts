@@ -42,8 +42,8 @@ describe('seccionesMarcadas (spec §6.2, Errores)', () => {
 		expect(markedSections([])).toEqual([]);
 	});
 
-	it.each(['Título', 'Etiquetas'] as const)('un error en %s marca Tarea', (field) => {
-		expect(markedSections([field])).toEqual(['Tarea']);
+	it('un error en Título marca Tarea', () => {
+		expect(markedSections(['Título'])).toEqual(['Tarea']);
 	});
 
 	it.each(['fecha límite', 'Cada', 'días', 'horario'] as const)('un error en %s marca Cuándo', (field) => {
@@ -51,7 +51,7 @@ describe('seccionesMarcadas (spec §6.2, Errores)', () => {
 	});
 
 	it('dos errores de la misma sección la marcan una sola vez', () => {
-		expect(markedSections(['Título', 'Etiquetas'])).toEqual(['Tarea']);
+		expect(markedSections(['horario', 'días'])).toEqual(['Cuándo']);
 	});
 
 	it('las marcadas van en el orden de las pestañas, no en el de los errores', () => {
@@ -65,11 +65,11 @@ describe('destinoAlFallarGuardar (spec §6.2, Errores)', () => {
 	});
 
 	it('Tarea va antes que Cuándo, aunque el error de Cuándo llegue primero', () => {
-		expect(destinationOnSaveFailure(['horario', 'Etiquetas'], 'pestanas')).toEqual({ tab: 'Tarea', field: 'Etiquetas' });
+		expect(destinationOnSaveFailure(['horario', 'Título'], 'pestanas')).toEqual({ tab: 'Tarea', field: 'Título' });
 	});
 
 	it.each([
-		[['Etiquetas', 'Título'], 'Título'],
+		[['días', 'Título'], 'Título'],
 		[['días', 'fecha límite'], 'fecha límite'],
 		[['horario', 'Cada'], 'Cada'],
 		[['horario', 'días'], 'días']
@@ -98,11 +98,11 @@ describe('barraDeGuardarVisible (spec §6.2, Teclado en pantalla)', () => {
 
 describe('camposConError (spec §6.2, Errores)', () => {
 	it('sin errores no hay campos', () => {
-		expect(fieldsWithError({}, 'puntual', false)).toEqual([]);
+		expect(fieldsWithError({}, 'puntual')).toEqual([]);
 	});
 
 	it('lista los campos con error en el orden de lectura', () => {
-		expect(fieldsWithError({ schedule: 'incompleto', title: 'vacio' }, 'puntual', true)).toEqual(['Título', 'Etiquetas', 'horario']);
+		expect(fieldsWithError({ schedule: 'incompleto', title: 'vacio' }, 'puntual')).toEqual(['Título', 'horario']);
 	});
 
 	it.each([
@@ -111,9 +111,9 @@ describe('camposConError (spec §6.2, Errores)', () => {
 		['días', { days: 'faltan' as const }, 'semanal'],
 		['días', { days: 'faltan' as const }, 'mensual']
 	] as const)('el error de %s solo cuenta con su opción de Se repite', (field, errors, repetition) => {
-		expect(fieldsWithError(errors, repetition, false)).toEqual([field]);
+		expect(fieldsWithError(errors, repetition)).toEqual([field]);
 		const other = repetition === 'puntual' ? 'relativo' : 'puntual';
-		expect(fieldsWithError(errors, other, false)).toEqual([]);
+		expect(fieldsWithError(errors, other)).toEqual([]);
 	});
 });
 

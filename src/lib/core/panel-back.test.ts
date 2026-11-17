@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { whatBackDoes, type OnTop } from './panel-back';
 
 const LAYERS: OnTop[] = ['aviso de cierre', 'aviso de acción', 'confirmación de Borrar tarea', 'selector de emoji', 'recuadro de Anotar'];
-const NO_LAYER: OnTop[] = ['nada', 'sugerencias de Etiquetas', 'aviso de deshacer'];
+const NO_LAYER: OnTop[] = ['nada', 'aviso de deshacer'];
 
 describe('queHaceAtras (spec §6.2)', () => {
 	it.each(LAYERS)('cierra solo %s, con o sin cambios', (top) => {

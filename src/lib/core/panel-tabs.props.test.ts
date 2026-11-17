@@ -13,7 +13,7 @@ import {
 	type RepetitionOption
 } from './panel-tabs';
 
-const FIELDS: FieldWithError[] = ['Título', 'Etiquetas', 'fecha límite', 'Cada', 'días', 'horario'];
+const FIELDS: FieldWithError[] = ['Título', 'fecha límite', 'Cada', 'días', 'horario'];
 const fields = fc.subarray(FIELDS).chain((subset) => fc.shuffledSubarray(subset));
 const presentation = fc.constantFrom('pestanas' as const, 'secciones' as const);
 const repetition = fc.constantFrom<RepetitionOption>('puntual', 'relativo', 'semanal', 'mensual');
@@ -94,10 +94,9 @@ describe('camposConError (propiedades)', () => {
 
 	it('es un subconjunto sin repetidos de los campos, en orden de lectura', () => {
 		fc.assert(
-			fc.property(errors, repetition, fc.boolean(), (e, r, et) => {
-				const result = fieldsWithError(e, r, et);
+			fc.property(errors, repetition, (e, r) => {
+				const result = fieldsWithError(e, r);
 				expect(result).toEqual(FIELDS.filter((c) => result.includes(c)));
-				expect(result.includes('Etiquetas')).toBe(et);
 			})
 		);
 	});
@@ -105,7 +104,7 @@ describe('camposConError (propiedades)', () => {
 	it('los campos de las otras opciones de Se repite nunca cuentan', () => {
 		fc.assert(
 			fc.property(errors, repetition, (e, r) => {
-				const result = fieldsWithError(e, r, false);
+				const result = fieldsWithError(e, r);
 				expect(result.includes('fecha límite')).toBe(r === 'puntual' && e.dueDate !== undefined);
 				expect(result.includes('Cada')).toBe(r === 'relativo' && e.every !== undefined);
 				expect(result.includes('días')).toBe((r === 'semanal' || r === 'mensual') && e.days !== undefined);

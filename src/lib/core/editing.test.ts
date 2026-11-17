@@ -217,37 +217,3 @@ describe('editar una pausada (spec §5.8)', () => {
 	});
 });
 
-describe('editar el esfuerzo', () => {
-	const WITH_EFFORT: OneOffTask = { ...ONE_OFF, effort: 'media' };
-
-	it('elegir otro nivel entra en el cambio, y solo él', () => {
-		expect(edit(WITH_EFFORT, { ...taskData(WITH_EFFORT), effort: 'rapida' })).toStrictEqual({
-			ok: true,
-			change: { effort: 'rapida' }
-		});
-	});
-
-	it('poner uno a una tarea sin estimar entra en el cambio', () => {
-		expect(edit(ONE_OFF, { ...taskData(ONE_OFF), effort: 'larga' })).toStrictEqual({ ok: true, change: { effort: 'larga' } });
-	});
-
-	it('elegir "Sin estimar" lo quita con null', () => {
-		expect(edit(WITH_EFFORT, { ...taskData(WITH_EFFORT), effort: undefined })).toStrictEqual({
-			ok: true,
-			change: { effort: null }
-		});
-	});
-
-	it('sin cambiarlo, no entra en el cambio', () => {
-		expect(edit(WITH_EFFORT, taskData(WITH_EFFORT))).toStrictEqual({ ok: true, change: {} });
-	});
-
-	it('cambiar el tipo no lo toca', () => {
-		const result = edit(WITH_EFFORT, { shape: 'relativa', title: 'Pagar', effort: 'media', every: 3, unit: 'dias' });
-
-		expect(result).toStrictEqual({
-			ok: true,
-			change: { kind: 'periodica', dueDate: null, recurrence: { mode: 'relativo', every: 3, unit: 'dias' } }
-		});
-	});
-});

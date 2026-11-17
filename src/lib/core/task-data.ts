@@ -5,7 +5,6 @@ import type { CreationResult } from './creation';
 import { createRecurringCalendar, type RecurringCalendarData } from './create-recurring-calendar';
 import { createRecurringRelative, type RecurringRelativeData } from './create-recurring-relative';
 import { createOneOff, type OneOffData } from './create-one-off';
-import { effortFields } from './effort';
 import { isoDay } from './days';
 import type { Task } from './task';
 
@@ -26,8 +25,8 @@ export function createFromData(data: TaskData, id: string, now: Date): CreationR
 
 /** Los valores actuales de la tarea, como los carga el panel al editar: la inversa de crearSegunDatos. */
 export function taskData(task: Task): TaskData {
-	const { title, emoji, note, firstStep, steps, minimalVersion, schedule, effort } = task;
-	const commons = { title, ...textFields({ emoji, note, firstStep, minimalVersion }), ...(steps && { steps: [...steps] }), ...(schedule && { schedule: schedule.map((timeWindow) => ({ ...timeWindow })) }), ...effortFields(effort) };
+	const { title, emoji, note, firstStep, steps, minimalVersion, schedule } = task;
+	const commons = { title, ...textFields({ emoji, note, firstStep, minimalVersion }), ...(steps && { steps: [...steps] }), ...(schedule && { schedule: schedule.map((timeWindow) => ({ ...timeWindow })) }) };
 	if (task.kind === 'puntual')
 		return { shape: 'puntual', ...commons, ...(task.dueDate && { dueDate: isoDay(task.dueDate) }) };
 	const { recurrence } = task;

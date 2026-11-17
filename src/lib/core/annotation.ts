@@ -4,10 +4,11 @@ import { visibleNotice, type Notice } from './notice';
 
 export type Sense = 'Me sirvió' | 'Me molestó';
 
-/** Las pantallas donde puede estar la persona con el panel cerrado. */
-export type CurrentScreen = 'Pendientes' | 'Historial' | 'Etiquetas' | 'Anotaciones';
+/** Spec §5.10: las pantallas donde puede estar la persona con el panel cerrado. */
+export type CurrentScreen = 'Pendientes' | 'Historial' | 'Anotaciones';
 
-export type AnnotationScreen = CurrentScreen | 'Panel de edición';
+/** Spec §4.5: `Etiquetas` solo lo tienen las anotaciones guardadas cuando esa pantalla existía; la app no lo vuelve a producir. */
+export type AnnotationScreen = CurrentScreen | 'Panel de edición' | 'Etiquetas';
 
 export interface Annotation {
 	id: string;

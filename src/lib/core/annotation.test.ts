@@ -45,7 +45,7 @@ describe('anotar (spec §5.10)', () => {
 	});
 
 	it('con el panel abierto al editar, la pantalla es el Panel de edición y la tarea la del panel', () => {
-		const annotation = annotate('a1', 'Me sirvió', now, { screen: 'Etiquetas', panel: { taskId: 'regar' } });
+		const annotation = annotate('a1', 'Me sirvió', now, { screen: 'Anotaciones', panel: { taskId: 'regar' } });
 
 		expect(annotation).toMatchObject({ screen: 'Panel de edición', taskId: 'regar' });
 	});
@@ -100,5 +100,19 @@ describe('editarTexto (spec §6.7, §7)', () => {
 
 	it('editar una anotación ya borrada no la revive', () => {
 		expect(editText([other], 'a1', 'tres')).toStrictEqual([other]);
+	});
+	it('una anotación guardada en Etiquetas, cuando esa pantalla existía, conserva su pantalla (§4.5)', () => {
+		const onLabels: Annotation = { ...other, screen: 'Etiquetas' };
+
+		expect(editText([onLabels], 'a2', 'tres')).toStrictEqual([{ ...onLabels, text: 'tres' }]);
+	});
+});
+
+describe('las pantallas donde se anota (spec §4.5, §5.10)', () => {
+	it('una anotación nueva no puede tomarse en Etiquetas: esa pantalla ya no existe', () => {
+		// @ts-expect-error Etiquetas ya no es una pantalla donde se pueda estar (§5.10).
+		const onLabels: AnnotateContext = { screen: 'Etiquetas' };
+
+		expect(onLabels.screen).toBe('Etiquetas');
 	});
 });

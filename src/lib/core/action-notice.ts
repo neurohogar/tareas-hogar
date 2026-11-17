@@ -6,10 +6,9 @@ import { changeOfAction, type PanelAction } from './panel-action';
 import type { PanelForm } from './unsaved-changes';
 import { CHANGES_MESSAGE, KEEP_EDITING, type ChangesNotice, type NoticeButton } from './unsaved-changes-notice';
 import { editFromPanel } from './unsaved-changes-saved';
+import type { EditingResult } from './editing';
 import type { CreationErrors } from './creation';
 import { applyChange, taskFromDocument, type TaskChange } from './task-document';
-import type { Label } from './label';
-import type { EditingWithLabels } from './save-with-labels';
 import { pauseAction } from './pause';
 import { postponeAction } from './postponement-in-panel';
 import type { Completion, Task } from './task';
@@ -24,8 +23,6 @@ export interface NoticeAction {
 	completions: readonly Completion[];
 	now: Date;
 	form: PanelForm;
-	/** Las etiquetas que existen ahora. */
-	existings: readonly Label[];
 }
 
 type ActionConditions = Pick<NoticeAction, 'action' | 'completions' | 'now'>;
@@ -37,17 +34,14 @@ function isShown({ action, completions, now }: ActionConditions, task: Task): bo
 }
 
 /** Lo que haría Guardar con lo escrito, medido contra la tarea al abrir. */
-function saveTyped({ taskOnOpen, form, existings, now }: NoticeAction, newId: () => string): EditingWithLabels {
-	return editFromPanel(taskOnOpen, form, { existings, newId }, now);
+function saveTyped({ taskOnOpen, form, now }: NoticeAction): EditingResult {
+	return editFromPanel(taskOnOpen, form, now);
 }
 
 /** La tarea de ahora con el cambio, como la aplicaría el servidor (§7). */
 function savedTask(task: Task, change: TaskChange): Task {
 	return taskFromDocument(applyChange([task], task.id, change)[0]);
 }
-
-/** Evaluar el aviso no crea etiquetas: el id nunca se usa. */
-const unusedId = () => '';
 
 const discard = (action: PanelAction): NoticeButton => ({ text: `Descartar y ${action}`, effect: 'descartar' });
 
@@ -60,7 +54,7 @@ const discard = (action: PanelAction): NoticeButton => ({ text: `Descartar y ${a
 export function actionNotice(context: NoticeAction): ChangesNotice | undefined {
 	const { action, task } = context;
 	if (!isShown(context, task)) return undefined;
-	const editing = saveTyped(context, unusedId);
+	const editing = saveTyped(context);
 	if (editing.ok && !isShown(context, savedTask(task, editing.change)))
 		return { message: `Con estos cambios la tarea ya no se puede ${action}`, buttons: [KEEP_EDITING, discard(action)] };
 	return { message: CHANGES_MESSAGE, buttons: [KEEP_EDITING, discard(action), { text: `Guardar y ${action}`, effect: 'guardar' }] };
@@ -72,7 +66,7 @@ export function discardAndAct(context: NoticeAction): TaskChange | undefined {
 }
 
 export type SaveAndActResult =
-	| { result: 'guardado'; change: TaskChange; newLabels: Label[] }
+	| { result: 'guardado'; change: TaskChange }
 	| { result: 'rechazado'; errors: CreationErrors }
 	| { result: 'aviso actualizado'; notice: ChangesNotice }
 	| { result: 'aviso cerrado' };
@@ -82,11 +76,11 @@ export type SaveAndActResult =
  * corresponde, no se guarda ni se actúa. Si Guardar falla, no se ejecuta nada.
  * Si no, guarda y actúa en un solo cambio.
  */
-export function saveAndAct(context: NoticeAction, newId: () => string): SaveAndActResult {
+export function saveAndAct(context: NoticeAction): SaveAndActResult {
 	const notice = actionNotice(context);
 	if (!notice) return { result: 'aviso cerrado' };
 	if (!notice.buttons.some(({ effect }) => effect === 'guardar')) return { result: 'aviso actualizado', notice };
-	const editing = saveTyped(context, newId);
+	const editing = saveTyped(context);
 	if (!editing.ok) return { result: 'rechazado', errors: editing.errors };
-	return { result: 'guardado', change: { ...editing.change, ...changeOfAction(context.action, context.now) }, newLabels: editing.newLabels };
+	return { result: 'guardado', change: { ...editing.change, ...changeOfAction(context.action, context.now) } };
 }

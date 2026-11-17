@@ -30,6 +30,6 @@ export function createRecurringCalendar(
 	now: Date
 ): CreationResult<RecurringTask> {
 	const days = daysError(data);
-	const { title, emoji, note, firstStep, steps, minimalVersion, schedule, effort } = data;
-	return createRecurring({ title, emoji, note, firstStep, steps, minimalVersion, schedule, effort, id, now }, days ? { days } : {}, () => recurrenceOf(data));
+	const { title, emoji, note, firstStep, steps, minimalVersion, schedule } = data;
+	return createRecurring({ title, emoji, note, firstStep, steps, minimalVersion, schedule, id, now }, days ? { days } : {}, () => recurrenceOf(data));
 }

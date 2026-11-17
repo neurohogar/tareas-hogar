@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyChange, applyReferenceChanges, taskFromDocument, type TaskDocument } from './task-document';
+import { applyChange, taskFromDocument, type TaskDocument } from './task-document';
 import type { Recurrence } from './task';
 
 const CREATED = new Date(2026, 6, 1, 8, 0, 0);
@@ -29,11 +29,6 @@ describe('tareaDesdeDocumento', () => {
 
 		expect(taskFromDocument({ ...ONE_OFF, ...fields })).toStrictEqual({ ...ONE_OFF, ...fields });
 		expect(taskFromDocument({ ...RECURRING, ...fields })).toStrictEqual({ ...RECURRING, ...fields });
-	});
-
-	it('las dos formas conservan sus etiquetas', () => {
-		expect(taskFromDocument({ ...ONE_OFF, labels: ['e1'] })).toStrictEqual({ ...ONE_OFF, labels: ['e1'] });
-		expect(taskFromDocument({ ...RECURRING, labels: ['e1', 'e2'] })).toStrictEqual({ ...RECURRING, labels: ['e1', 'e2'] });
 	});
 
 	it('una periódica sin recurrencia viola el modelo', () => {
@@ -91,56 +86,6 @@ describe('aplicarCambio con emoji y nota', () => {
 	});
 });
 
-describe('aplicarCambio con etiquetas', () => {
-	it('el campo etiquetas se reemplaza entero: gana el último cambio, sin unir', () => {
-		const withKitchen = applyChange([{ ...ONE_OFF, labels: ['cocina'] }], 't1', { labels: ['cocina', 'bano'] });
-		const [editedDocument] = applyChange(withKitchen, 't1', { labels: ['cocina', 'patio'] });
-
-		expect(editedDocument.labels).toStrictEqual(['cocina', 'patio']);
-	});
-});
-
-describe('aplicarCambiosDeReferencias', () => {
-	it('quita las etiquetas nombradas de las tareas nombradas y deja sus otras etiquetas', () => {
-		const pay = { ...ONE_OFF, labels: ['bano', 'cocina'] };
-		const water = { ...RECURRING, labels: ['cocina'] };
-		const removeKitchen = (taskId: string) => ({ taskId, remove: ['cocina'], put: [] });
-
-		expect(applyReferenceChanges([pay, water], [removeKitchen('t1'), removeKitchen('t2')])).toStrictEqual([
-			{ ...pay, labels: ['bano'] },
-			{ ...water, labels: [] }
-		]);
-	});
-
-	it('pone al final las que no estaban, sin repetir', () => {
-		const pay = { ...ONE_OFF, labels: ['b', 'c', 'a'] };
-
-		expect(applyReferenceChanges([pay], [{ taskId: 't1', remove: ['b'], put: ['a', 'd'] }])).toStrictEqual([
-			{ ...pay, labels: ['c', 'a', 'd'] }
-		]);
-	});
-
-	it('no toca las tareas no nombradas, aunque tengan la etiqueta', () => {
-		const water = { ...RECURRING, labels: ['cocina'] };
-
-		expect(applyReferenceChanges([water], [{ taskId: 't1', remove: ['cocina'], put: [] }])).toStrictEqual([water]);
-	});
-
-	it('una tarea que ya no existe se saltea', () => {
-		expect(applyReferenceChanges([ONE_OFF], [{ taskId: 'borrada', remove: [], put: ['a'] }])).toStrictEqual([ONE_OFF]);
-	});
-
-	it('aplica en orden varios cambios a la misma tarea', () => {
-		const pay = { ...ONE_OFF, labels: ['a'] };
-		const changes = [
-			{ taskId: 't1', remove: ['a'], put: ['b'] },
-			{ taskId: 't1', remove: ['b'], put: ['c'] }
-		];
-
-		expect(applyReferenceChanges([pay], changes)).toStrictEqual([{ ...pay, labels: ['c'] }]);
-	});
-});
-
 describe('tareaDesdeDocumento y aplicarCambio con pausa (spec §5.8, §7)', () => {
 	const RESUMED = new Date(2026, 6, 15, 10, 0, 0);
 
@@ -191,29 +136,25 @@ describe('pospuesta en el documento (spec §4.1, §7)', () => {
 	});
 });
 
-describe('el esfuerzo en el documento', () => {
-	it('las dos formas conservan su esfuerzo', () => {
-		expect(taskFromDocument({ ...ONE_OFF, effort: 'rapida' })).toStrictEqual({ ...ONE_OFF, effort: 'rapida' });
-		expect(taskFromDocument({ ...RECURRING, effort: 'larga' })).toStrictEqual({ ...RECURRING, effort: 'larga' });
+describe('datos que ya no se usan (spec §7)', () => {
+	/** Un documento guardado antes de quitar las etiquetas y el esfuerzo: los campos viejos siguen ahí. */
+	const withOldFields = (doc: TaskDocument) => ({ ...doc, esfuerzo: 'rapida', etiquetas: ['e1', 'e2'] }) as TaskDocument;
+
+	it('la tarea no lee esfuerzo ni etiquetas', () => {
+		expect(taskFromDocument(withOldFields(ONE_OFF))).toStrictEqual(taskFromDocument(ONE_OFF));
+		expect(taskFromDocument(withOldFields(RECURRING))).toStrictEqual(taskFromDocument(RECURRING));
 	});
 
-	it('sin el campo, la tarea queda sin estimar', () => {
-		expect(taskFromDocument(ONE_OFF)).not.toHaveProperty('effort');
+	it('una edición los deja intactos', () => {
+		const [edited] = applyChange([withOldFields(ONE_OFF)], 't1', { title: 'Pagar la luz', note: 'Antes del 10' });
+
+		expect(edited).toStrictEqual(withOldFields({ ...ONE_OFF, title: 'Pagar la luz', note: 'Antes del 10' }));
 	});
 
-	it('es un campo independiente: se combina con un cambio de título de otro dispositivo (§7)', () => {
-		const withEffort: TaskDocument = { ...ONE_OFF, effort: 'media' };
-		const [result] = applyChange(applyChange([withEffort], 't1', { title: 'Pagar la luz' }), 't1', { effort: 'rapida' });
+	it('un cambio de tipo quita solo los campos de tipo', () => {
+		const [changed] = applyChange([withOldFields(ONE_OFF)], 't1', { kind: 'periodica', dueDate: null, recurrence: RELATIVE });
+		const { dueDate: _, ...withoutDueDate } = ONE_OFF;
 
-		expect(result).toStrictEqual({ ...ONE_OFF, title: 'Pagar la luz', effort: 'rapida' });
-	});
-
-	it('el último cambio gana, también si lo quita con null (§7)', () => {
-		const withEffort: TaskDocument = { ...ONE_OFF, effort: 'media' };
-		const [removed] = applyChange(applyChange([withEffort], 't1', { effort: 'rapida' }), 't1', { effort: null });
-		const [updated] = applyChange(applyChange([withEffort], 't1', { effort: null }), 't1', { effort: 'larga' });
-
-		expect(removed).toStrictEqual(ONE_OFF);
-		expect(updated).toStrictEqual({ ...ONE_OFF, effort: 'larga' });
+		expect(changed).toStrictEqual(withOldFields({ ...withoutDueDate, kind: 'periodica', recurrence: RELATIVE }));
 	});
 });

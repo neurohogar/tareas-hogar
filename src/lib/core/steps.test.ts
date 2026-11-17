@@ -212,7 +212,7 @@ describe('editar los pasos (spec §4.1, §7)', () => {
 describe('hayCambios con pasos (spec §6.2)', () => {
 	const OPEN: TaskData = { shape: 'puntual', title: 'Ropa', firstStep: 'Separar', steps: ['Lavar'] };
 	const doesChange = (current: TaskData, onOpen: TaskData = OPEN) =>
-		hasChanges({ data: onOpen, labels: [] }, { data: current, labels: [], unconfirmed: '' });
+		hasChanges({ data: onOpen }, { data: current });
 
 	it('cambiar un paso cuenta; el mismo con espacios alrededor, no', () => {
 		expect(doesChange({ ...OPEN, steps: ['Tender'] })).toBe(true);

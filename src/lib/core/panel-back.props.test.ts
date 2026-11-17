@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { whatBackDoes, type OnTop } from './panel-back';
 import { onClosePanel } from './unsaved-changes-notice';
 
-const top = fc.constantFrom<OnTop>('nada', 'aviso de cierre', 'aviso de acción', 'confirmación de Borrar tarea', 'selector de emoji', 'recuadro de Anotar', 'sugerencias de Etiquetas', 'aviso de deshacer');
+const top = fc.constantFrom<OnTop>('nada', 'aviso de cierre', 'aviso de acción', 'confirmación de Borrar tarea', 'selector de emoji', 'recuadro de Anotar', 'aviso de deshacer');
 const LAYERS: readonly OnTop[] = ['aviso de cierre', 'aviso de acción', 'confirmación de Borrar tarea', 'selector de emoji', 'recuadro de Anotar'];
 
 describe('queHaceAtras: propiedades (spec §6.2)', () => {

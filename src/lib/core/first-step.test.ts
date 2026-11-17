@@ -112,7 +112,7 @@ describe('editar el primer paso (spec §4.1, §7)', () => {
 describe('hayCambios con primer paso (spec §6.2)', () => {
 	const OPEN: TaskData = { shape: 'puntual', title: 'Ropa', firstStep: STEP };
 	const doesChange = (current: TaskData, onOpen: TaskData = OPEN) =>
-		hasChanges({ data: onOpen, labels: [] }, { data: current, labels: [], unconfirmed: '' });
+		hasChanges({ data: onOpen }, { data: current });
 
 	it('otro primer paso es un cambio; el mismo con espacios alrededor, no', () => {
 		expect(doesChange({ ...OPEN, firstStep: 'Lavar' })).toBe(true);

@@ -24,7 +24,6 @@ export interface WaitStatus {
 	auth: AuthResponse;
 	tasksResponded: boolean;
 	completionsResponded: boolean;
-	labelsResponded: boolean;
 	atkinson: FontStatus;
 	noto: FontStatus;
 	online: boolean;
@@ -37,9 +36,7 @@ function fontMayStillArrive(font: FontStatus, online: boolean): boolean {
 }
 
 function dataResponded(status: WaitStatus): boolean {
-	return (
-		status.tasksResponded && status.completionsResponded && status.labelsResponded
-	);
+	return status.tasksResponded && status.completionsResponded;
 }
 
 function openingWithSessionReady(status: WaitStatus): boolean {

@@ -1,4 +1,4 @@
-// Spec §7 (Limpiezas y reintentos): las cuatro limpiezas se intentan elemento por elemento y se reintentan.
+// Spec §7 (Limpiezas y reintentos): las dos limpiezas se intentan elemento por elemento y se reintentan.
 
 /** Qué quedó limpio y qué quedó por reintentar tras un intento; solo ids, nada para mostrar. */
 export interface AttemptResult {

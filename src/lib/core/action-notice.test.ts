@@ -20,8 +20,7 @@ function inNotice(action: PanelAction, task: Task, changes: Partial<NoticeAction
 		task,
 		completions: [],
 		now: NOW,
-		form: { data: { ...taskData(task), title: `${task.title} nuevo` }, labels: [], unconfirmed: '' },
-		existings: [],
+		form: { data: { ...taskData(task), title: `${task.title} nuevo` } },
 		...changes
 	};
 }
@@ -77,7 +76,7 @@ describe('avisoDeAccion (spec §6.2)', () => {
 
 	describe('si lo guardado deja la acción sin sentido', () => {
 		it('Pausar una tarea cambiada a No se repite: lo dice y no ofrece Guardar', () => {
-			const notice = actionNotice(inNotice('pausar', WATER, { form: { data: TO_ONE_OFF('Regar'), labels: [], unconfirmed: '' } }));
+			const notice = actionNotice(inNotice('pausar', WATER, { form: { data: TO_ONE_OFF('Regar') } }));
 			expect(notice).toEqual({
 				message: 'Con estos cambios la tarea ya no se puede pausar',
 				buttons: [
@@ -88,32 +87,27 @@ describe('avisoDeAccion (spec §6.2)', () => {
 		});
 
 		it('Reanudar una pausada cambiada a No se repite: guardar ya la reanuda', () => {
-			const notice = actionNotice(inNotice('reanudar', PAUSED, { form: { data: TO_ONE_OFF('Regar'), labels: [], unconfirmed: '' } }));
+			const notice = actionNotice(inNotice('reanudar', PAUSED, { form: { data: TO_ONE_OFF('Regar') } }));
 			expect(notice?.message).toBe('Con estos cambios la tarea ya no se puede reanudar');
 			expect(notice?.buttons.map(({ text }) => text)).toEqual(['Seguir editando', 'Descartar y reanudar']);
 		});
 
 		it('Posponer una periódica con completados cambiada a No se repite: quedaría completada', () => {
 			const completions: Completion[] = [{ id: 'c', taskId: 'r', completedAt: new Date(2026, 6, 12, 9, 0, 0) }];
-			const notice = actionNotice(inNotice('posponer 1 hora', WATER, { completions, form: { data: TO_ONE_OFF('Regar'), labels: [], unconfirmed: '' } }));
+			const notice = actionNotice(inNotice('posponer 1 hora', WATER, { completions, form: { data: TO_ONE_OFF('Regar') } }));
 			expect(notice?.message).toBe('Con estos cambios la tarea ya no se puede posponer 1 hora');
 			expect(notice?.buttons.map(({ text }) => text)).toEqual(['Seguir editando', 'Descartar y posponer 1 hora']);
 		});
 
 		it('la misma periódica, sin completados, se puede posponer como puntual', () => {
-			expect(texts(inNotice('posponer 1 hora', WATER, { form: { data: TO_ONE_OFF('Regar'), labels: [], unconfirmed: '' } }))).toContain('Guardar y posponer 1 hora');
+			expect(texts(inNotice('posponer 1 hora', WATER, { form: { data: TO_ONE_OFF('Regar') } }))).toContain('Guardar y posponer 1 hora');
 		});
 	});
 
 	describe('si lo escrito es inválido no hay cómo evaluarlo: se ofrece Guardar', () => {
 		it('por un campo', () => {
-			const notice = actionNotice(inNotice('pausar', WATER, { form: { data: TO_ONE_OFF(''), labels: [], unconfirmed: '' } }));
+			const notice = actionNotice(inNotice('pausar', WATER, { form: { data: TO_ONE_OFF('') } }));
 			expect(notice?.message).toBe('Tenés cambios sin guardar');
-			expect(notice?.buttons.map(({ text }) => text)).toContain('Guardar y pausar');
-		});
-
-		it('por un texto sin confirmar inválido en Etiquetas', () => {
-			const notice = actionNotice(inNotice('pausar', WATER, { form: { data: TO_ONE_OFF('Regar'), labels: [], unconfirmed: 'abcdefghijklmnopqrstuvwxyz12345' } }));
 			expect(notice?.buttons.map(({ text }) => text)).toContain('Guardar y pausar');
 		});
 	});
@@ -140,7 +134,7 @@ describe('avisoDeAccion (spec §6.2)', () => {
 			// Vence el 14; con cada 5 días estaría en espera hasta el 17 a las 9.
 			const completions: Completion[] = [{ id: 'c', taskId: 'r', completedAt: new Date(2026, 6, 12, 9, 0, 0) }];
 			const data: TaskData = { shape: 'relativa', title: 'Regar', every: 5, unit: 'dias' };
-			const context = inNotice('posponer 1 hora', WATER, { completions, form: { data, labels: [], unconfirmed: '' } });
+			const context = inNotice('posponer 1 hora', WATER, { completions, form: { data } });
 			expect(texts(context)).toEqual(['Seguir editando', 'Descartar y posponer 1 hora']);
 			expect(texts({ ...context, now: new Date(2026, 6, 17, 10, 0, 0) })).toContain('Guardar y posponer 1 hora');
 		});
@@ -169,7 +163,7 @@ describe('descartarYActuar (spec §6.2)', () => {
 	});
 
 	it('también si lo guardado dejaría la acción sin sentido', () => {
-		expect(discardAndAct(inNotice('pausar', WATER, { form: { data: TO_ONE_OFF('Regar'), labels: [], unconfirmed: '' } }))).toEqual({ paused: true });
+		expect(discardAndAct(inNotice('pausar', WATER, { form: { data: TO_ONE_OFF('Regar') } }))).toEqual({ paused: true });
 	});
 
 	it('si la acción ya no corresponde, no actúa', () => {
@@ -178,40 +172,31 @@ describe('descartarYActuar (spec §6.2)', () => {
 });
 
 describe('guardarYActuar (spec §6.2): se vuelve a evaluar al tocarlo', () => {
-	const newId = () => 'nueva';
-
 	it('guarda y actúa en un solo cambio, con el ahora del toque', () => {
-		const result = saveAndAct(inNotice('posponer 1 hora', PAY, { now: LATER }), newId);
+		const result = saveAndAct(inNotice('posponer 1 hora', PAY, { now: LATER }));
 		expect(result).toEqual({
 			result: 'guardado',
-			change: { title: 'Pagar nuevo', postponed: { from: LATER, to: new Date(2026, 6, 15, 9, 3, 0) } },
-			newLabels: []
+			change: { title: 'Pagar nuevo', postponed: { from: LATER, to: new Date(2026, 6, 15, 9, 3, 0) } }
 		});
 	});
 
-	it('crea las etiquetas nuevas confirmadas', () => {
-		const form = { data: taskData(WATER), labels: ['casa'], unconfirmed: 'sin crear' };
-		const result = saveAndAct(inNotice('pausar', WATER, { form }), newId);
-		expect(result).toEqual({ result: 'guardado', change: { labels: ['nueva'], paused: true }, newLabels: [{ id: 'nueva', name: 'casa', color: 'gris' }] });
-	});
-
 	it('si Guardar falla por validación, no se ejecuta nada', () => {
-		const context = inNotice('pausar', WATER, { form: { data: TO_ONE_OFF(''), labels: [], unconfirmed: '' } });
-		expect(saveAndAct(context, newId)).toEqual({ result: 'rechazado', errors: { title: 'vacio' } });
+		const context = inNotice('pausar', WATER, { form: { data: TO_ONE_OFF('') } });
+		expect(saveAndAct(context)).toEqual({ result: 'rechazado', errors: { title: 'vacio' } });
 	});
 
 	it('si la acción quedó sin sentido, no guarda ni actúa y el aviso queda actualizado', () => {
-		const context = inNotice('pausar', WATER, { form: { data: TO_ONE_OFF('Regar'), labels: [], unconfirmed: '' } });
-		expect(saveAndAct(context, newId)).toEqual({ result: 'aviso actualizado', notice: actionNotice(context) });
+		const context = inNotice('pausar', WATER, { form: { data: TO_ONE_OFF('Regar') } });
+		expect(saveAndAct(context)).toEqual({ result: 'aviso actualizado', notice: actionNotice(context) });
 	});
 
 	it('si la acción ya no corresponde, no guarda ni actúa y el aviso se cierra', () => {
-		expect(saveAndAct(inNotice('pausar', WATER, { task: PAUSED }), newId)).toEqual({ result: 'aviso cerrado' });
+		expect(saveAndAct(inNotice('pausar', WATER, { task: PAUSED }))).toEqual({ result: 'aviso cerrado' });
 	});
 
 	it('mide lo escrito contra la tarea al abrir: no pisa lo que otro dispositivo cambió', () => {
 		const remote: Task = { ...WATER, note: 'Remota' };
-		const result = saveAndAct(inNotice('pausar', WATER, { task: remote }), newId);
-		expect(result).toEqual({ result: 'guardado', change: { title: 'Regar nuevo', paused: true }, newLabels: [] });
+		const result = saveAndAct(inNotice('pausar', WATER, { task: remote }));
+		expect(result).toEqual({ result: 'guardado', change: { title: 'Regar nuevo', paused: true } });
 	});
 });

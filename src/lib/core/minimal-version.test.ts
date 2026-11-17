@@ -105,9 +105,9 @@ describe('editar la versión mínima (spec §6.2, §7)', () => {
 });
 
 describe('Cambios sin guardar con versión mínima (spec §6.2)', () => {
-	const values = (data: TaskData) => ({ data, labels: [] });
+	const values = (data: TaskData) => ({ data });
 	const onOpen = values(taskData(ONE_OFF));
-	const withMinimal = (minimalVersion: string | undefined) => ({ ...values({ ...taskData(ONE_OFF), minimalVersion }), unconfirmed: '' });
+	const withMinimal = (minimalVersion: string | undefined) => values({ ...taskData(ONE_OFF), minimalVersion });
 
 	it('escribir otra cuenta; volver al valor original o agregarle espacios no', () => {
 		expect(hasChanges(onOpen, withMinimal('Solo la pileta'))).toBe(true);
@@ -118,13 +118,13 @@ describe('Cambios sin guardar con versión mínima (spec §6.2)', () => {
 	it('vaciar una existente cuenta; vacío y sin el campo son lo mismo', () => {
 		expect(hasChanges(onOpen, withMinimal(''))).toBe(true);
 		const withoutMinimal = values({ shape: 'puntual', title: 'Baño' });
-		expect(hasChanges(withoutMinimal, { ...values({ shape: 'puntual', title: 'Baño', minimalVersion: '  ' }), unconfirmed: '' })).toBe(false);
+		expect(hasChanges(withoutMinimal, values({ shape: 'puntual', title: 'Baño', minimalVersion: '  ' }))).toBe(false);
 	});
 
 	it('con una repetición inválida, una versión mínima vacía no cuenta como cambio', () => {
 		const invalid: TaskData = { shape: 'relativa', title: 'Regar', every: 0, unit: 'dias' };
 
-		expect(hasChanges(values(invalid), { ...values({ ...invalid, minimalVersion: '' }), unconfirmed: '' })).toBe(false);
+		expect(hasChanges(values(invalid), values({ ...invalid, minimalVersion: '' }))).toBe(false);
 	});
 });
 

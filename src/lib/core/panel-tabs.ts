@@ -5,17 +5,16 @@ import { DATA_ON_CREATE, type TaskData } from './task-data';
 export type PanelPresentation = 'pestanas' | 'secciones';
 export type PanelMode = 'crear' | 'editar';
 export type PanelSection = 'Tarea' | 'Cuándo' | 'Acciones';
-export type FieldWithError = 'Título' | 'Etiquetas' | 'fecha límite' | 'Cada' | 'días' | 'horario';
+export type FieldWithError = 'Título' | 'fecha límite' | 'Cada' | 'días' | 'horario';
 export type RepetitionOption = 'puntual' | 'relativo' | 'semanal' | 'mensual';
 export type ErrorDestination = { tab: PanelSection | undefined; field: FieldWithError };
 
 const MAX_PHONE_WIDTH_IN_REM = 40;
 const SECTIONS_ON_CREATE: readonly PanelSection[] = ['Tarea', 'Cuándo'];
 const SECTIONS_ON_EDIT: readonly PanelSection[] = ['Tarea', 'Cuándo', 'Acciones'];
-const FIELDS_IN_READING_ORDER: readonly FieldWithError[] = ['Título', 'Etiquetas', 'fecha límite', 'Cada', 'días', 'horario'];
+const FIELDS_IN_READING_ORDER: readonly FieldWithError[] = ['Título', 'fecha límite', 'Cada', 'días', 'horario'];
 const SECTION_OF_FIELD: Readonly<Record<FieldWithError, PanelSection>> = {
 	Título: 'Tarea',
-	Etiquetas: 'Tarea',
 	'fecha límite': 'Cuándo',
 	Cada: 'Cuándo',
 	días: 'Cuándo',
@@ -61,12 +60,11 @@ export function saveBarVisible(keyboardOpen: boolean): boolean {
 
 /**
  * Spec §6.2, Errores: los campos que muestran un error ahora, en el orden de lectura. Solo cuentan los
- * campos de la opción elegida en "Se repite"; el error de Etiquetas puede venir del guardado o del campo en vivo.
+ * campos de la opción elegida en "Se repite".
  */
-export function fieldsWithError(errors: CreationErrors, repetition: RepetitionOption, labelsError: boolean): FieldWithError[] {
+export function fieldsWithError(errors: CreationErrors, repetition: RepetitionOption): FieldWithError[] {
 	const withError: Record<FieldWithError, boolean> = {
 		Título: errors.title !== undefined,
-		Etiquetas: labelsError,
 		'fecha límite': errors.dueDate !== undefined && repetition === 'puntual',
 		Cada: errors.every !== undefined && repetition === 'relativo',
 		días: errors.days !== undefined && (repetition === 'semanal' || repetition === 'mensual'),

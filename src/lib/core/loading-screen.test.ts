@@ -17,7 +17,6 @@ function wait(changes: Partial<WaitStatus> = {}): WaitStatus {
 		auth: 'con-sesion',
 		tasksResponded: true,
 		completionsResponded: true,
-		labelsResponded: true,
 		atkinson: 'lista',
 		noto: 'lista',
 		online: true,
@@ -41,7 +40,6 @@ describe('pantallaDeCargaSeVa: con sesión', () => {
 	it.each([
 		['las tareas', { tasksResponded: false }],
 		['los completados', { completionsResponded: false }],
-		['las etiquetas', { labelsResponded: false }],
 		['Atkinson', { atkinson: 'sin-guardar' }],
 		['Noto', { noto: 'sin-guardar' }]
 	] as const)('espera a %s', (_name, changes) => {
@@ -74,7 +72,6 @@ describe('pantallaDeCargaSeVa: tope de 10 s', () => {
 	const nothingReady = {
 		tasksResponded: false,
 		completionsResponded: false,
-		labelsResponded: false,
 		atkinson: 'sin-guardar',
 		noto: 'sin-guardar'
 	} as const;
@@ -102,8 +99,7 @@ describe('pantallaDeCargaSeVa: sin sesión', () => {
 	const withoutSession = {
 		auth: 'sin-sesion',
 		tasksResponded: false,
-		completionsResponded: false,
-		labelsResponded: false
+		completionsResponded: false
 	} as const;
 
 	it('no espera datos ni a Noto', () => {
@@ -144,7 +140,7 @@ describe('pantallaDeCargaSeVa: no espera lo que no va a llegar', () => {
 	});
 
 	it('sin conexión sigue esperando el caché local de los datos', () => {
-		expect(loadingScreenLeaves(wait({ online: false, labelsResponded: false }))).toBe(
+		expect(loadingScreenLeaves(wait({ online: false, completionsResponded: false }))).toBe(
 			false
 		);
 	});

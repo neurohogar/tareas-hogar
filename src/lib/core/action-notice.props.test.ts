@@ -19,8 +19,7 @@ const pausing = (data: TaskData, moment: Date): NoticeAction => ({
 	task: RELATIVE,
 	completions: [],
 	now: moment,
-	form: { data, labels: [], unconfirmed: '' },
-	existings: []
+	form: { data }
 });
 const staysRelative = (t: string): TaskData => ({ shape: 'relativa', title: t, every: 2, unit: 'dias' });
 const becomesOneOff = (t: string): TaskData => ({ shape: 'puntual', title: t });
@@ -78,7 +77,7 @@ describe('avisoDeAccion: propiedades (spec §6.2)', () => {
 				const context = { ...pausing(staysRelative(t), moment), action: 'reanudar' as const };
 				expect(actionNotice(context)).toBeUndefined();
 				expect(discardAndAct(context)).toBeUndefined();
-				expect(saveAndAct(context, () => 'x')).toEqual({ result: 'aviso cerrado' });
+				expect(saveAndAct(context)).toEqual({ result: 'aviso cerrado' });
 			})
 		);
 	});
@@ -92,7 +91,7 @@ describe('avisoDeAccion: propiedades (spec §6.2)', () => {
 	it('Guardar y actuar guarda lo escrito y la acción en un solo cambio', () => {
 		fc.assert(
 			fc.property(title, now, (t, moment) => {
-				const result = saveAndAct(pausing(staysRelative(t), moment), () => 'x');
+				const result = saveAndAct(pausing(staysRelative(t), moment));
 				expect(result.result).toBe('guardado');
 				if (result.result === 'guardado') expect(result.change).toMatchObject({ paused: true });
 			})
@@ -102,7 +101,7 @@ describe('avisoDeAccion: propiedades (spec §6.2)', () => {
 	it('si lo guardado deja la acción sin sentido, Guardar y actuar no guarda nada', () => {
 		fc.assert(
 			fc.property(title, now, (t, moment) => {
-				const result = saveAndAct(pausing(becomesOneOff(t), moment), () => 'x');
+				const result = saveAndAct(pausing(becomesOneOff(t), moment));
 				expect(result.result).toBe('aviso actualizado');
 			})
 		);
