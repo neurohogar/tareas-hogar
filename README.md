@@ -8,7 +8,7 @@ La idea es simple: que no se olviden las tareas recurrentes y que la lista muest
 
 - Tareas puntuales y periódicas: cada N días u horas, o ciertos días de la semana o del mes.
 - Estados claros: pendiente, atrasada y en espera, con una barra que muestra cuánto falta para que vuelva.
-- Horarios en los que una tarea tiene sentido, posponer, pausar, etiquetas con color y una estimación de esfuerzo con el filtro «Solo rápidas».
+- Horarios en los que una tarea tiene sentido, posponer y pausar.
 - Historial de todo lo completado, con deshacer.
 - Funciona sin conexión y sincroniza entre dispositivos. Se entra con Google.
 - Fuente Atkinson Hyperlegible y emoji empaquetados, para que se vea igual en todos lados.

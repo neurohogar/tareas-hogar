@@ -91,7 +91,7 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 
 - **Problema y persona.** TDAH y TEA. Frente a la lista entera, elegir es otro costo previo a empezar.
 - **Evidencia.** `tdah §1.3C` (moderada, población general); `tea §1` y `§2` (moderada: la propuesta tiene que ser determinista); `tea §8` (débil a moderada: una cosa por pantalla); `aacc H10` (débil).
-- **Qué propone.** Una entrada de un toque desde Pendientes que muestra una sola tarea: la primera del orden visible, con los filtros puestos (incluido «Solo rápidas»), su primer paso y el motivo. Tres salidas: hacerla, pasar a la siguiente del mismo orden o volver a la lista.
+- **Qué propone.** Una entrada de un toque desde Pendientes que muestra una sola tarea: la primera del orden visible, su primer paso y el motivo. Tres salidas: hacerla, pasar a la siguiente del mismo orden o volver a la lista.
 - **Hipótesis y validación.** Quitar la decisión destraba más que mostrar todo. Señal: se sigue usando después de cuatro semanas. La refuta que la primera del orden sea siempre la más temida.
 - **Evitar.** El azar. Abrir la app en este modo sin que la persona lo haya elegido. Pedir prioridades por tarea.
 - **Depende de · Tamaño · Riesgos.** Rinde más después de la E3 y la E4 · S a M · El orden por antigüedad del atraso puede no ser el mejor para arrancar.
@@ -120,8 +120,8 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 - **Evidencia.** `tdah §1.3B` (fuerte en población general; débil en adultos con TDAH, con estimaciones corregidas mucho menores); `tdah §2.3` (débil a moderada); `tdah §1.3F` y `tea §1` (moderada: las rutinas reducen decisiones). **Hipótesis.**
 - **Qué propone.** Un «momento» opcional por tarea («después de cenar»), redactado como plan. Una vista por momento con sus tareas en orden fijo. Es el reemplazo de la alarma.
 - **Hipótesis y validación.** Atar la tarea a un evento concreto la arranca más que una hora. Señal: notas en la vista del momento. La refuta que nadie abra la app en ese momento.
-- **Evitar.** Planes abstractos («esta semana»); que un plan no cumplido deje un estado; duplicar las etiquetas y los horarios que ya existen.
-- **Depende de · Tamaño · Riesgos.** Nada · M · Se solapa con etiquetas y horarios; el análisis define si se construye sobre ellos. Sube en el orden si las notas dicen «me olvido de abrir la app».
+- **Evitar.** Planes abstractos («esta semana»); que un plan no cumplido deje un estado; duplicar los horarios que ya existen.
+- **Depende de · Tamaño · Riesgos.** Nada · M · Se solapa con los horarios; el análisis define si se construye sobre ellos. Sube en el orden si las notas dicen «me olvido de abrir la app».
 
 ### E9. Ajustes sensoriales y densidad
 
