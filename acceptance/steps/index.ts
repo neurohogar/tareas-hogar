@@ -5,9 +5,7 @@ import { crearSteps } from './crear';
 import { deshacerSteps } from './deshacer';
 import { edicionSteps } from './edicion';
 import { emojiYNotaSteps } from './emoji-y-nota';
-import { esfuerzoSteps } from './esfuerzo';
 import { emojisRecientesSteps } from './emojis-recientes';
-import { etiquetasSteps } from './etiquetas';
 import { fuenteSteps } from './fuente';
 import { historialSteps } from './historial';
 import { horarioSteps } from './horario';
@@ -30,4 +28,4 @@ import type { StepDefinition } from './world';
 
 export { createWorld, type StepDefinition, type World } from './world';
 
-export const steps: StepDefinition[] = [...crearSteps, ...periodicaRelativaSteps, ...periodicaCalendarioSteps, ...puntualSteps, ...pendientesSteps, ...edicionSteps, ...historialSteps, ...deshacerSteps, ...etiquetasSteps, ...emojiYNotaSteps, ...emojisRecientesSteps, ...checkboxSteps, ...horarioSteps, ...ultimaVezSteps, ...pausarSteps, ...posponerSteps, ...esfuerzoSteps, ...panelPestanasSteps, ...cambiosSinGuardarSteps, ...fuenteSteps, ...pantallaDeCargaSteps, ...orientacionVerticalSteps, ...anotacionSteps, ...limpiezasSteps, ...textoDeFilaSteps, ...primerPasoSteps, ...pasosSteps, ...versionMinimaSteps];
+export const steps: StepDefinition[] = [...crearSteps, ...periodicaRelativaSteps, ...periodicaCalendarioSteps, ...puntualSteps, ...pendientesSteps, ...edicionSteps, ...historialSteps, ...deshacerSteps, ...emojiYNotaSteps, ...emojisRecientesSteps, ...checkboxSteps, ...horarioSteps, ...ultimaVezSteps, ...pausarSteps, ...posponerSteps, ...panelPestanasSteps, ...cambiosSinGuardarSteps, ...fuenteSteps, ...pantallaDeCargaSteps, ...orientacionVerticalSteps, ...anotacionSteps, ...limpiezasSteps, ...textoDeFilaSteps, ...primerPasoSteps, ...pasosSteps, ...versionMinimaSteps];

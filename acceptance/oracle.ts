@@ -921,8 +921,6 @@ export interface TareaDelOrden {
 	conCompletadoSinMomento?: boolean;
 	/** §5.5: sus ventanas diarias, ordenadas, si tiene horario. */
 	horario?: Ventana[];
-	/** §4.1: rapida, media o larga; sin el campo, sin estimar. */
-	esfuerzo?: string;
 	/** §5.8: pausada; y el momento de la última reanudación. */
 	pausada?: boolean;
 	reanudada?: number;
@@ -1044,32 +1042,11 @@ function conTitulo(tareas: TareaDelOrden[], titulo: string): TareaDelOrden | und
 	return tareas.find((t) => t.titulo === titulo);
 }
 
-/** §4.1: los niveles de esfuerzo; "sin estimar" es sin el campo. */
-const NIVELES_DE_ESFUERZO = ['rapida', 'media', 'larga'];
-
-/** El esfuerzo que da un paso: `{}` es sin estimar; undefined, un valor que §4.1 no admite. */
-export function esfuerzoEscrito(valor: string): { esfuerzo?: string } | undefined {
-	if (valor === 'sin estimar') return {};
-	return NIVELES_DE_ESFUERZO.includes(valor) ? { esfuerzo: valor } : undefined;
-}
-
-/** §6.1 Solo rápidas: encendido, quedan solo las tareas con esfuerzo rapida, en el mismo orden. */
-export const soloLasRapidas = (tareas: TareaDelOrden[]) => tareas.filter((t) => t.esfuerzo === 'rapida');
-
 export const REGLAS_DEL_ORDEN: ReglaDeOrden[] = [
 	// §4.1 y §6.1: el primer paso no cambia el orden de la lista; la tarea tiene que existir.
 	[/^el primer paso de la tarea (\S+) es (.*)$/, (ts, [t]) => conTitulo(ts, t) !== undefined],
 	// §4.1 y §6.1: la versión mínima no cambia el orden de la lista; la tarea tiene que existir.
 	[/^la versión mínima de la tarea (\S+) es (.*)$/, (ts, [t]) => conTitulo(ts, t) !== undefined],
-	[
-		/^la tarea (\S+) tiene esfuerzo (.+)$/,
-		(ts, [t, e]) => {
-			const tarea = conTitulo(ts, t);
-			const escrito = esfuerzoEscrito(e);
-			if (tarea && escrito) tarea.esfuerzo = escrito.esfuerzo;
-			return tarea !== undefined && escrito !== undefined;
-		}
-	],
 	[
 		/^la tarea (\S+) fue pospuesta con la opción (.+) el (\S+)$/,
 		(ts, [t, o, m]) => {
@@ -1192,7 +1169,6 @@ export function ordenDePendientes(pasos: PasoOraculo[], fila: FilaOraculo): Vist
 	let cualquierMomento = false;
 	let mostrarCompletadas = false;
 	let mostrarPausadas = false;
-	let soloRapidas = false;
 	for (const paso of pasos) {
 		const texto = resolver(paso.text, fila);
 		if (texto === undefined) return undefined;
@@ -1201,24 +1177,19 @@ export function ordenDePendientes(pasos: PasoOraculo[], fila: FilaOraculo): Vist
 		else if (texto === 'consulto Pendientes en cualquier momento') cualquierMomento = true;
 		else if (texto === MOSTRAR_COMPLETADAS) mostrarCompletadas = true;
 		else if (texto === MOSTRAR_PAUSADAS) mostrarPausadas = true;
-		else if (SOLO_RAPIDAS.test(texto)) soloRapidas = texto.endsWith('encendido');
 		else {
 			const regla = REGLAS_DEL_ORDEN.map(([patron, aplicar]) => ({ c: patron.exec(texto), aplicar })).find((r) => r.c);
 			if (!regla?.c || !regla.aplicar(tareas, regla.c.slice(1))) return undefined;
 		}
 	}
-	const visibles = soloRapidas ? soloLasRapidas(tareas) : tareas;
 	// Una pausada no depende de ahora: va al final, por título (§6.1).
-	if (cualquierMomento && visibles.some((t) => !t.pausada && (!t.puntual || t.limite))) return undefined;
+	if (cualquierMomento && tareas.some((t) => !t.pausada && (!t.puntual || t.limite))) return undefined;
 	if (!cualquierMomento && ahora === undefined) return undefined;
-	return vistaDePendientes(visibles, ahora, mostrarCompletadas, mostrarPausadas);
+	return vistaDePendientes(tareas, ahora, mostrarCompletadas, mostrarPausadas);
 }
 
 /** El paso que enciende el check "Mostrar completadas" (§6.1); sin él, está apagado. */
 export const MOSTRAR_COMPLETADAS = 'Mostrar completadas está encendido';
-
-/** El paso que da el estado del botón "Solo rápidas" (§6.1); sin él, está apagado. */
-const SOLO_RAPIDAS = /^Solo rápidas está (?:encendido|apagado)$/;
 
 /** El paso que enciende el check "Mostrar pausadas" (§6.1); sin él, está apagado. */
 export const MOSTRAR_PAUSADAS = 'Mostrar pausadas está encendido';

@@ -46,7 +46,7 @@ function unoDe<T extends string>(permitidos: readonly T[], valor: string, que: s
 	return permitido;
 }
 
-const CAMPOS: readonly FieldWithError[] = ['Título', 'Etiquetas', 'fecha límite', 'Cada', 'días', 'horario'];
+const CAMPOS: readonly FieldWithError[] = ['Título', 'fecha límite', 'Cada', 'días', 'horario'];
 const SECCIONES: readonly PanelSection[] = ['Tarea', 'Cuándo', 'Acciones'];
 const MODOS: readonly PanelMode[] = ['crear', 'editar'];
 const FOCOS = ['un campo está enfocado', 'ningún campo está enfocado'] as const;

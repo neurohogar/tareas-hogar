@@ -1,8 +1,0 @@
-// Spec §6.2 y §6.4: los textos de los errores de nombre de etiqueta, los mismos en el panel y en la pantalla Etiquetas.
-import type { RenameError } from '#lib/core/label-management.ts';
-
-export const NAME_MESSAGES: Record<RenameError, string> = {
-	vacio: 'El nombre no puede estar vacío',
-	largo: 'El nombre puede tener hasta 30 caracteres',
-	repetido: 'Ya existe una etiqueta con ese nombre'
-};

@@ -96,10 +96,10 @@ const DEFINICIONES: { text: string; data: (titulo: string, ...valores: string[])
 	}
 ];
 
-/** Cambiar el tipo en el panel deja como estaban el emoji, la nota, los pasos, la versión mínima, el esfuerzo y el horario. */
-function camposQueConserva(tarea: Task): Pick<TaskData, 'emoji' | 'note' | 'firstStep' | 'steps' | 'minimalVersion' | 'effort' | 'schedule'> {
-	const { emoji, note: nota, firstStep: primerPaso, steps: pasos, minimalVersion: versionMinima, effort: esfuerzo, schedule: horario } = taskData(tarea);
-	return { ...(emoji && { emoji }), ...(nota && { note: nota }), ...(primerPaso && { firstStep: primerPaso }), ...(pasos && { steps: pasos }), ...(versionMinima && { minimalVersion: versionMinima }), ...(esfuerzo && { effort: esfuerzo }), ...(horario && { schedule: horario }) };
+/** Cambiar el tipo en el panel deja como estaban el emoji, la nota, los pasos, la versión mínima y el horario. */
+function camposQueConserva(tarea: Task): Pick<TaskData, 'emoji' | 'note' | 'firstStep' | 'steps' | 'minimalVersion' | 'schedule'> {
+	const { emoji, note: nota, firstStep: primerPaso, steps: pasos, minimalVersion: versionMinima, schedule: horario } = taskData(tarea);
+	return { ...(emoji && { emoji }), ...(nota && { note: nota }), ...(primerPaso && { firstStep: primerPaso }), ...(pasos && { steps: pasos }), ...(versionMinima && { minimalVersion: versionMinima }), ...(horario && { schedule: horario }) };
 }
 
 const pasosDeEditarA: StepDefinition[] = EDITORES.flatMap((editor) =>

@@ -3,24 +3,20 @@ import type { OnTop } from '../../src/lib/core/panel-back';
 import type { Annotation, CurrentScreen } from '../../src/lib/core/annotation';
 import type { AnnotationsGroup } from '../../src/lib/core/annotations';
 import type { Notice } from '../../src/lib/core/notice';
-import type { PanelForm, PanelValues } from '../../src/lib/core/unsaved-changes';
+import type { PanelForm } from '../../src/lib/core/unsaved-changes';
 import type { CreationErrors } from '../../src/lib/core/creation';
 import { taskFromDocument, type TaskDocument } from '../../src/lib/core/task-document';
 import type { Status } from '../../src/lib/core/status';
 import type { StepButtons } from '../../src/lib/core/current-step';
 import type { MinimalLine } from '../../src/lib/core/minimal-version';
-import type { Label } from '../../src/lib/core/label';
-import type { RenameError } from '../../src/lib/core/label-management';
 import type { HistoryGroup } from '../../src/lib/core/history';
 import { taskData } from '../../src/lib/core/task-data';
-import { taskLabels } from '../../src/lib/core/task-labels';
 import type { Completion, Task } from '../../src/lib/core/task';
 
-/** Lo que hay guardado: los documentos de las tareas, los completados y las etiquetas. */
+/** Lo que hay guardado: los documentos de las tareas, y los completados. */
 export interface Guardado {
 	documentos: TaskDocument[];
 	completions: Completion[];
-	labels: Label[];
 }
 
 /** Estado de una ejecución de escenario: un repositorio en memoria. */
@@ -44,8 +40,6 @@ export interface World extends Guardado {
 	mostrarCompletadas?: boolean;
 	/** El check "Mostrar pausadas" de este dispositivo (§6.1); sin él, en su valor inicial. */
 	mostrarPausadas?: boolean;
-	/** El botón "Solo rápidas" de este dispositivo (§6.1); sin él, apagado. */
-	soloRapidas?: boolean;
 	/** El panel de edición abierto (§6.2): el botón de pausa que ofrece y, si se abrió en un momento dado, lo que dice de la posposición. */
 	panel?: { pausa: 'pausar' | 'reanudar' | undefined; posposicion?: { boton: 'posponer' | 'quitar' | undefined; text: string | undefined }; cambios: CambiosDelPanel };
 	/** El aviso de deshacer (§5.4) está a la vista: no depende del panel, sigue abierto aunque el panel se cierre. */
@@ -64,10 +58,6 @@ export interface World extends Guardado {
 	historial?: HistoryGroup[];
 	/** El texto de "Última vez" en el último momento consultado. */
 	ultimaVez?: string;
-	/** El id de la etiqueta elegida en el filtro de Pendientes; sin él, "Todas". */
-	filtro?: string;
-	/** Rechazo del último renombrado de etiqueta. */
-	errorDeRenombrado?: RenameError;
 	/** Los emojis recientes del selector en este dispositivo; sin ellos, todavía no se declararon. */
 	recientes?: string[];
 	/** Ya hubo una acción sobre los recientes: los pasos "los emojis recientes son" y "hay N" verifican en vez de declarar. */
@@ -107,7 +97,6 @@ export interface AperturaDeLaApp {
 	auth: number;
 	tasks: number;
 	completions: number;
-	labels: number;
 	atkinson: FuenteDeLaApertura;
 	noto: FuenteDeLaApertura;
 	recordaba: boolean;
@@ -118,7 +107,7 @@ export interface AperturaDeLaApp {
 export interface CambiosDelPanel {
 	/** La tarea con que se abrió; sin ella, el panel se abrió para crear. */
 	taskOnOpen?: Task;
-	alAbrir: PanelValues;
+	alAbrir: PanelForm;
 	form: PanelForm;
 	top: OnTop;
 	/** La acción del aviso de acción abierto. */
@@ -128,12 +117,11 @@ export interface CambiosDelPanel {
 	keyboardOpen: boolean;
 }
 
-/** Lo que se ve de una fila de Pendientes: el título, si se ve completada o pausada, el texto del esfuerzo y el de fecha. */
+/** Lo que se ve de una fila de Pendientes: el título, si se ve completada o pausada, y el texto de fecha. */
 export interface FilaConsultada {
 	title: string;
 	completed: boolean;
 	paused: boolean;
-	effort: string | undefined;
 	/** El texto de fecha y distancia («Tocaba …», «Vuelve …», §6.1); sin él, la fila no lo muestra. */
 	dateText: string | undefined;
 	/** La línea del paso de la fila, «Primer paso: …» o «Paso: …» (§6.1); sin ella, la fila no la muestra. */
@@ -147,18 +135,18 @@ export interface FilaConsultada {
 /** El sujeto de los pasos del otro dispositivo: actúa sobre lo guardado antes de mi último cambio. */
 export const OTRO = 'otro dispositivo, sin ver ese cambio,';
 
-function cambiosAlAbrir(alAbrir: PanelValues, tareaAlAbrir?: Task, ahora?: Date): CambiosDelPanel {
-	return { taskOnOpen: tareaAlAbrir, alAbrir, form: { ...alAbrir, unconfirmed: '' }, top: 'nada', now: ahora, keyboardOpen: false };
+function cambiosAlAbrir(alAbrir: PanelForm, tareaAlAbrir?: Task, ahora?: Date): CambiosDelPanel {
+	return { taskOnOpen: tareaAlAbrir, alAbrir, form: alAbrir, top: 'nada', now: ahora, keyboardOpen: false };
 }
 
 /** Spec §6.2: al editar, el panel se abre con los valores actuales de la tarea. */
-export function cambiosAlEditar(world: World, tarea: Task, ahora?: Date): CambiosDelPanel {
-	return cambiosAlAbrir({ data: taskData(tarea), labels: taskLabels(tarea, world.labels).map(({ name: nombre }) => nombre) }, tarea, ahora);
+export function cambiosAlEditar(_world: World, tarea: Task, ahora?: Date): CambiosDelPanel {
+	return cambiosAlAbrir({ data: taskData(tarea) }, tarea, ahora);
 }
 
 /** Spec §6.2: al crear, el panel se abre con los valores de `datos`. */
-export function cambiosAlCrear(datos: PanelValues['data']): CambiosDelPanel {
-	return cambiosAlAbrir({ data: datos, labels: [] });
+export function cambiosAlCrear(datos: PanelForm['data']): CambiosDelPanel {
+	return cambiosAlAbrir({ data: datos });
 }
 
 /** Un paso soportado: el runtime lo despacha con las capturas ya resueltas. */
@@ -171,14 +159,13 @@ export function createWorld(): World {
 	return {
 		documentos: [],
 		completions: [],
-		labels: [],
 		siguienteId: 1,
 		anotaciones: [],
 		anotacionesBorradas: [],
 		estados: [],
 		momentosDelEstado: [],
 		consultasDePendientes: [],
-		borrado: { documentos: [], completions: [], labels: [] }
+		borrado: { documentos: [], completions: [] }
 	};
 }
 
@@ -186,13 +173,8 @@ export function nuevoId(world: World, prefijo: string): string {
 	return `${prefijo}-${world.siguienteId++}`;
 }
 
-/** Con ceros a la izquierda: los ids de etiqueta crecen en el orden en que se crean, también comparados como texto. */
-export function nuevoIdDeEtiqueta(world: World): string {
-	return `etiqueta-${String(world.siguienteId++).padStart(6, '0')}`;
-}
-
 /** Solo lo guardado, sin el resto del estado del escenario. */
-export const copiaDe = ({ documentos, completions: completados, labels: etiquetas }: Guardado): Guardado => ({ documentos, completions: completados, labels: etiquetas });
+export const copiaDe = ({ documentos, completions: completados }: Guardado): Guardado => ({ documentos, completions: completados });
 
 /** Las tareas que describen los documentos guardados. */
 export function tareasDe(guardado: Guardado): Task[] {
@@ -252,8 +234,7 @@ export function borrarGuardado(world: World, documentoIds: readonly string[], co
 	const seBorra = ({ id }: { id: string }, ids: readonly string[]) => ids.includes(id);
 	world.borrado = {
 		documentos: [...world.borrado.documentos, ...world.documentos.filter((d) => seBorra(d, documentoIds))],
-		completions: [...world.borrado.completions, ...world.completions.filter((c) => seBorra(c, completadoIds))],
-		labels: world.borrado.labels
+		completions: [...world.borrado.completions, ...world.completions.filter((c) => seBorra(c, completadoIds))]
 	};
 	world.documentos = world.documentos.filter((d) => !seBorra(d, documentoIds));
 	world.completions = world.completions.filter((c) => !seBorra(c, completadoIds));
@@ -263,7 +244,6 @@ export function borrarGuardado(world: World, documentoIds: readonly string[], co
 export function loQueHuboGuardado(world: World): Guardado {
 	return {
 		documentos: [...world.documentos, ...world.borrado.documentos],
-		completions: [...world.completions, ...world.borrado.completions],
-		labels: [...world.labels, ...world.borrado.labels]
+		completions: [...world.completions, ...world.borrado.completions]
 	};
 }

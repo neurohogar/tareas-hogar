@@ -4,7 +4,6 @@
 	const TABS = [
 		{ path: '/', name: 'Pendientes' },
 		{ path: '/historial', name: 'Historial' },
-		{ path: '/etiquetas', name: 'Etiquetas' },
 		{ path: '/anotaciones', name: 'Anotaciones' }
 	];
 </script>

@@ -15,7 +15,6 @@ import { clasificarFila, elementos, esCronologiaImposible, esEscenarioDeFuente, 
 import { esEscenarioDeCambios, esEscenarioDelPanel, observarCambios, observarPanel } from './oracle-panel';
 import { esEscenarioDeAnotaciones, esEscenarioDeLimpiezas, observarAnotaciones, observarLimpiezas } from './oracle-anotaciones';
 import { esEscenarioDeEdicion, observarEdicion } from './oracle-edicion';
-import { esEscenarioDeEtiquetas, observarEtiquetas } from './oracle-etiquetas';
 import { esEscenarioDeTextoDeFecha, observarTextoDeFecha } from './oracle-texto-de-fecha';
 import { esEscenarioDePantallaDeCarga, observarPantallaDeCarga } from './oracle-pantalla-de-carga';
 
@@ -145,7 +144,7 @@ function esEquivalenteDeEdicion(feature: Feature, scenario: Scenario, candidata:
 type Observador = (entradas: PasoOraculo[], thens: PasoOraculo[], fila: FilaOraculo) => { observado: string[]; afirmado: string[] } | undefined;
 
 /**
- * Escenario de anotaciones (§4.5, §5.10, §6.7), de etiquetas o del filtro (§4.3, §6.1, §6.2, §6.4, §7), del panel en pestañas (§6.2), de qué fuente dibuja cada carácter (§6) o de la pantalla de carga (§6.6): una mutación
+ * Escenario de anotaciones (§4.5, §5.10, §6.7), del panel en pestañas (§6.2), de qué fuente dibuja cada carácter (§6) o de la pantalla de carga (§6.6): una mutación
  * es equivalente cuando ningún Then nombra la columna, el oráculo reproduce lo que el escenario afirma con la
  * fila original (auditoría en línea) y, con el valor mutado, deduce lo mismo que observa cada Then.
  */
@@ -203,9 +202,6 @@ export function esEquivalente(feature: Feature, candidata: Candidata): boolean {
 	}
 	if (esEscenarioDelPanel(pasosDe(feature, scenario).map(({ step }) => step.text))) {
 		return esEquivalenteSegun(observarPanel, feature, scenario, candidata);
-	}
-	if (esEscenarioDeEtiquetas(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteSegun(observarEtiquetas, feature, scenario, candidata);
 	}
 	if (esEscenarioDeEdicion(pasosDe(feature, scenario).map(({ step }) => step.text))) {
 		return esEquivalenteDeEdicion(feature, scenario, candidata);

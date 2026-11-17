@@ -12,23 +12,17 @@
 	import { now as currentTime, observeClock } from '#lib/adapters/clock.ts';
 	import {
 		deleteCompletion,
-		deleteLabel,
 		deleteTask,
-		changeLabel,
-		mergeLabels,
 		saveChange,
 		saveCompletion,
 		saveTask,
 		cleanOrphanCompletions,
-		cleanReferences,
 		observeCompletions,
-		observeLabels,
 		observeTasks
 	} from '#lib/adapters/repository.ts';
 	import { noticeOnComplete, visibleNotice, completionToUndo, msUntilDue, noticeReturn, noticeText, type Notice } from '#lib/core/notice.ts';
 	import { annotate, editText, type Annotation, type CurrentScreen, type Sense } from '#lib/core/annotation.ts';
 	import { orphanAnnotations, deletion, orphanCompletions, taskExists } from '#lib/core/deletion.ts';
-	import { labelDeletion, brokenReferences } from '#lib/core/label-deletion.ts';
 	import { checkboxAction } from '#lib/core/checkbox.ts';
 	import { complete } from '#lib/core/completions.ts';
 	import { doTheMinimal as doTheMinimalFromCore } from '#lib/core/minimal-version.ts';
@@ -38,11 +32,7 @@
 	import { taskData } from '#lib/core/task-data.ts';
 	import type { PanelForm } from '#lib/core/unsaved-changes.ts';
 	import { createFromPanel, editFromPanel } from '#lib/core/unsaved-changes-saved.ts';
-	import type { Label } from '#lib/core/label.ts';
-	import { taskLabels } from '#lib/core/task-labels.ts';
 	import { itemsToAttempt, retriesWith, attemptResult } from '#lib/core/cleanups.ts';
-	import { mergeOfDuplicates } from '#lib/core/label-merge.ts';
-	import { rename } from '#lib/core/label-management.ts';
 	import type { TaskChange } from '#lib/core/task-document.ts';
 	import type { Completion, Task } from '#lib/core/task.ts';
 	import { lastTime } from '#lib/core/last-time.ts';
@@ -63,20 +53,15 @@
 
 	let tasks = $state<Task[]>([]);
 	let completions = $state<Completion[]>([]);
-	let labels = $state<Label[]>([]);
 	let annotations = $state<Annotation[]>([]);
 	let annotationsLoaded = $state(false);
 	/** El recuadro de Anotar (§5.10) y el panel de edición abierto, si lo hay (con su tarea al editar). */
 	let annotating = $state(false);
 	let panel = $state.raw<{ taskId?: string } | undefined>(undefined);
 	const annotationsBeingCleaned = new Set<string>();
-	/** Hasta que las colecciones respondieron, faltar una tarea o una etiqueta no significa que se borró. */
+	/** Hasta que las colecciones respondieron, faltar una tarea no significa que se borró. */
 	let tasksLoaded = $state(false);
 	let completionsLoaded = $state(false);
-	let labelsLoaded = $state(false);
-	/** El filtro de Pendientes (id de etiqueta; sin él, "Todas"): sigue al cambiar de pantalla, no al recargar. */
-	let filter = $state<string | undefined>(undefined);
-	let quickOnly = $state(false);
 	let now = $state(currentTime());
 	/** El aviso del último completado de este dispositivo; sigue al cambiar de pantalla. */
 	let notice = $state.raw<Notice | undefined>(undefined);
@@ -90,9 +75,6 @@
 	const editedExists = $derived(edited !== undefined && taskExists(tasks, edited.id));
 	/** Huérfanos que ya se mandaron a limpiar, para no repetirlos en cada snapshot. */
 	const orphansBeingCleaned = new Set<string>();
-	/** Referencias rotas y etiquetas duplicadas que ya se mandaron a resolver. */
-	const referencesBeingCleaned = new Set<string>();
-	const labelsBeingMerged = new Set<string>();
 
 	onMount(() => {
 		const unsubscribers = [
@@ -103,10 +85,6 @@
 			observeCompletions(uid, (currentItems) => {
 				completions = currentItems;
 				completionsLoaded = true;
-			}),
-			observeLabels(uid, (currentItems) => {
-				labels = currentItems;
-				labelsLoaded = true;
 			}),
 			observeAnnotations(uid, (currentItems) => {
 				annotations = currentItems;
@@ -119,7 +97,7 @@
 
 	// Spec §6.6: la pantalla de carga espera la primera respuesta de cada colección.
 	$effect(() => {
-		onCollectionsResponded({ tasks: tasksLoaded, completions: completionsLoaded, labels: labelsLoaded });
+		onCollectionsResponded({ tasks: tasksLoaded, completions: completionsLoaded });
 	});
 
 	/** Cambia al volver la conexión: los efectos de limpieza la leen para reintentar. */
@@ -165,23 +143,6 @@
 		cleanUp(orphanAnnotations(tasks, annotations), ({ id }) => id, annotationsBeingCleaned, (batch) => cleanOrphanAnnotations(uid, batch));
 	});
 
-	// Spec §7: las referencias a etiquetas borradas se ignoran y se limpian.
-	$effect(() => {
-		if (!tasksLoaded || !labelsLoaded) return;
-		void [connection.value, reevaluate];
-		cleanUp(brokenReferences(tasks, labels), ({ taskId }) => taskId, referencesBeingCleaned, (batch) => cleanReferences(uid, batch));
-	});
-
-	// Spec §7: las etiquetas duplicadas se fusionan al detectarlas.
-	$effect(() => {
-		if (!tasksLoaded || !labelsLoaded) return;
-		void [connection.value, reevaluate];
-		const merge = mergeOfDuplicates(labels, tasks);
-		cleanUp(merge.deletedItems, (id) => id, labelsBeingMerged, (deletedItems) =>
-			mergeLabels(uid, { deletedItems, references: merge.references.filter(({ remove }) => remove.some((id) => deletedItems.includes(id))) })
-		);
-	});
-
 	// El aviso desaparece justo a los 5 segundos, sin esperar al próximo tic del reloj.
 	$effect(() => {
 		if (!displayedNotice) return;
@@ -194,7 +155,7 @@
 		const completion = existingCompletion ?? complete(task, completions, newId(), now);
 		notice = noticeOnComplete(task, completion, completions);
 		void saveCompletion(uid, completion);
-		void saveChange(uid, task.id, changeOnComplete(task), []);
+		void saveChange(uid, task.id, changeOnComplete(task));
 	}
 
 	/** «Hice la mínima» (§6.1): lo que dice el core, con el mismo aviso y el mismo reinicio de paso que el checkbox. */
@@ -211,13 +172,13 @@
 		// La tarea que se ve puede no reflejar todavía el reinicio al paso 1 de completarla (esa escritura
 		// sigue en camino): se la toma sin paso guardado conocido (0 no es ningún paso), así el core
 		// siempre da el paso a escribir en lugar de creer que la tarea ya está en él.
-		if (task) void saveChange(uid, task.id, changeOnDeleteCompletion({ ...task, currentStep: 0 }, completions, completion), []);
+		if (task) void saveChange(uid, task.id, changeOnDeleteCompletion({ ...task, currentStep: 0 }, completions, completion));
 	}
 
 	/** «Hecho» de la fila (§6.1): pasa al paso siguiente o, en el último, completa como el checkbox. */
 	function tapDone(task: Task) {
 		const action = doneAction(task, completions, currentTime());
-		if (action.kind === 'avanzar') void saveChange(uid, task.id, action.change, []);
+		if (action.kind === 'avanzar') void saveChange(uid, task.id, action.change);
 		else if (action.kind === 'completar') completeTask(task);
 	}
 
@@ -234,32 +195,23 @@
 		if (completion) deleteAndRestoreStep(completion);
 	}
 
-	/** Las etiquetas de ahora y cómo nombrar las nuevas, para guardar el panel. */
-	const labelsOnSave = () => ({ existings: labels, newId });
-
 	function create(form: PanelForm) {
-		const result = createFromPanel(form, newId(), currentTime(), labelsOnSave());
+		const result = createFromPanel(form, newId(), currentTime());
 		if (!result.ok) return result.errors;
-		void saveTask(uid, result.task, result.newLabels);
+		void saveTask(uid, result.task);
 	}
 
 	function saveEdit(task: Task, form: PanelForm) {
-		const result = editFromPanel(task, form, labelsOnSave(), currentTime());
+		const result = editFromPanel(task, form, currentTime());
 		if (!result.ok) return result.errors;
 		edited = undefined;
-		void saveChange(uid, task.id, result.change, result.newLabels);
+		void saveChange(uid, task.id, result.change);
 	}
 
 	/** Spec §6.2: pausar, reanudar, posponer y quitar posponer actúan y cierran el panel. */
-	function act(task: Task, change: TaskChange, newLabels: Label[]) {
+	function act(task: Task, change: TaskChange) {
 		edited = undefined;
-		void saveChange(uid, task.id, change, newLabels);
-	}
-
-	function renameLabel(label: Label, typed: string) {
-		const result = rename(label, typed, labels);
-		if (!result.ok) return result.error;
-		void changeLabel(uid, label.id, result.change);
+		void saveChange(uid, task.id, change);
 	}
 
 	function deleteEdited(task: Task) {
@@ -267,7 +219,7 @@
 		void deleteTask(uid, deletion(task.id, completions, annotations));
 	}
 
-	const SCREENS: Record<string, CurrentScreen> = { '/historial': 'Historial', '/etiquetas': 'Etiquetas', '/anotaciones': 'Anotaciones' };
+	const SCREENS: Record<string, CurrentScreen> = { '/historial': 'Historial', '/anotaciones': 'Anotaciones' };
 
 	/** Segundo toque (§5.10): el core toma el contexto de la pantalla, el panel y el aviso. */
 	function annotateNow(sense: Sense, text: string) {
@@ -317,24 +269,10 @@
 		get now() {
 			return now;
 		},
-		get labels() {
-			return labels;
-		},
-		get filter() {
-			return filter;
-		},
-		chooseFilter: (labelId) => (filter = labelId),
-		get quickOnly() {
-			return quickOnly;
-		},
-		toggleQuickOnly: () => (quickOnly = !quickOnly),
-		renameLabel,
-		recolorLabel: (label, color) => void changeLabel(uid, label.id, { color }),
-		deleteLabel: (label) => void deleteLabel(uid, labelDeletion(label.id, tasks)),
 		tapCheckbox,
 		tapDone,
 		doTheMinimal,
-		previousStep: (task) => void saveChange(uid, task.id, previousStepChange(task), []),
+		previousStep: (task) => void saveChange(uid, task.id, previousStepChange(task)),
 		create,
 		openTask: (task) => (edited = task),
 		deleteCompletion: deleteAndRestoreStep
@@ -359,13 +297,12 @@
 		<TaskPanel
 			header="Editar tarea"
 			initial={taskData(openedTask)}
-			initialLabels={taskLabels(openedTask, labels).map(({ name }) => name)}
 			lastTime={lastTime(openedTask.id, completions, now)}
 			task={openedTask}
 			onSave={(form) => saveEdit(openedTask, form)}
 			onClose={() => (edited = undefined)}
 			onDelete={() => deleteEdited(openedTask)}
-			onAct={(change, newLabels) => act(openedTask, change, newLabels)}
+			onAct={(change) => act(openedTask, change)}
 			pause={pauseAction(active)}
 			postpone={postponeAction(active, completions, now)}
 			postponedText={postponementText(active, now)}

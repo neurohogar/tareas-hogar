@@ -38,8 +38,6 @@ const MOTIVOS = {
 	'semanal y mensual combinados': { days: 'combinados' },
 	'fecha límite inválida': { dueDate: 'invalida' },
 	'emoji inválido': { emoji: 'invalido' },
-	'nombre de etiqueta vacío': { labels: 'vacio' },
-	'nombre de etiqueta demasiado largo': { labels: 'largo' },
 	'horario incompleto': { schedule: 'incompleto' },
 	'horarios superpuestos': { schedule: 'superpuestos' },
 	'varios horarios en una relativa en horas': { schedule: 'variasEnHoras' }

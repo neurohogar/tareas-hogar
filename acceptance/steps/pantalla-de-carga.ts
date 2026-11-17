@@ -27,7 +27,7 @@ function segundos(valor: string): number {
 
 const fuenteNueva = (): FuenteDeLaApertura => ({ llega: NUNCA, falla: NUNCA, guardada: false });
 
-const COLECCION = { tareas: 'tasks', completados: 'completions', etiquetas: 'labels' } as const;
+const COLECCION = { tareas: 'tasks', completados: 'completions' } as const;
 
 function apertura(world: World): AperturaDeLaApp {
 	world.apertura ??= {
@@ -37,7 +37,6 @@ function apertura(world: World): AperturaDeLaApp {
 		auth: NUNCA,
 		tasks: NUNCA,
 		completions: NUNCA,
-		labels: NUNCA,
 		atkinson: fuenteNueva(),
 		noto: fuenteNueva(),
 		recordaba: false,
@@ -62,7 +61,6 @@ function estadoEn(a: AperturaDeLaApp, instante: number): WaitStatus {
 		auth: instante >= a.auth ? sesionRespondida : 'esperando',
 		tasksResponded: instante >= a.tasks,
 		completionsResponded: instante >= a.completions,
-		labelsResponded: instante >= a.labels,
 		atkinson: estadoDeFuente(a.atkinson, a.sinConexion, instante),
 		noto: estadoDeFuente(a.noto, a.sinConexion, instante),
 		online: !a.sinConexion && instante < a.pierdeLaConexion,
@@ -72,7 +70,7 @@ function estadoEn(a: AperturaDeLaApp, instante: number): WaitStatus {
 
 /** Los instantes en que puede cambiar la respuesta: el arranque, el mínimo, el tope y cada evento declarado. */
 function instantes(a: AperturaDeLaApp): number[] {
-	const eventos = [a.auth, a.tasks, a.completions, a.labels, a.pierdeLaConexion, a.atkinson.llega, a.atkinson.falla, a.noto.llega, a.noto.falla];
+	const eventos = [a.auth, a.tasks, a.completions, a.pierdeLaConexion, a.atkinson.llega, a.atkinson.falla, a.noto.llega, a.noto.falla];
 	const todos = [0, SCREEN_MINIMUM_IN_SECONDS, SCREEN_LIMIT_IN_SECONDS, ...eventos].filter((t) => t >= 0 && t !== NUNCA);
 	return [...new Set(todos)].sort((x, y) => x - y);
 }
@@ -115,16 +113,16 @@ export const pantallaDeCargaSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^(?:las|los) (tareas|completados|etiquetas) responden a los ${P} segundos$`),
+		pattern: new RegExp(`^(?:las|los) (tareas|completados) responden a los ${P} segundos$`),
 		run: (world, coleccion, momento) => {
-			apertura(world)[COLECCION[coleccion as 'tareas' | 'completados' | 'etiquetas']] = segundos(momento);
+			apertura(world)[COLECCION[coleccion as 'tareas' | 'completados']] = segundos(momento);
 		}
 	},
 	{
 		pattern: new RegExp(`^los datos responden a los ${P} segundos$`),
 		run: (world, momento) => {
 			const a = apertura(world);
-			a.tasks = a.completions = a.labels = segundos(momento);
+			a.tasks = a.completions = segundos(momento);
 		}
 	},
 	{

@@ -10,15 +10,6 @@
 	--border: #d9d6cf;
 	--control-border: #9c978e;
 	--navigation-height: 56px;
-	/* Paleta de etiquetas (spec §4.3), tenue. */
-	--label-gris: #e3e3e0;
-	--label-rojo: #f5d5d0;
-	--label-naranja: #f7dfc4;
-	--label-amarillo: #f4eab8;
-	--label-verde: #d3ead5;
-	--label-celeste: #cfe8f0;
-	--label-azul: #d3dcf3;
-	--label-violeta: #e3d6f0;
 	font-family: 'Atkinson Hyperlegible Next', 'Noto Color Emoji', system-ui, sans-serif;
 }
 
@@ -32,14 +23,6 @@
 		--error: #e08a7e;
 		--border: #343a36;
 		--control-border: #5e6661;
-		--label-gris: #3b3d3c;
-		--label-rojo: #4f3230;
-		--label-naranja: #523b28;
-		--label-amarillo: #4b4426;
-		--label-verde: #2f4633;
-		--label-celeste: #2b4450;
-		--label-azul: #2f3a55;
-		--label-violeta: #42344f;
 	}
 }
 

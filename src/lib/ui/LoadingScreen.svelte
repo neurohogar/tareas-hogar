@@ -2,7 +2,6 @@
 	export interface CollectionsResponded {
 		tasks: boolean;
 		completions: boolean;
-		labels: boolean;
 	}
 </script>
 
@@ -41,7 +40,6 @@
 		auth,
 		tasksResponded: data.tasks,
 		completionsResponded: data.completions,
-		labelsResponded: data.labels,
 		atkinson: fonts.atkinson,
 		noto: fonts.noto,
 		online,

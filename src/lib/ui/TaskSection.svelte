@@ -1,14 +1,10 @@
 <script lang="ts">
 	import type { CreationErrors } from '#lib/core/creation.ts';
 	import type { TaskData } from '#lib/core/task-data.ts';
-	import { EFFORT_OPTIONS } from '#lib/core/effort.ts';
 	import type { PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
-	import type { Effort } from '#lib/core/task.ts';
 	import { tick } from 'svelte';
-	import LabelsField from './LabelsField.svelte';
 	import Icon from './icons/Icon.svelte';
 	import SectionFrame from './SectionFrame.svelte';
-	import { useSession } from './session';
 
 	let {
 		presentation,
@@ -20,11 +16,7 @@
 		errors,
 		clearError,
 		emoji = $bindable(),
-		effort = $bindable(),
 		steps = $bindable(),
-		labels = $bindable(),
-		labelsError = $bindable(),
-		unconfirmed = $bindable(),
 		onOpenPicker
 	}: {
 		presentation: PanelPresentation;
@@ -38,17 +30,10 @@
 		/** El error de un campo dura lo que dura su mensaje: al corregirlo se va. */
 		clearError: (field: keyof CreationErrors) => void;
 		emoji: string;
-		effort: Effort | '';
 		/** Los pasos más (2, 3…), uno por campo (§6.2). */
 		steps: string[];
-		labels: string[];
-		labelsError: string | undefined;
-		/** El texto escrito en Etiquetas que todavía no se confirmó. */
-		unconfirmed: string;
 		onOpenPicker: () => void;
 	} = $props();
-
-	const session = useSession();
 
 	async function addStep() {
 		steps = [...steps, ''];
@@ -118,19 +103,6 @@
 	<div class="form-field">
 		<label for="field-note">Nota</label>
 		<textarea id="field-note" name="note" rows="2" value={values?.note ?? ''}></textarea>
-	</div>
-
-	<div class="form-field">
-		<label for="field-effort">Esfuerzo</label>
-		<select id="field-effort" bind:value={effort}>
-			{#each EFFORT_OPTIONS as option (option.text)}
-				<option value={option.value ?? ''}>{option.text}</option>
-			{/each}
-		</select>
-	</div>
-
-	<div data-field="Etiquetas">
-		<LabelsField bind:names={labels} bind:error={labelsError} bind:typed={unconfirmed} existing={session.labels} />
 	</div>
 </SectionFrame>
 

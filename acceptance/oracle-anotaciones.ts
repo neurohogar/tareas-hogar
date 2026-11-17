@@ -47,8 +47,9 @@ interface Mundo {
 }
 
 const SENTIDOS = ['Me sirvió', 'Me molestó'];
-const PANTALLAS_ACTUALES = ['Pendientes', 'Historial', 'Etiquetas', 'Anotaciones'];
-const PANTALLAS = [...PANTALLAS_ACTUALES, 'Panel de edición'];
+const PANTALLAS_ACTUALES = ['Pendientes', 'Historial', 'Anotaciones'];
+/** §4.5: «Etiquetas» ya no es una pantalla donde anotar; las anotaciones guardadas con ella la conservan como valor opaco. */
+const PANTALLAS = [...PANTALLAS_ACTUALES, 'Etiquetas', 'Panel de edición'];
 
 const conValores = (texto: string, fila: FilaOraculo) => texto.replace(/<([A-Za-z0-9_]+)>/g, (_, columna: string) => fila[columna] ?? '<?>');
 
@@ -99,7 +100,7 @@ function anotoYo(mundo: Mundo, sentido: string, ahora: string, texto = ''): void
 
 /** Otro dispositivo, sin panel; sobre una tarea solo con su aviso de deshacer a la vista. */
 function anotaElOtro(mundo: Mundo, sentido: string, pantalla: string, ahora: string, titulo?: string): void {
-	if (!PANTALLAS_ACTUALES.includes(pantalla)) indeciso(`pantalla ${pantalla}`);
+	if (![...PANTALLAS_ACTUALES, 'Etiquetas'].includes(pantalla)) indeciso(`pantalla ${pantalla}`);
 	nueva(mundo, sentidoDe(sentido), pantalla, momento(ahora), titulo === undefined ? undefined : laTarea(mundo, titulo));
 }
 
@@ -314,7 +315,7 @@ export function observarAnotaciones(entradas: PasoOraculo[], thens: PasoOraculo[
 // elemento: se limpia todo elemento cuyo intento no falla y quedan por limpiar solo los que fallaron. Se
 // reintenta al volver la conexión y cuando cambian los datos; el tiempo no cuenta (sin temporizadores).
 
-const LIMPIEZAS = ['completados huérfanos', 'anotaciones huérfanas', 'referencias a etiquetas borradas', 'etiquetas duplicadas'];
+const LIMPIEZAS = ['completados huérfanos', 'anotaciones huérfanas'];
 const SUCESOS_QUE_REINTENTAN = ['vuelve la conexión', 'cambian los datos'];
 
 interface MundoDeLimpieza {

@@ -16,7 +16,6 @@ import {
 	escritasDe,
 	botonDePosponer,
 	dia,
-	esfuerzoEscrito,
 	diasMes,
 	diasSemana,
 	elementos,
@@ -75,8 +74,6 @@ interface Documento {
 	pasoActual?: number;
 	/** §4.1 (Versión mínima): una línea, recortada; sin el campo, sin versión mínima. Un campo independiente (§7). */
 	versionMinima?: string;
-	/** §4.1: rapida, media o larga; sin el campo, sin estimar. Un campo independiente (§7). */
-	esfuerzo?: string;
 	tipo: 'puntual' | 'periodica';
 	limite?: Date;
 	recurrencia?: Recurrencia;
@@ -159,7 +156,6 @@ interface Datos {
 	primerPaso?: string;
 	pasos?: string[];
 	versionMinima?: string;
-	esfuerzo?: string;
 	tipo: 'puntual' | 'periodica';
 	limite?: Date;
 	recurrencia?: Recurrencia;
@@ -185,7 +181,7 @@ function claveDeRecurrencia(r: Recurrencia | undefined): string {
 const claveDeHorario = (h: Ventana[] | undefined) => (h === undefined ? '-' : h.map((v) => `${v.desde}-${v.hasta}`).join(' '));
 
 const claveDeDocumento = (d: Documento) =>
-	JSON.stringify([d.id, d.titulo, d.emoji, d.nota, d.primerPaso, d.pasos, d.pasoActual, d.versionMinima, d.esfuerzo, d.tipo, d.limite?.getTime(), claveDeRecurrencia(d.recurrencia), claveDeHorario(d.horario), d.creada, d.pausada, d.reanudada, d.pospuesta]);
+	JSON.stringify([d.id, d.titulo, d.emoji, d.nota, d.primerPaso, d.pasos, d.pasoActual, d.versionMinima, d.tipo, d.limite?.getTime(), claveDeRecurrencia(d.recurrencia), claveDeHorario(d.horario), d.creada, d.pausada, d.reanudada, d.pospuesta]);
 
 const momento = (valor: string) => fecha(valor) ?? indeciso(`fecha y hora ${valor}`);
 const diaDe = (valor: string) => dia(valor) ?? indeciso(`fecha ${valor}`);
@@ -278,10 +274,9 @@ function conValidacion(datos: Datos): Datos {
 	return datos.titulo.trim() === '' ? { ...datos, motivos: ['título vacío', ...datos.motivos] } : datos;
 }
 
-/** Los campos de texto, el esfuerzo y el horario de la tarea que se edita siguen igual salvo los que la edición escribe. */
+/** Los campos de texto y el horario de la tarea que se edita siguen igual salvo los que la edición escribe. */
 const conservando = (base: Documento, datos: Datos, escritos: Escritos = {}): Datos => ({
 	...conEscritos(datos, { emoji: base.emoji, nota: base.nota, primerPaso: base.primerPaso, pasos: base.pasos, versionMinima: base.versionMinima, ...escritos }),
-	esfuerzo: base.esfuerzo,
 	horario: base.horario,
 	ventanasEscritas: base.horario?.length ?? 0
 });
@@ -322,7 +317,7 @@ function datosDe(texto: string, titulo: string): Datos {
 
 /** Los valores actuales de una tarea, como los carga el panel al editar. */
 function datosDeDocumento(d: Documento): Datos {
-	const campos = { titulo: d.titulo, emoji: d.emoji, nota: d.nota, primerPaso: d.primerPaso, pasos: d.pasos, versionMinima: d.versionMinima, esfuerzo: d.esfuerzo, horario: d.horario, ventanasEscritas: d.horario?.length ?? 0, motivos: [] };
+	const campos = { titulo: d.titulo, emoji: d.emoji, nota: d.nota, primerPaso: d.primerPaso, pasos: d.pasos, versionMinima: d.versionMinima, horario: d.horario, ventanasEscritas: d.horario?.length ?? 0, motivos: [] };
 	if (d.tipo === 'puntual') return { ...campos, tipo: 'puntual', limite: d.limite };
 	return { ...campos, tipo: 'periodica', recurrencia: d.recurrencia };
 }
@@ -369,7 +364,6 @@ function crear(m: Mundo, datos: Datos, creada: number | undefined): void {
 			primerPaso: datos.primerPaso,
 			pasos: datos.pasos,
 			versionMinima: datos.versionMinima,
-			esfuerzo: datos.esfuerzo,
 			tipo: datos.tipo,
 			limite: datos.limite,
 			recurrencia: datos.recurrencia,
@@ -396,7 +390,6 @@ function cambioDe(base: Documento, nuevo: Datos): Record<string, unknown> {
 	// §7: `pasos` es un solo campo que se reemplaza entero, solo si cambió; la edición nunca escribe `pasoActual`.
 	if (JSON.stringify(base.pasos) !== JSON.stringify(nuevo.pasos)) cambio.pasos = nuevo.pasos ?? null;
 	if (base.versionMinima !== nuevo.versionMinima) cambio.versionMinima = nuevo.versionMinima ?? null;
-	if (base.esfuerzo !== nuevo.esfuerzo) cambio.esfuerzo = nuevo.esfuerzo ?? null;
 	if (claveDeHorario(base.horario) !== claveDeHorario(nuevo.horario)) cambio.horario = nuevo.horario ?? null;
 	if (base.tipo !== nuevo.tipo) {
 		return { ...cambio, tipo: nuevo.tipo, limite: nuevo.limite ?? null, recurrencia: nuevo.recurrencia ?? null };
@@ -732,9 +725,6 @@ function guardarHorario(tarea: Documento, horas: string[]): void {
 	tarea.horario = datos.motivos.length > 0 ? indeciso(`horario ${horas.join(' ')}`) : datos.horario;
 }
 
-/** §4.1 y §6.2: el esfuerzo elegido en el selector; "sin estimar" deja la tarea sin el campo. */
-const esfuerzoDe = (valor: string) => esfuerzoEscrito(valor) ?? indeciso(`esfuerzo ${valor}`);
-
 /** Deja la tarea ya guardada con esa lista de pasos: el primero es el primer paso. */
 function guardarPasos(tarea: Documento, texto: string): void {
 	const { primerPaso, pasos } = pasosEscritos(...(([primero, ...mas]) => [primero, mas] as const)(elementos(texto) ?? indeciso(`pasos ${texto}`)));
@@ -743,10 +733,6 @@ function guardarPasos(tarea: Documento, texto: string): void {
 }
 
 const CREACIONES: Paso[] = [
-	[
-		/^una tarea puntual sin fecha límite con esfuerzo (.+)$/,
-		(m, [e]) => crear(m, { ...datosDe('puntual sin fecha límite', 'Tarea'), ...esfuerzoDe(e) }, undefined)
-	],
 	[new RegExp(`^la tarea se puede completar ${HORARIO}$`), (m, horas) => guardarHorario(unica(m), horas)],
 	[new RegExp(`^la tarea (\\S+) se puede completar ${HORARIO}$`), (m, [t, ...horas]) => guardarHorario(conTitulo(m, t), horas)],
 	[
@@ -1048,13 +1034,8 @@ const EDICIONES_DE_HORARIO: Paso[] = [
 	]
 ];
 
-/** Elegir en el selector de esfuerzo (§6.2): el resto de la tarea como está; escribe solo si cambió (§7). */
-const conEsfuerzo = (valor: string) => (base: Documento) => ({ ...datosDeDocumento(base), esfuerzo: esfuerzoDe(valor).esfuerzo });
-
 const EDICIONES: Paso[] = [
 	...EDICIONES_DE_HORARIO,
-	[/^elijo el esfuerzo (.+)$/, (m, [e]) => editoYo(m, undefined, conEsfuerzo(e))],
-	[new RegExp(`^${OTRO} elige el esfuerzo (.+)$`), (m, [e]) => editaElOtro(m, conEsfuerzo(e))],
 	// §5.8: pasar una periódica pausada a puntual la reanuda en ese momento.
 	[
 		/^edito la tarea a puntual sin fecha límite el (\S+)$/,
@@ -1377,7 +1358,6 @@ const OBSERVACIONES: Observacion[] = [
 	[/^la tarea tiene dos completados, uno entero y uno de la mínima$/, (m) => JSON.stringify(completadosDe(m, unica(m).id).map((c) => c.minima === true).sort())],
 	[/^el aviso del completado dice (.*)$/, (m) => m.avisoTexto ?? indeciso('sin consulta del aviso')],
 	[/^la tarea tiene un primer paso de (\S+) caracteres$/, (m) => String(unica(m).primerPaso?.length)],
-	[/^su esfuerzo es (.+)$/, (m) => unica(m).esfuerzo ?? 'sin estimar'],
 	[/^la nota de la tarea tiene dos líneas: .*$/, (m) => JSON.stringify(unica(m).nota?.split('\n'))],
 	[/^la tarea tiene una nota de (\S+) caracteres$/, (m) => String(unica(m).nota?.length)],
 	[/^el nombre de la tarea es .*$/, (m) => nombreDe(unica(m))],

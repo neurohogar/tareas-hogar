@@ -13,8 +13,9 @@ import { OTRO, borrarGuardado, cambiosAlCrear, cambiosAlEditar, laTareaTitulada,
 import { P, TITULO, fechaHora, numero } from './valores';
 
 const SENTIDOS = ['Me sirvió', 'Me molestó'];
-const PANTALLAS_ACTUALES = ['Pendientes', 'Historial', 'Etiquetas', 'Anotaciones'];
-const PANTALLAS = [...PANTALLAS_ACTUALES, 'Panel de edición'];
+const PANTALLAS_ACTUALES = ['Pendientes', 'Historial', 'Anotaciones'];
+/** Las pantallas que puede tener una anotación guardada: «Etiquetas» solo existe como valor guardado (§4.5, D20), ya no se anota ahí. */
+const PANTALLAS = [...PANTALLAS_ACTUALES, 'Etiquetas', 'Panel de edición'];
 
 /** Un sentido o una pantalla, escritos en el paso o como `<placeholder>`. */
 const SENTIDO = `(<[A-Za-z0-9_]+>|${SENTIDOS.join('|')})`;
@@ -40,6 +41,11 @@ function contextoDe(world: World): AnnotateContext {
 	};
 }
 
+/** «Etiquetas» ya no es una pantalla actual: la anotación guardada la conserva como valor viejo (§4.5, D20); se arma en Pendientes y se le pone ese valor. */
+const pantallaParaArmar = (pantalla: string): string => (pantalla === 'Etiquetas' ? 'Pendientes' : pantalla);
+
+const conPantallaGuardada = (anotacion: Annotation, pantalla: string): Annotation => (pantalla === 'Etiquetas' ? { ...anotacion, screen: 'Etiquetas' } : anotacion);
+
 function guardar(world: World, anotacion: Annotation): void {
 	world.anotaciones = [...world.anotaciones, anotacion];
 	world.ultimaAnotacionId = anotacion.id;
@@ -58,15 +64,15 @@ function anotaElOtro(world: World, sentidoElegido: string, pantalla: string, aho
 		titulo === undefined
 			? undefined
 			: noticeOnComplete(laTareaTitulada(loQueHuboGuardado(world), titulo), { id: nuevoId(world, 'completado'), taskId: laTareaTitulada(loQueHuboGuardado(world), titulo).id, completedAt: momento });
-	guardar(world, annotate(nuevoId(world, 'anotacion'), sentido(sentidoElegido), momento, { screen: pantallaActual(pantalla), notice: aviso }));
+	guardar(world, conPantallaGuardada(annotate(nuevoId(world, 'anotacion'), sentido(sentidoElegido), momento, { screen: pantallaActual(pantallaParaArmar(pantalla)), notice: aviso }), pantalla));
 }
 
 /** Declara una anotación guardada, con el contexto que dice el paso. */
 function declaro(world: World, sentidoElegido: string, pantalla: string, anotada: string): void {
 	const alAbrirPanel = pantalla === 'Panel de edición';
 	if (!PANTALLAS.includes(pantalla)) throw new Error(`Pantalla inválida: "${pantalla}"`);
-	const contexto: AnnotateContext = { screen: alAbrirPanel ? 'Pendientes' : pantallaActual(pantalla), ...(alAbrirPanel && { panel: {} }) };
-	guardar(world, annotate(nuevoId(world, 'anotacion'), sentido(sentidoElegido), fechaHora(anotada), contexto));
+	const contexto: AnnotateContext = { screen: alAbrirPanel ? 'Pendientes' : pantallaActual(pantallaParaArmar(pantalla)), ...(alAbrirPanel && { panel: {} }) };
+	guardar(world, conPantallaGuardada(annotate(nuevoId(world, 'anotacion'), sentido(sentidoElegido), fechaHora(anotada), contexto), pantalla));
 }
 
 const todas = (world: World): Annotation[] => [...world.anotaciones, ...world.anotacionesBorradas];

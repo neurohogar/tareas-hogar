@@ -46,7 +46,7 @@ const LECTORES: [RegExp, (a: Apertura, ...capturas: string[]) => void][] = [
 	[/^se pierde la conexión a los (.+) segundos$/, (a, s) => void (a.pierde = numero(s))],
 	[/^Auth responde enseguida$/, (a) => void (a.auth = 0)],
 	[/^Auth responde a los (.+) segundos$/, (a, s) => void (a.auth = numero(s))],
-	[/^(?:las tareas|los completados|las etiquetas) responden a los (.+) segundos$/, (a, s) => void a.datos.push(numero(s))],
+	[/^(?:las tareas|los completados) responden a los (.+) segundos$/, (a, s) => void a.datos.push(numero(s))],
 	[/^los datos responden a los (.+) segundos$/, (a, s) => void a.datos.push(numero(s))],
 	[/^(Atkinson|Noto) queda list[ao] a los (.+) segundos$/, (a, nombre, s) => void (fuenteDe(a, nombre).llega = numero(s))],
 	[/^(Atkinson|Noto) falla a los (.+) segundos$/, (a, nombre, s) => void (fuenteDe(a, nombre).falla = numero(s))],

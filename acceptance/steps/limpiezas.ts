@@ -1,11 +1,11 @@
-// Limpiezas y reintentos (spec §7). Las cuatro limpiezas comparten handler: la limpieza solo
+// Limpiezas y reintentos (spec §7). Las limpiezas comparten handler: la limpieza solo
 // nombra de qué elementos se trata. Los pasos declaran qué hay por limpiar y qué intentos fallan;
 // los Then preguntan qué quedó limpio y qué quedó por reintentar.
 import { expect } from 'vitest';
 import { itemsToAttempt, retriesWith, attemptResult, type AppEvent } from '../../src/lib/core/cleanups';
 import type { StepDefinition, World } from './world';
 
-const LIMPIEZAS = ['completados huérfanos', 'anotaciones huérfanas', 'referencias a etiquetas borradas', 'etiquetas duplicadas'];
+const LIMPIEZAS = ['completados huérfanos', 'anotaciones huérfanas'];
 
 interface Limpieza {
 	original: string[];

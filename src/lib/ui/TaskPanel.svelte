@@ -5,20 +5,17 @@
 	import { actionNotice, discardAndAct, saveAndAct, type NoticeAction } from '#lib/core/action-notice.ts';
 	import { changeOfAction, whatTheActionDoes, type PanelAction } from '#lib/core/panel-action.ts';
 	import { whatBackDoes, type OnTop } from '#lib/core/panel-back.ts';
-	import { hasChanges, type PanelForm, type PanelValues } from '#lib/core/unsaved-changes.ts';
+	import { hasChanges, type PanelForm } from '#lib/core/unsaved-changes.ts';
 	import { onClosePanel, CLOSE_NOTICE, type NoticeButton } from '#lib/core/unsaved-changes-notice.ts';
 	import type { TaskChange } from '#lib/core/task-document.ts';
-	import type { Label } from '#lib/core/label.ts';
 	import { taskName } from '#lib/core/task-name.ts';
-	import type { Weekday, Effort, Task, Unit } from '#lib/core/task.ts';
+	import type { Weekday, Task, Unit } from '#lib/core/task.ts';
 	import { takeBack } from '#lib/adapters/back.ts';
 	import { confirmOnLeave } from '#lib/adapters/confirm-on-leave.ts';
-	import { newId } from '#lib/adapters/ids.ts';
 	import { readRecents, rememberRecent } from '#lib/adapters/recents.ts';
 	import { now as currentTime } from '#lib/adapters/clock.ts';
 	import UnsavedChangesNotice from './UnsavedChangesNotice.svelte';
 	import TabBar from './TabBar.svelte';
-	import { NAME_MESSAGES } from './label-messages';
 	import ActionsSection from './ActionsSection.svelte';
 	import WhenSection, { type WindowRow } from './WhenSection.svelte';
 	import TaskSection from './TaskSection.svelte';
@@ -44,7 +41,6 @@
 		header,
 		initial,
 		task,
-		initialLabels = [],
 		lastTime,
 		onSave,
 		onClose,
@@ -59,8 +55,6 @@
 		initial?: TaskData;
 		/** Solo al editar: la tarea como estaba al abrir el panel. */
 		task?: Task;
-		/** Los nombres de las etiquetas que tiene la tarea que se edita. */
-		initialLabels?: string[];
 		/** Solo al editar: el texto de "Última vez" que calcula el core (§6.2). */
 		lastTime?: string;
 		/** Guarda el formulario; si algo es inválido devuelve los errores y el panel sigue abierto. */
@@ -69,7 +63,7 @@
 		/** Solo al editar: borra la tarea, ya confirmado. */
 		onDelete?: () => void;
 		/** Solo al editar: ejecuta una acción (con lo guardado, si pasó por el aviso) y cierra el panel. */
-		onAct?: (change: TaskChange, newLabels: Label[]) => void;
+		onAct?: (change: TaskChange) => void;
 		/** Solo al editar una periódica (§6.2): el botón que ofrece el core. */
 		pause?: 'pausar' | 'reanudar';
 		/** Solo al editar (§6.2): el botón que ofrece el core. */
@@ -90,14 +84,9 @@
 	let repetition = $state<RepetitionOption>(repetitionOnOpen(values));
 	let weekdays = $state<Weekday[]>(values?.shape === 'calendario' ? [...values.weekdays] : []);
 	let monthDays = $state<number[]>(values?.shape === 'calendario' ? [...values.monthDays] : []);
-	let labels = $state<string[]>(untrack(() => [...initialLabels]));
-	let labelsError = $state<string | undefined>(undefined);
-	/** El texto de Etiquetas que todavía no se confirmó. */
-	let unconfirmed = $state('');
 	let errors = $state<CreationErrors>({});
 	let confirmingDelete = $state(false);
 	let emoji = $state(untrack(() => initial?.emoji ?? ''));
-	let effort = $state<Effort | ''>(untrack(() => initial?.effort ?? ''));
 	/** "Solo en un horario": apagado, la tarea no tiene horario (§6.2). */
 	let withSchedule = $state(values?.schedule !== undefined);
 	/** Los pasos más (2, 3…), uno por campo; Agregar paso suma uno vacío (§6.2). */
@@ -134,7 +123,7 @@
 		const firstStep = String(fields.get('firstStep') ?? '');
 		const minimalVersion = String(fields.get('minimalVersion') ?? '');
 		const schedule = withSchedule ? windowRows.map(({ from, to }) => ({ from, to })) : undefined;
-		const common = { title: String(fields.get('title') ?? ''), emoji, note, firstStep, minimalVersion, steps: [...steps], schedule, ...(effort && { effort }) };
+		const common = { title: String(fields.get('title') ?? ''), emoji, note, firstStep, minimalVersion, steps: [...steps], schedule };
 		if (repetition === 'puntual') {
 			const dateField = form.elements.namedItem('dueDate') as HTMLInputElement;
 			return { shape: 'puntual', ...common, dueDate: dueDateOf(dateField) };
@@ -154,7 +143,7 @@
 	let openSection = $state<PanelSection>(TAB_ON_OPEN);
 	let content: HTMLDivElement;
 
-	const withError = $derived(fieldsWithError(errors, repetition, labelsError !== undefined));
+	const withError = $derived(fieldsWithError(errors, repetition));
 	const marked = $derived(markedSections(withError));
 
 	let keyboard = $state<KeyboardState>({ open: false, overlap: 0 });
@@ -189,13 +178,13 @@
 	const session = useSession();
 	let form: HTMLFormElement;
 	/** Los valores con que se abrió el panel; al crear, el formulario como se abre (§6.2). */
-	const onOpen: PanelValues = { data: values ?? DATA_ON_CREATE, labels: untrack(() => [...initialLabels]) };
+	const onOpen: PanelForm = { data: values ?? DATA_ON_CREATE };
 	let closeNoticeOpen = $state(false);
 	/** La acción cuyo aviso está abierto, con lo escrito al elegirla. */
 	let openAction = $state.raw<{ action: PanelAction; form: PanelForm } | undefined>(undefined);
 
 	function currentForm(): PanelForm {
-		return { data: taskDataFromForm(form), labels: [...labels], unconfirmed };
+		return { data: taskDataFromForm(form) };
 	}
 	const hasChangesNow = () => hasChanges(onOpen, currentForm());
 
@@ -208,8 +197,7 @@
 			task: session.tasks.find(({ id }) => id === taskWhenOpened.id) ?? taskWhenOpened,
 			completions: session.completions,
 			now,
-			form,
-			existings: session.labels
+			form
 		};
 	}
 	const shownActionNotice = $derived(openAction ? actionNotice(noticeContext(openAction, session.now)) : undefined);
@@ -220,7 +208,6 @@
 
 	function showErrors(newErrors: CreationErrors | undefined) {
 		errors = newErrors ?? {};
-		if (errors.labels) labelsError = NAME_MESSAGES[errors.labels];
 		const destination = destinationOnSaveFailure(withError, presentation);
 		if (destination) void goToField(destination);
 	}
@@ -243,7 +230,7 @@
 
 	function chooseAction(action: PanelAction) {
 		const typed = currentForm();
-		if (whatTheActionDoes(action, hasChanges(onOpen, typed)) === 'actúa') onAct?.(changeOfAction(action, currentTime()), []);
+		if (whatTheActionDoes(action, hasChanges(onOpen, typed)) === 'actúa') onAct?.(changeOfAction(action, currentTime()));
 		else openAction = { action, form: typed };
 	}
 
@@ -257,11 +244,11 @@
 		if (effect === 'descartar') {
 			openAction = undefined;
 			const change = discardAndAct(context);
-			if (change) onAct?.(change, []);
+			if (change) onAct?.(change);
 			return;
 		}
-		const result = saveAndAct(context, newId);
-		if (result.result === 'guardado') onAct?.(result.change, result.newLabels);
+		const result = saveAndAct(context);
+		if (result.result === 'guardado') onAct?.(result.change);
 		else if (result.result === 'rechazado') {
 			openAction = undefined;
 			showErrors(result.errors);
@@ -329,11 +316,7 @@
 				{errors}
 				{clearError}
 				bind:emoji
-				bind:effort
 				bind:steps
-				bind:labels
-				bind:labelsError
-				bind:unconfirmed
 				onOpenPicker={openPicker}
 			/>
 			<WhenSection

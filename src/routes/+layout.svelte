@@ -12,7 +12,7 @@
 	/** undefined mientras Auth todavía no respondió. */
 	let user = $state<User | null | undefined>(undefined);
 	const auth = $derived<AuthResponse>(user === undefined ? 'esperando' : user ? 'con-sesion' : 'sin-sesion');
-	let data = $state.raw<CollectionsResponded>({ tasks: false, completions: false, labels: false });
+	let data = $state.raw<CollectionsResponded>({ tasks: false, completions: false });
 	/** Spec §6.6: una sola vez por arranque; entrar con Google no la vuelve a mostrar. */
 	let loading = $state(true);
 

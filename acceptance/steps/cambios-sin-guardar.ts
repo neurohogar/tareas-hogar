@@ -12,7 +12,6 @@ import type { CommonData } from '../../src/lib/core/creation';
 import { createOneOff } from '../../src/lib/core/create-one-off';
 import { DATA_ON_CREATE, type TaskData } from '../../src/lib/core/task-data';
 import { applyChange, type TaskChange } from '../../src/lib/core/task-document';
-import { EFFORT_OPTIONS } from '../../src/lib/core/effort';
 import type { TypedSchedule } from '../../src/lib/core/schedule';
 import { POSTPONE_OPTIONS } from '../../src/lib/core/postponement';
 import type { Task } from '../../src/lib/core/task';
@@ -23,7 +22,6 @@ import {
 	cambiosAlEditar,
 	laTarea,
 	nuevoId,
-	nuevoIdDeEtiqueta,
 	recordarAntesDeMiCambio,
 	tareasDe,
 	type CambiosDelPanel,
@@ -56,7 +54,7 @@ function ventana(valor: string): TypedSchedule[number] {
 function contextoDeLaAccion(world: World, cambios: CambiosDelPanel, tareaAlAbrir: Task, accion: PanelAction): NoticeAction {
 	const tarea = tareasDe(world).find(({ id }) => id === tareaAlAbrir.id);
 	if (!tarea) throw new Error('La tarea del panel ya no existe');
-	return { action: accion, taskOnOpen: tareaAlAbrir, task: tarea, completions: world.completions, now: elMomento(cambios), form: cambios.form, existings: world.labels };
+	return { action: accion, taskOnOpen: tareaAlAbrir, task: tarea, completions: world.completions, now: elMomento(cambios), form: cambios.form };
 }
 
 /** Lo que hizo otro dispositivo o el paso del tiempo mientras el panel estaba abierto (§6.2, §7). */
@@ -90,8 +88,7 @@ const NOMBRES_DE_ENCIMA: Record<string, OnTop> = {
 	'el aviso de cierre': 'aviso de cierre',
 	'el aviso de acción': 'aviso de acción',
 	'la confirmación de Borrar tarea': 'confirmación de Borrar tarea',
-	'el selector de emoji': 'selector de emoji',
-	'las sugerencias de Etiquetas': 'sugerencias de Etiquetas'
+	'el selector de emoji': 'selector de emoji'
 };
 
 const LO_ABIERTO: Partial<Record<OnTop, string>> = {
@@ -107,8 +104,7 @@ const CAMPOS: Record<string, { lee: (f: PanelForm) => string | undefined; escrib
 	Título: { lee: (f) => f.data.title, escribe: (f, titulo) => ({ ...f, data: { ...f.data, title: titulo } }) },
 	Nota: { lee: (f) => f.data.note, escribe: (f, nota) => ({ ...f, data: { ...f.data, note: nota } }) },
 	'Primer paso': { lee: (f) => f.data.firstStep, escribe: (f, primerPaso) => ({ ...f, data: { ...f.data, firstStep: primerPaso } }) },
-	'Versión mínima': { lee: (f) => f.data.minimalVersion, escribe: (f, versionMinima) => ({ ...f, data: { ...f.data, minimalVersion: versionMinima } }) },
-	'Etiquetas sin confirmar': { lee: (f) => f.unconfirmed, escribe: (f, sinConfirmar) => ({ ...f, unconfirmed: sinConfirmar }) }
+	'Versión mínima': { lee: (f) => f.data.minimalVersion, escribe: (f, versionMinima) => ({ ...f, data: { ...f.data, minimalVersion: versionMinima } }) }
 };
 
 /** Los pasos más del panel: el campo «Paso N» (N ≥ 2) es el lugar N - 2 de `pasos` (§6.2). */
@@ -141,7 +137,7 @@ function cambioLosPasos(world: World, cambiar: (pasos: readonly string[], formul
 	cambios.form = { ...formulario, data: { ...formulario.data, steps: cambiar(formulario.data.steps ?? [], formulario) } };
 }
 
-const comunesDe = ({ title: titulo, emoji, note: nota, firstStep: primerPaso, steps: pasos, minimalVersion: versionMinima, schedule: horario, effort: esfuerzo }: TaskData): CommonData => ({ title: titulo, emoji, note: nota, firstStep: primerPaso, steps: pasos, minimalVersion: versionMinima, schedule: horario, effort: esfuerzo });
+const comunesDe = ({ title: titulo, emoji, note: nota, firstStep: primerPaso, steps: pasos, minimalVersion: versionMinima, schedule: horario }: TaskData): CommonData => ({ title: titulo, emoji, note: nota, firstStep: primerPaso, steps: pasos, minimalVersion: versionMinima, schedule: horario });
 
 /** Los campos de cada opción de "Se repite": los de la tarea si es de esa forma; si no, como al crear (§6.2). */
 const SE_REPITE: Record<string, { shape: TaskData['shape']; vacios: Partial<TaskData> }> = {
@@ -154,23 +150,12 @@ const SELECTORES: Record<string, (cambios: CambiosDelPanel, valor: string) => Ta
 		const { shape: forma, vacios } = deLaTabla(SE_REPITE, valor, 'Opción de Se repite');
 		const base = alAbrir.data.shape === forma ? alAbrir.data : { shape: forma, ...vacios };
 		return { ...base, ...comunesDe(formulario.data) } as TaskData;
-	},
-	Esfuerzo: ({ form: formulario }, valor) => {
-		// El paso nombra la opción sin la duración que la acompaña en pantalla: "Media", no "Media (≈ 15 min)".
-		const opcion = EFFORT_OPTIONS.find(({ text: texto }) => texto === valor || texto.startsWith(`${valor} (`));
-		if (!opcion) throw new Error(`Esfuerzo inválido: "${valor}"`);
-		return { ...formulario.data, effort: opcion.value };
 	}
 };
 
 function cambioElHorario(world: World, horario: TypedSchedule): void {
 	const cambios = elPanelAbierto(world);
 	cambios.form = { ...cambios.form, data: { ...cambios.form.data, schedule: horario } };
-}
-
-function cambioLasEtiquetas(world: World, cambiar: (etiquetas: readonly string[]) => string[]): void {
-	const cambios = elPanelAbierto(world);
-	cambios.form = { ...cambios.form, labels: cambiar(cambios.form.labels) };
 }
 
 // ---- Los avisos ----
@@ -229,30 +214,25 @@ function fallaGuardar(world: World, cambios: CambiosDelPanel, errores: World['er
 	cierroLoDeArriba(cambios);
 }
 
-const alGuardar = (world: World) => ({ existings: world.labels, newId: () => nuevoIdDeEtiqueta(world) });
-
 function guardoDesdeElCierre(world: World, cambios: CambiosDelPanel): void {
 	const { taskOnOpen: tareaAlAbrir, form: formulario } = cambios;
 	const actual = tareaAlAbrir && tareasDe(world).find(({ id }) => id === tareaAlAbrir.id);
 	if (actual) {
-		const edicion = editFromPanel(actual, formulario, alGuardar(world), elMomento(cambios));
+		const edicion = editFromPanel(actual, formulario, elMomento(cambios));
 		if (!edicion.ok) return fallaGuardar(world, cambios, edicion.errors);
-		world.labels = [...world.labels, ...edicion.newLabels];
 		return actuo(world, actual, edicion.change);
 	}
-	const creacion = createFromPanel(formulario, nuevoId(world, 'tarea'), elMomento(cambios), alGuardar(world));
+	const creacion = createFromPanel(formulario, nuevoId(world, 'tarea'), elMomento(cambios));
 	if (!creacion.ok) return fallaGuardar(world, cambios, creacion.errors);
-	world.labels = [...world.labels, ...creacion.newLabels];
 	world.documentos = [...world.documentos, creacion.task];
 	cierroElPanel(world);
 }
 
 function guardoYActuo(world: World, cambios: CambiosDelPanel, contexto: NoticeAction): void {
-	const resultado = saveAndAct(contexto, () => nuevoIdDeEtiqueta(world));
+	const resultado = saveAndAct(contexto);
 	if (resultado.result === 'rechazado') return fallaGuardar(world, cambios, resultado.errors);
 	if (resultado.result === 'aviso cerrado') return cierroLoDeArriba(cambios);
 	if (resultado.result === 'aviso actualizado') return;
-	world.labels = [...world.labels, ...resultado.newLabels];
 	actuo(world, contexto.task, resultado.change);
 }
 
@@ -407,14 +387,6 @@ export const cambiosSinGuardarSteps: StepDefinition[] = [
 	{
 		pattern: /^agrego una fila de horario vacía$/,
 		run: (world) => cambioElHorario(world, [...(elPanelAbierto(world).form.data.schedule ?? []), { from: '', to: '' }])
-	},
-	{
-		pattern: new RegExp(`^agrego la etiqueta ${P}$`),
-		run: (world, etiqueta) => cambioLasEtiquetas(world, (etiquetas) => [...etiquetas, etiqueta])
-	},
-	{
-		pattern: new RegExp(`^quito la etiqueta ${P}$`),
-		run: (world, etiqueta) => cambioLasEtiquetas(world, (etiquetas) => etiquetas.filter((nombre) => nombre !== etiqueta))
 	},
 	{
 		pattern: /^toco la X del panel$/,

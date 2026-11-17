@@ -5,14 +5,11 @@ import { getContext, setContext } from 'svelte';
 import type { Annotation, Sense } from '#lib/core/annotation.ts';
 import type { CreationErrors } from '#lib/core/creation.ts';
 import type { PanelForm } from '#lib/core/unsaved-changes.ts';
-import type { Color, Label } from '#lib/core/label.ts';
-import type { RenameError } from '#lib/core/label-management.ts';
 import type { Completion, Task } from '#lib/core/task.ts';
 
 export interface Session {
 	readonly tasks: Task[];
 	readonly completions: Completion[];
-	readonly labels: Label[];
 	readonly annotations: Annotation[];
 	/** El recuadro de Anotar (§5.10) está abierto. */
 	readonly annotating: boolean;
@@ -30,12 +27,6 @@ export interface Session {
 	deleteAnnotation(annotation: Annotation): void;
 	/** La hora actual; se actualiza sola. */
 	readonly now: Date;
-	/** El id de la etiqueta elegida en el filtro de Pendientes; sin él, "Todas". */
-	readonly filter: string | undefined;
-	chooseFilter(labelId: string | undefined): void;
-	/** Solo rápidas de Pendientes (§6.1): sigue al cambiar de pantalla, no al recargar. */
-	readonly quickOnly: boolean;
-	toggleQuickOnly(): void;
 	/** Tocar el checkbox de la fila (§6.1): completa la tarea (con el aviso) o borra su último completado. */
 	tapCheckbox(task: Task): void;
 	/** «Hice la mínima» de la fila (§6.1): completa la tarea como el checkbox, recordando que fue la mínima. */
@@ -50,11 +41,6 @@ export interface Session {
 	openTask(task: Task): void;
 	/** Borra un completado (deshacer desde el Historial), ya confirmado. */
 	deleteCompletion(completion: Completion): void;
-	/** Renombra la etiqueta; si el nombre es inválido o repetido devuelve el error. */
-	renameLabel(label: Label, typed: string): RenameError | undefined;
-	recolorLabel(label: Label, color: Color): void;
-	/** Borra la etiqueta (ya confirmado): se quita de todas las tareas. */
-	deleteLabel(label: Label): void;
 }
 
 const KEY = Symbol('sesion');

@@ -11,7 +11,6 @@ const ANCHO_MAXIMO_DE_CELULAR = 40;
 /** §6.2 Errores: la sección de cada campo, en el orden en que se ven los campos (§6.2 Tarea y Cuándo). */
 const SECCION_DEL_CAMPO: [string, string][] = [
 	['Título', 'Tarea'],
-	['Etiquetas', 'Tarea'],
 	['fecha límite', 'Cuándo'],
 	['Cada', 'Cuándo'],
 	['días', 'Cuándo'],
@@ -142,12 +141,9 @@ interface Formulario {
 	/** §4.1 (Versión mínima): una línea; Guardar la recorta y vacío es sin versión mínima. */
 	versionMinima: string;
 	repite: string;
-	esfuerzo: string;
 	/** Las ventanas tal como se escribieron; '' es una fila vacía. */
 	horarios: string[];
 	emoji: string;
-	etiquetas: string[];
-	sinConfirmar: string;
 }
 
 interface TareaGuardada {
@@ -174,16 +170,13 @@ interface MundoDeCambios {
 	eligioEmoji: boolean;
 }
 
-const FORMULARIO_AL_CREAR: Formulario = { titulo: '', nota: '', primerPaso: '', pasos: [], versionMinima: '', repite: 'No se repite', esfuerzo: 'Sin estimar', horarios: [], emoji: '', etiquetas: [], sinConfirmar: '' };
-const LO_DE_ARRIBA = ['nada', 'el aviso de cierre', 'el aviso de acción', 'la confirmación de Borrar tarea', 'el selector de emoji', 'las sugerencias de Etiquetas'];
+const FORMULARIO_AL_CREAR: Formulario = { titulo: '', nota: '', primerPaso: '', pasos: [], versionMinima: '', repite: 'No se repite', horarios: [], emoji: '' };
+const LO_DE_ARRIBA = ['nada', 'el aviso de cierre', 'el aviso de acción', 'la confirmación de Borrar tarea', 'el selector de emoji'];
 /** §6.2 Atrás: lo que no cuenta como algo abierto encima del panel. */
-const NO_CUENTA_COMO_ABIERTO = ['nada', 'las sugerencias de Etiquetas'];
-const OPCIONES_DEL_ESFUERZO = ['Sin estimar', 'Rápida', 'Media', 'Larga'];
+const NO_CUENTA_COMO_ABIERTO = ['nada'];
 const REPITE_QUE_CONOCE = ['No se repite', 'Intervalo'];
 const ACCIONES = ['pausar', 'reanudar', 'quitar posponer', 'posponer 1 hora', 'posponer 3 horas', 'posponer hasta mañana'];
 const OPCION_DE_POSPONER = /^posponer (.+)$/;
-/** §4.3: el nombre de una etiqueta tiene hasta 30 caracteres. */
-const LARGO_MAXIMO_DE_ETIQUETA = 30;
 const MENSAJE_DE_CAMBIOS = 'Tenés cambios sin guardar';
 /** El momento en que se crean las tareas de estos pasos: anterior a cualquier fecha del escenario (2000-01-01). */
 const CREADA_ANTES_DEL_ESCENARIO = new Date(2000, 0, 1).getTime();
@@ -196,22 +189,22 @@ const claveDeHorarios = (horarios: string[]) => [...horarios].sort().join(' ');
 /** §4.1 (Pasos): Guardar recorta cada paso, descarta los vacíos y los de abajo suben. */
 const pasosGuardados = (f: Formulario) => [f.primerPaso, ...f.pasos].map((paso) => paso.trim()).filter((paso) => paso !== '');
 
-/** §6.2: Guardar recorta el título, la nota, los pasos y la versión mínima y ordena las ventanas; las etiquetas no dependen del orden. */
+/** §6.2: Guardar recorta el título, la nota, los pasos y la versión mínima y ordena las ventanas. */
 const claveDeFormulario = (f: Formulario) =>
-	JSON.stringify([f.titulo.trim(), f.nota.trim(), pasosGuardados(f), f.versionMinima.trim(), f.repite, f.esfuerzo, claveDeHorarios(f.horarios), f.emoji, [...f.etiquetas].sort()]);
+	JSON.stringify([f.titulo.trim(), f.nota.trim(), pasosGuardados(f), f.versionMinima.trim(), f.repite, claveDeHorarios(f.horarios), f.emoji]);
 
-/** §6.2: lo que Guardar cambiaría, más el texto sin confirmar de Etiquetas salvo solo espacios. */
+/** §6.2: lo que Guardar cambiaría. */
 function hayCambios(m: MundoDeCambios): boolean {
 	const escrito = elEscrito(m);
 	if (!m.alAbrir) return indeciso('panel sin valores al abrir');
-	return escrito.sinConfirmar.trim() !== '' || claveDeFormulario(m.alAbrir) !== claveDeFormulario(escrito);
+	return claveDeFormulario(m.alAbrir) !== claveDeFormulario(escrito);
 }
 
-/** §4.1–§4.3: lo escrito se puede guardar. Intervalo sin Cada, si la tarea no era de intervalo, no. */
+/** §4.1 y §4.2: lo escrito se puede guardar. Intervalo sin Cada, si la tarea no era de intervalo, no. */
 function guardable(m: MundoDeCambios): boolean {
 	const f = elEscrito(m);
 	const cadaVacio = f.repite === 'Intervalo' && m.tarea?.intervalo === undefined;
-	return f.titulo.trim() !== '' && !f.horarios.includes('') && [...f.sinConfirmar.trim()].length <= LARGO_MAXIMO_DE_ETIQUETA && !cadaVacio;
+	return f.titulo.trim() !== '' && !f.horarios.includes('') && !cadaVacio;
 }
 
 /** §5.8: pasar a puntual reanuda. El estado de la tarea se recalcula con la definición nueva (§6.2). */
@@ -357,7 +350,7 @@ function abrirConLaTarea(m: MundoDeCambios, valores: Partial<Formulario> & { tit
 /** El formulario arranca con los valores al abrir; lo que se escribe no cambia esos valores. */
 function abrirCon(m: MundoDeCambios, alAbrir: Formulario): void {
 	m.alAbrir = alAbrir;
-	m.escrito = { ...alAbrir, pasos: [...alAbrir.pasos], horarios: [...alAbrir.horarios], etiquetas: [...alAbrir.etiquetas] };
+	m.escrito = { ...alAbrir, pasos: [...alAbrir.pasos], horarios: [...alAbrir.horarios] };
 }
 
 function ventanasValidas(primera: string, segunda: string): string[] {
@@ -381,14 +374,12 @@ function escribirEn(m: MundoDeCambios, campo: string, valor: string): void {
 	else if (campo === 'Primer paso') f.primerPaso = valor;
 	else if (campo === 'Versión mínima') f.versionMinima = valor;
 	else if (LUGAR_DE_PASO.test(campo)) f.pasos[lugarDelPaso(f, campo)] = valor;
-	else if (campo === 'Etiquetas sin confirmar') f.sinConfirmar = valor;
 	else indeciso(`campo ${campo}`);
 }
 
 function elegirEn(m: MundoDeCambios, selector: string, valor: string): void {
 	const f = elEscrito(m);
 	if (selector === 'Se repite' && REPITE_QUE_CONOCE.includes(valor)) f.repite = valor;
-	else if (selector === 'Esfuerzo' && OPCIONES_DEL_ESFUERZO.includes(valor)) f.esfuerzo = valor;
 	else indeciso(`selector ${selector}: ${valor}`);
 }
 
@@ -481,14 +472,6 @@ const PASOS_DE_CAMBIOS: [RegExp, (m: MundoDeCambios, ...grupos: string[]) => voi
 	[/^elijo (.+) en (.+)$/, (m, valor, selector) => elegirEn(m, selector, valor)],
 	[/^cambio los horarios a (.+) y (.+)$/, (m, a, b) => void (elEscrito(m).horarios = ventanasValidas(a, b))],
 	[/^agrego una fila de horario vacía$/, (m) => void elEscrito(m).horarios.push('')],
-	[/^agrego la etiqueta (.+)$/, (m, etiqueta) => void elEscrito(m).etiquetas.push(etiqueta)],
-	[
-		/^quito la etiqueta (.+)$/,
-		(m, etiqueta) => {
-			const f = elEscrito(m);
-			f.etiquetas = f.etiquetas.filter((nombre) => nombre !== etiqueta);
-		}
-	],
 	[/^toco la X del panel$/, cerrarConLaX],
 	[/^toco Atrás$/, tocarAtras],
 	[/^toco (.+) en el aviso el (.+)$/, (m, boton, momento) => ((m.ahora = momento), tocarEnElAviso(m, boton))],
@@ -517,7 +500,7 @@ function elAvisoAbierto(m: MundoDeCambios): { mensaje: string; botones: string[]
 	return (m.encima === 'el aviso de acción' ? avisoDeLaAccion(m) : undefined) ?? indeciso('no hay aviso');
 }
 
-const CAMPO_ESCRITO: Record<string, (f: Formulario) => string> = { Título: (f) => f.titulo, Nota: (f) => f.nota, 'Primer paso': (f) => f.primerPaso, 'Versión mínima': (f) => f.versionMinima, 'Etiquetas sin confirmar': (f) => f.sinConfirmar };
+const CAMPO_ESCRITO: Record<string, (f: Formulario) => string> = { Título: (f) => f.titulo, Nota: (f) => f.nota, 'Primer paso': (f) => f.primerPaso, 'Versión mínima': (f) => f.versionMinima };
 
 const siHayTarea = (m: MundoDeCambios, ver: (t: TareaGuardada) => string) => (m.tarea ? ver(m.tarea) : 'sin tarea');
 const instante = (valor: string) => String(fecha(valor) ?? indeciso(`fecha ${valor}`));

@@ -1,13 +1,10 @@
 <script lang="ts">
 	import { progressPercentage, type Status } from '#lib/core/status.ts';
-	import type { Label } from '#lib/core/label.ts';
-	import { effortText } from '#lib/core/effort.ts';
 	import { scheduleText } from '#lib/core/schedule.ts';
 	import { taskName } from '#lib/core/task-name.ts';
 	import type { StepButtons } from '#lib/core/current-step.ts';
 	import type { MinimalLine } from '#lib/core/minimal-version.ts';
 	import type { Task } from '#lib/core/task.ts';
-	import LabelChip from './LabelChip.svelte';
 
 	let {
 		task,
@@ -18,7 +15,6 @@
 		stepButtons,
 		minimal,
 		enabled,
-		labels,
 		onCheckboxTap,
 		onMinimal,
 		onDone,
@@ -39,8 +35,6 @@
 		minimal?: MinimalLine;
 		/** Spec §6.1 y §5.5: deshabilitado si tocarlo completaría fuera de la ventana del horario. */
 		enabled: boolean;
-		/** Las etiquetas de la tarea, ya en orden (§4.3). */
-		labels: Label[];
 		onCheckboxTap: () => void;
 		onMinimal: () => void;
 		onDone: () => void;
@@ -49,7 +43,6 @@
 	} = $props();
 
 	const name = $derived(taskName(task));
-	const level = $derived(effortText(task.effort));
 
 	function tap(event: Event) {
 		// Marcado se deriva de los completados: el checkbox vuelve a su valor hasta que llegan.
@@ -81,17 +74,6 @@
 				<p class="first-step">{minimal.text}</p>
 				<button type="button" class="step-button" disabled={!minimal.enabled} onclick={onMinimal}>Hice la mínima</button>
 			</div>
-		{/if}
-		{#if labels.length > 0}
-			<!-- Debajo del botón de la fila: tocar un chip es tocar la fila, no filtra. -->
-			<ul class="chips" aria-label="Etiquetas">
-				{#each labels as label (label.id)}
-					<LabelChip {label} />
-				{/each}
-			</ul>
-		{/if}
-		{#if level}
-			<span class="effort">{level}</span>
 		{/if}
 		{#if task.schedule}
 			<span class="schedule">{scheduleText(task.schedule)}</span>
@@ -169,11 +151,6 @@
 		cursor: not-allowed;
 	}
 
-	.effort {
-		font-size: 0.8rem;
-		color: var(--text-muted);
-	}
-
 	.paused-status {
 		font-size: 0.8rem;
 		color: var(--text-muted);
@@ -231,15 +208,6 @@
 		content: '';
 		position: absolute;
 		inset: 0;
-	}
-
-	.chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
 	}
 
 	.checkbox-area:has(input:disabled),

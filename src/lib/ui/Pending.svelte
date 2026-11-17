@@ -3,10 +3,6 @@
 	import { saveShowPaused, readShowPaused } from '#lib/adapters/show-paused.ts';
 	import { checkboxEnabled } from '#lib/core/checkbox.ts';
 	import type { PanelForm } from '#lib/core/unsaved-changes.ts';
-	import { taskLabels } from '#lib/core/task-labels.ts';
-	import { filterByLabel, activeFilter } from '#lib/core/label-filter.ts';
-	import { filterQuickOnly, emptyListText } from '#lib/core/quick-only.ts';
-	import { sortLabels } from '#lib/core/label-order.ts';
 	import { pendingRows } from '#lib/core/pending.ts';
 	import TaskRow from './TaskRow.svelte';
 	import TaskPanel from './TaskPanel.svelte';
@@ -14,20 +10,9 @@
 
 	const session = useSession();
 	let creating = $state(false);
-	const labels = $derived(sortLabels(session.labels));
-	const filter = $derived(activeFilter(session.filter, session.labels));
 	let showCompleted = $state(readShowCompleted());
 	let showPaused = $state(readShowPaused());
-	const rows = $derived(
-		filterQuickOnly(
-			filterByLabel(
-				pendingRows(session.tasks, session.completions, session.now, showCompleted, showPaused),
-				filter
-			),
-			session.quickOnly
-		)
-	);
-	const emptyText = $derived(rows.length === 0 ? emptyListText(filter, session.quickOnly) : undefined);
+	const rows = $derived(pendingRows(session.tasks, session.completions, session.now, showCompleted, showPaused));
 
 	function saveNew(form: PanelForm) {
 		const errors = session.create(form);
@@ -38,21 +23,7 @@
 
 <section>
 	<h1>Pendientes</h1>
-	{#if labels.length > 0}
-		<div class="filter" role="group" aria-label="Filtrar por etiqueta">
-			<button type="button" aria-pressed={filter === undefined} onclick={() => session.chooseFilter(undefined)}>Todas</button>
-			{#each labels as label (label.id)}
-				<button
-					type="button"
-					aria-pressed={filter === label.id}
-					style:--color-chip={`var(--label-${label.color})`}
-					onclick={() => session.chooseFilter(label.id)}>{label.name}</button
-				>
-			{/each}
-		</div>
-	{/if}
 	<div class="controls">
-		<button type="button" class="quick-only" aria-pressed={session.quickOnly} onclick={() => session.toggleQuickOnly()}>Solo rápidas</button>
 		<label class="show-completed">
 			<input type="checkbox" bind:checked={showCompleted} onchange={(event) => saveShowCompleted(event.currentTarget.checked)} />
 			Completadas
@@ -73,7 +44,6 @@
 				{stepButtons}
 				{minimal}
 				enabled={checkboxEnabled(task, session.completions, session.now)}
-				labels={taskLabels(task, session.labels)}
 				onCheckboxTap={() => session.tapCheckbox(task)}
 				onMinimal={() => session.doTheMinimal(task)}
 				onDone={() => session.tapDone(task)}
@@ -82,9 +52,6 @@
 			/>
 		{/each}
 	</ul>
-	{#if emptyText}
-		<p class="empty">{emptyText}</p>
-	{/if}
 	<button type="button" class="new" title="Nueva tarea" onclick={() => (creating = true)}>+</button>
 </section>
 
@@ -98,48 +65,12 @@
 		margin: 0.5rem 0 1rem;
 	}
 
-	.filter {
-		display: flex;
-		gap: 0.4rem;
-		margin-bottom: 0.75rem;
-		overflow-x: auto;
-		padding-bottom: 0.25rem;
-	}
-
 	.controls {
 		display: flex;
 		gap: 0.5rem;
 		align-items: center;
 		flex-wrap: wrap;
 		margin-bottom: 0.5rem;
-	}
-
-	.quick-only {
-		min-height: 36px;
-		padding: 0 0.85rem;
-		border: 1px solid var(--control-border);
-		border-radius: 999px;
-		background: transparent;
-		color: var(--text);
-		cursor: pointer;
-	}
-
-	.filter button {
-		flex: none;
-		min-height: 36px;
-		padding: 0 0.85rem;
-		border: 1px solid var(--control-border);
-		border-radius: 999px;
-		background: var(--color-chip, transparent);
-		color: var(--text);
-		cursor: pointer;
-	}
-
-	.filter button[aria-pressed='true'],
-	.quick-only[aria-pressed='true'] {
-		border-color: var(--accent);
-		box-shadow: inset 0 0 0 2px var(--accent);
-		font-weight: 600;
 	}
 
 	.show-completed {
@@ -156,10 +87,6 @@
 		height: 1.2rem;
 		margin: 0;
 		accent-color: var(--accent);
-	}
-
-	.empty {
-		color: var(--text-muted);
 	}
 
 	.list {
