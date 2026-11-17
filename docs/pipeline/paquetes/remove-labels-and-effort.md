@@ -4,6 +4,55 @@ Labels and the effort level leave the project. Tasks no longer have labels or an
 
 ## Specs
 
+Deleted from the spec (not S#): §4.1 rows `etiquetas` and `esfuerzo`; the whole of §4.3 Etiqueta and §6.4 Etiquetas (headings kept as «(eliminada)» so §4.4, §4.5, §6.5-§6.7 and every reference to them keep their numbers); §6.1 Filtro por etiqueta, Solo rápidas, label chips and effort level of the row; §6.2 Etiquetas and Esfuerzo fields; §7 `etiquetas` path, label merge/deleted-reference rules; §2 labels bullet; §10 criterion 6.
+
+- **S1** (§2): «- Tareas puntuales y periódicas (modo relativo y modo calendario).
+- Historial de todo lo completado, con deshacer.»
+- **S2** (§4.1): «Una línea con el primer movimiento concreto (ver más abajo). Cualquier tipo de tarea. |»
+- **S3** (§4.1): «No cambia el estado (§5) ni el orden de la lista, y el nombre de la tarea (abajo) sigue siendo emoji y título. No se ve en el Historial, en el aviso de deshacer, en Anotaciones ni en el texto copiado.»
+- **S4** (§4.1): «más pasos, opcionales y para cualquier tipo de tarea. El primer paso es el paso 1»
+- **S5** (§4.1): «Los pasos y su avance no cambian el estado (§5) ni el orden de la lista, y no se ven en el Historial»
+- **S6** (§4.1): «una sola línea, sin saltos de línea y sin largo máximo, para cualquier tipo de tarea («Solo el inodoro»).»
+- **S7** (§4.1): «La mínima no cambia el estado (§5) ni el orden de la lista, y el nombre de la tarea (abajo) sigue siendo emoji y título.»
+- **S8** (§4.3): «### 4.3 (eliminada)
+
+Esta sección ya no existe; la numeración de las demás no se corre para no romper las referencias.»
+- **S9** (§4.5): «Dónde estaba la persona (§5.10). `Etiquetas` solo lo tienen las anotaciones guardadas cuando esa pantalla existía: la app no lo vuelve a producir, y esas anotaciones se siguen mostrando y copiando con ese valor.»
+- **S10** (§4.5): «Una anotación no guarda ni la pestaña del panel ni escalas de ánimo.»
+- **S11** (§5.10): «en Pendientes, Historial, Anotaciones y el panel de edición (al crear y al editar)»
+- **S12** (§5.10): «si no, la pantalla donde está: Pendientes, Historial o Anotaciones.»
+- **S13** (§6): «una barra fija con tres pestañas, en este orden: **Pendientes** (ruta `/`), **Historial** (ruta `/historial`) y **Anotaciones** (ruta `/anotaciones`), sin contador ni marca de anotaciones nuevas.»
+- **S14** (§6): «La ruta `/etiquetas` ya no existe: abrirla (un favorito, el historial del navegador o recargar una pestaña que estaba ahí cuando llegó la versión nueva) abre Pendientes, reemplazando esa entrada del historial del navegador y sin aviso, así que **Atrás** no vuelve a ella.»
+- **S15** (§6): «todas las pantallas (Pendientes, Historial, Anotaciones, el panel y sus avisos, el selector de emoji con sus Recientes, el aviso de deshacer y la pantalla de entrada), también en campos y botones, y en los dos temas. Incluye un emoji pegado o tecleado en un título o una nota.»
+- **S16** (§6): «rige en todas las pantallas de la app instalada (Pendientes, Historial, Anotaciones, el panel y sus avisos, la pantalla de entrada y la pantalla de carga, §6.6), sin excepciones.»
+- **S17** (§6.1): «cada fila atenuada, con el texto "Pausada" en lugar del texto de atraso o de regreso y el checkbox deshabilitado. El valor se guarda en ese dispositivo, como "Mostrar completadas".»
+- **S18** (§6.1): «  - Encendido: después de las no completadas (en el orden de arriba) van las completadas, de la de `completadoEn` más reciente a la más antigua; si empatan, se aplican los mismos desempates de arriba.
+  - El valor se guarda **en ese dispositivo**»
+- **S19** (§6.1): «en el mismo tamaño y color de texto secundario que el horario, sin énfasis ni color propio. No se ve en las filas `en espera`»
+- **S20** (§6.1): «se ve en el mismo color y el mismo tamaño de texto secundario que el horario, sin rojo ni énfasis.»
+- **S21** (§6.2): «- Título, emoji y nota. El campo **Título** se ve en 20px (1.25rem)»
+- **S22** (§6.2): «Un campo vaciado o una fila de horario vacía sí cuentan, aunque sean inválidos. Esta es la única definición de "hay cambios"»
+- **S23** (§6.2): «Tocar cualquier campo con otro valor (por ejemplo **Se repite**) es cargar algo»
+- **S24** (§6.2): «El aviso de deshacer (§5.4) no cuenta: no se abre encima de nada, **Atrás** lo ignora y sigue sus 5 segundos. Con el teclado en pantalla abierto»
+- **S25** (§6.2): «Los diálogos de Historial (§6.3) no cambian con esta feature.»
+- **S26** (§6.2): «después el título con el emoji al lado (el botón de emoji junto al campo Título, con **Quitar emoji** debajo); el primer paso y los pasos más; la versión mínima; la nota.»
+- **S27** (§6.2): «cambiar de pestaña o de ancho no pierde nada de lo escrito. **Guardar** considera todas las secciones»
+- **S28** (§6.2): «sea cual sea su origen (al guardar); la marca dura lo que dura el mensaje y se distingue del icono de la pestaña. Los errores de Título son de **Tarea**;»
+- **S29** (§6.2): «Enter en un campo de una línea guarda y Enter en Nota agrega una línea; si ese guardado falla, valen las reglas de Errores.»
+- **S30** (§6.4): «### 6.4 (eliminada)
+
+Esta sección ya no existe; la numeración de las demás no se corre para no romper las referencias.»
+- **S31** (§6.6): «la respuesta de Auth y la **primera respuesta** de tareas y de completados (del caché local o de la red), y también la fuente»
+- **S32** (§7): «  - `users/{uid}/tareas/{tareaId}`
+  - `users/{uid}/completados/{completadoId}`
+  - `users/{uid}/anotaciones/{anotacionId}`»
+- **S33** (§7): «  - Tareas: **gana el último cambio, por campo**»
+- **S34** (§7): «`pasos` es un solo campo que se reemplaza entero, y `pasoActual` es otro campo independiente»
+- **S35** (§7): «las dos limpiezas de esta sección (completados huérfanos y anotaciones huérfanas) se reintentan»
+- **S36** (§7): «- **Datos que ya no se usan**: los documentos de tareas pueden seguir teniendo `etiquetas` y `esfuerzo`, y la colección `etiquetas` puede seguir existiendo, hasta que una migración aparte los borre. La app no los lee, no los muestra, no los escribe ni los borra: una edición escribe solo los campos que cambiaron, así que esos campos quedan intactos, y un cambio de tipo quita solo los campos de tipo. Las anotaciones no se tocan.»
+- **S37** (§10): «5. Puedo deshacer un completado desde el aviso o desde el historial.
+6. La app se instala como PWA en Android y abre sin conexión.»
+
 ## Decisions
 
 - D1 (2026-11-16, user, via orchestrator): labels (etiquetas) and the effort level (esfuerzo) are removed from the project entirely.
