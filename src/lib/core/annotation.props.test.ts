@@ -90,3 +90,23 @@ describe('editarTexto (propiedades)', () => {
 		);
 	});
 });
+
+describe('pantalla Etiquetas guardada (propiedades, spec §4.5)', () => {
+	it('una anotación nueva nunca queda en Etiquetas', () => {
+		fc.assert(
+			fc.property(sense, instant, screen, panel, text, (s, now, currentScreen, p, typedOne) => {
+				const done = annotate('a1', s, now, { screen: currentScreen, ...(p && { panel: p }) }, typedOne);
+				expect(done.screen).not.toBe('Etiquetas');
+			})
+		);
+	});
+
+	it('corregir el texto de una guardada en Etiquetas conserva su pantalla', () => {
+		fc.assert(
+			fc.property(instant, text, (at, typedOne) => {
+				const stored: Annotation = { id: 'a1', sense: 'Me sirvió', annotatedAt: at, screen: 'Etiquetas' };
+				expect(editText([stored], 'a1', typedOne)[0].screen).toBe('Etiquetas');
+			})
+		);
+	});
+});

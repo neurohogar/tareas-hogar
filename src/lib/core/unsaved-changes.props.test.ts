@@ -37,3 +37,13 @@ describe('hayCambios: propiedades (spec §6.2)', () => {
 		}));
 	});
 });
+
+describe('hayCambios sin etiquetas ni esfuerzo (propiedades, spec §6.2)', () => {
+	it('un valor de etiquetas o de esfuerzo en los datos no cambia la respuesta', () => {
+		const legacy = fc.record({ etiquetas: fc.array(fc.string({ maxLength: 3 }), { maxLength: 3 }), esfuerzo: fc.constantFrom('rapida', 'media', 'larga') });
+		fc.assert(fc.property(values, values, legacy, (a, b, extra) => {
+			const withExtra = { data: { ...b.data, ...extra } as TaskData };
+			expect(hasChanges(a, withExtra)).toBe(hasChanges(a, b));
+		}));
+	});
+});

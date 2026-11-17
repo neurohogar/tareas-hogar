@@ -108,3 +108,20 @@ describe('borrado y huérfanas de anotaciones (propiedades)', () => {
 		);
 	});
 });
+
+describe('anotaciones guardadas en Etiquetas (propiedades, spec §4.5)', () => {
+	const onLabels = fc.array(annotation, { maxLength: 6 }).map((as) => as.map((a, i): Annotation => ({ ...a, id: `e${i}`, screen: 'Etiquetas' })));
+
+	it('se siguen mostrando y copiando, con Etiquetas como su pantalla', () => {
+		fc.assert(
+			fc.property(tasks, onLabels, now, (ts, as, at) => {
+				const shown = annotationsOnScreen(ts, as, at).flatMap((g) => g.entries);
+				const visibleCount = visibleAnnotations(ts, as, oldestFirst).length;
+				expect(shown).toHaveLength(visibleCount);
+				const copied = annotationsText(ts, as);
+				expect(copied === undefined ? 0 : copied.split('\n').length).toBe(visibleCount);
+				for (const line of copied?.split('\n') ?? []) expect(line.split(' · ')).toContain('Etiquetas');
+			})
+		);
+	});
+});
