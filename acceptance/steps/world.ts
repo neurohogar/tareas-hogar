@@ -140,7 +140,7 @@ function cambiosAlAbrir(alAbrir: PanelForm, tareaAlAbrir?: Task, ahora?: Date): 
 }
 
 /** Spec §6.2: al editar, el panel se abre con los valores actuales de la tarea. */
-export function cambiosAlEditar(_world: World, tarea: Task, ahora?: Date): CambiosDelPanel {
+export function cambiosAlEditar(tarea: Task, ahora?: Date): CambiosDelPanel {
 	return cambiosAlAbrir({ data: taskData(tarea) }, tarea, ahora);
 }
 

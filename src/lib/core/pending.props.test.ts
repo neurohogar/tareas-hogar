@@ -45,7 +45,7 @@ describe('filasDePendientes (propiedades)', () => {
 			fc.property(tasks, completions, instant, (list, doneOnes, now) => {
 				const expectedValues = list
 					.map((task) => ({ task, status: taskStatus(task, doneOnes, now), completed: false }))
-					.filter(({ task, status }) => !isCompleted(task, doneOnes, now));
+					.filter(({ task }) => !isCompleted(task, doneOnes, now));
 				const byId = (a: { task: Task }, b: { task: Task }) => a.task.id.localeCompare(b.task.id);
 				const rows = pendingRows(list, doneOnes, now).map(({ task, status, completed }) => ({ task, status, completed }));
 				expect(rows.sort(byId)).toEqual(expectedValues.sort(byId));

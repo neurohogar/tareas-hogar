@@ -76,7 +76,7 @@ export const pausarSteps: StepDefinition[] = [
 		pattern: /^abro la tarea en el panel de edición$/,
 		run: (world) => {
 			const tarea = laTarea(world);
-			world.panel = { pausa: pauseAction(tarea), cambios: cambiosAlEditar(world, tarea) };
+			world.panel = { pausa: pauseAction(tarea), cambios: cambiosAlEditar(tarea) };
 		}
 	},
 	{

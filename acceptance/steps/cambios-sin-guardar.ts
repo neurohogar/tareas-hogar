@@ -41,7 +41,7 @@ function abroParaEditar(world: World, datos: CommonData): void {
 	registrarCreacion(world, (id) => createOneOff(datos, id, ANTES_DEL_ESCENARIO));
 	expect(world.errors).toBeUndefined();
 	const tarea = laTarea(world);
-	world.panel = { pausa: undefined, cambios: cambiosAlEditar(world, tarea) };
+	world.panel = { pausa: undefined, cambios: cambiosAlEditar(tarea) };
 }
 
 /** La ventana "HH:MM-HH:MM" de un paso. */

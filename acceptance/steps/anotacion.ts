@@ -143,7 +143,7 @@ export const anotacionSteps: StepDefinition[] = [
 		pattern: new RegExp(`^el panel de edición está abierto al editar la tarea ${TITULO}$`),
 		run: (world, titulo) => {
 			const tarea = laTareaTitulada(world, titulo);
-			world.panelDeAnotar = { taskId: tarea.id, cambios: cambiosAlEditar(world, tarea), documentosAlAbrir: structuredClone(world.documentos) };
+			world.panelDeAnotar = { taskId: tarea.id, cambios: cambiosAlEditar(tarea), documentosAlAbrir: structuredClone(world.documentos) };
 		}
 	},
 	{

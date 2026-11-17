@@ -83,7 +83,7 @@ export const posponerSteps: StepDefinition[] = [
 			world.panel = {
 				pausa: pauseAction(tarea),
 				posposicion: { boton: postponeAction(tarea, world.completions, ahora), text: postponementText(tarea, ahora) },
-				cambios: cambiosAlEditar(world, tarea, ahora)
+				cambios: cambiosAlEditar(tarea, ahora)
 			};
 		}
 	},

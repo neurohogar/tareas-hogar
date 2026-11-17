@@ -10,7 +10,7 @@
 // En ese caso los tests no pueden distinguirla: pasarían igual.
 // Si algún paso Then verifica otra cosa (valores, progreso, el completado
 // registrado), la mutación nunca se filtra.
-import type { Example, Feature, Scenario } from './ir';
+import type { Feature, Scenario } from './ir';
 import { clasificarFila, elementos, esCronologiaImposible, esEscenarioDeFuente, observarFuente, ordenDePendientes, type FilaOraculo, type PasoOraculo, type VistaDePendientes } from './oracle';
 import { esEscenarioDeCambios, esEscenarioDelPanel, observarCambios, observarPanel } from './oracle-panel';
 import { esEscenarioDeAnotaciones, esEscenarioDeLimpiezas, observarAnotaciones, observarLimpiezas } from './oracle-anotaciones';
