@@ -9,11 +9,9 @@
 # "Hay cambios" es cuando Guardar cambiaría algo respecto de los valores con
 # que se abrió el panel: escribir y volver al valor original no cuenta, ni los
 # espacios que Guardar recorta, ni el orden de las ventanas de horario; un
-# campo vaciado o una fila de horario vacía sí cuentan. Única excepción: el
-# texto sin confirmar de Etiquetas (campo "Etiquetas sin confirmar") cuenta
-# salvo que sean solo espacios. Se mide contra lo que tenía el panel al abrir,
+# campo vaciado o una fila de horario vacía sí cuentan. Se mide contra lo que tenía el panel al abrir,
 # no contra lo que escribió otro dispositivo. Al editar, la tarea se abre
-# puntual, sin esfuerzo, sin etiquetas y sin horario salvo que el paso diga
+# puntual y sin horario salvo que el paso diga
 # otra cosa. El aviso en sí se verifica en aviso-de-cierre.feature.
 Feature: Cambios sin guardar
 
@@ -29,7 +27,6 @@ Feature: Cambios sin guardar
       | titulo | nota | campo                   | valor     | abierto                         |
       | Pagar  | Luz  | Título                  | Pagar luz | el panel con el aviso de cierre |
       | Pagar  | Luz  | Nota                    | Gas       | el panel con el aviso de cierre |
-      | Pagar  | Luz  | Etiquetas sin confirmar | casa      | el panel con el aviso de cierre |
       | Pagar  | Luz  | Título                  | Pagar     | nada                            |
       | Pagar  | Luz  | Nota                    | Luz       | nada                            |
 
@@ -51,8 +48,7 @@ Feature: Cambios sin guardar
       | Pagar  | Luz  | Nota   | Gas       | Agua      | el panel con el aviso de cierre |
 
   # Cambios sin guardar 3
-  # Los espacios que Guardar recorta (título y nota) no cuentan; en el texto
-  # sin confirmar de Etiquetas los espacios alrededor no le quitan el valor.
+  # Los espacios que Guardar recorta (título y nota) no cuentan.
   Scenario Outline: Cambios sin guardar 3
     Given abro el panel para editar la tarea <titulo> con nota <nota>
     When escribo <valor> con espacios alrededor en el campo <campo>
@@ -65,7 +61,6 @@ Feature: Cambios sin guardar
       | Pagar  | Luz  | Título                  | Pagar luz | el panel con el aviso de cierre |
       | Pagar  | Luz  | Nota                    | Luz       | nada                            |
       | Pagar  | Luz  | Nota                    | Gas       | el panel con el aviso de cierre |
-      | Pagar  | Luz  | Etiquetas sin confirmar | casa      | el panel con el aviso de cierre |
 
   # Cambios sin guardar 4
   # Un campo vaciado cuenta, aunque sea inválido (un título vacío no se puede
@@ -82,8 +77,7 @@ Feature: Cambios sin guardar
       | Pagar  | Luz  | Nota   | el panel con el aviso de cierre |
 
   # Cambios sin guardar 5
-  # Solo espacios: en Título y Nota es un campo vaciado (cuenta); en el texto
-  # sin confirmar de Etiquetas no es nada (no cuenta).
+  # Solo espacios: en Título y Nota es un campo vaciado (cuenta).
   Scenario Outline: Cambios sin guardar 5
     Given abro el panel para editar la tarea <titulo> con nota <nota>
     When escribo solo espacios en el campo <campo>
@@ -94,7 +88,6 @@ Feature: Cambios sin guardar
       | titulo | nota | campo                   | abierto                         |
       | Pagar  | Luz  | Título                  | el panel con el aviso de cierre |
       | Pagar  | Luz  | Nota                    | el panel con el aviso de cierre |
-      | Pagar  | Luz  | Etiquetas sin confirmar | nada                            |
 
   # Cambios sin guardar 6
   # Elegir en un selector otro valor es un cambio; el mismo valor, no.
@@ -107,9 +100,7 @@ Feature: Cambios sin guardar
     Examples:
       | titulo | nota | selector  | valor        | abierto                         |
       | Pagar  | Luz  | Se repite | Intervalo    | el panel con el aviso de cierre |
-      | Pagar  | Luz  | Esfuerzo  | Media        | el panel con el aviso de cierre |
       | Pagar  | Luz  | Se repite | No se repite | nada                            |
-      | Pagar  | Luz  | Esfuerzo  | Sin estimar  | nada                            |
 
   # Cambios sin guardar 7
   # Las ventanas de horario se comparan ordenadas, como las guarda Guardar:
@@ -137,30 +128,6 @@ Feature: Cambios sin guardar
       | titulo | primero     | segundo     | abierto                         |
       | Pagar  | 08:00-10:00 | 12:00-14:00 | el panel con el aviso de cierre |
 
-  # Cambios sin guardar 9
-  # Agregar una etiqueta es un cambio; agregarla y quitarla, no.
-  Scenario Outline: Cambios sin guardar 9
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When agrego la etiqueta <etiqueta>
-    And toco la X del panel
-    Then queda abierto <abierto>
-
-    Examples:
-      | titulo | nota | etiqueta | abierto                         |
-      | Pagar  | Luz  | casa     | el panel con el aviso de cierre |
-
-  # Cambios sin guardar 10
-  Scenario Outline: Cambios sin guardar 10
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When agrego la etiqueta <etiqueta>
-    And quito la etiqueta <etiqueta>
-    And toco la X del panel
-    Then queda abierto <abierto>
-
-    Examples:
-      | titulo | nota | etiqueta | abierto |
-      | Pagar  | Luz  | casa     | nada    |
-
   # Cambios sin guardar 11
   # Al crear, "sin cambios" es que el formulario sigue como se abrió: tocar
   # cualquier campo con otro valor es cargar algo.
@@ -174,7 +141,6 @@ Feature: Cambios sin guardar
       | campo                   | valor | abierto                         |
       | Título                  | Pagar | el panel con el aviso de cierre |
       | Nota                    | Luz   | el panel con el aviso de cierre |
-      | Etiquetas sin confirmar | casa  | el panel con el aviso de cierre |
 
   # Cambios sin guardar 12
   # Al crear, Se repite viene con No se repite: elegir Intervalo es cargar algo.
@@ -187,7 +153,6 @@ Feature: Cambios sin guardar
     Examples:
       | selector  | valor     | abierto                         |
       | Se repite | Intervalo | el panel con el aviso de cierre |
-      | Esfuerzo  | Media     | el panel con el aviso de cierre |
 
   # Cambios sin guardar 13
   # Al crear, un formulario sin tocar, o con solo espacios, cierra directo.
@@ -201,7 +166,6 @@ Feature: Cambios sin guardar
       | campo                   | abierto |
       | Título                  | nada    |
       | Nota                    | nada    |
-      | Etiquetas sin confirmar | nada    |
 
   # Cambios sin guardar 14
   Scenario Outline: Cambios sin guardar 14
@@ -264,7 +228,6 @@ Feature: Cambios sin guardar
     Examples:
       | titulo | nota | campo                   | valor     | respuesta           |
       | Pagar  | Luz  | Título                  | Pagar luz | pide confirmación   |
-      | Pagar  | Luz  | Etiquetas sin confirmar | casa      | pide confirmación   |
       | Pagar  | Luz  | Título                  | Pagar     | no pregunta         |
 
   # Cambios sin guardar 19

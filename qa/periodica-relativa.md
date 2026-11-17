@@ -6,7 +6,7 @@ espera con su barra de progreso, avanzar el reloj y verla pendiente y luego
 atrasada. Cubre spec §4.2 (Relativa), §4.4, §5.2, §6.1 (subconjunto), §6.2
 (subconjunto), §6.5 y §7.
 
-Fuera de alcance: orden entre tareas, filtros, etiquetas, emoji, nota,
+Fuera de alcance: orden entre tareas, emoji, nota,
 deshacer, historial, edición y borrado.
 
 ## Entorno

@@ -13,7 +13,7 @@ Verifica, solo por la interfaz, el panel **Nueva tarea** / **Editar tarea** en e
 
 Cubre spec §6.2 (Presentación del panel) y las reglas de campos y acciones de §6.2, §5.8, §5.9, §5.4 y §7 en cuanto a dónde se ven.
 
-Fuera de alcance: las reglas de cada campo y acción (`qa/puntual.md`, `qa/periodica-relativa.md`, `qa/periodica-calendario.md`, `qa/horario.md`, `qa/etiquetas.md`, `qa/emoji-y-nota.md`, `qa/esfuerzo.md`, `qa/posponer.md`, `qa/pausar.md`, `qa/editar-borrar.md`), el aviso de cambios sin guardar y el botón Atrás de Android (`qa/cambios-sin-guardar.md`), y la orientación vertical.
+Fuera de alcance: las reglas de cada campo y acción (`qa/puntual.md`, `qa/periodica-relativa.md`, `qa/periodica-calendario.md`, `qa/horario.md`, `qa/emoji-y-nota.md`, `qa/posponer.md`, `qa/pausar.md`, `qa/editar-borrar.md`), el aviso de cambios sin guardar y el botón Atrás de Android (`qa/cambios-sin-guardar.md`), y la orientación vertical.
 
 ## Entorno
 
@@ -36,7 +36,7 @@ Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16, vie
 - **Marca de error de una pestaña**: un indicador distinto del icono, dentro de la pestaña, presente mientras algún campo de esa sección muestra un error y ausente cuando no hay ninguno (nombre accesible: "con errores").
 - **Contenido**: lo que hay bajo la barra; en el celular se ve el de la pestaña elegida y se desplaza dentro del panel. Al elegir una pestaña, el contenido empieza arriba (desplazamiento 0).
 - **Barra de Guardar**: una barra pegada al borde inferior del panel con el botón **Guardar** (solo texto, sin icono). Visible en todas las pestañas y en pantallas anchas.
-- **Sección Tarea**, de arriba abajo: "Pausada" (si corresponde), "Pospuesta hasta HH:MM" o "Pospuesta hasta mañana HH:MM" (si corresponde), "Última vez: …" (solo al editar); el campo **Título** con el botón de emoji a su lado (nombre accesible **Elegir emoji** si no hay emoji, sin texto visible; si hay, el emoji) y **Quitar emoji** debajo; **Nota**; **Esfuerzo**; **Etiquetas**.
+- **Sección Tarea**, de arriba abajo: "Pausada" (si corresponde), "Pospuesta hasta HH:MM" o "Pospuesta hasta mañana HH:MM" (si corresponde), "Última vez: …" (solo al editar); el campo **Título** con el botón de emoji a su lado (nombre accesible **Elegir emoji** si no hay emoji, sin texto visible; si hay, el emoji) y **Quitar emoji** debajo; **Nota**.
 - **Sección Cuándo**: **Se repite** con sus cuatro opciones (**No se repite**, **Intervalo**, **Días de la semana**, **Días del mes**) en una grilla de 2 columnas por 2 filas, y los campos de la opción elegida (fecha límite, **Cada**, días); después **Solo en un horario** con sus ventanas, **Agregar horario** y **Quitar**.
 - **Sección Acciones** (solo al editar): las opciones de posponer **1 hora**, **3 horas** y **Hasta mañana** visibles, sin botón **Posponer** (o, si está pospuesta, **Quitar posponer**); **Pausar** o **Reanudar** (solo una periódica); y al final, separado del resto y en el color de error, **Borrar tarea**. Cada una lleva un icono junto a su texto.
 - **Pantallas anchas**: sin `tablist`; las tres secciones seguidas, cada una con su nombre (**Tarea**, **Cuándo**, **Acciones**) como título sin icono; **Acciones** solo al editar. El panel mide lo de siempre (no ocupa todo el viewport).
@@ -49,7 +49,7 @@ Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16, vie
 Precondición: lista vacía, reloj en `2026-07-15T10:00:00`, viewport de celular.
 
 1. Tocar **+**: el panel **Nueva tarea** ocupa todo el viewport. Ningún campo tiene el foco y el teclado no está abierto.
-2. La barra de pestañas tiene **Tarea** y **Cuándo**, en ese orden, y no tiene **Acciones**. La pestaña **Tarea** está elegida y se ve el título, el emoji, la nota, el esfuerzo y las etiquetas; no se ve nada de **Cuándo**. **Guardar** está visible abajo.
+2. La barra de pestañas tiene **Tarea** y **Cuándo**, en ese orden, y no tiene **Acciones**. La pestaña **Tarea** está elegida y se ve el título, el emoji y la nota; no se ve nada de **Cuándo**. **Guardar** está visible abajo.
 3. Tocar **Cuándo**: se ve **Se repite** con las cuatro opciones en 2 filas de 2, **No se repite** elegida (la opción con la que abre el panel al crear), con **Fecha límite** vacía y sin **Cada**, y **Solo en un horario**. **Guardar** sigue visible. Tocar de nuevo **Tarea**.
 4. Deslizar horizontalmente el contenido no cambia de pestaña.
 5. Escribir `Regar` en el título, tocar **Cuándo**, elegir **Intervalo** (se ven **Cada** y la unidad) con **Cada** `2` **días**, y tocar **Guardar**: el panel se cierra y la lista tiene **Regar**.
@@ -57,10 +57,10 @@ Precondición: lista vacía, reloj en `2026-07-15T10:00:00`, viewport de celular
 
 ## Flujo 2: editar y las tres pestañas
 
-Precondición: lista vacía, reloj en `2026-07-15T10:00:00`, viewport de celular. Crear `Regar` con **Intervalo** cada `2` **horas**, emoji 🌱, nota `Las del balcón`, esfuerzo **Media (≈ 15 min)**, etiqueta `casa`, y completarla a las `2026-07-15T08:00:00` (para "Última vez"; a las 10:00 vuelve a estar pendiente, así ofrece posponer).
+Precondición: lista vacía, reloj en `2026-07-15T10:00:00`, viewport de celular. Crear `Regar` con **Intervalo** cada `2` **horas**, emoji 🌱, nota `Las del balcón`, y completarla a las `2026-07-15T08:00:00` (para "Última vez"; a las 10:00 vuelve a estar pendiente, así ofrece posponer).
 
 1. Tocar la fila **Regar**: el panel **Editar tarea** abre en **Tarea** (aunque antes se haya cerrado estando en otra pestaña). La barra tiene **Tarea**, **Cuándo** y **Acciones**.
-2. En **Tarea**, de arriba abajo: "Última vez: hoy 08:00"; el título `Regar` con el emoji 🌱 al lado y **Quitar emoji** debajo; la nota; el esfuerzo; las etiquetas. No hay "Pausada" ni "Pospuesta".
+2. En **Tarea**, de arriba abajo: "Última vez: hoy 08:00"; el título `Regar` con el emoji 🌱 al lado y **Quitar emoji** debajo; la nota. No hay "Pausada" ni "Pospuesta".
 3. Tocar **Cuándo**: **Intervalo** elegida (la de la tarea, no la inicial de crear), **Cada** `2` **horas**, y después **Solo en un horario** apagado.
 4. Tocar **Acciones**: las opciones **1 hora**, **3 horas** y **Hasta mañana** visibles (sin **Posponer**), **Pausar**, y al final, separado y en el color de error, **Borrar tarea**. Cada una con su icono; no hay **Quitar posponer** ni **Reanudar**.
 5. Tocar **1 hora**: el panel se cierra y **Regar** se ve pospuesta. Volver a abrirla: abre en **Tarea** y arriba dice "Pospuesta hasta 11:00"; en **Acciones** está **Quitar posponer** (en lugar de las tres opciones) y **Pausar**.
@@ -73,7 +73,7 @@ Precondición: lista vacía, reloj en `2026-07-15T10:00:00`, viewport de celular
 Precondición: lista vacía, viewport de celular. Crear una tarea y abrirla en edición.
 
 1. El panel ocupa todo el viewport. Anotar la posición del encabezado, de la barra de pestañas y de **Guardar**.
-2. En **Tarea**, agregar `casa`, `cocina`, `jardín`, `limpieza` y `compras` como etiquetas y una nota de 10 líneas, hasta que el contenido no entre. Desplazar el contenido hasta abajo: el encabezado, la barra de pestañas y **Guardar** están en la misma posición que en el paso 1 y ninguno queda tapado por el contenido.
+2. En **Tarea**, escribir una nota de 30 líneas, hasta que el contenido no entre. Desplazar el contenido hasta abajo: el encabezado, la barra de pestañas y **Guardar** están en la misma posición que en el paso 1 y ninguno queda tapado por el contenido.
 3. Tocar **Cuándo** y volver a **Tarea**: el contenido empieza arriba (desplazamiento 0) en cada pestaña, aunque antes se hubiera desplazado.
 4. En **Cuándo**, elegir **Días de la semana** con varias ventanas de horario (**Agregar horario** hasta 4) hasta que no entre: lo mismo, las tres barras fijas y el contenido se desplaza. Ningún control queda fuera del ancho (sin desplazamiento horizontal: `scrollWidth` = `clientWidth`), con 360 px y también con 320 px.
 
@@ -81,10 +81,10 @@ Precondición: lista vacía, viewport de celular. Crear una tarea y abrirla en e
 
 Precondición: lista vacía, viewport de celular, panel **Nueva tarea**.
 
-1. Escribir `Barrer` en el título y la nota `Con cuidado`; en **Etiquetas** escribir `cas` sin confirmar; tocar **Cuándo**, elegir **Días de la semana** con lunes y jueves y un horario de `08:00` a `10:00`.
-2. Tocar **Tarea**: el título dice `Barrer`, la nota `Con cuidado` y el campo **Etiquetas** conserva `cas`. Tocar **Cuándo**: lunes y jueves y el horario siguen.
-3. Cambiar el ancho del viewport a 1024 px: se ven seguidas las tres secciones con todo lo escrito, incluido `cas`. Volver a 360 px: el panel vuelve a las pestañas con lo mismo.
-4. Estando en **Cuándo**, tocar **Guardar**: se crea `Barrer` semanal con lunes y jueves, horario `08:00`-`10:00`, nota `Con cuidado` (sin etiqueta `cas`, porque no se confirmó). Es un solo guardado con todo lo de las dos pestañas.
+1. Escribir `Barrer` en el título y la nota `Con cuidado`; tocar **Cuándo**, elegir **Días de la semana** con lunes y jueves y un horario de `08:00` a `10:00`.
+2. Tocar **Tarea**: el título dice `Barrer`, la nota `Con cuidado`. Tocar **Cuándo**: lunes y jueves y el horario siguen.
+3. Cambiar el ancho del viewport a 1024 px: se ven seguidas las tres secciones con todo lo escrito. Volver a 360 px: el panel vuelve a las pestañas con lo mismo.
+4. Estando en **Cuándo**, tocar **Guardar**: se crea `Barrer` semanal con lunes y jueves, horario `08:00`-`10:00`, nota `Con cuidado`. Es un solo guardado con todo lo de las dos pestañas.
 5. Abrir `Barrer`, cambiar el título a `Barrer más` y tocar **Cerrar** y **Descartar** en el aviso: la lista sigue con `Barrer`. Abrirla, cambiar el título y tocar **Pausar** en **Acciones** (una semanal fuera de su día no ofrece posponer) y **Descartar y pausar** en el aviso: la tarea se pausa y el cambio del título no se guardó.
 
 ## Flujo 5: errores
@@ -93,10 +93,9 @@ Precondición: lista vacía, viewport de celular.
 
 1. Tocar **+**. Con el título vacío, tocar **Cuándo**, elegir **Intervalo**, dejar **Cada** vacío y activar **Solo en un horario** con `Desde` `10:00` y `Hasta` `09:00`. Tocar **Guardar**: el panel sigue abierto, salta a **Tarea** (la primera pestaña con error) y el contenido está en el campo **Título**, con su error a la vista. **Tarea** y **Cuándo** tienen la marca de error, distinta del icono.
 2. Escribir `Regar` en el título: la marca de **Tarea** desaparece en el acto (el error de Título se va); la de **Cuándo** sigue.
-3. En **Tarea**, escribir en **Etiquetas** un nombre de 31 caracteres: el error en vivo aparece bajo el campo y **Tarea** vuelve a tener la marca. Borrar caracteres hasta 30: la marca se va.
-4. Tocar **Guardar**: salta a **Cuándo** y el contenido está en el primer campo con error (**Cada**). Corregir **Cada** con `2` **días**: la marca de **Cuándo** sigue por el horario; arreglar el horario (`Hasta` `11:00`): la marca se va. Guardar: se crea.
-5. Con 1024 px de ancho, abrir **+**, dejar el título vacío y poner `Hasta` antes que `Desde`; tocar **Guardar**: no hay pestañas ni marcas, el panel sigue abierto y el contenido se desplaza hasta el campo **Título** con su error a la vista (aunque el horario también falle).
-6. Con 1024 px, abrir otra vez y dejar solo el horario inválido: se desplaza hasta el campo del horario.
+3. Tocar **Guardar**: salta a **Cuándo** y el contenido está en el primer campo con error (**Cada**). Corregir **Cada** con `2` **días**: la marca de **Cuándo** sigue por el horario; arreglar el horario (`Hasta` `11:00`): la marca se va. Guardar: se crea.
+4. Con 1024 px de ancho, abrir **+**, dejar el título vacío y poner `Hasta` antes que `Desde`; tocar **Guardar**: no hay pestañas ni marcas, el panel sigue abierto y el contenido se desplaza hasta el campo **Título** con su error a la vista (aunque el horario también falle).
+5. Con 1024 px, abrir otra vez y dejar solo el horario inválido: se desplaza hasta el campo del horario.
 
 ## Flujo 6: teclado en pantalla
 
@@ -107,7 +106,7 @@ Precondición: lista vacía, viewport de celular con emulación táctil.
 3. Tocar **Cuándo**, activar **Solo en un horario**, y tocar el campo **Desde** (selector de hora): la barra de **Guardar** sigue visible.
 4. Con el viewport de 1024 px (compu), tocar el título: la barra de **Guardar** sigue visible con el campo enfocado.
 5. Celular, en **Tarea**: teclado abierto, dejar el título vacío y pulsar Enter en el título: intenta guardar, falla y salta a **Tarea** con el error en **Título**; la barra de **Guardar** sigue oculta mientras el teclado esté abierto. Con el título `Regar`, Enter en el título guarda y crea la tarea.
-6. En **Nota**, Enter agrega una línea y no guarda. En **Etiquetas**, escribir `cas` con una sugerencia y pulsar Enter elige la sugerencia y no guarda.
+6. En **Nota**, Enter agrega una línea y no guarda.
 
 ## Flujo 7: iconos y nombres accesibles
 

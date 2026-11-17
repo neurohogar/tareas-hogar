@@ -13,7 +13,6 @@
 #     las completadas, de completadoEn más reciente a más antiguo; si
 #     empatan, creadaEn más antigua primero, después título en orden
 #     alfabético en español, después id (no observable).
-#   El filtro por etiqueta aplica también a las completadas.
 # Que el valor se guarde en el dispositivo y sobreviva a recargar, y el
 # contraste (negrita contra tachado y atenuado), se verifican en la suite QA.
 # Cada tarea se nombra por su título (una palabra). "Pendientes muestra en
@@ -114,31 +113,6 @@ Feature: Mostrar completadas
       | 2026-07-10T08:00:00 | 2026-07-15T08:00:00 | 2026-07-10T08:00:01 | 2026-07-15T08:00:00 | Planchar, Barrer |
       | 2026-07-10T08:00:01 | 2026-07-15T08:00:00 | 2026-07-10T08:00:00 | 2026-07-15T08:00:00 | Barrer, Planchar |
       | 2026-07-10T08:00:00 | 2026-07-15T08:00:00 | 2026-07-10T08:00:00 | 2026-07-15T08:00:00 | Barrer, Planchar |
-
-  # Mostrar completadas 5
-  # Encendido: el filtro por etiqueta aplica también a las completadas. Pagar
-  # (completada) y Foco tienen Cocina; Regar (completada, en espera) tiene
-  # Baño.
-  Scenario Outline: Mostrar completadas 5
-    Given Mostrar completadas está encendido
-    And una tarea puntual Foco sin fecha límite
-    And una tarea puntual Pagar sin fecha límite
-    And la tarea Pagar fue completada el <completada_pagar>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada_regar>
-    And existen las etiquetas <existentes>
-    And la tarea Pagar tiene las etiquetas <etiquetas_pagar>
-    And la tarea Regar tiene las etiquetas <etiquetas_regar>
-    And la tarea Foco tiene las etiquetas <etiquetas_foco>
-    And elegí el filtro <filtro>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
-
-    Examples:
-      | completada_pagar    | cada | unidad | completada_regar    | existentes             | etiquetas_pagar | etiquetas_regar | etiquetas_foco | filtro | ahora               | orden              |
-      | 2026-07-15T09:00:00 | 2    | dias   | 2026-07-15T08:00:00 | Cocina:rojo, Baño:gris | Cocina          | Baño            | Cocina         | Todas  | 2026-07-15T12:00:00 | Foco, Pagar, Regar |
-      | 2026-07-15T09:00:00 | 2    | dias   | 2026-07-15T08:00:00 | Cocina:rojo, Baño:gris | Cocina          | Baño            | Cocina         | Cocina | 2026-07-15T12:00:00 | Foco, Pagar        |
-      | 2026-07-15T09:00:00 | 2    | dias   | 2026-07-15T08:00:00 | Cocina:rojo, Baño:gris | Cocina          | Baño            | Cocina         | Baño   | 2026-07-15T12:00:00 | Regar              |
 
   # Mostrar completadas 6
   # Apagado: al completar una tarea, su fila desaparece de Pendientes.

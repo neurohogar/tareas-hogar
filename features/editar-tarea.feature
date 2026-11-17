@@ -5,7 +5,7 @@
 
 # Spec §6.2 (Editar), §4.1 y §4.2. Editar una tarea existente con el mismo
 # panel de creación: título, tipo (puntual ↔ periódica), fecha límite y
-# recurrencia (relativa, semanal o mensual). Emoji, nota y etiquetas quedan
+# recurrencia (relativa, semanal o mensual). Emoji y nota quedan
 # fuera de esta feature.
 # Valen las mismas validaciones que al crear: título no vacío (solo espacios
 # cuenta como vacío), fecha límite que existe en el calendario, N entero ≥ 1,

@@ -2,17 +2,17 @@
 
 Verifica, solo por la interfaz:
 
-- el botón **Anotar**, arriba y siempre en el mismo lugar, en Pendientes, Historial, Etiquetas, Anotaciones y el panel de edición, en celular y en pantalla ancha; y que no está en la pantalla de entrada ni en la de carga;
+- el botón **Anotar**, arriba y siempre en el mismo lugar, en Pendientes, Historial, Anotaciones y el panel de edición, en celular y en pantalla ancha; y que no está en la pantalla de entrada ni en la de carga;
 - el gesto de dos toques: el recuadro con el campo de texto y los dos botones de sentido, guardar con el texto escrito, la confirmación «Anotación guardada» y que la persona no elige el contexto;
 - que anotar no toca el panel ni la tarea, y que **Atrás** cierra el recuadro sin anotar (con el panel abierto y con el panel cerrado);
-- la cuarta pestaña **Anotaciones**: la barra de navegación, la lista agrupada por día, el contexto de cada anotación (pantalla y tarea con su nombre actual), el texto de vacío;
+- la tercera pestaña **Anotaciones** y que la ruta `/etiquetas` ya no existe y abre Pendientes: la barra de navegación, la lista agrupada por día, el contexto de cada anotación (pantalla y tarea con su nombre actual), el texto de vacío;
 - **Editar texto**, **Borrar** (con confirmación y Cancelar) y **Copiar**, también sin conexión;
 - el borrado de una tarea con sus anotaciones, y los casos de dos dispositivos (anotación sobre una tarea ya borrada, edición contra borrado);
 - que la app nunca pide una anotación: sin avisos, contadores ni marcas.
 
 Cubre spec §2, §3 (Anotación), §4.5, §5.10, §6 (navegación), §6.2 (Atrás y borrar tarea), §6.7 y §7.
 
-Fuera de alcance: las reglas de contexto con todos sus bordes de tiempo, el orden y el formato del texto copiado, que cubren los `.feature` (`features/anotar.feature`, `features/anotaciones.feature`, `features/copiar-anotaciones.feature`, `features/editar-anotacion.feature`, `features/borrar-anotacion.feature`, `features/anotaciones-de-tarea-borrada.feature`).
+Fuera de alcance: las reglas de contexto con todos sus bordes de tiempo, el orden y el formato del texto copiado, que cubren los `.feature` (`features/anotar.feature`, `features/anotaciones.feature`, `features/copiar-anotaciones.feature`, `features/editar-anotacion.feature`, `features/borrar-anotacion.feature`, `features/anotaciones-de-tarea-borrada.feature`). Las anotaciones guardadas antes de esta versión con la pantalla **Etiquetas** (la app ya no las produce) las cubren `features/anotaciones.feature` y `features/copiar-anotaciones.feature`.
 
 ## Entorno
 
@@ -29,14 +29,14 @@ Semana de referencia: miércoles 2026-07-15 (hoy), martes 14 (ayer).
 
 ## Contrato observable
 
-- **Botón Anotar**: un botón con nombre accesible **Anotar**, en la parte de arriba de la pantalla, en la misma posición en todas las pantallas (mismas coordenadas en Pendientes, Historial, Etiquetas y Anotaciones). Con el panel de edición abierto, también está visible en el panel o sobre él, y se puede tocar. No hay ajuste ni opción para ocultarlo.
+- **Botón Anotar**: un botón con nombre accesible **Anotar**, en la parte de arriba de la pantalla, en la misma posición en todas las pantallas (mismas coordenadas en Pendientes, Historial y Anotaciones). Con el panel de edición abierto, también está visible en el panel o sobre él, y se puede tocar. No hay ajuste ni opción para ocultarlo.
 - **Recuadro**: al tocar **Anotar** aparece un diálogo (rol `dialog`, nombre **Anotar**) con un campo de texto de una línea (rol `textbox`, etiqueta **Texto**, vacío al abrir) y dos botones, **Me sirvió** y **Me molestó**. No tiene otros campos ni selectores de pantalla o tarea.
 - **Segundo toque**: tocar **Me sirvió** o **Me molestó** guarda la anotación con el texto escrito y cierra el recuadro.
 - **Confirmación**: una región con rol `status` con el texto **Anotación guardada**, sin botones, que desaparece sola (con el reloj simulado: se ve al guardar y no se ve a los 5 s). Si hay un aviso de deshacer visible, los dos se ven a la vez.
-- **Navegación**: la barra (rol `navigation`) tiene cuatro enlaces, en este orden: **Pendientes** (`/`), **Historial** (`/historial`), **Etiquetas** (`/etiquetas`) y **Anotaciones** (`/anotaciones`), sin contador ni marca. El de la pantalla actual tiene `aria-current="page"`. Abrir `/anotaciones` directamente (o recargar ahí) muestra la pantalla Anotaciones.
+- **Navegación**: la barra (rol `navigation`) tiene tres enlaces, en este orden: **Pendientes** (`/`), **Historial** (`/historial`) y **Anotaciones** (`/anotaciones`), sin contador ni marca. El de la pantalla actual tiene `aria-current="page"`. Abrir `/anotaciones` directamente (o recargar ahí) muestra la pantalla Anotaciones.
 - **Pantalla Anotaciones**: encabezado **Anotaciones**.
   - Cada día con anotaciones es un grupo con un encabezado de nivel 2: **Hoy**, **Ayer** o la fecha en minúsculas ("martes 14 de julio"; con " de 2025" si el año no es el actual). Los grupos y las anotaciones van de la más reciente a la más antigua.
-  - Cada anotación (rol `listitem`) muestra la hora `HH:MM` en 24 h, el sentido (**Me sirvió** o **Me molestó**), la pantalla (**Pendientes**, **Historial**, **Etiquetas**, **Anotaciones** o **Panel de edición**), el nombre actual de la tarea («emoji título» o solo el título) si la hay y el texto si lo hay; y los botones **Editar texto** y **Borrar**.
+  - Cada anotación (rol `listitem`) muestra la hora `HH:MM` en 24 h, el sentido (**Me sirvió** o **Me molestó**), la pantalla (**Pendientes**, **Historial**, **Anotaciones** o **Panel de edición**), el nombre actual de la tarea («emoji título» o solo el título) si la hay y el texto si lo hay; y los botones **Editar texto** y **Borrar**.
   - Sin anotaciones muestra el texto **Todavía no hay anotaciones**.
   - Un único botón **Copiar** en la pantalla.
 - **Editar texto**: abre un campo de una línea con el texto actual (vacío si no tiene) y un botón **Guardar**; guardar cambia solo el texto de esa anotación.
@@ -50,7 +50,7 @@ Semana de referencia: miércoles 2026-07-15 (hoy), martes 14 (ayer).
 
 1. Abrir la app sin sesión. Ver la pantalla de entrada: no hay botón **Anotar**.
 2. Recargar con la respuesta de Auth del emulador demorada: mientras se ve la pantalla de carga no hay botón **Anotar**.
-3. Iniciar sesión. En celular (390 × 844), recorrer **Pendientes**, **Historial**, **Etiquetas** y **Anotaciones**: en cada una hay un botón **Anotar** arriba, en las mismas coordenadas que en las demás.
+3. Iniciar sesión. En celular (390 × 844), recorrer **Pendientes**, **Historial** y **Anotaciones**: en cada una hay un botón **Anotar** arriba, en las mismas coordenadas que en las demás.
 4. Repetir el recorrido en pantalla ancha (1280 × 800): el botón está en cada pantalla, arriba, en las mismas coordenadas entre pantallas.
 5. Tocar **+**: con el panel de creación abierto, el botón **Anotar** está visible y se puede tocar. Cerrar el panel con la **X**. Abrir una tarea (editar): también está.
 6. No existe ninguna opción para ocultar el botón (ni en pantallas ni en ajustes, si los hay).
@@ -63,13 +63,13 @@ Semana de referencia: miércoles 2026-07-15 (hoy), martes 14 (ayer).
 4. Tocar **Anotar** y tocar **Me molestó** sin escribir nada: se guarda sin texto (es válido) y aparece en la lista sin texto, con **Me molestó**.
 5. Tocar **Anotar**, escribir `   espacios   ` (con espacios a los lados) y tocar **Me molestó**: en la lista el texto es `espacios`. Repetir con solo espacios: queda sin texto.
 6. Tocar **Anotar** y escribir un texto de 300 caracteres: se guarda completo, sin error.
-7. Desde Historial, Etiquetas y Anotaciones, anotar una vez en cada una: cada anotación muestra su pantalla (**Historial**, **Etiquetas**, **Anotaciones**).
+7. Desde Historial y Anotaciones, anotar una vez en cada una: cada anotación muestra su pantalla (**Historial**, **Anotaciones**).
 
 ### Flujo 3: contexto con el panel y con el aviso
 
 1. Crear la tarea `Regar`. Tocar su fila para abrir el panel de edición y, con el panel abierto, tocar **Anotar**, tocar **Me sirvió**: la anotación, en **Anotaciones**, dice **Panel de edición** y nombra `Regar`.
 2. Abrir el panel de creación (**+**) y anotar: dice **Panel de edición** y no tiene tarea.
-3. Con el panel abierto desde Historial (tocar el título de una entrada), anotar: **Panel de edición**. El panel cubre la barra y solo se abre desde Pendientes o Historial, así que no existe sobre Etiquetas.
+3. Con el panel abierto desde Historial (tocar el título de una entrada), anotar: **Panel de edición**. El panel cubre la barra y solo se abre desde Pendientes o Historial.
 4. Cerrar el panel. A las 08:00 completar `Regar` (aparece el aviso con **Deshacer**); a las 08:00:04 anotar en Pendientes: la anotación dice **Pendientes** y nombra `Regar`. Anotar a las 08:00:05 con el aviso ya cerrado: sin tarea.
 5. Completar otra tarea `Pagar` y, con su aviso visible, abrir el panel de edición de `Regar` y anotar: la anotación nombra `Regar` (manda el panel). Con el panel de creación abierto y el aviso visible, anotar: sin tarea.
 6. Con el aviso de deshacer visible, anotar: al guardar se ve **Anotación guardada** y el aviso con **Deshacer** sigue visible (no lo tapa).
@@ -86,14 +86,14 @@ Semana de referencia: miércoles 2026-07-15 (hoy), martes 14 (ayer).
 1. En Pendientes, tocar **Anotar**, escribir `a medias` y tocar **Atrás**: el recuadro se cierra, no aparece **Anotación guardada** y la app sigue en Pendientes. La lista de Anotaciones no tiene la anotación. Tocar **Anotar** de nuevo: el campo está vacío.
 2. Tocar **Anotar**, escribir texto y cerrar el recuadro con la tecla `Escape`: se cierra sin guardar y sin preguntar.
 3. Con el panel de edición abierto, tocar **Anotar** y **Atrás**: se cierra el recuadro y el panel sigue abierto (el panel no se cierra con ese Atrás). Tocar **Atrás** otra vez: hace lo de siempre con el panel (cerrarlo, o el aviso de cambios sin guardar si los hay).
-4. En Historial, con el panel cerrado, tocar **Anotar** y **Atrás**: se cierra el recuadro y la app sigue en Historial. Hacer lo mismo en Etiquetas y Anotaciones.
+4. En Historial, con el panel cerrado, tocar **Anotar** y **Atrás**: se cierra el recuadro y la app sigue en Historial. Hacer lo mismo en Anotaciones.
 5. Con el panel cerrado, abrir y cerrar el recuadro con **Atrás** varias veces, y después tocar **Atrás** una vez más: sale de la pantalla como siempre (no hay un **Atrás** de más que no haga nada) y **Adelante** no reabre el recuadro ni el panel.
-6. Los diálogos de Historial (borrar un completado) y de Etiquetas (renombrar, borrar) se comportan como antes de la feature con **Atrás**.
+6. Los diálogos de Historial (borrar un completado) se comportan como antes de la feature con **Atrás**.
 
 ### Flujo 6: la pantalla Anotaciones
 
 1. Sin anotaciones, abrir **Anotaciones**: el texto **Todavía no hay anotaciones** y ninguna lista.
-2. Crear anotaciones (con el reloj): ayer 2026-07-14 21:30 en Etiquetas con texto `muy lento` (**Me sirvió**); hoy 08:05 en Pendientes, con tarea `Regar` (🌱) y texto `quedó lindo` (**Me sirvió**); hoy 09:10 en Historial, sin tarea y sin texto (**Me molestó**).
+2. Crear anotaciones (con el reloj): ayer 2026-07-14 21:30 en Historial con texto `muy lento` (**Me sirvió**); hoy 08:05 en Pendientes, con tarea `Regar` (🌱) y texto `quedó lindo` (**Me sirvió**); hoy 09:10 en Historial, sin tarea y sin texto (**Me molestó**).
 3. En **Anotaciones**: grupos **Hoy** (09:10 arriba, 08:05 abajo) y **Ayer** (21:30). Cada anotación muestra hora, sentido, pantalla; la de 08:05 muestra `🌱 Regar` y `quedó lindo`; la de 09:10 no muestra tarea ni texto.
 4. Avanzar el reloj al 2026-07-16 00:00: el grupo de las 08:05 y 09:10 pasa a **Ayer** y el de las 21:30 a `martes 14 de julio`. Avanzar a 2027-01-02: el encabezado lleva " de 2026".
 5. Renombrar `Regar` a `Plantas` desde su panel: la anotación de 08:05 muestra `🌱 Plantas` (nombre actual).
@@ -144,3 +144,12 @@ Semana de referencia: miércoles 2026-07-15 (hoy), martes 14 (ayer).
 
 1. Usar la app una semana simulada sin anotar (avanzar el reloj, completar tareas, abrir pantallas): no aparece ningún aviso, recordatorio, contador ni marca de «sin anotar», ni en la barra ni en el botón **Anotar**.
 2. Comparar el botón **Anotar** (su apariencia) sin anotaciones y con 20 anotaciones: es idéntico.
+
+### Flujo 14: la ruta /etiquetas ya no existe
+
+Precondición: sesión iniciada, reloj en `2026-07-15T08:00:00`, celular.
+
+1. Abrir `/historial`. Navegar directamente a `/etiquetas` (`page.goto`): se ve Pendientes, la dirección es `/`, el enlace **Pendientes** de la barra tiene `aria-current="page"` y no aparece ningún aviso ni mensaje de página inexistente.
+2. Tocar **Atrás** (`page.goBack()`): la app vuelve a Historial; no reaparece `/etiquetas` ni una pantalla vacía.
+3. En una pestaña nueva del mismo contexto (con la sesión iniciada), abrir `/etiquetas` como primera dirección: se ve Pendientes, la dirección es `/` y no hay ningún aviso.
+4. La barra tiene solo **Pendientes**, **Historial** y **Anotaciones**; no hay ningún enlace a Etiquetas.

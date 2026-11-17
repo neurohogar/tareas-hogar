@@ -103,8 +103,7 @@ Feature: Aviso de cierre
 
   # Aviso de cierre 7
   # Si Guardar falla por validación, no se cierra nada: el aviso se cierra y
-  # el panel sigue abierto con lo escrito; la tarea no cambia. Título vacío (y,
-  # en el escenario siguiente, un texto de Etiquetas de más de 30 caracteres).
+  # el panel sigue abierto con lo escrito; la tarea no cambia. Título vacío.
   Scenario Outline: Aviso de cierre 7
     Given abro el panel para editar la tarea <titulo> con nota <nota>
     When vacío el campo <campo>
@@ -116,19 +115,6 @@ Feature: Aviso de cierre
     Examples:
       | titulo | nota | campo  | boton   | abierto  | guardado |
       | Pagar  | Luz  | Título | Guardar | el panel | Pagar    |
-
-  # Aviso de cierre 8
-  Scenario Outline: Aviso de cierre 8
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo <valor> en el campo <campo>
-    And toco la X del panel
-    And toco <boton> en el aviso
-    Then queda abierto <abierto>
-    And la tarea tiene título <guardado>
-
-    Examples:
-      | titulo | nota | campo                   | valor                           | boton   | abierto  | guardado |
-      | Pagar  | Luz  | Etiquetas sin confirmar | abcdefghijklmnopqrstuvwxyz12345 | Guardar | el panel | Pagar    |
 
   # Aviso de cierre 9
   # Si otro dispositivo borra la tarea con el aviso abierto, se cierran el

@@ -8,7 +8,7 @@ nuevo selector. Cubre spec §4.1, §4.4, §5.1, §6.1 (subconjunto), §6.2
 (subconjunto) y §7.
 
 Fuera de alcance: orden entre tareas, historial, deshacer (aviso y desde el
-historial), volver a la lista, edición, borrado, etiquetas, emoji y nota.
+historial), volver a la lista, edición, borrado, emoji y nota.
 
 ## Entorno
 

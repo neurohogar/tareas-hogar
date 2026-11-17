@@ -5,7 +5,7 @@
 
 # Spec §4.1 (Versión mínima), con §6.2 y §7. Un campo opcional `versionMinima`
 # con una versión chica de la tarea («Solo el inodoro»), para cualquier tipo
-# de tarea y cualquier esfuerzo. Una sola línea, sin largo máximo; al guardar
+# de tarea. Una sola línea, sin largo máximo; al guardar
 # se recortan los espacios del inicio y del final; vacío o solo espacios es
 # sin versión mínima (el campo no se guarda). Nunca es inválida: no rechaza la
 # creación ni la edición. Una tarea guardada sin el campo no tiene versión
@@ -47,20 +47,6 @@ Feature: Versión mínima
     Examples:
       | titulo | dias           | minima           | titulo_guardado | minima_guardada  |
       | Basura | martes, jueves | Solo la de la cocina | Basura      | Solo la de la cocina |
-
-  # Versión mínima 4
-  # Con cualquier esfuerzo, también sin estimar.
-  Scenario Outline: Versión mínima 4
-    Given una tarea puntual sin fecha límite con esfuerzo <esfuerzo>
-    When edito la versión mínima a <minima>
-    Then la tarea tiene versión mínima <minima_guardada>
-
-    Examples:
-      | esfuerzo    | minima          | minima_guardada |
-      | sin estimar | Solo el inodoro | Solo el inodoro |
-      | rapida      | Solo el inodoro | Solo el inodoro |
-      | media       | Solo el inodoro | Solo el inodoro |
-      | larga       | Solo el inodoro | Solo el inodoro |
 
   # Versión mínima 5
   # Al guardar se recortan los espacios del inicio y del final.

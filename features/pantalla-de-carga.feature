@@ -6,7 +6,7 @@
 # Spec §6.6 (Pantalla de carga) y §7 (preferencias locales). Cuándo se va la
 # pantalla de carga según lo que espera, y qué recuerda el dispositivo de un tope
 # con Noto sin bajar. Los tiempos cuentan en segundos desde que la app arranca.
-# "Los datos" son tareas, completados y etiquetas juntos; una fuente guardada queda
+# "Los datos" son tareas y completados juntos; una fuente guardada queda
 # lista desde el dispositivo, y una sin guardar solo puede venir por red. Un valor
 # de 30 segundos es algo que no llega antes del tope. Cuándo aparece, qué se ve, el
 # nombre accesible, el movimiento reducido y el tema se verifican en la suite QA
@@ -14,36 +14,33 @@
 Feature: Pantalla de carga
 
   # Pantalla de carga 1
-  # Con sesión espera Auth, las tres colecciones y las dos fuentes, con un mínimo de
-  # 0,5 s y un tope de 10 s para todo menos Auth. Las filas 1, 8 y 9 son los ejemplos del spec.
+  # Con sesión espera Auth, las dos colecciones y las dos fuentes, con un mínimo de
+  # 0,5 s y un tope de 10 s para todo menos Auth. Las filas 1, 7 y 8 son los ejemplos del spec.
   Scenario Outline: Pantalla de carga 1
     Given la app arranca con sesión
     And Auth responde a los <auth> segundos
     And las tareas responden a los <tareas> segundos
     And los completados responden a los <completados> segundos
-    And las etiquetas responden a los <etiquetas> segundos
     And Atkinson queda lista a los <atkinson> segundos
     And Noto queda listo a los <noto> segundos
     Then la pantalla de carga se va a los <salida> segundos
 
     Examples:
-      | auth | tareas | completados | etiquetas | atkinson | noto | salida |
-      | 0.1  | 0.2    | 0.2         | 0.2       | 0.2      | 0.2  | 0.5    |
-      | 0.1  | 0.6    | 0.1         | 0.1       | 0.1      | 0.1  | 0.6    |
-      | 0.1  | 0.1    | 0.7         | 0.1       | 0.1      | 0.1  | 0.7    |
-      | 0.1  | 0.1    | 0.1         | 0.8       | 0.1      | 0.1  | 0.8    |
-      | 0.1  | 0.1    | 0.1         | 0.1       | 0.9      | 0.1  | 0.9    |
-      | 0.1  | 0.1    | 0.1         | 0.1       | 0.1      | 1    | 1      |
-      | 2    | 0.1    | 0.1         | 0.1       | 0.1      | 0.1  | 2      |
-      | 0.1  | 3      | 3           | 3         | 2        | 6    | 6      |
-      | 0.1  | 1      | 1           | 1         | 1        | 30   | 10     |
-      | 0.1  | 30     | 1           | 1         | 1        | 1    | 10     |
-      | 0.1  | 1      | 30          | 1         | 1        | 1    | 10     |
-      | 0.1  | 1      | 1           | 30        | 1        | 1    | 10     |
-      | 0.1  | 1      | 1           | 1         | 30       | 1    | 10     |
-      | 0.1  | 1      | 1           | 1         | 1        | 9.9  | 9.9    |
-      | 12   | 1      | 1           | 1         | 1        | 1    | 12     |
-      | 12   | 1      | 1           | 1         | 1        | 30   | 12     |
+      | auth | tareas | completados | atkinson | noto | salida |
+      | 0.1  | 0.2    | 0.2         | 0.2      | 0.2  | 0.5    |
+      | 0.1  | 0.6    | 0.1         | 0.1      | 0.1  | 0.6    |
+      | 0.1  | 0.1    | 0.7         | 0.1      | 0.1  | 0.7    |
+      | 0.1  | 0.1    | 0.1         | 0.9      | 0.1  | 0.9    |
+      | 0.1  | 0.1    | 0.1         | 0.1      | 1    | 1      |
+      | 2    | 0.1    | 0.1         | 0.1      | 0.1  | 2      |
+      | 0.1  | 3      | 3           | 2        | 6    | 6      |
+      | 0.1  | 1      | 1           | 1        | 30   | 10     |
+      | 0.1  | 30     | 1           | 1        | 1    | 10     |
+      | 0.1  | 1      | 30          | 1        | 1    | 10     |
+      | 0.1  | 1      | 1           | 30       | 1    | 10     |
+      | 0.1  | 1      | 1           | 1        | 9.9  | 9.9    |
+      | 12   | 1      | 1           | 1        | 1    | 12     |
+      | 12   | 1      | 1           | 1        | 30   | 12     |
 
   # Pantalla de carga 2
   # Sin sesión espera Auth y solo Atkinson; Noto sigue bajando detrás.

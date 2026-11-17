@@ -8,8 +8,8 @@
 # deja el panel como estaba: el aviso de cierre o de acción equivale a Seguir
 # editando, la confirmación de Borrar tarea a cancelar y el selector de emoji
 # se cierra sin elegir. Con el panel solo arriba, Atrás lo cierra; con cambios
-# sin guardar abre el aviso de cierre. El aviso de deshacer y las sugerencias
-# de Etiquetas no cuentan como algo abierto. Con el teclado en pantalla
+# sin guardar abre el aviso de cierre. El aviso de deshacer no cuenta como
+# algo abierto. Con el teclado en pantalla
 # abierto, el primer Atrás lo cierra el sistema y el panel sigue igual. Atrás
 # no muestra la confirmación del navegador. Qué queda abierto lo da "queda
 # abierto". Que Atrás no salga de la pantalla (Pendientes o Historial) y lo que
@@ -36,8 +36,7 @@ Feature: Atrás del panel
 
   # Atrás del panel 2
   # Con el panel solo arriba: sin cambios lo cierra directo; con cambios abre
-  # el aviso de cierre. Las sugerencias de Etiquetas no cuentan como algo
-  # abierto.
+  # el aviso de cierre.
   Scenario Outline: Atrás del panel 2
     Given el panel está abierto <cambios>
     And encima del panel hay <encima>
@@ -48,7 +47,6 @@ Feature: Atrás del panel
       | cambios                  | encima                           | abierto                         |
       | sin cambios              | nada                             | nada                            |
       | con cambios sin guardar  | nada                             | el panel con el aviso de cierre |
-      | con cambios sin guardar  | las sugerencias de Etiquetas     | el panel con el aviso de cierre |
 
   # Atrás del panel 3
   # El aviso de deshacer no cuenta: Atrás lo ignora y el aviso sigue.

@@ -14,7 +14,7 @@ Verifica, solo por la interfaz:
 
 Cubre spec §4.1 (horario y varios horarios), §5.5, §5.6, §5.7, §6.1 (horario en la fila, checkbox fuera de la ventana, orden), §6.2 (campo Horario) y §7 (conflictos por campo).
 
-Fuera de alcance: los estados sin horario (`qa/puntual.md`, `qa/periodica-relativa.md`, `qa/periodica-calendario.md`), el Historial más allá de borrar un completado (`qa/historial-deshacer.md`) y las etiquetas (`qa/etiquetas.md`).
+Fuera de alcance: los estados sin horario (`qa/puntual.md`, `qa/periodica-relativa.md`, `qa/periodica-calendario.md`), el Historial más allá de borrar un completado (`qa/historial-deshacer.md`).
 
 ## Entorno
 

@@ -7,10 +7,10 @@ instante, sobrevive a una recarga y sincroniza solo al reconectar, y que una
 escritura pendiente no se pierde si se recarga antes de que llegue al
 servidor. Cubre spec §2 (sin conexión y sync), §6.5 (abre directo, también sin
 conexión), §7 (caché persistente multi-pestaña, sync al reconectar), §8 (PWA:
-manifest + service worker) y §10 criterios 1, 4 y 7.
+manifest + service worker) y §10 criterios 1, 4 y 6.
 
 Fuera de alcance: las reglas de conflicto entre dispositivos (ya cubiertas en
-`qa/editar-borrar.md` y `qa/etiquetas.md`); cualquier indicador visual de "sin
+`qa/editar-borrar.md`); cualquier indicador visual de "sin
 conexión" o "pendiente de sincronizar" (el spec no lo define: QA no lo exige ni
 lo prohíbe); qué pasa con una versión nueva del service worker; abrir sin
 conexión sin haber iniciado sesión nunca; el aspecto del ícono, el nombre y los
@@ -54,8 +54,7 @@ Igual que `qa/editar-borrar.md`:
 - **Aviso de conexión**: texto visible "Sin conexión" mientras el contexto
   está sin conexión; sin él con conexión. No hay contador de pendientes.
 - **Fila y pantallas**: el contrato de fila de `qa/periodica-relativa.md`, el
-  de Historial de `qa/historial-deshacer.md` y el de etiquetas de
-  `qa/etiquetas.md`.
+  de Historial de `qa/historial-deshacer.md`.
 
 ## Flujo 1: PWA instalable
 
@@ -74,7 +73,7 @@ Igual que `qa/editar-borrar.md`:
    **Pendientes**, sin pantalla de login y sin error de red, y muestra la fila
    **Regar**.
 3. Abrir `/historial` por URL directa y recargar, aún sin conexión: se ve el
-   Historial (vacío: "Todavía no completaste nada"). Lo mismo con `/etiquetas`
+   Historial (vacío: "Todavía no completaste nada"). Lo mismo con `/anotaciones`
    y sus textos.
 4. Cerrar la página, abrir una pestaña nueva en la raíz, todavía sin conexión:
    abre directo en **Pendientes** con **Regar**.

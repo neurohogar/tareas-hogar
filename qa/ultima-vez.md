@@ -9,7 +9,7 @@ Verifica, solo por la interfaz:
 
 Cubre spec §6.2 (Última vez), con §5.2 (relojes desfasados), §5.4 (deshacer) y §6.3 (formato de la fecha y abrir el panel desde el Historial).
 
-Fuera de alcance: los estados y el orden (`qa/periodica-relativa.md`, `qa/orden-pendientes.md`), el contenido del Historial (`qa/historial-deshacer.md`), etiquetas, emoji, nota y PWA.
+Fuera de alcance: los estados y el orden (`qa/periodica-relativa.md`, `qa/orden-pendientes.md`), el contenido del Historial (`qa/historial-deshacer.md`), emoji, nota y PWA.
 
 ## Entorno
 

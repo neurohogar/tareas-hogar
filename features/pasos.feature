@@ -42,21 +42,6 @@ Feature: Pasos
       | titulo | dias           | pasos                                  | titulo_guardado | pasos_guardados                        |
       | Basura | martes, jueves | Atar la bolsa llena, Bajar la basura   | Basura          | Atar la bolsa llena, Bajar la basura   |
 
-  # Pasos 4
-  # Con cualquier esfuerzo, también sin estimar.
-  Scenario Outline: Pasos 4
-    Given una tarea puntual sin fecha límite con esfuerzo <esfuerzo>
-    And el primer paso de la tarea es <primer_paso>
-    When edito el paso 2 a <paso>
-    Then la tarea tiene los pasos <pasos_guardados>
-
-    Examples:
-      | esfuerzo    | primer_paso            | paso                | pasos_guardados                            |
-      | sin estimar | Separar la ropa blanca | Poner el lavarropas | Separar la ropa blanca, Poner el lavarropas |
-      | rapida      | Separar la ropa blanca | Poner el lavarropas | Separar la ropa blanca, Poner el lavarropas |
-      | media       | Separar la ropa blanca | Poner el lavarropas | Separar la ropa blanca, Poner el lavarropas |
-      | larga       | Separar la ropa blanca | Poner el lavarropas | Separar la ropa blanca, Poner el lavarropas |
-
   # Pasos 5
   # Al guardar se recortan los espacios del inicio y del final de cada paso.
   Scenario Outline: Pasos 5
@@ -339,7 +324,7 @@ Feature: Pasos
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | Buscar el detergente | Juntar las llaves | Separar la ropa blanca, Juntar las llaves, Tender la ropa |
 
   # Pasos 26
-  # `pasos` es un solo campo que se reemplaza entero, como etiquetas: dos
+  # `pasos` es un solo campo que se reemplaza entero: dos
   # ediciones de pasos distintos no se mezclan; gana la lista del último
   # cambio en llegar, que parte de lo que ese dispositivo veía.
   Scenario Outline: Pasos 26

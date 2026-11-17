@@ -8,7 +8,7 @@ próxima. Cubre spec §4.2 (Semanal, Mensual), §4.4, §5.3, §6.1 (subconjunto)
 §6.2 (subconjunto) y §7.
 
 Fuera de alcance: orden entre tareas, edición de la recurrencia, historial,
-deshacer, etiquetas, emoji, nota y borrado.
+deshacer, emoji, nota y borrado.
 
 ## Entorno
 

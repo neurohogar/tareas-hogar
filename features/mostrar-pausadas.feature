@@ -10,7 +10,6 @@
 #     mayúsculas ni acentos, ñ después de n), sin importar su urgencia ni
 #     su creadaEn.
 #   Una pausada no está completada: no va con las completadas.
-#   El filtro por etiqueta aplica también a las pausadas.
 # Que el valor se guarde en el dispositivo y sobreviva a recargar, y la
 # fila atenuada con "Pausada" en lugar del indicador de estado, se
 # verifican en la suite QA.
@@ -126,26 +125,6 @@ Feature: Mostrar pausadas
       | Barrer   | Árbol      | Árbol, Barrer      |
       | Zapallo  | acelga     | acelga, Zapallo    |
       | Cocina   | Dormitorio | Cocina, Dormitorio |
-
-  # Mostrar pausadas 6
-  # Encendido: el filtro por etiqueta aplica también a las pausadas.
-  Scenario Outline: Mostrar pausadas 6
-    Given Mostrar pausadas está encendido
-    And una tarea puntual Foco sin fecha límite
-    And una tarea periódica relativa Regar nunca completada
-    And la tarea Regar fue pausada
-    And existen las etiquetas <existentes>
-    And la tarea Foco tiene las etiquetas <etiquetas_foco>
-    And la tarea Regar tiene las etiquetas <etiquetas_regar>
-    And elegí el filtro <filtro>
-    When consulto Pendientes en cualquier momento
-    Then Pendientes muestra en orden <orden>
-
-    Examples:
-      | existentes             | etiquetas_foco | etiquetas_regar | filtro | orden       |
-      | Cocina:rojo, Baño:gris | Cocina         | Baño            | Todas  | Foco, Regar |
-      | Cocina:rojo, Baño:gris | Cocina         | Baño            | Cocina | Foco        |
-      | Cocina:rojo, Baño:gris | Cocina         | Baño            | Baño   | Regar       |
 
   # Mostrar pausadas 7
   # Apagado: al pausar una tarea, su fila desaparece de Pendientes.

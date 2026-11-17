@@ -11,11 +11,11 @@
 # se presenta "en pestañas" (con pantalla completa); por encima, "en secciones
 # seguidas". "El panel ofrece las secciones" da las pestañas de la barra, de
 # izquierda a derecha, y "la pestaña abierta" la que se ve al abrir.
-# Los campos con error son Título y Etiquetas (sección Tarea) y fecha límite,
-# Cada, días y horario (sección Cuándo). Cuando el guardado falla, el panel
+# El campo con error de la sección Tarea es Título; los de Cuándo son fecha límite,
+# Cada, días y horario. Cuando el guardado falla, el panel
 # salta a la primera pestaña con error (Tarea antes que Cuándo, solo en
 # pestañas: "ninguna" si no las hay) y se desplaza hasta el primer campo con
-# error, en el orden en que se ven los campos: Título, Etiquetas, fecha
+# error, en el orden en que se ven los campos: Título, fecha
 # límite, Cada, días, horario. "Las secciones marcadas" son las que mientras
 # dure el error se distinguen en la barra de pestañas, "ninguna" si no hay.
 # "ninguno" en una lista de campos es que no hay errores.
@@ -59,14 +59,12 @@ Feature: Panel en pestañas
       | campos                | marcadas    |
       | ninguno               | ninguna     |
       | Título                | Tarea       |
-      | Etiquetas             | Tarea       |
       | fecha límite          | Cuándo      |
       | Cada                  | Cuándo      |
       | días                  | Cuándo      |
       | horario               | Cuándo      |
-      | Título, Etiquetas     | Tarea       |
       | Título, horario       | Tarea, Cuándo |
-      | Etiquetas, días       | Tarea, Cuándo |
+      | Título, días          | Tarea, Cuándo |
 
   # Panel en pestañas 4
   # Guardar falla: en el celular salta a la primera pestaña con error (Tarea
@@ -82,14 +80,13 @@ Feature: Panel en pestañas
       | ancho | campos            | pestana | campo      |
       | 22.5  | horario           | Cuándo  | horario    |
       | 22.5  | Título            | Tarea   | Título     |
-      | 22.5  | Etiquetas, Título | Tarea   | Título     |
-      | 22.5  | horario, Etiquetas| Tarea   | Etiquetas  |
+      | 22.5  | horario, Título   | Tarea   | Título     |
       | 22.5  | horario, días     | Cuándo  | días       |
       | 22.5  | fecha límite      | Cuándo  | fecha límite |
       | 22.5  | Cada, horario     | Cuándo  | Cada       |
       | 40    | horario, Título   | Tarea   | Título     |
       | 40.1  | horario, Título   | ninguna | Título     |
-      | 80    | Etiquetas, días   | ninguna | Etiquetas  |
+      | 80    | Título, días      | ninguna | Título     |
       | 80    | horario           | ninguna | horario    |
 
   # Panel en pestañas 5

@@ -10,7 +10,7 @@ dispositivos. Cubre spec §4.1–§4.2, §5.1–§5.3, §6.1 (tocar la fila), §
 §7 (ediciones parciales, borrado, edición contra borrado, completados
 huérfanos).
 
-Fuera de alcance: emoji, nota, etiquetas, historial y deshacer, PWA y
+Fuera de alcance: emoji, nota, historial y deshacer, PWA y
 funcionamiento offline más allá de los flujos de dos dispositivos. Que el
 borrado se lleve también los completados solo se ve en el Historial, que
 todavía no existe; lo cubre `features/borrar-tarea.feature`.

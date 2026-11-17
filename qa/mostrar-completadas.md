@@ -6,12 +6,11 @@ Verifica, solo por la interfaz:
 - qué cuenta como completada: la puntual con un completado y la periódica en espera con un completado, pero no la semanal en espera antes de su primera ocurrencia;
 - el contraste: no completadas en negrita; completadas tachadas, en peso normal, atenuadas y con el checkbox marcado;
 - tocar el checkbox de una completada: en una puntual, o en una periódica cuyo completado más reciente es de hoy (o posterior), lo borra sin aviso nuevo; en una periódica cuyo completado más reciente es de un día anterior, la completa de nuevo, con aviso;
-- el filtro por etiqueta aplicado a las completadas;
 - que el valor del check se guarda en el dispositivo, sobrevive a recargar y no se sincroniza con otro dispositivo.
 
 Cubre spec §5.1, §5.2–§5.3 (completar de nuevo), §5.4 (deshacer con el checkbox) y §6.1 (Mostrar completadas, Contraste, checkbox de la fila).
 
-Fuera de alcance: el orden por urgencia de las no completadas (`qa/orden-pendientes.md`), el Historial más allá de contar entradas (`qa/historial-deshacer.md`) y la gestión de etiquetas (`qa/etiquetas.md`).
+Fuera de alcance: el orden por urgencia de las no completadas (`qa/orden-pendientes.md`), el Historial más allá de contar entradas (`qa/historial-deshacer.md`).
 
 ## Entorno
 
@@ -24,7 +23,7 @@ Como en `qa/historial-deshacer.md`, salvo el check **Mostrar completadas**, que 
   - "Avanzar el reloj a X" significa adelantarlo hasta X y esperar a que la pantalla se actualice sola (sin recargar), salvo que el paso diga "recargar".
   - Con "reloj detenido" (`page.clock.pauseAt`), el reloj se adelanta con `page.clock.runFor` o `fastForward` hasta la hora exacta, para que el tiempo no corra mientras QA actúa.
 - Sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de `qa/periodica-relativa.md`).
-- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite** que indica el paso y guardar, con los controles de `qa/puntual.md` y `qa/periodica-calendario.md`. Agregar etiquetas con el campo **Etiquetas** de `qa/etiquetas.md`.
+- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite** que indica el paso y guardar, con los controles de `qa/puntual.md` y `qa/periodica-calendario.md`.
 - **Dos dispositivos** (Flujos 5, 6 y 8): dos contextos de navegador independientes, A y B, con la misma cuenta y el mismo reloj simulado. "B sin conexión" significa `browserContext.setOffline(true)` en B; "B vuelve a tener conexión", volverlo online y esperar a que las dos pantallas se actualicen solas.
 
 Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16, viernes 17, sábado 18.
@@ -58,19 +57,17 @@ Precondición: lista vacía, reloj en `2026-07-15T08:00:00` (miércoles).
    - La lista es **Regar plantas**, **Sacar la basura**, **Cambiar foco**.
    - La opacidad efectiva del título de **Cambiar foco** es menor que la del de **Regar plantas**.
 
-## Flujo 2: orden de las completadas y filtro por etiqueta
+## Flujo 2: orden de las completadas
 
 Precondición: lista vacía, reloj en `2026-07-15T08:00:00` (miércoles). Tocar el check **Mostrar completadas** (queda marcado).
 
-1. A las `08:00`, crear `Pagar la luz` (**No se repite**, sin fecha límite) con la etiqueta `Casa`. A las `08:01`, crear `Ventilar` (**Intervalo** cada `4` **horas**) con la etiqueta `Patio`. A las `08:02`, crear `Barrer` (**No se repite**, sin fecha límite) con la etiqueta `Casa`. A las `08:03`, crear `Lavar ropa` (**No se repite**, sin fecha límite) sin etiquetas.
+1. A las `08:00`, crear `Pagar la luz` (**No se repite**, sin fecha límite). A las `08:01`, crear `Ventilar` (**Intervalo** cada `4` **horas**). A las `08:02`, crear `Barrer` (**No se repite**, sin fecha límite). A las `08:03`, crear `Lavar ropa` (**No se repite**, sin fecha límite).
 2. A las `09:00`, completar **Barrer**. A las `09:30`, completar **Ventilar**. A las `10:00`, completar **Pagar la luz**.
-   - Con **Todas**, la lista es **Lavar ropa**, **Pagar la luz**, **Ventilar**, **Barrer**: la no completada y después las completadas, de la más reciente a la más antigua (no por cuándo se crearon).
+   - La lista es **Lavar ropa**, **Pagar la luz**, **Ventilar**, **Barrer**: la no completada y después las completadas, de la más reciente a la más antigua (no por cuándo se crearon).
    - **Lavar ropa** en negrita; las otras tres tachadas, con el checkbox marcado.
-3. Tocar **Casa** en el filtro: la lista es **Pagar la luz**, **Barrer**, las dos completadas.
-4. Tocar **Patio**: la lista es **Ventilar**, completada.
-5. Tocar **Todas**. Avanzar el reloj a `2026-07-15T13:30:00`: **Ventilar** vuelve a `pendiente` y deja de ser completada.
+3. Avanzar el reloj a `2026-07-15T13:30:00`: **Ventilar** vuelve a `pendiente` y deja de ser completada.
    - La lista es **Ventilar**, **Lavar ropa**, **Pagar la luz**, **Barrer**.
-6. Recargar: el check sigue marcado, **Todas** está elegido y la lista es la misma.
+4. Recargar: el check sigue marcado y la lista es la misma.
 
 ## Flujo 3: tocar el checkbox de una completada
 

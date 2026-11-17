@@ -13,7 +13,7 @@ periódicas de calendario que todavía no llegaron a su primera ocurrencia. El
 lugar de las completadas con el check encendido se verifica en
 `qa/mostrar-completadas.md`.
 
-Fuera de alcance: filtro por etiqueta, chips, edición, borrado, historial y
+Fuera de alcance: edición, borrado, historial y
 deshacer.
 
 ## Entorno

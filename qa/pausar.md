@@ -4,7 +4,7 @@ Verifica, solo por la interfaz:
 
 - el botón **Pausar** / **Reanudar** del panel: aparece solo al editar una periódica, actúa en el momento (guarda y cierra el panel sin **Guardar**) y, con la tarea pausada, el panel dice "Pausada";
 - que una pausada no se ve en Pendientes con **Mostrar pausadas** apagado, y que no se atrasa mientras está pausada;
-- el check **Mostrar pausadas**: las pausadas van al final (después de las completadas), por título, atenuadas, con "Pausada" en lugar del indicador de estado y el checkbox deshabilitado; el filtro por etiqueta; el valor se guarda en el dispositivo y no se sincroniza;
+- el check **Mostrar pausadas**: las pausadas van al final (después de las completadas), por título, atenuadas, con "Pausada" en lugar del indicador de estado y el checkbox deshabilitado; el valor se guarda en el dispositivo y no se sincroniza;
 - reanudar: la relativa queda `pendiente`; la de calendario queda `pendiente` si hoy toca y, si no, `en espera` hasta la próxima ocurrencia; con horario, una ventana que ya cerró al reanudar no la deja `atrasada`;
 - que los completados de antes de la pausa siguen en el Historial y en "Última vez", pero no cuentan para el estado después de reanudar;
 - pasar una periódica pausada a puntual la reanuda;
@@ -22,7 +22,7 @@ Fuera de alcance: el orden por urgencia de las no pausadas (`qa/orden-pendientes
   - "A las X" significa adelantar el reloj simulado hasta X antes del paso.
   - "Avanzar el reloj a X" significa adelantarlo hasta X y esperar a que la pantalla se actualice sola (sin recargar).
   - Con "reloj detenido" (`page.clock.pauseAt`), el reloj se adelanta con `page.clock.runFor` o `fastForward` hasta la hora exacta, para que el tiempo no corra mientras QA actúa.
-- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite** que indica el paso, con los controles de `qa/puntual.md`, `qa/periodica-relativa.md` y `qa/periodica-calendario.md`; si el paso da un horario, cargarlo como en `qa/horario.md`; si da etiquetas, como en `qa/etiquetas.md`; guardar.
+- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite** que indica el paso, con los controles de `qa/puntual.md`, `qa/periodica-relativa.md` y `qa/periodica-calendario.md`; si el paso da un horario, cargarlo como en `qa/horario.md`; guardar.
 - **Mostrar completadas** y **Mostrar pausadas** quedan apagados salvo que el flujo diga encenderlos.
 - **Dos dispositivos** (Flujo 7): dos contextos de navegador independientes, A y B, con la misma cuenta y el mismo reloj simulado. "B sin conexión" significa `browserContext.setOffline(true)` en B; "B vuelve a tener conexión", volverlo online y esperar a que las dos pantallas se actualicen solas.
 
@@ -87,18 +87,17 @@ Precondición: lista vacía, reloj detenido en `2026-07-10T09:00:00` (viernes). 
 5. Avanzar el reloj a `2026-07-17T11:00:00`: `atrasada` (con el checkbox deshabilitado: la ventana ya cerró).
 6. Pausarla. A las `2026-07-22T09:00:00` (miércoles, dentro de la ventana), reanudarla: `pendiente`, checkbox habilitado. Avanzar el reloj a `2026-07-22T11:00:00` sin completarla: `atrasada` (la ventana estaba abierta al reanudar).
 
-## Flujo 5: Mostrar pausadas, orden y filtro
+## Flujo 5: Mostrar pausadas y orden
 
 Precondición: lista vacía, reloj en `2026-07-15T08:00:00` (miércoles).
 
-1. Crear, en este orden: `Ñandú` con **Intervalo** cada `1` **días** y la etiqueta `Patio`; `Nube` con **Intervalo** cada `1` **días** y la etiqueta `Casa`; `Árbol` con **Días de la semana** `lunes` y la etiqueta `Patio`; `Pagar la luz` con **No se repite**, sin fecha límite y la etiqueta `Casa`; `Cambiar foco` con **No se repite** y sin fecha límite.
+1. Crear, en este orden: `Ñandú` con **Intervalo** cada `1` **días**; `Nube` con **Intervalo** cada `1` **días**; `Árbol` con **Días de la semana** `lunes`; `Pagar la luz` con **No se repite** y sin fecha límite; `Cambiar foco` con **No se repite** y sin fecha límite.
 2. Completar **Pagar la luz**. Pausar **Ñandú**, **Nube** y **Árbol**. La lista es **Cambiar foco**.
 3. Encender **Mostrar pausadas**: la lista es **Cambiar foco**, **Árbol**, **Nube**, **Ñandú** (las pausadas al final, por título: la Á con la A, la ñ después de la n; no por cuándo se crearon).
 4. Encender **Mostrar completadas**: la lista es **Cambiar foco**, **Pagar la luz**, **Árbol**, **Nube**, **Ñandú**: las pausadas después de la completada. **Pagar la luz** se ve completada (tachada, checkbox marcado); las tres pausadas, con "Pausada" y el checkbox deshabilitado.
-5. Tocar **Casa** en el filtro: la lista es **Pagar la luz**, **Nube**. Tocar **Patio**: la lista es **Árbol**, **Ñandú**. Tocar **Todas**.
-6. Apagar **Mostrar completadas**: la lista es **Cambiar foco**, **Árbol**, **Nube**, **Ñandú**.
-7. Recargar: **Mostrar pausadas** sigue marcado y la lista es la misma. Cerrar la pestaña y abrir la app de nuevo en el mismo contexto: el check sigue marcado.
-8. Apagar **Mostrar pausadas**: la lista es **Cambiar foco**. Recargar: sigue sin marcar.
+5. Apagar **Mostrar completadas**: la lista es **Cambiar foco**, **Árbol**, **Nube**, **Ñandú**.
+6. Recargar: **Mostrar pausadas** sigue marcado y la lista es la misma. Cerrar la pestaña y abrir la app de nuevo en el mismo contexto: el check sigue marcado.
+7. Apagar **Mostrar pausadas**: la lista es **Cambiar foco**. Recargar: sigue sin marcar.
 
 ## Flujo 6: pasar una periódica pausada a puntual
 

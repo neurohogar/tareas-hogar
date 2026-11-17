@@ -7,7 +7,7 @@ Verifica, solo por la interfaz:
 - que la línea y el botón desaparecen y vuelven solos con el estado de cada momento (`en espera`, pospuesta, completada, pausada) y que el botón está deshabilitado como el checkbox;
 - **Hice la mínima**: completa la tarea como el checkbox (mismo estado, mismo orden), con el aviso `Completaste «…» · mínima`, **Deshacer** y «Vuelve …» si es periódica; la palabra «Mínima» en el Historial y en el diálogo de **Borrar**, nunca el texto de la mínima; borrar el completado de la mínima (aviso, Historial, checkbox) como cualquier otro;
 - que con pasos, **Hice la mínima** funciona en cualquier paso, la tarea vuelve al paso 1 y deshacer devuelve el paso en que iba;
-- que la mínima no cambia el orden, los filtros, **Solo rápidas** ni el nombre de la tarea, y que no se ve en **Anotaciones** ni en el texto copiado; que editar o vaciar la versión mínima no toca los completados que ya fueron la mínima;
+- que la mínima no cambia el orden ni el nombre de la tarea, y que no se ve en **Anotaciones** ni en el texto copiado; que editar o vaciar la versión mínima no toca los completados que ya fueron la mínima;
 - **Cambios sin guardar** con el campo y el caso de dos dispositivos.
 
 Cubre spec §4.1 (**Versión mínima**, **Pasos**), §4.4 (`fueMinima`), §5.4 (aviso y deshacer), §5.5 (ventana), §6.1 (fila y botón), §6.2 (campo, orden de la sección, **Cambios sin guardar**), §6.3 (Historial y **Borrar**) y §7 (conflictos por campo, completados de dos dispositivos).
@@ -23,7 +23,7 @@ Fuera de alcance: las reglas de estado y de orden en sí (`qa/puntual.md`, `qa/p
   - "Fijar la hora a X" significa llevar el reloj a X justo antes del paso: con el reloj pausado el tiempo corre unos ms por aserción, y los avances de reloj van con holgura (varios segundos de más, nunca justo en el borde).
 - Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite** que indica el paso (controles de `qa/puntual.md`, `qa/periodica-relativa.md` y `qa/periodica-calendario.md`), horario como en `qa/horario.md`, escribir **Primer paso**, los pasos y **Versión mínima** que el paso indica y guardar.
 - "Posponer X con la opción O": tocar la fila X y elegir O entre las opciones de **Posponer** (`qa/posponer.md`). "Pausar X" y "Reanudar X": tocar la fila X y el botón **Pausar** o **Reanudar** del panel (`qa/pausar.md`); solo las periódicas se pausan.
-- **Mostrar completadas**, **Mostrar pausadas** y **Solo rápidas** quedan apagados salvo que el flujo diga encenderlos.
+- **Mostrar completadas** y **Mostrar pausadas** quedan apagados salvo que el flujo diga encenderlos.
 - **Dos dispositivos** (Flujo 8): dos contextos A y B con la misma cuenta y el mismo reloj simulado. "B sin conexión" es `browserContext.setOffline(true)`; "B vuelve a tener conexión", volverlo online y esperar a que las dos pantallas se actualicen solas, y además ~10 s quietos antes de mirar.
 
 Semana de referencia: lunes 2026-11-09, martes 10, miércoles 11, jueves 12, viernes 13, sábado 14, domingo 15.
@@ -33,7 +33,7 @@ Semana de referencia: lunes 2026-11-09, martes 10, miércoles 11, jueves 12, vie
 - **Campo del panel**: en la sección **Tarea** (**Nueva tarea** y **Editar tarea**), un campo de texto de una línea (rol `textbox`, etiqueta **Versión mínima**, sin `placeholder`), después de **Agregar paso** y antes de la **Nota**. Arranca vacío al crear y con el valor guardado al editar.
 - **Línea de la fila**: un texto en su propia línea debajo del título (y debajo de la línea del paso, si la hay): `Mínima: ` seguido del texto. "La fila dice la mínima M" significa que ese texto es exactamente `Mínima: M`. Una fila sin versión mínima, o que no la muestra, no contiene `Mínima`.
 - **Botón de la fila**: **Hice la mínima**, un botón de texto chico (rol `button`) junto a esa línea. Está habilitado o deshabilitado igual que el checkbox de la fila.
-- **Estilo**: la línea tiene el mismo `color` y `font-size` computados que la línea del paso (y que el texto de esfuerzo `Rápida`, `Media`, `Larga`); `font-weight` normal, sin subrayado ni color propio en el texto ni en el botón; la fila no cambia de fondo. Sin recorte (sin `text-overflow: ellipsis`, sin `-webkit-line-clamp`, sin `max-height`): un texto largo se ve completo en varias líneas.
+- **Estilo**: la línea tiene el mismo `color` y `font-size` computados que la línea del paso; `font-weight` normal, sin subrayado ni color propio en el texto ni en el botón; la fila no cambia de fondo. Sin recorte (sin `text-overflow: ellipsis`, sin `-webkit-line-clamp`, sin `max-height`): un texto largo se ve completo en varias líneas.
 - **Tocar**: tocar el texto de la línea (fuera del botón) es tocar la fila: abre **Editar tarea**. Tocar **Hice la mínima** no abre el panel ni **Cambios sin guardar**, y sí abre el aviso de completar.
 - **Aviso**: el de `qa/historial-deshacer.md`; con **Hice la mínima**, su texto es `Completaste «Regar» · mínima` (con emoji, `Completaste «🌱 Regar» · mínima`); con el checkbox o **Hecho**, sin ` · mínima`. Nunca contiene el texto de la versión mínima.
 - **Historial**: cada entrada de un completado de la mínima muestra, después de la hora, la palabra `Mínima` en el mismo texto secundario, sin color ni icono (`08:05 Mínima`); la de un completado entero, solo la hora. Nunca muestra el texto de la versión mínima. El diálogo de **Borrar** de ese completado nombra la tarea, el momento y la palabra `Mínima`.
@@ -43,7 +43,7 @@ Semana de referencia: lunes 2026-11-09, martes 10, miércoles 11, jueves 12, vie
 
 Precondición: lista vacía, reloj en `2026-11-13T10:00:00` (viernes).
 
-1. Tocar **+**. En **Nueva tarea** hay **Versión mínima**, vacío y sin texto de ejemplo. El orden vertical de la sección es: **Título** (con el botón de emoji), **Primer paso**, **Agregar paso**, **Versión mínima**, **Nota**, esfuerzo, etiquetas. Tocar **Agregar paso**: el campo **Paso 2** aparece antes de **Versión mínima**.
+1. Tocar **+**. En **Nueva tarea** hay **Versión mínima**, vacío y sin texto de ejemplo. El orden vertical de la sección es: **Título** (con el botón de emoji), **Primer paso**, **Agregar paso**, **Versión mínima**, **Nota**. Tocar **Agregar paso**: el campo **Paso 2** aparece antes de **Versión mínima**.
 2. Escribir `Limpiar baño` en **Título** y `Solo el inodoro` en **Versión mínima**. Con el foco en **Versión mínima**, apretar Enter: el panel guarda y se cierra. La fila de `Limpiar baño` dice la mínima `Solo el inodoro` y tiene **Hice la mínima**.
 3. Tocar la fila: **Editar tarea** muestra **Versión mínima** `Solo el inodoro`. Recargar: sigue igual.
 4. Escribir en **Versión mínima** `  Solo el lavabo  ` (con espacios al inicio y al final) y guardar. Reabrir: tiene exactamente `Solo el lavabo`.
@@ -51,15 +51,15 @@ Precondición: lista vacía, reloj en `2026-11-13T10:00:00` (viernes).
 6. Vaciar **Versión mínima** y guardar: la fila ya no contiene `Mínima` ni **Hice la mínima**; reabrir muestra el campo vacío. Escribir `Solo el inodoro` y guardar. Escribir solo espacios y guardar: no hay error ni mensaje de rechazo; la fila no tiene línea y reabrir muestra el campo vacío.
 7. Pegar en **Versión mínima** un texto de 5000 caracteres y guardar: se acepta sin error ni advertencia. Reabrir: tiene los 5000.
 8. Crear `Barrer` con **No se repite**, sin fecha límite, con solo espacios en **Versión mínima**: se crea sin error y sin línea. Crear `Planchar` sin tocar **Versión mínima**: la fila se ve como antes, sin `Mínima` ni botón.
-9. Crear con **Versión mínima** una periódica (`Regar`, **Intervalo** cada `2` **días**, `Solo los helechos`), una de calendario (`Basura`, **Días de la semana** y **martes**, `Solo la de la cocina`) y una con esfuerzo **Larga**: se aceptan; reabrir muestra el valor en cada una. Cambiar de tipo en `Regar` (**No se repite** y de nuevo **Intervalo**), guardando: reabrir conserva `Solo los helechos`.
+9. Crear con **Versión mínima** una periódica (`Regar`, **Intervalo** cada `2` **días**, `Solo los helechos`), una de calendario (`Basura`, **Días de la semana** y **martes**, `Solo la de la cocina`): se aceptan; reabrir muestra el valor en cada una. Cambiar de tipo en `Regar` (**No se repite** y de nuevo **Intervalo**), guardando: reabrir conserva `Solo los helechos`.
 10. Escribir en **Versión mínima** el texto de unos 160 caracteres `Abrir el cajón de abajo y sacar toda la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla con nada de color oscuro ni delicado` y, en un celular (390 × 844), mirar la fila: la línea se ve completa, en varias líneas, sin cortar ni scroll horizontal.
 
 ## Flujo 2: la línea y el botón en la fila
 
-Precondición: lista vacía, reloj en `2026-11-13T10:00:00`. Crear `Lavar` (**No se repite**, sin fecha límite) con `Separar la ropa blanca` en **Primer paso** y `Solo el inodoro` en **Versión mínima**, y `Barrer` (**No se repite**, sin fecha límite, esfuerzo **Rápida**) con `Solo el pasillo` en **Versión mínima**, sin primer paso.
+Precondición: lista vacía, reloj en `2026-11-13T10:00:00`. Crear `Lavar` (**No se repite**, sin fecha límite) con `Separar la ropa blanca` en **Primer paso** y `Solo el inodoro` en **Versión mínima**, y `Barrer` (**No se repite**, sin fecha límite) con `Solo el pasillo` en **Versión mínima**, sin primer paso.
 
 1. La fila de `Lavar` tiene dos líneas debajo del título, en este orden: `Primer paso: Separar la ropa blanca` y `Mínima: Solo el inodoro` (con **Hice la mínima**). La fila de `Barrer` tiene la línea `Mínima: Solo el pasillo` y **Hice la mínima** aunque no tenga primer paso.
-2. **Estilo**: la línea de la mínima tiene el mismo `color` y `font-size` que la línea del paso y que el texto de esfuerzo `Rápida` de `Barrer`; el botón no tiene color propio ni fondo destacado; la fila no cambia de fondo. La fila no tiene contadores, marcas ni textos que propongan hacer la mínima.
+2. **Estilo**: la línea de la mínima tiene el mismo `color` y `font-size` que la línea del paso; el botón no tiene color propio ni fondo destacado; la fila no cambia de fondo. La fila no tiene contadores, marcas ni textos que propongan hacer la mínima.
 3. Tocar el texto `Mínima: Solo el pasillo` (fuera del botón): se abre **Editar tarea** de `Barrer`. Cerrar con la X sin cambios: cierra directo.
 4. Con el panel cerrado, tocar **Hice la mínima** en `Barrer`: no se abre el panel ni aparece **Cambios sin guardar**; aparece el aviso de completar (Flujo 3).
 5. Con pasos: abrir `Lavar`, agregar `Poner el lavarropas` en **Paso 2** y `Tender la ropa` en **Paso 3** y guardar. En el paso 1 la fila dice `Primer paso: Separar la ropa blanca` y debajo `Mínima: Solo el inodoro`, con **Hecho** y **Hice la mínima**. Tocar **Hecho**: dice `Paso: Poner el lavarropas` y la mínima sigue igual, debajo de la línea del paso. Tocar **Hecho** otra vez: igual en el paso 3.
@@ -113,14 +113,13 @@ Precondición: lista vacía, reloj en `2026-11-13T08:05:00`. Crear `Regar` (**In
 
 ## Flujo 6: lo que no cambia y lo que no lo muestra
 
-Precondición: lista vacía, reloj detenido en `2026-11-13T10:00:00`, **Mostrar completadas** encendido. Dos etiquetas creadas con los controles de `qa/etiquetas.md`.
+Precondición: lista vacía, reloj detenido en `2026-11-13T10:00:00`, **Mostrar completadas** encendido.
 
-1. Crear `Barrer` y `Lavar`, ambas con **No se repite**, sin fecha límite y esfuerzo **Rápida**; `Planchar` con **No se repite**, sin fecha límite y esfuerzo **Larga**. Anotar el orden y el texto de cada fila.
+1. Crear `Barrer`, `Lavar` y `Planchar`, todas con **No se repite** y sin fecha límite. Anotar el orden y el texto de cada fila.
 2. Escribir en `Lavar` una **Versión mínima** (`Solo el inodoro`) y guardar: el orden de la lista es el mismo; las filas de `Barrer` y `Planchar` son idénticas a antes. Escribir también una en `Barrer` y guardar: el orden no cambia.
-3. Tocar **Solo rápidas**: la lista deja a `Barrer` y `Lavar`, con o sin versión mínima, y `Planchar` no se ve. Apagarlo. Asignar una etiqueta a `Lavar` y filtrar por ella: la lista es `Lavar` con su línea y su botón. **Todas**: vuelve la lista completa.
-4. Poner a `Lavar` el emoji `🧺`: el título dice `🧺 Lavar`, la línea `Mínima: …` va en su propia línea debajo. El título no incluye la versión mínima.
-5. Tocar **Hice la mínima** en `Lavar`: el aviso dice `Completaste «🧺 Lavar» · mínima`, sin el texto de la mínima. Esperar el aviso. Tocar **Anotar**, `salió bien`, **Me sirvió**, con `Lavar` en la lista. En **Anotaciones**: el nombre `🧺 Lavar` y `salió bien`, sin el texto de la versión mínima. Con el portapapeles funcionando (`qa/reintento-y-aviso-de-copia.md`), **Copiar**: el texto copiado no contiene la versión mínima ni la palabra `Mínima`.
-6. Tocar el texto `Mínima: …` de una fila (fuera del botón): abre el panel de esa tarea.
+3. Poner a `Lavar` el emoji `🧺`: el título dice `🧺 Lavar`, la línea `Mínima: …` va en su propia línea debajo. El título no incluye la versión mínima.
+4. Tocar **Hice la mínima** en `Lavar`: el aviso dice `Completaste «🧺 Lavar» · mínima`, sin el texto de la mínima. Esperar el aviso. Tocar **Anotar**, `salió bien`, **Me sirvió**, con `Lavar` en la lista. En **Anotaciones**: el nombre `🧺 Lavar` y `salió bien`, sin el texto de la versión mínima. Con el portapapeles funcionando (`qa/reintento-y-aviso-de-copia.md`), **Copiar**: el texto copiado no contiene la versión mínima ni la palabra `Mínima`.
+5. Tocar el texto `Mínima: …` de una fila (fuera del botón): abre el panel de esa tarea.
 
 ## Flujo 7: Cambios sin guardar
 

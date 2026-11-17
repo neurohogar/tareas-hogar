@@ -7,8 +7,8 @@
 # anotación «Me sirvió» o «Me molestó» con el contexto tomado solo: el instante,
 # la pantalla y, si la hay, la tarea. La persona no elige ni corrige el contexto.
 # pantalla: el Panel de edición si el panel está abierto (al crear o al editar),
-# sobre cualquier pantalla; si no, la pantalla donde está (Pendientes, Historial,
-# Etiquetas o Anotaciones).
+# sobre cualquier pantalla; si no, la pantalla donde está (Pendientes, Historial
+# o Anotaciones).
 # tareaId: la tarea del panel si está abierto al editar; si no, la que nombra el
 # aviso de deshacer (§5.4) si está visible; si no, ninguna. Con el panel abierto
 # al crear no hay tarea, aunque haya un aviso de deshacer visible.
@@ -35,7 +35,6 @@ Feature: Anotar
       | pantalla     | sentido    | ahora               | sentido_guardado | pantalla_guardada |
       | Pendientes   | Me sirvió  | 2026-07-15T08:05:00 | Me sirvió        | Pendientes        |
       | Historial    | Me molestó | 2026-07-15T09:10:30 | Me molestó       | Historial         |
-      | Etiquetas    | Me sirvió  | 2026-07-15T23:59:59 | Me sirvió        | Etiquetas         |
       | Anotaciones  | Me molestó | 2026-07-16T00:00:00 | Me molestó       | Anotaciones       |
 
   # Anotar 2
@@ -54,7 +53,6 @@ Feature: Anotar
       | pantalla    | sentido    | ahora               | sentido_guardado | pantalla_guardada |
       | Pendientes  | Me sirvió  | 2026-07-15T08:05:00 | Me sirvió        | Panel de edición  |
       | Historial   | Me molestó | 2026-07-15T08:05:00 | Me molestó       | Panel de edición  |
-      | Etiquetas   | Me sirvió  | 2026-07-15T08:05:00 | Me sirvió        | Panel de edición  |
       | Anotaciones | Me molestó | 2026-07-15T08:05:00 | Me molestó       | Panel de edición  |
 
   # Anotar 3
@@ -88,7 +86,6 @@ Feature: Anotar
       | pantalla    | sentido    | completada          | ahora               | sentido_guardado | pantalla_guardada |
       | Pendientes  | Me sirvió  | 2026-07-15T08:00:00 | 2026-07-15T08:00:00 | Me sirvió        | Pendientes        |
       | Historial   | Me molestó | 2026-07-15T08:00:00 | 2026-07-15T08:00:04 | Me molestó       | Historial         |
-      | Etiquetas   | Me sirvió  | 2026-07-15T08:00:00 | 2026-07-15T08:00:04 | Me sirvió        | Etiquetas         |
       | Anotaciones | Me molestó | 2026-07-15T08:00:00 | 2026-07-15T08:00:04 | Me molestó       | Anotaciones       |
 
   # Anotar 5

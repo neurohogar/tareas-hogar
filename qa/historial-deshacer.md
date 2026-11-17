@@ -11,7 +11,7 @@ Verifica, solo por la interfaz:
 
 Cubre spec §4.4, §5.1–§5.4, §6 (navegación), §6.2 (borrar tarea y editar desde el historial), §6.3, §7 y §10 criterio 5.
 
-Fuera de alcance: etiquetas, emoji, nota, PWA y la pestaña Etiquetas.
+Fuera de alcance: emoji, nota y PWA.
 
 ## Entorno
 

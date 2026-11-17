@@ -37,13 +37,13 @@ Fuera de alcance: el teclado del celular y los calendarios y listas nativas de u
 - **Pedidos de red**: los que registra Playwright (`page.on("request")`).
 - **Tamaño y peso**: el alto y el ancho de la caja del elemento (`boundingBox`) y su `font-size` y `font-weight` calculados.
 - **Pantalla de carga**: el elemento con nombre accesible «Cargando» (`getByRole('img', { name: 'Cargando' })`). **Pulso**: `element.getAnimations()` del ícono tiene una animación en curso; **quieto**: no tiene ninguna.
-- **Textos de referencia**: título «Ñandú: camión 12:30», nota «Año 2026 ✈», etiqueta «Cocina», título con otro alfabeto «日本語».
+- **Textos de referencia**: título «Ñandú: camión 12:30», nota «Año 2026 ✈», título con otro alfabeto «日本語».
 
 ## Flujo 1: toda la app con la fuente
 
-1. Crear la tarea «Regar» con emoji 🌱, la etiqueta «Cocina» y nota «Año 2026 ✈».
+1. Crear la tarea «Regar» con emoji 🌱 y nota «Año 2026 ✈».
 2. En **Pendientes**, la fila de «Regar» y la pestaña **Pendientes** se ven con Atkinson; el 🌱 con Noto.
-3. Ir a **Historial** y **Etiquetas**: los títulos, los botones, los campos y la barra de pestañas se ven con Atkinson.
+3. Ir a **Historial** y **Anotaciones**: los títulos, los botones, los campos y la barra de pestañas se ven con Atkinson.
 4. Abrir el panel de «Regar»: título, nota, botones (**Guardar**, **Pausar** o **Posponer** según corresponda), las pestañas y los campos se ven con Atkinson; el ✈ de la nota se ve con Noto.
 5. Abrir el selector de emoji: sus Recientes y todos los emoji que muestra se ven con Noto; los títulos y botones del selector, con Atkinson.
 6. Tocar el checkbox de «Regar»: el aviso de deshacer («Completaste «🌱 Regar»») se ve con Atkinson y el 🌱 con Noto.
@@ -128,7 +128,7 @@ Qué se ve:
 
 Cuándo aparece:
 
-5. Aparece al abrir, al recargar y al abrir con una versión nueva, y en las tres pantallas de destino (`/`, `/historial`, `/etiquetas`).
+5. Aparece al abrir, al recargar y al abrir con una versión nueva, y en las tres pantallas de destino (`/`, `/historial`, `/anotaciones`).
 6. Con la app abierta, pasarla a segundo plano y volver (abrir otra pestaña y volver, con `visibilitychange`): no aparece.
 7. Sin sesión, tocar **Entrar con Google** y completar la entrada: se pasa de la pantalla de entrada a la app sin que aparezca.
 
@@ -136,7 +136,7 @@ Qué espera con sesión:
 
 8. Con la app guardada y todo disponible, recargar: a los 0,4 s sigue abierta, a los 0,5 s se va, y se ve la lista completa.
 9. Con Auth demorado, más allá de los 10 s: sigue abierta hasta que Auth responde, y entonces se va.
-10. Con cada una de las colecciones (tareas, completados, etiquetas) demorada por turno, 3 s: sigue abierta hasta los 3 s y se va cuando responde.
+10. Con cada una de las colecciones (tareas, completados) demorada por turno, 3 s: sigue abierta hasta los 3 s y se va cuando responde.
 11. En un contexto nuevo, con Atkinson demorada y después con Noto demorado, 6 s: sigue abierta hasta los 6 s; al irse, el texto y los emoji ya se ven con Atkinson y con Noto, sin haber mostrado un respaldo.
 12. Con los datos demorados más de 10 s: se va a los 10 s, sin aviso, y la lista se completa sola al liberarlos.
 

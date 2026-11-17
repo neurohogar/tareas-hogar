@@ -2,7 +2,7 @@
 
 Verifica, solo por la interfaz:
 
-- que la fila de una tarea `atrasada` dice desde cuándo toca, como un hecho con fecha y distancia («Tocaba el martes 10 · hace 3 días»), en el mismo color y tamaño que el esfuerzo y el horario, y que ya no dice «Atrasada»;
+- que la fila de una tarea `atrasada` dice desde cuándo toca, como un hecho con fecha y distancia («Tocaba el martes 10 · hace 3 días»), en el mismo color y tamaño que el horario, y que ya no dice «Atrasada»;
 - que la fila de una tarea `en espera` (periódica completada con **Mostrar completadas**, de calendario antes de su ocurrencia, con horario fuera de la ventana, pospuesta) dice cuándo vuelve («Vuelve el jueves 19 · en 6 días») además de su barra de progreso, sin nombrar la posposición;
 - que las filas `pendiente`, las pausadas y las puntuales completadas no muestran texto de fecha ni de distancia;
 - que los textos se actualizan solos con el paso del tiempo (medianoche, hora, minuto) y que el estado y el orden de la lista no cambian;
@@ -32,7 +32,7 @@ Semana de referencia: lunes 2026-11-09, martes 10, miércoles 11, jueves 12, vie
 - **Texto de la fila**: dentro de la fila de la tarea, un texto que empieza con `Tocaba ` (atrasada) o `Vuelve ` (en espera). "La fila dice T" significa que el texto de la fila es exactamente T (con el punto medio `·`, U+00B7, rodeado de espacios, y sin otras palabras). Una fila sin texto de fecha no contiene `Tocaba`, `Vuelve` ni `hace`/`en` seguidos de una cantidad.
   - Ninguna fila contiene el texto `Atrasada`.
   - La hora va en 24 h, `HH:MM`, sin segundos.
-- **Estilo del texto de atraso**: el mismo `color` y el mismo `font-size` computados que el texto de esfuerzo (`Rápida`, `Media`, `Larga`) o el de horario de la misma fila o de otra fila; no es rojizo (el canal rojo no domina: no es el color de alarma `--atraso` de antes), no está en negrita (`font-weight` normal) ni subrayado, y la fila atrasada no cambia de fondo.
+- **Estilo del texto de atraso**: el mismo `color` y el mismo `font-size` computados que el texto de horario de la misma fila o de otra fila; no es rojizo (el canal rojo no domina: no es el color de alarma `--atraso` de antes), no está en negrita (`font-weight` normal) ni subrayado, y la fila atrasada no cambia de fondo.
 - **Fila en espera**: el contrato de `qa/periodica-relativa.md` (estilo atenuado, barra de progreso con `aria-valuenow`), con el texto «Vuelve …» además de la barra. La barra no cambia.
 - **Fila atrasada**: sin atenuar, sin barra, con el texto «Tocaba …».
 - **Fila pausada** (con **Mostrar pausadas** encendido): dice «Pausada» y ningún `Tocaba` ni `Vuelve`.
@@ -43,13 +43,12 @@ Semana de referencia: lunes 2026-11-09, martes 10, miércoles 11, jueves 12, vie
 
 Precondición: lista vacía, reloj en `2026-11-13T10:00:00` (viernes).
 
-1. Crear `Pagar la luz` con **No se repite**, fecha límite `2026-11-10` y esfuerzo **Rápida**; `Pagar agua` con **No se repite** y fecha límite `2026-11-12`; `Cambiar foco` con **No se repite** y sin fecha límite; y `Barrer` con **Días de la semana** y **viernes**.
+1. Crear `Pagar la luz` con **No se repite**, fecha límite `2026-11-10`; `Pagar agua` con **No se repite** y fecha límite `2026-11-12`; `Cambiar foco` con **No se repite** y sin fecha límite; y `Barrer` con **Días de la semana** y **viernes**.
 2. La lista es **Pagar la luz**, **Pagar agua**, **Barrer**, **Cambiar foco** (las dos primeras `atrasadas`; las otras, `pendiente`). La fila de **Pagar la luz** dice `Tocaba el martes 10 · hace 3 días`; la de **Pagar agua**, `Tocaba ayer`. Ninguna fila contiene `Atrasada`. **Cambiar foco** y **Barrer** no muestran texto de fecha.
-3. El texto de atraso de **Pagar la luz** tiene el mismo `color` y `font-size` que su texto `Rápida`, no está en negrita y no es rojizo.
-4. Crear `Lavar` con **No se repite**, fecha límite `2026-11-13` y horario **Desde** `08:00` **Hasta** `11:00`. Avanzar el reloj a `2026-11-13T10:59:00`: **Lavar** está `pendiente` y no muestra texto de fecha. Avanzar a `2026-11-13T11:00:00`: su fila dice `Tocaba hoy`, sin hora ni distancia.
-5. Crear `Regar` con **Intervalo** cada `1` **horas** y tocar su checkbox. Avanzar el reloj a `2026-11-13T13:00:00`: **Regar** está `atrasada` y su fila dice `Tocaba hoy 12:00 · hace 1 hora`. Avanzar a `2026-11-13T14:30:00`: dice `Tocaba hoy 12:00 · hace 2 horas`.
-6. Avanzar el reloj a `2026-11-14T00:00:00` (sábado): **Barrer** está `atrasada` y dice `Tocaba ayer` (sin hora); **Regar** dice `Tocaba ayer 12:00 · hace 12 horas`.
-7. Avanzar el reloj a `2026-11-15T10:00:00` (domingo): **Barrer** dice `Tocaba el viernes 13 · hace 2 días` y **Pagar la luz**, `Tocaba el martes 10 · hace 5 días`.
+3. Crear `Lavar` con **No se repite**, fecha límite `2026-11-13` y horario **Desde** `08:00` **Hasta** `11:00`. Avanzar el reloj a `2026-11-13T10:59:00`: **Lavar** está `pendiente` y no muestra texto de fecha. El texto de atraso de **Pagar la luz** tiene el mismo `color` y `font-size` que el texto de horario de **Lavar**, no está en negrita y no es rojizo. Avanzar a `2026-11-13T11:00:00`: su fila dice `Tocaba hoy`, sin hora ni distancia.
+4. Crear `Regar` con **Intervalo** cada `1` **horas** y tocar su checkbox. Avanzar el reloj a `2026-11-13T13:00:00`: **Regar** está `atrasada` y su fila dice `Tocaba hoy 12:00 · hace 1 hora`. Avanzar a `2026-11-13T14:30:00`: dice `Tocaba hoy 12:00 · hace 2 horas`.
+5. Avanzar el reloj a `2026-11-14T00:00:00` (sábado): **Barrer** está `atrasada` y dice `Tocaba ayer` (sin hora); **Regar** dice `Tocaba ayer 12:00 · hace 12 horas`.
+6. Avanzar el reloj a `2026-11-15T10:00:00` (domingo): **Barrer** dice `Tocaba el viernes 13 · hace 2 días` y **Pagar la luz**, `Tocaba el martes 10 · hace 5 días`.
 
 ## Flujo 2: «Vuelve …» en las filas en espera
 

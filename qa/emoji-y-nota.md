@@ -8,7 +8,7 @@ Pendientes, en el Historial y en el aviso de deshacer, que la nota se ve solo
 en el panel y se normaliza, y los conflictos entre dos dispositivos. Cubre spec
 §4.1, §6.1, §6.2, §6.3, §5.4 y §7.
 
-Fuera de alcance: etiquetas, estados y orden (no dependen de estos campos);
+Fuera de alcance: estados y orden (no dependen de estos campos);
 la regla de rechazo de un emoji inválido (§4.1), que la UI no puede producir y
 cubren los unit tests del core.
 

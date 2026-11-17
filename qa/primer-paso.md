@@ -3,10 +3,10 @@
 Verifica, solo por la interfaz:
 
 - el campo **Primer paso** del panel de edición: una línea, sin texto de ejemplo, justo debajo del título (con su emoji) y antes de la nota; arranca vacío al crear y con el valor actual al editar; Enter guarda; se recortan los espacios; vacío o solo espacios deja la tarea sin primer paso; no tiene largo máximo y nunca rechaza un guardado;
-- que la fila de una tarea `pendiente` o `atrasada` con primer paso dice, en su propia línea debajo del título, `Primer paso: ` seguido del texto, completo (en varias líneas si hace falta), en el mismo tamaño y color que el esfuerzo y el horario y sin énfasis; y que tocarlo es tocar la fila;
+- que la fila de una tarea `pendiente` o `atrasada` con primer paso dice, en su propia línea debajo del título, `Primer paso: ` seguido del texto, completo (en varias líneas si hace falta), en el mismo tamaño y color que el horario y sin énfasis; y que tocarlo es tocar la fila;
 - que las filas `en espera` (completadas, pospuestas, por su horario o de calendario antes de su ocurrencia), las completadas y las pausadas no muestran el primer paso, y que la línea desaparece y vuelve sola con el estado de cada momento (completar, deshacer, posponer, pausar, reanudar, el paso del tiempo);
 - que el primer paso no tiene estado: completar, posponer, pausar, reanudar, deshacer y cambiar de tipo o de modo no lo borran ni lo cambian, una periódica que vuelve muestra el mismo, y no hay forma de marcarlo como hecho ni indicador de avance;
-- que no cambia el estado, el orden de la lista, los filtros ni **Solo rápidas**, y que el nombre de la tarea sigue siendo emoji y título;
+- que no cambia el estado, el orden de la lista, y que el nombre de la tarea sigue siendo emoji y título;
 - que no se ve en el Historial, en el aviso de deshacer, en **Anotaciones** ni en el texto copiado;
 - **Cambios sin guardar** con el campo y el caso de dos dispositivos.
 
@@ -22,16 +22,16 @@ Fuera de alcance: las reglas de estado y de orden en sí (`qa/puntual.md`, `qa/p
   - "A las X" y "Avanzar el reloj a X" significan adelantarlo hasta X (`page.clock.runFor` o `fastForward`) y esperar a que la pantalla se actualice sola, sin recargar.
 - Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite** que indica el paso (controles de `qa/puntual.md`, `qa/periodica-relativa.md` y `qa/periodica-calendario.md`), horario como en `qa/horario.md`, escribir el **Primer paso** si el paso lo da y guardar.
 - "Posponer X con la opción O": tocar la fila X y elegir O entre las opciones de **Posponer** (`qa/posponer.md`). "Pausar X" y "Reanudar X": tocar la fila X y el botón **Pausar** o **Reanudar** del panel (`qa/pausar.md`); solo las periódicas se pausan.
-- **Mostrar completadas**, **Mostrar pausadas** y **Solo rápidas** quedan apagados salvo que el flujo diga encenderlos.
+- **Mostrar completadas** y **Mostrar pausadas** quedan apagados salvo que el flujo diga encenderlos.
 - **Dos dispositivos** (Flujo 8): dos contextos A y B con la misma cuenta y el mismo reloj simulado. "B sin conexión" es `browserContext.setOffline(true)`; "B vuelve a tener conexión", volverlo online y esperar a que las dos pantallas se actualicen solas.
 
 Semana de referencia: lunes 2026-11-09, martes 10, miércoles 11, jueves 12, viernes 13, sábado 14, domingo 15.
 
 ## Contrato observable
 
-- **Campo Primer paso**: en el panel (**Nueva tarea** y **Editar tarea**), sección **Tarea**, un campo de texto de una línea (rol `textbox`, etiqueta **Primer paso**) sin `placeholder`. En el orden de la sección, de arriba hacia abajo: el título con el botón de emoji, el campo **Primer paso**, la **Nota**, el esfuerzo y las etiquetas. Al crear está vacío; al editar muestra el valor guardado. Enter dentro del campo guarda, como en el campo **Título**.
+- **Campo Primer paso**: en el panel (**Nueva tarea** y **Editar tarea**), sección **Tarea**, un campo de texto de una línea (rol `textbox`, etiqueta **Primer paso**) sin `placeholder`. En el orden de la sección, de arriba hacia abajo: el título con el botón de emoji, el campo **Primer paso**, la **Nota**. Al crear está vacío; al editar muestra el valor guardado. Enter dentro del campo guarda, como en el campo **Título**.
 - **Línea de la fila**: dentro de la fila de la tarea, un texto que empieza con `Primer paso: ` y sigue con el texto guardado, en su propia línea debajo del título. "La fila dice P" significa que ese texto es exactamente `Primer paso: P`. Una fila sin primer paso, o que no lo muestra, no contiene `Primer paso`.
-- **Estilo de la línea**: el mismo `color` y el mismo `font-size` computados que el texto de esfuerzo (`Rápida`, `Media`, `Larga`) o el de horario de la misma fila o de otra; `font-weight` normal, sin subrayado ni color propio; la fila no cambia de fondo. No tiene recorte (sin `text-overflow: ellipsis`, sin `overflow: hidden` ni `max-height` que corten): el texto completo es visible, en varias líneas si hace falta.
+- **Estilo de la línea**: el mismo `color` y el mismo `font-size` computados que el texto de horario de la misma fila o de otra; `font-weight` normal, sin subrayado ni color propio; la fila no cambia de fondo. No tiene recorte (sin `text-overflow: ellipsis`, sin `overflow: hidden` ni `max-height` que corten): el texto completo es visible, en varias líneas si hace falta.
 - **Sin controles propios**: la línea no tiene botón, checkbox ni campo; el único checkbox de la fila es el de la tarea. Tocar la línea es tocar la fila: abre el panel **Editar tarea**.
 - **Aviso, Historial, Anotaciones, texto copiado**: los de `qa/historial-deshacer.md`, `qa/anotacion.md` y `qa/reintento-y-aviso-de-copia.md`; ninguno contiene `Primer paso` ni el texto del primer paso.
 - **Lista**: "La lista es A, B, C" significa exactamente esas filas, de arriba hacia abajo.
@@ -40,10 +40,10 @@ Semana de referencia: lunes 2026-11-09, martes 10, miércoles 11, jueves 12, vie
 
 Precondición: lista vacía, reloj en `2026-11-13T10:00:00` (viernes).
 
-1. Tocar **+**. En el panel **Nueva tarea**, el campo **Primer paso** existe, está vacío y no tiene texto de ejemplo. En la sección **Tarea**, el orden vertical es: **Título** (con el botón de emoji), **Primer paso**, **Nota**, esfuerzo, etiquetas.
+1. Tocar **+**. En el panel **Nueva tarea**, el campo **Primer paso** existe, está vacío y no tiene texto de ejemplo. En la sección **Tarea**, el orden vertical es: **Título** (con el botón de emoji), **Primer paso**, **Nota**.
 2. Escribir `Lavar` en **Título** y `Separar la ropa blanca` en **Primer paso**. Con el foco en **Primer paso**, apretar Enter: el panel guarda y se cierra. La fila de `Lavar` dice `Primer paso: Separar la ropa blanca`, debajo del título.
 3. Tocar **+**, escribir `Barrer` (**No se repite**, sin fecha límite) y guardar sin tocar **Primer paso**: la fila de `Barrer` no contiene `Primer paso`.
-4. Tocar **+**, elegir **Intervalo** cada `2` **días**, título `Regar`, **Primer paso** `Llenar la regadera`, esfuerzo **Rápida**, y guardar: la fila dice `Primer paso: Llenar la regadera` y también muestra `Rápida`. Repetir con **Días de la semana** y **martes** (`Basura`, `Atar la bolsa llena`) y con esfuerzo **Sin estimar** (`Lavar los platos`, `Poner el agua a calentar`): cada fila muestra su línea.
+4. Tocar **+**, elegir **Intervalo** cada `2` **días**, título `Regar`, **Primer paso** `Llenar la regadera`, y guardar: la fila dice `Primer paso: Llenar la regadera`. Repetir con **Días de la semana** y **martes** (`Basura`, `Atar la bolsa llena`): cada fila muestra su línea.
 5. Tocar la fila `Lavar`: el panel **Editar tarea** muestra **Primer paso** con `Separar la ropa blanca`. Tocar la fila `Barrer`: **Primer paso** está vacío. Recargar: las filas siguen igual.
 
 ## Flujo 2: editar, recortar, vaciar y texto largo
@@ -59,10 +59,10 @@ Precondición: lista con `Lavar` (**No se repite**, sin fecha límite) con **Pri
 
 ## Flujo 3: la línea en la fila (posición, estilo, toque)
 
-Precondición: lista vacía, reloj en `2026-11-13T10:00:00`. Crear `Pagar la luz` con **No se repite**, fecha límite `2026-11-10`, esfuerzo **Rápida** y **Primer paso** `Buscar la factura`; y `Cambiar foco` con **No se repite**, sin fecha límite y **Primer paso** `Sacar la escalera`.
+Precondición: lista vacía, reloj en `2026-11-13T10:00:00`. Crear `Pagar la luz` con **No se repite**, fecha límite `2026-11-10` y **Primer paso** `Buscar la factura`; y `Cambiar foco` con **No se repite**, sin fecha límite, horario **Desde** `08:00` **Hasta** `12:00` y **Primer paso** `Sacar la escalera`.
 
 1. **Pagar la luz** está `atrasada` y **Cambiar foco** `pendiente`: la fila de **Pagar la luz** dice `Primer paso: Buscar la factura`, y la de **Cambiar foco**, `Primer paso: Sacar la escalera`, cada una en su propia línea, debajo del título (la línea queda más abajo que el título en la pantalla).
-2. El texto de la línea de **Pagar la luz** tiene el mismo `color` y `font-size` que su texto `Rápida`, no está en negrita ni subrayado y no es rojizo. La fila no cambió de fondo respecto de una fila sin primer paso.
+2. El texto de la línea de **Pagar la luz** tiene el mismo `color` y `font-size` que el texto de horario de **Cambiar foco**, no está en negrita ni subrayado y no es rojizo. La fila no cambió de fondo respecto de una fila sin primer paso.
 3. Las filas no tienen ningún campo ni botón nuevo: el único checkbox de la fila es el de la tarea, y no hay marca de «hecho» ni indicador de avance del primer paso.
 4. Tocar la línea `Primer paso: Sacar la escalera`: se abre el panel **Editar tarea** de **Cambiar foco** (igual que tocar el título). Cerrarlo sin cambios.
 5. Tocar el checkbox de **Cambiar foco**: completa la tarea; la línea no se marca ni cambia de ningún modo antes de desaparecer (ver Flujo 4).
@@ -103,14 +103,13 @@ Precondición: lista vacía, reloj en `2026-11-13T10:00:00`. **Mostrar completad
 
 ## Flujo 7: lo que no cambia y lo que no lo muestra
 
-Precondición: lista vacía, reloj detenido en `2026-11-13T10:00:00`. Dos etiquetas creadas con los controles de `qa/etiquetas.md`.
+Precondición: lista vacía, reloj detenido en `2026-11-13T10:00:00`.
 
-1. Crear `Barrer` y `Lavar`, ambas con **No se repite**, sin fecha límite y esfuerzo **Rápida**; `Planchar` con **No se repite**, sin fecha límite y esfuerzo **Larga**. Anotar el orden de la lista y el texto de cada fila.
+1. Crear `Barrer`, `Lavar` y `Planchar`, todas con **No se repite** y sin fecha límite. Anotar el orden de la lista y el texto de cada fila.
 2. Escribir en `Lavar` el **Primer paso** `Separar la ropa blanca` y guardar. El orden de la lista es el mismo que anotó; las filas de **Barrer** y **Planchar** son idénticas a antes. Repetir poniendo el primer paso en `Barrer` y quitándoselo a `Lavar`: el orden de la lista sigue siendo el mismo.
-3. Tocar **Solo rápidas**: la lista deja a **Barrer** y **Lavar**, con o sin primer paso, y **Planchar** (**Larga**) no se ve. Apagarlo. Asignar una etiqueta a `Lavar` y elegirla en **Filtrar por etiqueta**: la lista es **Lavar** (con su línea de primer paso). **Todas**: vuelve la lista completa.
-4. Poner a `Lavar` el emoji `🧺` con el selector: el título de la fila dice `🧺 Lavar` y la línea de primer paso sigue en su propia línea debajo. El título no incluye el primer paso.
-5. Tocar el checkbox de **Lavar**: el aviso dice `Completaste «🧺 Lavar»`, sin `Primer paso`. Ir a **Historial**: la entrada dice `🧺 Lavar` con su hora, sin `Primer paso`.
-6. Tocar **Anotar**, escribir `salió bien`, **Me sirvió**, con `Lavar` en la lista. Ir a **Anotaciones**: la anotación muestra el nombre de la tarea (`🧺 Lavar`) y el texto `salió bien`, sin `Primer paso`. Con el portapapeles funcionando (`qa/reintento-y-aviso-de-copia.md`), tocar **Copiar**: el texto copiado no contiene `Primer paso` ni `Separar la ropa blanca`.
+3. Poner a `Lavar` el emoji `🧺` con el selector: el título de la fila dice `🧺 Lavar` y la línea de primer paso sigue en su propia línea debajo. El título no incluye el primer paso.
+4. Tocar el checkbox de **Lavar**: el aviso dice `Completaste «🧺 Lavar»`, sin `Primer paso`. Ir a **Historial**: la entrada dice `🧺 Lavar` con su hora, sin `Primer paso`.
+5. Tocar **Anotar**, escribir `salió bien`, **Me sirvió**, con `Lavar` en la lista. Ir a **Anotaciones**: la anotación muestra el nombre de la tarea (`🧺 Lavar`) y el texto `salió bien`, sin `Primer paso`. Con el portapapeles funcionando (`qa/reintento-y-aviso-de-copia.md`), tocar **Copiar**: el texto copiado no contiene `Primer paso` ni `Separar la ropa blanca`.
 
 ## Flujo 8: cambios sin guardar con el campo
 

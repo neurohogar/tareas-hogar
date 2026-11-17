@@ -38,20 +38,6 @@ Feature: Primer paso
       | titulo | dias           | primer_paso         | titulo_guardado | primer_paso_guardado |
       | Basura | martes, jueves | Atar la bolsa llena | Basura          | Atar la bolsa llena  |
 
-  # Primer paso 4
-  # Con cualquier esfuerzo, también sin estimar.
-  Scenario Outline: Primer paso 4
-    Given una tarea puntual sin fecha límite con esfuerzo <esfuerzo>
-    When edito el primer paso a <primer_paso>
-    Then la tarea tiene primer paso <primer_paso_guardado>
-
-    Examples:
-      | esfuerzo    | primer_paso            | primer_paso_guardado   |
-      | sin estimar | Separar la ropa blanca | Separar la ropa blanca |
-      | rapida      | Separar la ropa blanca | Separar la ropa blanca |
-      | media       | Separar la ropa blanca | Separar la ropa blanca |
-      | larga       | Separar la ropa blanca | Separar la ropa blanca |
-
   # Primer paso 5
   # Al guardar se recortan los espacios del inicio y del final.
   Scenario Outline: Primer paso 5

@@ -4,11 +4,12 @@ Verifica, solo por la interfaz (salvo la lectura auxiliar del emulador que se in
 
 - que al tocar **Copiar** en **Anotaciones** y rechazar el navegador la copia, aparece el texto **No se pudo copiar**, breve y neutro, sin botones, que se va solo, y que no cambia nada más;
 - que ese texto no tapa el aviso de deshacer, que solo se ve un texto a la vez (el último reemplaza al anterior) y que la persona puede volver a tocar **Copiar**;
-- que las cuatro limpiezas de §7 (completados huérfanos, anotaciones huérfanas, referencias a etiquetas borradas, etiquetas duplicadas) se reintentan al volver la conexión y al cambiar los datos, sin temporizadores y sin que la app avise ni cuente nada.
+- que las dos limpiezas de §7 (completados huérfanos y anotaciones huérfanas) se reintentan al volver la conexión y al cambiar los datos, sin temporizadores y sin que la app avise ni cuente nada.
+- que los campos `etiquetas` y `esfuerzo` de una tarea y la colección `etiquetas`, que pueden seguir en los datos, no se ven, no se escriben ni se borran (§7, **Datos que ya no se usan**).
 
-Cubre spec §6.7 (Copiar) y §7 (Limpiezas y reintentos).
+Cubre spec §6.7 (Copiar) y §7 (Limpiezas y reintentos, Datos que ya no se usan).
 
-Fuera de alcance: qué elementos se intentan y cuáles quedan por limpiar (cada elemento por separado, las cuatro limpiezas), que cubre `features/reintento-de-limpiezas.feature`; el texto copiado cuando funciona, que cubre `features/copiar-anotaciones.feature` y `qa/anotacion.md` (Flujo 9).
+Fuera de alcance: qué elementos se intentan y cuáles quedan por limpiar (cada elemento por separado, las dos limpiezas), que cubre `features/reintento-de-limpiezas.feature`; el texto copiado cuando funciona, que cubre `features/copiar-anotaciones.feature` y `qa/anotacion.md` (Flujo 9).
 
 ## Entorno
 
@@ -19,7 +20,7 @@ Igual que `qa/anotacion.md`:
 - **Dos dispositivos**: dos contextos de navegador A y B con la misma cuenta; "B sin conexión" es `browserContext.setOffline(true)`; "B vuelve a tener conexión" es volverlo online y esperar a que las pantallas se actualicen solas.
 - **Rechazo del portapapeles**: un script de inicio (`page.addInitScript`) que hace que `navigator.clipboard.writeText` rechace con un error (`NotAllowedError`), y otro que lo deja funcionar. "El portapapeles rechaza" y "el portapapeles funciona" se refieren a ellos; cambiar de uno al otro es recargar la página con el otro script (las anotaciones persisten).
 - **Fallo de una limpieza**: las limpiezas de huérfanos confirman con el servidor antes de borrar, así que fallan cuando no hay conexión. "Cortar la conexión durante el intento" es: con la red de B demorada (CDP `Network.emulateNetworkConditions` con latencia de 3 s), esperar a que llegue el dato huérfano y poner `setOffline(true)` antes de que termine el intento.
-- **Lectura auxiliar**: la interfaz no muestra las huérfanas ni las referencias a etiquetas borradas, así que su limpieza solo se comprueba leyendo el emulador (REST de Firestore Emulator, `GET /v1/projects/<id>/databases/(default)/documents/users/<uid>/anotaciones`, y lo mismo con `completados` y `tareas`). Las etiquetas duplicadas sí se ven en **Etiquetas**.
+- **Lectura auxiliar**: la interfaz no muestra las huérfanas, así que su limpieza solo se comprueba leyendo el emulador (REST de Firestore Emulator, `GET /v1/projects/<id>/databases/(default)/documents/users/<uid>/anotaciones`, y lo mismo con `completados`).
 - **Celular**: 390 × 844.
 
 ## Contrato observable
@@ -71,8 +72,12 @@ Igual que `qa/anotacion.md`:
 1. Con una huérfana que quedó sin limpiar porque B estaba sin conexión (Flujo 4, paso 3), dejar B con conexión pero sin cambiar datos, detener el reloj y adelantarlo 1 hora (`page.clock.runFor`): no hay reintento por tiempo (el estado del emulador no cambia por el solo paso del tiempo simulado).
 2. Hacer que cambien los datos (A edita una tarea y B la recibe): ahí sí se reintenta y la huérfana se limpia (lectura auxiliar).
 
-### Flujo 7: etiquetas duplicadas y referencias a etiquetas borradas
+### Flujo 7: datos que ya no se usan
 
-1. A y B sin conexión crean cada uno una etiqueta `Cocina` y `cocina` y las asignan a `Regar`. Los dos vuelven a tener conexión: en **Etiquetas** de ambos queda una sola, la de `id` menor, con su nombre y color, sin avisos; `Regar` muestra una sola etiqueta.
-2. Si un intento de fusión falla (cortar la conexión justo al llegar los datos), no se pierde: al volver la conexión o al cambiar los datos queda una sola etiqueta en **Etiquetas**.
-3. A borra una etiqueta `Hogar` mientras B sin conexión se la asigna a `Pagar`. B vuelve a tener conexión: `Pagar` no muestra el chip, ni aparece en ese filtro, y la referencia se quita (lectura auxiliar de `tareas`, aunque falle el primer intento por cortar la conexión). Sin avisos ni contadores.
+Precondición: reloj en `2026-07-15T08:00:00`, un dispositivo, sesión iniciada. Como en la lectura auxiliar, el emulador se lee y se escribe por su REST (`PATCH` y `GET` sobre `/v1/projects/<id>/databases/(default)/documents/users/<uid>/...`); es la única forma de dejar datos de antes de esta versión.
+
+1. Crear `Regar` con **Intervalo** cada `2` **días** y `Pagar` con **No se repite**. Con el REST, agregar al documento de `Regar` en `tareas` los campos `etiquetas` = `["x"]` y `esfuerzo` = `"media"`, y crear un documento en la colección `etiquetas` (`nombre` = `Casa`, `color` = `rojo`). Recargar.
+2. La app se ve igual que sin esos datos: la fila de `Regar` no muestra chips ni nivel de esfuerzo, Pendientes no tiene filtro por etiqueta ni **Solo rápidas**, la barra tiene **Pendientes**, **Historial** y **Anotaciones**, y no aparece ningún aviso.
+3. Abrir `Regar`: el panel no tiene **Etiquetas** ni **Esfuerzo**. Cambiar el título a `Regar plantas` y **Guardar**. Leer el documento (lectura auxiliar): `titulo` es `Regar plantas` y `etiquetas` (`["x"]`) y `esfuerzo` (`"media"`) siguen intactos.
+4. Abrir `Regar plantas`, cambiar **Se repite** a **No se repite** y **Guardar**. Leer el documento: ya no tiene los campos de la recurrencia y sigue con `etiquetas` y `esfuerzo` intactos.
+5. Leer la colección `etiquetas`: el documento `Casa` sigue ahí, sin cambios, y las anotaciones existentes tampoco cambiaron. Borrar `Regar plantas` desde su panel: el documento desaparece de `tareas`; el de `etiquetas` sigue.

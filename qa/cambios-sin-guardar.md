@@ -31,7 +31,7 @@ El de `qa/panel-mobile.md` (Firebase Emulator Suite, sesión `qa@example.com`, r
 - **Confirmación de Borrar tarea**: la de `qa/editar-borrar.md` (`alertdialog`, botones **Borrar** y **Cancelar**).
 - **Selector de emoji** y **aviso de deshacer**: los de `qa/emoji-y-nota.md` y `qa/historial-deshacer.md`.
 - **Panel cerrado** es que no hay ningún diálogo **Nueva tarea** ni **Editar tarea**.
-- Panel de referencia al editar: `Regar` con **Intervalo** cada `2` **días**, nota `Las del balcón`, sin etiquetas ni horario, creada a las `2026-07-13T08:00:00` (a las 08:00 del 15 está pendiente).
+- Panel de referencia al editar: `Regar` con **Intervalo** cada `2` **días**, nota `Las del balcón`, sin horario, creada a las `2026-07-13T08:00:00` (a las 08:00 del 15 está pendiente).
 
 ## Flujo 1: cerrar con cambios al editar
 
@@ -44,8 +44,7 @@ Precondición: lista vacía, reloj en `2026-07-15T08:00:00`, celular. Crear `Reg
 5. Tocar **Cerrar** y **Descartar**: el panel se cierra y la lista dice `Regar`. Abrir `Regar`: el título es `Regar`.
 6. Cambiar el título a `Regar plantas`, tocar **Cerrar** y **Guardar**: el panel se cierra y la lista dice `Regar plantas`. Recargar: sigue `Regar plantas`.
 7. Abrir `Regar plantas`, vaciar el título, tocar **Cerrar** (se abre el aviso) y **Guardar**: el aviso se cierra, el panel sigue abierto con el título vacío, salta a la pestaña **Tarea** y se ve el error de Título; la lista sigue diciendo `Regar plantas`. Tocar **Cerrar** y **Descartar**.
-8. Abrir `Regar plantas`, escribir en **Etiquetas** un nombre de 31 caracteres sin confirmar, tocar **Cerrar** y **Guardar**: el panel sigue abierto con el error de Etiquetas visible y la lista no cambia. Tocar **Cerrar** y **Descartar**.
-9. En ancho (1024 px) repetir los pasos 2, 3 y 5: el comportamiento es el mismo.
+8. En ancho (1024 px) repetir los pasos 2, 3 y 5: el comportamiento es el mismo.
 
 ## Flujo 2: qué cuenta como cambio
 
@@ -56,15 +55,11 @@ Precondición: lista vacía, reloj en `2026-07-15T08:00:00`, celular. Crear `Reg
 3. Cambiar el título a `Regar plantas`: pide confirmación.
 4. Vaciar la nota: pide confirmación. Escribir solo espacios en la nota: pide confirmación (queda sin nota).
 5. Vaciar el título: pide confirmación (aunque no se pueda guardar).
-6. En **Etiquetas**, escribir solo espacios sin confirmar: cierra directo.
-7. En **Etiquetas**, escribir `ca` sin confirmar (con o sin espacios alrededor): pide confirmación. Tocar **Guardar** desde el aviso no crea la etiqueta `ca`: en **Etiquetas** (pantalla) no aparece.
-8. En **Etiquetas**, agregar la etiqueta existente `casa` y quitarla: cierra directo. Agregarla y no quitarla: pide confirmación.
-9. En **Cuándo**, cambiar **Se repite** a **Días de la semana** y volver a **Intervalo** con **Cada** `2` **días**: cierra directo. Dejarlo en **Días de la semana**: pide confirmación.
-10. Cambiar el esfuerzo a **Media (≈ 15 min)**: pide confirmación; volver a **Sin estimar**: cierra directo.
-11. En **Cuándo**, intercambiar los valores de las dos ventanas (la primera pasa a `12:00`-`14:00` y la segunda a `08:00`-`10:00`): cierra directo. Cambiar `14:00` a `15:00` en una: pide confirmación.
-12. En **Cuándo**, tocar **Agregar horario** (queda una fila vacía): pide confirmación.
-13. Elegir un emoji en el botón de emoji: pide confirmación; tocar **Quitar emoji** y volver a no tener emoji: cierra directo.
-14. Crear `Pagar` con **No se repite**. Con el reloj en `2026-07-15T08:00:00`, otro dispositivo (B) cambia el título de `Pagar` a `Pagar luz` mientras A tiene su panel abierto sin tocar nada: en A, **Cerrar** cierra directo (un cambio remoto no hace aparecer el aviso).
+6. En **Cuándo**, cambiar **Se repite** a **Días de la semana** y volver a **Intervalo** con **Cada** `2` **días**: cierra directo. Dejarlo en **Días de la semana**: pide confirmación.
+7. En **Cuándo**, intercambiar los valores de las dos ventanas (la primera pasa a `12:00`-`14:00` y la segunda a `08:00`-`10:00`): cierra directo. Cambiar `14:00` a `15:00` en una: pide confirmación.
+8. En **Cuándo**, tocar **Agregar horario** (queda una fila vacía): pide confirmación.
+9. Elegir un emoji en el botón de emoji: pide confirmación; tocar **Quitar emoji** y volver a no tener emoji: cierra directo.
+10. Crear `Pagar` con **No se repite**. Con el reloj en `2026-07-15T08:00:00`, otro dispositivo (B) cambia el título de `Pagar` a `Pagar luz` mientras A tiene su panel abierto sin tocar nada: en A, **Cerrar** cierra directo (un cambio remoto no hace aparecer el aviso).
 
 ## Flujo 3: crear con cambios sin guardar
 
@@ -74,9 +69,8 @@ Precondición: lista vacía, celular.
 2. Tocar **+**, escribir solo espacios en el título y **Cerrar**: cierra directo.
 3. Tocar **+**, escribir `Pagar` en el título y **Cerrar**: se abre el aviso con **Seguir editando**, **Descartar** y **Guardar**. **Seguir editando**: el panel sigue con `Pagar`. **Cerrar** y **Descartar**: la lista sigue vacía.
 4. Tocar **+**, elegir **Intervalo** en **Se repite** (sin escribir nada más) y **Cerrar**: pide confirmación. **Descartar**. Tocar **+**, elegir **Intervalo** y volver a **No se repite**, y **Cerrar**: cierra directo.
-5. Tocar **+**, elegir el esfuerzo **Media (≈ 15 min)** y **Cerrar**: pide confirmación. **Descartar**.
-6. Tocar **+**, escribir `Pagar` y borrarlo, y **Cerrar**: cierra directo.
-7. Tocar **+**, escribir `Pagar` y **Cerrar**, y **Guardar**: se crea `Pagar` y el panel se cierra.
+5. Tocar **+**, escribir `Pagar` y borrarlo, y **Cerrar**: cierra directo.
+6. Tocar **+**, escribir `Pagar` y **Cerrar**, y **Guardar**: se crea `Pagar` y el panel se cierra.
 
 ## Flujo 4: acciones con cambios
 
@@ -116,12 +110,11 @@ Precondición: lista vacía, celular. Crear `Regar` (panel de referencia) y comp
 4. Abrir `Regar`, tocar **Borrar tarea** y luego Atrás: la confirmación se cierra (equivale a **Cancelar**) y el panel sigue abierto, en **Acciones**. Tocar Atrás: el panel se cierra (no hay cambios).
 5. Abrir `Regar` en la pestaña **Tarea**, tocar el botón de emoji y luego Atrás: el selector se cierra sin elegir emoji y el panel sigue. Tocar Atrás de nuevo: el panel se cierra.
 6. Abrir `Regar`, cambiar el título, tocar **Pausar** (aviso de acción) y Atrás: el aviso se cierra sin actuar y el panel sigue con el título escrito; la tarea no está pausada. Tocar Atrás: se abre el aviso de cierre. **Seguir editando**.
-7. Abrir `Regar`, escribir `ca` en **Etiquetas** (se ven las sugerencias) y tocar Atrás: las sugerencias no cuentan como algo abierto, así que se abre el aviso de cierre (hay texto sin confirmar). **Descartar**.
-8. Con el aviso de deshacer a la vista (completar `Regar` desde la lista, a las `2026-07-15T10:00:00`), abrir otra tarea sin cambios y tocar Atrás: el panel se cierra y el aviso de deshacer sigue a la vista sus 5 segundos (Atrás no lo toca).
-9. Abrir `Regar` (sin cambios), tocar el título (teclado en pantalla abierto, viewport achicado) y tocar Atrás: el primer Atrás solo cierra el teclado (viewport al alto original) y el panel sigue exactamente igual; el segundo Atrás cierra el panel. Repetir con el título cambiado: el primer Atrás solo cierra el teclado y el segundo abre el aviso de cierre.
-10. Con el panel cerrado: abrir `Regar` y tocar **Cerrar**; tocar Atrás: sale de la pantalla (igual que antes de esta feature), sin un Atrás de más que no haga nada. Hacer lo mismo cerrando con **Guardar** y con una acción (**1 hora**). Después de cerrar el panel, tocar Adelante (`page.goForward()`): no reabre el panel.
-11. En ancho (1024 px), repetir 1, 3 y 4: Atrás hace lo mismo.
-12. Con cambios sin guardar, tocar Atrás: el navegador no muestra su confirmación (ningún diálogo `beforeunload`).
+7. Con el aviso de deshacer a la vista (completar `Regar` desde la lista, a las `2026-07-15T10:00:00`), abrir otra tarea sin cambios y tocar Atrás: el panel se cierra y el aviso de deshacer sigue a la vista sus 5 segundos (Atrás no lo toca).
+8. Abrir `Regar` (sin cambios), tocar el título (teclado en pantalla abierto, viewport achicado) y tocar Atrás: el primer Atrás solo cierra el teclado (viewport al alto original) y el panel sigue exactamente igual; el segundo Atrás cierra el panel. Repetir con el título cambiado: el primer Atrás solo cierra el teclado y el segundo abre el aviso de cierre.
+9. Con el panel cerrado: abrir `Regar` y tocar **Cerrar**; tocar Atrás: sale de la pantalla (igual que antes de esta feature), sin un Atrás de más que no haga nada. Hacer lo mismo cerrando con **Guardar** y con una acción (**1 hora**). Después de cerrar el panel, tocar Adelante (`page.goForward()`): no reabre el panel.
+10. En ancho (1024 px), repetir 1, 3 y 4: Atrás hace lo mismo.
+11. Con cambios sin guardar, tocar Atrás: el navegador no muestra su confirmación (ningún diálogo `beforeunload`).
 
 ## Flujo 7: recargar o cerrar la app
 
@@ -129,12 +122,11 @@ Precondición: lista con `Regar`, celular.
 
 1. Abrir `Regar`, cambiar el título y recargar (`page.reload()`): el navegador muestra su confirmación. Cancelarla: el panel sigue abierto con el cambio. Aceptarla: la app recarga, el panel no se reabre y la lista dice `Regar`.
 2. Abrir `Regar` sin tocar nada y recargar: no hay confirmación.
-3. Abrir `Regar`, escribir `ca` sin confirmar en **Etiquetas** y recargar: hay confirmación. Con solo espacios: no hay.
-4. Abrir `Regar`, cambiar el título y tocar **Cerrar** (aviso de cierre abierto) y cerrar la página con `page.close({ runBeforeUnload: true })`: hay confirmación.
-5. Abrir `Regar`, cambiar el título, tocar **Pausar** (aviso de acción abierto) y recargar: hay confirmación.
-6. Abrir `Regar`, cambiar el título y **Descartar** desde el aviso, y recargar: no hay confirmación.
-7. Tocar **+** y recargar sin tocar nada: no hay confirmación; escribir `Pagar` y recargar: hay.
-8. Abrir `Regar`, cambiar el título y tocar Atrás: no hay confirmación del navegador (solo el aviso de la app).
+3. Abrir `Regar`, cambiar el título y tocar **Cerrar** (aviso de cierre abierto) y cerrar la página con `page.close({ runBeforeUnload: true })`: hay confirmación.
+4. Abrir `Regar`, cambiar el título, tocar **Pausar** (aviso de acción abierto) y recargar: hay confirmación.
+5. Abrir `Regar`, cambiar el título y **Descartar** desde el aviso, y recargar: no hay confirmación.
+6. Tocar **+** y recargar sin tocar nada: no hay confirmación; escribir `Pagar` y recargar: hay.
+7. Abrir `Regar`, cambiar el título y tocar Atrás: no hay confirmación del navegador (solo el aviso de la app).
 
 ## Flujo 8: dos dispositivos con el panel abierto
 
