@@ -45,7 +45,8 @@ function happens(world: World, incident: AppEvent): void {
 	if (retriesWith(incident)) attempt(world);
 }
 
-const EVENTS: AppEvent[] = ['vuelve la conexión', 'cambian los datos'];
+/** The incidents as the Gherkin says them, mapped to the core's events. */
+const EVENTS: Record<string, AppEvent> = { 'vuelve la conexión': 'connectionBack', 'cambian los datos': 'dataChanged' };
 
 export const cleanupsSteps: StepDefinition[] = [
 	{
@@ -70,15 +71,16 @@ export const cleanupsSteps: StepDefinition[] = [
 	{
 		pattern: /^sucede que (.+)$/,
 		run: (world, incident) => {
-			if (!EVENTS.includes(incident as AppEvent)) throw new Error(`Unknown incident: "${incident}"`);
-			happens(world, incident as AppEvent);
+			const event = EVENTS[incident];
+			if (event === undefined) throw new Error(`Unknown incident: "${incident}"`);
+			happens(world, event);
 		}
 	},
 	{
 		pattern: /^pasan (.+) minutos sin que suceda nada más$/,
 		run: (world, minutes) => {
 			if (!/^\d+$/.test(minutes)) throw new Error(`Invalid minutes: "${minutes}"`);
-			happens(world, 'pasa el tiempo');
+			happens(world, 'timePasses');
 		}
 	},
 	{

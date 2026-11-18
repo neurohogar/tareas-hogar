@@ -10,7 +10,7 @@
 		children
 	}: { name: PanelSection; presentation: PanelPresentation; openSection: PanelSection; children: Snippet } = $props();
 
-	const inTabs = $derived(presentation === 'pestanas');
+	const inTabs = $derived(presentation === 'tabs');
 </script>
 
 <section

@@ -139,7 +139,7 @@
 	let windowWidth = $state(window.innerWidth);
 	const remInPx = () => Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
 	const presentation = $derived(panelPresentation(windowWidth / remInPx()));
-	const sections = $derived(panelSections(onDelete ? 'editar' : 'crear'));
+	const sections = $derived(panelSections(onDelete ? 'edit' : 'create'));
 	let openSection = $state<PanelSection>(TAB_ON_OPEN);
 	let content: HTMLDivElement;
 
@@ -218,7 +218,7 @@
 	}
 
 	function close() {
-		if (onClosePanel(hasChangesNow()) === 'cierra el panel') onClose();
+		if (onClosePanel(hasChangesNow()) === 'closesPanel') onClose();
 		else closeNoticeOpen = true;
 	}
 
@@ -230,7 +230,7 @@
 
 	function chooseAction(action: PanelAction) {
 		const typed = currentForm();
-		if (whatTheActionDoes(action, hasChanges(onOpen, typed)) === 'actúa') onAct?.(changeOfAction(action, currentTime()));
+		if (whatTheActionDoes(action, hasChanges(onOpen, typed)) === 'acts') onAct?.(changeOfAction(action, currentTime()));
 		else openAction = { action, form: typed };
 	}
 
@@ -256,24 +256,24 @@
 	}
 
 	function whatIsOnTop(): OnTop {
-		if (session.annotating) return 'recuadro de Anotar';
-		if (closeNoticeOpen) return 'aviso de cierre';
-		if (openAction) return 'aviso de acción';
-		if (confirmingDelete) return 'confirmación de Borrar tarea';
-		return recents ? 'selector de emoji' : 'nada';
+		if (session.annotating) return 'annotateBox';
+		if (closeNoticeOpen) return 'closeNotice';
+		if (openAction) return 'actionNotice';
+		if (confirmingDelete) return 'deleteConfirmation';
+		return recents ? 'emojiPicker' : 'nothing';
 	}
 
 	/** Back with the panel open (§6.2); returns whether the panel is still open. */
 	function onBackTap(): boolean {
 		const effect = whatBackDoes({ top: whatIsOnTop(), hasChanges: hasChangesNow(), keyboardOpen: keyboard.open });
-		if (effect === 'cierra el teclado') (document.activeElement as HTMLElement | null)?.blur();
-		else if (effect === 'cierra lo de arriba' && session.annotating) session.closeAnnotate();
-		else if (effect === 'cierra lo de arriba') {
+		if (effect === 'closesKeyboard') (document.activeElement as HTMLElement | null)?.blur();
+		else if (effect === 'closesTopLayer' && session.annotating) session.closeAnnotate();
+		else if (effect === 'closesTopLayer') {
 			closeNoticeOpen = false;
 			openAction = undefined;
 			confirmingDelete = false;
 			recents = undefined;
-		} else if (effect === 'abre el aviso de cierre') closeNoticeOpen = true;
+		} else if (effect === 'opensCloseNotice') closeNoticeOpen = true;
 		else {
 			onClose();
 			return false;
@@ -296,12 +296,12 @@
 <svelte:window bind:innerWidth={windowWidth} />
 
 <div class="panel main-panel" inert={closeNoticeOpen || openAction !== undefined || confirmingDelete} style:bottom={keyboard.overlap > 0 ? `${keyboard.overlap}px` : undefined} role="dialog" aria-modal="true" aria-labelledby="title-panel">
-	<form class="sheet" bind:this={form} class:full={presentation === 'pestanas'} novalidate onsubmit={submit}>
+	<form class="sheet" bind:this={form} class:full={presentation === 'tabs'} novalidate onsubmit={submit}>
 		<header>
 			<h2 id="title-panel">{header}</h2>
 			<button type="button" class="close" aria-label="Cerrar" onclick={close}><Icon name="close" /></button>
 		</header>
-		{#if presentation === 'pestanas'}
+		{#if presentation === 'tabs'}
 			<TabBar {sections} {openSection} {marked} onChoose={chooseTab} />
 		{/if}
 

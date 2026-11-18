@@ -50,7 +50,7 @@ describe('steps (properties)', () => {
 				const inRange = (step: number) => step >= 1 && step <= amount;
 				expect(inRange(stepItIsOn(task))).toBe(true);
 				const action = doneAction(task, [], CREATED);
-				if (action.kind === 'avanzar') expect(inRange(stepItIsOn({ ...task, currentStep: action.change.currentStep ?? 1 }))).toBe(true);
+				if (action.kind === 'advance') expect(inRange(stepItIsOn({ ...task, currentStep: action.change.currentStep ?? 1 }))).toBe(true);
 				const previous = previousStepChange(task).currentStep;
 				expect(inRange(previous ?? 1)).toBe(true);
 			})

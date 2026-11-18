@@ -33,7 +33,7 @@ describe('checkboxAction (properties)', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, doneOnes, now) => {
 				fc.pre(!isCompleted(t, doneOnes, now));
-				expect(checkboxAction(t, doneOnes, now)).toEqual({ kind: 'completar' });
+				expect(checkboxAction(t, doneOnes, now)).toEqual({ kind: 'complete' });
 			})
 		);
 	});
@@ -42,7 +42,7 @@ describe('checkboxAction (properties)', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, doneOnes, now) => {
 				const action = checkboxAction(t, doneOnes, now);
-				if (action.kind !== 'borrar') return;
+				if (action.kind !== 'remove') return;
 				const owns = completionsOfTask(doneOnes, t.id);
 				expect(owns).toContain(action.completion);
 				expect(action.completion.completedAt.getTime()).toBe(lastCompletedAt(owns));
@@ -54,7 +54,7 @@ describe('checkboxAction (properties)', () => {
 		fc.assert(
 			fc.property(oneOff, completions, instant, (t, doneOnes, now) => {
 				fc.pre(completionsOfTask(doneOnes, t.id).length > 0);
-				expect(checkboxAction(t, doneOnes, now).kind).toBe('borrar');
+				expect(checkboxAction(t, doneOnes, now).kind).toBe('remove');
 			})
 		);
 	});
@@ -64,7 +64,7 @@ describe('checkboxAction (properties)', () => {
 			fc.property(fc.oneof(recurring(relative), recurring(calendar)), completions, instant, (t, doneOnes, now) => {
 				const owns = completionsOfTask(doneOnes, t.id);
 				fc.pre(owns.length > 0 && lastCompletedAt(owns) < startOfDay(now).getTime());
-				expect(checkboxAction(t, doneOnes, now)).toEqual({ kind: 'completar' });
+				expect(checkboxAction(t, doneOnes, now)).toEqual({ kind: 'complete' });
 			})
 		);
 	});
@@ -74,7 +74,7 @@ describe('checkboxAction (properties)', () => {
 			fc.property(fc.oneof(oneOff, recurring(relative)), completions, instant, (t, doneOnes, now) => {
 				const previousItems = doneOnes.filter(({ completedAt }) => completedAt.getTime() < now.getTime());
 				const newValue = complete(t, previousItems, 'nuevo', now);
-				expect(checkboxAction(t, [...previousItems, newValue], now)).toEqual({ kind: 'borrar', completion: newValue });
+				expect(checkboxAction(t, [...previousItems, newValue], now)).toEqual({ kind: 'remove', completion: newValue });
 			})
 		);
 	});

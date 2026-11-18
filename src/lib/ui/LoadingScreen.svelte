@@ -28,7 +28,7 @@
 	let { auth, data, onLeave }: { auth: AuthResponse; data: CollectionsResponded; onLeave: () => void } = $props();
 
 	/** Until it is known whether they are on the device, they are awaited as if they were. */
-	let fonts = $state<FontsStatus>({ atkinson: 'guardada', noto: 'guardada' });
+	let fonts = $state<FontsStatus>({ atkinson: 'saved', noto: 'saved' });
 	let online = $state(true);
 	let hasLeft = $state(false);
 	/** Spec §6.6: holds for the whole launch, even if Noto ends up stored meanwhile. */
@@ -84,6 +84,6 @@
 
 	// Spec §6.6: what is remembered is forgotten when Noto ends up stored, also after the screen has gone.
 	$effect(() => {
-		if (hasLeft && fonts.noto === 'lista') saveNotoLimitMemory(notoLimitMemory(waitStatus()));
+		if (hasLeft && fonts.noto === 'ready') saveNotoLimitMemory(notoLimitMemory(waitStatus()));
 	});
 </script>

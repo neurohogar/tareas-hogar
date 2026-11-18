@@ -14,11 +14,11 @@ import {
 function wait(changes: Partial<WaitStatus> = {}): WaitStatus {
 	return {
 		secondsSinceStart: 2,
-		auth: 'con-sesion',
+		auth: 'signedIn',
 		tasksResponded: true,
 		completionsResponded: true,
-		atkinson: 'lista',
-		noto: 'lista',
+		atkinson: 'ready',
+		noto: 'ready',
 		online: true,
 		remembersNotoLimit: false,
 		...changes
@@ -40,8 +40,8 @@ describe('loadingScreenLeaves: with a session', () => {
 	it.each([
 		['the tasks', { tasksResponded: false }],
 		['the completions', { completionsResponded: false }],
-		['Atkinson', { atkinson: 'sin-guardar' }],
-		['Noto', { noto: 'sin-guardar' }]
+		['Atkinson', { atkinson: 'unsaved' }],
+		['Noto', { noto: 'unsaved' }]
 	] as const)('waits for %s', (_name, changes) => {
 		expect(loadingScreenLeaves(wait(changes))).toBe(false);
 	});
@@ -59,10 +59,10 @@ describe('loadingScreenLeaves: minimum of 0.5 s', () => {
 	it('it also holds without a session, offline and with the fonts failed', () => {
 		const status = wait({
 			secondsSinceStart: 0.4,
-			auth: 'sin-sesion',
+			auth: 'signedOut',
 			online: false,
-			atkinson: 'fallida',
-			noto: 'fallida'
+			atkinson: 'failed',
+			noto: 'failed'
 		});
 		expect(loadingScreenLeaves(status)).toBe(false);
 	});
@@ -72,8 +72,8 @@ describe('loadingScreenLeaves: limit of 10 s', () => {
 	const nothingReady = {
 		tasksResponded: false,
 		completionsResponded: false,
-		atkinson: 'sin-guardar',
-		noto: 'sin-guardar'
+		atkinson: 'unsaved',
+		noto: 'unsaved'
 	} as const;
 
 	it('before the limit it keeps waiting', () => {
@@ -85,7 +85,7 @@ describe('loadingScreenLeaves: limit of 10 s', () => {
 	});
 
 	it('the wait for Auth does not count toward the limit', () => {
-		expect(loadingScreenLeaves(wait({ auth: 'esperando', secondsSinceStart: 60 }))).toBe(
+		expect(loadingScreenLeaves(wait({ auth: 'waiting', secondsSinceStart: 60 }))).toBe(
 			false
 		);
 	});
@@ -97,43 +97,43 @@ describe('loadingScreenLeaves: limit of 10 s', () => {
 
 describe('loadingScreenLeaves: without a session', () => {
 	const withoutSession = {
-		auth: 'sin-sesion',
+		auth: 'signedOut',
 		tasksResponded: false,
 		completionsResponded: false
 	} as const;
 
 	it('does not wait for data or for Noto', () => {
-		expect(loadingScreenLeaves(wait({ ...withoutSession, noto: 'sin-guardar' }))).toBe(true);
+		expect(loadingScreenLeaves(wait({ ...withoutSession, noto: 'unsaved' }))).toBe(true);
 	});
 
 	it('waits for Atkinson', () => {
-		expect(loadingScreenLeaves(wait({ ...withoutSession, atkinson: 'sin-guardar' }))).toBe(false);
+		expect(loadingScreenLeaves(wait({ ...withoutSession, atkinson: 'unsaved' }))).toBe(false);
 	});
 });
 
 describe('loadingScreenLeaves: does not wait for what will not arrive', () => {
 	it.each([
-		['Atkinson', { atkinson: 'fallida' }],
-		['Noto', { noto: 'fallida' }]
+		['Atkinson', { atkinson: 'failed' }],
+		['Noto', { noto: 'failed' }]
 	] as const)('%s failed stops being waited for when online', (_name, changes) => {
 		expect(loadingScreenLeaves(wait(changes))).toBe(true);
 	});
 
 	it('a failed font does not release the rest still pending', () => {
-		expect(loadingScreenLeaves(wait({ noto: 'fallida', atkinson: 'sin-guardar' }))).toBe(false);
-		expect(loadingScreenLeaves(wait({ noto: 'fallida', tasksResponded: false }))).toBe(false);
+		expect(loadingScreenLeaves(wait({ noto: 'failed', atkinson: 'unsaved' }))).toBe(false);
+		expect(loadingScreenLeaves(wait({ noto: 'failed', tasksResponded: false }))).toBe(false);
 	});
 
 	it.each([
-		['Atkinson', { atkinson: 'sin-guardar' }],
-		['Noto', { noto: 'sin-guardar' }]
+		['Atkinson', { atkinson: 'unsaved' }],
+		['Noto', { noto: 'unsaved' }]
 	] as const)('offline it does not wait for %s not stored', (_name, changes) => {
 		expect(loadingScreenLeaves(wait({ ...changes, online: false }))).toBe(true);
 	});
 
 	it.each([
-		['Atkinson', { atkinson: 'guardada' }],
-		['Noto', { noto: 'guardada' }]
+		['Atkinson', { atkinson: 'saved' }],
+		['Noto', { noto: 'saved' }]
 	] as const)('offline it keeps waiting for %s stored', (_name, changes) => {
 		const status = wait({ ...changes, online: false });
 		expect(loadingScreenLeaves(status)).toBe(false);
@@ -148,26 +148,26 @@ describe('loadingScreenLeaves: does not wait for what will not arrive', () => {
 
 describe('loadingScreenLeaves: after a limit reached with Noto not downloaded', () => {
 	it('with a session it does not wait for Noto', () => {
-		expect(loadingScreenLeaves(wait({ remembersNotoLimit: true, noto: 'sin-guardar' }))).toBe(
+		expect(loadingScreenLeaves(wait({ remembersNotoLimit: true, noto: 'unsaved' }))).toBe(
 			true
 		);
 	});
 
 	it('the rest is still waited for', () => {
-		const status = wait({ remembersNotoLimit: true, noto: 'sin-guardar', atkinson: 'guardada' });
+		const status = wait({ remembersNotoLimit: true, noto: 'unsaved', atkinson: 'saved' });
 		expect(loadingScreenLeaves(status)).toBe(false);
 	});
 });
 
 describe('notoLimitMemory', () => {
-	const atLimit = { secondsSinceStart: 10, noto: 'sin-guardar' } as const;
+	const atLimit = { secondsSinceStart: 10, noto: 'unsaved' } as const;
 
 	it('a limit reached with Noto not downloaded in an opening that waited for it is remembered', () => {
 		expect(notoLimitMemory(wait(atLimit))).toBe(true);
 	});
 
 	it('also when Noto was being read from the device', () => {
-		expect(notoLimitMemory(wait({ ...atLimit, noto: 'guardada' }))).toBe(true);
+		expect(notoLimitMemory(wait({ ...atLimit, noto: 'saved' }))).toBe(true);
 	});
 
 	it('if the screen left before the limit there is nothing to remember', () => {
@@ -179,11 +179,11 @@ describe('notoLimitMemory', () => {
 	});
 
 	it('without a session it does not count: it did not wait for it', () => {
-		expect(notoLimitMemory(wait({ ...atLimit, auth: 'sin-sesion' }))).toBe(false);
+		expect(notoLimitMemory(wait({ ...atLimit, auth: 'signedOut' }))).toBe(false);
 	});
 
 	it('Noto failed before the limit does not count: it was no longer waited for', () => {
-		expect(notoLimitMemory(wait({ ...atLimit, noto: 'fallida' }))).toBe(false);
+		expect(notoLimitMemory(wait({ ...atLimit, noto: 'failed' }))).toBe(false);
 	});
 
 	it('Noto not stored and offline does not count: it was no longer waited for', () => {
@@ -191,7 +191,7 @@ describe('notoLimitMemory', () => {
 	});
 
 	it('Noto stored and offline counts: it was still waited for', () => {
-		expect(notoLimitMemory(wait({ ...atLimit, online: false, noto: 'guardada' }))).toBe(true);
+		expect(notoLimitMemory(wait({ ...atLimit, online: false, noto: 'saved' }))).toBe(true);
 	});
 
 	it('with Noto ready at the limit it is not remembered', () => {
@@ -199,21 +199,21 @@ describe('notoLimitMemory', () => {
 	});
 
 	it.each([
-		['without a session', { auth: 'sin-sesion' }],
-		['with Noto failed', { noto: 'fallida' }],
+		['without a session', { auth: 'signedOut' }],
+		['with Noto failed', { noto: 'failed' }],
 		['offline', { online: false }],
 		['before the limit', { secondsSinceStart: 1 }]
 	] as const)('what was already remembered is kept %s', (_name, changes) => {
-		const status = wait({ noto: 'sin-guardar', remembersNotoLimit: true, ...changes });
+		const status = wait({ noto: 'unsaved', remembersNotoLimit: true, ...changes });
 		expect(notoLimitMemory(status)).toBe(true);
 	});
 
 	it('it is forgotten when Noto is stored', () => {
-		expect(notoLimitMemory(wait({ remembersNotoLimit: true, noto: 'lista' }))).toBe(false);
+		expect(notoLimitMemory(wait({ remembersNotoLimit: true, noto: 'ready' }))).toBe(false);
 	});
 
 	it('it is forgotten even if the opening has no session', () => {
-		const status = wait({ remembersNotoLimit: true, noto: 'lista', auth: 'sin-sesion' });
+		const status = wait({ remembersNotoLimit: true, noto: 'ready', auth: 'signedOut' });
 		expect(notoLimitMemory(status)).toBe(false);
 	});
 });
@@ -243,8 +243,8 @@ describe('next limit', () => {
 
 describe('fonts summary', () => {
 	it('the worst rules: failed, then not stored, then stored', () => {
-		expect(fontsSummary(['guardada', 'sin-guardar', 'fallida'])).toBe('fallida');
-		expect(fontsSummary(['guardada', 'sin-guardar'])).toBe('sin-guardar');
-		expect(fontsSummary(['guardada'])).toBe('guardada');
+		expect(fontsSummary(['saved', 'unsaved', 'failed'])).toBe('failed');
+		expect(fontsSummary(['saved', 'unsaved'])).toBe('unsaved');
+		expect(fontsSummary(['saved'])).toBe('saved');
 	});
 });

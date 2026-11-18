@@ -31,16 +31,16 @@ describe('whatTheActionDoes (spec §6.2)', () => {
 	const ACTIONS: PanelAction[] = ['pausar', 'reanudar', 'posponer 1 hora', 'posponer 3 horas', 'posponer hasta mañana', 'quitar posponer'];
 
 	it('without changes, each action acts at once', () => {
-		for (const action of ACTIONS) expect(whatTheActionDoes(action, false)).toBe('actúa');
+		for (const action of ACTIONS) expect(whatTheActionDoes(action, false)).toBe('acts');
 	});
 
 	it('with changes, each action opens the notice', () => {
-		for (const action of ACTIONS) expect(whatTheActionDoes(action, true)).toBe('abre el aviso de acción');
+		for (const action of ACTIONS) expect(whatTheActionDoes(action, true)).toBe('opensActionNotice');
 	});
 
 	it('Borrar tarea does not add the notice: with or without changes, only its confirmation', () => {
-		expect(whatTheActionDoes('borrar tarea', true)).toBe('pide confirmar el borrado');
-		expect(whatTheActionDoes('borrar tarea', false)).toBe('pide confirmar el borrado');
+		expect(whatTheActionDoes('borrar tarea', true)).toBe('asksDeleteConfirmation');
+		expect(whatTheActionDoes('borrar tarea', false)).toBe('asksDeleteConfirmation');
 	});
 });
 

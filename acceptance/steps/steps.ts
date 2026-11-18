@@ -104,8 +104,8 @@ function tapDone(world: World, task: Task, moment: Date): void {
 	// Without a prior query, what is asserted afterwards belongs to the moment of the tap.
 	if (world.statusMoments.length === 0) world.statusMoments = [moment];
 	const action = doneAction(task, world.completions, moment);
-	if (action.kind === 'completar') return completeMe(world, moment, task);
-	if (action.kind === 'avanzar') {
+	if (action.kind === 'complete') return completeMe(world, moment, task);
+	if (action.kind === 'advance') {
 		rememberBeforeOfMyChange(world);
 		writeChange(world, task, action.change);
 	}
@@ -120,8 +120,8 @@ function dueDoneOther(world: World, moment: Date): void {
 	const seen = thatSawOther(world);
 	const task = theTask(seen);
 	const action = doneAction(task, seen.completions, moment);
-	if (action.kind === 'avanzar') writeChange(world, task, action.change);
-	if (action.kind === 'completar') {
+	if (action.kind === 'advance') writeChange(world, task, action.change);
+	if (action.kind === 'complete') {
 		world.completions = [...world.completions, complete(task, seen.completions, newId(world, 'completado'), moment)];
 		writeChange(world, task, changeOnComplete(task));
 	}

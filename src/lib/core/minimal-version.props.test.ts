@@ -55,7 +55,7 @@ describe('minimal version (properties)', () => {
 			fc.property(taskWithMinimal, completions, instant, (t, doneOnes, now) => {
 				const status = taskStatus(t, doneOnes, now);
 				const doneItem = doTheMinimal(t, doneOnes, 'n', now);
-				const shouldOffer = t.minimalVersion !== undefined && (status.kind === 'pendiente' || status.kind === 'atrasada') && checkboxAction(t, doneOnes, now).kind === 'completar';
+				const shouldOffer = t.minimalVersion !== undefined && (status.kind === 'pendiente' || status.kind === 'atrasada') && checkboxAction(t, doneOnes, now).kind === 'complete';
 				expect(doneItem !== undefined).toBe(shouldOffer);
 			})
 		);

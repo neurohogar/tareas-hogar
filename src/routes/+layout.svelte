@@ -11,7 +11,7 @@
 
 	/** undefined while Auth has not answered yet. */
 	let user = $state<User | null | undefined>(undefined);
-	const auth = $derived<AuthResponse>(user === undefined ? 'esperando' : user ? 'con-sesion' : 'sin-sesion');
+	const auth = $derived<AuthResponse>(user === undefined ? 'waiting' : user ? 'signedIn' : 'signedOut');
 	let data = $state.raw<CollectionsResponded>({ tasks: false, completions: false });
 	/** Spec §6.6: once per launch; signing in with Google does not show it again. */
 	let loading = $state(true);

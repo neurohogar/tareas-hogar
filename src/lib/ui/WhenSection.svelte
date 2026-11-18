@@ -50,10 +50,10 @@
 		{ value: 'mensual', name: 'Días del mes' }
 	];
 	const SCHEDULE_ERRORS: Record<NonNullable<CreationErrors['schedule']>, string> = {
-		finNoPosterior: 'La hora de fin tiene que ser posterior a la de inicio',
-		incompleto: 'Completá las dos horas',
-		superpuestos: 'Los horarios no se pueden superponer',
-		variasEnHoras: 'Con varios horarios, el intervalo tiene que ser en días'
+		endNotAfterStart: 'La hora de fin tiene que ser posterior a la de inicio',
+		incomplete: 'Completá las dos horas',
+		overlapping: 'Los horarios no se pueden superponer',
+		severalInHours: 'Con varios horarios, el intervalo tiene que ser en días'
 	};
 	const DAYS_ERRORS: Record<NonNullable<CreationErrors['days']>, string> = {
 		faltan: 'Elegí al menos un día.',

@@ -60,7 +60,7 @@ describe('characterFont (properties)', () => {
 	it('a valid emoji is drawn with Noto or with the device emoji, never with a text font', () => {
 		fc.assert(
 			fc.property(validEmoji, (emoji) => {
-				expect(['Noto Color Emoji', 'el emoji del dispositivo']).toContain(characterFont(emoji));
+				expect(['Noto Color Emoji', 'deviceEmoji']).toContain(characterFont(emoji));
 			})
 		);
 	});
@@ -86,7 +86,7 @@ describe('characterFont (properties)', () => {
 	it('a character of another alphabet is drawn with the system font', () => {
 		fc.assert(
 			fc.property(range(0x4e00, 0x4e50), (point) => {
-				expect(characterFont(cp(point))).toBe('la fuente del sistema');
+				expect(characterFont(cp(point))).toBe('systemFont');
 			})
 		);
 	});

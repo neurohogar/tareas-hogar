@@ -26,14 +26,14 @@ describe('creating with a schedule (spec §4.1)', () => {
 	it('with from ≥ to it is rejected whole, together with the other errors', () => {
 		expect(createFromData({ shape: 'puntual', title: ' ', schedule: [{ from: '11:00', to: '08:00' }] }, 't1', NOW)).toStrictEqual({
 			ok: false,
-			errors: { title: 'vacio', schedule: 'finNoPosterior' }
+			errors: { title: 'vacio', schedule: 'endNotAfterStart' }
 		});
 	});
 
 	it('with only one of the two times it is rejected for an incomplete schedule', () => {
 		expect(createFromData({ shape: 'relativa', title: 'Regar', every: 1, unit: 'dias', schedule: [{ from: '08:00' }] }, 't1', NOW)).toStrictEqual({
 			ok: false,
-			errors: { schedule: 'incompleto' }
+			errors: { schedule: 'incomplete' }
 		});
 	});
 });
@@ -64,7 +64,7 @@ describe('editing the schedule (spec §6.2, §7)', () => {
 	it('an edit with an invalid schedule is rejected whole', () => {
 		expect(edit(WITH_SCHEDULE, { shape: 'puntual', title: 'Barrer', schedule: [{ from: '10:00', to: '10:00' }] })).toStrictEqual({
 			ok: false,
-			errors: { schedule: 'finNoPosterior' }
+			errors: { schedule: 'endNotAfterStart' }
 		});
 	});
 });
@@ -103,7 +103,7 @@ describe('several schedules (spec §4.1, §6.2, §7)', () => {
 	it('a relative task in hours with more than one window is rejected whole', () => {
 		expect(createFromData({ shape: 'relativa', title: ' ', every: 8, unit: 'horas', schedule: MORNING_AND_AFTERNOON }, 't1', NOW)).toStrictEqual({
 			ok: false,
-			errors: { title: 'vacio', schedule: 'variasEnHoras' }
+			errors: { title: 'vacio', schedule: 'severalInHours' }
 		});
 	});
 
@@ -116,7 +116,7 @@ describe('several schedules (spec §4.1, §6.2, §7)', () => {
 		const overlapping = [MORNING_AND_AFTERNOON[0], { from: '09:00', to: '12:00' }];
 		expect(createFromData({ shape: 'relativa', title: 'Remedio', every: 8, unit: 'horas', schedule: overlapping }, 't1', NOW)).toStrictEqual({
 			ok: false,
-			errors: { schedule: 'superpuestos' }
+			errors: { schedule: 'overlapping' }
 		});
 	});
 
@@ -124,7 +124,7 @@ describe('several schedules (spec §4.1, §6.2, §7)', () => {
 		const task: OneOffTask = { ...WITH_SCHEDULE, schedule: MORNING_AND_AFTERNOON };
 		expect(edit(task, { shape: 'relativa', title: 'Regar', every: 8, unit: 'horas', schedule: MORNING_AND_AFTERNOON })).toStrictEqual({
 			ok: false,
-			errors: { schedule: 'variasEnHoras' }
+			errors: { schedule: 'severalInHours' }
 		});
 	});
 

@@ -14,7 +14,7 @@ export function createRecurringRelative(data: RecurringRelativeData, id: string,
 	const { every, unit, ...commons } = data;
 	const errors: RecurrenceErrors = {
 		...(!(Number.isInteger(every) && every >= 1) && { every: 'invalido' as const }),
-		...(severalWindowsInHours(data) && { schedule: 'variasEnHoras' as const })
+		...(severalWindowsInHours(data) && { schedule: 'severalInHours' as const })
 	};
 	return createRecurring({ ...commons, id, now }, errors, () => ({ mode: 'relativo', every, unit }));
 }

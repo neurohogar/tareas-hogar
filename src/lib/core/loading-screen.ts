@@ -9,14 +9,14 @@ export const SCREEN_MINIMUM_IN_SECONDS = 0.5;
 export const SCREEN_LIMIT_IN_SECONDS = 10;
 
 /** The Auth response: until it arrives it is not known whether the opening has a session. */
-export type AuthResponse = 'esperando' | 'con-sesion' | 'sin-sesion';
+export type AuthResponse = 'waiting' | 'signedIn' | 'signedOut';
 
 /**
  * Each font (Atkinson or Noto): `lista` to draw; `guardada` on the device and
  * still loading; `sin-guardar`, it can only come over the network; `fallida` failed or, for
  * Noto, the browser cannot draw it.
  */
-export type FontStatus = 'lista' | 'guardada' | 'sin-guardar' | 'fallida';
+export type FontStatus = 'ready' | 'saved' | 'unsaved' | 'failed';
 
 /** What matters for the loading screen at an instant. */
 export interface WaitStatus {
@@ -32,7 +32,7 @@ export interface WaitStatus {
 
 /** Spec §6.6, "No espera lo que no va a llegar": a font fails or only arrives over the network. */
 function fontMayStillArrive(font: FontStatus, online: boolean): boolean {
-	return font === 'guardada' || (font === 'sin-guardar' && online);
+	return font === 'saved' || (font === 'unsaved' && online);
 }
 
 function dataResponded(status: WaitStatus): boolean {
@@ -48,7 +48,7 @@ function openingWithSessionReady(status: WaitStatus): boolean {
 
 function respondedEverythingExpected(status: WaitStatus): boolean {
 	if (fontMayStillArrive(status.atkinson, status.online)) return false;
-	return status.auth === 'sin-sesion' || openingWithSessionReady(status);
+	return status.auth === 'signedOut' || openingWithSessionReady(status);
 }
 
 /**
@@ -56,7 +56,7 @@ function respondedEverythingExpected(status: WaitStatus): boolean {
  * what that opening waits for is ready or on reaching the limit of 10 s.
  */
 export function loadingScreenLeaves(status: WaitStatus): boolean {
-	if (status.auth === 'esperando') return false;
+	if (status.auth === 'waiting') return false;
 	if (status.secondsSinceStart < SCREEN_MINIMUM_IN_SECONDS) return false;
 	return (
 		status.secondsSinceStart >= SCREEN_LIMIT_IN_SECONDS ||
@@ -67,7 +67,7 @@ export function loadingScreenLeaves(status: WaitStatus): boolean {
 function limitWithNotoExpected(status: WaitStatus): boolean {
 	return (
 		status.secondsSinceStart >= SCREEN_LIMIT_IN_SECONDS &&
-		status.auth === 'con-sesion' &&
+		status.auth === 'signedIn' &&
 		fontMayStillArrive(status.noto, status.online)
 	);
 }
@@ -77,7 +77,7 @@ function limitWithNotoExpected(status: WaitStatus): boolean {
  * at the instant the screen leaves and every time Noto becomes ready afterwards.
  */
 export function notoLimitMemory(status: WaitStatus): boolean {
-	if (status.noto === 'lista') return false;
+	if (status.noto === 'ready') return false;
 	return status.remembersNotoLimit || limitWithNotoExpected(status);
 }
 
@@ -95,6 +95,6 @@ export function nextScreenLimit(secondsSinceStart: number): number | undefined {
 
 /** The status of the whole font set according to that of each of its files: the worst one rules. */
 export function fontsSummary(statuses: FontStatus[]): FontStatus {
-	if (statuses.includes('fallida')) return 'fallida';
-	return statuses.includes('sin-guardar') ? 'sin-guardar' : 'guardada';
+	if (statuses.includes('failed')) return 'failed';
+	return statuses.includes('unsaved') ? 'unsaved' : 'saved';
 }

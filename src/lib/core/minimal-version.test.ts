@@ -243,14 +243,14 @@ describe('checkbox of a task completed with the minimal version (spec §5.4, §6
 		const whole: Completion = { id: 'c1', taskId: ONE_OFF.id, completedAt: CREATED };
 		const minimum: Completion = { id: 'c2', taskId: ONE_OFF.id, completedAt: new Date(2026, 10, 2), wasMinimal: true };
 
-		expect(checkboxAction(ONE_OFF, [whole, minimum], NOW)).toStrictEqual({ kind: 'borrar', completion: minimum });
+		expect(checkboxAction(ONE_OFF, [whole, minimum], NOW)).toStrictEqual({ kind: 'remove', completion: minimum });
 	});
 
 	it('a recurring task completed with the minimal version a previous day is completed again, in full', () => {
 		const minimum: Completion = { id: 'c1', taskId: RELATIVE.id, completedAt: new Date(2026, 10, 12, 9, 0, 0), wasMinimal: true };
 		const daily: RecurringTask = { ...RELATIVE, recurrence: { mode: 'relativo', every: 2, unit: 'horas' } };
 
-		expect(checkboxAction(daily, [minimum], NOW)).toStrictEqual({ kind: 'completar' });
+		expect(checkboxAction(daily, [minimum], NOW)).toStrictEqual({ kind: 'complete' });
 		expect(complete(daily, [minimum], 'c2', NOW)).not.toHaveProperty('wasMinimal');
 	});
 });

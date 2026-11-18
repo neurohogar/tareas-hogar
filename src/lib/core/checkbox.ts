@@ -7,11 +7,11 @@ import { asJustCreated, isPaused } from './pause';
 import type { Completion, Task } from './task';
 
 /** "ninguna": the checkbox is disabled (it would complete outside the window, §5.5, or the task is paused, §5.8). */
-export type CheckboxAction = { kind: 'completar' } | { kind: 'borrar'; completion: Completion } | { kind: 'ninguna' };
+export type CheckboxAction = { kind: 'complete' } | { kind: 'remove'; completion: Completion } | { kind: 'none' };
 
 /** Spec §5.5: with a schedule, it is completed only inside one of its windows. */
 function completeIfPossible({ schedule }: Task, now: Date): CheckboxAction {
-	return !schedule || withinSchedule(schedule, now) ? { kind: 'completar' } : { kind: 'ninguna' };
+	return !schedule || withinSchedule(schedule, now) ? { kind: 'complete' } : { kind: 'none' };
 }
 
 /**
@@ -24,16 +24,16 @@ function completeIfPossible({ schedule }: Task, now: Date): CheckboxAction {
  * resumedAt count (§5.8).
  */
 export function checkboxAction(task: Task, completions: readonly Completion[], now: Date): CheckboxAction {
-	if (isPaused(task)) return { kind: 'ninguna' };
+	if (isPaused(task)) return { kind: 'none' };
 	const { owns } = asJustCreated(task, completionsOfTask(completions, task.id));
 	if (!isCompleted(task, completions, now)) return completeIfPossible(task, now);
 	const mostRecent = latestCompletion(owns);
 	const ofTodayOrLater = mostRecent.completedAt.getTime() >= startOfDay(now).getTime();
-	if (task.kind === 'puntual' || ofTodayOrLater) return { kind: 'borrar', completion: mostRecent };
+	if (task.kind === 'puntual' || ofTodayOrLater) return { kind: 'remove', completion: mostRecent };
 	return completeIfPossible(task, now);
 }
 
 /** Spec §6.1 and §5.8: disabled if tapping it would complete outside the window, or if the task is paused. */
 export function checkboxEnabled(task: Task, completions: readonly Completion[], now: Date): boolean {
-	return checkboxAction(task, completions, now).kind !== 'ninguna';
+	return checkboxAction(task, completions, now).kind !== 'none';
 }

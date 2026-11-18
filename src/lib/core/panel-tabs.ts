@@ -2,8 +2,8 @@
 import type { CreationErrors } from './creation';
 import { DATA_ON_CREATE, type TaskData } from './task-data';
 
-export type PanelPresentation = 'pestanas' | 'secciones';
-export type PanelMode = 'crear' | 'editar';
+export type PanelPresentation = 'tabs' | 'sections';
+export type PanelMode = 'create' | 'edit';
 export type PanelSection = 'Tarea' | 'Cuándo' | 'Acciones';
 export type FieldWithError = 'Título' | 'fecha límite' | 'Cada' | 'días' | 'horario';
 export type RepetitionOption = 'puntual' | 'relativo' | 'semanal' | 'mensual';
@@ -33,12 +33,12 @@ export function repetitionOnOpen(data: TaskData = DATA_ON_CREATE): RepetitionOpt
 
 /** Spec §6.2, Panel presentation: up to 40rem inclusive is a phone, in tabs; above that, consecutive sections. */
 export function panelPresentation(widthRem: number): PanelPresentation {
-	return widthRem <= MAX_PHONE_WIDTH_IN_REM ? 'pestanas' : 'secciones';
+	return widthRem <= MAX_PHONE_WIDTH_IN_REM ? 'tabs' : 'sections';
 }
 
 /** Spec §6.2, Tabs: when creating Acciones does not appear; when editing it always appears. */
 export function panelSections(mode: PanelMode): readonly PanelSection[] {
-	return mode === 'crear' ? SECTIONS_ON_CREATE : SECTIONS_ON_EDIT;
+	return mode === 'create' ? SECTIONS_ON_CREATE : SECTIONS_ON_EDIT;
 }
 
 /** Spec §6.2, Errors: the sections with some field showing an error, in tab order. */
@@ -50,7 +50,7 @@ export function markedSections(fieldsWithError: readonly FieldWithError[]): read
 export function destinationOnSaveFailure(fieldsWithError: readonly FieldWithError[], presentation: PanelPresentation): ErrorDestination | undefined {
 	const field = FIELDS_IN_READING_ORDER.find((candidate) => fieldsWithError.includes(candidate));
 	if (!field) return undefined;
-	return { tab: presentation === 'pestanas' ? SECTION_OF_FIELD[field] : undefined, field };
+	return { tab: presentation === 'tabs' ? SECTION_OF_FIELD[field] : undefined, field };
 }
 
 /** Spec §6.2, On-screen keyboard: the Guardar bar is hidden only while the on-screen keyboard is open. */

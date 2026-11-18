@@ -7,7 +7,7 @@ export interface AttemptResult {
 }
 
 /** What can happen while the app is open; only the first two retry. */
-export type AppEvent = 'vuelve la conexión' | 'cambian los datos' | 'pasa el tiempo';
+export type AppEvent = 'connectionBack' | 'dataChanged' | 'timePasses';
 
 /** §7: each item is attempted separately; only those that failed are left to clean. */
 export function attemptResult(attempted: readonly string[], failed: readonly string[]): AttemptResult {
@@ -25,5 +25,5 @@ export function itemsToAttempt(toClean: readonly string[], inProgress: ReadonlyS
 
 /** §7: it retries when the connection returns and when the data changes, without timers. */
 export function retriesWith(occurrenceEvent: AppEvent): boolean {
-	return occurrenceEvent !== 'pasa el tiempo';
+	return occurrenceEvent !== 'timePasses';
 }

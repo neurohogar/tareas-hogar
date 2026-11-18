@@ -126,6 +126,6 @@ export const scheduleSteps: StepDefinition[] = [
 	},
 	{
 		pattern: /^la (?:creación|edición) se rechaza porque la hora de fin no es posterior a la de inicio$/,
-		run: (world) => expect(world.errors).toEqual({ schedule: 'finNoPosterior' })
+		run: (world) => expect(world.errors).toEqual({ schedule: 'endNotAfterStart' })
 	}
 ];

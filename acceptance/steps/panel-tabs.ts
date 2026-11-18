@@ -48,10 +48,10 @@ function oneOf<T extends string>(allowedValues: readonly T[], value: string, tha
 
 const FIELDS: readonly FieldWithError[] = ['Título', 'fecha límite', 'Cada', 'días', 'horario'];
 const SECTIONS: readonly PanelSection[] = ['Tarea', 'Cuándo', 'Acciones'];
-const MODES: readonly PanelMode[] = ['crear', 'editar'];
+const MODES: Record<string, PanelMode> = { crear: 'create', editar: 'edit' };
 const FOCUSES = ['un campo está enfocado', 'ningún campo está enfocado'] as const;
 
-const PRESENTATIONS: Record<string, PanelPresentation> = { 'en pestañas': 'pestanas', 'en secciones seguidas': 'secciones' };
+const PRESENTATIONS: Record<string, PanelPresentation> = { 'en pestañas': 'tabs', 'en secciones seguidas': 'sections' };
 const KEYBOARDS: Record<string, boolean> = { abierto: true, cerrado: false };
 const BARS: Record<string, boolean> = { visible: true, oculta: false };
 
@@ -99,7 +99,7 @@ export const panelTabsSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^el panel se abre para ${P}$`),
 		run: (world, mode) => {
-			declaredOf(world).mode = oneOf(MODES, mode, 'Modo');
+			declaredOf(world).mode = ofTable(MODES, mode, 'Modo');
 		}
 	},
 	{

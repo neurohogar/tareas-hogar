@@ -27,13 +27,13 @@ const becomesOneOff = (t: string): TaskData => ({ shape: 'puntual', title: t });
 describe('whatTheActionDoes: properties (spec §6.2)', () => {
 	it('with changes it opens its notice and without changes it acts', () => {
 		fc.assert(fc.property(fc.constantFrom(...ACTIONS), fc.boolean(), (action, changes) => {
-			expect(whatTheActionDoes(action, changes)).toBe(changes ? 'abre el aviso de acción' : 'actúa');
+			expect(whatTheActionDoes(action, changes)).toBe(changes ? 'opensActionNotice' : 'acts');
 		}));
 	});
 
 	it('Borrar tarea only asks for its confirmation, with or without changes', () => {
 		fc.assert(fc.property(fc.boolean(), (changes) => {
-			expect(whatTheActionDoes('borrar tarea', changes)).toBe('pide confirmar el borrado');
+			expect(whatTheActionDoes('borrar tarea', changes)).toBe('asksDeleteConfirmation');
 		}));
 	});
 });

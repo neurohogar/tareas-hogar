@@ -3,8 +3,8 @@ import { characterFont, textFonts } from './character-font';
 
 const ATKINSON = 'Atkinson Hyperlegible Next';
 const NOTO = 'Noto Color Emoji';
-const SYSTEM = 'la fuente del sistema';
-const DEVICE = 'el emoji del dispositivo';
+const SYSTEM = 'systemFont';
+const DEVICE = 'deviceEmoji';
 
 describe('characterFont', () => {
 	it.each(['a', 'ñ', 'Á', 'é', 'é', '¿', '€', '–', ' ', '0', '9', '#', '*', '©', '®', '™'])(

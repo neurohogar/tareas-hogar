@@ -38,9 +38,9 @@ const REASONS = {
 	'semanal y mensual combinados': { days: 'combinados' },
 	'fecha límite inválida': { dueDate: 'invalida' },
 	'emoji inválido': { emoji: 'invalido' },
-	'horario incompleto': { schedule: 'incompleto' },
-	'horarios superpuestos': { schedule: 'superpuestos' },
-	'varios horarios en una relativa en horas': { schedule: 'variasEnHoras' }
+	'horario incompleto': { schedule: 'incomplete' },
+	'horarios superpuestos': { schedule: 'overlapping' },
+	'varios horarios en una relativa en horas': { schedule: 'severalInHours' }
 };
 
 const KINDS = { periódica: 'periodica', puntual: 'puntual' };

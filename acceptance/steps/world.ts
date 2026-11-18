@@ -136,7 +136,7 @@ export interface RowQueried {
 export const OTHER = 'otro dispositivo, sin ver ese cambio,';
 
 function changesOnOpen(onOpen: PanelForm, taskOnOpen?: Task, now?: Date): PanelChanges {
-	return { taskOnOpen, onOpen, form: onOpen, top: 'nada', now, keyboardOpen: false };
+	return { taskOnOpen, onOpen, form: onOpen, top: 'nothing', now, keyboardOpen: false };
 }
 
 /** Spec §6.2: when editing, the panel opens with the current values of the task. */

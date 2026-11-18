@@ -20,7 +20,7 @@ export interface MinimalLine {
  */
 export function minimalLine(task: Task, status: Pick<Status, 'kind'>, completions: readonly Completion[], now: Date): MinimalLine | undefined {
 	if (task.minimalVersion === undefined || !visibleLine(status)) return undefined;
-	return { text: `Mínima: ${task.minimalVersion}`, enabled: checkboxAction(task, completions, now).kind === 'completar' };
+	return { text: `Mínima: ${task.minimalVersion}`, enabled: checkboxAction(task, completions, now).kind === 'complete' };
 }
 
 /**

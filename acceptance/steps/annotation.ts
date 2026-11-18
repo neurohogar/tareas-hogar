@@ -254,7 +254,7 @@ export const annotationSteps: StepDefinition[] = [
 			const { changes, docsOnOpen } = thePanelOpen(world);
 			expect(world.annotations).toHaveLength(1);
 			expect(hasChanges(changes.onOpen, changes.form)).toBe(false);
-			expect(changes.top).toBe('nada');
+			expect(changes.top).toBe('nothing');
 			expect(world.docs).toStrictEqual(docsOnOpen);
 		}
 	},

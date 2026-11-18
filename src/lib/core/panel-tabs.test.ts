@@ -13,21 +13,21 @@ import {
 
 describe('panelPresentation (spec §6.2, Panel presentation)', () => {
 	it.each([22.5, 39.9, 40])('%s rem is a phone: in tabs', (width) => {
-		expect(panelPresentation(width)).toBe('pestanas');
+		expect(panelPresentation(width)).toBe('tabs');
 	});
 
 	it.each([40.1, 80])('%s rem is a wide screen: in consecutive sections', (width) => {
-		expect(panelPresentation(width)).toBe('secciones');
+		expect(panelPresentation(width)).toBe('sections');
 	});
 });
 
 describe('panelSections (spec §6.2, Tabs)', () => {
 	it('when creating, Acciones does not appear', () => {
-		expect(panelSections('crear')).toEqual(['Tarea', 'Cuándo']);
+		expect(panelSections('create')).toEqual(['Tarea', 'Cuándo']);
 	});
 
 	it('when editing it always appears, at the end', () => {
-		expect(panelSections('editar')).toEqual(['Tarea', 'Cuándo', 'Acciones']);
+		expect(panelSections('edit')).toEqual(['Tarea', 'Cuándo', 'Acciones']);
 	});
 });
 
@@ -61,11 +61,11 @@ describe('markedSections (spec §6.2, Errors)', () => {
 
 describe('destinationOnSaveFailure (spec §6.2, Errors)', () => {
 	it('in tabs it jumps to the tab of the only error', () => {
-		expect(destinationOnSaveFailure(['horario'], 'pestanas')).toEqual({ tab: 'Cuándo', field: 'horario' });
+		expect(destinationOnSaveFailure(['horario'], 'tabs')).toEqual({ tab: 'Cuándo', field: 'horario' });
 	});
 
 	it('Tarea goes before Cuándo, even if the Cuándo error arrives first', () => {
-		expect(destinationOnSaveFailure(['horario', 'Título'], 'pestanas')).toEqual({ tab: 'Tarea', field: 'Título' });
+		expect(destinationOnSaveFailure(['horario', 'Título'], 'tabs')).toEqual({ tab: 'Tarea', field: 'Título' });
 	});
 
 	it.each([
@@ -74,15 +74,15 @@ describe('destinationOnSaveFailure (spec §6.2, Errors)', () => {
 		[['horario', 'Cada'], 'Cada'],
 		[['horario', 'días'], 'días']
 	] as const)('of %j the first is %s: the order in which the fields are seen', (fields, field) => {
-		expect(destinationOnSaveFailure(fields, 'pestanas')?.field).toBe(field);
+		expect(destinationOnSaveFailure(fields, 'tabs')?.field).toBe(field);
 	});
 
 	it('in consecutive sections there is no tab: only the field', () => {
-		expect(destinationOnSaveFailure(['horario', 'Título'], 'secciones')).toEqual({ tab: undefined, field: 'Título' });
+		expect(destinationOnSaveFailure(['horario', 'Título'], 'sections')).toEqual({ tab: undefined, field: 'Título' });
 	});
 
 	it('without errors there is nowhere to go', () => {
-		expect(destinationOnSaveFailure([], 'pestanas')).toBeUndefined();
+		expect(destinationOnSaveFailure([], 'tabs')).toBeUndefined();
 	});
 });
 
@@ -102,7 +102,7 @@ describe('fieldsWithError (spec §6.2, Errors)', () => {
 	});
 
 	it('lists the fields with an error in reading order', () => {
-		expect(fieldsWithError({ schedule: 'incompleto', title: 'vacio' }, 'puntual')).toEqual(['Título', 'horario']);
+		expect(fieldsWithError({ schedule: 'incomplete', title: 'vacio' }, 'puntual')).toEqual(['Título', 'horario']);
 	});
 
 	it.each([

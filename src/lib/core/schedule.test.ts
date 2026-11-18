@@ -37,13 +37,13 @@ describe('readSchedule (spec §4.1)', () => {
 		['09:00', '09:00'],
 		['22:00', '02:00']
 	])('with from ≥ to (%s to %s) the end time is not later', (from, to) => {
-		expect(readSchedule([{ from, to }])).toStrictEqual({ ok: false, error: 'finNoPosterior' });
+		expect(readSchedule([{ from, to }])).toStrictEqual({ ok: false, error: 'endNotAfterStart' });
 	});
 
 	it.each([{ from: '08:00' }, { to: '11:00' }, { from: '08:00', to: '' }, { from: '', to: '' }, { from: '8:00', to: '11:00' }, { from: '24:00', to: '11:00' }])(
 		'with a time that is missing or is not HH:MM it is incomplete (%o)',
 		(typedOne) => {
-			expect(readSchedule([typedOne])).toStrictEqual({ ok: false, error: 'incompleto' });
+			expect(readSchedule([typedOne])).toStrictEqual({ ok: false, error: 'incomplete' });
 		}
 	);
 
@@ -65,12 +65,12 @@ describe('readSchedule (spec §4.1)', () => {
 		[{ from: '08:00', to: '12:00' }, { from: '09:00', to: '10:00' }],
 		[{ from: '10:00', to: '12:00' }, { from: '08:00', to: '10:01' }]
 	])('overlapping windows are rejected (%o and %o)', (one, other) => {
-		expect(readSchedule([one, other])).toStrictEqual({ ok: false, error: 'superpuestos' });
+		expect(readSchedule([one, other])).toStrictEqual({ ok: false, error: 'overlapping' });
 	});
 
 	it('a second window that is incomplete or has from ≥ to rejects the whole schedule', () => {
-		expect(readSchedule([MORNING_AND_AFTERNOON[0], { from: '18:00' }])).toStrictEqual({ ok: false, error: 'incompleto' });
-		expect(readSchedule([MORNING_AND_AFTERNOON[0], { from: '21:00', to: '18:00' }])).toStrictEqual({ ok: false, error: 'finNoPosterior' });
+		expect(readSchedule([MORNING_AND_AFTERNOON[0], { from: '18:00' }])).toStrictEqual({ ok: false, error: 'incomplete' });
+		expect(readSchedule([MORNING_AND_AFTERNOON[0], { from: '21:00', to: '18:00' }])).toStrictEqual({ ok: false, error: 'endNotAfterStart' });
 	});
 });
 

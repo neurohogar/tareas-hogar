@@ -15,15 +15,15 @@ import {
 
 const FIELDS: FieldWithError[] = ['Título', 'fecha límite', 'Cada', 'días', 'horario'];
 const fields = fc.subarray(FIELDS).chain((subset) => fc.shuffledSubarray(subset));
-const presentation = fc.constantFrom('pestanas' as const, 'secciones' as const);
+const presentation = fc.constantFrom('tabs' as const, 'sections' as const);
 const repetition = fc.constantFrom<RepetitionOption>('puntual', 'relativo', 'semanal', 'mensual');
 
 describe('panelPresentation (properties)', () => {
 	it('is in tabs exactly up to 40rem inclusive and is monotonic', () => {
 		fc.assert(
 			fc.property(fc.double({ min: 0, max: 200, noNaN: true }), fc.double({ min: 0, max: 200, noNaN: true }), (a, b) => {
-				expect(panelPresentation(a) === 'pestanas').toBe(a <= 40);
-				if (a <= b && panelPresentation(b) === 'pestanas') expect(panelPresentation(a)).toBe('pestanas');
+				expect(panelPresentation(a) === 'tabs').toBe(a <= 40);
+				if (a <= b && panelPresentation(b) === 'tabs') expect(panelPresentation(a)).toBe('tabs');
 			})
 		);
 	});
@@ -31,7 +31,7 @@ describe('panelPresentation (properties)', () => {
 
 describe('panelSections (properties)', () => {
 	it('when editing they are those of creating plus Acciones, without repeating', () => {
-		expect(panelSections('editar')).toEqual([...panelSections('crear'), 'Acciones']);
+		expect(panelSections('edit')).toEqual([...panelSections('create'), 'Acciones']);
 	});
 });
 
@@ -42,7 +42,7 @@ describe('markedSections (properties)', () => {
 				const marked = markedSections(c);
 				expect(markedSections([...c].reverse())).toEqual(marked);
 				expect(markedSections([...c, ...c])).toEqual(marked);
-				expect(marked).toEqual(panelSections('editar').filter((s) => marked.includes(s)));
+				expect(marked).toEqual(panelSections('edit').filter((s) => marked.includes(s)));
 				expect(marked.length === 0).toBe(c.length === 0);
 			})
 		);
@@ -73,8 +73,8 @@ describe('destinationOnSaveFailure (properties)', () => {
 	it('the tab exists only in tabs and is the first marked one (Tarea before Cuándo)', () => {
 		fc.assert(
 			fc.property(fields, (c) => {
-				expect(destinationOnSaveFailure(c, 'secciones')?.tab).toBeUndefined();
-				expect(destinationOnSaveFailure(c, 'pestanas')?.tab).toBe(markedSections(c)[0]);
+				expect(destinationOnSaveFailure(c, 'sections')?.tab).toBeUndefined();
+				expect(destinationOnSaveFailure(c, 'tabs')?.tab).toBe(markedSections(c)[0]);
 			})
 		);
 	});
@@ -87,7 +87,7 @@ describe('fieldsWithError (properties)', () => {
 			every: fc.constant('invalido' as const),
 			days: fc.constantFrom('faltan' as const, 'combinados' as const),
 			dueDate: fc.constant('invalida' as const),
-			schedule: fc.constant('incompleto' as const)
+			schedule: fc.constant('incomplete' as const)
 		},
 		{ requiredKeys: [] }
 	);

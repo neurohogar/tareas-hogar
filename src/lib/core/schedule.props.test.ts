@@ -34,7 +34,7 @@ describe('readSchedule (properties)', () => {
 				fc.pre(a >= b);
 				expect(readSchedule([{ from: hour(a), to: hour(b) }])).toEqual({
 					ok: false,
-					error: 'finNoPosterior'
+					error: 'endNotAfterStart'
 				});
 			})
 		);
@@ -46,7 +46,7 @@ describe('readSchedule (properties)', () => {
 				const typedOne = missingFrom ? { from: missing, to: hour(m) } : { from: hour(m), to: missing };
 				expect(readSchedule([typedOne])).toEqual({
 					ok: false,
-					error: 'incompleto'
+					error: 'incomplete'
 				});
 			})
 		);
@@ -72,7 +72,7 @@ describe('readSchedule (properties)', () => {
 					{ from: hour(a), to: hour(c) },
 					{ from: hour(b), to: hour(Math.max(c, extra)) }
 				];
-				expect(readSchedule(invert ? timeWindows.reverse() : timeWindows)).toEqual({ ok: false, error: 'superpuestos' });
+				expect(readSchedule(invert ? timeWindows.reverse() : timeWindows)).toEqual({ ok: false, error: 'overlapping' });
 			})
 		);
 	});

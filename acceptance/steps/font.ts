@@ -4,6 +4,14 @@ import { textFonts } from '../../src/lib/core/character-font';
 import { P } from './values';
 import type { StepDefinition } from './world';
 
+/** The font names as the Gherkin says them, mapped to the core's values. */
+const GHERKIN_FONTS: Record<string, string> = {
+	'Atkinson Hyperlegible Next': 'Atkinson Hyperlegible Next',
+	'Noto Color Emoji': 'Noto Color Emoji',
+	'la fuente del sistema': 'systemFont',
+	'el emoji del dispositivo': 'deviceEmoji'
+};
+
 export const fontSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^el texto ${P}$`),
@@ -13,6 +21,6 @@ export const fontSteps: StepDefinition[] = [
 	},
 	{
 		pattern: new RegExp(`^el texto se dibuja con ${P}$`),
-		run: (world, font) => expect(new Set(textFonts(world.text ?? ''))).toEqual(new Set([font]))
+		run: (world, font) => expect(new Set(textFonts(world.text ?? ''))).toEqual(new Set([GHERKIN_FONTS[font] ?? font]))
 	}
 ];

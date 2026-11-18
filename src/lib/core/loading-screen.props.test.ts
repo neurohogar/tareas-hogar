@@ -12,10 +12,10 @@ import {
 	type WaitStatus
 } from './loading-screen';
 
-const font = fc.constantFrom<FontStatus>('lista', 'guardada', 'sin-guardar', 'fallida');
+const font = fc.constantFrom<FontStatus>('ready', 'saved', 'unsaved', 'failed');
 const wait = fc.record<WaitStatus>({
 	secondsSinceStart: fc.double({ min: 0, max: 30, noNaN: true }),
-	auth: fc.constantFrom('esperando', 'con-sesion', 'sin-sesion'),
+	auth: fc.constantFrom('waiting', 'signedIn', 'signedOut'),
 	tasksResponded: fc.boolean(),
 	completionsResponded: fc.boolean(),
 	atkinson: font,
@@ -28,7 +28,7 @@ describe('loadingScreenLeaves', () => {
 	it('never leaves without Auth or before the minimum', () => {
 		fc.assert(
 			fc.property(wait, (e) => {
-				if (e.auth === 'esperando' || e.secondsSinceStart < SCREEN_MINIMUM_IN_SECONDS) {
+				if (e.auth === 'waiting' || e.secondsSinceStart < SCREEN_MINIMUM_IN_SECONDS) {
 					expect(loadingScreenLeaves(e)).toBe(false);
 				}
 			})
@@ -38,7 +38,7 @@ describe('loadingScreenLeaves', () => {
 	it('with Auth answered, it always leaves on reaching the limit', () => {
 		fc.assert(
 			fc.property(wait, fc.double({ min: SCREEN_LIMIT_IN_SECONDS, max: 1000, noNaN: true }), (e, t) => {
-				if (e.auth !== 'esperando') expect(loadingScreenLeaves({ ...e, secondsSinceStart: t })).toBe(true);
+				if (e.auth !== 'waiting') expect(loadingScreenLeaves({ ...e, secondsSinceStart: t })).toBe(true);
 			})
 		);
 	});
@@ -58,7 +58,7 @@ describe('Noto memory', () => {
 	it('with Noto ready nothing is remembered', () => {
 		fc.assert(
 			fc.property(wait, (e) => {
-				expect(notoLimitMemory({ ...e, noto: 'lista' })).toBe(false);
+				expect(notoLimitMemory({ ...e, noto: 'ready' })).toBe(false);
 			})
 		);
 	});
@@ -91,12 +91,12 @@ describe('nextScreenLimit', () => {
 describe('fontsSummary', () => {
 	it('does not depend on the order and the worst status wins', () => {
 		fc.assert(
-			fc.property(fc.array(fc.constantFrom<FontStatus>('guardada', 'sin-guardar', 'fallida'), { minLength: 1 }), (statuses) => {
+			fc.property(fc.array(fc.constantFrom<FontStatus>('saved', 'unsaved', 'failed'), { minLength: 1 }), (statuses) => {
 				const summary = fontsSummary(statuses);
 				expect(fontsSummary([...statuses].reverse())).toBe(summary);
-				if (statuses.includes('fallida')) expect(summary).toBe('fallida');
-				else if (statuses.includes('sin-guardar')) expect(summary).toBe('sin-guardar');
-				else expect(summary).toBe('guardada');
+				if (statuses.includes('failed')) expect(summary).toBe('failed');
+				else if (statuses.includes('unsaved')) expect(summary).toBe('unsaved');
+				else expect(summary).toBe('saved');
 			})
 		);
 	});

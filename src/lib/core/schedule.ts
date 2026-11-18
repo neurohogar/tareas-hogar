@@ -13,8 +13,8 @@ export interface TypedWindow {
 /** The From/To rows of the panel, in the order they were written. */
 export type TypedSchedule = TypedWindow[];
 
-/** variasEnHoras: more than one window in a relative task in hours (§4.1); detected by the relative task. */
-export type ScheduleError = 'incompleto' | 'finNoPosterior' | 'superpuestos' | 'variasEnHoras';
+/** severalInHours: more than one window in a relative task in hours (§4.1); detected by the relative task. */
+export type ScheduleError = 'incomplete' | 'endNotAfterStart' | 'overlapping' | 'severalInHours';
 
 export type ScheduleReading = { ok: true; schedule?: Schedule } | { ok: false; error: ScheduleError };
 
@@ -44,11 +44,11 @@ const overlapping = (ordered: Schedule) => ordered.some((timeWindow, i) => i > 0
  */
 export function readSchedule(typedOne: TypedSchedule | undefined): ScheduleReading {
 	if (typedOne === undefined || typedOne.length === 0) return { ok: true };
-	if (!typedOne.every(isComplete)) return { ok: false, error: 'incompleto' };
+	if (!typedOne.every(isComplete)) return { ok: false, error: 'incomplete' };
 	const timeWindows = (typedOne as Schedule).map(({ from, to }) => ({ from, to }));
-	if (!timeWindows.every(laterEnd)) return { ok: false, error: 'finNoPosterior' };
+	if (!timeWindows.every(laterEnd)) return { ok: false, error: 'endNotAfterStart' };
 	const ordered = timeWindows.sort((a, b) => minutes(a.from) - minutes(b.from));
-	if (overlapping(ordered)) return { ok: false, error: 'superpuestos' };
+	if (overlapping(ordered)) return { ok: false, error: 'overlapping' };
 	return { ok: true, schedule: ordered };
 }
 

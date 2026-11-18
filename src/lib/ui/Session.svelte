@@ -126,7 +126,7 @@
 			.then((failed) => {
 				const { cleaned, pendings } = attemptResult(attempted, failed);
 				[...cleaned, ...pendings].forEach((id) => inProgress.delete(id));
-				if (skipped.delete(inProgress) && retriesWith('cambian los datos')) reevaluate++;
+				if (skipped.delete(inProgress) && retriesWith('dataChanged')) reevaluate++;
 			});
 	}
 
@@ -178,15 +178,15 @@
 	/** «Hecho» of the row (§6.1): moves to the next step or, on the last one, completes like the checkbox. */
 	function tapDone(task: Task) {
 		const action = doneAction(task, completions, currentTime());
-		if (action.kind === 'avanzar') void saveChange(uid, task.id, action.change);
-		else if (action.kind === 'completar') completeTask(task);
+		if (action.kind === 'advance') void saveChange(uid, task.id, action.change);
+		else if (action.kind === 'complete') completeTask(task);
 	}
 
 	/** No notice on deleting: the checkbox already undoes (§6.1). */
 	function tapCheckbox(task: Task) {
 		const action = checkboxAction(task, completions, currentTime());
-		if (action.kind === 'completar') completeTask(task);
-		else if (action.kind === 'borrar') deleteAndRestoreStep(action.completion);
+		if (action.kind === 'complete') completeTask(task);
+		else if (action.kind === 'remove') deleteAndRestoreStep(action.completion);
 	}
 
 	function undo() {

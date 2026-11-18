@@ -67,41 +67,41 @@ describe('stepText (spec §6.1)', () => {
 
 describe('doneAction (spec §4.1 and §6.1)', () => {
 	it('on a step that is not the last, it moves to the next', () => {
-		expect(doneAction(THREE, [], NOW)).toStrictEqual({ kind: 'avanzar', change: { currentStep: 2 } });
-		expect(doneAction(atStep(2), [], NOW)).toStrictEqual({ kind: 'avanzar', change: { currentStep: 3 } });
+		expect(doneAction(THREE, [], NOW)).toStrictEqual({ kind: 'advance', change: { currentStep: 2 } });
+		expect(doneAction(atStep(2), [], NOW)).toStrictEqual({ kind: 'advance', change: { currentStep: 3 } });
 	});
 
 	it('on the last step it completes the task', () => {
-		expect(doneAction(atStep(3), [], NOW)).toStrictEqual({ kind: 'completar' });
+		expect(doneAction(atStep(3), [], NOW)).toStrictEqual({ kind: 'complete' });
 	});
 
 	it('with fewer steps than currentStep it acts on the last one: it completes', () => {
-		expect(doneAction(atStep(8), [], NOW)).toStrictEqual({ kind: 'completar' });
+		expect(doneAction(atStep(8), [], NOW)).toStrictEqual({ kind: 'complete' });
 	});
 
 	it('a currentStep 0 from old data is step 1: it moves to 2', () => {
-		expect(doneAction(atStep(0), [], NOW)).toStrictEqual({ kind: 'avanzar', change: { currentStep: 2 } });
+		expect(doneAction(atStep(0), [], NOW)).toStrictEqual({ kind: 'advance', change: { currentStep: 2 } });
 	});
 
 	it('on the last step, outside the schedule window, nothing (like the checkbox)', () => {
 		const withSchedule = { ...atStep(3), schedule: [{ from: '18:00', to: '20:00' }] };
 
-		expect(doneAction(withSchedule, [], NOW)).toStrictEqual({ kind: 'ninguna' });
-		expect(doneAction(withSchedule, [], new Date(2026, 6, 15, 19, 0, 0))).toStrictEqual({ kind: 'completar' });
+		expect(doneAction(withSchedule, [], NOW)).toStrictEqual({ kind: 'none' });
+		expect(doneAction(withSchedule, [], new Date(2026, 6, 15, 19, 0, 0))).toStrictEqual({ kind: 'complete' });
 	});
 
 	it('outside the window, on a step that is not the last, it moves on anyway', () => {
 		const withSchedule = { ...THREE, schedule: [{ from: '18:00', to: '20:00' }] };
 
-		expect(doneAction(withSchedule, [], NOW)).toStrictEqual({ kind: 'avanzar', change: { currentStep: 2 } });
+		expect(doneAction(withSchedule, [], NOW)).toStrictEqual({ kind: 'advance', change: { currentStep: 2 } });
 	});
 
 	it('on the last step of a completed one it does not complete again', () => {
-		expect(doneAction(atStep(3), [completionOf('t1', CREATED)], NOW)).toStrictEqual({ kind: 'ninguna' });
+		expect(doneAction(atStep(3), [completionOf('t1', CREATED)], NOW)).toStrictEqual({ kind: 'none' });
 	});
 
 	it('a single-step task has no «Hecho»', () => {
-		expect(doneAction(ONE_STEP, [], NOW)).toStrictEqual({ kind: 'ninguna' });
+		expect(doneAction(ONE_STEP, [], NOW)).toStrictEqual({ kind: 'none' });
 	});
 
 	it('two «Hecho» from the same step write the same next step', () => {

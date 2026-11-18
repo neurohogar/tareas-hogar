@@ -12,12 +12,12 @@ export function optionAction(option: PostponeOption): PanelAction {
 	return `posponer ${option}`;
 }
 
-export type ActionEffect = 'actúa' | 'abre el aviso de acción' | 'pide confirmar el borrado';
+export type ActionEffect = 'acts' | 'opensActionNotice' | 'asksDeleteConfirmation';
 
 /** Spec §6.2: with changes the action opens its notice and without changes it acts; Delete task only asks for its confirmation. */
 export function whatTheActionDoes(action: PanelAction | 'borrar tarea', hasChanges: boolean): ActionEffect {
-	if (action === 'borrar tarea') return 'pide confirmar el borrado';
-	return hasChanges ? 'abre el aviso de acción' : 'actúa';
+	if (action === 'borrar tarea') return 'asksDeleteConfirmation';
+	return hasChanges ? 'opensActionNotice' : 'acts';
 }
 
 const COMMANDS: Readonly<Record<PanelAction, (now: Date) => TaskChange>> = {

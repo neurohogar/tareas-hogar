@@ -5,7 +5,7 @@ import { itemsToAttempt, retriesWith, attemptResult, type AppEvent } from './cle
 
 const ids = fc.uniqueArray(fc.constantFrom<string[]>('a1', 'a2', 'a3', 'a4', 'a5', 'a6'), { maxLength: 6 });
 const failures = fc.array(fc.constantFrom<string[]>('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'z9'), { maxLength: 8 });
-const appEvents = fc.constantFrom<AppEvent>('vuelve la conexión', 'cambian los datos', 'pasa el tiempo');
+const appEvents = fc.constantFrom<AppEvent>('connectionBack', 'dataChanged', 'timePasses');
 
 describe('attemptResult (properties)', () => {
 	it('cleaned and pending partition what was attempted, keeping the order', () => {
@@ -67,7 +67,7 @@ describe('retriesWith (properties)', () => {
 	it('retries on every event except the passing of time', () => {
 		fc.assert(
 			fc.property(appEvents, (occurrenceEvent) => {
-				expect(retriesWith(occurrenceEvent)).toBe(occurrenceEvent !== 'pasa el tiempo');
+				expect(retriesWith(occurrenceEvent)).toBe(occurrenceEvent !== 'timePasses');
 			})
 		);
 	});

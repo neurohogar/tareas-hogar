@@ -121,16 +121,16 @@ function nextAttempt(waitInMs: number): Promise<void> {
 async function obtainFace(family: string, file: FontFile, notify: (status: FontStatus) => void): Promise<FontFace> {
 	const cached = await readCached(family, file);
 	if (cached) return cached;
-	notify('sin-guardar');
+	notify('unsaved');
 	for (let wait = FIRST_RETRY_IN_MS; ; wait = nextWait(wait)) {
 		try {
 			const data = await download(file);
 			const face = await createFace(family, file, data);
 			await saveToCache(file, data);
-			notify('guardada');
+			notify('saved');
 			return face;
 		} catch {
-			notify('fallida');
+			notify('failed');
 			await nextAttempt(wait);
 		}
 	}
@@ -141,7 +141,7 @@ async function obtainFace(family: string, file: FontFile, notify: (status: FontS
  * for the other weights, and the design would change (spec §6). Reports `lista` only once it can draw.
  */
 async function loadFontSet({ family, files, canDraw }: FontSet, notify: (status: FontStatus) => void): Promise<void> {
-	const statuses = files.map((): FontStatus => 'guardada');
+	const statuses = files.map((): FontStatus => 'saved');
 	const faces = await Promise.all(
 		files.map((file, i) =>
 			obtainFace(family, file, (status) => {
@@ -153,9 +153,9 @@ async function loadFontSet({ family, files, canDraw }: FontSet, notify: (status:
 	// FontFaceSet is a Set of faces, although the DOM types do not say so.
 	const registered = document.fonts as unknown as Set<FontFace>;
 	faces.forEach((face) => registered.add(face));
-	if (canDraw()) return notify('lista');
+	if (canDraw()) return notify('ready');
 	faces.forEach((face) => registered.delete(face));
-	notify('fallida');
+	notify('failed');
 }
 
 export interface FontsStatus {
@@ -174,7 +174,7 @@ export function loadFonts(onChange: (change: Partial<FontsStatus>) => void): voi
 			if (face.family.includes(NOTO.family)) face.unicodeRange = notoScope;
 		});
 	void loadFontSet(ATKINSON, (atkinson) => {
-		if (atkinson === 'lista') notoScope = WHOLE_SET;
+		if (atkinson === 'ready') notoScope = WHOLE_SET;
 		adjustNoto();
 		onChange({ atkinson });
 	});

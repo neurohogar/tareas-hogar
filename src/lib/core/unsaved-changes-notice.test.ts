@@ -3,8 +3,8 @@ import { onClosePanel, CLOSE_NOTICE, CHANGES_MESSAGE } from './unsaved-changes-n
 
 describe('onClosePanel (spec §6.2)', () => {
 	it('without changes it closes directly; with changes it opens the close notice', () => {
-		expect(onClosePanel(false)).toBe('cierra el panel');
-		expect(onClosePanel(true)).toBe('abre el aviso de cierre');
+		expect(onClosePanel(false)).toBe('closesPanel');
+		expect(onClosePanel(true)).toBe('opensCloseNotice');
 	});
 });
 

@@ -4,11 +4,11 @@ import { onClosePanel, type CloseEffect } from './unsaved-changes-notice';
 /**
  * What can be open on top of the panel; the undo notice does not count. The Annotate box (§5.10) closes without annotating.
  */
-export type OnTop = 'nada' | 'aviso de cierre' | 'aviso de acción' | 'confirmación de Borrar tarea' | 'selector de emoji' | 'recuadro de Anotar' | 'aviso de deshacer';
+export type OnTop = 'nothing' | 'closeNotice' | 'actionNotice' | 'deleteConfirmation' | 'emojiPicker' | 'annotateBox' | 'undoNotice';
 
-export type BackEffect = 'cierra el teclado' | 'cierra lo de arriba' | CloseEffect;
+export type BackEffect = 'closesKeyboard' | 'closesTopLayer' | CloseEffect;
 
-const NOT_COUNTED: readonly OnTop[] = ['nada', 'aviso de deshacer'];
+const NOT_COUNTED: readonly OnTop[] = ['nothing', 'undoNotice'];
 
 export interface PanelOnBack {
 	top: OnTop;
@@ -21,6 +21,6 @@ export interface PanelOnBack {
  * otherwise it closes only what is on top; with the panel alone, it is like closing it.
  */
 export function whatBackDoes({ top, hasChanges, keyboardOpen }: PanelOnBack): BackEffect {
-	if (keyboardOpen) return 'cierra el teclado';
-	return NOT_COUNTED.includes(top) ? onClosePanel(hasChanges) : 'cierra lo de arriba';
+	if (keyboardOpen) return 'closesKeyboard';
+	return NOT_COUNTED.includes(top) ? onClosePanel(hasChanges) : 'closesTopLayer';
 }

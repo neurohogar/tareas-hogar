@@ -22,9 +22,9 @@ export const CLOSE_NOTICE: ChangesNotice = {
 	buttons: [KEEP_EDITING, { text: 'Descartar', effect: 'descartar' }, { text: 'Guardar', effect: 'guardar' }]
 };
 
-export type CloseEffect = 'cierra el panel' | 'abre el aviso de cierre';
+export type CloseEffect = 'closesPanel' | 'opensCloseNotice';
 
 /** Spec §6.2: closing with changes asks for confirmation; without changes it closes directly. */
 export function onClosePanel(hasChanges: boolean): CloseEffect {
-	return hasChanges ? 'abre el aviso de cierre' : 'cierra el panel';
+	return hasChanges ? 'opensCloseNotice' : 'closesPanel';
 }

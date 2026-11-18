@@ -5,7 +5,7 @@ import { EMOJI_SHAPES } from './emoji';
 import { ATKINSON_COVERAGE, NOTO_COVERAGE, type Coverage } from './character-font-coverage';
 
 /** The four ways of drawing a character in the §6 table. */
-export type CharacterFont = 'Atkinson Hyperlegible Next' | 'Noto Color Emoji' | 'la fuente del sistema' | 'el emoji del dispositivo';
+export type CharacterFont = 'Atkinson Hyperlegible Next' | 'Noto Color Emoji' | 'systemFont' | 'deviceEmoji';
 
 /**
  * Seen as an emoji even if there is a letter for it: it is presented as emoji by default, carries the
@@ -25,13 +25,13 @@ function coverageCovers(coverage: Coverage, grapheme: string): boolean {
 }
 
 const emojiFont = (grapheme: string): CharacterFont =>
-	coverageCovers(NOTO_COVERAGE, grapheme) ? 'Noto Color Emoji' : 'el emoji del dispositivo';
+	coverageCovers(NOTO_COVERAGE, grapheme) ? 'Noto Color Emoji' : 'deviceEmoji';
 
 /** Spec §6: the font that draws a character, a whole grapheme (an emoji sequence is a single one). */
 export function characterFont(grapheme: string): CharacterFont {
 	if (EMOJI_FOR_SURE.test(grapheme)) return emojiFont(grapheme);
 	if (coverageCovers(ATKINSON_COVERAGE, grapheme)) return 'Atkinson Hyperlegible Next';
-	return WITH_EMOJI_VERSION.test(grapheme) ? emojiFont(grapheme) : 'la fuente del sistema';
+	return WITH_EMOJI_VERSION.test(grapheme) ? emojiFont(grapheme) : 'systemFont';
 }
 
 /** Spec §6: the fonts that draw a text, without repeats, in the order they appear; what is not drawn asks for none. */

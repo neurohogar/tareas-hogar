@@ -27,12 +27,12 @@ describe('itemsToAttempt', () => {
 
 describe('retriesWith', () => {
 	it('retries when the connection returns', () => {
-		expect(retriesWith('vuelve la conexión')).toBe(true);
+		expect(retriesWith('connectionBack')).toBe(true);
 	});
 	it('retries when the data changes', () => {
-		expect(retriesWith('cambian los datos')).toBe(true);
+		expect(retriesWith('dataChanged')).toBe(true);
 	});
 	it('does not retry because time passes', () => {
-		expect(retriesWith('pasa el tiempo')).toBe(false);
+		expect(retriesWith('timePasses')).toBe(false);
 	});
 });

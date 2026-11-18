@@ -16,8 +16,8 @@ function tapCheckbox(world: World, moment: Date): void {
 	// Without a prior query, what is asserted afterwards belongs to the moment of the tap.
 	if (world.statusMoments.length === 0) world.statusMoments = [moment];
 	const action = checkboxAction(task, world.completions, moment);
-	if (action.kind === 'ninguna') return;
-	if (action.kind === 'completar') return completeMe(world, moment, task);
+	if (action.kind === 'none') return;
+	if (action.kind === 'complete') return completeMe(world, moment, task);
 	rememberBeforeOfMyChange(world);
 	deleteCompletion(world, action.completion);
 }

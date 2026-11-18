@@ -85,6 +85,19 @@ Decisions taken in layer C (2026-11-18):
 - Stay Spanish on purpose: `esEquivalente` (the export `bdd-pipeline` loads through `acceptance.equivalenceModule`); the `inicio` and `ultimaNovedad` keys that `tests/scripts/progress.test.ts` writes for `bdd-pipeline` (its tracking file format); Firestore field and collection names read or written through the emulator REST API in `e2e/`; record keys and union members that are stored values (`'puntual'`, `'periodica'`, `'semanal'`, `'mensual'`) or visible button and field names (`Título`, `Nota`, `Pausar`, `Reanudar`, `Posponer`, `Banderas`, `Intervalo`); and the oracle's own `tipo`, `limite` and `recurrencia` doc keys that mirror the stored shape.
 - `tests/scripts/*` already fail on the base commit (they call `scripts/gate.ts`, which no longer exists); they are not part of any gate and were left as they are.
 
+Decisions taken after layer D (2026-11-18): internal string-union values that the person never sees or hears:
+
+- `ActionEffect`: `'acts'`, `'opensActionNotice'`, `'asksDeleteConfirmation'`.
+- `OnTop`: `'nothing'`, `'closeNotice'`, `'actionNotice'`, `'deleteConfirmation'`, `'emojiPicker'`, `'annotateBox'`, `'undoNotice'`. `BackEffect`: `'closesKeyboard'`, `'closesTopLayer'`. `CloseEffect`: `'closesPanel'`, `'opensCloseNotice'`.
+- `ScheduleError`: `'incomplete'`, `'endNotAfterStart'`, `'overlapping'`, `'severalInHours'` (the keys of `SCHEDULE_ERRORS` in `WhenSection` follow; their messages are app text).
+- `CharacterFont`: `'systemFont'`, `'deviceEmoji'` (the two font names stay as they are).
+- `PanelPresentation`: `'tabs'`, `'sections'`. `PanelMode`: `'create'`, `'edit'`.
+- `AuthResponse`: `'waiting'`, `'signedIn'`, `'signedOut'`. `FontStatus`: `'ready'`, `'saved'`, `'unsaved'`, `'failed'`.
+- `AppEvent`: `'connectionBack'`, `'dataChanged'`, `'timePasses'`.
+- `CheckboxAction` and `DoneAction` kinds: `'complete'`, `'remove'`, `'none'`, `'advance'`.
+- The step handlers that read Gherkin text (`cleanups`, `font`, `panel-tabs`, `unsaved-changes`, `create`, `loading-screen`) map the unchanged step text to the new values; the oracle keeps its own vocabulary, which mirrors the step text.
+- Kept Spanish on purpose: `Status` kinds (`'pendiente'`, `'atrasada'`, `'en espera'`, `'completada'`, `'pausada'`, shown as status text and compared by tests), `Unit`, `PostponeOption`, `PanelAction` and the `'borrar tarea'` action name (names on visible buttons), `RepetitionOption` and `kind`/`mode` task values (stored), `Sense`, `CurrentScreen`, `AnnotationScreen`, `DateVerb`, `PanelSection` and `FieldWithError` (visible names or text), `DAYS_ERRORS` keys such as `faltan` (not touched here).
+
 ## Adapter and UI file names
 
 Adapters: `anotaciones` annotations, `atras` back, `conexion` connection, `confirmacion-al-salir` confirm-on-leave, `fuentes` fonts, `mostrar-completadas` show-completed, `mostrar-pausadas` show-paused, `pantalla-de-carga` loading-screen, `portapapeles` clipboard, `recientes` recents, `reloj` clock, `repositorio` repository, `teclado` keyboard (`auth`, `firebase` and `ids` keep their names).

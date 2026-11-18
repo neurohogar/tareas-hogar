@@ -9,7 +9,7 @@ import { stepWithLimit, stepItIsOn, taskSteps, hasSeveralSteps } from './steps';
 import type { Completion, Task } from './task';
 
 /** What tapping «Hecho» does: move to the next step, complete the task like the checkbox, or nothing (disabled). */
-export type DoneAction = { kind: 'avanzar'; change: TaskChange } | { kind: 'completar' } | { kind: 'ninguna' };
+export type DoneAction = { kind: 'advance'; change: TaskChange } | { kind: 'complete' } | { kind: 'none' };
 
 /** The buttons of the step line: «Paso anterior» (if shown) and whether «Hecho» is enabled. */
 export interface StepButtons {
@@ -43,9 +43,9 @@ export function stepText(task: Task, status: Pick<Status, 'kind'>): string | und
 export function doneAction(task: Task, completions: readonly Completion[], now: Date): DoneAction {
 	const amount = taskSteps(task).length;
 	const step = stepItIsOn(task);
-	if (amount < 2) return { kind: 'ninguna' };
-	if (step < amount) return { kind: 'avanzar', change: changeToStep(task, step + 1) };
-	return checkboxAction(task, completions, now).kind === 'completar' ? { kind: 'completar' } : { kind: 'ninguna' };
+	if (amount < 2) return { kind: 'none' };
+	if (step < amount) return { kind: 'advance', change: changeToStep(task, step + 1) };
+	return checkboxAction(task, completions, now).kind === 'complete' ? { kind: 'complete' } : { kind: 'none' };
 }
 
 /** Spec §4.1 and §6.1: «Paso anterior» goes back to the previous step; it does not go past the first. */
@@ -56,7 +56,7 @@ export function previousStepChange(task: Task): TaskChange {
 /** Spec §6.1: with two steps or more and the line visible, «Paso anterior» (not on step 1) and «Hecho», enabled according to doneAction. */
 export function stepButtons(task: Task, status: Pick<Status, 'kind'>, completions: readonly Completion[], now: Date): StepButtons | undefined {
 	if (!hasSeveralSteps(task) || !visibleLine(status)) return undefined;
-	return { previousStep: stepItIsOn(task) > 1, doneEnabled: doneAction(task, completions, now).kind !== 'ninguna' };
+	return { previousStep: stepItIsOn(task) > 1, doneEnabled: doneAction(task, completions, now).kind !== 'none' };
 }
 
 /** Spec §4.1 (Pasos: Completar): completing the task, by the checkbox, by «Hecho» or by «Hice la mínima», puts it back on step 1. */

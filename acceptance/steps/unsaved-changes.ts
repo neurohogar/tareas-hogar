@@ -66,7 +66,7 @@ function panelOnDay(world: World): PanelChanges | undefined {
 		world.panel = undefined;
 		return undefined;
 	}
-	if (changes.top === 'aviso de acción' && taskOnOpen && action && !actionNotice(actionContext(world, changes, taskOnOpen, action))) topClose(changes);
+	if (changes.top === 'actionNotice' && taskOnOpen && action && !actionNotice(actionContext(world, changes, taskOnOpen, action))) topClose(changes);
 	return changes;
 }
 
@@ -77,25 +77,25 @@ function thePanelOpen(world: World): PanelChanges {
 }
 
 function topClose(changes: PanelChanges): void {
-	changes.top = 'nada';
+	changes.top = 'nothing';
 	changes.action = undefined;
 }
 
 const withChanges = ({ onOpen, form }: PanelChanges) => hasChanges(onOpen, form);
 
 const ON_TOP_NAMES: Record<string, OnTop> = {
-	nada: 'nada',
-	'el aviso de cierre': 'aviso de cierre',
-	'el aviso de acción': 'aviso de acción',
-	'la confirmación de Borrar tarea': 'confirmación de Borrar tarea',
-	'el selector de emoji': 'selector de emoji'
+	nada: 'nothing',
+	'el aviso de cierre': 'closeNotice',
+	'el aviso de acción': 'actionNotice',
+	'la confirmación de Borrar tarea': 'deleteConfirmation',
+	'el selector de emoji': 'emojiPicker'
 };
 
 const OPEN: Partial<Record<OnTop, string>> = {
-	'aviso de cierre': 'el panel con el aviso de cierre',
-	'aviso de acción': 'el panel con el aviso de acción',
-	'confirmación de Borrar tarea': 'el panel con la confirmación de Borrar tarea',
-	'selector de emoji': 'el panel con el selector de emoji'
+	closeNotice: 'el panel con el aviso de cierre',
+	actionNotice: 'el panel con el aviso de acción',
+	deleteConfirmation: 'el panel con la confirmación de Borrar tarea',
+	emojiPicker: 'el panel con el selector de emoji'
 };
 
 // ---- What is written ----
@@ -168,9 +168,9 @@ function actionOf(text: string): PanelAction | 'borrar tarea' {
 }
 
 function theNotice(world: World, changes: PanelChanges): ChangesNotice {
-	if (changes.top === 'aviso de cierre') return CLOSE_NOTICE;
+	if (changes.top === 'closeNotice') return CLOSE_NOTICE;
 	const { taskOnOpen, action } = changes;
-	const notice = changes.top === 'aviso de acción' && taskOnOpen && action && actionNotice(actionContext(world, changes, taskOnOpen, action));
+	const notice = changes.top === 'actionNotice' && taskOnOpen && action && actionNotice(actionContext(world, changes, taskOnOpen, action));
 	if (!notice) throw new Error('There is no open notice');
 	return notice;
 }
@@ -193,14 +193,14 @@ function chooseAction(world: World, text: string, moment: string): void {
 	const task = changes.taskOnOpen;
 	if (!task) throw new Error('Actions only exist when editing');
 	const effect = whatTheActionDoes(action, withChanges(changes));
-	if (action === 'borrar tarea' || effect === 'pide confirmar el borrado') {
-		changes.top = 'confirmación de Borrar tarea';
+	if (action === 'borrar tarea' || effect === 'asksDeleteConfirmation') {
+		changes.top = 'deleteConfirmation';
 		return;
 	}
 	const context = actionContext(world, changes, task, action);
-	if (effect === 'abre el aviso de acción') {
+	if (effect === 'opensActionNotice') {
 		expect(actionNotice(context)).toBeDefined();
-		changes.top = 'aviso de acción';
+		changes.top = 'actionNotice';
 		changes.action = action;
 	} else {
 		expect(discardAndAct(context)).toBeDefined();
@@ -245,7 +245,7 @@ function discardAndActStep(world: World, changes: PanelChanges, context: NoticeA
 function tapButton(world: World, changes: PanelChanges, { effect }: NoticeButton): void {
 	if (effect === 'seguir editando') return topClose(changes);
 	const { taskOnOpen, action } = changes;
-	if (changes.top === 'aviso de acción' && taskOnOpen && action) {
+	if (changes.top === 'actionNotice' && taskOnOpen && action) {
 		const context = actionContext(world, changes, taskOnOpen, action);
 		return effect === 'guardar' ? saveAndActStep(world, changes, context) : discardAndActStep(world, changes, context);
 	}
@@ -261,18 +261,18 @@ function tapInNotice(world: World, text: string, moment?: string): void {
 	tapButton(world, changes, button);
 }
 
-function closePanelFrom(world: World, changes: PanelChanges, effect: 'cierra el panel' | 'abre el aviso de cierre'): void {
-	if (effect === 'cierra el panel') closePanel(world);
-	else changes.top = 'aviso de cierre';
+function closePanelFrom(world: World, changes: PanelChanges, effect: 'closesPanel' | 'opensCloseNotice'): void {
+	if (effect === 'closesPanel') closePanel(world);
+	else changes.top = 'closeNotice';
 }
 
 function tapBack(world: World): void {
 	const changes = thePanelOpen(world);
 	world.tapBack = true;
-	const undoTop = changes.top === 'nada' && world.noticeOfUndoOpen === true;
-	const effect = whatBackDoes({ top: undoTop ? 'aviso de deshacer' : changes.top, hasChanges: withChanges(changes), keyboardOpen: changes.keyboardOpen });
-	if (effect === 'cierra el teclado') changes.keyboardOpen = false;
-	else if (effect !== 'cierra lo de arriba') closePanelFrom(world, changes, effect);
+	const undoTop = changes.top === 'nothing' && world.noticeOfUndoOpen === true;
+	const effect = whatBackDoes({ top: undoTop ? 'undoNotice' : changes.top, hasChanges: withChanges(changes), keyboardOpen: changes.keyboardOpen });
+	if (effect === 'closesKeyboard') changes.keyboardOpen = false;
+	else if (effect !== 'closesTopLayer') closePanelFrom(world, changes, effect);
 	else if (undoTop) world.noticeOfUndoOpen = false;
 	else topClose(changes);
 }
@@ -338,7 +338,7 @@ export const unsavedChangesSteps: StepDefinition[] = [
 			const changes = thePanelOpen(world);
 			changes.top = ofTable(ON_TOP_NAMES, onTop, 'Lo de arriba');
 			// A one-off task without postponement offers Posponer: its action notice may be open (§5.9).
-			if (changes.top === 'aviso de acción') changes.action = optionAction('1 hora');
+			if (changes.top === 'actionNotice') changes.action = optionAction('1 hora');
 		}
 	},
 	{

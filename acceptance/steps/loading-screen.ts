@@ -49,16 +49,16 @@ const fontOf = (world: World, name: string) => (name === 'Atkinson' ? opening(wo
 
 /** A stored font is ready from the device: it is the only thing that arrives offline. */
 function fontStatus(font: OpeningFont, withoutConnection: boolean, instant: number): FontStatus {
-	if (instant >= font.arrives) return 'lista';
-	if (instant >= font.failure) return 'fallida';
-	return withoutConnection && font.saved ? 'guardada' : 'sin-guardar';
+	if (instant >= font.arrives) return 'ready';
+	if (instant >= font.failure) return 'failed';
+	return withoutConnection && font.saved ? 'saved' : 'unsaved';
 }
 
 function statusIn(a: AppOpening, instant: number): WaitStatus {
-	const sessionAnswered = a.session ? 'con-sesion' : 'sin-sesion';
+	const sessionAnswered = a.session ? 'signedIn' : 'signedOut';
 	return {
 		secondsSinceStart: instant,
-		auth: instant >= a.auth ? sessionAnswered : 'esperando',
+		auth: instant >= a.auth ? sessionAnswered : 'waiting',
 		tasksResponded: instant >= a.tasks,
 		completionsResponded: instant >= a.completions,
 		atkinson: fontStatus(a.atkinson, a.withoutConnection, instant),
