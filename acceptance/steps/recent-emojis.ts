@@ -6,63 +6,63 @@
 // fallan si falta.
 import { expect } from 'vitest';
 import { addRecent } from '../../src/lib/core/recent-emojis';
-import { P, lista, numero } from './values';
+import { P, list, numeric } from './values';
 import type { StepDefinition, World } from './world';
 
 /** Elegir un emoji en el selector lo suma a los recientes de este dispositivo. */
-export function registrarEleccion(world: World, emoji: string): void {
-	world.recientes = addRecent(world.recientes ?? [], emoji);
-	world.huboAccionSobreRecientes = true;
+export function recordChoice(world: World, emoji: string): void {
+	world.recent = addRecent(world.recent ?? [], emoji);
+	world.wasActionOnRecent = true;
 }
 
-function recientesDeclarados(world: World): string[] {
-	if (world.recientes === undefined) throw new Error('Falta declarar los emojis recientes antes de actuar sobre ellos.');
-	return world.recientes;
+function recentDeclared(world: World): string[] {
+	if (world.recent === undefined) throw new Error('Falta declarar los emojis recientes antes de actuar sobre ellos.');
+	return world.recent;
 }
 
 /** Emojis distintos entre sí, para llenar la lista sin nombrarlos. */
-const emojisDistintos = (cantidad: number) => Array.from({ length: cantidad }, (_, i) => String.fromCodePoint(0x1f600 + i));
+const emojisDistinct = (count: number) => Array.from({ length: count }, (_, i) => String.fromCodePoint(0x1f600 + i));
 
-const NUEVO = '🧪';
+const NEW = '🧪';
 
-function declaroOVerifico(world: World, esperados: string[]): void {
-	if (world.huboAccionSobreRecientes) expect(world.recientes).toEqual(esperados);
-	else world.recientes = esperados;
+function declareOVerify(world: World, expected: string[]): void {
+	if (world.wasActionOnRecent) expect(world.recent).toEqual(expected);
+	else world.recent = expected;
 }
 
-export const emojisRecientesSteps: StepDefinition[] = [
+export const recentEmojisSteps: StepDefinition[] = [
 	{
 		pattern: /^que no hay emojis recientes$/,
-		run: (world) => void (world.recientes = [])
+		run: (world) => void (world.recent = [])
 	},
 	{
 		pattern: new RegExp(`^los emojis recientes son ${P}$`),
-		run: (world, recientes) => declaroOVerifico(world, lista(recientes))
+		run: (world, recent) => declareOVerify(world, list(recent))
 	},
 	{
 		pattern: new RegExp(`^hay ${P} emojis recientes$`),
-		run: (world, cantidad) =>
-			world.huboAccionSobreRecientes
-				? expect(world.recientes).toHaveLength(numero(cantidad))
-				: void (world.recientes = emojisDistintos(numero(cantidad)))
+		run: (world, count) =>
+			world.wasActionOnRecent
+				? expect(world.recent).toHaveLength(numeric(count))
+				: void (world.recent = emojisDistinct(numeric(count)))
 	},
 	{
 		pattern: /^elijo un emoji que no estaba entre los recientes$/,
 		run: (world) => {
-			world.emojiMasViejo = recientesDeclarados(world).at(-1);
-			world.emojiElegido = NUEVO;
-			registrarEleccion(world, NUEVO);
+			world.emojiMoreOld = recentDeclared(world).at(-1);
+			world.emojiChosen = NEW;
+			recordChoice(world, NEW);
 			// Con el panel abierto, el emoji elegido queda en el formulario (§6.2).
-			const cambios = world.panel?.cambios;
-			if (cambios) cambios.form = { ...cambios.form, data: { ...cambios.form.data, emoji: NUEVO } };
+			const changes = world.panel?.changes;
+			if (changes) changes.form = { ...changes.form, data: { ...changes.form.data, emoji: NEW } };
 		}
 	},
 	{
 		pattern: /^el primero es el que elegí$/,
-		run: (world) => expect(world.recientes?.[0]).toBe(world.emojiElegido)
+		run: (world) => expect(world.recent?.[0]).toBe(world.emojiChosen)
 	},
 	{
 		pattern: /^el emoji más viejo de antes ya no está$/,
-		run: (world) => expect(world.recientes).not.toContain(world.emojiMasViejo)
+		run: (world) => expect(world.recent).not.toContain(world.emojiMoreOld)
 	}
 ];

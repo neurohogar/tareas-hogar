@@ -4,275 +4,275 @@
 // deshacer) y devuelve lo que cada paso Then observa. Todo lo que no reconoce o no puede decidir
 // (por ejemplo dos anotaciones del mismo instante sin ids) lanza `Indeciso`: el resultado es
 // undefined y la mutación no se filtra.
-import { fecha, type FilaOraculo, type PasoOraculo } from './oracle';
-import { avisoSeVe, encabezadoDeDia } from './oracle-history';
+import { date, type RowOracle, type StepOracle } from './oracle';
+import { noticeSees, dayHeading } from './oracle-history';
 
-class Indeciso extends Error {}
-const indeciso = (motivo: string): never => {
-	throw new Indeciso(motivo);
+class Undecided extends Error {}
+const undecided = (reason: string): never => {
+	throw new Undecided(reason);
 };
 
-interface Tarea {
+interface Task {
 	/** Como se llamó al declararla: así la nombran los pasos. */
-	nombre: string;
-	titulo: string;
+	name: string;
+	title: string;
 	emoji?: string;
-	borrada: boolean;
+	deleted: boolean;
 }
 
-interface Anotacion {
+interface Annotation {
 	id: string;
-	en: number;
-	sentido: string;
-	pantalla: string;
-	tarea?: Tarea;
-	texto?: string;
-	borrada: boolean;
+	at: number;
+	direction: string;
+	screenName: string;
+	task?: Task;
+	text?: string;
+	deleted: boolean;
 }
 
-interface Mundo {
-	tareas: Tarea[];
-	completados: { tarea: Tarea; en: number }[];
-	anotaciones: Anotacion[];
-	pantalla?: string;
+interface OracleWorld {
+	tasks: Task[];
+	completions: { task: Task; at: number }[];
+	annotations: Annotation[];
+	screenName?: string;
 	/** El panel de edición abierto: la tarea, si se abrió para editar. */
-	panel?: { tarea?: Tarea };
+	panel?: { task?: Task };
 	/** El aviso del último completado de este dispositivo (§5.4). */
-	aviso?: { tarea: Tarea; en: number };
-	siguiente: number;
-	ultima?: Anotacion;
+	notice?: { task: Task; at: number };
+	next: number;
+	last?: Annotation;
 	/** Las anotaciones que mostró la última consulta de Anotaciones y el texto de la última copia. */
-	vista?: string;
-	copia?: string[];
+	view?: string;
+	copy?: string[];
 }
 
-const SENTIDOS = ['Me sirvió', 'Me molestó'];
-const PANTALLAS_ACTUALES = ['Pendientes', 'Historial', 'Anotaciones'];
+const DIRECTIONS = ['Me sirvió', 'Me molestó'];
+const SCREENS_CURRENT = ['Pendientes', 'Historial', 'Anotaciones'];
 /** §4.5: «Etiquetas» ya no es una pantalla donde anotar; las anotaciones guardadas con ella la conservan como valor opaco. */
-const PANTALLAS = [...PANTALLAS_ACTUALES, 'Etiquetas', 'Panel de edición'];
+const SCREENS = [...SCREENS_CURRENT, 'Etiquetas', 'Panel de edición'];
 
-const conValores = (texto: string, fila: FilaOraculo) => texto.replace(/<([A-Za-z0-9_]+)>/g, (_, columna: string) => fila[columna] ?? '<?>');
+const withValues = (text: string, row: RowOracle) => text.replace(/<([A-Za-z0-9_]+)>/g, (_, column: string) => row[column] ?? '<?>');
 
-const momento = (valor: string) => fecha(valor) ?? indeciso(`fecha ${valor}`);
-const sentidoDe = (valor: string) => (SENTIDOS.includes(valor) ? valor : indeciso(`sentido ${valor}`));
-const pantallaDe = (valor: string) => (PANTALLAS.includes(valor) ? valor : indeciso(`pantalla ${valor}`));
+const moment = (value: string) => date(value) ?? undecided(`fecha ${value}`);
+const directionOf = (value: string) => (DIRECTIONS.includes(value) ? value : undecided(`sentido ${value}`));
+const screenOf = (value: string) => (SCREENS.includes(value) ? value : undecided(`pantalla ${value}`));
 
-function espacios(valor: string): string {
-	const n = Number(valor);
-	if (valor.trim() === '' || !Number.isInteger(n) || n < 0 || n > 100_000) return indeciso(`espacios ${valor}`);
+function spaces(value: string): string {
+	const n = Number(value);
+	if (value.trim() === '' || !Number.isInteger(n) || n < 0 || n > 100_000) return undecided(`espacios ${value}`);
 	return ' '.repeat(n);
 }
 
 /** §4.5: se recortan los espacios del inicio y del final; vacío es sin texto. */
-const recortado = (texto: string): string | undefined => texto.trim() || undefined;
+const trimmed = (text: string): string | undefined => text.trim() || undefined;
 
-const dosDigitos = (n: number) => String(n).padStart(2, '0');
-const horaDe = (en: number) => `${dosDigitos(new Date(en).getHours())}:${dosDigitos(new Date(en).getMinutes())}`;
-const fechaYHoraDe = (en: number) => {
-	const d = new Date(en);
-	return `${d.getFullYear()}-${dosDigitos(d.getMonth() + 1)}-${dosDigitos(d.getDate())} ${horaDe(en)}`;
+const twoDigits = (n: number) => String(n).padStart(2, '0');
+const hourOf = (at: number) => `${twoDigits(new Date(at).getHours())}:${twoDigits(new Date(at).getMinutes())}`;
+const dateAndHourOf = (at: number) => {
+	const d = new Date(at);
+	return `${d.getFullYear()}-${twoDigits(d.getMonth() + 1)}-${twoDigits(d.getDate())} ${hourOf(at)}`;
 };
 
-function laTarea(mundo: Mundo, nombre: string): Tarea {
-	return mundo.tareas.find((tarea) => tarea.nombre === nombre) ?? indeciso(`tarea ${nombre}`);
+function theTask(world: OracleWorld, name: string): Task {
+	return world.tasks.find((task) => task.name === name) ?? undecided(`tarea ${name}`);
 }
 
-function laAnotacion(mundo: Mundo, anotada: string): Anotacion {
-	const en = momento(anotada);
-	const delMomento = mundo.anotaciones.filter((anotacion) => anotacion.en === en);
-	return delMomento.length === 1 ? delMomento[0] : indeciso(`anotación del ${anotada}`);
+function theAnnotation(world: OracleWorld, annotated: string): Annotation {
+	const at = moment(annotated);
+	const ofMoment = world.annotations.filter((annotation) => annotation.at === at);
+	return ofMoment.length === 1 ? ofMoment[0] : undecided(`anotación del ${annotated}`);
 }
 
-function nueva(mundo: Mundo, sentido: string, pantalla: string, en: number, tarea?: Tarea, texto?: string): Anotacion {
-	const anotacion: Anotacion = { id: `~${String(mundo.siguiente++).padStart(6, '0')}`, en, sentido, pantalla, tarea, texto, borrada: false };
-	mundo.anotaciones.push(anotacion);
-	mundo.ultima = anotacion;
-	return anotacion;
+function fresh(world: OracleWorld, direction: string, screenName: string, at: number, task?: Task, text?: string): Annotation {
+	const annotation: Annotation = { id: `~${String(world.next++).padStart(6, '0')}`, at, direction, screenName, task, text, deleted: false };
+	world.annotations.push(annotation);
+	world.last = annotation;
+	return annotation;
 }
 
 /** §5.10: el panel manda sobre el aviso de deshacer; con el panel cerrado, el aviso solo si se ve. */
-function anotoYo(mundo: Mundo, sentido: string, ahora: string, texto = ''): void {
-	const en = momento(ahora);
-	if (mundo.pantalla === undefined) indeciso('sin pantalla');
-	const tarea = mundo.panel ? mundo.panel.tarea : mundo.aviso && avisoSeVe(mundo.aviso.en, en) ? mundo.aviso.tarea : undefined;
-	nueva(mundo, sentidoDe(sentido), mundo.panel ? 'Panel de edición' : (mundo.pantalla as string), en, tarea, recortado(texto));
+function annotateMe(world: OracleWorld, direction: string, now: string, text = ''): void {
+	const at = moment(now);
+	if (world.screenName === undefined) undecided('sin pantalla');
+	const task = world.panel ? world.panel.task : world.notice && noticeSees(world.notice.at, at) ? world.notice.task : undefined;
+	fresh(world, directionOf(direction), world.panel ? 'Panel de edición' : (world.screenName as string), at, task, trimmed(text));
 }
 
 /** Otro dispositivo, sin panel; sobre una tarea solo con su aviso de deshacer a la vista. */
-function anotaElOtro(mundo: Mundo, sentido: string, pantalla: string, ahora: string, titulo?: string): void {
-	if (![...PANTALLAS_ACTUALES, 'Etiquetas'].includes(pantalla)) indeciso(`pantalla ${pantalla}`);
-	nueva(mundo, sentidoDe(sentido), pantalla, momento(ahora), titulo === undefined ? undefined : laTarea(mundo, titulo));
+function annotatesOther(world: OracleWorld, direction: string, screenName: string, now: string, title?: string): void {
+	if (![...SCREENS_CURRENT, 'Etiquetas'].includes(screenName)) undecided(`pantalla ${screenName}`);
+	fresh(world, directionOf(direction), screenName, moment(now), title === undefined ? undefined : theTask(world, title));
 }
 
 /** §7: borrar gana sobre editar; una edición de una anotación borrada no la revive. */
-function editoElTexto(mundo: Mundo, anotada: string, texto: string): void {
-	const anotacion = laAnotacion(mundo, anotada);
-	if (!anotacion.borrada) anotacion.texto = recortado(texto);
+function doEditText(world: OracleWorld, annotated: string, text: string): void {
+	const annotation = theAnnotation(world, annotated);
+	if (!annotation.deleted) annotation.text = trimmed(text);
 }
 
-function borroLaAnotacion(mundo: Mundo, anotada: string): void {
-	laAnotacion(mundo, anotada).borrada = true;
+function deleteAnnotation(world: OracleWorld, annotated: string): void {
+	theAnnotation(world, annotated).deleted = true;
 }
 
 /** §6.2, §7: se borran la tarea, sus completados y sus anotaciones, y solo las suyas. */
-function borroLaTarea(mundo: Mundo, nombre: string): void {
-	const tarea = laTarea(mundo, nombre);
-	tarea.borrada = true;
-	mundo.completados = mundo.completados.filter((completado) => completado.tarea !== tarea);
-	for (const anotacion of mundo.anotaciones) if (anotacion.tarea === tarea) anotacion.borrada = true;
+function deleteTask(world: OracleWorld, name: string): void {
+	const task = theTask(world, name);
+	task.deleted = true;
+	world.completions = world.completions.filter((completion) => completion.task !== task);
+	for (const annotation of world.annotations) if (annotation.task === task) annotation.deleted = true;
 }
 
-const nombreDe = ({ titulo, emoji }: Tarea) => (emoji ? `${emoji} ${titulo}` : titulo);
+const nameOf = ({ title, emoji }: Task) => (emoji ? `${emoji} ${title}` : title);
 
 /** §6.7: las de tarea existente o sin tarea; las huérfanas y las de tareas borradas no se muestran. */
-const visibles = (mundo: Mundo) => mundo.anotaciones.filter((anotacion) => !anotacion.borrada && !anotacion.tarea?.borrada);
+const visible = (world: OracleWorld) => world.annotations.filter((annotation) => !annotation.deleted && !annotation.task?.deleted);
 
 /** §6.7: con el mismo instante, primero la de id menor; sin ids que desempaten no se decide. */
-function ordenadas(mundo: Mundo, masRecientePrimero: boolean): Anotacion[] {
-	const lista = visibles(mundo);
-	const sinDesempate = lista.some((a, i) => lista.some((b, j) => i < j && a.en === b.en && (a.id.startsWith('~') || b.id.startsWith('~') || a.id === b.id)));
-	if (sinDesempate) indeciso('empate sin ids');
-	return [...lista].sort((a, b) => (masRecientePrimero ? b.en - a.en : a.en - b.en) || (a.id < b.id ? -1 : 1));
+function sorted(world: OracleWorld, moreRecentFirst: boolean): Annotation[] {
+	const list = visible(world);
+	const withoutTiebreak = list.some((a, i) => list.some((b, j) => i < j && a.at === b.at && (a.id.startsWith('~') || b.id.startsWith('~') || a.id === b.id)));
+	if (withoutTiebreak) undecided('empate sin ids');
+	return [...list].sort((a, b) => (moreRecentFirst ? b.at - a.at : a.at - b.at) || (a.id < b.id ? -1 : 1));
 }
 
-const partes = (anotacion: Anotacion, delante: string) =>
-	[delante, anotacion.sentido, anotacion.pantalla, anotacion.tarea && nombreDe(anotacion.tarea), anotacion.texto].filter((parte) => parte !== undefined).join(' · ');
+const parts = (annotation: Annotation, front: string) =>
+	[front, annotation.direction, annotation.screenName, annotation.task && nameOf(annotation.task), annotation.text].filter((part) => part !== undefined).join(' · ');
 
 /** §6.7: grupos "<encabezado>: <anotaciones>" con "; ", anotaciones con ", ". */
-function pantallaDeAnotaciones(mundo: Mundo, ahora: number): string {
-	const grupos: { encabezado: string; textos: string[] }[] = [];
-	for (const anotacion of ordenadas(mundo, true)) {
-		const encabezado = encabezadoDeDia(anotacion.en, ahora);
-		const texto = partes(anotacion, horaDe(anotacion.en));
-		const ultimo = grupos.at(-1);
-		if (ultimo?.encabezado === encabezado) ultimo.textos.push(texto);
-		else grupos.push({ encabezado, textos: [texto] });
+function annotationsScreen(world: OracleWorld, now: number): string {
+	const groups: { heading: string; texts: string[] }[] = [];
+	for (const annotation of sorted(world, true)) {
+		const heading = dayHeading(annotation.at, now);
+		const text = parts(annotation, hourOf(annotation.at));
+		const last = groups.at(-1);
+		if (last?.heading === heading) last.texts.push(text);
+		else groups.push({ heading, texts: [text] });
 	}
-	return grupos.map(({ encabezado, textos }) => `${encabezado}: ${textos.join(', ')}`).join('; ');
+	return groups.map(({ heading, texts }) => `${heading}: ${texts.join(', ')}`).join('; ');
 }
 
 /** §6.7: una línea por anotación que la pantalla muestra, de la más antigua a la más reciente. */
-const lineasCopiadas = (mundo: Mundo) => ordenadas(mundo, false).map((anotacion) => partes(anotacion, fechaYHoraDe(anotacion.en)));
+const linesCopied = (world: OracleWorld) => sorted(world, false).map((annotation) => parts(annotation, dateAndHourOf(annotation.at)));
 
-type Lector = [RegExp, (mundo: Mundo, ...capturas: string[]) => void];
+type Reader = [RegExp, (world: OracleWorld, ...captures: string[]) => void];
 
-const SENTIDO = '(Me sirvió|Me molestó)';
-const PANTALLA = `(${PANTALLAS.join('|')})`;
-const OTRO = 'otro dispositivo, sin ver ese cambio,';
+const DIRECTION = '(Me sirvió|Me molestó)';
+const SCREEN = `(${SCREENS.join('|')})`;
+const OTHER = 'otro dispositivo, sin ver ese cambio,';
 
-const LECTORES: Lector[] = [
+const READERS: Reader[] = [
 	[
 		/^una tarea puntual (\S+) (?:sin|con) fecha límite(?: (?:\d{4}-\d{2}-\d{2}))?(?: con emoji (\S+))?$/,
-		(mundo, nombre, emoji) => void mundo.tareas.push({ nombre, titulo: nombre, emoji, borrada: false })
+		(world, name, emoji) => void world.tasks.push({ name, title: name, emoji, deleted: false })
 	],
-	[/^estoy en (\S+)$/, (mundo, pantalla) => void (mundo.pantalla = PANTALLAS_ACTUALES.includes(pantalla) ? pantalla : indeciso(pantalla))],
-	[/^el panel de edición está abierto al editar la tarea (\S+)$/, (mundo, nombre) => void (mundo.panel = { tarea: laTarea(mundo, nombre) })],
-	[/^el panel de edición está abierto al crear una tarea$/, (mundo) => void (mundo.panel = {})],
+	[/^estoy en (\S+)$/, (world, screenName) => void (world.screenName = SCREENS_CURRENT.includes(screenName) ? screenName : undecided(screenName))],
+	[/^el panel de edición está abierto al editar la tarea (\S+)$/, (world, name) => void (world.panel = { task: theTask(world, name) })],
+	[/^el panel de edición está abierto al crear una tarea$/, (world) => void (world.panel = {})],
 	[
 		/^completo la tarea (\S+) el (\S+)$/,
-		(mundo, nombre, en) => {
-			const tarea = laTarea(mundo, nombre);
-			mundo.completados.push({ tarea, en: momento(en) });
-			mundo.aviso = { tarea, en: momento(en) };
+		(world, name, at) => {
+			const task = theTask(world, name);
+			world.completions.push({ task, at: moment(at) });
+			world.notice = { task, at: moment(at) };
 		}
 	],
-	[/^la tarea (\S+) fue completada el (\S+)$/, (mundo, nombre, en) => void mundo.completados.push({ tarea: laTarea(mundo, nombre), en: momento(en) })],
+	[/^la tarea (\S+) fue completada el (\S+)$/, (world, name, at) => void world.completions.push({ task: theTask(world, name), at: moment(at) })],
 	[
 		/^edito el título a (\S+)$/,
-		(mundo, titulo) => {
-			const vivas = mundo.tareas.filter(({ borrada }) => !borrada);
-			if (vivas.length !== 1) indeciso('título de varias tareas');
-			vivas[0].titulo = titulo;
+		(world, title) => {
+			const live = world.tasks.filter(({ deleted }) => !deleted);
+			if (live.length !== 1) undecided('título de varias tareas');
+			live[0].title = title;
 		}
 	],
-	[new RegExp(`^anoto ${SENTIDO} el (\\S+)$`), (mundo, sentido, ahora) => anotoYo(mundo, sentido, ahora)],
+	[new RegExp(`^anoto ${DIRECTION} el (\\S+)$`), (world, direction, now) => annotateMe(world, direction, now)],
 	[
-		new RegExp(`^anoto ${SENTIDO} el (\\S+) con el texto (.+?) entre (\\S+) espacios$`),
-		(mundo, sentido, ahora, texto, n) => anotoYo(mundo, sentido, ahora, `${espacios(n)}${texto}${espacios(n)}`)
+		new RegExp(`^anoto ${DIRECTION} el (\\S+) con el texto (.+?) entre (\\S+) espacios$`),
+		(world, direction, now, text, n) => annotateMe(world, direction, now, `${spaces(n)}${text}${spaces(n)}`)
 	],
-	[new RegExp(`^anoto ${SENTIDO} el (\\S+) con el texto (.+)$`), (mundo, sentido, ahora, texto) => anotoYo(mundo, sentido, ahora, texto)],
-	[new RegExp(`^anoto ${SENTIDO} el (\\S+) con (\\S+) espacios como texto$`), (mundo, sentido, ahora, n) => anotoYo(mundo, sentido, ahora, espacios(n))],
+	[new RegExp(`^anoto ${DIRECTION} el (\\S+) con el texto (.+)$`), (world, direction, now, text) => annotateMe(world, direction, now, text)],
+	[new RegExp(`^anoto ${DIRECTION} el (\\S+) con (\\S+) espacios como texto$`), (world, direction, now, n) => annotateMe(world, direction, now, spaces(n))],
 	[
-		new RegExp(`^anoto ${SENTIDO} el (\\S+) con un texto de (\\S+) caracteres$`),
-		(mundo, sentido, ahora, largo) => anotoYo(mundo, sentido, ahora, 'a'.repeat(Number(largo) >= 0 && Number(largo) <= 100_000 ? Number(largo) : indeciso(largo)))
+		new RegExp(`^anoto ${DIRECTION} el (\\S+) con un texto de (\\S+) caracteres$`),
+		(world, direction, now, length) => annotateMe(world, direction, now, 'a'.repeat(Number(length) >= 0 && Number(length) <= 100_000 ? Number(length) : undecided(length)))
 	],
-	[new RegExp(`^${OTRO} anota ${SENTIDO} en ${PANTALLA} el (\\S+)$`), (mundo, sentido, pantalla, ahora) => anotaElOtro(mundo, sentido, pantalla, ahora)],
+	[new RegExp(`^${OTHER} anota ${DIRECTION} en ${SCREEN} el (\\S+)$`), (world, direction, screenName, now) => annotatesOther(world, direction, screenName, now)],
 	[
-		new RegExp(`^${OTRO} anota ${SENTIDO} en ${PANTALLA} el (\\S+) sobre la tarea (\\S+)$`),
-		(mundo, sentido, pantalla, ahora, titulo) => anotaElOtro(mundo, sentido, pantalla, ahora, titulo)
+		new RegExp(`^${OTHER} anota ${DIRECTION} en ${SCREEN} el (\\S+) sobre la tarea (\\S+)$`),
+		(world, direction, screenName, now, title) => annotatesOther(world, direction, screenName, now, title)
 	],
 	[
-		new RegExp(`^una anotación ${SENTIDO} en ${PANTALLA} del (\\S+)$`),
-		(mundo, sentido, pantalla, anotada) => void nueva(mundo, sentido, pantallaDe(pantalla), momento(anotada))
+		new RegExp(`^una anotación ${DIRECTION} en ${SCREEN} del (\\S+)$`),
+		(world, direction, screenName, annotated) => void fresh(world, direction, screenOf(screenName), moment(annotated))
 	],
 	[
 		/^la anotación se refiere a la tarea (\S+)$/,
-		(mundo, nombre) => void ((mundo.ultima ?? indeciso('sin anotación')).tarea = laTarea(mundo, nombre))
+		(world, name) => void ((world.last ?? undecided('sin anotación')).task = theTask(world, name))
 	],
-	[/^la anotación dice (.+)$/, (mundo, texto) => void ((mundo.ultima ?? indeciso('sin anotación')).texto = recortado(texto))],
-	[/^la anotación se registró con id (\S+)$/, (mundo, id) => void ((mundo.ultima ?? indeciso('sin anotación')).id = id)],
-	[/^consulto Anotaciones el (\S+)$/, (mundo, ahora) => void (mundo.vista = pantallaDeAnotaciones(mundo, momento(ahora)))],
-	[/^copio las anotaciones$/, (mundo) => void (mundo.copia = lineasCopiadas(mundo))],
+	[/^la anotación dice (.+)$/, (world, text) => void ((world.last ?? undecided('sin anotación')).text = trimmed(text))],
+	[/^la anotación se registró con id (\S+)$/, (world, id) => void ((world.last ?? undecided('sin anotación')).id = id)],
+	[/^consulto Anotaciones el (\S+)$/, (world, now) => void (world.view = annotationsScreen(world, moment(now)))],
+	[/^copio las anotaciones$/, (world) => void (world.copy = linesCopied(world))],
 	[
 		/^edito el texto de la anotación del (\S+) a (.+?) entre (\S+) espacios$/,
-		(mundo, anotada, texto, n) => editoElTexto(mundo, anotada, `${espacios(n)}${texto}${espacios(n)}`)
+		(world, annotated, text, n) => doEditText(world, annotated, `${spaces(n)}${text}${spaces(n)}`)
 	],
-	[/^edito el texto de la anotación del (\S+) a (\S+) espacios$/, (mundo, anotada, n) => editoElTexto(mundo, anotada, espacios(n))],
-	[/^edito el texto de la anotación del (\S+) a (.+)$/, (mundo, anotada, texto) => editoElTexto(mundo, anotada, texto)],
-	[new RegExp(`^${OTRO} edita el texto de la anotación del (\\S+) a (.+)$`), (mundo, anotada, texto) => editoElTexto(mundo, anotada, texto)],
-	[/^borro la anotación del (\S+)$/, (mundo, anotada) => borroLaAnotacion(mundo, anotada)],
-	[new RegExp(`^${OTRO} borra la anotación del (\\S+)$`), (mundo, anotada) => borroLaAnotacion(mundo, anotada)],
-	[/^borro la tarea (\S+)$/, (mundo, nombre) => borroLaTarea(mundo, nombre)]
+	[/^edito el texto de la anotación del (\S+) a (\S+) espacios$/, (world, annotated, n) => doEditText(world, annotated, spaces(n))],
+	[/^edito el texto de la anotación del (\S+) a (.+)$/, (world, annotated, text) => doEditText(world, annotated, text)],
+	[new RegExp(`^${OTHER} edita el texto de la anotación del (\\S+) a (.+)$`), (world, annotated, text) => doEditText(world, annotated, text)],
+	[/^borro la anotación del (\S+)$/, (world, annotated) => deleteAnnotation(world, annotated)],
+	[new RegExp(`^${OTHER} borra la anotación del (\\S+)$`), (world, annotated) => deleteAnnotation(world, annotated)],
+	[/^borro la tarea (\S+)$/, (world, name) => deleteTask(world, name)]
 ];
 
-const guardadas = (mundo: Mundo) => mundo.anotaciones.filter(({ borrada }) => !borrada);
-const sinDefinir = (texto: string | undefined) => texto ?? '<sin texto>';
+const saved = (world: OracleWorld) => world.annotations.filter(({ deleted }) => !deleted);
+const withoutDefine = (text: string | undefined) => text ?? '<sin texto>';
 
 /** Cada Then: lo que el oráculo observa y lo que el paso afirma. */
-type Observador = [RegExp, (mundo: Mundo, ...capturas: string[]) => [observado: string, afirmado: string]];
+type Observer = [RegExp, (world: OracleWorld, ...captures: string[]) => [observado: string, afirmado: string]];
 
-const OBSERVADORES: Observador[] = [
-	[/^queda una sola anotación$/, (mundo) => [String(guardadas(mundo).length), '1']],
-	[/^quedan (\S+) anotaciones$/, (mundo, n) => [String(guardadas(mundo).length), n]],
-	[/^no queda ninguna anotación$/, (mundo) => [String(guardadas(mundo).length), '0']],
-	[/^no existe la anotación del (\S+)$/, (mundo, anotada) => [String(!laAnotacion(mundo, anotada).borrada), 'false']],
+const OBSERVERS: Observer[] = [
+	[/^queda una sola anotación$/, (world) => [String(saved(world).length), '1']],
+	[/^quedan (\S+) anotaciones$/, (world, n) => [String(saved(world).length), n]],
+	[/^no queda ninguna anotación$/, (world) => [String(saved(world).length), '0']],
+	[/^no existe la anotación del (\S+)$/, (world, annotated) => [String(!theAnnotation(world, annotated).deleted), 'false']],
 	[
 		/^la anotación del (\S+) tiene sentido (Me sirvió|Me molestó) en (.+)$/,
-		(mundo, anotada, sentido, pantalla) => {
-			const anotacion = laAnotacion(mundo, anotada);
-			return [`${anotacion.sentido}|${anotacion.pantalla}`, `${sentido}|${pantalla}`];
+		(world, annotated, direction, screenName) => {
+			const annotation = theAnnotation(world, annotated);
+			return [`${annotation.direction}|${annotation.screenName}`, `${direction}|${screenName}`];
 		}
 	],
-	[/^la anotación del (\S+) es de la tarea (\S+)$/, (mundo, anotada, nombre) => [laAnotacion(mundo, anotada).tarea?.nombre ?? '<sin tarea>', nombre]],
-	[/^la anotación del (\S+) no es de ninguna tarea$/, (mundo, anotada) => [String(laAnotacion(mundo, anotada).tarea === undefined), 'true']],
-	[/^la anotación del (\S+) dice un texto de (\S+) caracteres$/, (mundo, anotada, largo) => [String(laAnotacion(mundo, anotada).texto?.length), largo]],
-	[/^la anotación del (\S+) dice (.+)$/, (mundo, anotada, texto) => [sinDefinir(laAnotacion(mundo, anotada).texto), texto]],
-	[/^la anotación del (\S+) no tiene texto$/, (mundo, anotada) => [String(laAnotacion(mundo, anotada).texto === undefined), 'true']],
-	[/^el panel sigue abierto sin cambios sin guardar$/, (mundo) => [String(mundo.panel !== undefined && guardadas(mundo).length > 0), 'true']],
-	[/^Anotaciones muestra (.+)$/, (mundo, esperado) => [mundo.vista ?? indeciso('sin consulta'), esperado]],
-	[/^Anotaciones está vacía$/, (mundo) => [mundo.vista ?? indeciso('sin consulta'), '']],
-	[/^el texto copiado tiene las líneas (.+)$/, (mundo, lineas) => [(mundo.copia ?? indeciso('sin copia')).join('; '), lineas]],
-	[/^no hay nada para copiar$/, (mundo) => [String((mundo.copia ?? indeciso('sin copia')).length), '0']],
+	[/^la anotación del (\S+) es de la tarea (\S+)$/, (world, annotated, name) => [theAnnotation(world, annotated).task?.name ?? '<sin tarea>', name]],
+	[/^la anotación del (\S+) no es de ninguna tarea$/, (world, annotated) => [String(theAnnotation(world, annotated).task === undefined), 'true']],
+	[/^la anotación del (\S+) dice un texto de (\S+) caracteres$/, (world, annotated, length) => [String(theAnnotation(world, annotated).text?.length), length]],
+	[/^la anotación del (\S+) dice (.+)$/, (world, annotated, text) => [withoutDefine(theAnnotation(world, annotated).text), text]],
+	[/^la anotación del (\S+) no tiene texto$/, (world, annotated) => [String(theAnnotation(world, annotated).text === undefined), 'true']],
+	[/^el panel sigue abierto sin cambios sin guardar$/, (world) => [String(world.panel !== undefined && saved(world).length > 0), 'true']],
+	[/^Anotaciones muestra (.+)$/, (world, expected) => [world.view ?? undecided('sin consulta'), expected]],
+	[/^Anotaciones está vacía$/, (world) => [world.view ?? undecided('sin consulta'), '']],
+	[/^el texto copiado tiene las líneas (.+)$/, (world, lines) => [(world.copy ?? undecided('sin copia')).join('; '), lines]],
+	[/^no hay nada para copiar$/, (world) => [String((world.copy ?? undecided('sin copia')).length), '0']],
 	[
 		/^las anotaciones huérfanas a limpiar son solo la del (\S+)$/,
-		(mundo, anotada) => [
+		(world, annotated) => [
 			// §7: una anotación de una tarea que ya no existe, que nadie borró con ella.
-			mundo.anotaciones
-				.filter((anotacion) => !anotacion.borrada && anotacion.tarea?.borrada)
-				.map(({ en }) => en)
+			world.annotations
+				.filter((annotation) => !annotation.deleted && annotation.task?.deleted)
+				.map(({ at }) => at)
 				.join(','),
-			String(momento(anotada))
+			String(moment(annotated))
 		]
 	],
-	[/^no existe la tarea (\S+)$/, (mundo, nombre) => [String(!laTarea(mundo, nombre).borrada), 'false']],
-	[/^no queda ningún completado de (\S+)$/, (mundo, nombre) => [String(mundo.completados.filter(({ tarea }) => tarea === laTarea(mundo, nombre)).length), '0']],
+	[/^no existe la tarea (\S+)$/, (world, name) => [String(!theTask(world, name).deleted), 'false']],
+	[/^no queda ningún completado de (\S+)$/, (world, name) => [String(world.completions.filter(({ task }) => task === theTask(world, name)).length), '0']],
 	[
 		/^la tarea (\S+) conserva un solo completado, del (\S+)$/,
-		(mundo, nombre, completada) => [mundo.completados.filter(({ tarea }) => tarea === laTarea(mundo, nombre)).map(({ en }) => en).join(','), String(momento(completada))]
+		(world, name, completed) => [world.completions.filter(({ task }) => task === theTask(world, name)).map(({ at }) => at).join(','), String(moment(completed))]
 	]
 ];
 
-const PATRONES_DE_ESCENARIO = [
+const SCENARIO_PATTERNS = [
 	/^anoto /,
 	/^una anotación /,
 	/^consulto Anotaciones el /,
@@ -282,31 +282,31 @@ const PATRONES_DE_ESCENARIO = [
 	/ (?:anota|edita el texto de la anotación|borra la anotación) /
 ];
 
-export const esEscenarioDeAnotaciones = (textos: string[]) => textos.some((texto) => PATRONES_DE_ESCENARIO.some((patron) => patron.test(texto)));
+export const isScenarioOfAnnotations = (texts: string[]) => texts.some((text) => SCENARIO_PATTERNS.some((pattern) => pattern.test(text)));
 
 /** Lo que observa y lo que afirma cada Then: undefined si el oráculo no reconoce o no decide el escenario. */
-export function observarAnotaciones(entradas: PasoOraculo[], thens: PasoOraculo[], fila: FilaOraculo): { observado: string[]; afirmado: string[] } | undefined {
-	const mundo: Mundo = { tareas: [], completados: [], anotaciones: [], siguiente: 1 };
+export function observeAnnotations(entries: StepOracle[], thens: StepOracle[], row: RowOracle): { observed: string[]; asserted: string[] } | undefined {
+	const world: OracleWorld = { tasks: [], completions: [], annotations: [], next: 1 };
 	try {
-		for (const paso of entradas) {
-			const texto = conValores(paso.text, fila);
-			const lector = LECTORES.find(([patron]) => patron.test(texto));
-			if (!lector) return undefined;
-			lector[1](mundo, ...(lector[0].exec(texto) as RegExpExecArray).slice(1));
+		for (const step of entries) {
+			const text = withValues(step.text, row);
+			const reader = READERS.find(([pattern]) => pattern.test(text));
+			if (!reader) return undefined;
+			reader[1](world, ...(reader[0].exec(text) as RegExpExecArray).slice(1));
 		}
-		const observado: string[] = [];
-		const afirmado: string[] = [];
-		for (const paso of thens) {
-			const texto = conValores(paso.text, fila);
-			const observador = OBSERVADORES.find(([patron]) => patron.test(texto));
-			if (!observador) return undefined;
-			const [visto, dicho] = observador[1](mundo, ...(observador[0].exec(texto) as RegExpExecArray).slice(1));
-			observado.push(visto);
-			afirmado.push(dicho);
+		const observed: string[] = [];
+		const asserted: string[] = [];
+		for (const step of thens) {
+			const text = withValues(step.text, row);
+			const observer = OBSERVERS.find(([pattern]) => pattern.test(text));
+			if (!observer) return undefined;
+			const [seen, said] = observer[1](world, ...(observer[0].exec(text) as RegExpExecArray).slice(1));
+			observed.push(seen);
+			asserted.push(said);
 		}
-		return { observado, afirmado };
+		return { observed, asserted };
 	} catch (error) {
-		if (error instanceof Indeciso) return undefined;
+		if (error instanceof Undecided) return undefined;
 		throw error;
 	}
 }
@@ -315,66 +315,66 @@ export function observarAnotaciones(entradas: PasoOraculo[], thens: PasoOraculo[
 // elemento: se limpia todo elemento cuyo intento no falla y quedan por limpiar solo los que fallaron. Se
 // reintenta al volver la conexión y cuando cambian los datos; el tiempo no cuenta (sin temporizadores).
 
-const LIMPIEZAS = ['completados huérfanos', 'anotaciones huérfanas'];
-const SUCESOS_QUE_REINTENTAN = ['vuelve la conexión', 'cambian los datos'];
+const CLEANUPS = ['completados huérfanos', 'anotaciones huérfanas'];
+const EVENTS_THAT_RETRY = ['vuelve la conexión', 'cambian los datos'];
 
-interface MundoDeLimpieza {
+interface CleanupWorld {
 	original: string[];
-	fallan: Set<string>;
-	limpios: Set<string>;
-	pendientes: string[];
+	fail: Set<string>;
+	clean: Set<string>;
+	pending: string[];
 }
 
-export const esEscenarioDeLimpiezas = (textos: string[]) => textos.some((texto) => /^(?:hay por limpiar |la app intent(?:a|ó) las limpiezas$)/.test(texto));
+export const isScenarioOfCleanups = (texts: string[]) => texts.some((text) => /^(?:hay por limpiar |la app intent(?:a|ó) las limpiezas$)/.test(text));
 
 /** Lista de ids separada por ", "; "ninguno" es la lista vacía. */
-function idsDe(valor: string): string[] {
-	if (valor === 'ninguno') return [];
-	const partes = valor.split(', ');
-	return partes.some((parte) => parte === '' || parte !== parte.trim()) ? indeciso(`lista ${valor}`) : partes;
+function idsOf(value: string): string[] {
+	if (value === 'ninguno') return [];
+	const parts = value.split(', ');
+	return parts.some((part) => part === '' || part !== part.trim()) ? undecided(`lista ${value}`) : parts;
 }
 
-function intentarLimpiezas(m: MundoDeLimpieza): void {
-	for (const id of m.pendientes) if (!m.fallan.has(id)) m.limpios.add(id);
-	m.pendientes = m.pendientes.filter((id) => m.fallan.has(id));
+function attemptCleanups(m: CleanupWorld): void {
+	for (const id of m.pending) if (!m.fail.has(id)) m.clean.add(id);
+	m.pending = m.pending.filter((id) => m.fail.has(id));
 }
 
-function pasoDeLimpieza(m: MundoDeLimpieza, texto: string): void {
+function cleanupStep(m: CleanupWorld, text: string): void {
 	let c: RegExpExecArray | null;
-	if ((c = /^hay por limpiar (.+) de (.+)$/.exec(texto))) {
-		if (!LIMPIEZAS.includes(c[2])) indeciso(`limpieza ${c[2]}`);
-		m.original = idsDe(c[1]);
-		m.pendientes = [...m.original];
-	} else if ((c = /^falla el intento de limpiar (.+)$/.exec(texto))) {
-		for (const id of idsDe(c[1])) m.fallan.add(id);
-	} else if ((c = /^deja de fallar el intento de limpiar (.+)$/.exec(texto))) {
-		for (const id of idsDe(c[1])) m.fallan.delete(id);
-	} else if (/^la app intent(?:a|ó) las limpiezas$/.test(texto)) {
-		intentarLimpiezas(m);
-	} else if ((c = /^sucede que (.+)$/.exec(texto))) {
-		if (!SUCESOS_QUE_REINTENTAN.includes(c[1])) indeciso(`suceso ${c[1]}`);
-		intentarLimpiezas(m);
-	} else if ((c = /^pasan (.+) minutos sin que suceda nada más$/.exec(texto))) {
-		if (!/^\d+$/.test(c[1])) indeciso(`minutos ${c[1]}`);
-	} else indeciso(`paso ${texto}`);
+	if ((c = /^hay por limpiar (.+) de (.+)$/.exec(text))) {
+		if (!CLEANUPS.includes(c[2])) undecided(`limpieza ${c[2]}`);
+		m.original = idsOf(c[1]);
+		m.pending = [...m.original];
+	} else if ((c = /^falla el intento de limpiar (.+)$/.exec(text))) {
+		for (const id of idsOf(c[1])) m.fail.add(id);
+	} else if ((c = /^deja de fallar el intento de limpiar (.+)$/.exec(text))) {
+		for (const id of idsOf(c[1])) m.fail.delete(id);
+	} else if (/^la app intent(?:a|ó) las limpiezas$/.test(text)) {
+		attemptCleanups(m);
+	} else if ((c = /^sucede que (.+)$/.exec(text))) {
+		if (!EVENTS_THAT_RETRY.includes(c[1])) undecided(`suceso ${c[1]}`);
+		attemptCleanups(m);
+	} else if ((c = /^pasan (.+) minutos sin que suceda nada más$/.exec(text))) {
+		if (!/^\d+$/.test(c[1])) undecided(`minutos ${c[1]}`);
+	} else undecided(`paso ${text}`);
 }
 
-export function observarLimpiezas(entradas: PasoOraculo[], thens: PasoOraculo[], fila: FilaOraculo): { observado: string[]; afirmado: string[] } | undefined {
+export function observeCleanups(entries: StepOracle[], thens: StepOracle[], row: RowOracle): { observed: string[]; asserted: string[] } | undefined {
 	try {
-		const m: MundoDeLimpieza = { original: [], fallan: new Set(), limpios: new Set(), pendientes: [] };
-		for (const paso of entradas) pasoDeLimpieza(m, conValores(paso.text, fila));
-		const lista = (ids: string[]) => (ids.length === 0 ? 'ninguno' : ids.join(', '));
-		const observado: string[] = [];
-		const afirmado: string[] = [];
-		for (const paso of thens) {
-			const texto = conValores(paso.text, fila);
-			const c = /^quedan (limpios|por limpiar) (.+)$/.exec(texto) ?? indeciso(`then ${texto}`);
-			observado.push(lista(c[1] === 'limpios' ? m.original.filter((id) => m.limpios.has(id)) : m.original.filter((id) => m.pendientes.includes(id))));
-			afirmado.push(lista(idsDe(c[2])));
+		const m: CleanupWorld = { original: [], fail: new Set(), clean: new Set(), pending: [] };
+		for (const step of entries) cleanupStep(m, withValues(step.text, row));
+		const list = (ids: string[]) => (ids.length === 0 ? 'ninguno' : ids.join(', '));
+		const observed: string[] = [];
+		const asserted: string[] = [];
+		for (const step of thens) {
+			const text = withValues(step.text, row);
+			const c = /^quedan (limpios|por limpiar) (.+)$/.exec(text) ?? undecided(`then ${text}`);
+			observed.push(list(c[1] === 'limpios' ? m.original.filter((id) => m.clean.has(id)) : m.original.filter((id) => m.pending.includes(id))));
+			asserted.push(list(idsOf(c[2])));
 		}
-		return { observado, afirmado };
+		return { observed, asserted };
 	} catch (error) {
-		if (error instanceof Indeciso) return undefined;
+		if (error instanceof Undecided) return undefined;
 		throw error;
 	}
 }

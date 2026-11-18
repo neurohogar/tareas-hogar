@@ -1,377 +1,377 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
-	abrir,
-	adelantar,
-	atenuada,
-	cerrar,
-	completar,
-	conmutarMostrarCompletadas,
-	crear,
-	dosDispositivos,
-	editar,
-	encenderCompletadas,
-	esperarEstado,
-	fila,
-	irA,
-	limpiarEmuladores,
-	listaEs,
-	llegaAlServidor,
-	sesionConReloj
+	openTask,
+	advance,
+	dimmed,
+	close,
+	complete,
+	toggleShowCompleted,
+	create,
+	twoDevices,
+	edit,
+	turnOnCompleted,
+	waitStatus,
+	row,
+	goA,
+	cleanEmulators,
+	listIs,
+	arrivesOnServer,
+	sessionWithClock
 } from './support';
 
 test.beforeEach(async () => {
-	await limpiarEmuladores();
+	await cleanEmulators();
 });
 
-const aviso = (page: Page) => page.getByRole('status').filter({ hasText: 'Completaste' });
-const botonPausar = (page: Page) => page.getByRole('button', { name: 'Pausar', exact: true });
-const botonReanudar = (page: Page) => page.getByRole('button', { name: 'Reanudar', exact: true });
-const mostrarPausadas = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
+const notice = (page: Page) => page.getByRole('status').filter({ hasText: 'Completaste' });
+const buttonPause = (page: Page) => page.getByRole('button', { name: 'Pausar', exact: true });
+const buttonResume = (page: Page) => page.getByRole('button', { name: 'Reanudar', exact: true });
+const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
 
-async function conmutarPausadas(page: Page, encendido: boolean) {
-	await mostrarPausadas(page).click();
-	if (encendido) await expect(mostrarPausadas(page)).toBeChecked();
-	else await expect(mostrarPausadas(page)).not.toBeChecked();
+async function togglePaused(page: Page, on: boolean) {
+	await showPaused(page).click();
+	if (on) await expect(showPaused(page)).toBeChecked();
+	else await expect(showPaused(page)).not.toBeChecked();
 }
 
 /** Abre la tarea y toca Pausar: el panel se cierra solo, sin Guardar. */
-async function pausar(page: Page, titulo: string) {
-	await abrir(page, titulo);
-	await expect(botonReanudar(page)).toHaveCount(0);
-	await botonPausar(page).click();
+async function pause(page: Page, title: string) {
+	await openTask(page, title);
+	await expect(buttonResume(page)).toHaveCount(0);
+	await buttonPause(page).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
 /** Abre la tarea pausada y toca Reanudar: el panel se cierra solo, sin Guardar. */
-async function reanudar(page: Page, titulo: string) {
-	await abrir(page, titulo);
+async function resume(page: Page, title: string) {
+	await openTask(page, title);
 	await expect(page.getByRole('dialog').getByText('Pausada')).toBeVisible();
-	await expect(botonPausar(page)).toHaveCount(0);
-	await botonReanudar(page).click();
+	await expect(buttonPause(page)).toHaveCount(0);
+	await buttonResume(page).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
 /** Fila pausada: atenuada, con "Pausada", sin "Tocaba", sin barra y con el checkbox deshabilitado. */
-async function verPausada(page: Page, titulo: string) {
-	const f = fila(page, titulo);
+async function viewPaused(page: Page, title: string) {
+	const f = row(page, title);
 	await expect(f).toBeVisible();
 	await expect(f.getByText('Pausada')).toHaveCount(1);
 	await expect(f.getByText(/Tocaba /)).toHaveCount(0);
 	await expect(f.getByRole('progressbar')).toHaveCount(0);
 	const check = f.getByRole('checkbox');
 	await expect(check).toBeDisabled();
-	expect(await atenuada(f)).toBe(true);
+	expect(await dimmed(f)).toBe(true);
 }
 
-async function noPausada(page: Page, titulo: string) {
-	await expect(fila(page, titulo).getByText('Pausada')).toHaveCount(0);
+async function notPaused(page: Page, title: string) {
+	await expect(row(page, title).getByText('Pausada')).toHaveCount(0);
 }
 
-async function tocarDeshabilitado(page: Page, titulo: string) {
-	await fila(page, titulo).getByRole('checkbox').click({ force: true });
-	await expect(aviso(page)).toHaveCount(0);
+async function tapDisabled(page: Page, title: string) {
+	await row(page, title).getByRole('checkbox').click({ force: true });
+	await expect(notice(page)).toHaveCount(0);
 }
 
-async function ultimaVez(page: Page, texto: string) {
-	await expect(page.getByText(/^Última vez/)).toHaveText(`Última vez: ${texto}`);
+async function lastTime(page: Page, text: string) {
+	await expect(page.getByText(/^Última vez/)).toHaveText(`Última vez: ${text}`);
 }
 
-async function entradasDelHistorial(page: Page, titulo: string, hora: string, cantidad: number) {
-	await irA(page, 'Historial');
+async function historyEntries(page: Page, title: string, hour: string, count: number) {
+	await goA(page, 'Historial');
 	await expect(
-		page.getByRole('listitem').filter({ hasText: new RegExp(`^${titulo}\\s*${hora}`) })
-	).toHaveCount(cantidad);
-	await irA(page, 'Pendientes');
+		page.getByRole('listitem').filter({ hasText: new RegExp(`^${title}\\s*${hour}`) })
+	).toHaveCount(count);
+	await goA(page, 'Pendientes');
 }
 
 test('Flujo 1: pausar y reanudar una relativa', async ({ page }) => {
-	await sesionConReloj(page, '2026-07-14T09:00:00');
-	await crear(page, { titulo: 'Cambiar foco', tipo: 'No se repite' });
+	await sessionWithClock(page, '2026-07-14T09:00:00');
+	await create(page, { title: 'Cambiar foco', kind: 'No se repite' });
 	await page.getByRole('button', { name: '+' }).click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
-	await expect(botonPausar(page)).toHaveCount(0);
-	await expect(botonReanudar(page)).toHaveCount(0);
-	await cerrar(page);
-	await crear(page, { titulo: 'Regar', tipo: 'Intervalo', cada: '2', unidad: 'días' });
+	await expect(buttonPause(page)).toHaveCount(0);
+	await expect(buttonResume(page)).toHaveCount(0);
+	await close(page);
+	await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 
-	await completar(page, 'Regar');
-	await expect(fila(page, 'Regar')).toHaveCount(0);
-	await listaEs(page, ['Cambiar foco']);
+	await complete(page, 'Regar');
+	await expect(row(page, 'Regar')).toHaveCount(0);
+	await listIs(page, ['Cambiar foco']);
 
-	await abrir(page, 'Cambiar foco');
-	await expect(botonPausar(page)).toHaveCount(0);
-	await expect(botonReanudar(page)).toHaveCount(0);
-	await cerrar(page);
+	await openTask(page, 'Cambiar foco');
+	await expect(buttonPause(page)).toHaveCount(0);
+	await expect(buttonResume(page)).toHaveCount(0);
+	await close(page);
 
-	await encenderCompletadas(page);
-	await abrir(page, 'Regar');
-	await expect(botonPausar(page)).toBeVisible();
-	await ultimaVez(page, 'hoy 09:00');
-	await botonPausar(page).click();
+	await turnOnCompleted(page);
+	await openTask(page, 'Regar');
+	await expect(buttonPause(page)).toBeVisible();
+	await lastTime(page, 'hoy 09:00');
+	await buttonPause(page).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
-	await listaEs(page, ['Cambiar foco']);
+	await listIs(page, ['Cambiar foco']);
 
-	await conmutarPausadas(page, true);
-	await listaEs(page, ['Cambiar foco', 'Regar']);
-	await verPausada(page, 'Regar');
-	await tocarDeshabilitado(page, 'Regar');
-	await entradasDelHistorial(page, 'Regar', '09:00', 1);
+	await togglePaused(page, true);
+	await listIs(page, ['Cambiar foco', 'Regar']);
+	await viewPaused(page, 'Regar');
+	await tapDisabled(page, 'Regar');
+	await historyEntries(page, 'Regar', '09:00', 1);
 
-	await abrir(page, 'Regar');
+	await openTask(page, 'Regar');
 	await expect(page.getByRole('dialog').getByText('Pausada')).toBeVisible();
-	await expect(botonReanudar(page)).toBeVisible();
-	await expect(botonPausar(page)).toHaveCount(0);
-	await ultimaVez(page, 'hoy 09:00');
-	await cerrar(page);
+	await expect(buttonResume(page)).toBeVisible();
+	await expect(buttonPause(page)).toHaveCount(0);
+	await lastTime(page, 'hoy 09:00');
+	await close(page);
 
-	await adelantar(page, '2026-07-20T10:00:00');
-	await verPausada(page, 'Regar');
+	await advance(page, '2026-07-20T10:00:00');
+	await viewPaused(page, 'Regar');
 
 	await page.reload();
-	await expect(mostrarPausadas(page)).toBeChecked();
+	await expect(showPaused(page)).toBeChecked();
 	await expect(page.getByRole('checkbox', { name: 'Completadas' })).toBeChecked();
-	await verPausada(page, 'Regar');
+	await viewPaused(page, 'Regar');
 
-	await reanudar(page, 'Regar');
-	await esperarEstado(page, 'Regar', 'pendiente', undefined, false);
-	await noPausada(page, 'Regar');
-	await listaEs(page, ['Regar', 'Cambiar foco']);
+	await resume(page, 'Regar');
+	await waitStatus(page, 'Regar', 'pendiente', undefined, false);
+	await notPaused(page, 'Regar');
+	await listIs(page, ['Regar', 'Cambiar foco']);
 
-	await abrir(page, 'Regar');
-	await expect(botonPausar(page)).toBeVisible();
-	await ultimaVez(page, 'hace 6 días');
-	await cerrar(page);
-	await entradasDelHistorial(page, 'Regar', '09:00', 1);
+	await openTask(page, 'Regar');
+	await expect(buttonPause(page)).toBeVisible();
+	await lastTime(page, 'hace 6 días');
+	await close(page);
+	await historyEntries(page, 'Regar', '09:00', 1);
 
-	await adelantar(page, '2026-07-25T10:00:00');
-	await esperarEstado(page, 'Regar', 'pendiente', undefined, false);
+	await advance(page, '2026-07-25T10:00:00');
+	await waitStatus(page, 'Regar', 'pendiente', undefined, false);
 
-	await adelantar(page, '2026-07-25T10:05:00');
-	await completar(page, 'Regar');
-	await expect(aviso(page)).toContainText('Completaste «Regar»');
-	await esperarEstado(page, 'Regar', 'en espera', 0, true);
+	await advance(page, '2026-07-25T10:05:00');
+	await complete(page, 'Regar');
+	await expect(notice(page)).toContainText('Completaste «Regar»');
+	await waitStatus(page, 'Regar', 'en espera', 0, true);
 });
 
 test('Flujo 2: reanudar una de calendario', async ({ page }) => {
-	await sesionConReloj(page, '2026-07-07T09:00:00');
-	await crear(page, { titulo: 'Sacar la basura', tipo: 'Días de la semana', dias: ['martes', 'jueves'] });
-	await adelantar(page, '2026-07-07T09:01:00');
-	await crear(page, { titulo: 'Cambiar sábanas', tipo: 'Días de la semana', dias: ['jueves'] });
-	await encenderCompletadas(page);
-	await completar(page, 'Sacar la basura');
-	await completar(page, 'Cambiar sábanas');
-	await esperarEstado(page, 'Sacar la basura', 'en espera');
-	await esperarEstado(page, 'Cambiar sábanas', 'en espera');
+	await sessionWithClock(page, '2026-07-07T09:00:00');
+	await create(page, { title: 'Sacar la basura', kind: 'Días de la semana', days: ['martes', 'jueves'] });
+	await advance(page, '2026-07-07T09:01:00');
+	await create(page, { title: 'Cambiar sábanas', kind: 'Días de la semana', days: ['jueves'] });
+	await turnOnCompleted(page);
+	await complete(page, 'Sacar la basura');
+	await complete(page, 'Cambiar sábanas');
+	await waitStatus(page, 'Sacar la basura', 'en espera');
+	await waitStatus(page, 'Cambiar sábanas', 'en espera');
 
-	await conmutarPausadas(page, true);
-	await pausar(page, 'Sacar la basura');
-	await pausar(page, 'Cambiar sábanas');
-	await conmutarMostrarCompletadas(page, false);
-	await listaEs(page, ['Cambiar sábanas', 'Sacar la basura']);
-	await verPausada(page, 'Sacar la basura');
-	await verPausada(page, 'Cambiar sábanas');
+	await togglePaused(page, true);
+	await pause(page, 'Sacar la basura');
+	await pause(page, 'Cambiar sábanas');
+	await toggleShowCompleted(page, false);
+	await listIs(page, ['Cambiar sábanas', 'Sacar la basura']);
+	await viewPaused(page, 'Sacar la basura');
+	await viewPaused(page, 'Cambiar sábanas');
 
-	await adelantar(page, '2026-07-15T12:00:00');
-	await reanudar(page, 'Sacar la basura');
-	await esperarEstado(page, 'Sacar la basura', 'en espera', 0, false);
+	await advance(page, '2026-07-15T12:00:00');
+	await resume(page, 'Sacar la basura');
+	await waitStatus(page, 'Sacar la basura', 'en espera', 0, false);
 
-	await adelantar(page, '2026-07-15T18:00:00');
-	await esperarEstado(page, 'Sacar la basura', 'en espera', 50, false);
+	await advance(page, '2026-07-15T18:00:00');
+	await waitStatus(page, 'Sacar la basura', 'en espera', 50, false);
 
-	await adelantar(page, '2026-07-16T10:00:00');
-	await esperarEstado(page, 'Sacar la basura', 'pendiente', undefined, false);
-	await reanudar(page, 'Cambiar sábanas');
-	await esperarEstado(page, 'Cambiar sábanas', 'pendiente', undefined, false);
-	await conmutarPausadas(page, false);
-	await listaEs(page, ['Sacar la basura', 'Cambiar sábanas']);
+	await advance(page, '2026-07-16T10:00:00');
+	await waitStatus(page, 'Sacar la basura', 'pendiente', undefined, false);
+	await resume(page, 'Cambiar sábanas');
+	await waitStatus(page, 'Cambiar sábanas', 'pendiente', undefined, false);
+	await togglePaused(page, false);
+	await listIs(page, ['Sacar la basura', 'Cambiar sábanas']);
 
-	await completar(page, 'Sacar la basura');
-	await conmutarMostrarCompletadas(page, true);
-	await esperarEstado(page, 'Sacar la basura', 'en espera');
+	await complete(page, 'Sacar la basura');
+	await toggleShowCompleted(page, true);
+	await waitStatus(page, 'Sacar la basura', 'en espera');
 
-	await adelantar(page, '2026-07-17T00:00:00');
-	await esperarEstado(page, 'Cambiar sábanas', 'atrasada', undefined, false);
-	await esperarEstado(page, 'Sacar la basura', 'en espera');
+	await advance(page, '2026-07-17T00:00:00');
+	await waitStatus(page, 'Cambiar sábanas', 'atrasada', undefined, false);
+	await waitStatus(page, 'Sacar la basura', 'en espera');
 });
 
 test('Flujo 3: completar después de reanudar cubre la próxima ocurrencia', async ({ page }) => {
-	await sesionConReloj(page, '2026-07-07T09:00:00');
-	await encenderCompletadas(page);
-	await conmutarPausadas(page, true);
-	await crear(page, { titulo: 'Sacar la basura', tipo: 'Días de la semana', dias: ['martes', 'jueves'] });
-	await completar(page, 'Sacar la basura');
-	await pausar(page, 'Sacar la basura');
+	await sessionWithClock(page, '2026-07-07T09:00:00');
+	await turnOnCompleted(page);
+	await togglePaused(page, true);
+	await create(page, { title: 'Sacar la basura', kind: 'Días de la semana', days: ['martes', 'jueves'] });
+	await complete(page, 'Sacar la basura');
+	await pause(page, 'Sacar la basura');
 
-	await adelantar(page, '2026-07-15T10:00:00');
-	await reanudar(page, 'Sacar la basura');
-	await esperarEstado(page, 'Sacar la basura', 'en espera', undefined, false);
+	await advance(page, '2026-07-15T10:00:00');
+	await resume(page, 'Sacar la basura');
+	await waitStatus(page, 'Sacar la basura', 'en espera', undefined, false);
 
-	await adelantar(page, '2026-07-15T11:00:00');
-	await completar(page, 'Sacar la basura');
-	await expect(aviso(page)).toContainText('Completaste «Sacar la basura»');
-	await esperarEstado(page, 'Sacar la basura', 'en espera');
+	await advance(page, '2026-07-15T11:00:00');
+	await complete(page, 'Sacar la basura');
+	await expect(notice(page)).toContainText('Completaste «Sacar la basura»');
+	await waitStatus(page, 'Sacar la basura', 'en espera');
 
-	await adelantar(page, '2026-07-16T10:00:00');
-	await esperarEstado(page, 'Sacar la basura', 'en espera');
+	await advance(page, '2026-07-16T10:00:00');
+	await waitStatus(page, 'Sacar la basura', 'en espera');
 
-	await adelantar(page, '2026-07-21T00:00:00');
-	await esperarEstado(page, 'Sacar la basura', 'pendiente', undefined, false);
+	await advance(page, '2026-07-21T00:00:00');
+	await waitStatus(page, 'Sacar la basura', 'pendiente', undefined, false);
 });
 
 test('Flujo 4: reanudar con horario', async ({ page }) => {
-	await sesionConReloj(page, '2026-07-10T09:00:00');
-	await encenderCompletadas(page);
-	await conmutarPausadas(page, true);
-	await crear(page, {
-		titulo: 'Ventilar',
-		tipo: 'Días de la semana',
-		dias: ['miércoles', 'viernes'],
-		horario: { desde: '08:00', hasta: '11:00' }
+	await sessionWithClock(page, '2026-07-10T09:00:00');
+	await turnOnCompleted(page);
+	await togglePaused(page, true);
+	await create(page, {
+		title: 'Ventilar',
+		kind: 'Días de la semana',
+		days: ['miércoles', 'viernes'],
+		schedule: { from: '08:00', to: '11:00' }
 	});
-	await completar(page, 'Ventilar');
-	await pausar(page, 'Ventilar');
+	await complete(page, 'Ventilar');
+	await pause(page, 'Ventilar');
 
-	await adelantar(page, '2026-07-15T12:00:00');
-	await reanudar(page, 'Ventilar');
-	await esperarEstado(page, 'Ventilar', 'en espera', 0, false, false);
+	await advance(page, '2026-07-15T12:00:00');
+	await resume(page, 'Ventilar');
+	await waitStatus(page, 'Ventilar', 'en espera', 0, false, false);
 
-	await adelantar(page, '2026-07-15T23:00:00');
-	await esperarEstado(page, 'Ventilar', 'en espera', 25, false, false);
+	await advance(page, '2026-07-15T23:00:00');
+	await waitStatus(page, 'Ventilar', 'en espera', 25, false, false);
 
-	await adelantar(page, '2026-07-17T08:00:00');
-	await esperarEstado(page, 'Ventilar', 'pendiente', undefined, false);
+	await advance(page, '2026-07-17T08:00:00');
+	await waitStatus(page, 'Ventilar', 'pendiente', undefined, false);
 
-	await adelantar(page, '2026-07-17T11:00:00');
-	await esperarEstado(page, 'Ventilar', 'atrasada', undefined, false, false);
+	await advance(page, '2026-07-17T11:00:00');
+	await waitStatus(page, 'Ventilar', 'atrasada', undefined, false, false);
 
-	await pausar(page, 'Ventilar');
-	await adelantar(page, '2026-07-22T09:00:00');
-	await reanudar(page, 'Ventilar');
-	await esperarEstado(page, 'Ventilar', 'pendiente', undefined, false);
-	await adelantar(page, '2026-07-22T11:00:00');
-	await esperarEstado(page, 'Ventilar', 'atrasada', undefined, false, false);
+	await pause(page, 'Ventilar');
+	await advance(page, '2026-07-22T09:00:00');
+	await resume(page, 'Ventilar');
+	await waitStatus(page, 'Ventilar', 'pendiente', undefined, false);
+	await advance(page, '2026-07-22T11:00:00');
+	await waitStatus(page, 'Ventilar', 'atrasada', undefined, false, false);
 });
 
 test('Flujo 5: Mostrar pausadas y orden', async ({ page }) => {
-	await sesionConReloj(page, '2026-07-15T08:00:00');
-	await crear(page, { titulo: 'Ñandú', tipo: 'Intervalo', cada: '1', unidad: 'días' });
-	await crear(page, { titulo: 'Nube', tipo: 'Intervalo', cada: '1', unidad: 'días' });
-	await crear(page, { titulo: 'Árbol', tipo: 'Días de la semana', dias: ['lunes'] });
-	await crear(page, { titulo: 'Pagar la luz', tipo: 'No se repite' });
-	await crear(page, { titulo: 'Cambiar foco', tipo: 'No se repite' });
+	await sessionWithClock(page, '2026-07-15T08:00:00');
+	await create(page, { title: 'Ñandú', kind: 'Intervalo', every: '1', unit: 'días' });
+	await create(page, { title: 'Nube', kind: 'Intervalo', every: '1', unit: 'días' });
+	await create(page, { title: 'Árbol', kind: 'Días de la semana', days: ['lunes'] });
+	await create(page, { title: 'Pagar la luz', kind: 'No se repite' });
+	await create(page, { title: 'Cambiar foco', kind: 'No se repite' });
 
-	await completar(page, 'Pagar la luz');
-	await pausar(page, 'Ñandú');
-	await pausar(page, 'Nube');
-	await pausar(page, 'Árbol');
-	await listaEs(page, ['Cambiar foco']);
+	await complete(page, 'Pagar la luz');
+	await pause(page, 'Ñandú');
+	await pause(page, 'Nube');
+	await pause(page, 'Árbol');
+	await listIs(page, ['Cambiar foco']);
 
-	await conmutarPausadas(page, true);
-	await listaEs(page, ['Cambiar foco', 'Árbol', 'Nube', 'Ñandú']);
+	await togglePaused(page, true);
+	await listIs(page, ['Cambiar foco', 'Árbol', 'Nube', 'Ñandú']);
 
-	await conmutarMostrarCompletadas(page, true);
-	await listaEs(page, ['Cambiar foco', 'Pagar la luz', 'Árbol', 'Nube', 'Ñandú']);
-	await esperarEstado(page, 'Pagar la luz', 'pendiente', undefined, true);
-	for (const t of ['Árbol', 'Nube', 'Ñandú']) await verPausada(page, t);
+	await toggleShowCompleted(page, true);
+	await listIs(page, ['Cambiar foco', 'Pagar la luz', 'Árbol', 'Nube', 'Ñandú']);
+	await waitStatus(page, 'Pagar la luz', 'pendiente', undefined, true);
+	for (const t of ['Árbol', 'Nube', 'Ñandú']) await viewPaused(page, t);
 
-	await conmutarMostrarCompletadas(page, false);
-	await listaEs(page, ['Cambiar foco', 'Árbol', 'Nube', 'Ñandú']);
+	await toggleShowCompleted(page, false);
+	await listIs(page, ['Cambiar foco', 'Árbol', 'Nube', 'Ñandú']);
 
 	await page.reload();
-	await expect(mostrarPausadas(page)).toBeChecked();
-	await listaEs(page, ['Cambiar foco', 'Árbol', 'Nube', 'Ñandú']);
-	const contexto = page.context();
-	const otra = await contexto.newPage();
-	await otra.goto('/');
-	await expect(otra.getByRole('heading', { name: 'Pendientes' })).toBeVisible();
-	await expect(mostrarPausadas(otra)).toBeChecked();
-	await otra.close();
+	await expect(showPaused(page)).toBeChecked();
+	await listIs(page, ['Cambiar foco', 'Árbol', 'Nube', 'Ñandú']);
+	const context = page.context();
+	const other = await context.newPage();
+	await other.goto('/');
+	await expect(other.getByRole('heading', { name: 'Pendientes' })).toBeVisible();
+	await expect(showPaused(other)).toBeChecked();
+	await other.close();
 
-	await conmutarPausadas(page, false);
-	await listaEs(page, ['Cambiar foco']);
+	await togglePaused(page, false);
+	await listIs(page, ['Cambiar foco']);
 	await page.reload();
-	await expect(mostrarPausadas(page)).not.toBeChecked();
-	await listaEs(page, ['Cambiar foco']);
+	await expect(showPaused(page)).not.toBeChecked();
+	await listIs(page, ['Cambiar foco']);
 });
 
 test('Flujo 6: pasar una periódica pausada a puntual', async ({ page }) => {
-	await sesionConReloj(page, '2026-07-10T09:00:00');
-	await encenderCompletadas(page);
-	await crear(page, { titulo: 'Regar', tipo: 'Intervalo', cada: '2', unidad: 'días' });
-	await completar(page, 'Regar');
-	await pausar(page, 'Regar');
-	await listaEs(page, []);
+	await sessionWithClock(page, '2026-07-10T09:00:00');
+	await turnOnCompleted(page);
+	await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
+	await complete(page, 'Regar');
+	await pause(page, 'Regar');
+	await listIs(page, []);
 
-	await adelantar(page, '2026-07-15T10:00:00');
-	await conmutarPausadas(page, true);
-	await editar(page, 'Regar', { tipo: 'No se repite' });
-	await esperarEstado(page, 'Regar', 'pendiente', undefined, true);
-	await noPausada(page, 'Regar');
-	await abrir(page, 'Regar');
-	await expect(botonPausar(page)).toHaveCount(0);
-	await expect(botonReanudar(page)).toHaveCount(0);
-	await cerrar(page);
+	await advance(page, '2026-07-15T10:00:00');
+	await togglePaused(page, true);
+	await edit(page, 'Regar', { kind: 'No se repite' });
+	await waitStatus(page, 'Regar', 'pendiente', undefined, true);
+	await notPaused(page, 'Regar');
+	await openTask(page, 'Regar');
+	await expect(buttonPause(page)).toHaveCount(0);
+	await expect(buttonResume(page)).toHaveCount(0);
+	await close(page);
 
-	await editar(page, 'Regar', { tipo: 'Intervalo', cada: '2', unidad: 'días' });
-	await esperarEstado(page, 'Regar', 'pendiente', undefined, false);
-	await abrir(page, 'Regar');
-	await expect(botonPausar(page)).toBeVisible();
-	await cerrar(page);
+	await edit(page, 'Regar', { kind: 'Intervalo', every: '2', unit: 'días' });
+	await waitStatus(page, 'Regar', 'pendiente', undefined, false);
+	await openTask(page, 'Regar');
+	await expect(buttonPause(page)).toBeVisible();
+	await close(page);
 });
 
 test('Flujo 7: dos dispositivos', async ({ browser }) => {
-	const { a, b, ctxB, cerrar: fin } = await dosDispositivos(browser, '2026-07-14T08:00:00');
-	await conmutarPausadas(a, true);
-	await conmutarPausadas(b, true);
+	const { a, b, ctxB, close: end } = await twoDevices(browser, '2026-07-14T08:00:00');
+	await togglePaused(a, true);
+	await togglePaused(b, true);
 
-	await crear(a, { titulo: 'Regar', tipo: 'Intervalo', cada: '2', unidad: 'días' });
-	await expect(fila(b, 'Regar')).toBeVisible();
-
-	await ctxB.setOffline(true);
-	await pausar(a, 'Regar');
-	await verPausada(a, 'Regar');
-	await llegaAlServidor(a);
-	await adelantar(a, '2026-07-14T09:00:00');
-	await adelantar(b, '2026-07-14T09:00:00');
-	await completar(b, 'Regar');
-	await expect(aviso(b)).toContainText('Completaste «Regar»');
-
-	await ctxB.setOffline(false);
-	await llegaAlServidor(b);
-	await verPausada(a, 'Regar');
-	await verPausada(b, 'Regar');
-	await entradasDelHistorial(a, 'Regar', '09:00', 1);
-	await entradasDelHistorial(b, 'Regar', '09:00', 1);
+	await create(a, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
+	await expect(row(b, 'Regar')).toBeVisible();
 
 	await ctxB.setOffline(true);
-	await adelantar(a, '2026-07-15T10:00:00');
-	await adelantar(b, '2026-07-15T10:00:00');
-	await reanudar(a, 'Regar');
-	await esperarEstado(a, 'Regar', 'pendiente', undefined, false);
-	await llegaAlServidor(a);
-	await editar(b, 'Regar', { titulo: 'Regar plantas' });
+	await pause(a, 'Regar');
+	await viewPaused(a, 'Regar');
+	await arrivesOnServer(a);
+	await advance(a, '2026-07-14T09:00:00');
+	await advance(b, '2026-07-14T09:00:00');
+	await complete(b, 'Regar');
+	await expect(notice(b)).toContainText('Completaste «Regar»');
+
 	await ctxB.setOffline(false);
-	await llegaAlServidor(b);
+	await arrivesOnServer(b);
+	await viewPaused(a, 'Regar');
+	await viewPaused(b, 'Regar');
+	await historyEntries(a, 'Regar', '09:00', 1);
+	await historyEntries(b, 'Regar', '09:00', 1);
+
+	await ctxB.setOffline(true);
+	await advance(a, '2026-07-15T10:00:00');
+	await advance(b, '2026-07-15T10:00:00');
+	await resume(a, 'Regar');
+	await waitStatus(a, 'Regar', 'pendiente', undefined, false);
+	await arrivesOnServer(a);
+	await edit(b, 'Regar', { title: 'Regar plantas' });
+	await ctxB.setOffline(false);
+	await arrivesOnServer(b);
 	for (const p of [a, b]) {
-		await esperarEstado(p, 'Regar plantas', 'pendiente', undefined, false);
-		await noPausada(p, 'Regar plantas');
+		await waitStatus(p, 'Regar plantas', 'pendiente', undefined, false);
+		await notPaused(p, 'Regar plantas');
 	}
 
-	await conmutarPausadas(a, false);
-	await expect(mostrarPausadas(b)).toBeChecked();
+	await togglePaused(a, false);
+	await expect(showPaused(b)).toBeChecked();
 	await b.reload();
-	await expect(mostrarPausadas(b)).toBeChecked();
+	await expect(showPaused(b)).toBeChecked();
 
 	await ctxB.setOffline(true);
-	await pausar(a, 'Regar plantas');
-	await llegaAlServidor(a);
-	await editar(b, 'Regar plantas', { titulo: 'Regar' });
+	await pause(a, 'Regar plantas');
+	await arrivesOnServer(a);
+	await edit(b, 'Regar plantas', { title: 'Regar' });
 	await ctxB.setOffline(false);
-	await llegaAlServidor(b);
-	await listaEs(a, []);
-	await verPausada(b, 'Regar');
-	await listaEs(b, ['Regar']);
-	await conmutarPausadas(a, true);
-	await verPausada(a, 'Regar');
-	await fin();
+	await arrivesOnServer(b);
+	await listIs(a, []);
+	await viewPaused(b, 'Regar');
+	await listIs(b, ['Regar']);
+	await togglePaused(a, true);
+	await viewPaused(a, 'Regar');
+	await end();
 });

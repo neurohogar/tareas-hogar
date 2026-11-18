@@ -1,76 +1,76 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { completar, crear, fila, irA, limpiarEmuladores, sesionConReloj } from './support';
+import { complete, create, row, goA, cleanEmulators, sessionWithClock } from './support';
 
-const HOY = '2026-07-15T08:00:00';
-const REGAR = { titulo: 'Regar', tipo: 'No se repite', fecha: '2026-07-15' } as const;
+const TODAY = '2026-07-15T08:00:00';
+const WATER = { title: 'Regar', kind: 'No se repite', date: '2026-07-15' } as const;
 
 test.beforeEach(async () => {
-	await limpiarEmuladores();
+	await cleanEmulators();
 });
 
 /** For each tab, whether the topmost element at its center belongs to the navigation bar. */
-async function pestanasAlFrente(page: Page): Promise<boolean[]> {
+async function tabsOnFront(page: Page): Promise<boolean[]> {
 	return page.getByRole('navigation').getByRole('link').evaluateAll((links) =>
 		links.map((link) => {
 			const r = link.getBoundingClientRect();
-			const arriba = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-			return arriba?.closest('nav') === link.closest('nav');
+			const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+			return top?.closest('nav') === link.closest('nav');
 		})
 	);
 }
 
 /** Shrinks the screen so `fila` ends behind the fixed navigation bar. */
-async function dejarDetrasDeLaNavegacion(page: Page, fila: Locator): Promise<void> {
-	const caja = await fila.boundingBox();
-	if (!caja) throw new Error('the row is not on screen');
-	const ancho = page.viewportSize()?.width ?? 390;
-	await page.setViewportSize({ width: ancho, height: Math.round(caja.y + caja.height + 8) });
+async function leaveBehindOfNavigation(page: Page, row: Locator): Promise<void> {
+	const box = await row.boundingBox();
+	if (!box) throw new Error('the row is not on screen');
+	const width = page.viewportSize()?.width ?? 390;
+	await page.setViewportSize({ width, height: Math.round(box.y + box.height + 8) });
 	await page.evaluate(() => window.scrollTo(0, 0));
 }
 
 /** Every tab is on top (`true`) or every tab is covered (`false`). */
-async function pestanas(page: Page, alFrente: boolean): Promise<void> {
-	const estado = await pestanasAlFrente(page);
-	expect(estado.length).toBeGreaterThan(0);
-	expect(estado).toEqual(estado.map(() => alFrente));
+async function tabs(page: Page, onFront: boolean): Promise<void> {
+	const status = await tabsOnFront(page);
+	expect(status.length).toBeGreaterThan(0);
+	expect(status).toEqual(status.map(() => onFront));
 }
 
 test('the history entries do not cover the navigation tabs', async ({ page }) => {
-	await sesionConReloj(page, HOY);
-	await crear(page, REGAR);
-	await completar(page, 'Regar');
-	await irA(page, 'Historial');
-	const entrada = page.getByRole('listitem').filter({ hasText: 'Regar' });
-	await expect(entrada).toBeVisible();
+	await sessionWithClock(page, TODAY);
+	await create(page, WATER);
+	await complete(page, 'Regar');
+	await goA(page, 'Historial');
+	const entry = page.getByRole('listitem').filter({ hasText: 'Regar' });
+	await expect(entry).toBeVisible();
 
-	await dejarDetrasDeLaNavegacion(page, entrada);
-	await pestanas(page, true);
+	await leaveBehindOfNavigation(page, entry);
+	await tabs(page, true);
 });
 
 test('the pending rows do not cover the navigation tabs', async ({ page }) => {
-	await sesionConReloj(page, HOY);
-	await crear(page, REGAR);
-	await expect(fila(page, 'Regar')).toBeVisible();
+	await sessionWithClock(page, TODAY);
+	await create(page, WATER);
+	await expect(row(page, 'Regar')).toBeVisible();
 
-	await dejarDetrasDeLaNavegacion(page, fila(page, 'Regar'));
-	await pestanas(page, true);
+	await leaveBehindOfNavigation(page, row(page, 'Regar'));
+	await tabs(page, true);
 });
 
 test('the task panel covers the navigation tabs', async ({ page }) => {
-	await sesionConReloj(page, HOY);
+	await sessionWithClock(page, TODAY);
 	await page.getByRole('button', { name: '+' }).click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
 
-	await pestanas(page, false);
+	await tabs(page, false);
 });
 
 test('the history delete confirmation covers the navigation tabs', async ({ page }) => {
-	await sesionConReloj(page, HOY);
-	await crear(page, REGAR);
-	await completar(page, 'Regar');
-	await irA(page, 'Historial');
+	await sessionWithClock(page, TODAY);
+	await create(page, WATER);
+	await complete(page, 'Regar');
+	await goA(page, 'Historial');
 	await page.getByRole('listitem').filter({ hasText: 'Regar' }).getByRole('button', { name: 'Borrar' }).click();
 	await expect(page.getByRole('alertdialog')).toBeVisible();
 
-	await pestanas(page, false);
+	await tabs(page, false);
 });

@@ -8,13 +8,13 @@ const MANIFEST_URL = new URL('../../static/manifest.webmanifest', import.meta.ur
 
 const manifests = new WeakMap<World, Record<string, unknown>>();
 
-function manifestDe(world: World): Record<string, unknown> {
+function manifestOf(world: World): Record<string, unknown> {
 	const manifest = manifests.get(world);
 	if (!manifest) throw new Error('El escenario no declaró "el manifest que publica la app"');
 	return manifest;
 }
 
-export const orientacionVerticalSteps: StepDefinition[] = [
+export const portraitOrientationSteps: StepDefinition[] = [
 	{
 		pattern: /^el manifest que publica la app$/,
 		run: (world) => {
@@ -24,9 +24,9 @@ export const orientacionVerticalSteps: StepDefinition[] = [
 	},
 	{
 		pattern: new RegExp(`^el campo ${P} del manifest es ${P}$`),
-		run: (world, campo, valor) => {
-			const manifest = manifestDe(world);
-			expect(manifest[campo]).toBe(valor);
+		run: (world, field, value) => {
+			const manifest = manifestOf(world);
+			expect(manifest[field]).toBe(value);
 		}
 	}
 ];

@@ -2,52 +2,52 @@
 // regreso del aviso de completar (§5.4).
 import { expect } from 'vitest';
 import { noticeReturn } from '../../src/lib/core/notice';
-import { P, TITULO } from './values';
-import { laTarea, type World, type StepDefinition } from './world';
+import { P, TITLE } from './values';
+import { theTask, type World, type StepDefinition } from './world';
 
 /** El regreso que dice el aviso consultado, que tiene que verse y nombrar la tarea. */
-function regresoDelCompletado(world: World): string | undefined {
-	if (!world.avisoConsultado) throw new Error('No se consultó el aviso');
-	const { notice: aviso, now: ahora } = world.avisoConsultado;
-	expect(aviso?.name).toBe(laTarea(world).title);
-	return aviso && noticeReturn(aviso, ahora);
+function completionReturn(world: World): string | undefined {
+	if (!world.noticeQueried) throw new Error('No se consultó el aviso');
+	const { notice, now } = world.noticeQueried;
+	expect(notice?.name).toBe(theTask(world).title);
+	return notice && noticeReturn(notice, now);
 }
 
 /** En cada momento consultado, la lista tiene una sola fila y su texto de fecha es `texto`. */
-function laFilaMuestraElTexto(world: World, texto: string | undefined): void {
-	expect(world.consultasDePendientes.length).toBeGreaterThan(0);
-	for (const filas of world.consultasDePendientes) {
-		expect(filas).toHaveLength(1);
-		expect(filas[0].dateText).toBe(texto);
+function theRowShowsText(world: World, text: string | undefined): void {
+	expect(world.pendingQueries.length).toBeGreaterThan(0);
+	for (const rows of world.pendingQueries) {
+		expect(rows).toHaveLength(1);
+		expect(rows[0].dateText).toBe(text);
 	}
 }
 
-export const textoDeFilaSteps: StepDefinition[] = [
+export const rowTextSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^la fila de la tarea muestra el texto ${P}$`),
-		run: (world, texto) => laFilaMuestraElTexto(world, texto)
+		run: (world, text) => theRowShowsText(world, text)
 	},
 	{
-		pattern: new RegExp(`^la fila de ${TITULO} muestra el texto ${P}$`),
-		run: (world, titulo, texto) => {
-			expect(world.consultasDePendientes.length).toBeGreaterThan(0);
-			for (const filas of world.consultasDePendientes) {
-				const delTitulo = filas.filter((fila) => fila.title === titulo);
-				expect(delTitulo).toHaveLength(1);
-				expect(delTitulo[0].dateText).toBe(texto);
+		pattern: new RegExp(`^la fila de ${TITLE} muestra el texto ${P}$`),
+		run: (world, title, text) => {
+			expect(world.pendingQueries.length).toBeGreaterThan(0);
+			for (const rows of world.pendingQueries) {
+				const ofTitle = rows.filter((row) => row.title === title);
+				expect(ofTitle).toHaveLength(1);
+				expect(ofTitle[0].dateText).toBe(text);
 			}
 		}
 	},
 	{
 		pattern: /^la fila de la tarea no muestra texto de fecha$/,
-		run: (world) => laFilaMuestraElTexto(world, undefined)
+		run: (world) => theRowShowsText(world, undefined)
 	},
 	{
 		pattern: new RegExp(`^el aviso del completado muestra el regreso ${P}$`),
-		run: (world, regreso) => expect(regresoDelCompletado(world)).toBe(regreso)
+		run: (world, returned) => expect(completionReturn(world)).toBe(returned)
 	},
 	{
 		pattern: /^el aviso del completado no muestra regreso$/,
-		run: (world) => expect(regresoDelCompletado(world)).toBeUndefined()
+		run: (world) => expect(completionReturn(world)).toBeUndefined()
 	}
 ];

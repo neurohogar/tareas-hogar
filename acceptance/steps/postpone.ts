@@ -5,105 +5,105 @@ import { pauseAction } from '../../src/lib/core/pause';
 import { postponeAction, postponementText } from '../../src/lib/core/postponement-in-panel';
 import { POSTPONE_OPTIONS, postpone, removePostpone, type PostponeOption } from '../../src/lib/core/postponement';
 import type { Task } from '../../src/lib/core/task';
-import { elPanel, guardarCambio } from './pause';
-import { P, TITULO, fechaHora } from './values';
-import { OTRO, cambiosAlEditar, elDocumento, laTarea, laTareaTitulada, loQueVioElOtro, recordarAntesDeMiCambio, type Guardado, type StepDefinition, type World } from './world';
+import { thePanel, saveChange } from './pause';
+import { P, TITLE, dateHour } from './values';
+import { OTHER, changesOnEdit, theDoc, theTask, theTaskTitled, thatSawOther, rememberBeforeOfMyChange, type Saved, type StepDefinition, type World } from './world';
 
-function opcion(texto: string): PostponeOption {
-	const elegida = POSTPONE_OPTIONS.find(({ option: opcion }) => opcion === texto);
-	if (!elegida) throw new Error(`Opción de posponer inválida: "${texto}"`);
-	return elegida.option;
+function option(text: string): PostponeOption {
+	const chosen = POSTPONE_OPTIONS.find(({ option }) => option === text);
+	if (!chosen) throw new Error(`Opción de posponer inválida: "${text}"`);
+	return chosen.option;
 }
 
-const BOTONES: Record<string, 'posponer' | 'quitar' | undefined> = { Posponer: 'posponer', 'Quitar posponer': 'quitar', ninguno: undefined };
+const BUTTONS: Record<string, 'posponer' | 'quitar' | undefined> = { Posponer: 'posponer', 'Quitar posponer': 'quitar', ninguno: undefined };
 
-function boton(texto: string): 'posponer' | 'quitar' | undefined {
-	if (!(texto in BOTONES)) throw new Error(`Botón de posponer inválido: "${texto}"`);
-	return BOTONES[texto];
+function button(text: string): 'posponer' | 'quitar' | undefined {
+	if (!(text in BUTTONS)) throw new Error(`Botón de posponer inválido: "${text}"`);
+	return BUTTONS[text];
 }
 
 /** Toco Posponer en el panel y elijo la opción: el panel, con lo que ve quien pospone, tiene que ofrecerlo (§6.2). */
-function posponerViendo(world: World, vista: Guardado, tarea: Task, elegida: string, momento: string): void {
-	const ahora = fechaHora(momento);
-	expect(postponeAction(tarea, vista.completions, ahora)).toBe('posponer');
-	guardarCambio(world, tarea, postpone(opcion(elegida), ahora));
+function postponeViewing(world: World, view: Saved, task: Task, chosen: string, moment: string): void {
+	const now = dateHour(moment);
+	expect(postponeAction(task, view.completions, now)).toBe('posponer');
+	saveChange(world, task, postpone(option(chosen), now));
 }
 
-function pospongoYo(world: World, tarea: Task, elegida: string, momento: string): void {
-	const vista = { ...world };
-	recordarAntesDeMiCambio(world);
-	posponerViendo(world, vista, tarea, elegida, momento);
+function postponeMe(world: World, task: Task, chosen: string, moment: string): void {
+	const view = { ...world };
+	rememberBeforeOfMyChange(world);
+	postponeViewing(world, view, task, chosen, moment);
 }
 
-export const posponerSteps: StepDefinition[] = [
+export const postponeSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^pospongo la tarea con la opción ${P} el ${P}$`),
-		run: (world, elegida, momento) => pospongoYo(world, laTarea(world), elegida, momento)
+		run: (world, chosen, moment) => postponeMe(world, theTask(world), chosen, moment)
 	},
 	{
 		pattern: new RegExp(`^la tarea fue pospuesta con la opción ${P} el ${P}$`),
-		run: (world, elegida, momento) => posponerViendo(world, world, laTarea(world), elegida, momento)
+		run: (world, chosen, moment) => postponeViewing(world, world, theTask(world), chosen, moment)
 	},
 	{
-		pattern: new RegExp(`^la tarea ${TITULO} fue pospuesta con la opción ${P} el ${P}$`),
-		run: (world, titulo, elegida, momento) => posponerViendo(world, world, laTareaTitulada(world, titulo), elegida, momento)
+		pattern: new RegExp(`^la tarea ${TITLE} fue pospuesta con la opción ${P} el ${P}$`),
+		run: (world, title, chosen, moment) => postponeViewing(world, world, theTaskTitled(world, title), chosen, moment)
 	},
 	{
-		pattern: new RegExp(`^${OTRO} pospone la tarea con la opción ${P} el ${P}$`),
-		run: (world, elegida, momento) => {
-			const vista = loQueVioElOtro(world);
-			posponerViendo(world, vista, laTarea(vista), elegida, momento);
+		pattern: new RegExp(`^${OTHER} pospone la tarea con la opción ${P} el ${P}$`),
+		run: (world, chosen, moment) => {
+			const view = thatSawOther(world);
+			postponeViewing(world, view, theTask(view), chosen, moment);
 		}
 	},
 	{
 		// El paso no da el momento: Quitar posponer actúa sobre la posposición guardada (§6.2).
 		pattern: /^quito la posposición$/,
 		run: (world) => {
-			expect(elDocumento(world).postponed).toBeDefined();
-			recordarAntesDeMiCambio(world);
-			guardarCambio(world, laTarea(world), removePostpone());
+			expect(theDoc(world).postponed).toBeDefined();
+			rememberBeforeOfMyChange(world);
+			saveChange(world, theTask(world), removePostpone());
 		}
 	},
 	{
 		pattern: new RegExp(`^la tarea está pospuesta desde ${P} hasta ${P}$`),
-		run: (world, desde, hasta) => expect(elDocumento(world).postponed).toEqual({ from: fechaHora(desde), to: fechaHora(hasta) })
+		run: (world, from, to) => expect(theDoc(world).postponed).toEqual({ from: dateHour(from), to: dateHour(to) })
 	},
 	{
 		// §4.1: sin el campo, no está pospuesta.
 		pattern: /^la tarea no está pospuesta$/,
-		run: (world) => expect(elDocumento(world)).not.toHaveProperty('postponed')
+		run: (world) => expect(theDoc(world)).not.toHaveProperty('postponed')
 	},
 	{
 		pattern: new RegExp(`^abro la tarea en el panel de edición el ${P}$`),
-		run: (world, momento) => {
-			const tarea = laTarea(world);
-			const ahora = fechaHora(momento);
+		run: (world, moment) => {
+			const task = theTask(world);
+			const now = dateHour(moment);
 			// Una tarea no se abre antes de haber sido pospuesta: el escenario sería imposible.
-			if (tarea.postponed && ahora < tarea.postponed.from) throw new Error(`El panel se abre el ${momento}, antes de que la tarea fuera pospuesta`);
+			if (task.postponed && now < task.postponed.from) throw new Error(`El panel se abre el ${moment}, antes de que la tarea fuera pospuesta`);
 			world.panel = {
-				pausa: pauseAction(tarea),
-				posposicion: { boton: postponeAction(tarea, world.completions, ahora), text: postponementText(tarea, ahora) },
-				cambios: cambiosAlEditar(tarea, ahora)
+				pause: pauseAction(task),
+				postponement: { button: postponeAction(task, world.completions, now), text: postponementText(task, now) },
+				changes: changesOnEdit(task, now)
 			};
 		}
 	},
 	{
 		pattern: new RegExp(`^el botón de posponer del panel es ${P}$`),
-		run: (world, texto) => expect(laPosposicion(world).boton).toBe(boton(texto))
+		run: (world, text) => expect(thePostponement(world).button).toBe(button(text))
 	},
 	{
 		pattern: new RegExp(`^el panel de edición muestra ${P}$`),
-		run: (world, texto) => expect(laPosposicion(world).text).toBe(texto)
+		run: (world, text) => expect(thePostponement(world).text).toBe(text)
 	},
 	{
 		pattern: /^el panel de edición no dice que está pospuesta$/,
-		run: (world) => expect(laPosposicion(world).text).toBeUndefined()
+		run: (world) => expect(thePostponement(world).text).toBeUndefined()
 	}
 ];
 
 /** Lo que el panel dice de la posposición: se abrió en un momento dado. */
-function laPosposicion(world: World) {
-	const { posposicion } = elPanel(world);
-	if (!posposicion) throw new Error('El panel de edición se abrió sin un momento');
-	return posposicion;
+function thePostponement(world: World) {
+	const { postponement } = thePanel(world);
+	if (!postponement) throw new Error('El panel de edición se abrió sin un momento');
+	return postponement;
 }

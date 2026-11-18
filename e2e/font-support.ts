@@ -9,43 +9,43 @@ export const NOTO = "Noto Color Emoji";
 // "la fuente del sistema" y "el emoji del dispositivo" no lo son.
 // ---------------------------------------------------------------------------
 
-export interface Plataforma {
+export interface Platform {
   familyName: string;
   isCustomFont: boolean;
   glyphCount: number;
 }
-interface NodoCdp {
+interface NodeCdp {
   nodeId: number;
   attributes?: string[];
-  children?: NodoCdp[];
-  shadowRoots?: NodoCdp[];
-  contentDocument?: NodoCdp;
+  children?: NodeCdp[];
+  shadowRoots?: NodeCdp[];
+  contentDocument?: NodeCdp;
 }
 
-function buscarMarca(n: NodoCdp): NodoCdp | undefined {
+function searchMark(n: NodeCdp): NodeCdp | undefined {
   if (n.attributes?.includes("data-qa-sonda")) return n;
   for (const h of [
     ...(n.children ?? []),
     ...(n.shadowRoots ?? []),
     ...(n.contentDocument ? [n.contentDocument] : []),
   ]) {
-    const r = buscarMarca(h);
+    const r = searchMark(h);
     if (r !== undefined) return r;
   }
   return undefined;
 }
 
-function descendientes(n: NodoCdp): NodoCdp[] {
+function descendants(n: NodeCdp): NodeCdp[] {
   return [
     n,
-    ...[...(n.shadowRoots ?? []), ...(n.children ?? [])].flatMap(descendientes),
+    ...[...(n.shadowRoots ?? []), ...(n.children ?? [])].flatMap(descendants),
   ];
 }
 
-export async function plataforma(
+export async function platform(
   page: Page,
   l: Locator,
-): Promise<Plataforma[]> {
+): Promise<Platform[]> {
   await l.first().evaluate((e) => e.setAttribute("data-qa-sonda", ""));
   const cdp = await page.context().newCDPSession(page);
   try {
@@ -54,14 +54,14 @@ export async function plataforma(
     const { root } = (await cdp.send("DOM.getDocument", {
       depth: -1,
       pierce: true,
-    })) as { root: NodoCdp };
-    const marcado = buscarMarca(root);
-    if (marcado === undefined) throw new Error("nodo marcado no encontrado");
+    })) as { root: NodeCdp };
+    const marked = searchMark(root);
+    if (marked === undefined) throw new Error("nodo marcado no encontrado");
     // Un campo dibuja su texto en un nodo interno: se pregunta por él si el campo no informa fuentes.
-    for (const n of descendientes(marcado)) {
+    for (const n of descendants(marked)) {
       const r = (await cdp.send("CSS.getPlatformFontsForNode", {
         nodeId: n.nodeId,
-      })) as { fonts: Plataforma[] };
+      })) as { fonts: Platform[] };
       if (r.fonts.length > 0) return r.fonts;
     }
     return [];
@@ -74,33 +74,33 @@ export async function plataforma(
   }
 }
 
-export const esAtkinson = (f: Plataforma) =>
+export const isAtkinson = (f: Platform) =>
   f.familyName.startsWith(ATKINSON) && f.isCustomFont;
-export const esNoto = (f: Plataforma) =>
+export const isNoto = (f: Platform) =>
   f.familyName.startsWith(NOTO) && f.isCustomFont;
-export const esOtra = (f: Plataforma) => !esAtkinson(f) && !esNoto(f);
+export const isOther = (f: Platform) => !isAtkinson(f) && !isNoto(f);
 
-export const glifos = (fs: Plataforma[], p: (f: Plataforma) => boolean) =>
+export const glyphs = (fs: Platform[], p: (f: Platform) => boolean) =>
   fs.filter(p).reduce((s, f) => s + f.glyphCount, 0);
 
 /** El nodo se dibuja solo con Atkinson (con al menos un glifo). */
-export const conAtkinson = (page: Page, l: Locator) =>
-  repartoEs(page, l, ([a, n, o]) => a > 0 && n === 0 && o === 0);
+export const withAtkinson = (page: Page, l: Locator) =>
+  distributionIs(page, l, ([a, n, o]) => a > 0 && n === 0 && o === 0);
 
 /** El nodo se dibuja solo con Noto (el juego empaquetado). */
-export const conNoto = (page: Page, l: Locator) =>
-  repartoEs(page, l, ([a, n, o]) => a === 0 && n > 0 && o === 0);
+export const withNoto = (page: Page, l: Locator) =>
+  distributionIs(page, l, ([a, n, o]) => a === 0 && n > 0 && o === 0);
 
 /** Reparto de glifos del nodo: [Atkinson, Noto, otras]. */
-export async function reparto(
+export async function distribution(
   page: Page,
   l: Locator,
 ): Promise<[number, number, number]> {
-  const fs = await plataforma(page, l);
-  return [glifos(fs, esAtkinson), glifos(fs, esNoto), glifos(fs, esOtra)];
+  const fs = await platform(page, l);
+  return [glyphs(fs, isAtkinson), glyphs(fs, isNoto), glyphs(fs, isOther)];
 }
 
-export async function repartoEs(
+export async function distributionIs(
   page: Page,
   l: Locator,
   cond: (r: [number, number, number]) => boolean,
@@ -108,9 +108,9 @@ export async function repartoEs(
   await expect
     .poll(async () => {
       // Si la grilla se vuelve a dibujar entre marcar el nodo y leerlo, la marca se pierde: se reintenta.
-      const r = await plataforma(page, l).catch((e: Error) => e.message);
+      const r = await platform(page, l).catch((e: Error) => e.message);
       if (typeof r === "string") return r;
-      return cond([glifos(r, esAtkinson), glifos(r, esNoto), glifos(r, esOtra)])
+      return cond([glyphs(r, isAtkinson), glyphs(r, isNoto), glyphs(r, isOther)])
         ? "ok"
         : JSON.stringify(r);
     })

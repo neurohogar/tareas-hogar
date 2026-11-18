@@ -5,88 +5,88 @@ import { expect } from 'vitest';
 import { itemsToAttempt, retriesWith, attemptResult, type AppEvent } from '../../src/lib/core/cleanups';
 import type { StepDefinition, World } from './world';
 
-const LIMPIEZAS = ['completados huérfanos', 'anotaciones huérfanas'];
+const CLEANUPS = ['completados huérfanos', 'anotaciones huérfanas'];
 
-interface Limpieza {
+interface Cleanup {
 	original: string[];
-	porLimpiar: string[];
-	fallan: Set<string>;
+	byClean: string[];
+	fail: Set<string>;
 	cleaned: string[];
 }
 
-const estados = new WeakMap<World, Limpieza>();
+const statuses = new WeakMap<World, Cleanup>();
 
-function estado(world: World): Limpieza {
-	let actual = estados.get(world);
-	if (!actual) {
-		actual = { original: [], porLimpiar: [], fallan: new Set(), cleaned: [] };
-		estados.set(world, actual);
+function status(world: World): Cleanup {
+	let current = statuses.get(world);
+	if (!current) {
+		current = { original: [], byClean: [], fail: new Set(), cleaned: [] };
+		statuses.set(world, current);
 	}
-	return actual;
+	return current;
 }
 
 /** Ids separados por ", "; "ninguno" es la lista vacía. */
-function ids(valor: string): string[] {
-	if (valor === 'ninguno') return [];
-	const partes = valor.split(', ');
-	if (partes.some((parte) => parte === '' || parte !== parte.trim())) throw new Error(`Lista de ids inválida: "${valor}"`);
-	return partes;
+function ids(value: string): string[] {
+	if (value === 'ninguno') return [];
+	const parts = value.split(', ');
+	if (parts.some((part) => part === '' || part !== part.trim())) throw new Error(`Lista de ids inválida: "${value}"`);
+	return parts;
 }
 
 /** Un intento: se intenta cada elemento por limpiar por separado; los que fallaron siguen por limpiar. */
-function intentar(world: World): void {
-	const actual = estado(world);
-	const resultado = attemptResult(itemsToAttempt(actual.porLimpiar, new Set()), [...actual.fallan]);
-	actual.cleaned.push(...resultado.cleaned);
-	actual.porLimpiar = resultado.pendings;
+function attempt(world: World): void {
+	const current = status(world);
+	const result = attemptResult(itemsToAttempt(current.byClean, new Set()), [...current.fail]);
+	current.cleaned.push(...result.cleaned);
+	current.byClean = result.pendings;
 }
 
-function sucede(world: World, suceso: AppEvent): void {
-	if (retriesWith(suceso)) intentar(world);
+function happens(world: World, incident: AppEvent): void {
+	if (retriesWith(incident)) attempt(world);
 }
 
-const SUCESOS: AppEvent[] = ['vuelve la conexión', 'cambian los datos'];
+const EVENTS: AppEvent[] = ['vuelve la conexión', 'cambian los datos'];
 
-export const limpiezasSteps: StepDefinition[] = [
+export const cleanupsSteps: StepDefinition[] = [
 	{
 		pattern: /^hay por limpiar (.+) de (.+)$/,
-		run: (world, elementos, limpieza) => {
-			if (!LIMPIEZAS.includes(limpieza)) throw new Error(`Limpieza desconocida: "${limpieza}"`);
-			estados.set(world, { original: ids(elementos), porLimpiar: ids(elementos), fallan: new Set(), cleaned: [] });
+		run: (world, elements, cleanup) => {
+			if (!CLEANUPS.includes(cleanup)) throw new Error(`Limpieza desconocida: "${cleanup}"`);
+			statuses.set(world, { original: ids(elements), byClean: ids(elements), fail: new Set(), cleaned: [] });
 		}
 	},
 	{
 		pattern: /^falla el intento de limpiar (.+)$/,
-		run: (world, fallan) => ids(fallan).forEach((id) => estado(world).fallan.add(id))
+		run: (world, fail) => ids(fail).forEach((id) => status(world).fail.add(id))
 	},
 	{
 		pattern: /^deja de fallar el intento de limpiar (.+)$/,
-		run: (world, fallan) => ids(fallan).forEach((id) => estado(world).fallan.delete(id))
+		run: (world, fail) => ids(fail).forEach((id) => status(world).fail.delete(id))
 	},
 	{
 		pattern: /^la app intent(?:a|ó) las limpiezas$/,
-		run: intentar
+		run: attempt
 	},
 	{
 		pattern: /^sucede que (.+)$/,
-		run: (world, suceso) => {
-			if (!SUCESOS.includes(suceso as AppEvent)) throw new Error(`Suceso desconocido: "${suceso}"`);
-			sucede(world, suceso as AppEvent);
+		run: (world, incident) => {
+			if (!EVENTS.includes(incident as AppEvent)) throw new Error(`Suceso desconocido: "${incident}"`);
+			happens(world, incident as AppEvent);
 		}
 	},
 	{
 		pattern: /^pasan (.+) minutos sin que suceda nada más$/,
-		run: (world, minutos) => {
-			if (!/^\d+$/.test(minutos)) throw new Error(`Minutos inválidos: "${minutos}"`);
-			sucede(world, 'pasa el tiempo');
+		run: (world, minutes) => {
+			if (!/^\d+$/.test(minutes)) throw new Error(`Minutos inválidos: "${minutes}"`);
+			happens(world, 'pasa el tiempo');
 		}
 	},
 	{
 		pattern: /^quedan limpios (.+)$/,
-		run: (world, limpios) => expect(estado(world).original.filter((id) => estado(world).cleaned.includes(id))).toEqual(ids(limpios))
+		run: (world, clean) => expect(status(world).original.filter((id) => status(world).cleaned.includes(id))).toEqual(ids(clean))
 	},
 	{
 		pattern: /^quedan por limpiar (.+)$/,
-		run: (world, pendientes) => expect(estado(world).porLimpiar).toEqual(ids(pendientes))
+		run: (world, pending) => expect(status(world).byClean).toEqual(ids(pending))
 	}
 ];

@@ -1,1149 +1,1149 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test';
 import {
-	abrirPestana,
-	adelantar,
-	asentar,
-	cerrar,
-	completarPanel,
-	conReloj,
-	crear,
-	crearYVer,
-	detener,
-	dosDispositivos,
-	elegirEmoji,
-	encenderCompletadas,
-	esperarEstado,
-	irA,
-	limpiarEmuladores,
-	llegaAlServidor,
-	retroceder,
-	sesionConReloj,
-	verHistorial,
-	type Definicion
+	openTab,
+	advance,
+	settle,
+	close,
+	completePanel,
+	withClock,
+	create,
+	createAndView,
+	stop,
+	twoDevices,
+	chooseEmoji,
+	turnOnCompleted,
+	waitStatus,
+	goA,
+	cleanEmulators,
+	arrivesOnServer,
+	goBack,
+	sessionWithClock,
+	viewHistory,
+	type Definition
 } from './support';
 
 // qa/pasos-de-a-uno.md: los campos de pasos del panel, la línea y los botones de la fila, Hecho en el último paso,
 // cuándo se ve, lo que no cambia, Cambios sin guardar y dos dispositivos.
 
 test.beforeEach(async () => {
-	await limpiarEmuladores();
+	await cleanEmulators();
 });
 
-const VIERNES = '2026-11-13T10:00:00';
+const FRIDAY = '2026-11-13T10:00:00';
 const P1 = 'Separar la ropa blanca';
 const P2 = 'Poner el lavarropas';
 const P3 = 'Tender la ropa';
-const LARGO =
+const LENGTH =
 	'Abrir el cajón de abajo y sacar toda la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla con nada de color oscuro ni delicado';
-const NO_SE_REPITE = 'No se repite' as const;
+const DOES_NOT_REPEAT = 'No se repite' as const;
 
 /** La fila de la tarea de título exacto `t` (las demás filas pueden contener ese texto). */
 const f = (page: Page, t: string): Locator =>
 	page.getByRole('listitem').filter({ has: page.getByRole('button', { name: t, exact: true }) });
-const linea = (page: Page, t: string) => f(page, t).getByText(/^(Primer paso|Paso): /);
-const hecho = (page: Page, t: string) => f(page, t).getByRole('button', { name: 'Hecho', exact: true });
-const anterior = (page: Page, t: string) => f(page, t).getByRole('button', { name: 'Paso anterior', exact: true });
-const aviso = (page: Page) => page.getByRole('status').filter({ hasText: 'Completaste' });
-const boton = (page: Page, nombre: string) => page.getByRole('button', { name: nombre, exact: true });
-const primero = (page: Page) => page.getByRole('textbox', { name: 'Primer paso', exact: true });
-const paso = (page: Page, n: number) => page.getByRole('textbox', { name: `Paso ${n}`, exact: true });
-const camposPaso = (page: Page) => page.getByRole('textbox', { name: /^Paso \d+$/ });
-const quitar = (page: Page, n: number) =>
-	paso(page, n).locator('..').getByRole('button', { name: 'Quitar', exact: true });
-const mostrarPausadas = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
+const line = (page: Page, t: string) => f(page, t).getByText(/^(Primer paso|Paso): /);
+const done = (page: Page, t: string) => f(page, t).getByRole('button', { name: 'Hecho', exact: true });
+const previous = (page: Page, t: string) => f(page, t).getByRole('button', { name: 'Paso anterior', exact: true });
+const notice = (page: Page) => page.getByRole('status').filter({ hasText: 'Completaste' });
+const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
+const first = (page: Page) => page.getByRole('textbox', { name: 'Primer paso', exact: true });
+const step = (page: Page, n: number) => page.getByRole('textbox', { name: `Paso ${n}`, exact: true });
+const fieldsStep = (page: Page) => page.getByRole('textbox', { name: /^Paso \d+$/ });
+const remove = (page: Page, n: number) =>
+	step(page, n).locator('..').getByRole('button', { name: 'Quitar', exact: true });
+const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
 const panel = (page: Page) => page.getByRole('dialog');
-const avisoDeCambios = (page: Page) => page.getByRole('alertdialog', { name: 'Tenés cambios sin guardar' });
-const titulos = (page: Page) =>
+const unsavedChangesNotice = (page: Page) => page.getByRole('alertdialog', { name: 'Tenés cambios sin guardar' });
+const titles = (page: Page) =>
 	page
 		.getByRole('listitem')
 		.getByRole('checkbox')
 		.evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')!.replace('Completar ', '')));
 
 /** La fila dice exactamente `Primer paso: texto` (o `Paso: texto`), una sola vez. */
-async function dice(page: Page, t: string, texto: string, esPrimero = false) {
-	await expect(linea(page, t)).toHaveCount(1);
-	await expect(linea(page, t)).toHaveText(`${esPrimero ? 'Primer paso' : 'Paso'}: ${texto}`);
+async function says(page: Page, t: string, text: string, isFirst = false) {
+	await expect(line(page, t)).toHaveCount(1);
+	await expect(line(page, t)).toHaveText(`${isFirst ? 'Primer paso' : 'Paso'}: ${text}`);
 }
 
 /** Con dos pasos o más: Paso anterior (si va en otro que el primero) y Hecho, en ese orden. */
-async function conBotones(page: Page, t: string, conAnterior: boolean) {
-	await expect(hecho(page, t)).toHaveCount(1);
-	await expect(anterior(page, t)).toHaveCount(conAnterior ? 1 : 0);
-	if (conAnterior) {
-		const a = (await anterior(page, t).boundingBox())!;
-		const h = (await hecho(page, t).boundingBox())!;
+async function withButtons(page: Page, t: string, withPrevious: boolean) {
+	await expect(done(page, t)).toHaveCount(1);
+	await expect(previous(page, t)).toHaveCount(withPrevious ? 1 : 0);
+	if (withPrevious) {
+		const a = (await previous(page, t).boundingBox())!;
+		const h = (await done(page, t).boundingBox())!;
 		expect(a.x).toBeLessThan(h.x);
 	}
 }
 
 /** La fila está a la vista y no tiene línea ni botones. */
-async function sinLinea(page: Page, t: string) {
+async function withoutLine(page: Page, t: string) {
 	await expect(f(page, t)).toBeVisible();
 	await expect(f(page, t)).not.toContainText(/Primer paso|Paso/);
-	await expect(hecho(page, t)).toHaveCount(0);
-	await expect(anterior(page, t)).toHaveCount(0);
+	await expect(done(page, t)).toHaveCount(0);
+	await expect(previous(page, t)).toHaveCount(0);
 }
 
-async function abrirFila(page: Page, t: string) {
+async function openRow(page: Page, t: string) {
 	await f(page, t).getByRole('button', { name: t, exact: true }).click();
 	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();
-	await abrirPestana(page, 'Tarea');
+	await openTab(page, 'Tarea');
 }
 
-async function guardar(page: Page) {
-	await boton(page, 'Guardar').click();
+async function save(page: Page) {
+	await button(page, 'Guardar').click();
 	await expect(panel(page)).toHaveCount(0);
 }
 
-async function agregarPaso(page: Page, n: number, texto?: string) {
-	await boton(page, 'Agregar paso').click();
-	if (texto !== undefined) await paso(page, n).fill(texto);
+async function addStep(page: Page, n: number, text?: string) {
+	await button(page, 'Agregar paso').click();
+	if (text !== undefined) await step(page, n).fill(text);
 }
 
-const valoresDePasos = (page: Page) => camposPaso(page).evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
+const stepsValues = (page: Page) => fieldsStep(page).evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
 
 /** Abre la fila y verifica Primer paso y los pasos más; cierra sin cambios. */
-async function panelTiene(page: Page, t: string, esPrimero: string, pasos: string[]) {
-	await abrirFila(page, t);
-	await expect(primero(page)).toHaveValue(esPrimero);
-	await expect.poll(() => valoresDePasos(page)).toEqual(pasos);
-	await cerrar(page);
+async function panelHas(page: Page, t: string, isFirst: string, steps: string[]) {
+	await openRow(page, t);
+	await expect(first(page)).toHaveValue(isFirst);
+	await expect.poll(() => stepsValues(page)).toEqual(steps);
+	await close(page);
 }
 
-async function escribirPaso(page: Page, t: string, n: number, texto: string) {
-	await abrirFila(page, t);
-	await paso(page, n).fill(texto);
-	await guardar(page);
+async function writeStep(page: Page, t: string, n: number, text: string) {
+	await openRow(page, t);
+	await step(page, n).fill(text);
+	await save(page);
 }
 
-async function escribirPrimero(page: Page, t: string, texto: string) {
-	await abrirFila(page, t);
-	await primero(page).fill(texto);
-	await guardar(page);
+async function writeFirst(page: Page, t: string, text: string) {
+	await openRow(page, t);
+	await first(page).fill(text);
+	await save(page);
 }
 
-async function pegar(page: Page, campo: Locator, texto: string) {
+async function paste(page: Page, field: Locator, text: string) {
 	await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-	await page.evaluate((x) => navigator.clipboard.writeText(x), texto);
-	await campo.focus();
+	await page.evaluate((x) => navigator.clipboard.writeText(x), text);
+	await field.focus();
 	await page.keyboard.press('ControlOrMeta+A');
 	await page.keyboard.press('ControlOrMeta+V');
 }
 
-const estilo = (l: Locator) =>
+const style = (l: Locator) =>
 	l.evaluate((e) => {
 		const s = getComputedStyle(e);
 		return {
 			color: s.color,
-			tamano: s.fontSize,
-			peso: Number(s.fontWeight),
-			linea: s.textDecorationLine,
-			fondo: s.backgroundColor,
-			recorte: s.textOverflow,
+			size: s.fontSize,
+			weight: Number(s.fontWeight),
+			line: s.textDecorationLine,
+			background: s.backgroundColor,
+			trim: s.textOverflow,
 			overflow: s.overflow,
-			maxAlto: s.maxHeight,
+			maxHeight: s.maxHeight,
 			clamp: s.getPropertyValue('-webkit-line-clamp')
 		};
 	});
 
-async function pausar(page: Page, t: string) {
-	await abrirFila(page, t);
-	await boton(page, 'Pausar').click();
+async function pause(page: Page, t: string) {
+	await openRow(page, t);
+	await button(page, 'Pausar').click();
 	await expect(panel(page)).toHaveCount(0);
 }
 
-async function posponer(page: Page, t: string, opcion: '3 horas' | 'Hasta mañana') {
-	await abrirFila(page, t);
-	await boton(page, opcion).click();
+async function postpone(page: Page, t: string, option: '3 horas' | 'Hasta mañana') {
+	await openRow(page, t);
+	await button(page, option).click();
 	await expect(panel(page)).toHaveCount(0);
 }
 
 /** Sesión con el reloj corriendo 10 minutos antes de `hora` (las tareas se crean así). */
-async function sesion(page: Page, hora: string, completadas = false) {
-	await sesionConReloj(page, new Date(new Date(hora).getTime() - 600_000).toISOString());
-	if (completadas) await encenderCompletadas(page);
+async function session(page: Page, hour: string, completedList = false) {
+	await sessionWithClock(page, new Date(new Date(hour).getTime() - 600_000).toISOString());
+	if (completedList) await turnOnCompleted(page);
 }
 
 /** Avanza el reloj hasta `hora` y deja correr un segundo para que la pantalla se actualice sola. */
-async function ir(page: Page, hora: string) {
-	const falta = new Date(hora).getTime() - (await page.evaluate(() => Date.now()));
-	if (falta <= 10_000) await page.clock.runFor(falta);
-	else await adelantar(page, hora);
+async function go(page: Page, hour: string) {
+	const missing = new Date(hour).getTime() - (await page.evaluate(() => Date.now()));
+	if (missing <= 10_000) await page.clock.runFor(missing);
+	else await advance(page, hour);
 	await page.clock.runFor(1000);
 }
 
 /** Completa con el checkbox justo a `hora` (el reloj de la prueba avanza unos ms por cada espera, y la vuelta se cuenta desde acá). */
-async function completarA(page: Page, hora: string, t: string) {
-	await page.clock.setSystemTime(new Date(hora));
+async function completeA(page: Page, hour: string, t: string) {
+	await page.clock.setSystemTime(new Date(hour));
 	await f(page, t).getByRole('checkbox').click();
 }
 
-async function borrarDelHistorial(page: Page, t: string) {
+async function historyDelete(page: Page, t: string) {
 	await page
 		.getByRole('listitem')
 		.filter({ hasText: new RegExp(`^${t}\\s*\\d\\d:\\d\\d`) })
 		.getByRole('button', { name: 'Borrar', exact: true })
 		.click();
-	const dialogo = page.getByRole('alertdialog');
-	await dialogo.getByRole('button', { name: 'Borrar', exact: true }).click();
-	await expect(dialogo).toHaveCount(0);
+	const dialog = page.getByRole('alertdialog');
+	await dialog.getByRole('button', { name: 'Borrar', exact: true }).click();
+	await expect(dialog).toHaveCount(0);
 }
 
 test('Flujo 1: los campos de pasos en el panel y crear', async ({ page }) => {
-	await sesionConReloj(page, VIERNES);
+	await sessionWithClock(page, FRIDAY);
 	const y = async (l: Locator) => (await l.boundingBox())!.y;
-	const ascendente = (ys: number[]) => {
+	const ascending = (ys: number[]) => {
 		expect(ys).toEqual([...ys].sort((a, b) => a - b));
 		expect(new Set(ys).size).toBe(ys.length);
 	};
 
 	// 1
-	await boton(page, '+').click();
+	await button(page, '+').click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
-	await expect(primero(page)).toBeVisible();
-	await expect(boton(page, 'Agregar paso')).toBeVisible();
-	await expect(camposPaso(page)).toHaveCount(0);
-	const titulo = page.getByLabel('Título');
+	await expect(first(page)).toBeVisible();
+	await expect(button(page, 'Agregar paso')).toBeVisible();
+	await expect(fieldsStep(page)).toHaveCount(0);
+	const title = page.getByLabel('Título');
 	const emoji = page.getByRole('button', { name: /^(Elegir emoji|Cambiar emoji)/ });
-	const nota = page.getByLabel('Nota');
+	const note = page.getByLabel('Nota');
 	await expect(emoji).toBeVisible();
-	ascendente([
-		await y(titulo),
-		await y(primero(page)),
-		await y(boton(page, 'Agregar paso')),
-		await y(nota)
+	ascending([
+		await y(title),
+		await y(first(page)),
+		await y(button(page, 'Agregar paso')),
+		await y(note)
 	]);
-	expect(Math.abs((await y(emoji)) - (await y(titulo)))).toBeLessThan((await y(primero(page))) - (await y(titulo)));
+	expect(Math.abs((await y(emoji)) - (await y(title)))).toBeLessThan((await y(first(page))) - (await y(title)));
 
 	// 2
-	await titulo.fill('Lavar');
-	await primero(page).fill(P1);
-	await boton(page, 'Agregar paso').click();
-	await expect(paso(page, 2)).toBeVisible();
-	await expect(paso(page, 2)).toHaveValue('');
-	await expect(paso(page, 2)).toBeFocused();
-	await expect(paso(page, 2)).toHaveJSProperty('placeholder', '');
-	await expect(quitar(page, 2)).toBeVisible();
-	expect(Math.abs((await y(quitar(page, 2))) - (await y(paso(page, 2))))).toBeLessThan(30);
-	expect(await y(boton(page, 'Agregar paso'))).toBeGreaterThan(await y(paso(page, 2)));
-	await paso(page, 2).fill(P2);
-	await boton(page, 'Agregar paso').click();
-	await expect(paso(page, 3)).toBeFocused();
-	await paso(page, 3).fill(P3);
-	ascendente([
-		await y(primero(page)),
-		await y(paso(page, 2)),
-		await y(paso(page, 3)),
-		await y(boton(page, 'Agregar paso')),
-		await y(nota)
+	await title.fill('Lavar');
+	await first(page).fill(P1);
+	await button(page, 'Agregar paso').click();
+	await expect(step(page, 2)).toBeVisible();
+	await expect(step(page, 2)).toHaveValue('');
+	await expect(step(page, 2)).toBeFocused();
+	await expect(step(page, 2)).toHaveJSProperty('placeholder', '');
+	await expect(remove(page, 2)).toBeVisible();
+	expect(Math.abs((await y(remove(page, 2))) - (await y(step(page, 2))))).toBeLessThan(30);
+	expect(await y(button(page, 'Agregar paso'))).toBeGreaterThan(await y(step(page, 2)));
+	await step(page, 2).fill(P2);
+	await button(page, 'Agregar paso').click();
+	await expect(step(page, 3)).toBeFocused();
+	await step(page, 3).fill(P3);
+	ascending([
+		await y(first(page)),
+		await y(step(page, 2)),
+		await y(step(page, 3)),
+		await y(button(page, 'Agregar paso')),
+		await y(note)
 	]);
 
 	// 3
-	await paso(page, 3).press('Enter');
+	await step(page, 3).press('Enter');
 	await expect(panel(page)).toHaveCount(0);
-	await dice(page, 'Lavar', P1, true);
-	await conBotones(page, 'Lavar', false);
+	await says(page, 'Lavar', P1, true);
+	await withButtons(page, 'Lavar', false);
 	await expect(f(page, 'Lavar')).not.toContainText(P2);
 	await expect(f(page, 'Lavar')).not.toContainText(P3);
 
 	// 4
-	await abrirFila(page, 'Lavar');
-	await expect(primero(page)).toHaveValue(P1);
-	await expect(paso(page, 2)).toHaveValue(P2);
-	await expect(paso(page, 3)).toHaveValue(P3);
-	await expect(quitar(page, 2)).toBeVisible();
-	await expect(quitar(page, 3)).toBeVisible();
+	await openRow(page, 'Lavar');
+	await expect(first(page)).toHaveValue(P1);
+	await expect(step(page, 2)).toHaveValue(P2);
+	await expect(step(page, 3)).toHaveValue(P3);
+	await expect(remove(page, 2)).toBeVisible();
+	await expect(remove(page, 3)).toBeVisible();
 	await expect(panel(page)).not.toContainText(/en qué paso|paso actual/i);
-	await cerrar(page);
+	await close(page);
 	await page.reload();
-	await panelTiene(page, 'Lavar', P1, [P2, P3]);
+	await panelHas(page, 'Lavar', P1, [P2, P3]);
 
 	// 5
-	await crear(page, { titulo: 'Barrer', tipo: NO_SE_REPITE, fecha: '', primerPaso: 'Juntar la basura' });
-	await dice(page, 'Barrer', 'Juntar la basura', true);
-	await expect(hecho(page, 'Barrer')).toHaveCount(0);
-	await expect(anterior(page, 'Barrer')).toHaveCount(0);
+	await create(page, { title: 'Barrer', kind: DOES_NOT_REPEAT, date: '', firstStep: 'Juntar la basura' });
+	await says(page, 'Barrer', 'Juntar la basura', true);
+	await expect(done(page, 'Barrer')).toHaveCount(0);
+	await expect(previous(page, 'Barrer')).toHaveCount(0);
 
 	// 6
-	await crear(page, {
-		titulo: 'Regar',
-		tipo: 'Intervalo',
-		cada: '2',
-		unidad: 'días',
-		primerPaso: 'Llenar la regadera',
-		pasos: ['Regar los helechos']
+	await create(page, {
+		title: 'Regar',
+		kind: 'Intervalo',
+		every: '2',
+		unit: 'días',
+		firstStep: 'Llenar la regadera',
+		steps: ['Regar los helechos']
 	});
-	await dice(page, 'Regar', 'Llenar la regadera', true);
-	await conBotones(page, 'Regar', false);
-	await crear(page, {
-		titulo: 'Basura',
-		tipo: 'Días de la semana',
-		dias: ['martes'],
-		primerPaso: 'Atar la bolsa llena',
-		pasos: ['Bajar la basura']
+	await says(page, 'Regar', 'Llenar la regadera', true);
+	await withButtons(page, 'Regar', false);
+	await create(page, {
+		title: 'Basura',
+		kind: 'Días de la semana',
+		days: ['martes'],
+		firstStep: 'Atar la bolsa llena',
+		steps: ['Bajar la basura']
 	});
-	await sinLinea(page, 'Basura'); // en espera hasta el martes
+	await withoutLine(page, 'Basura'); // en espera hasta el martes
 
 	// 7
-	await crear(page, { titulo: 'Planchar', tipo: NO_SE_REPITE, fecha: '' });
-	await sinLinea(page, 'Planchar');
+	await create(page, { title: 'Planchar', kind: DOES_NOT_REPEAT, date: '' });
+	await withoutLine(page, 'Planchar');
 });
 
 test('Flujo 2: editar, recortar, descartar, quitar y sin máximos', async ({ page }) => {
-	await sesionConReloj(page, VIERNES);
-	await crear(page, { titulo: 'Lavar', tipo: NO_SE_REPITE, fecha: '', primerPaso: P1, pasos: [P2, P3] });
+	await sessionWithClock(page, FRIDAY);
+	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '', firstStep: P1, steps: [P2, P3] });
 
 	// 1
-	await escribirPaso(page, 'Lavar', 2, '  Juntar las llaves  ');
-	await panelTiene(page, 'Lavar', P1, ['Juntar las llaves', P3]);
+	await writeStep(page, 'Lavar', 2, '  Juntar las llaves  ');
+	await panelHas(page, 'Lavar', P1, ['Juntar las llaves', P3]);
 
 	// 2
-	await abrirFila(page, 'Lavar');
-	await pegar(page, paso(page, 2), 'uno\ndos');
-	expect(await paso(page, 2).inputValue()).not.toContain('\n');
-	await paso(page, 2).press('Enter');
+	await openRow(page, 'Lavar');
+	await paste(page, step(page, 2), 'uno\ndos');
+	expect(await step(page, 2).inputValue()).not.toContain('\n');
+	await step(page, 2).press('Enter');
 	await expect(panel(page)).toHaveCount(0);
-	await abrirFila(page, 'Lavar');
-	expect(await paso(page, 2).inputValue()).not.toContain('\n');
-	expect(await paso(page, 2).inputValue()).toMatch(/^uno ?dos$/);
-	await cerrar(page);
+	await openRow(page, 'Lavar');
+	expect(await step(page, 2).inputValue()).not.toContain('\n');
+	expect(await step(page, 2).inputValue()).toMatch(/^uno ?dos$/);
+	await close(page);
 
 	// 3
-	await escribirPaso(page, 'Lavar', 2, '');
-	await panelTiene(page, 'Lavar', P1, [P3]);
+	await writeStep(page, 'Lavar', 2, '');
+	await panelHas(page, 'Lavar', P1, [P3]);
 
 	// 4
-	await abrirFila(page, 'Lavar');
-	await paso(page, 2).fill('   ');
-	await boton(page, 'Guardar').click();
+	await openRow(page, 'Lavar');
+	await step(page, 2).fill('   ');
+	await button(page, 'Guardar').click();
 	await expect(panel(page)).toHaveCount(0);
 	await expect(page.getByRole('alert')).toHaveCount(0);
-	await panelTiene(page, 'Lavar', P1, []);
-	await abrirFila(page, 'Lavar');
-	await agregarPaso(page, 2, P2);
-	await guardar(page);
-	await panelTiene(page, 'Lavar', P1, [P2]);
+	await panelHas(page, 'Lavar', P1, []);
+	await openRow(page, 'Lavar');
+	await addStep(page, 2, P2);
+	await save(page);
+	await panelHas(page, 'Lavar', P1, [P2]);
 
 	// 5
-	await escribirPrimero(page, 'Lavar', '');
-	await dice(page, 'Lavar', P2, true);
-	await panelTiene(page, 'Lavar', P2, []);
+	await writeFirst(page, 'Lavar', '');
+	await says(page, 'Lavar', P2, true);
+	await panelHas(page, 'Lavar', P2, []);
 
 	// 6
-	await abrirFila(page, 'Lavar');
-	await agregarPaso(page, 2, 'A');
-	await agregarPaso(page, 3, 'B');
-	await guardar(page);
-	await panelTiene(page, 'Lavar', P2, ['A', 'B']);
-	await abrirFila(page, 'Lavar');
-	await quitar(page, 2).click();
-	await expect(paso(page, 2)).toHaveValue('B');
-	await expect(paso(page, 3)).toHaveCount(0);
-	await guardar(page);
-	await panelTiene(page, 'Lavar', P2, ['B']);
-	await abrirFila(page, 'Lavar');
-	await boton(page, 'Agregar paso').click();
-	await expect(paso(page, 3)).toHaveValue('');
-	await guardar(page);
-	await panelTiene(page, 'Lavar', P2, ['B']);
+	await openRow(page, 'Lavar');
+	await addStep(page, 2, 'A');
+	await addStep(page, 3, 'B');
+	await save(page);
+	await panelHas(page, 'Lavar', P2, ['A', 'B']);
+	await openRow(page, 'Lavar');
+	await remove(page, 2).click();
+	await expect(step(page, 2)).toHaveValue('B');
+	await expect(step(page, 3)).toHaveCount(0);
+	await save(page);
+	await panelHas(page, 'Lavar', P2, ['B']);
+	await openRow(page, 'Lavar');
+	await button(page, 'Agregar paso').click();
+	await expect(step(page, 3)).toHaveValue('');
+	await save(page);
+	await panelHas(page, 'Lavar', P2, ['B']);
 
 	// 7
-	await abrirFila(page, 'Lavar');
-	await pegar(page, paso(page, 2), 'a'.repeat(5000));
-	await guardar(page);
+	await openRow(page, 'Lavar');
+	await paste(page, step(page, 2), 'a'.repeat(5000));
+	await save(page);
 	await expect(page.getByRole('alert')).toHaveCount(0);
-	await abrirFila(page, 'Lavar');
-	expect((await paso(page, 2).inputValue()).length).toBe(5000);
-	await cerrar(page);
+	await openRow(page, 'Lavar');
+	expect((await step(page, 2).inputValue()).length).toBe(5000);
+	await close(page);
 
 	// 8
-	await abrirFila(page, 'Lavar');
-	for (let i = 1; i <= 30; i++) await agregarPaso(page, i + 2, `p${i}`);
-	await guardar(page);
+	await openRow(page, 'Lavar');
+	for (let i = 1; i <= 30; i++) await addStep(page, i + 2, `p${i}`);
+	await save(page);
 	await expect(page.getByRole('alert')).toHaveCount(0);
-	await abrirFila(page, 'Lavar');
-	const valores = await (async () => {
-		await expect(camposPaso(page)).toHaveCount(31);
-		return valoresDePasos(page);
+	await openRow(page, 'Lavar');
+	const values = await (async () => {
+		await expect(fieldsStep(page)).toHaveCount(31);
+		return stepsValues(page);
 	})();
-	expect(valores[0].length).toBe(5000);
-	expect(valores.slice(1)).toEqual(Array.from({ length: 30 }, (_, i) => `p${i + 1}`));
-	await cerrar(page);
+	expect(values[0].length).toBe(5000);
+	expect(values.slice(1)).toEqual(Array.from({ length: 30 }, (_, i) => `p${i + 1}`));
+	await close(page);
 
 	// 9
 	await page.setViewportSize({ width: 390, height: 844 });
-	await crear(page, {
-		titulo: 'Cajón',
-		tipo: NO_SE_REPITE,
-		fecha: '',
-		primerPaso: 'Abrir el cajón',
-		pasos: [LARGO]
+	await create(page, {
+		title: 'Cajón',
+		kind: DOES_NOT_REPEAT,
+		date: '',
+		firstStep: 'Abrir el cajón',
+		steps: [LENGTH]
 	});
-	await hecho(page, 'Cajón').click();
-	await dice(page, 'Cajón', LARGO);
-	const l = linea(page, 'Cajón');
-	const e = await estilo(l);
-	expect(e.recorte).not.toBe('ellipsis');
+	await done(page, 'Cajón').click();
+	await says(page, 'Cajón', LENGTH);
+	const l = line(page, 'Cajón');
+	const e = await style(l);
+	expect(e.trim).not.toBe('ellipsis');
 	expect(e.overflow).not.toBe('hidden');
-	expect(e.maxAlto).toBe('none');
+	expect(e.maxHeight).toBe('none');
 	expect(e.clamp).not.toMatch(/^\d+$/);
 	expect(await l.evaluate((n) => n.scrollHeight <= n.clientHeight + 1 && n.scrollWidth <= n.clientWidth + 1)).toBe(true);
-	const caja = (await l.boundingBox())!;
-	expect(caja.height).toBeGreaterThan(parseFloat(e.tamano) * 2.2);
-	expect(caja.x + caja.width).toBeLessThanOrEqual(390);
+	const box = (await l.boundingBox())!;
+	expect(box.height).toBeGreaterThan(parseFloat(e.size) * 2.2);
+	expect(box.x + box.width).toBeLessThanOrEqual(390);
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 	expect(await l.innerText()).not.toContain('…');
 });
 
 test('Flujo 3: avanzar y retroceder desde la fila', async ({ page }) => {
-	await sesionConReloj(page, VIERNES);
-	await crear(page, { titulo: 'Barrer', tipo: NO_SE_REPITE, fecha: '', horario: { desde: '08:00', hasta: '12:00' } });
-	await crear(page, { titulo: 'Lavar', tipo: NO_SE_REPITE, fecha: '', primerPaso: P1, pasos: [P2, P3] });
-	const sinAvisos = async () => {
+	await sessionWithClock(page, FRIDAY);
+	await create(page, { title: 'Barrer', kind: DOES_NOT_REPEAT, date: '', schedule: { from: '08:00', to: '12:00' } });
+	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '', firstStep: P1, steps: [P2, P3] });
+	const withoutNotices = async () => {
 		await expect(page.getByRole('heading', { name: 'Editar tarea' })).toHaveCount(0);
 		await expect(panel(page)).toHaveCount(0);
-		await expect(avisoDeCambios(page)).toHaveCount(0);
+		await expect(unsavedChangesNotice(page)).toHaveCount(0);
 		await expect(page.getByRole('alertdialog')).toHaveCount(0);
-		await expect(aviso(page)).toHaveCount(0);
+		await expect(notice(page)).toHaveCount(0);
 	};
 
 	// 1
-	await dice(page, 'Lavar', P1, true);
-	await conBotones(page, 'Lavar', false);
-	const fondo = (await estilo(f(page, 'Lavar'))).fondo;
+	await says(page, 'Lavar', P1, true);
+	await withButtons(page, 'Lavar', false);
+	const background = (await style(f(page, 'Lavar'))).background;
 
 	// 2
-	await hecho(page, 'Lavar').click();
-	await dice(page, 'Lavar', P2);
-	await conBotones(page, 'Lavar', true);
-	await sinAvisos();
+	await done(page, 'Lavar').click();
+	await says(page, 'Lavar', P2);
+	await withButtons(page, 'Lavar', true);
+	await withoutNotices();
 	await expect(f(page, 'Lavar')).not.toContainText(P3);
 	await expect(f(page, 'Lavar')).not.toContainText(/\d+ de \d+|[Pp]aso \d/);
 
 	// 3
-	await anterior(page, 'Lavar').click();
-	await dice(page, 'Lavar', P1, true);
-	await conBotones(page, 'Lavar', false);
-	await hecho(page, 'Lavar').click();
-	await dice(page, 'Lavar', P2);
-	await hecho(page, 'Lavar').click();
-	await dice(page, 'Lavar', P3);
-	await sinAvisos();
+	await previous(page, 'Lavar').click();
+	await says(page, 'Lavar', P1, true);
+	await withButtons(page, 'Lavar', false);
+	await done(page, 'Lavar').click();
+	await says(page, 'Lavar', P2);
+	await done(page, 'Lavar').click();
+	await says(page, 'Lavar', P3);
+	await withoutNotices();
 
 	// 4
 	await page.reload();
-	await dice(page, 'Lavar', P3);
-	await conBotones(page, 'Lavar', true);
+	await says(page, 'Lavar', P3);
+	await withButtons(page, 'Lavar', true);
 
 	// 5
-	const c = (await linea(page, 'Lavar').boundingBox())!;
+	const c = (await line(page, 'Lavar').boundingBox())!;
 	await page.mouse.click(c.x + c.width / 2, c.y + c.height / 2);
 	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();
 	await expect(page.getByLabel('Título')).toHaveValue('Lavar');
 	await expect(panel(page)).not.toContainText(/en qué paso|paso actual/i);
-	await cerrar(page);
-	await expect(avisoDeCambios(page)).toHaveCount(0);
+	await close(page);
+	await expect(unsavedChangesNotice(page)).toHaveCount(0);
 
 	// 6
-	const l = await estilo(linea(page, 'Lavar'));
-	const r = await estilo(f(page, 'Barrer').getByText(/\d\d:\d\d–\d\d:\d\d/));
+	const l = await style(line(page, 'Lavar'));
+	const r = await style(f(page, 'Barrer').getByText(/\d\d:\d\d–\d\d:\d\d/));
 	expect(l.color).toBe(r.color);
-	expect(l.tamano).toBe(r.tamano);
-	expect(l.peso).toBeLessThan(600);
-	expect(l.linea).not.toContain('underline');
-	for (const b of [hecho(page, 'Lavar'), anterior(page, 'Lavar')]) {
-		const e = await estilo(b);
+	expect(l.size).toBe(r.size);
+	expect(l.weight).toBeLessThan(600);
+	expect(l.line).not.toContain('underline');
+	for (const b of [done(page, 'Lavar'), previous(page, 'Lavar')]) {
+		const e = await style(b);
 		expect(e.color).toBe(l.color);
-		expect(e.peso).toBeLessThan(600);
-		expect(e.linea).not.toContain('underline');
-		expect(e.fondo).toBe('rgba(0, 0, 0, 0)');
+		expect(e.weight).toBeLessThan(600);
+		expect(e.line).not.toContain('underline');
+		expect(e.background).toBe('rgba(0, 0, 0, 0)');
 	}
-	expect((await estilo(f(page, 'Lavar'))).fondo).toBe(fondo);
-	expect((await estilo(f(page, 'Barrer'))).fondo).toBe(fondo);
+	expect((await style(f(page, 'Lavar'))).background).toBe(background);
+	expect((await style(f(page, 'Barrer'))).background).toBe(background);
 });
 
 test('Flujo 4: «Hecho» en el último paso completa la tarea', async ({ page }) => {
-	await sesion(page, VIERNES, true);
-	await conReloj(page, async () => {
-		await crearYVer(page, {
-			titulo: 'Regar',
-			tipo: 'Intervalo',
-			cada: '2',
-			unidad: 'días',
-			primerPaso: 'Llenar la regadera',
-			pasos: ['Regar los helechos']
+	await session(page, FRIDAY, true);
+	await withClock(page, async () => {
+		await createAndView(page, {
+			title: 'Regar',
+			kind: 'Intervalo',
+			every: '2',
+			unit: 'días',
+			firstStep: 'Llenar la regadera',
+			steps: ['Regar los helechos']
 		});
-		await crearYVer(page, {
-			titulo: 'Cambiar foco',
-			tipo: NO_SE_REPITE,
-			fecha: '',
-			primerPaso: 'Sacar la escalera',
-			pasos: ['Cambiar el foco']
+		await createAndView(page, {
+			title: 'Cambiar foco',
+			kind: DOES_NOT_REPEAT,
+			date: '',
+			firstStep: 'Sacar la escalera',
+			steps: ['Cambiar el foco']
 		});
 	});
-	await detener(page, VIERNES);
+	await stop(page, FRIDAY);
 
 	// 1
-	await hecho(page, 'Regar').click();
-	await conReloj(page, () => dice(page, 'Regar', 'Regar los helechos'));
-	await hecho(page, 'Regar').click();
-	await conReloj(page, async () => {
-		await expect(aviso(page)).toContainText('Completaste «Regar»');
-		await expect(aviso(page)).toContainText(/Vuelve /);
-		await expect(aviso(page)).not.toContainText('Paso');
-		await expect(aviso(page).getByRole('button', { name: 'Deshacer' })).toBeVisible();
-		await esperarEstado(page, 'Regar', 'en espera');
-		await sinLinea(page, 'Regar');
+	await done(page, 'Regar').click();
+	await withClock(page, () => says(page, 'Regar', 'Regar los helechos'));
+	await done(page, 'Regar').click();
+	await withClock(page, async () => {
+		await expect(notice(page)).toContainText('Completaste «Regar»');
+		await expect(notice(page)).toContainText(/Vuelve /);
+		await expect(notice(page)).not.toContainText('Paso');
+		await expect(notice(page).getByRole('button', { name: 'Deshacer' })).toBeVisible();
+		await waitStatus(page, 'Regar', 'en espera');
+		await withoutLine(page, 'Regar');
 	});
 
 	// 2
-	await aviso(page).getByRole('button', { name: 'Deshacer' }).click();
-	await asentar(page);
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Regar', 'pendiente');
-		await dice(page, 'Regar', 'Regar los helechos');
-		await conBotones(page, 'Regar', true);
+	await notice(page).getByRole('button', { name: 'Deshacer' }).click();
+	await settle(page);
+	await withClock(page, async () => {
+		await waitStatus(page, 'Regar', 'pendiente');
+		await says(page, 'Regar', 'Regar los helechos');
+		await withButtons(page, 'Regar', true);
 	});
 
 	// 3
-	await anterior(page, 'Regar').click();
-	await conReloj(page, () => dice(page, 'Regar', 'Llenar la regadera', true));
-	await hecho(page, 'Regar').click();
-	await conReloj(page, () => dice(page, 'Regar', 'Regar los helechos'));
-	await hecho(page, 'Regar').click();
-	await conReloj(page, () => expect(aviso(page)).toContainText('Completaste «Regar»'));
+	await previous(page, 'Regar').click();
+	await withClock(page, () => says(page, 'Regar', 'Llenar la regadera', true));
+	await done(page, 'Regar').click();
+	await withClock(page, () => says(page, 'Regar', 'Regar los helechos'));
+	await done(page, 'Regar').click();
+	await withClock(page, () => expect(notice(page)).toContainText('Completaste «Regar»'));
 	await page.clock.runFor(6000);
-	await conReloj(page, () => expect(aviso(page)).toHaveCount(0));
-	await irA(page, 'Historial');
-	await conReloj(page, () => borrarDelHistorial(page, 'Regar'));
-	await irA(page, 'Pendientes');
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Regar', 'pendiente');
-		await dice(page, 'Regar', 'Regar los helechos');
+	await withClock(page, () => expect(notice(page)).toHaveCount(0));
+	await goA(page, 'Historial');
+	await withClock(page, () => historyDelete(page, 'Regar'));
+	await goA(page, 'Pendientes');
+	await withClock(page, async () => {
+		await waitStatus(page, 'Regar', 'pendiente');
+		await says(page, 'Regar', 'Regar los helechos');
 	});
 
 	// 4
-	await hecho(page, 'Cambiar foco').click();
-	await conReloj(page, () => dice(page, 'Cambiar foco', 'Cambiar el foco'));
-	await hecho(page, 'Cambiar foco').click();
-	await conReloj(page, async () => {
-		await expect(aviso(page)).toContainText('Completaste «Cambiar foco»');
+	await done(page, 'Cambiar foco').click();
+	await withClock(page, () => says(page, 'Cambiar foco', 'Cambiar el foco'));
+	await done(page, 'Cambiar foco').click();
+	await withClock(page, async () => {
+		await expect(notice(page)).toContainText('Completaste «Cambiar foco»');
 		await expect(f(page, 'Cambiar foco').getByRole('checkbox')).toBeChecked();
-		await sinLinea(page, 'Cambiar foco');
+		await withoutLine(page, 'Cambiar foco');
 	});
 	await f(page, 'Cambiar foco').getByRole('checkbox').click();
-	await asentar(page);
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Cambiar foco', 'pendiente');
-		await dice(page, 'Cambiar foco', 'Cambiar el foco');
-		await conBotones(page, 'Cambiar foco', true);
+	await settle(page);
+	await withClock(page, async () => {
+		await waitStatus(page, 'Cambiar foco', 'pendiente');
+		await says(page, 'Cambiar foco', 'Cambiar el foco');
+		await withButtons(page, 'Cambiar foco', true);
 	});
 
 	// 5
-	await anterior(page, 'Regar').click();
-	await conReloj(page, () => dice(page, 'Regar', 'Llenar la regadera', true));
-	await completarA(page, VIERNES, 'Regar');
-	await conReloj(page, async () => {
-		await expect(aviso(page)).toContainText('Completaste «Regar»');
-		await expect(aviso(page)).toContainText(/Vuelve /);
-		await expect(aviso(page)).not.toContainText('Paso');
-		await sinLinea(page, 'Regar');
+	await previous(page, 'Regar').click();
+	await withClock(page, () => says(page, 'Regar', 'Llenar la regadera', true));
+	await completeA(page, FRIDAY, 'Regar');
+	await withClock(page, async () => {
+		await expect(notice(page)).toContainText('Completaste «Regar»');
+		await expect(notice(page)).toContainText(/Vuelve /);
+		await expect(notice(page)).not.toContainText('Paso');
+		await withoutLine(page, 'Regar');
 	});
-	await ir(page, '2026-11-15T10:00:00');
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Regar', 'pendiente');
-		await dice(page, 'Regar', 'Llenar la regadera', true);
-		await conBotones(page, 'Regar', false);
+	await go(page, '2026-11-15T10:00:00');
+	await withClock(page, async () => {
+		await waitStatus(page, 'Regar', 'pendiente');
+		await says(page, 'Regar', 'Llenar la regadera', true);
+		await withButtons(page, 'Regar', false);
 	});
-	await hecho(page, 'Regar').click();
-	await conReloj(page, () => dice(page, 'Regar', 'Regar los helechos'));
-	await completarA(page, '2026-11-15T10:00:00', 'Regar');
-	await conReloj(page, () => sinLinea(page, 'Regar'));
-	await ir(page, '2026-11-17T10:00:00');
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Regar', 'pendiente');
-		await dice(page, 'Regar', 'Llenar la regadera', true);
-		await conBotones(page, 'Regar', false);
+	await done(page, 'Regar').click();
+	await withClock(page, () => says(page, 'Regar', 'Regar los helechos'));
+	await completeA(page, '2026-11-15T10:00:00', 'Regar');
+	await withClock(page, () => withoutLine(page, 'Regar'));
+	await go(page, '2026-11-17T10:00:00');
+	await withClock(page, async () => {
+		await waitStatus(page, 'Regar', 'pendiente');
+		await says(page, 'Regar', 'Llenar la regadera', true);
+		await withButtons(page, 'Regar', false);
 	});
 
 	// 6
-	await hecho(page, 'Regar').click();
-	await conReloj(page, () => dice(page, 'Regar', 'Regar los helechos'));
+	await done(page, 'Regar').click();
+	await withClock(page, () => says(page, 'Regar', 'Regar los helechos'));
 	await f(page, 'Regar').getByRole('checkbox').click();
-	await conReloj(page, () => expect(aviso(page)).toContainText('Completaste «Regar»'));
-	await aviso(page).getByRole('button', { name: 'Deshacer' }).click();
-	await asentar(page);
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Regar', 'pendiente');
-		await dice(page, 'Regar', 'Regar los helechos');
-		await conBotones(page, 'Regar', true);
+	await withClock(page, () => expect(notice(page)).toContainText('Completaste «Regar»'));
+	await notice(page).getByRole('button', { name: 'Deshacer' }).click();
+	await settle(page);
+	await withClock(page, async () => {
+		await waitStatus(page, 'Regar', 'pendiente');
+		await says(page, 'Regar', 'Regar los helechos');
+		await withButtons(page, 'Regar', true);
 	});
 });
 
 test('Flujo 5: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => {
-	await sesion(page, VIERNES, true);
+	await session(page, FRIDAY, true);
 
 	// 1
-	await conReloj(page, async () => {
-		await crearYVer(page, {
-			titulo: 'Cambiar foco',
-			tipo: NO_SE_REPITE,
-			fecha: '',
-			primerPaso: 'Sacar la escalera',
-			pasos: ['Cambiar el foco']
+	await withClock(page, async () => {
+		await createAndView(page, {
+			title: 'Cambiar foco',
+			kind: DOES_NOT_REPEAT,
+			date: '',
+			firstStep: 'Sacar la escalera',
+			steps: ['Cambiar el foco']
 		});
-		await crearYVer(page, {
-			titulo: 'Pagar',
-			tipo: NO_SE_REPITE,
-			fecha: '2026-11-10',
-			primerPaso: 'Buscar la factura',
-			pasos: ['Pagar en el banco']
+		await createAndView(page, {
+			title: 'Pagar',
+			kind: DOES_NOT_REPEAT,
+			date: '2026-11-10',
+			firstStep: 'Buscar la factura',
+			steps: ['Pagar en el banco']
 		});
-		await crearYVer(page, {
-			titulo: 'Regar',
-			tipo: 'Intervalo',
-			cada: '8',
-			unidad: 'horas',
-			primerPaso: 'Llenar la regadera',
-			pasos: ['Regar los helechos']
+		await createAndView(page, {
+			title: 'Regar',
+			kind: 'Intervalo',
+			every: '8',
+			unit: 'horas',
+			firstStep: 'Llenar la regadera',
+			steps: ['Regar los helechos']
 		});
 	});
-	await detener(page, VIERNES);
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Pagar', 'atrasada', undefined, false);
-		await esperarEstado(page, 'Cambiar foco', 'pendiente');
-		await esperarEstado(page, 'Regar', 'pendiente');
+	await stop(page, FRIDAY);
+	await withClock(page, async () => {
+		await waitStatus(page, 'Pagar', 'atrasada', undefined, false);
+		await waitStatus(page, 'Cambiar foco', 'pendiente');
+		await waitStatus(page, 'Regar', 'pendiente');
 		for (const [t, p] of [
 			['Pagar', 'Buscar la factura'],
 			['Cambiar foco', 'Sacar la escalera'],
 			['Regar', 'Llenar la regadera']
 		]) {
-			await dice(page, t, p, true);
-			await conBotones(page, t, false);
+			await says(page, t, p, true);
+			await withButtons(page, t, false);
 		}
 	});
 
 	// 2
-	const orden = await titulos(page);
-	await hecho(page, 'Pagar').click();
-	await conReloj(page, async () => {
-		await dice(page, 'Pagar', 'Pagar en el banco');
-		await conBotones(page, 'Pagar', true);
-		await esperarEstado(page, 'Pagar', 'atrasada', undefined, false);
+	const order = await titles(page);
+	await done(page, 'Pagar').click();
+	await withClock(page, async () => {
+		await says(page, 'Pagar', 'Pagar en el banco');
+		await withButtons(page, 'Pagar', true);
+		await waitStatus(page, 'Pagar', 'atrasada', undefined, false);
 	});
-	expect(await titulos(page)).toEqual(orden);
+	expect(await titles(page)).toEqual(order);
 
 	// 9 (primero, con el reloj en el viernes): el checkbox completa en el paso 1 y deshacer lo devuelve.
 	await f(page, 'Cambiar foco').getByRole('checkbox').click();
-	await conReloj(page, async () => {
-		await expect(aviso(page)).toContainText('Completaste «Cambiar foco»');
-		await sinLinea(page, 'Cambiar foco');
+	await withClock(page, async () => {
+		await expect(notice(page)).toContainText('Completaste «Cambiar foco»');
+		await withoutLine(page, 'Cambiar foco');
 	});
-	await aviso(page).getByRole('button', { name: 'Deshacer' }).click();
-	await asentar(page);
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Cambiar foco', 'pendiente');
-		await dice(page, 'Cambiar foco', 'Sacar la escalera', true);
-		await conBotones(page, 'Cambiar foco', false);
+	await notice(page).getByRole('button', { name: 'Deshacer' }).click();
+	await settle(page);
+	await withClock(page, async () => {
+		await waitStatus(page, 'Cambiar foco', 'pendiente');
+		await says(page, 'Cambiar foco', 'Sacar la escalera', true);
+		await withButtons(page, 'Cambiar foco', false);
 	});
 
 	// 3 y 4: se pospone y se completa con el reloj en el viernes; luego se avanza.
-	await posponer(page, 'Cambiar foco', '3 horas');
-	await posponer(page, 'Pagar', 'Hasta mañana');
+	await postpone(page, 'Cambiar foco', '3 horas');
+	await postpone(page, 'Pagar', 'Hasta mañana');
 	await f(page, 'Regar').getByRole('checkbox').click();
-	await conReloj(page, async () => {
-		await sinLinea(page, 'Cambiar foco');
-		await sinLinea(page, 'Pagar');
+	await withClock(page, async () => {
+		await withoutLine(page, 'Cambiar foco');
+		await withoutLine(page, 'Pagar');
 		await expect(f(page, 'Regar').getByRole('checkbox')).toBeChecked();
-		await sinLinea(page, 'Regar');
+		await withoutLine(page, 'Regar');
 	});
-	await ir(page, '2026-11-13T13:01:00');
-	await conReloj(page, async () => {
-		await dice(page, 'Cambiar foco', 'Sacar la escalera', true);
-		await conBotones(page, 'Cambiar foco', false);
-		await sinLinea(page, 'Regar');
-		await sinLinea(page, 'Pagar');
+	await go(page, '2026-11-13T13:01:00');
+	await withClock(page, async () => {
+		await says(page, 'Cambiar foco', 'Sacar la escalera', true);
+		await withButtons(page, 'Cambiar foco', false);
+		await withoutLine(page, 'Regar');
+		await withoutLine(page, 'Pagar');
 	});
-	await ir(page, '2026-11-13T17:59:00');
-	await conReloj(page, () => sinLinea(page, 'Regar'));
-	await ir(page, '2026-11-13T18:00:00');
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Regar', 'pendiente', undefined, false);
-		await dice(page, 'Regar', 'Llenar la regadera', true);
-		await conBotones(page, 'Regar', false);
+	await go(page, '2026-11-13T17:59:00');
+	await withClock(page, () => withoutLine(page, 'Regar'));
+	await go(page, '2026-11-13T18:00:00');
+	await withClock(page, async () => {
+		await waitStatus(page, 'Regar', 'pendiente', undefined, false);
+		await says(page, 'Regar', 'Llenar la regadera', true);
+		await withButtons(page, 'Regar', false);
 	});
-	await ir(page, '2026-11-15T07:00:00');
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Pagar', 'atrasada', undefined, false);
-		await dice(page, 'Pagar', 'Pagar en el banco');
-		await conBotones(page, 'Pagar', true);
+	await go(page, '2026-11-15T07:00:00');
+	await withClock(page, async () => {
+		await waitStatus(page, 'Pagar', 'atrasada', undefined, false);
+		await says(page, 'Pagar', 'Pagar en el banco');
+		await withButtons(page, 'Pagar', true);
 	});
 
 	// 5
-	await pausar(page, 'Regar');
-	await conReloj(page, () => expect(f(page, 'Regar')).toHaveCount(0));
-	await mostrarPausadas(page).click();
-	await expect(mostrarPausadas(page)).toBeChecked();
-	await conReloj(page, async () => {
+	await pause(page, 'Regar');
+	await withClock(page, () => expect(f(page, 'Regar')).toHaveCount(0));
+	await showPaused(page).click();
+	await expect(showPaused(page)).toBeChecked();
+	await withClock(page, async () => {
 		await expect(f(page, 'Regar').getByText('Pausada')).toBeVisible();
-		await sinLinea(page, 'Regar');
+		await withoutLine(page, 'Regar');
 	});
-	await abrirFila(page, 'Regar');
-	await boton(page, 'Reanudar').click();
+	await openRow(page, 'Regar');
+	await button(page, 'Reanudar').click();
 	await expect(panel(page)).toHaveCount(0);
-	await conReloj(page, async () => {
+	await withClock(page, async () => {
 		await expect(f(page, 'Regar').getByText('Pausada')).toHaveCount(0);
-		await esperarEstado(page, 'Regar', 'pendiente', undefined, false);
-		await dice(page, 'Regar', 'Llenar la regadera', true);
-		await conBotones(page, 'Regar', false);
+		await waitStatus(page, 'Regar', 'pendiente', undefined, false);
+		await says(page, 'Regar', 'Llenar la regadera', true);
+		await withButtons(page, 'Regar', false);
 	});
 
 	// 6: con el reloj en el viernes.
-	await retroceder(page, VIERNES);
-	await conReloj(page, () =>
-		crearYVer(page, {
-			titulo: 'Basura',
-			tipo: 'Días de la semana',
-			dias: ['martes'],
-			primerPaso: 'Atar la bolsa llena',
-			pasos: ['Bajar la basura']
+	await goBack(page, FRIDAY);
+	await withClock(page, () =>
+		createAndView(page, {
+			title: 'Basura',
+			kind: 'Días de la semana',
+			days: ['martes'],
+			firstStep: 'Atar la bolsa llena',
+			steps: ['Bajar la basura']
 		})
 	);
-	await conReloj(page, () => sinLinea(page, 'Basura'));
-	await ir(page, '2026-11-17T09:00:00');
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Basura', 'pendiente', undefined, false);
-		await dice(page, 'Basura', 'Atar la bolsa llena', true);
-		await conBotones(page, 'Basura', false);
+	await withClock(page, () => withoutLine(page, 'Basura'));
+	await go(page, '2026-11-17T09:00:00');
+	await withClock(page, async () => {
+		await waitStatus(page, 'Basura', 'pendiente', undefined, false);
+		await says(page, 'Basura', 'Atar la bolsa llena', true);
+		await withButtons(page, 'Basura', false);
 	});
 
 	// 7
-	await conReloj(page, () =>
-		crearYVer(page, {
-			titulo: 'Llamar',
-			tipo: NO_SE_REPITE,
-			fecha: '',
-			horario: { desde: '08:00', hasta: '09:00' },
-			primerPaso: 'Buscar el número',
-			pasos: ['Marcar']
+	await withClock(page, () =>
+		createAndView(page, {
+			title: 'Llamar',
+			kind: DOES_NOT_REPEAT,
+			date: '',
+			schedule: { from: '08:00', to: '09:00' },
+			firstStep: 'Buscar el número',
+			steps: ['Marcar']
 		})
 	);
-	await conReloj(page, () => sinLinea(page, 'Llamar'));
-	await ir(page, '2026-11-18T08:00:00');
-	await conReloj(page, async () => {
-		await esperarEstado(page, 'Llamar', 'pendiente', undefined, false);
-		await dice(page, 'Llamar', 'Buscar el número', true);
-		await conBotones(page, 'Llamar', false);
+	await withClock(page, () => withoutLine(page, 'Llamar'));
+	await go(page, '2026-11-18T08:00:00');
+	await withClock(page, async () => {
+		await waitStatus(page, 'Llamar', 'pendiente', undefined, false);
+		await says(page, 'Llamar', 'Buscar el número', true);
+		await withButtons(page, 'Llamar', false);
 	});
 
 	// 8: checkbox deshabilitado.
-	await retroceder(page, '2026-11-13T07:00:00');
-	await conReloj(page, () =>
-		crearYVer(page, {
-			titulo: 'Lavar',
-			tipo: NO_SE_REPITE,
-			fecha: '2026-11-10',
-			horario: { desde: '08:00', hasta: '11:00' },
-			primerPaso: P1,
-			pasos: [P2]
+	await goBack(page, '2026-11-13T07:00:00');
+	await withClock(page, () =>
+		createAndView(page, {
+			title: 'Lavar',
+			kind: DOES_NOT_REPEAT,
+			date: '2026-11-10',
+			schedule: { from: '08:00', to: '11:00' },
+			firstStep: P1,
+			steps: [P2]
 		})
 	);
 	const check = f(page, 'Lavar').getByRole('checkbox');
-	await conReloj(page, async () => {
+	await withClock(page, async () => {
 		await expect(check).toBeDisabled();
 		await expect(check).not.toBeChecked();
-		await dice(page, 'Lavar', P1, true);
-		await expect(hecho(page, 'Lavar')).toBeEnabled();
+		await says(page, 'Lavar', P1, true);
+		await expect(done(page, 'Lavar')).toBeEnabled();
 	});
-	await hecho(page, 'Lavar').click();
-	await conReloj(page, async () => {
-		await dice(page, 'Lavar', P2);
-		await expect(hecho(page, 'Lavar')).toBeDisabled();
-		await expect(anterior(page, 'Lavar')).toBeEnabled();
+	await done(page, 'Lavar').click();
+	await withClock(page, async () => {
+		await says(page, 'Lavar', P2);
+		await expect(done(page, 'Lavar')).toBeDisabled();
+		await expect(previous(page, 'Lavar')).toBeEnabled();
 	});
-	await hecho(page, 'Lavar').click({ force: true });
-	await conReloj(page, async () => {
-		await dice(page, 'Lavar', P2);
+	await done(page, 'Lavar').click({ force: true });
+	await withClock(page, async () => {
+		await says(page, 'Lavar', P2);
 		await expect(check).not.toBeChecked();
-		await expect(aviso(page)).toHaveCount(0);
+		await expect(notice(page)).toHaveCount(0);
 	});
-	await ir(page, '2026-11-13T08:00:00');
-	await conReloj(page, async () => {
+	await go(page, '2026-11-13T08:00:00');
+	await withClock(page, async () => {
 		await expect(check).toBeEnabled();
-		await expect(hecho(page, 'Lavar')).toBeEnabled();
+		await expect(done(page, 'Lavar')).toBeEnabled();
 	});
 });
 
 test('Flujo 6: editar los pasos y el avance', async ({ page }) => {
-	await sesionConReloj(page, VIERNES);
-	await mostrarPausadas(page).click();
-	await expect(mostrarPausadas(page)).toBeChecked();
-	await crear(page, { titulo: 'Lavar', tipo: NO_SE_REPITE, fecha: '', primerPaso: P1, pasos: [P2, P3] });
-	await hecho(page, 'Lavar').click();
-	await dice(page, 'Lavar', P2);
-	await hecho(page, 'Lavar').click();
-	await dice(page, 'Lavar', P3);
+	await sessionWithClock(page, FRIDAY);
+	await showPaused(page).click();
+	await expect(showPaused(page)).toBeChecked();
+	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '', firstStep: P1, steps: [P2, P3] });
+	await done(page, 'Lavar').click();
+	await says(page, 'Lavar', P2);
+	await done(page, 'Lavar').click();
+	await says(page, 'Lavar', P3);
 
 	// 1
-	await escribirPaso(page, 'Lavar', 2, 'Cargar el lavarropas');
-	await dice(page, 'Lavar', P3);
+	await writeStep(page, 'Lavar', 2, 'Cargar el lavarropas');
+	await says(page, 'Lavar', P3);
 
 	// 2
-	await escribirPaso(page, 'Lavar', 3, '');
-	await dice(page, 'Lavar', 'Cargar el lavarropas');
-	await conBotones(page, 'Lavar', true);
-	await abrirFila(page, 'Lavar');
-	await agregarPaso(page, 3, 'Guardar la ropa');
-	await guardar(page);
-	await dice(page, 'Lavar', 'Guardar la ropa');
+	await writeStep(page, 'Lavar', 3, '');
+	await says(page, 'Lavar', 'Cargar el lavarropas');
+	await withButtons(page, 'Lavar', true);
+	await openRow(page, 'Lavar');
+	await addStep(page, 3, 'Guardar la ropa');
+	await save(page);
+	await says(page, 'Lavar', 'Guardar la ropa');
 
 	// 3
-	await abrirFila(page, 'Lavar');
-	await paso(page, 3).fill('');
-	await paso(page, 2).fill('');
-	await guardar(page);
-	await dice(page, 'Lavar', P1, true);
-	await expect(hecho(page, 'Lavar')).toHaveCount(0);
-	await expect(anterior(page, 'Lavar')).toHaveCount(0);
-	await abrirFila(page, 'Lavar');
-	await agregarPaso(page, 2, P2);
-	await agregarPaso(page, 3, P3);
-	await guardar(page);
-	await dice(page, 'Lavar', P3);
-	await conBotones(page, 'Lavar', true);
+	await openRow(page, 'Lavar');
+	await step(page, 3).fill('');
+	await step(page, 2).fill('');
+	await save(page);
+	await says(page, 'Lavar', P1, true);
+	await expect(done(page, 'Lavar')).toHaveCount(0);
+	await expect(previous(page, 'Lavar')).toHaveCount(0);
+	await openRow(page, 'Lavar');
+	await addStep(page, 2, P2);
+	await addStep(page, 3, P3);
+	await save(page);
+	await says(page, 'Lavar', P3);
+	await withButtons(page, 'Lavar', true);
 
 	// 4
-	await hecho(page, 'Lavar').click();
-	await expect(aviso(page)).toContainText('Completaste «Lavar»');
-	await aviso(page).getByRole('button', { name: 'Deshacer' }).click();
-	await expect(aviso(page)).toHaveCount(0);
-	await dice(page, 'Lavar', P3);
+	await done(page, 'Lavar').click();
+	await expect(notice(page)).toContainText('Completaste «Lavar»');
+	await notice(page).getByRole('button', { name: 'Deshacer' }).click();
+	await expect(notice(page)).toHaveCount(0);
+	await says(page, 'Lavar', P3);
 
 	// 5
-	const mismos = async () => {
-		await panelTiene(page, 'Lavar', P1, [P2, P3]);
+	const same = async () => {
+		await panelHas(page, 'Lavar', P1, [P2, P3]);
 	};
-	await abrirFila(page, 'Lavar');
-	await completarPanel(page, { tipo: 'Intervalo', cada: '3', unidad: 'días' });
-	await guardar(page);
-	await mismos();
-	await dice(page, 'Lavar', P3);
-	await pausar(page, 'Lavar');
+	await openRow(page, 'Lavar');
+	await completePanel(page, { kind: 'Intervalo', every: '3', unit: 'días' });
+	await save(page);
+	await same();
+	await says(page, 'Lavar', P3);
+	await pause(page, 'Lavar');
 	await expect(f(page, 'Lavar').getByText('Pausada')).toBeVisible();
-	await mismos();
-	await abrirFila(page, 'Lavar');
-	await boton(page, 'Reanudar').click();
+	await same();
+	await openRow(page, 'Lavar');
+	await button(page, 'Reanudar').click();
 	await expect(panel(page)).toHaveCount(0);
-	await dice(page, 'Lavar', P3);
-	await abrirFila(page, 'Lavar');
-	await completarPanel(page, { tipo: 'Días de la semana', dias: ['martes'] });
-	await guardar(page);
-	await mismos();
-	await abrirFila(page, 'Lavar');
-	await completarPanel(page, { tipo: NO_SE_REPITE, fecha: '' });
-	await guardar(page);
-	await mismos();
-	await dice(page, 'Lavar', P3);
-	await posponer(page, 'Lavar', '3 horas');
-	await mismos();
-	await ir(page, '2026-11-13T13:01:00');
-	await dice(page, 'Lavar', P3);
+	await says(page, 'Lavar', P3);
+	await openRow(page, 'Lavar');
+	await completePanel(page, { kind: 'Días de la semana', days: ['martes'] });
+	await save(page);
+	await same();
+	await openRow(page, 'Lavar');
+	await completePanel(page, { kind: DOES_NOT_REPEAT, date: '' });
+	await save(page);
+	await same();
+	await says(page, 'Lavar', P3);
+	await postpone(page, 'Lavar', '3 horas');
+	await same();
+	await go(page, '2026-11-13T13:01:00');
+	await says(page, 'Lavar', P3);
 
 	// 6
 	await page.reload();
-	await dice(page, 'Lavar', P3);
-	await mismos();
-	await abrirFila(page, 'Lavar');
+	await says(page, 'Lavar', P3);
+	await same();
+	await openRow(page, 'Lavar');
 	await expect(panel(page).getByRole('progressbar')).toHaveCount(0);
 	await expect(panel(page).getByRole('spinbutton', { name: /paso/i })).toHaveCount(0);
 	await expect(panel(page).getByRole('combobox', { name: /paso/i })).toHaveCount(0);
-	await cerrar(page);
+	await close(page);
 	await expect(page.locator('body')).not.toContainText(/paso \d+ de \d+|paso actual/i);
 	await expect(page.getByRole('progressbar')).toHaveCount(0);
 });
 
 test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', async ({ page }) => {
-	await sesionConReloj(page, VIERNES);
-	const textos = async (t: string[]) => Promise.all(t.map((x) => f(page, x).innerText()));
+	await sessionWithClock(page, FRIDAY);
+	const texts = async (t: string[]) => Promise.all(t.map((x) => f(page, x).innerText()));
 
 	// 1
-	await crear(page, { titulo: 'Barrer', tipo: NO_SE_REPITE, fecha: '' });
-	await crear(page, { titulo: 'Lavar', tipo: NO_SE_REPITE, fecha: '' });
-	await crear(page, { titulo: 'Planchar', tipo: NO_SE_REPITE, fecha: '' });
-	const orden = await titulos(page);
-	expect([...orden].sort()).toEqual(['Barrer', 'Lavar', 'Planchar']);
-	const antes = await textos(['Barrer', 'Planchar']);
+	await create(page, { title: 'Barrer', kind: DOES_NOT_REPEAT, date: '' });
+	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '' });
+	await create(page, { title: 'Planchar', kind: DOES_NOT_REPEAT, date: '' });
+	const order = await titles(page);
+	expect([...order].sort()).toEqual(['Barrer', 'Lavar', 'Planchar']);
+	const before = await texts(['Barrer', 'Planchar']);
 
 	// 2
-	await abrirFila(page, 'Lavar');
-	await primero(page).fill(P1);
-	await agregarPaso(page, 2, P2);
-	await agregarPaso(page, 3, P3);
-	await guardar(page);
-	await hecho(page, 'Lavar').click();
-	await dice(page, 'Lavar', P2);
-	expect(await titulos(page)).toEqual(orden);
-	expect(await textos(['Barrer', 'Planchar'])).toEqual(antes);
-	await abrirFila(page, 'Barrer');
-	await primero(page).fill('Barrer abajo');
-	await agregarPaso(page, 2, 'Juntar');
-	await guardar(page);
-	await abrirFila(page, 'Lavar');
-	await primero(page).fill('');
-	await paso(page, 2).fill('');
-	await paso(page, 3).fill('');
-	await guardar(page);
-	await sinLinea(page, 'Lavar');
-	expect(await titulos(page)).toEqual(orden);
-	await abrirFila(page, 'Lavar');
-	await primero(page).fill(P1);
-	await agregarPaso(page, 2, P2);
-	await agregarPaso(page, 3, P3);
-	await guardar(page);
-	await dice(page, 'Lavar', P2); // editar no cambia el paso en que va
-	await anterior(page, 'Lavar').click();
-	await dice(page, 'Lavar', P1, true);
+	await openRow(page, 'Lavar');
+	await first(page).fill(P1);
+	await addStep(page, 2, P2);
+	await addStep(page, 3, P3);
+	await save(page);
+	await done(page, 'Lavar').click();
+	await says(page, 'Lavar', P2);
+	expect(await titles(page)).toEqual(order);
+	expect(await texts(['Barrer', 'Planchar'])).toEqual(before);
+	await openRow(page, 'Barrer');
+	await first(page).fill('Barrer abajo');
+	await addStep(page, 2, 'Juntar');
+	await save(page);
+	await openRow(page, 'Lavar');
+	await first(page).fill('');
+	await step(page, 2).fill('');
+	await step(page, 3).fill('');
+	await save(page);
+	await withoutLine(page, 'Lavar');
+	expect(await titles(page)).toEqual(order);
+	await openRow(page, 'Lavar');
+	await first(page).fill(P1);
+	await addStep(page, 2, P2);
+	await addStep(page, 3, P3);
+	await save(page);
+	await says(page, 'Lavar', P2); // editar no cambia el paso en que va
+	await previous(page, 'Lavar').click();
+	await says(page, 'Lavar', P1, true);
 
 	// Barrer y Lavar muestran sus pasos; vaciar los de Barrer no toca a Planchar.
-	await dice(page, 'Barrer', 'Barrer abajo', true);
-	await dice(page, 'Lavar', P1, true);
-	await abrirFila(page, 'Barrer');
-	await primero(page).fill('');
-	await paso(page, 2).fill('');
-	await guardar(page);
-	await sinLinea(page, 'Barrer');
-	expect(await textos(['Planchar'])).toEqual([antes[1]]);
+	await says(page, 'Barrer', 'Barrer abajo', true);
+	await says(page, 'Lavar', P1, true);
+	await openRow(page, 'Barrer');
+	await first(page).fill('');
+	await step(page, 2).fill('');
+	await save(page);
+	await withoutLine(page, 'Barrer');
+	expect(await texts(['Planchar'])).toEqual([before[1]]);
 
 	// 3
-	await abrirFila(page, 'Lavar');
-	await elegirEmoji(page, '🧺', 'cesta');
-	await guardar(page);
+	await openRow(page, 'Lavar');
+	await chooseEmoji(page, '🧺', 'cesta');
+	await save(page);
 	await expect(f(page, '🧺 Lavar').getByRole('button', { name: '🧺 Lavar', exact: true })).toBeVisible();
-	await dice(page, '🧺 Lavar', P1, true);
+	await says(page, '🧺 Lavar', P1, true);
 	const b = (await f(page, '🧺 Lavar').getByRole('button', { name: '🧺 Lavar', exact: true }).boundingBox())!;
-	expect((await linea(page, '🧺 Lavar').boundingBox())!.y).toBeGreaterThanOrEqual(b.y + b.height - 2);
+	expect((await line(page, '🧺 Lavar').boundingBox())!.y).toBeGreaterThanOrEqual(b.y + b.height - 2);
 	await expect(f(page, '🧺 Lavar').getByRole('button', { name: '🧺 Lavar', exact: true })).not.toContainText(P1);
 
 	// 4: Lavar en el paso 1 de 3.
-	await hecho(page, '🧺 Lavar').click();
-	await dice(page, '🧺 Lavar', P2);
-	await hecho(page, '🧺 Lavar').click();
-	await dice(page, '🧺 Lavar', P3);
-	await hecho(page, '🧺 Lavar').click();
-	await expect(aviso(page)).toContainText('Completaste «🧺 Lavar»');
-	await expect(aviso(page)).not.toContainText(/Paso|Primer/);
-	for (const p of [P1, P2, P3]) await expect(aviso(page)).not.toContainText(p);
-	await irA(page, 'Historial');
-	await verHistorial(page, [['Hoy', [['🧺 Lavar', '\\d\\d:\\d\\d']]]]);
+	await done(page, '🧺 Lavar').click();
+	await says(page, '🧺 Lavar', P2);
+	await done(page, '🧺 Lavar').click();
+	await says(page, '🧺 Lavar', P3);
+	await done(page, '🧺 Lavar').click();
+	await expect(notice(page)).toContainText('Completaste «🧺 Lavar»');
+	await expect(notice(page)).not.toContainText(/Paso|Primer/);
+	for (const p of [P1, P2, P3]) await expect(notice(page)).not.toContainText(p);
+	await goA(page, 'Historial');
+	await viewHistory(page, [['Hoy', [['🧺 Lavar', '\\d\\d:\\d\\d']]]]);
 	await expect(page.locator('body')).not.toContainText(/Primer paso|Paso:/);
 	for (const p of [P1, P2, P3]) await expect(page.locator('body')).not.toContainText(p);
-	await irA(page, 'Pendientes');
+	await goA(page, 'Pendientes');
 
 	// 5
-	await encenderCompletadas(page);
+	await turnOnCompleted(page);
 	await expect(f(page, '🧺 Lavar')).toBeVisible();
 	await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-	await boton(page, 'Anotar').click();
-	const recuadro = page.getByRole('dialog', { name: 'Anotar', exact: true });
-	await recuadro.getByRole('textbox', { name: 'Texto' }).fill('salió bien');
-	await recuadro.getByRole('button', { name: 'Me sirvió' }).click();
-	await expect(recuadro).toHaveCount(0);
+	await button(page, 'Anotar').click();
+	const box = page.getByRole('dialog', { name: 'Anotar', exact: true });
+	await box.getByRole('textbox', { name: 'Texto' }).fill('salió bien');
+	await box.getByRole('button', { name: 'Me sirvió' }).click();
+	await expect(box).toHaveCount(0);
 	await page.getByRole('navigation').getByRole('link', { name: 'Anotaciones', exact: true }).click();
 	await page.clock.runFor(100);
 	await expect(page.getByRole('heading', { name: 'Anotaciones', level: 1 })).toBeVisible();
-	const entrada = page.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'Editar texto' }) });
-	await expect(entrada).toHaveCount(1);
-	await expect(entrada).toContainText('🧺 Lavar');
-	await expect(entrada).toContainText('salió bien');
-	await expect(entrada).not.toContainText(/Primer paso|Paso:/);
-	for (const p of [P1, P2, P3]) await expect(entrada).not.toContainText(p);
-	await boton(page, 'Copiar').click();
+	const entry = page.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'Editar texto' }) });
+	await expect(entry).toHaveCount(1);
+	await expect(entry).toContainText('🧺 Lavar');
+	await expect(entry).toContainText('salió bien');
+	await expect(entry).not.toContainText(/Primer paso|Paso:/);
+	for (const p of [P1, P2, P3]) await expect(entry).not.toContainText(p);
+	await button(page, 'Copiar').click();
 	await expect(page.getByRole('status').filter({ hasText: 'Anotaciones copiadas' })).toBeVisible();
-	const copiado = await page.evaluate(() => navigator.clipboard.readText());
-	expect(copiado).toContain('salió bien');
-	expect(copiado).not.toMatch(/Primer paso|Paso:/);
-	for (const p of [P1, P2, P3]) expect(copiado).not.toContain(p);
-	await irA(page, 'Pendientes');
+	const copied = await page.evaluate(() => navigator.clipboard.readText());
+	expect(copied).toContain('salió bien');
+	expect(copied).not.toMatch(/Primer paso|Paso:/);
+	for (const p of [P1, P2, P3]) expect(copied).not.toContain(p);
+	await goA(page, 'Pendientes');
 
 	// 6 en adelante: Lavar con Primer paso y Paso 2 (se le quita el Paso 3).
 	const L = '🧺 Lavar';
-	await abrirFila(page, L);
-	await quitar(page, 3).click();
-	await guardar(page);
-	await panelTiene(page, L, P1, [P2]);
-	const cierraDirecto = async () => {
-		await boton(page, 'Cerrar').click();
+	await openRow(page, L);
+	await remove(page, 3).click();
+	await save(page);
+	await panelHas(page, L, P1, [P2]);
+	const closesDirect = async () => {
+		await button(page, 'Cerrar').click();
 		await expect(panel(page)).toHaveCount(0);
-		await expect(avisoDeCambios(page)).toHaveCount(0);
+		await expect(unsavedChangesNotice(page)).toHaveCount(0);
 	};
-	const pideAvisoYDescarta = async () => {
-		await boton(page, 'Cerrar').click();
-		await expect(avisoDeCambios(page)).toBeVisible();
-		await avisoDeCambios(page).getByRole('button', { name: 'Descartar', exact: true }).click();
+	const asksNoticeAndDiscards = async () => {
+		await button(page, 'Cerrar').click();
+		await expect(unsavedChangesNotice(page)).toBeVisible();
+		await unsavedChangesNotice(page).getByRole('button', { name: 'Descartar', exact: true }).click();
 		await expect(panel(page)).toHaveCount(0);
-		await expect(avisoDeCambios(page)).toHaveCount(0);
+		await expect(unsavedChangesNotice(page)).toHaveCount(0);
 	};
 	await page.getByRole('navigation').getByRole('link', { name: 'Pendientes' }).waitFor();
-	const textoDeLaFila = await f(page, L).innerText();
+	const rowText = await f(page, L).innerText();
 
 	// 6
-	await abrirFila(page, L);
-	await paso(page, 2).fill('Juntar las llaves');
-	await pideAvisoYDescarta();
-	expect(await f(page, L).innerText()).toBe(textoDeLaFila);
-	await panelTiene(page, L, P1, [P2]);
+	await openRow(page, L);
+	await step(page, 2).fill('Juntar las llaves');
+	await asksNoticeAndDiscards();
+	expect(await f(page, L).innerText()).toBe(rowText);
+	await panelHas(page, L, P1, [P2]);
 
 	// 7
-	await abrirFila(page, L);
-	await paso(page, 2).fill('Juntar las llaves');
-	await paso(page, 2).fill(P2);
-	await cierraDirecto();
-	await abrirFila(page, L);
-	await paso(page, 2).fill(`   ${P2}   `);
-	await cierraDirecto();
+	await openRow(page, L);
+	await step(page, 2).fill('Juntar las llaves');
+	await step(page, 2).fill(P2);
+	await closesDirect();
+	await openRow(page, L);
+	await step(page, 2).fill(`   ${P2}   `);
+	await closesDirect();
 
 	// 8
-	await abrirFila(page, L);
-	await paso(page, 2).fill('');
-	await pideAvisoYDescarta();
-	await abrirFila(page, L);
-	await paso(page, 2).fill('   ');
-	await pideAvisoYDescarta();
+	await openRow(page, L);
+	await step(page, 2).fill('');
+	await asksNoticeAndDiscards();
+	await openRow(page, L);
+	await step(page, 2).fill('   ');
+	await asksNoticeAndDiscards();
 
 	// 9
-	await abrirFila(page, L);
-	await boton(page, 'Agregar paso').click();
-	await cierraDirecto();
-	await abrirFila(page, L);
-	await agregarPaso(page, 3, P3);
-	await pideAvisoYDescarta();
-	await abrirFila(page, L);
-	await agregarPaso(page, 3, '   ');
-	await cierraDirecto();
+	await openRow(page, L);
+	await button(page, 'Agregar paso').click();
+	await closesDirect();
+	await openRow(page, L);
+	await addStep(page, 3, P3);
+	await asksNoticeAndDiscards();
+	await openRow(page, L);
+	await addStep(page, 3, '   ');
+	await closesDirect();
 
 	// 10
-	await abrirFila(page, L);
-	await quitar(page, 2).click();
-	await pideAvisoYDescarta();
-	await abrirFila(page, L);
-	await boton(page, 'Agregar paso').click();
-	await quitar(page, 3).click();
-	await cierraDirecto();
-	await panelTiene(page, L, P1, [P2]);
+	await openRow(page, L);
+	await remove(page, 2).click();
+	await asksNoticeAndDiscards();
+	await openRow(page, L);
+	await button(page, 'Agregar paso').click();
+	await remove(page, 3).click();
+	await closesDirect();
+	await panelHas(page, L, P1, [P2]);
 
 	// 11
-	await boton(page, '+').click();
+	await button(page, '+').click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
-	await boton(page, 'Agregar paso').click();
-	await cierraDirecto();
-	await boton(page, '+').click();
+	await button(page, 'Agregar paso').click();
+	await closesDirect();
+	await button(page, '+').click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
-	await agregarPaso(page, 2, P2);
-	await pideAvisoYDescarta();
+	await addStep(page, 2, P2);
+	await asksNoticeAndDiscards();
 
 	// 12: se desmarca Lavar para tener sus botones; Hecho y Paso anterior no abren nada.
 	await f(page, L).getByRole('checkbox').click();
-	await expect(hecho(page, L)).toBeVisible();
-	if ((await anterior(page, L).count()) > 0) await anterior(page, L).click();
-	await dice(page, L, P1, true);
-	await hecho(page, L).click();
-	await dice(page, L, P2);
-	await anterior(page, L).click();
-	await dice(page, L, P1, true);
+	await expect(done(page, L)).toBeVisible();
+	if ((await previous(page, L).count()) > 0) await previous(page, L).click();
+	await says(page, L, P1, true);
+	await done(page, L).click();
+	await says(page, L, P2);
+	await previous(page, L).click();
+	await says(page, L, P1, true);
 	await expect(panel(page)).toHaveCount(0);
-	await expect(avisoDeCambios(page)).toHaveCount(0);
+	await expect(unsavedChangesNotice(page)).toHaveCount(0);
 	await expect(page.getByRole('alertdialog')).toHaveCount(0);
 });
 
-async function dispositivos(browser: Browser) {
-	const d = await dosDispositivos(browser, VIERNES);
+async function devices(browser: Browser) {
+	const d = await twoDevices(browser, FRIDAY);
 	for (const p of [d.a, d.b]) {
-		await encenderCompletadas(p);
-		await mostrarPausadas(p).click();
-		await expect(mostrarPausadas(p)).toBeChecked();
+		await turnOnCompleted(p);
+		await showPaused(p).click();
+		await expect(showPaused(p)).toBeChecked();
 	}
 	return d;
 }
 
 test('Flujo 8: dos dispositivos', async ({ browser }) => {
 	test.setTimeout(300_000);
-	const { a, b, ctxB, cerrar: fin } = await dispositivos(browser);
-	const ambos = [a, b];
-	const sincronizar = async () => {
-		await llegaAlServidor(a);
+	const { a, b, ctxB, close: end } = await devices(browser);
+	const both = [a, b];
+	const sync = async () => {
+		await arrivesOnServer(a);
 		await ctxB.setOffline(false);
 		await a.waitForTimeout(10_000); // B reconecta y sus escrituras pendientes llegan; las dos pantallas se actualizan solas
 	};
 	/** El panel muestra esos valores en `p` (con reintentos mientras llega la sincronización). */
-	const panelEs = (p: Page, esPrimero: string, pasos: string[]) =>
+	const panelIs = (p: Page, isFirst: string, steps: string[]) =>
 		expect(async () => {
-			await abrirFila(p, 'Lavar');
-			await expect(primero(p)).toHaveValue(esPrimero, { timeout: 1000 });
-			expect(await valoresDePasos(p)).toEqual(pasos);
-			await cerrar(p);
+			await openRow(p, 'Lavar');
+			await expect(first(p)).toHaveValue(isFirst, { timeout: 1000 });
+			expect(await stepsValues(p)).toEqual(steps);
+			await close(p);
 		}).toPass({ timeout: 60_000 });
 
 	// 1
-	await crear(a, { titulo: 'Lavar', tipo: NO_SE_REPITE, fecha: '', primerPaso: P1, pasos: [P2, P3] });
+	await create(a, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '', firstStep: P1, steps: [P2, P3] });
 	await expect(f(b, 'Lavar')).toBeVisible();
-	for (const p of ambos) await dice(p, 'Lavar', P1, true);
+	for (const p of both) await says(p, 'Lavar', P1, true);
 
 	// 2
 	await ctxB.setOffline(true);
-	await hecho(b, 'Lavar').click();
-	await hecho(a, 'Lavar').click();
-	await sincronizar();
-	for (const p of ambos) await dice(p, 'Lavar', P2);
+	await done(b, 'Lavar').click();
+	await done(a, 'Lavar').click();
+	await sync();
+	for (const p of both) await says(p, 'Lavar', P2);
 
 	// 3
 	await ctxB.setOffline(true);
-	await hecho(b, 'Lavar').click();
-	await dice(b, 'Lavar', P3);
-	await escribirPaso(a, 'Lavar', 2, 'Juntar las llaves');
-	await sincronizar();
-	for (const p of ambos) {
-		await dice(p, 'Lavar', P3);
-		await panelEs(p, P1, ['Juntar las llaves', P3]);
+	await done(b, 'Lavar').click();
+	await says(b, 'Lavar', P3);
+	await writeStep(a, 'Lavar', 2, 'Juntar las llaves');
+	await sync();
+	for (const p of both) {
+		await says(p, 'Lavar', P3);
+		await panelIs(p, P1, ['Juntar las llaves', P3]);
 	}
 
 	// 4
 	await ctxB.setOffline(true);
-	await escribirPaso(b, 'Lavar', 2, 'Buscar el detergente');
-	await anterior(a, 'Lavar').click();
-	await sincronizar();
-	for (const p of ambos) {
-		await dice(p, 'Lavar', 'Buscar el detergente');
-		await panelEs(p, P1, ['Buscar el detergente', P3]);
+	await writeStep(b, 'Lavar', 2, 'Buscar el detergente');
+	await previous(a, 'Lavar').click();
+	await sync();
+	for (const p of both) {
+		await says(p, 'Lavar', 'Buscar el detergente');
+		await panelIs(p, P1, ['Buscar el detergente', P3]);
 	}
 
 	// 5
 	await ctxB.setOffline(true);
-	await escribirPaso(b, 'Lavar', 2, 'Buscar la esponja');
-	await escribirPaso(a, 'Lavar', 2, 'Poner el agua a calentar');
-	await sincronizar();
-	for (const p of ambos) await dice(p, 'Lavar', 'Buscar la esponja');
+	await writeStep(b, 'Lavar', 2, 'Buscar la esponja');
+	await writeStep(a, 'Lavar', 2, 'Poner el agua a calentar');
+	await sync();
+	for (const p of both) await says(p, 'Lavar', 'Buscar la esponja');
 
 	// 6
 	await ctxB.setOffline(true);
-	await escribirPaso(b, 'Lavar', 2, 'Barrer abajo');
-	await escribirPaso(a, 'Lavar', 3, 'Guardar la ropa');
-	await sincronizar();
-	for (const p of ambos) await panelEs(p, P1, ['Barrer abajo', P3]);
+	await writeStep(b, 'Lavar', 2, 'Barrer abajo');
+	await writeStep(a, 'Lavar', 3, 'Guardar la ropa');
+	await sync();
+	for (const p of both) await panelIs(p, P1, ['Barrer abajo', P3]);
 
 	// 7
 	await ctxB.setOffline(true);
-	await escribirPrimero(b, 'Lavar', 'Juntar las llaves');
-	await escribirPaso(a, 'Lavar', 2, 'Tender la ropa');
-	await sincronizar();
-	for (const p of ambos) await panelEs(p, 'Juntar las llaves', ['Tender la ropa', P3]);
+	await writeFirst(b, 'Lavar', 'Juntar las llaves');
+	await writeStep(a, 'Lavar', 2, 'Tender la ropa');
+	await sync();
+	for (const p of both) await panelIs(p, 'Juntar las llaves', ['Tender la ropa', P3]);
 
 	// 8
 	await ctxB.setOffline(true);
-	await escribirPaso(b, 'Lavar', 2, 'Barrer abajo');
-	await abrirFila(a, 'Lavar');
-	await guardar(a);
-	await sincronizar();
-	for (const p of ambos) await panelEs(p, 'Juntar las llaves', ['Barrer abajo', P3]);
+	await writeStep(b, 'Lavar', 2, 'Barrer abajo');
+	await openRow(a, 'Lavar');
+	await save(a);
+	await sync();
+	for (const p of both) await panelIs(p, 'Juntar las llaves', ['Barrer abajo', P3]);
 
-	await fin();
+	await end();
 });

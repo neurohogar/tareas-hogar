@@ -3,45 +3,45 @@ import AxeBuilder from '@axe-core/playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  sembrarEscenaVacia,
-  sembrarEscenaNormal,
-  sembrarEscenaAtrasadas,
+  seedSceneEmpty,
+  seedSceneNormal,
+  seedSceneOverdue,
 } from './scenes.ts';
 
-const RONDA = process.env.RONDA || '0';
-const OUT_DIR = join(process.cwd(), 'tmp/ui-ux', `ronda-${RONDA}`);
+const ROUND = process.env.RONDA || '0';
+const OUT_DIR = join(process.cwd(), 'tmp/ui-ux', `ronda-${ROUND}`);
 
 mkdirSync(OUT_DIR, { recursive: true });
 
-interface Variante {
-  nombre: string;
+interface Variant {
+  name: string;
   viewport: { width: number; height: number };
   hasTouch: boolean;
-  tema: 'light' | 'dark';
+  theme: 'light' | 'dark';
 }
 
-const VARIANTES: Variante[] = [
-  { nombre: 'mobile-light', viewport: { width: 360, height: 640 }, hasTouch: true, tema: 'light' },
-  { nombre: 'mobile-dark', viewport: { width: 360, height: 640 }, hasTouch: true, tema: 'dark' },
-  { nombre: 'desktop-light', viewport: { width: 1280, height: 800 }, hasTouch: false, tema: 'light' },
-  { nombre: 'desktop-dark', viewport: { width: 1280, height: 800 }, hasTouch: false, tema: 'dark' },
+const VARIANTS: Variant[] = [
+  { name: 'mobile-light', viewport: { width: 360, height: 640 }, hasTouch: true, theme: 'light' },
+  { name: 'mobile-dark', viewport: { width: 360, height: 640 }, hasTouch: true, theme: 'dark' },
+  { name: 'desktop-light', viewport: { width: 1280, height: 800 }, hasTouch: false, theme: 'light' },
+  { name: 'desktop-dark', viewport: { width: 1280, height: 800 }, hasTouch: false, theme: 'dark' },
 ];
 
-const ESCENAS = [
-  { id: '1-vacia', sembrar: sembrarEscenaVacia },
-  { id: '2-normal', sembrar: sembrarEscenaNormal },
-  { id: '3-atrasadas', sembrar: sembrarEscenaAtrasadas },
+const SCENES = [
+  { id: '1-vacia', seed: seedSceneEmpty },
+  { id: '2-normal', seed: seedSceneNormal },
+  { id: '3-atrasadas', seed: seedSceneOverdue },
 ];
 
 test.describe.serial('Capturas del Piloto UI/UX', () => {
-  for (const escena of ESCENAS) {
-    for (const variante of VARIANTES) {
-      test(`${escena.id} en ${variante.nombre}`, async ({ page }) => {
-        await page.setViewportSize(variante.viewport);
-        await page.emulateMedia({ colorScheme: variante.tema });
+  for (const scene of SCENES) {
+    for (const variant of VARIANTS) {
+      test(`${scene.id} en ${variant.name}`, async ({ page }) => {
+        await page.setViewportSize(variant.viewport);
+        await page.emulateMedia({ colorScheme: variant.theme });
 
         // Sembrar el estado específico (deja la app en / con login y reloj simulado)
-        await escena.sembrar(page);
+        await scene.seed(page);
 
         // Esperar a que la tipografía y el renderizado estén listos
         await expect(page.getByRole('heading', { name: 'Pendientes' })).toBeVisible();
@@ -49,10 +49,10 @@ test.describe.serial('Capturas del Piloto UI/UX', () => {
         // Breve pausa para asentar animaciones/transiciones
         await page.waitForTimeout(300);
 
-        const capturaId = `${escena.id}_${variante.nombre}`;
-        const pngPath = join(OUT_DIR, `${capturaId}.png`);
-        const axePath = join(OUT_DIR, `${capturaId}.axe.json`);
-        const ariaPath = join(OUT_DIR, `${capturaId}.aria.yml`);
+        const captureId = `${scene.id}_${variant.name}`;
+        const pngPath = join(OUT_DIR, `${captureId}.png`);
+        const axePath = join(OUT_DIR, `${captureId}.axe.json`);
+        const ariaPath = join(OUT_DIR, `${captureId}.aria.yml`);
 
         // 1. Captura visual
         await page.screenshot({ path: pngPath, fullPage: false });
@@ -67,7 +67,7 @@ test.describe.serial('Capturas del Piloto UI/UX', () => {
         const aria = await page.locator('body').ariaSnapshot();
         writeFileSync(ariaPath, aria);
 
-        console.log(`[Ronda ${RONDA}] Captura guardada: ${capturaId} (violaciones axe: ${axeResults.violations.length})`);
+        console.log(`[Ronda ${ROUND}] Captura guardada: ${captureId} (violaciones axe: ${axeResults.violations.length})`);
       });
     }
   }

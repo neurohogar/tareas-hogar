@@ -5,113 +5,113 @@ import { createOneOff, type OneOffData } from '../../src/lib/core/create-one-off
 import { taskData, type TaskData } from '../../src/lib/core/task-data';
 import { taskName } from '../../src/lib/core/task-name';
 import type { Task } from '../../src/lib/core/task';
-import { AHORA, ANTES_DEL_ESCENARIO, registrarCreacion } from './create';
-import { editaElOtro, editoYo } from './editing';
-import { registrarEleccion } from './recent-emojis';
-import { P, TITULO, numero } from './values';
-import { OTRO, elDocumento, laTarea, type StepDefinition, type World } from './world';
+import { NOW, SCENARIO_BEFORE, recordCreation } from './create';
+import { editsOther, editMe } from './editing';
+import { recordChoice } from './recent-emojis';
+import { P, TITLE, numeric } from './values';
+import { OTHER, theDoc, theTask, type StepDefinition, type World } from './world';
 
-const SOLO_ESPACIOS = '   ';
+const ONLY_SPACES = '   ';
 
 /** Lo que el panel escribe en los campos que cambian; el resto queda como estaba. */
-type Campos = Partial<Pick<TaskData, 'title' | 'emoji' | 'note'>>;
-const conCampos = (campos: Campos) => (tarea: Task) => ({ ...taskData(tarea), ...campos });
+type Fields = Partial<Pick<TaskData, 'title' | 'emoji' | 'note'>>;
+const withFields = (fields: Fields) => (task: Task) => ({ ...taskData(task), ...fields });
 
 /** Una nota escrita con espacios y saltos de línea de más al inicio y al final. */
-const conMargenes = (nota: string) => `  \n ${nota} \n  `;
+const withMargins = (note: string) => `  \n ${note} \n  `;
 
-const crear = (world: World, datos: OneOffData, ahora = ANTES_DEL_ESCENARIO) =>
-	registrarCreacion(world, (id) => createOneOff(datos, id, ahora));
+const create = (world: World, data: OneOffData, now = SCENARIO_BEFORE) =>
+	recordCreation(world, (id) => createOneOff(data, id, now));
 
 /** Quién edita la nota: yo, o el otro dispositivo sin ver mi último cambio. */
-const EDITORES = [
-	{ sujeto: 'edito', editar: editoYo },
-	{ sujeto: `${OTRO} edita`, editar: editaElOtro }
+const EDITORS = [
+	{ subject: 'edito', edit: editMe },
+	{ subject: `${OTHER} edita`, edit: editsOther }
 ];
 
 /** Elegir un emoji en el selector: se asigna a la tarea que se edita, si hay una, y pasa a los recientes. */
-function elijo(world: World, emoji: string, campos: Campos = {}): void {
-	registrarEleccion(world, emoji);
-	if (world.documentos.length > 0) editoYo(world, conCampos({ emoji, ...campos }));
+function choose(world: World, emoji: string, fields: Fields = {}): void {
+	recordChoice(world, emoji);
+	if (world.docs.length > 0) editMe(world, withFields({ emoji, ...fields }));
 }
 
 /** Cada forma de cambio de la nota: "<sujeto> la nota a ...". */
-const CAMBIOS: { text: string; campos: (...valores: string[]) => Campos }[] = [
-	{ text: `la nota a ${P}`, campos: (nota) => ({ note: nota }) },
-	{ text: `la nota a ${P} con espacios al inicio y al final`, campos: (nota) => ({ note: conMargenes(nota) }) },
-	{ text: `la nota a ${P} y ${P} en líneas separadas`, campos: (primera, segunda) => ({ note: `${primera}\n${segunda}` }) },
-	{ text: 'la nota a una de solo espacios', campos: () => ({ note: SOLO_ESPACIOS }) },
-	{ text: `la nota a una de ${P} caracteres`, campos: (largo) => ({ note: 'x'.repeat(numero(largo)) }) }
+const CHANGES: { text: string; fields: (...values: string[]) => Fields }[] = [
+	{ text: `la nota a ${P}`, fields: (note) => ({ note }) },
+	{ text: `la nota a ${P} con espacios al inicio y al final`, fields: (note) => ({ note: withMargins(note) }) },
+	{ text: `la nota a ${P} y ${P} en líneas separadas`, fields: (first, second) => ({ note: `${first}\n${second}` }) },
+	{ text: 'la nota a una de solo espacios', fields: () => ({ note: ONLY_SPACES }) },
+	{ text: `la nota a una de ${P} caracteres`, fields: (length) => ({ note: 'x'.repeat(numeric(length)) }) }
 ];
 
-const pasosDeEditar: StepDefinition[] = EDITORES.flatMap(({ sujeto, editar }) =>
-	CAMBIOS.map(({ text: texto, campos }) => ({
-		pattern: new RegExp(`^${sujeto} ${texto}$`),
-		run: (world: World, ...valores: string[]) => editar(world, conCampos(campos(...valores)))
+const editSteps: StepDefinition[] = EDITORS.flatMap(({ subject, edit }) =>
+	CHANGES.map(({ text, fields }) => ({
+		pattern: new RegExp(`^${subject} ${text}$`),
+		run: (world: World, ...values: string[]) => edit(world, withFields(fields(...values)))
 	}))
 );
 
-export const emojiYNotaSteps: StepDefinition[] = [
-	...pasosDeEditar,
+export const emojiAndNoteSteps: StepDefinition[] = [
+	...editSteps,
 	{
 		pattern: new RegExp(`^elijo el emoji ${P}$`),
-		run: (world, emoji) => elijo(world, emoji)
+		run: (world, emoji) => choose(world, emoji)
 	},
 	{
 		pattern: new RegExp(`^elijo el emoji ${P} y edito la nota a ${P}$`),
-		run: (world, emoji, nota) => elijo(world, emoji, { note: nota })
+		run: (world, emoji, note) => choose(world, emoji, { note })
 	},
 	{
-		pattern: new RegExp(`^${OTRO} elige el emoji ${P}$`),
-		run: (world, emoji) => editaElOtro(world, conCampos({ emoji }))
+		pattern: new RegExp(`^${OTHER} elige el emoji ${P}$`),
+		run: (world, emoji) => editsOther(world, withFields({ emoji }))
 	},
 	{
 		// Quitar es dejar la tarea sin emoji; no pasa por los recientes.
 		pattern: /^quito el emoji$/,
-		run: (world) => editoYo(world, conCampos({ emoji: '' }))
+		run: (world) => editMe(world, withFields({ emoji: '' }))
 	},
 	{
 		pattern: new RegExp(`^una tarea puntual sin fecha límite con emoji ${P}$`),
-		run: (world, emoji) => crear(world, { title: 'Tarea', emoji }, AHORA)
+		run: (world, emoji) => create(world, { title: 'Tarea', emoji }, NOW)
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual ${TITULO} sin fecha límite con emoji ${P}$`),
-		run: (world, titulo, emoji) => crear(world, { title: titulo, emoji })
+		pattern: new RegExp(`^una tarea puntual ${TITLE} sin fecha límite con emoji ${P}$`),
+		run: (world, title, emoji) => create(world, { title, emoji })
 	},
 	{
 		pattern: new RegExp(`^una tarea puntual sin fecha límite con nota ${P}$`),
-		run: (world, nota) => crear(world, { title: 'Tarea', note: nota }, AHORA)
+		run: (world, note) => create(world, { title: 'Tarea', note }, NOW)
 	},
 	{
 		pattern: new RegExp(`^creo una tarea puntual con título ${P}, emoji ${P} y nota ${P}$`),
-		run: (world, titulo, emoji, nota) => crear(world, { title: titulo, emoji, note: nota }, AHORA)
+		run: (world, title, emoji, note) => create(world, { title, emoji, note }, NOW)
 	},
 	{
 		pattern: new RegExp(`^la tarea tiene emoji ${P}$`),
-		run: (world, emoji) => expect(laTarea(world).emoji).toBe(emoji)
+		run: (world, emoji) => expect(theTask(world).emoji).toBe(emoji)
 	},
 	{
 		pattern: /^la tarea no tiene emoji$/,
-		run: (world) => expect(elDocumento(world)).not.toHaveProperty('emoji')
+		run: (world) => expect(theDoc(world)).not.toHaveProperty('emoji')
 	},
 	{
 		pattern: new RegExp(`^la tarea tiene nota ${P}$`),
-		run: (world, nota) => expect(laTarea(world).note).toBe(nota)
+		run: (world, note) => expect(theTask(world).note).toBe(note)
 	},
 	{
 		pattern: new RegExp(`^la nota de la tarea tiene dos líneas: ${P} y ${P}$`),
-		run: (world, primera, segunda) => expect(laTarea(world).note?.split('\n')).toEqual([primera, segunda])
+		run: (world, first, second) => expect(theTask(world).note?.split('\n')).toEqual([first, second])
 	},
 	{
 		pattern: /^la tarea no tiene nota$/,
-		run: (world) => expect(elDocumento(world)).not.toHaveProperty('note')
+		run: (world) => expect(theDoc(world)).not.toHaveProperty('note')
 	},
 	{
 		pattern: new RegExp(`^la tarea tiene una nota de ${P} caracteres$`),
-		run: (world, largo) => expect(laTarea(world).note).toHaveLength(numero(largo))
+		run: (world, length) => expect(theTask(world).note).toHaveLength(numeric(length))
 	},
 	{
 		pattern: new RegExp(`^el nombre de la tarea es ${P}$`),
-		run: (world, nombre) => expect(taskName(laTarea(world))).toBe(nombre)
+		run: (world, name) => expect(taskName(theTask(world))).toBe(name)
 	}
 ];

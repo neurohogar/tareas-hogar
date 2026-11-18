@@ -1,114 +1,114 @@
 import { expect } from 'vitest';
 import { createOneOff, type OneOffData } from '../../src/lib/core/create-one-off';
 import type { Task } from '../../src/lib/core/task';
-import { AHORA, ANTES_DEL_ESCENARIO, TITULO_VALIDO, registrarCreacion } from './create';
-import { registrarCompletado } from './recurring-relative';
-import { P, TITULO, fecha, fechaHora } from './values';
-import { elDocumento, laTarea, laTareaDeTipo, laTareaTitulada, type StepDefinition, type World } from './world';
+import { NOW, SCENARIO_BEFORE, TITLE_VALID, recordCreation } from './create';
+import { recordCompletion } from './recurring-relative';
+import { P, TITLE, date, dateHour } from './values';
+import { theDoc, theTask, theTaskOfKind, theTaskTitled, type StepDefinition, type World } from './world';
 
 /** Una fecha límite cualquiera: el escenario dice que no influye en el resultado. */
-const UNA_FECHA_LIMITE = '2026-07-20';
+const DUE_DATE = '2026-07-20';
 
 /** Momentos de completados ya registrados: el escenario dice que no influyen en el resultado. */
-const MOMENTOS_DE_COMPLETADOS = [new Date(2026, 6, 10, 9, 0, 0), new Date(2026, 6, 25, 18, 30, 0)];
-const CANTIDAD_DE_COMPLETADOS = { 'un completado': 1, 'dos completados': 2 };
-const CANTIDAD = `(${Object.keys(CANTIDAD_DE_COMPLETADOS).join('|')})`;
+const COMPLETIONS_MOMENTS = [new Date(2026, 6, 10, 9, 0, 0), new Date(2026, 6, 25, 18, 30, 0)];
+const COMPLETIONS_COUNT = { 'un completado': 1, 'dos completados': 2 };
+const COUNT = `(${Object.keys(COMPLETIONS_COUNT).join('|')})`;
 
-function registrarCompletados(world: World, tarea: Task, cantidad: string): void {
-	const cuantos = CANTIDAD_DE_COMPLETADOS[cantidad as keyof typeof CANTIDAD_DE_COMPLETADOS];
-	for (const momento of MOMENTOS_DE_COMPLETADOS.slice(0, cuantos)) registrarCompletado(world, momento, tarea);
+function recordCompletions(world: World, task: Task, count: string): void {
+	const howMany = COMPLETIONS_COUNT[count as keyof typeof COMPLETIONS_COUNT];
+	for (const moment of COMPLETIONS_MOMENTS.slice(0, howMany)) recordCompletion(world, moment, task);
 }
 
 /** La fecha límite llega como texto crudo: validarla es del dominio. */
-function crear(world: World, datos: OneOffData, ahora = AHORA): void {
-	registrarCreacion(world, (id) => createOneOff(datos, id, ahora));
+function create(world: World, data: OneOffData, now = NOW): void {
+	recordCreation(world, (id) => createOneOff(data, id, now));
 }
 
-const laPuntual = (world: World) => laTareaDeTipo(world, 'puntual');
+const theOneOff = (world: World) => theTaskOfKind(world, 'puntual');
 
-export const puntualSteps: StepDefinition[] = [
+export const oneOffSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^creo una tarea puntual con título ${P} y fecha límite ${P}$`),
-		run: (world, titulo, fechaLimite) => crear(world, { title: titulo, dueDate: fechaLimite })
+		run: (world, title, dueDate) => create(world, { title, dueDate })
 	},
 	{
 		pattern: new RegExp(`^creo una tarea puntual con título ${P} y sin fecha límite$`),
-		run: (world, titulo) => crear(world, { title: titulo })
+		run: (world, title) => create(world, { title })
 	},
 	{
 		pattern: /^creo una tarea puntual con un título de solo espacios y sin fecha límite$/,
-		run: (world) => crear(world, { title: '   ' })
+		run: (world) => create(world, { title: '   ' })
 	},
 	{
 		pattern: new RegExp(`^creo una tarea puntual con un título válido y fecha límite ${P}$`),
-		run: (world, fechaLimite) => crear(world, { title: TITULO_VALIDO, dueDate: fechaLimite })
+		run: (world, dueDate) => create(world, { title: TITLE_VALID, dueDate })
 	},
 	{
 		pattern: new RegExp(`^creo el ${P} una tarea puntual con un título válido y fecha límite ${P}$`),
-		run: (world, creada, fechaLimite) => crear(world, { title: TITULO_VALIDO, dueDate: fechaLimite }, fechaHora(creada))
+		run: (world, created, dueDate) => create(world, { title: TITLE_VALID, dueDate }, dateHour(created))
 	},
 	{
 		pattern: /^una tarea puntual sin fecha límite$/,
-		run: (world) => crear(world, { title: 'Tarea' })
+		run: (world) => create(world, { title: 'Tarea' })
 	},
 	{
 		pattern: new RegExp(`^una tarea puntual sin fecha límite creada el ${P}$`),
-		run: (world, creada) => crear(world, { title: 'Tarea' }, fechaHora(creada))
+		run: (world, created) => create(world, { title: 'Tarea' }, dateHour(created))
 	},
 	{
 		pattern: new RegExp(`^una tarea puntual con fecha límite ${P}$`),
-		run: (world, fechaLimite) => crear(world, { title: 'Tarea', dueDate: fechaLimite })
+		run: (world, dueDate) => create(world, { title: 'Tarea', dueDate })
 	},
 	{
 		pattern: new RegExp(`^una tarea puntual con fecha límite ${P} creada el ${P}$`),
-		run: (world, fechaLimite, creada) => crear(world, { title: 'Tarea', dueDate: fechaLimite }, fechaHora(creada))
+		run: (world, dueDate, created) => create(world, { title: 'Tarea', dueDate }, dateHour(created))
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual ${TITULO} con fecha límite ${P}$`),
-		run: (world, titulo, fechaLimite) => crear(world, { title: titulo, dueDate: fechaLimite }, ANTES_DEL_ESCENARIO)
+		pattern: new RegExp(`^una tarea puntual ${TITLE} con fecha límite ${P}$`),
+		run: (world, title, dueDate) => create(world, { title, dueDate }, SCENARIO_BEFORE)
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual ${TITULO} con fecha límite ${P} creada el ${P}$`),
-		run: (world, titulo, fechaLimite, creada) => crear(world, { title: titulo, dueDate: fechaLimite }, fechaHora(creada))
+		pattern: new RegExp(`^una tarea puntual ${TITLE} con fecha límite ${P} creada el ${P}$`),
+		run: (world, title, dueDate, created) => create(world, { title, dueDate }, dateHour(created))
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual ${TITULO} sin fecha límite$`),
-		run: (world, titulo) => crear(world, { title: titulo }, ANTES_DEL_ESCENARIO)
+		pattern: new RegExp(`^una tarea puntual ${TITLE} sin fecha límite$`),
+		run: (world, title) => create(world, { title }, SCENARIO_BEFORE)
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual ${TITULO} sin fecha límite creada el ${P}$`),
-		run: (world, titulo, creada) => crear(world, { title: titulo }, fechaHora(creada))
+		pattern: new RegExp(`^una tarea puntual ${TITLE} sin fecha límite creada el ${P}$`),
+		run: (world, title, created) => create(world, { title }, dateHour(created))
 	},
 	{
 		pattern: /^una tarea puntual con una fecha límite cualquiera$/,
-		run: (world) => crear(world, { title: 'Tarea', dueDate: UNA_FECHA_LIMITE })
+		run: (world) => create(world, { title: 'Tarea', dueDate: DUE_DATE })
 	},
 	{
 		pattern: /^se crea una tarea puntual$/,
-		run: (world) => laPuntual(world)
+		run: (world) => theOneOff(world)
 	},
 	{
 		pattern: new RegExp(`^su fecha límite es ${P}$`),
-		run: (world, fechaLimite) => expect(laPuntual(world).dueDate).toEqual(fecha(fechaLimite))
+		run: (world, dueDate) => expect(theOneOff(world).dueDate).toEqual(date(dueDate))
 	},
 	{
 		pattern: /^la tarea no tiene fecha límite$/,
-		run: (world) => expect(elDocumento(world)).not.toHaveProperty('dueDate')
+		run: (world) => expect(theDoc(world)).not.toHaveProperty('dueDate')
 	},
 	{
 		// Antes de tocar el checkbox declara los completados; después, afirma cuántos quedaron.
-		pattern: new RegExp(`^la tarea tiene ${CANTIDAD}$`),
-		run: (world, cantidad) => {
-			if (!world.checkboxTocado) return registrarCompletados(world, laTarea(world), cantidad);
-			expect(world.completions.filter(({ taskId: tareaId }) => tareaId === laTarea(world).id)).toHaveLength(CANTIDAD_DE_COMPLETADOS[cantidad as keyof typeof CANTIDAD_DE_COMPLETADOS]);
+		pattern: new RegExp(`^la tarea tiene ${COUNT}$`),
+		run: (world, count) => {
+			if (!world.checkboxTouched) return recordCompletions(world, theTask(world), count);
+			expect(world.completions.filter(({ taskId }) => taskId === theTask(world).id)).toHaveLength(COMPLETIONS_COUNT[count as keyof typeof COMPLETIONS_COUNT]);
 		}
 	},
 	{
-		pattern: new RegExp(`^la tarea ${TITULO} tiene ${CANTIDAD}$`),
-		run: (world, titulo, cantidad) => registrarCompletados(world, laTareaTitulada(world, titulo), cantidad)
+		pattern: new RegExp(`^la tarea ${TITLE} tiene ${COUNT}$`),
+		run: (world, title, count) => recordCompletions(world, theTaskTitled(world, title), count)
 	},
 	{
 		pattern: new RegExp(`^el completado registrado es del ${P}$`),
-		run: (world, completada) => expect(world.nuevoCompletado?.completedAt).toEqual(fechaHora(completada))
+		run: (world, completed) => expect(world.newCompletion?.completedAt).toEqual(dateHour(completed))
 	}
 ];

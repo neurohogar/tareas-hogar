@@ -3,269 +3,269 @@
 // handlers: es una segunda implementación, así que la implementación no juzga a sus propios tests. Lo que el
 // spec no decide devuelve undefined: no se filtra.
 import {
-	armar,
-	clasificarSituacion,
-	conHorarioDe,
-	DIAS_DE_LA_SEMANA,
-	disponibleYCierre,
-	elementos,
-	enEsperaPorPosposicion,
-	estadoSegunSuRegla,
-	fecha,
-	inicioDelDia,
-	intervaloMs,
-	ordenDePendientes,
-	porVentana,
-	posposicionVigente,
-	primeraPosterior,
-	proximaConHorario,
-	resolver,
-	SIN_PROGRESO,
-	ultimaCubierta,
-	type FilaOraculo,
-	type PasoOraculo,
-	type Situacion
+	build,
+	classifySituation,
+	withScheduleOf,
+	WEEKDAYS,
+	availableAndClosing,
+	elements,
+	inWaitByPostponement,
+	statusPerItsRule,
+	date,
+	dayStart,
+	intervalMs,
+	pendingOrder,
+	byTimeWindow,
+	postponementActive,
+	firstLater,
+	nextWithSchedule,
+	resolve,
+	WITHOUT_PROGRESS,
+	lastCovered,
+	type RowOracle,
+	type StepOracle,
+	type Situation
 } from './oracle';
-import { avisoSeVe } from './oracle-history';
+import { noticeSees } from './oracle-history';
 
-const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-const MS_DE_MINUTO = 60_000;
-const MS_DE_HORA = 3_600_000;
-const MINUTOS_POR_HORA = 60;
-const MS_DE_DIA = 86_400_000;
+const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const MINUTE_MS = 60_000;
+const HOUR_MS = 3_600_000;
+const MINUTES_BY_HOUR = 60;
+const DAY_MS = 86_400_000;
 
 /** Lo que se observa cuando la fila (o el aviso) no lleva texto. */
-export const SIN_TEXTO = 'sin texto';
+export const WITHOUT_TEXT = 'sin texto';
 
-const dosCifras = (n: number) => String(n).padStart(2, '0');
-const plural = (n: number, unidad: string) => `${n} ${unidad}${n === 1 ? '' : 's'}`;
+const twoDigits = (n: number) => String(n).padStart(2, '0');
+const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
 
 /** Días locales de `instante` respecto de `ahora` (negativo: pasado). */
-const diasLocalesDesde = (instante: number, ahora: number) =>
-	Math.round((inicioDelDia(instante).getTime() - inicioDelDia(ahora).getTime()) / MS_DE_DIA);
+const daysLocalFrom = (instant: number, now: number) =>
+	Math.round((dayStart(instant).getTime() - dayStart(now).getTime()) / DAY_MS);
 
 /** §6.1 Fecha: «hoy»/«ayer»/«mañana» o «el martes 10 [de <mes>][ de <año>]», con la hora si no son las 00:00. */
-function fechaDe(instante: number, ahora: number): string | undefined {
-	const d = new Date(instante);
-	const n = new Date(ahora);
-	const dias = diasLocalesDesde(instante, ahora);
-	const palabra = { [-1]: 'ayer', 0: 'hoy', 1: 'mañana' }[dias];
+function dateOf(instant: number, now: number): string | undefined {
+	const d = new Date(instant);
+	const n = new Date(now);
+	const days = daysLocalFrom(instant, now);
+	const word = { [-1]: 'ayer', 0: 'hoy', 1: 'mañana' }[days];
 	// El spec no dice qué pasa con otro año y el mismo mes: no se decide.
-	if (palabra === undefined && d.getFullYear() !== n.getFullYear() && d.getMonth() === n.getMonth()) return undefined;
-	const mes = d.getMonth() === n.getMonth() ? '' : ` de ${MESES[d.getMonth()]}`;
-	const anio = d.getFullYear() === n.getFullYear() ? '' : ` de ${d.getFullYear()}`;
-	const dia = palabra ?? `el ${DIAS_DE_LA_SEMANA[d.getDay()]} ${d.getDate()}${mes}${anio}`;
-	const conHora = d.getHours() !== 0 || d.getMinutes() !== 0;
-	return conHora ? `${dia} ${dosCifras(d.getHours())}:${dosCifras(d.getMinutes())}` : dia;
+	if (word === undefined && d.getFullYear() !== n.getFullYear() && d.getMonth() === n.getMonth()) return undefined;
+	const month = d.getMonth() === n.getMonth() ? '' : ` de ${MONTHS[d.getMonth()]}`;
+	const year = d.getFullYear() === n.getFullYear() ? '' : ` de ${d.getFullYear()}`;
+	const day = word ?? `el ${WEEKDAYS[d.getDay()]} ${d.getDate()}${month}${year}`;
+	const withHour = d.getHours() !== 0 || d.getMinutes() !== 0;
+	return withHour ? `${day} ${twoDigits(d.getHours())}:${twoDigits(d.getMinutes())}` : day;
 }
 
 /** §6.1 Distancia en horas o minutos (fecha de hoy, ayer o mañana con hora): pasado hacia abajo, futuro hacia arriba. */
-function distanciaCorta(instante: number, ahora: number): string | undefined {
-	const diferencia = instante - ahora;
-	if (diferencia >= 0) {
+function distanceShort(instant: number, now: number): string | undefined {
+	const difference = instant - now;
+	if (difference >= 0) {
 		// Lo futuro se redondea hacia arriba a minutos enteros primero: 60 minutos ya no son «menos de una hora».
-		const minutos = Math.ceil(diferencia / MS_DE_MINUTO);
-		return minutos < MINUTOS_POR_HORA ? `en ${plural(minutos, 'minuto')}` : `en ${plural(Math.ceil(diferencia / MS_DE_HORA), 'hora')}`;
+		const minutes = Math.ceil(difference / MINUTE_MS);
+		return minutes < MINUTES_BY_HOUR ? `en ${plural(minutes, 'minuto')}` : `en ${plural(Math.ceil(difference / HOUR_MS), 'hora')}`;
 	}
-	const pasado = -diferencia;
-	if (pasado >= MS_DE_HORA) return `hace ${plural(Math.floor(pasado / MS_DE_HORA), 'hora')}`;
+	const past = -difference;
+	if (past >= HOUR_MS) return `hace ${plural(Math.floor(past / HOUR_MS), 'hora')}`;
 	// §6.1: a menos de un minuto en el pasado la distancia es «ahora», no «hace 0 minutos».
-	return pasado >= MS_DE_MINUTO ? `hace ${plural(Math.floor(pasado / MS_DE_MINUTO), 'minuto')}` : 'ahora';
+	return past >= MINUTE_MS ? `hace ${plural(Math.floor(past / MINUTE_MS), 'minuto')}` : 'ahora';
 }
 
 /** §6.1 Frase: «<Tocaba|Vuelve> <fecha>[ · <distancia>]». */
-export function fraseDeFecha(palabra: 'Tocaba' | 'Vuelve', instante: number, ahora: number): string | undefined {
-	const fechaEscrita = fechaDe(instante, ahora);
-	if (fechaEscrita === undefined) return undefined;
-	const dias = diasLocalesDesde(instante, ahora);
-	if (Math.abs(dias) >= 2) return `${palabra} ${fechaEscrita} · ${dias < 0 ? `hace ${-dias} días` : `en ${dias} días`}`;
-	const conHora = fechaEscrita.includes(':');
-	if (!conHora) return `${palabra} ${fechaEscrita}`;
-	const distancia = distanciaCorta(instante, ahora);
-	return distancia && `${palabra} ${fechaEscrita} · ${distancia}`;
+export function datePhrase(word: 'Tocaba' | 'Vuelve', instant: number, now: number): string | undefined {
+	const dateWritten = dateOf(instant, now);
+	if (dateWritten === undefined) return undefined;
+	const days = daysLocalFrom(instant, now);
+	if (Math.abs(days) >= 2) return `${word} ${dateWritten} · ${days < 0 ? `hace ${-days} días` : `en ${days} días`}`;
+	const withHour = dateWritten.includes(':');
+	if (!withHour) return `${word} ${dateWritten}`;
+	const distance = distanceShort(instant, now);
+	return distance && `${word} ${dateWritten} · ${distance}`;
 }
 
 /** V: cuándo vuelve una relativa sin horario, el último completado más su intervalo. */
-function vencimientoRelativo(s: Situacion): number | undefined {
-	const intervalo = intervaloMs(s.cada, s.unidad);
-	return intervalo === undefined || s.completados.length === 0 ? undefined : Math.max(...s.completados) + intervalo;
+function dueRelative(s: Situation): number | undefined {
+	const interval = intervalMs(s.every, s.unit);
+	return interval === undefined || s.completions.length === 0 ? undefined : Math.max(...s.completions) + interval;
 }
 
 /** El 00:00 de N, la ocurrencia de calendario sin horario (§5.3). */
-function inicioDeN(s: Situacion): number | undefined {
-	const p = ultimaCubierta(s);
-	return p && s.calendario && primeraPosterior(s.calendario, p)?.getTime();
+function nStart(s: Situation): number | undefined {
+	const p = lastCovered(s);
+	return p && s.calendar && firstLater(s.calendar, p)?.getTime();
 }
 
 /** §6.1 Instante de «Vuelve» por la regla propia de la tarea (§5.2, §5.3, §5.5). */
-function vuelveDeSuRegla(s: Situacion, ahora: number): number | undefined {
-	if (s.horario) return conHorarioDe(s, s.horario, ahora)?.espera?.vuelve;
-	return s.calendario ? inicioDeN(s) : vencimientoRelativo(s);
+function returnsOfItsRule(s: Situation, now: number): number | undefined {
+	if (s.schedule) return withScheduleOf(s, s.schedule, now)?.wait?.returns;
+	return s.calendar ? nStart(s) : dueRelative(s);
 }
 
 /** §6.1 Instante de «Vuelve»: el de su regla y, con posposición vigente, el más tarde de las dos causas (§5.9). */
-function vuelve(s: Situacion, ahora: number): number | undefined {
-	const hasta = posposicionVigente(s)?.hasta;
-	const propia = estadoSegunSuRegla(s, SIN_PROGRESO) === 'en espera' ? vuelveDeSuRegla(s, ahora) : undefined;
-	if (hasta !== undefined && enEsperaPorPosposicion(s)) return hasta;
-	if (hasta !== undefined) return propia === undefined ? undefined : Math.max(propia, hasta);
-	return propia;
+function returns(s: Situation, now: number): number | undefined {
+	const to = postponementActive(s)?.to;
+	const own = statusPerItsRule(s, WITHOUT_PROGRESS) === 'en espera' ? returnsOfItsRule(s, now) : undefined;
+	if (to !== undefined && inWaitByPostponement(s)) return to;
+	if (to !== undefined) return own === undefined ? undefined : Math.max(own, to);
+	return own;
 }
 
 /** §6.1 Instante de «Tocaba» de una periódica con horario (§5.5, §5.6, §5.7): A, el inicio de N, o V si A no llegó. */
-function tocabaConHorario(s: Situacion, ahora: number): number | undefined {
-	const vs = s.horario;
+function wasDueWithSchedule(s: Situation, now: number): number | undefined {
+	const vs = s.schedule;
 	if (!vs) return undefined;
-	if (s.calendario || porVentana(s.unidad, vs)) return proximaConHorario(s, vs)?.abre;
-	const t = s.completados.length > 0 ? vencimientoRelativo(s) : s.creada?.getTime();
+	if (s.calendar || byTimeWindow(s.unit, vs)) return nextWithSchedule(s, vs)?.opens;
+	const t = s.completions.length > 0 ? dueRelative(s) : s.created?.getTime();
 	if (t === undefined) return undefined;
-	const a = disponibleYCierre(vs, t).a;
-	return ahora >= a ? a : t;
+	const a = availableAndClosing(vs, t).a;
+	return now >= a ? a : t;
 }
 
 /** §6.1 Instante de «Tocaba», por tipo; nunca es un instante futuro. */
-function tocaba(s: Situacion, ahora: number): number | undefined {
-	if (s.puntual) return s.puntual.limite?.getTime();
-	if (s.horario) return tocabaConHorario(s, ahora);
-	return s.calendario ? inicioDeN(s) : vencimientoRelativo(s);
+function wasDue(s: Situation, now: number): number | undefined {
+	if (s.oneOff) return s.oneOff.limit?.getTime();
+	if (s.schedule) return wasDueWithSchedule(s, now);
+	return s.calendar ? nStart(s) : dueRelative(s);
 }
 
 /** El texto de fecha de la fila (§6.1) de la tarea armada a `ahora`; SIN_TEXTO si no lleva; undefined si no se decide. */
-export function textoDeLaFila(s: Situacion): string | undefined {
-	const ahora = s.ahora;
-	if (ahora === undefined || s.puntual?.cualquiera) return undefined;
-	if (s.pausada) return SIN_TEXTO;
-	const posposicion = posposicionVigente(s) !== undefined && enEsperaPorPosposicion(s);
-	const estado = posposicion ? 'en espera' : estadoSegunSuRegla(s, SIN_PROGRESO);
-	if (estado === 'atrasada') {
-		const instante = tocaba(s, ahora);
-		return instante === undefined ? undefined : fraseDeFecha('Tocaba', instante, ahora);
+export function rowText(s: Situation): string | undefined {
+	const now = s.now;
+	if (now === undefined || s.oneOff?.any) return undefined;
+	if (s.paused) return WITHOUT_TEXT;
+	const postponement = postponementActive(s) !== undefined && inWaitByPostponement(s);
+	const status = postponement ? 'en espera' : statusPerItsRule(s, WITHOUT_PROGRESS);
+	if (status === 'atrasada') {
+		const instant = wasDue(s, now);
+		return instant === undefined ? undefined : datePhrase('Tocaba', instant, now);
 	}
-	if (estado === 'en espera') {
-		const instante = vuelve(s, ahora);
-		return instante === undefined ? undefined : fraseDeFecha('Vuelve', instante, ahora);
+	if (status === 'en espera') {
+		const instant = returns(s, now);
+		return instant === undefined ? undefined : datePhrase('Vuelve', instant, now);
 	}
-	return estado === 'pendiente' || estado === 'no aparece en Pendientes' ? SIN_TEXTO : undefined;
+	return status === 'pendiente' || status === 'no aparece en Pendientes' ? WITHOUT_TEXT : undefined;
 }
 
 /** §5.4 y §6.1: el regreso del aviso consultado a `ahora`: el «Vuelve …» de una periódica, nada en una puntual. */
-export function regresoDelAvisoDe(s: Situacion, ahora: number): string | undefined {
-	if (s.puntual) return s.puntual.cualquiera ? undefined : SIN_TEXTO;
-	const instante = vuelve({ ...s, ahora }, ahora);
-	return instante === undefined ? undefined : fraseDeFecha('Vuelve', instante, ahora);
+export function returnOfNoticeOf(s: Situation, now: number): string | undefined {
+	if (s.oneOff) return s.oneOff.any ? undefined : WITHOUT_TEXT;
+	const instant = returns({ ...s, now }, now);
+	return instant === undefined ? undefined : datePhrase('Vuelve', instant, now);
 }
 
-const THEN_DE_FILA = /^la fila de la tarea (?:muestra el texto (.*)|no muestra texto de fecha)$/su;
-const THEN_DE_FILA_DE_TITULO = /^la fila de ([A-ZÁÉÍÓÚÑ]\w*) muestra el texto (.*)$/su;
-const THEN_DE_PRIMER_PASO = /^la fila de la tarea (?:muestra el primer paso (.*)|no muestra primer paso)$/su;
-const PRIMER_PASO_GUARDADO = /^el primer paso de la tarea es (.*)$/su;
-const THEN_DE_CHECKBOX = /^el checkbox de la tarea está (habilitado|deshabilitado)$/;
+const ROW_THEN = /^la fila de la tarea (?:muestra el texto (.*)|no muestra texto de fecha)$/su;
+const THEN_OF_ROW_OF_TITLE = /^la fila de ([A-ZÁÉÍÓÚÑ]\w*) muestra el texto (.*)$/su;
+const THEN_OF_FIRST_STEP = /^la fila de la tarea (?:muestra el primer paso (.*)|no muestra primer paso)$/su;
+const FIRST_STEP_SAVED = /^el primer paso de la tarea es (.*)$/su;
+const CHECKBOX_THEN = /^el checkbox de la tarea está (habilitado|deshabilitado)$/;
 /** Pasos que el oráculo de edición modela mejor (el checkbox tocado, el completado borrado): lo decide ese oráculo. */
-const PASO_DE_EDICION = /^(?:toco el checkbox de la tarea |borro el completado del )/;
-const THEN_DE_ORDEN = /^Pendientes muestra en orden (.*)$/su;
-const THEN_DE_AVISO = /^el aviso del completado (?:muestra el regreso (.*)|no muestra regreso)$/su;
-const CONSULTA_DEL_AVISO = /^consulto el aviso el (\S+)$/;
-const DECLARA_UNA_TAREA = /^una tarea /;
-const TITULO_EN_EL_PASO = /\b(tarea(?: puntual| periódica (?:relativa|semanal|mensual))?) ([A-ZÁÉÍÓÚÑ]\w*)\b/u;
-const tituloDelPaso = (texto: string) => TITULO_EN_EL_PASO.exec(texto)?.[2];
+const EDITING_STEP = /^(?:toco el checkbox de la tarea |borro el completado del )/;
+const ORDER_THEN = /^Pendientes muestra en orden (.*)$/su;
+const NOTICE_THEN = /^el aviso del completado (?:muestra el regreso (.*)|no muestra regreso)$/su;
+const NOTICE_QUERY = /^consulto el aviso el (\S+)$/;
+const DECLARES_TASK = /^una tarea /;
+const TITLE_IN_STEP = /\b(tarea(?: puntual| periódica (?:relativa|semanal|mensual))?) ([A-ZÁÉÍÓÚÑ]\w*)\b/u;
+const stepTitle = (text: string) => TITLE_IN_STEP.exec(text)?.[2];
 
 /** Los pasos de la tarea (§4.1, Pasos) los modela el oráculo de edición, que sigue el avance y los completados. */
-const PASO_DE_LOS_PASOS = /^(?:los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|vacío el paso |la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está )/;
+const STEPS_STEP = /^(?:los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|vacío el paso |la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está )/;
 
 /** La versión mínima (§4.1, §6.1) y su botón los modela el oráculo de edición, que sigue los completados y el aviso. */
-const PASO_DE_LA_MINIMA = /^(?:la versión mínima de la tarea |toco Hice la mínima |la fila de la tarea (?:muestra la mínima |no muestra mínima$)|el botón Hice la mínima )/;
+const MINIMAL_STEP = /^(?:la versión mínima de la tarea |toco Hice la mínima |la fila de la tarea (?:muestra la mínima |no muestra mínima$)|el botón Hice la mínima )/;
 
-export const esEscenarioDeTextoDeFecha = (textos: string[]) =>
-	!textos.some((texto) => PASO_DE_LOS_PASOS.test(texto) || PASO_DE_LA_MINIMA.test(texto)) &&
-	!(textos.some((texto) => THEN_DE_PRIMER_PASO.test(texto)) && textos.some((texto) => PASO_DE_EDICION.test(texto))) &&
-	textos.some((texto) => THEN_DE_FILA.test(texto) || THEN_DE_PRIMER_PASO.test(texto) || THEN_DE_FILA_DE_TITULO.test(texto) || THEN_DE_AVISO.test(texto));
+export const isScenarioOfTextOfDate = (texts: string[]) =>
+	!texts.some((text) => STEPS_STEP.test(text) || MINIMAL_STEP.test(text)) &&
+	!(texts.some((text) => THEN_OF_FIRST_STEP.test(text)) && texts.some((text) => EDITING_STEP.test(text))) &&
+	texts.some((text) => ROW_THEN.test(text) || THEN_OF_FIRST_STEP.test(text) || THEN_OF_ROW_OF_TITLE.test(text) || NOTICE_THEN.test(text));
 
 /**
  * Los pasos de la tarea `titulo`: los que la nombran y los que no nombran a ninguna (la consulta, los checks). Con una
  * sola tarea el título no decide nada y se lo quita; con más de una hace falta saber de cuál se habla.
  */
-function pasosDeLaTarea(textos: string[], titulo: string | undefined): PasoOraculo[] | undefined {
-	const titulos = new Set(textos.filter((texto) => DECLARA_UNA_TAREA.test(texto)).map(tituloDelPaso));
-	if (titulos.size > 1 && (titulo === undefined || !titulos.has(titulo))) return undefined;
-	return textos
-		.filter((texto) => titulos.size <= 1 || tituloDelPaso(texto) === undefined || tituloDelPaso(texto) === titulo)
-		.map((texto) => ({ text: texto.replace(TITULO_EN_EL_PASO, '$1') }));
+function taskSteps(texts: string[], title: string | undefined): StepOracle[] | undefined {
+	const titles = new Set(texts.filter((text) => DECLARES_TASK.test(text)).map(stepTitle));
+	if (titles.size > 1 && (title === undefined || !titles.has(title))) return undefined;
+	return texts
+		.filter((text) => titles.size <= 1 || stepTitle(text) === undefined || stepTitle(text) === title)
+		.map((text) => ({ text: text.replace(TITLE_IN_STEP, '$1') }));
 }
 
 /** La tarea `titulo` armada con los pasos de entrada, y el momento en que se consulta el aviso, si lo hay. */
-function situacionDe(entradas: PasoOraculo[], fila: FilaOraculo, titulo?: string): { s: Situacion; ahoraDelAviso?: number } | undefined {
-	const resueltos = entradas.map(({ text }) => resolver(text, fila));
-	if (resueltos.includes(undefined)) return undefined;
-	const pasos = pasosDeLaTarea(resueltos as string[], titulo);
-	if (!pasos) return undefined;
-	const textos = pasos.map(({ text }) => text);
-	const consulta = textos.map((texto) => CONSULTA_DEL_AVISO.exec(texto)?.[1]).find((m) => m !== undefined);
-	const restantes = textos.filter((texto) => !CONSULTA_DEL_AVISO.test(texto) && texto !== 'Mostrar pausadas está encendido');
-	const s = armar(restantes.map((text) => ({ text })), {});
-	const ahoraDelAviso = consulta === undefined ? undefined : fecha(consulta);
-	return s && (consulta === undefined || ahoraDelAviso !== undefined) ? { s, ahoraDelAviso } : undefined;
+function situationOf(entries: StepOracle[], row: RowOracle, title?: string): { s: Situation; noticeNow?: number } | undefined {
+	const resolved = entries.map(({ text }) => resolve(text, row));
+	if (resolved.includes(undefined)) return undefined;
+	const steps = taskSteps(resolved as string[], title);
+	if (!steps) return undefined;
+	const texts = steps.map(({ text }) => text);
+	const query = texts.map((text) => NOTICE_QUERY.exec(text)?.[1]).find((m) => m !== undefined);
+	const remaining = texts.filter((text) => !NOTICE_QUERY.test(text) && text !== 'Mostrar pausadas está encendido');
+	const s = build(remaining.map((text) => ({ text })), {});
+	const noticeNow = query === undefined ? undefined : date(query);
+	return s && (query === undefined || noticeNow !== undefined) ? { s, noticeNow } : undefined;
 }
 
 /**
  * §6.1: la fila muestra «Primer paso: » y el texto, recortado, solo si la tarea tiene primer paso y está pendiente o
  * atrasada; en espera (también pospuesta o completada) o pausada no lo muestra. Se decide con el estado de ese momento.
  */
-function primerPasoDeLaFila(s: Situacion, guardado: string | undefined): string | undefined {
-	const ahora = s.ahora;
-	if (ahora === undefined || s.puntual?.cualquiera) return undefined;
-	const primerPaso = guardado?.trim();
-	if (s.pausada || !primerPaso) return SIN_TEXTO;
-	const estado = posposicionVigente(s) !== undefined && enEsperaPorPosposicion(s) ? 'en espera' : estadoSegunSuRegla(s, SIN_PROGRESO);
-	if (estado === 'pendiente' || estado === 'atrasada') return `Primer paso: ${primerPaso}`;
-	return estado === 'en espera' || estado === 'no aparece en Pendientes' ? SIN_TEXTO : undefined;
+function firstStepOfRow(s: Situation, saved: string | undefined): string | undefined {
+	const now = s.now;
+	if (now === undefined || s.oneOff?.any) return undefined;
+	const firstStep = saved?.trim();
+	if (s.paused || !firstStep) return WITHOUT_TEXT;
+	const status = postponementActive(s) !== undefined && inWaitByPostponement(s) ? 'en espera' : statusPerItsRule(s, WITHOUT_PROGRESS);
+	if (status === 'pendiente' || status === 'atrasada') return `Primer paso: ${firstStep}`;
+	return status === 'en espera' || status === 'no aparece en Pendientes' ? WITHOUT_TEXT : undefined;
 }
 
 /** El primer paso que deja guardado el escenario; el último paso que lo declara. */
-function primerPasoDeclarado(entradas: PasoOraculo[], fila: FilaOraculo): string | undefined {
-	const textos = entradas.map(({ text }) => resolver(text, fila) ?? '');
-	return textos.map((texto) => PRIMER_PASO_GUARDADO.exec(texto)?.[1]).filter((valor) => valor !== undefined).at(-1);
+function firstStepDeclared(entries: StepOracle[], row: RowOracle): string | undefined {
+	const texts = entries.map(({ text }) => resolve(text, row) ?? '');
+	return texts.map((text) => FIRST_STEP_SAVED.exec(text)?.[1]).filter((value) => value !== undefined).at(-1);
 }
 
 /** El aviso se ve entre el completado y 5 s después (§5.4); fuera, no hay aviso que consultar. */
-function regresoVisible(s: Situacion, ahora: number | undefined): string | undefined {
-	if (ahora === undefined || s.completados.length === 0) return undefined;
-	return avisoSeVe(Math.max(...s.completados), ahora) ? regresoDelAvisoDe(s, ahora) : 'sin aviso';
+function returnVisible(s: Situation, now: number | undefined): string | undefined {
+	if (now === undefined || s.completions.length === 0) return undefined;
+	return noticeSees(Math.max(...s.completions), now) ? returnOfNoticeOf(s, now) : 'sin aviso';
 }
 
 /** §6.1: lo que el oráculo observa en un Then de la lista o del aviso, con lo que el Then afirma; undefined si no se decide. */
-function observarThen(entradas: PasoOraculo[], texto: string, fila: FilaOraculo): { visto: string | undefined; escrito: string } {
-	const orden = THEN_DE_ORDEN.exec(texto);
-	const deCheckbox = THEN_DE_CHECKBOX.exec(texto);
-	if (deCheckbox) {
-		const situacion = situacionDe(entradas, fila);
-		const visto = situacion && clasificarSituacion(situacion.s, { progreso: false, checkbox: true, soloCheckbox: true });
-		return { visto: visto?.replace('checkbox ', ''), escrito: deCheckbox[1] };
+function observeThen(entries: StepOracle[], text: string, row: RowOracle): { seen: string | undefined; written: string } {
+	const order = ORDER_THEN.exec(text);
+	const ofCheckbox = CHECKBOX_THEN.exec(text);
+	if (ofCheckbox) {
+		const situation = situationOf(entries, row);
+		const seen = situation && classifySituation(situation.s, { progress: false, checkbox: true, onlyCheckbox: true });
+		return { seen: seen?.replace('checkbox ', ''), written: ofCheckbox[1] };
 	}
-	if (orden) return { visto: ordenDePendientes(entradas, fila)?.orden, escrito: elementos(orden[1])?.join(', ') ?? orden[1] };
-	const deTitulo = THEN_DE_FILA_DE_TITULO.exec(texto);
-	const deFila = deTitulo ?? THEN_DE_FILA.exec(texto);
-	const deAviso = THEN_DE_AVISO.exec(texto);
-	const dePrimerPaso = THEN_DE_PRIMER_PASO.exec(texto);
-	const situacion = situacionDe(entradas, fila, deTitulo?.[1]);
-	const escrito = (deTitulo ? deTitulo[2] : (deFila ?? deAviso ?? dePrimerPaso)?.[1]) ?? SIN_TEXTO;
-	if (!situacion) return { visto: undefined, escrito };
-	if (dePrimerPaso) return { visto: primerPasoDeLaFila(situacion.s, primerPasoDeclarado(entradas, fila)), escrito };
-	const visto = deFila ? textoDeLaFila(situacion.s) : deAviso ? regresoVisible(situacion.s, situacion.ahoraDelAviso) : undefined;
-	return { visto, escrito };
+	if (order) return { seen: pendingOrder(entries, row)?.order, written: elements(order[1])?.join(', ') ?? order[1] };
+	const ofTitle = THEN_OF_ROW_OF_TITLE.exec(text);
+	const ofRow = ofTitle ?? ROW_THEN.exec(text);
+	const ofNotice = NOTICE_THEN.exec(text);
+	const ofFirstStep = THEN_OF_FIRST_STEP.exec(text);
+	const situation = situationOf(entries, row, ofTitle?.[1]);
+	const written = (ofTitle ? ofTitle[2] : (ofRow ?? ofNotice ?? ofFirstStep)?.[1]) ?? WITHOUT_TEXT;
+	if (!situation) return { seen: undefined, written };
+	if (ofFirstStep) return { seen: firstStepOfRow(situation.s, firstStepDeclared(entries, row)), written };
+	const seen = ofRow ? rowText(situation.s) : ofNotice ? returnVisible(situation.s, situation.noticeNow) : undefined;
+	return { seen, written };
 }
 
 /** Lo que el oráculo observa y lo que cada Then afirma; undefined si algo no se reconoce o no se decide. */
-export function observarTextoDeFecha(entradas: PasoOraculo[], thens: PasoOraculo[], fila: FilaOraculo): { observado: string[]; afirmado: string[] } | undefined {
+export function observeTextOfDate(entries: StepOracle[], thens: StepOracle[], row: RowOracle): { observed: string[]; asserted: string[] } | undefined {
 	if (thens.length === 0) return undefined;
-	const observado: string[] = [];
-	const afirmado: string[] = [];
-	for (const paso of thens) {
-		const texto = resolver(paso.text, fila);
-		if (texto === undefined) return undefined;
-		const { visto, escrito } = observarThen(entradas, texto, fila);
-		if (visto === undefined) return undefined;
-		observado.push(visto);
-		afirmado.push(escrito);
+	const observed: string[] = [];
+	const asserted: string[] = [];
+	for (const step of thens) {
+		const text = resolve(step.text, row);
+		if (text === undefined) return undefined;
+		const { seen, written } = observeThen(entries, text, row);
+		if (seen === undefined) return undefined;
+		observed.push(seen);
+		asserted.push(written);
 	}
-	return { observado, afirmado };
+	return { observed, asserted };
 }

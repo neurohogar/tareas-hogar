@@ -8,367 +8,367 @@
 // el valor mutado (ver equivalence.ts). Todo lo que el oráculo no reconoce o no
 // puede decidir lanza `Indeciso`, y el resultado es undefined (no se filtra).
 import {
-	HORARIO,
-	MOSTRAR_COMPLETADAS,
-	NUMERO,
-	clasificarSituacion,
-	dentroDeVentana,
-	escritasDe,
-	botonDePosponer,
-	dia,
-	diasMes,
-	diasSemana,
-	elementos,
-	esCompletada,
-	fecha,
-	inicioDelDia,
-	intervaloValido,
-	enEsperaPorPosposicion,
-	inicioQueCubre,
-	isoDia,
-	leerHorario,
-	motivosFechaLimite,
-	motivosEmoji,
-	motivosMes,
-	ocurre,
-	ocurrenciaQueCubre,
-	ordenarPendientes,
-	pConHorario,
-	porVentana,
-	posposicionDe,
-	primeraSinCerrar,
-	proximaDeCalendario,
-	proximaPorVentana,
-	resolver,
-	ultimaCubierta,
-	type Calendario,
-	type FilaOraculo,
-	type Ocurrencia,
-	type PasoOraculo,
-	type Posposicion,
-	type Situacion,
-	type TareaDelOrden,
-	type Ventana
+	SCHEDULE,
+	SHOW_COMPLETED,
+	NUMBER,
+	classifySituation,
+	insideOfTimeWindow,
+	writtenOf,
+	postponeButton,
+	day,
+	monthDays,
+	weekdays,
+	elements,
+	isCompleted,
+	date,
+	dayStart,
+	intervalValid,
+	inWaitByPostponement,
+	startThatCovers,
+	isoDay,
+	readSchedule,
+	reasonsDueDate,
+	reasonsEmoji,
+	reasonsMonth,
+	occurs,
+	occurrenceThatCovers,
+	sortPending,
+	pWithSchedule,
+	byTimeWindow,
+	postponementOf,
+	firstWithoutClose,
+	calendarNext,
+	nextByTimeWindow,
+	resolve,
+	lastCovered,
+	type Calendar,
+	type RowOracle,
+	type Occurrence,
+	type StepOracle,
+	type Postponement,
+	type Situation,
+	type OrderTask,
+	type TimeWindow
 } from './oracle';
-import { avisoSeVe, textoDelHistorial, textoDeUltimaVez, type EntradaDelOraculo } from './oracle-history';
-import { regresoDelAvisoDe } from './oracle-date-text';
+import { noticeSees, historyText, textOfLastTime, type OracleEntry } from './oracle-history';
+import { returnOfNoticeOf } from './oracle-date-text';
 
-class Indeciso extends Error {}
-const indeciso = (motivo: string): never => {
-	throw new Indeciso(motivo);
+class Undecided extends Error {}
+const undecided = (reason: string): never => {
+	throw new Undecided(reason);
 };
 
-type Recurrencia = { relativa: { cada: string; unidad: string } } | Calendario;
+type Recurrence = { relative: { every: string; unit: string } } | Calendar;
 
 /** Lo guardado de una tarea (§4.1): puede tener un campo que no corresponde al tipo (§7). */
-interface Documento {
+interface Doc {
 	id: number;
-	titulo: string;
+	title: string;
 	emoji?: string;
-	nota?: string;
+	note?: string;
 	/** §4.1: una línea, recortada; sin el campo, sin primer paso. Un campo independiente (§7). */
-	primerPaso?: string;
+	firstStep?: string;
 	/** §4.1 (Pasos): los pasos 2 en adelante, en orden; sin el campo, no hay más pasos. Un solo campo, se reemplaza entero (§7). */
-	pasos?: string[];
+	steps?: string[];
 	/** §4.1 (Pasos): el paso en que va la tarea; sin el campo, el paso 1. Otro campo independiente (§7). */
-	pasoActual?: number;
+	currentStep?: number;
 	/** §4.1 (Versión mínima): una línea, recortada; sin el campo, sin versión mínima. Un campo independiente (§7). */
-	versionMinima?: string;
-	tipo: 'puntual' | 'periodica';
-	limite?: Date;
-	recurrencia?: Recurrencia;
+	minimalVersion?: string;
+	kind: 'puntual' | 'periodica';
+	limit?: Date;
+	recurrence?: Recurrence;
 	/** §4.1: una o más ventanas, ordenadas; un solo campo (§7). */
-	horario?: Ventana[];
-	creada?: number;
+	schedule?: TimeWindow[];
+	created?: number;
 	/** §5.8: pausada, y el momento de la última reanudación. */
-	pausada?: boolean;
-	reanudada?: number;
+	paused?: boolean;
+	resumed?: number;
 	/** §5.9: la posposición guardada; un solo campo (§7). */
-	pospuesta?: Posposicion;
+	postponed?: Postponement;
 }
 
-interface Completado {
+interface Completion {
 	id: number;
-	tareaId: number;
-	en: number;
+	taskId: number;
+	at: number;
 	/** §4.4: la ocurrencia cubierta sin hora (un día) o, con horario, su inicio. */
-	cubierta?: Date;
-	inicioCubierto?: number;
+	covered?: Date;
+	startCovered?: number;
 	/** El id que el escenario le fija ("con id c1"); sirve para desempatar en el Historial. */
 	ident?: string;
 	/** §4.4: el paso en que iba la tarea al completarla; solo en tareas de dos pasos o más. */
-	paso?: number;
+	step?: number;
 	/** §4.4: `true` si fue «Hice la mínima»; sin el campo, fue entero. Se fija al completar. */
-	minima?: boolean;
+	minimal?: boolean;
 }
 
 /** El aviso del último completado de este dispositivo (§5.4): nombra la tarea como se llamaba al completarla. */
-interface Aviso {
-	titulo: string;
-	completado: Completado;
+interface Notice {
+	title: string;
+	completion: Completion;
 }
 
-interface Guardado {
-	documentos: Documento[];
-	completados: Completado[];
+interface Saved {
+	docs: Doc[];
+	completions: Completion[];
 }
 
-interface Mundo extends Guardado {
-	siguiente: number;
+interface OracleWorld extends Saved {
+	next: number;
 	/** Lo guardado justo antes de mi último cambio: lo que ve otro dispositivo "sin ver ese cambio". */
-	antes?: Guardado;
-	rechazo?: string;
+	before?: Saved;
+	rejection?: string;
 	/** Clasificación de la última consulta de estado, con progreso. */
-	estado?: string;
+	status?: string;
 	/** El momento consultado; sin consulta, lo que se afirma es del momento en que se tocó el checkbox. */
-	consultadoEn?: number;
-	tocadoEn?: number;
-	orden?: string;
+	queriedAt?: number;
+	touchedAt?: number;
+	order?: string;
 	/** El momento en que se consultó Pendientes (§6.1); sin él pero con `consultoPendientes`, en cualquier momento. */
-	pendientesEn?: number;
-	consultoPendientes?: boolean;
+	pendingAt?: number;
+	queryPending?: boolean;
 	/** Por qué no se decide el orden de la última consulta de Pendientes: solo importa si un Then mira el orden. */
-	ordenIndeciso?: boolean;
+	orderUndecided?: boolean;
 	/** El check "Mostrar completadas" (§6.1); sin él, apagado. */
-	mostrarCompletadas?: boolean;
-	nuevo?: Completado;
+	showCompleted?: boolean;
+	updated?: Completion;
 	/** Lo que se borró alguna vez: se puede nombrar aunque ya no exista. */
-	borradasDocs: Documento[];
-	borradosCompletados: Completado[];
-	aviso?: Aviso;
+	deletedDocs: Doc[];
+	deletedCompletions: Completion[];
+	notice?: Notice;
 	/** Lo que mostraba el aviso en el último momento consultado. */
-	avisoVisto?: string;
+	noticeSeen?: string;
 	/** El texto del aviso en el último momento consultado (§5.4); sin aviso, 'sin aviso'. */
-	avisoTexto?: string;
+	noticeText?: string;
 	/** El momento en que se consultó el aviso por última vez. */
-	avisoEn?: number;
-	historial?: string;
+	noticeIn?: number;
+	history?: string;
 	/** Lo que mostraba "Última vez" en el último momento consultado (§6.2). */
-	ultimaVez?: string;
+	lastTime?: string;
 }
 
 /** Los datos que carga el panel (§6.2). */
-interface Datos {
-	titulo: string;
+interface Data {
+	title: string;
 	/** Lo que quedaría guardado: ya sin espacios; sin valor, la tarea queda sin el campo (§4.1). */
 	emoji?: string;
-	nota?: string;
-	primerPaso?: string;
-	pasos?: string[];
-	versionMinima?: string;
-	tipo: 'puntual' | 'periodica';
-	limite?: Date;
-	recurrencia?: Recurrencia;
-	horario?: Ventana[];
+	note?: string;
+	firstStep?: string;
+	steps?: string[];
+	minimalVersion?: string;
+	kind: 'puntual' | 'periodica';
+	limit?: Date;
+	recurrence?: Recurrence;
+	schedule?: TimeWindow[];
 	/** Cuántas ventanas se escribieron, válidas o no (§4.1: más de una no va en una relativa en horas). */
-	ventanasEscritas: number;
-	motivos: string[];
+	timeWindowsWritten: number;
+	reasons: string[];
 }
 
 // ---- Valores ----
 
 /** §4.2 los lista de lunes a domingo. */
-const LUNES_A_DOMINGO = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-const claveDeDias = (dias: string[]) => [...dias].sort((a, b) => LUNES_A_DOMINGO.indexOf(a) - LUNES_A_DOMINGO.indexOf(b));
+const MONDAY_A_SUNDAY = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+const daysKey = (days: string[]) => [...days].sort((a, b) => MONDAY_A_SUNDAY.indexOf(a) - MONDAY_A_SUNDAY.indexOf(b));
 
-function claveDeRecurrencia(r: Recurrencia | undefined): string {
+function recurrenceKey(r: Recurrence | undefined): string {
 	if (r === undefined) return '-';
-	if ('relativa' in r) return `relativa ${Number(r.relativa.cada)} ${r.relativa.unidad}`;
-	if ('semanal' in r) return `semanal ${claveDeDias(r.semanal).join(' ')}`;
-	return `mensual ${[...r.mensual].sort((a, b) => a - b).join(' ')}`;
+	if ('relative' in r) return `relativa ${Number(r.relative.every)} ${r.relative.unit}`;
+	if ('weekly' in r) return `semanal ${daysKey(r.weekly).join(' ')}`;
+	return `mensual ${[...r.monthly].sort((a, b) => a - b).join(' ')}`;
 }
 
-const claveDeHorario = (h: Ventana[] | undefined) => (h === undefined ? '-' : h.map((v) => `${v.desde}-${v.hasta}`).join(' '));
+const scheduleKey = (h: TimeWindow[] | undefined) => (h === undefined ? '-' : h.map((v) => `${v.from}-${v.to}`).join(' '));
 
-const claveDeDocumento = (d: Documento) =>
-	JSON.stringify([d.id, d.titulo, d.emoji, d.nota, d.primerPaso, d.pasos, d.pasoActual, d.versionMinima, d.tipo, d.limite?.getTime(), claveDeRecurrencia(d.recurrencia), claveDeHorario(d.horario), d.creada, d.pausada, d.reanudada, d.pospuesta]);
+const docKey = (d: Doc) =>
+	JSON.stringify([d.id, d.title, d.emoji, d.note, d.firstStep, d.steps, d.currentStep, d.minimalVersion, d.kind, d.limit?.getTime(), recurrenceKey(d.recurrence), scheduleKey(d.schedule), d.created, d.paused, d.resumed, d.postponed]);
 
-const momento = (valor: string) => fecha(valor) ?? indeciso(`fecha y hora ${valor}`);
-const diaDe = (valor: string) => dia(valor) ?? indeciso(`fecha ${valor}`);
-const numero = (valor: string) => (NUMERO.test(valor) ? Number(valor) : indeciso(`número ${valor}`));
-const unidadDe = (valor: string) => (valor === 'horas' || valor === 'dias' ? valor : indeciso(`unidad ${valor}`));
+const moment = (value: string) => date(value) ?? undecided(`fecha y hora ${value}`);
+const dayOf = (value: string) => day(value) ?? undecided(`fecha ${value}`);
+const numeric = (value: string) => (NUMBER.test(value) ? Number(value) : undecided(`número ${value}`));
+const unitOf = (value: string) => (value === 'horas' || value === 'dias' ? value : undecided(`unidad ${value}`));
 
 // ---- Datos nuevos de una edición y de una creación ----
 
-function recurrenciaRelativa(cada: string, unidad: string): Datos['recurrencia'] {
-	numero(cada);
-	return { relativa: { cada, unidad: unidadDe(unidad) } };
+function relativeRecurrence(every: string, unit: string): Data['recurrence'] {
+	numeric(every);
+	return { relative: { every, unit: unitOf(unit) } };
 }
 
 /** Semanal o mensual con días: los nombres o números ilegibles no se deciden; los fuera de rango son rechazo (§4.2). */
-function datosDeCalendario(forma: string, valor: string): Pick<Datos, 'recurrencia' | 'motivos'> {
-	if (forma === 'semanal') {
-		const calendario = diasSemana(valor) ?? indeciso(`días ${valor}`);
-		return { recurrencia: calendario, motivos: [] };
+function calendarData(shape: string, value: string): Pick<Data, 'recurrence' | 'reasons'> {
+	if (shape === 'semanal') {
+		const calendar = weekdays(value) ?? undecided(`días ${value}`);
+		return { recurrence: calendar, reasons: [] };
 	}
-	const lista = elementos(valor) ?? indeciso(`días ${valor}`);
-	lista.forEach(numero);
-	const motivos = motivosMes(valor) ?? indeciso(`días ${valor}`);
-	return { recurrencia: motivos.length === 0 ? (diasMes(valor) as Calendario) : undefined, motivos };
+	const list = elements(value) ?? undecided(`días ${value}`);
+	list.forEach(numeric);
+	const reasons = reasonsMonth(value) ?? undecided(`días ${value}`);
+	return { recurrence: reasons.length === 0 ? (monthDays(value) as Calendar) : undefined, reasons };
 }
 
-const sinDias = (): Pick<Datos, 'recurrencia' | 'motivos'> => ({ motivos: ['falta de días'] });
+const withoutDays = (): Pick<Data, 'recurrence' | 'reasons'> => ({ reasons: ['falta de días'] });
 
 /** Sin horario escrito: el que corresponde lo agrega quien edita o crea. */
-type Definicion = [RegExp, (titulo: string, c: string[]) => Omit<Datos, 'ventanasEscritas'>];
+type Definition = [RegExp, (title: string, c: string[]) => Omit<Data, 'timeWindowsWritten'>];
 
-const DEFINICIONES: Definicion[] = [
+const DEFINITIONS: Definition[] = [
 	[
 		/^puntual con fecha límite (\S+)$/,
-		(titulo, [l]) => ({ titulo, tipo: 'puntual', limite: dia(l), motivos: motivosFechaLimite(l) })
+		(title, [l]) => ({ title, kind: 'puntual', limit: day(l), reasons: reasonsDueDate(l) })
 	],
-	[/^puntual sin fecha límite$/, (titulo) => ({ titulo, tipo: 'puntual', motivos: [] })],
+	[/^puntual sin fecha límite$/, (title) => ({ title, kind: 'puntual', reasons: [] })],
 	[
 		/^periódica relativa cada (\S+) (\S+)$/,
-		(titulo, [c, u]) => ({
-			titulo,
-			tipo: 'periodica',
-			recurrencia: recurrenciaRelativa(c, u),
-			motivos: intervaloValido(c) ? [] : ['intervalo inválido']
+		(title, [c, u]) => ({
+			title,
+			kind: 'periodica',
+			recurrence: relativeRecurrence(c, u),
+			reasons: intervalValid(c) ? [] : ['intervalo inválido']
 		})
 	],
 	[
 		/^periódica (semanal los|mensual los días) (.*)$/,
-		(titulo, [f, d]) => ({ titulo, tipo: 'periodica', ...datosDeCalendario(f.split(' ')[0], d) })
+		(title, [f, d]) => ({ title, kind: 'periodica', ...calendarData(f.split(' ')[0], d) })
 	],
-	[/^periódica (?:semanal|mensual) sin días$/, (titulo) => ({ titulo, tipo: 'periodica', ...sinDias() })],
+	[/^periódica (?:semanal|mensual) sin días$/, (title) => ({ title, kind: 'periodica', ...withoutDays() })],
 	[
 		/^periódica de calendario con días de la semana y del mes a la vez$/,
-		(titulo) => ({ titulo, tipo: 'periodica', motivos: ['semanal y mensual combinados'] })
+		(title) => ({ title, kind: 'periodica', reasons: ['semanal y mensual combinados'] })
 	]
 ];
 
 /** Los campos de texto escritos en el panel (§4.1): emoji, nota y primer paso recortados, vacío es sin campo; un emoji que no es uno solo es inválido; un primer paso nunca es inválido. */
-interface Escritos {
+interface WrittenData {
 	emoji?: string;
-	nota?: string;
-	primerPaso?: string;
+	note?: string;
+	firstStep?: string;
 	/** Los pasos más, tal como se escribieron (§4.1, Pasos). */
-	pasos?: string[];
+	steps?: string[];
 	/** §4.1 (Versión mínima): una línea; Guardar la recorta y vacío es sin versión mínima; nunca es inválida. */
-	versionMinima?: string;
+	minimalVersion?: string;
 }
 
 /**
  * §4.1 (Pasos): el primer paso y los pasos más se recortan, los vacíos se descartan y los de abajo suben: si el
  * primer paso queda vacío y el paso 2 no, el paso 2 pasa a ser el primer paso. Sin pasos más, el campo no se guarda.
  */
-function pasosEscritos(primerPaso: string | undefined, pasos: string[] | undefined): Pick<Datos, 'primerPaso' | 'pasos'> {
-	const lista = [primerPaso ?? '', ...(pasos ?? [])].map((paso) => paso.trim()).filter((paso) => paso !== '');
-	return { primerPaso: lista[0], pasos: lista.length > 1 ? lista.slice(1) : undefined };
+function stepsWritten(firstStep: string | undefined, steps: string[] | undefined): Pick<Data, 'firstStep' | 'steps'> {
+	const list = [firstStep ?? '', ...(steps ?? [])].map((step) => step.trim()).filter((step) => step !== '');
+	return { firstStep: list[0], steps: list.length > 1 ? list.slice(1) : undefined };
 }
 
-function conEscritos(datos: Datos, { emoji, nota, primerPaso, pasos, versionMinima }: Escritos): Datos {
+function withWritten(data: Data, { emoji, note, firstStep, steps, minimalVersion }: WrittenData): Data {
 	return {
-		...datos,
+		...data,
 		emoji: emoji?.trim() || undefined,
-		nota: nota?.trim() || undefined,
-		versionMinima: versionMinima?.trim() || undefined,
-		...pasosEscritos(primerPaso, pasos),
-		motivos: [...motivosEmoji(emoji ?? ''), ...datos.motivos]
+		note: note?.trim() || undefined,
+		minimalVersion: minimalVersion?.trim() || undefined,
+		...stepsWritten(firstStep, steps),
+		reasons: [...reasonsEmoji(emoji ?? ''), ...data.reasons]
 	};
 }
 
 /** Spec §4.1: el título no puede ser vacío (solo espacios cuenta como vacío). */
-function conValidacion(datos: Datos): Datos {
-	return datos.titulo.trim() === '' ? { ...datos, motivos: ['título vacío', ...datos.motivos] } : datos;
+function withValidation(data: Data): Data {
+	return data.title.trim() === '' ? { ...data, reasons: ['título vacío', ...data.reasons] } : data;
 }
 
 /** Los campos de texto y el horario de la tarea que se edita siguen igual salvo los que la edición escribe. */
-const conservando = (base: Documento, datos: Datos, escritos: Escritos = {}): Datos => ({
-	...conEscritos(datos, { emoji: base.emoji, nota: base.nota, primerPaso: base.primerPaso, pasos: base.pasos, versionMinima: base.versionMinima, ...escritos }),
-	horario: base.horario,
-	ventanasEscritas: base.horario?.length ?? 0
+const keeping = (base: Doc, data: Data, written: WrittenData = {}): Data => ({
+	...withWritten(data, { emoji: base.emoji, note: base.note, firstStep: base.firstStep, steps: base.steps, minimalVersion: base.minimalVersion, ...written }),
+	schedule: base.schedule,
+	timeWindowsWritten: base.schedule?.length ?? 0
 });
 
 /** Ventanas escritas en el panel: cada una con sus dos horas, o alguna sin escribir. */
-type Escritas = [string | undefined, string | undefined][];
+type WrittenPairs = [string | undefined, string | undefined][];
 
 /** §4.1: los datos de la tarea con el horario escrito (sin ventanas, sin horario); uno inválido es un motivo de rechazo. */
-function conHorarioEscrito(datos: Datos, escritas: Escritas): Datos {
-	if (escritas.length === 0) return { ...datos, horario: undefined, ventanasEscritas: 0 };
-	const leido = leerHorario(escritas);
-	const motivos = leido.filter((l): l is string => typeof l === 'string');
-	const conEscritas = { ...datos, ventanasEscritas: escritas.length };
-	return motivos.length > 0 ? { ...conEscritas, motivos: [...datos.motivos, ...motivos] } : { ...conEscritas, horario: leido as Ventana[] };
+function withScheduleWritten(data: Data, written: WrittenPairs): Data {
+	if (written.length === 0) return { ...data, schedule: undefined, timeWindowsWritten: 0 };
+	const read = readSchedule(written);
+	const reasons = read.filter((l): l is string => typeof l === 'string');
+	const withWritten = { ...data, timeWindowsWritten: written.length };
+	return reasons.length > 0 ? { ...withWritten, reasons: [...data.reasons, ...reasons] } : { ...withWritten, schedule: read as TimeWindow[] };
 }
 
-const MOTIVOS_DEL_HORARIO = ['horario incompleto', 'hora de fin no posterior', 'horarios superpuestos'];
+const SCHEDULE_REASONS = ['horario incompleto', 'hora de fin no posterior', 'horarios superpuestos'];
 
 /**
  * §4.1: una relativa en horas no puede tener más de una ventana. Si además el horario mismo es inválido, el spec
  * no dice cuál de los dos errores se ve.
  */
-function conIntervaloDelHorario(datos: Datos): Datos {
-	const r = datos.recurrencia;
-	const enHoras = datos.tipo === 'periodica' && r !== undefined && 'relativa' in r && r.relativa.unidad === 'horas';
-	if (!enHoras || datos.ventanasEscritas <= 1) return datos;
-	if (datos.motivos.some((motivo) => MOTIVOS_DEL_HORARIO.includes(motivo))) return indeciso('dos errores del horario');
-	return { ...datos, motivos: [...datos.motivos, 'varios horarios en una relativa en horas'] };
+function withIntervalOfSchedule(data: Data): Data {
+	const r = data.recurrence;
+	const inHours = data.kind === 'periodica' && r !== undefined && 'relative' in r && r.relative.unit === 'horas';
+	if (!inHours || data.timeWindowsWritten <= 1) return data;
+	if (data.reasons.some((reason) => SCHEDULE_REASONS.includes(reason))) return undecided('dos errores del horario');
+	return { ...data, reasons: [...data.reasons, 'varios horarios en una relativa en horas'] };
 }
 
-function datosDe(texto: string, titulo: string): Datos {
-	for (const [patron, armar] of DEFINICIONES) {
-		const coincide = patron.exec(texto);
-		if (coincide) return conValidacion({ ...armar(titulo, coincide.slice(1)), ventanasEscritas: 0 });
+function dataOf(text: string, title: string): Data {
+	for (const [pattern, build] of DEFINITIONS) {
+		const matches = pattern.exec(text);
+		if (matches) return withValidation({ ...build(title, matches.slice(1)), timeWindowsWritten: 0 });
 	}
-	return indeciso(`definición ${texto}`);
+	return undecided(`definición ${text}`);
 }
 
 /** Los valores actuales de una tarea, como los carga el panel al editar. */
-function datosDeDocumento(d: Documento): Datos {
-	const campos = { titulo: d.titulo, emoji: d.emoji, nota: d.nota, primerPaso: d.primerPaso, pasos: d.pasos, versionMinima: d.versionMinima, horario: d.horario, ventanasEscritas: d.horario?.length ?? 0, motivos: [] };
-	if (d.tipo === 'puntual') return { ...campos, tipo: 'puntual', limite: d.limite };
-	return { ...campos, tipo: 'periodica', recurrencia: d.recurrencia };
+function docData(d: Doc): Data {
+	const fields = { title: d.title, emoji: d.emoji, note: d.note, firstStep: d.firstStep, steps: d.steps, minimalVersion: d.minimalVersion, schedule: d.schedule, timeWindowsWritten: d.schedule?.length ?? 0, reasons: [] };
+	if (d.kind === 'puntual') return { ...fields, kind: 'puntual', limit: d.limit };
+	return { ...fields, kind: 'periodica', recurrence: d.recurrence };
 }
 
 // ---- Mundo ----
 
-const copiar = (g: Guardado): Guardado => ({ documentos: [...g.documentos], completados: [...g.completados] });
+const copy = (g: Saved): Saved => ({ docs: [...g.docs], completions: [...g.completions] });
 
-function unica(g: Guardado): Documento {
-	return g.documentos.length === 1 ? g.documentos[0] : indeciso('se esperaba una tarea');
+function only(g: Saved): Doc {
+	return g.docs.length === 1 ? g.docs[0] : undecided('se esperaba una tarea');
 }
 
-function conTitulo(g: Guardado, titulo: string): Documento {
-	const encontradas = g.documentos.filter((d) => d.titulo === titulo);
-	return encontradas.length === 1 ? encontradas[0] : indeciso(`tarea ${titulo}`);
+function withTitle(g: Saved, title: string): Doc {
+	const found = g.docs.filter((d) => d.title === title);
+	return found.length === 1 ? found[0] : undecided(`tarea ${title}`);
 }
 
 /** La tarea con ese título, aunque ya se haya borrado. */
-function laQueTuvo(m: Mundo, titulo: string): Documento {
-	const encontradas = [...m.documentos, ...m.borradasDocs].filter((d) => d.titulo === titulo);
-	return encontradas.length === 1 ? encontradas[0] : indeciso(`tarea ${titulo}`);
+function theOneThatHad(m: OracleWorld, title: string): Doc {
+	const found = [...m.docs, ...m.deletedDocs].filter((d) => d.title === title);
+	return found.length === 1 ? found[0] : undecided(`tarea ${title}`);
 }
 
-const todosLosCompletados = (m: Mundo) => [...m.completados, ...m.borradosCompletados];
+const allCompletions = (m: OracleWorld) => [...m.completions, ...m.deletedCompletions];
 
 /** Si todavía no hice ningún cambio, el otro dispositivo vio todo lo guardado. */
-const loQueVioElOtro = (m: Mundo): Guardado => m.antes ?? copiar(m);
-const completadosDe = (g: Guardado, id: number) => g.completados.filter((c) => c.tareaId === id);
+const thatSawOther = (m: OracleWorld): Saved => m.before ?? copy(m);
+const completionsOf = (g: Saved, id: number) => g.completions.filter((c) => c.taskId === id);
 /** §5.8, §6.2: una periódica reanudada se evalúa sin los completados anteriores a reanudadaEn; una puntual ignora reanudadaEn. */
-const vigentesDe = (g: Guardado, d: Documento) =>
-	completadosDe(g, d.id).filter((c) => d.tipo === 'puntual' || d.reanudada === undefined || c.en >= d.reanudada);
+const activeOf = (g: Saved, d: Doc) =>
+	completionsOf(g, d.id).filter((c) => d.kind === 'puntual' || d.resumed === undefined || c.at >= d.resumed);
 /** §5.8: la tarea se evalúa como recién creada en reanudadaEn. */
-const creadaVigente = (d: Documento) => (d.tipo === 'periodica' && d.reanudada !== undefined ? d.reanudada : d.creada);
+const createdActive = (d: Doc) => (d.kind === 'periodica' && d.resumed !== undefined ? d.resumed : d.created);
 
-function crear(m: Mundo, datos: Datos, creada: number | undefined): void {
-	if (datos.motivos.length > 0) indeciso('creación inválida');
-	m.documentos = [
-		...m.documentos,
+function create(m: OracleWorld, data: Data, created: number | undefined): void {
+	if (data.reasons.length > 0) undecided('creación inválida');
+	m.docs = [
+		...m.docs,
 		{
-			id: m.siguiente++,
-			titulo: datos.titulo,
-			emoji: datos.emoji,
-			nota: datos.nota,
-			primerPaso: datos.primerPaso,
-			pasos: datos.pasos,
-			versionMinima: datos.versionMinima,
-			tipo: datos.tipo,
-			limite: datos.limite,
-			recurrencia: datos.recurrencia,
-			horario: datos.horario,
-			creada
+			id: m.next++,
+			title: data.title,
+			emoji: data.emoji,
+			note: data.note,
+			firstStep: data.firstStep,
+			steps: data.steps,
+			minimalVersion: data.minimalVersion,
+			kind: data.kind,
+			limit: data.limit,
+			recurrence: data.recurrence,
+			schedule: data.schedule,
+			created
 		}
 	];
 }
@@ -376,320 +376,320 @@ function crear(m: Mundo, datos: Datos, creada: number | undefined): void {
 // ---- Editar (§6.2) y conflictos (§7) ----
 
 /** La tarea que describe el documento: el campo que no corresponde al tipo se ignora (§7). */
-function derivada(d: Documento): Documento {
-	return d.tipo === 'puntual' ? { ...d, recurrencia: undefined, pausada: undefined, reanudada: undefined } : { ...d, limite: undefined };
+function derived(d: Doc): Doc {
+	return d.kind === 'puntual' ? { ...d, recurrence: undefined, paused: undefined, resumed: undefined } : { ...d, limit: undefined };
 }
 
 /** Los campos que la edición escribe: solo los que cambiaron; al cambiar de tipo, los dos campos de tipo (§7). */
-function cambioDe(base: Documento, nuevo: Datos): Record<string, unknown> {
-	const cambio: Record<string, unknown> = {};
-	if (base.titulo !== nuevo.titulo) cambio.titulo = nuevo.titulo;
-	if (base.emoji !== nuevo.emoji) cambio.emoji = nuevo.emoji ?? null;
-	if (base.nota !== nuevo.nota) cambio.nota = nuevo.nota ?? null;
-	if (base.primerPaso !== nuevo.primerPaso) cambio.primerPaso = nuevo.primerPaso ?? null;
+function changeOf(base: Doc, updated: Data): Record<string, unknown> {
+	const change: Record<string, unknown> = {};
+	if (base.title !== updated.title) change.title = updated.title;
+	if (base.emoji !== updated.emoji) change.emoji = updated.emoji ?? null;
+	if (base.note !== updated.note) change.note = updated.note ?? null;
+	if (base.firstStep !== updated.firstStep) change.firstStep = updated.firstStep ?? null;
 	// §7: `pasos` es un solo campo que se reemplaza entero, solo si cambió; la edición nunca escribe `pasoActual`.
-	if (JSON.stringify(base.pasos) !== JSON.stringify(nuevo.pasos)) cambio.pasos = nuevo.pasos ?? null;
-	if (base.versionMinima !== nuevo.versionMinima) cambio.versionMinima = nuevo.versionMinima ?? null;
-	if (claveDeHorario(base.horario) !== claveDeHorario(nuevo.horario)) cambio.horario = nuevo.horario ?? null;
-	if (base.tipo !== nuevo.tipo) {
-		return { ...cambio, tipo: nuevo.tipo, limite: nuevo.limite ?? null, recurrencia: nuevo.recurrencia ?? null };
+	if (JSON.stringify(base.steps) !== JSON.stringify(updated.steps)) change.steps = updated.steps ?? null;
+	if (base.minimalVersion !== updated.minimalVersion) change.minimalVersion = updated.minimalVersion ?? null;
+	if (scheduleKey(base.schedule) !== scheduleKey(updated.schedule)) change.schedule = updated.schedule ?? null;
+	if (base.kind !== updated.kind) {
+		return { ...change, tipo: updated.kind, limite: updated.limit ?? null, recurrencia: updated.recurrence ?? null };
 	}
-	if (base.limite?.getTime() !== nuevo.limite?.getTime()) cambio.limite = nuevo.limite ?? null;
-	if (claveDeRecurrencia(base.recurrencia) !== claveDeRecurrencia(nuevo.recurrencia)) {
-		cambio.recurrencia = nuevo.recurrencia ?? null;
+	if (base.limit?.getTime() !== updated.limit?.getTime()) change.limit = updated.limit ?? null;
+	if (recurrenceKey(base.recurrence) !== recurrenceKey(updated.recurrence)) {
+		change.recurrence = updated.recurrence ?? null;
 	}
-	return cambio;
+	return change;
 }
 
-function aplicar(documento: Documento, cambio: Record<string, unknown>): Documento {
-	const editado: Record<string, unknown> = { ...documento };
-	for (const [campo, valor] of Object.entries(cambio)) {
-		if (valor === null) delete editado[campo];
-		else editado[campo] = valor;
+function apply(doc: Doc, change: Record<string, unknown>): Doc {
+	const edited: Record<string, unknown> = { ...doc };
+	for (const [field, value] of Object.entries(change)) {
+		if (value === null) delete edited[field];
+		else edited[field] = value;
 	}
-	return editado as unknown as Documento;
+	return edited as unknown as Doc;
 }
 
 /** Editar `base` (la tarea como la vio quien edita) con los datos nuevos; el cambio llega a lo guardado hoy. */
-function editar(m: Mundo, base: Documento, datos: Datos, en?: number): void {
-	const nuevo = conIntervaloDelHorario(datos);
-	if (nuevo.motivos.length > 0) {
-		m.rechazo = [...nuevo.motivos].sort().join(', ');
+function edit(m: OracleWorld, base: Doc, data: Data, at?: number): void {
+	const updated = withIntervalOfSchedule(data);
+	if (updated.reasons.length > 0) {
+		m.rejection = [...updated.reasons].sort().join(', ');
 		return;
 	}
-	const cambio = cambioDe(base, nuevo);
+	const change = changeOf(base, updated);
 	// §5.8: cambiar una periódica pausada a puntual la reanuda (quita la pausa y guarda reanudadaEn).
-	if (base.pausada && nuevo.tipo === 'puntual') Object.assign(cambio, { pausada: null, reanudada: en ?? indeciso('sin momento de edición') });
-	m.documentos = m.documentos.map((d) => (d.id === base.id ? aplicar(d, cambio) : d));
+	if (base.paused && updated.kind === 'puntual') Object.assign(change, { paused: null, resumed: at ?? undecided('sin momento de edición') });
+	m.docs = m.docs.map((d) => (d.id === base.id ? apply(d, change) : d));
 }
 
-function editoYo(m: Mundo, titulo: string | undefined, armar: (base: Documento) => Datos, en?: number): void {
-	m.antes = copiar(m);
-	const base = derivada(titulo === undefined ? unica(m) : conTitulo(m, titulo));
-	editar(m, base, armar(base), en);
+function editMe(m: OracleWorld, title: string | undefined, build: (base: Doc) => Data, at?: number): void {
+	m.before = copy(m);
+	const base = derived(title === undefined ? only(m) : withTitle(m, title));
+	edit(m, base, build(base), at);
 }
 
-function editaElOtro(m: Mundo, armar: (base: Documento) => Datos): void {
-	const base = derivada(unica(loQueVioElOtro(m)));
-	editar(m, base, armar(base));
+function editsOther(m: OracleWorld, build: (base: Doc) => Data): void {
+	const base = derived(only(thatSawOther(m)));
+	edit(m, base, build(base));
 }
 
 // ---- Borrar (§6.2, §7) ----
 
-function borrar(m: Mundo, tarea: Documento, conocidos: Completado[]): void {
-	const ids = conocidos.filter((c) => c.tareaId === tarea.id).map((c) => c.id);
-	m.borradasDocs = [...m.borradasDocs, ...m.documentos.filter((d) => d.id === tarea.id)];
-	m.documentos = m.documentos.filter((d) => d.id !== tarea.id);
-	borrarCompletados(m, ids);
+function remove(m: OracleWorld, task: Doc, known: Completion[]): void {
+	const ids = known.filter((c) => c.taskId === task.id).map((c) => c.id);
+	m.deletedDocs = [...m.deletedDocs, ...m.docs.filter((d) => d.id === task.id)];
+	m.docs = m.docs.filter((d) => d.id !== task.id);
+	deleteCompletions(m, ids);
 }
 
 /** Borrar completados que ya no existen no hace nada (§5.4). */
-function borrarCompletados(m: Mundo, ids: number[]): void {
-	m.borradosCompletados = [...m.borradosCompletados, ...m.completados.filter((c) => ids.includes(c.id))];
-	m.completados = m.completados.filter((c) => !ids.includes(c.id));
+function deleteCompletions(m: OracleWorld, ids: number[]): void {
+	m.deletedCompletions = [...m.deletedCompletions, ...m.completions.filter((c) => ids.includes(c.id))];
+	m.completions = m.completions.filter((c) => !ids.includes(c.id));
 }
 
 // ---- Completar (§5.3) ----
 
 /** Los valores sin hora (§5.3, §5.6): la fecha cubierta o, sin ocurrencia cubierta, el día de completadoEn. */
-function aportes(comps: Completado[]): Date[] {
-	return comps.filter((c) => c.inicioCubierto === undefined).map((c) => c.cubierta ?? inicioDelDia(c.en));
+function contributions(comps: Completion[]): Date[] {
+	return comps.filter((c) => c.startCovered === undefined).map((c) => c.covered ?? dayStart(c.at));
 }
 
 /** §5.6: las ocurrencias cubiertas con hora, por su inicio. */
-const iniciosCubiertos = (comps: Completado[]) => comps.flatMap((c) => (c.inicioCubierto === undefined ? [] : [c.inicioCubierto]));
+const startsCovered = (comps: Completion[]) => comps.flatMap((c) => (c.startCovered === undefined ? [] : [c.startCovered]));
 
 /** §5.6 y §5.7: N de una de calendario con horario o de una relativa por ventana. */
-function proximaConHorario(tarea: Documento, vs: Ventana[], propios: Completado[]): Ocurrencia {
-	const recurrencia = tarea.recurrencia ?? indeciso('periódica sin recurrencia');
-	const desde = creadaVigente(tarea);
-	const creada = desde === undefined ? undefined : new Date(desde);
-	const p = pConHorario(aportes(propios), iniciosCubiertos(propios), creada) ?? indeciso('sin P');
-	if (!('relativa' in recurrencia)) return proximaDeCalendario(recurrencia, vs, p, tarea.reanudada) ?? indeciso('sin ocurrencia');
-	if (propios.length === 0) return primeraSinCerrar(vs, desde ?? indeciso('sin creación'));
-	return proximaPorVentana(vs, numero(recurrencia.relativa.cada), p);
+function nextWithSchedule(task: Doc, vs: TimeWindow[], own: Completion[]): Occurrence {
+	const recurrence = task.recurrence ?? undecided('periódica sin recurrencia');
+	const from = createdActive(task);
+	const created = from === undefined ? undefined : new Date(from);
+	const p = pWithSchedule(contributions(own), startsCovered(own), created) ?? undecided('sin P');
+	if (!('relative' in recurrence)) return calendarNext(recurrence, vs, p, task.resumed) ?? undecided('sin ocurrencia');
+	if (own.length === 0) return firstWithoutClose(vs, from ?? undecided('sin creación'));
+	return nextByTimeWindow(vs, numeric(recurrence.relative.every), p);
 }
 
 /** Si la tarea cubre ocurrencias con hora (§5.6, §5.7): de calendario con horario, o relativa por ventana. */
-function cubreConHora(tarea: Documento): Ventana[] | undefined {
-	const { horario, recurrencia } = tarea;
-	if (tarea.tipo !== 'periodica' || !horario || !recurrencia) return undefined;
-	return !('relativa' in recurrencia) || porVentana(recurrencia.relativa.unidad, horario) ? horario : undefined;
+function coversWithHour(task: Doc): TimeWindow[] | undefined {
+	const { schedule, recurrence } = task;
+	if (task.kind !== 'periodica' || !schedule || !recurrence) return undefined;
+	return !('relative' in recurrence) || byTimeWindow(recurrence.relative.unit, schedule) ? schedule : undefined;
 }
 
 /** La ocurrencia que cubre un completado nuevo: de calendario, un día (§5.3) o, con hora, un inicio (§5.6, §5.7). */
-function cubiertaDelNuevo(tarea: Documento, conocidos: Completado[], en: number): Pick<Completado, 'cubierta' | 'inicioCubierto'> {
-	const recurrencia = tarea.recurrencia;
-	const propios = vigentesDe({ documentos: [], completados: conocidos }, tarea);
-	const vs = cubreConHora(tarea);
+function newCovered(task: Doc, known: Completion[], at: number): Pick<Completion, 'covered' | 'startCovered'> {
+	const recurrence = task.recurrence;
+	const own = activeOf({ docs: [], completions: known }, task);
+	const vs = coversWithHour(task);
 	if (vs) {
-		const cuenta = (d: Date) => !recurrencia || 'relativa' in recurrencia || ocurre(recurrencia, d);
-		return { inicioCubierto: inicioQueCubre(proximaConHorario(tarea, vs, propios), vs, cuenta, en) };
+		const account = (d: Date) => !recurrence || 'relative' in recurrence || occurs(recurrence, d);
+		return { startCovered: startThatCovers(nextWithSchedule(task, vs, own), vs, account, at) };
 	}
-	if (tarea.tipo !== 'periodica' || !recurrencia || 'relativa' in recurrencia) return {};
-	if (iniciosCubiertos(propios).length > 0) return indeciso('sin horario, una ocurrencia cubierta con hora');
-	const p = ultimaCubierta(situacionBase({ cubiertas: aportes(propios), creada: creadaVigente(tarea) }));
-	if (!p) return indeciso('sin P');
-	return { cubierta: ocurrenciaQueCubre(recurrencia, p, inicioDelDia(en)) ?? indeciso('sin ocurrencia') };
+	if (task.kind !== 'periodica' || !recurrence || 'relative' in recurrence) return {};
+	if (startsCovered(own).length > 0) return undecided('sin horario, una ocurrencia cubierta con hora');
+	const p = lastCovered(situationBase({ covered: contributions(own), created: createdActive(task) }));
+	if (!p) return undecided('sin P');
+	return { covered: occurrenceThatCovers(recurrence, p, dayStart(at)) ?? undecided('sin ocurrencia') };
 }
 
-function completar(m: Mundo, tarea: Documento, conocidos: Completado[], en: number, ident?: string, minima = false): Completado {
-	const cubierta = cubiertaDelNuevo(tarea, conocidos, en);
+function complete(m: OracleWorld, task: Doc, known: Completion[], at: number, ident?: string, minimal = false): Completion {
+	const covered = newCovered(task, known, at);
 	// §4.4: el completado de una tarea de dos pasos o más guarda el paso en que iba.
-	const paso = variosPasos(tarea) ? { paso: pasoEnQueVa(tarea) } : {};
-	const completado = { id: m.siguiente++, tareaId: tarea.id, en, ...cubierta, ...paso, ...(ident && { ident }), ...(minima && { minima }) };
-	m.completados = [...m.completados, completado];
-	return completado;
+	const step = severalSteps(task) ? { step: stepInThatGoes(task) } : {};
+	const completion = { id: m.next++, taskId: task.id, at, ...covered, ...step, ...(ident && { ident }), ...(minimal && { minimal }) };
+	m.completions = [...m.completions, completion];
+	return completion;
 }
 
 // ---- Pasos (§4.1, Pasos) ----
 
 /** El primer paso y los pasos más: la lista de pasos de la tarea. */
-const pasosDe = (d: Documento): string[] => [...(d.primerPaso === undefined ? [] : [d.primerPaso]), ...(d.pasos ?? [])];
+const stepsOf = (d: Doc): string[] => [...(d.firstStep === undefined ? [] : [d.firstStep]), ...(d.steps ?? [])];
 
 /** §4.1: dos pasos o más si tiene primer paso y al menos un paso más. */
-const variosPasos = (d: Documento) => pasosDe(d).length >= 2;
+const severalSteps = (d: Doc) => stepsOf(d).length >= 2;
 
 /** §4.1: el paso en que va la tarea: sin el campo, el 1; si quedan menos pasos que el número, el último. */
-const pasoEnQueVa = (d: Documento) => Math.min(d.pasoActual ?? 1, Math.max(pasosDe(d).length, 1));
+const stepInThatGoes = (d: Doc) => Math.min(d.currentStep ?? 1, Math.max(stepsOf(d).length, 1));
 
 /** Un número de paso es un entero desde 1. */
-const numeroDePaso = (valor: string) => (/^[1-9]\d*$/.test(valor) ? Number(valor) : indeciso(`paso ${valor}`));
+const stepNumber = (value: string) => (/^[1-9]\d*$/.test(value) ? Number(value) : undecided(`paso ${value}`));
 
 /** Escribe el paso en que va la tarea; el paso 1 es sin el campo. */
-function irAlPaso(m: Mundo, id: number, paso: number): void {
-	m.documentos = m.documentos.map((d) => (d.id === id ? { ...d, pasoActual: paso === 1 ? undefined : paso } : d));
+function goOnStep(m: OracleWorld, id: number, step: number): void {
+	m.docs = m.docs.map((d) => (d.id === id ? { ...d, currentStep: step === 1 ? undefined : step } : d));
 }
 
 /** Completo desde este dispositivo: es mi cambio (el otro dispositivo no lo ve) y abre el aviso (§5.4). */
-function completoYo(m: Mundo, tarea: Documento, en: number, minima = false): void {
-	m.antes = copiar(m);
-	m.nuevo = completar(m, tarea, m.completados, en, undefined, minima);
-	m.aviso = { titulo: nombreDe(tarea), completado: m.nuevo };
+function completeMe(m: OracleWorld, task: Doc, at: number, minimal = false): void {
+	m.before = copy(m);
+	m.updated = complete(m, task, m.completions, at, undefined, minimal);
+	m.notice = { title: nameOf(task), completion: m.updated };
 	// §4.1 (Pasos: Completar): completar, por el checkbox o por «Hecho», vuelve la tarea al paso 1.
-	irAlPaso(m, tarea.id, 1);
+	goOnStep(m, task.id, 1);
 }
 
 /** Spec §4.1: «emoji título», o solo el título sin emoji. */
-const nombreDe = (d: Documento) => (d.emoji === undefined ? d.titulo : `${d.emoji} ${d.titulo}`);
+const nameOf = (d: Doc) => (d.emoji === undefined ? d.title : `${d.emoji} ${d.title}`);
 
 // ---- Deshacer (§5.4) ----
 
 /** El completado de ese momento, aunque ya se haya borrado: tiene que ser uno solo. */
-function elCompletadoDel(m: Mundo, en: number): Completado {
-	const delMomento = todosLosCompletados(m).filter((c) => c.en === en);
-	return delMomento.length === 1 ? delMomento[0] : indeciso(`completados del momento ${en}`);
+function theCompletionOf(m: OracleWorld, at: number): Completion {
+	const ofMoment = allCompletions(m).filter((c) => c.at === at);
+	return ofMoment.length === 1 ? ofMoment[0] : undecided(`completados del momento ${at}`);
 }
 
 /**
  * Deshacer en el aviso: borra solo el completado que nombra el aviso y lo cierra. El botón existe mientras el aviso
  * se ve (§5.4): fuera de esa ventana no hay nada que tocar y no pasa nada.
  */
-function tocoDeshacer(m: Mundo, ahora: number): void {
-	m.antes = copiar(m);
-	if (!m.aviso || !avisoSeVe(m.aviso.completado.en, ahora)) return;
-	deshacerCompletado(m, m.aviso.completado.id);
-	m.aviso = undefined;
+function tapUndo(m: OracleWorld, now: number): void {
+	m.before = copy(m);
+	if (!m.notice || !noticeSees(m.notice.completion.at, now)) return;
+	undoCompletion(m, m.notice.completion.id);
+	m.notice = undefined;
 }
 
 /**
  * Borrar un completado desde el aviso, el Historial o el checkbox (§5.4). Si era el más reciente de una tarea de dos
  * pasos o más y guardaba su paso, la tarea vuelve a ese paso, con el tope del último (§4.1, Pasos: Deshacer).
  */
-function deshacerCompletado(m: Mundo, id: number): void {
-	const completado = m.completados.find((c) => c.id === id);
-	const tarea = m.documentos.find((d) => d.id === completado?.tareaId);
-	if (completado?.paso !== undefined && tarea && variosPasos(tarea) && elMasReciente(completadosDe(m, tarea.id)) === completado) {
-		irAlPaso(m, tarea.id, Math.min(completado.paso, pasosDe(tarea).length));
+function undoCompletion(m: OracleWorld, id: number): void {
+	const completion = m.completions.find((c) => c.id === id);
+	const task = m.docs.find((d) => d.id === completion?.taskId);
+	if (completion?.step !== undefined && task && severalSteps(task) && theMoreRecent(completionsOf(m, task.id)) === completion) {
+		goOnStep(m, task.id, Math.min(completion.step, stepsOf(task).length));
 	}
-	borrarCompletados(m, [id]);
+	deleteCompletions(m, [id]);
 }
 
 /** Lo que muestra el aviso en ese momento: la tarea y el completado que ofrece deshacer, o ninguno. */
-function consultarAviso(m: Mundo, ahora: number): string {
-	const visible = m.aviso && avisoSeVe(m.aviso.completado.en, ahora) ? m.aviso : undefined;
-	return visible ? JSON.stringify([visible.titulo, visible.completado.en]) : 'sin aviso';
+function queryNotice(m: OracleWorld, now: number): string {
+	const visible = m.notice && noticeSees(m.notice.completion.at, now) ? m.notice : undefined;
+	return visible ? JSON.stringify([visible.title, visible.completion.at]) : 'sin aviso';
 }
 
 /** §5.4: «Completaste «nombre»», con « · mínima» si el completado fue la mínima. */
-function textoDelAviso(m: Mundo, ahora: number): string {
-	const visible = m.aviso && avisoSeVe(m.aviso.completado.en, ahora) ? m.aviso : undefined;
-	return visible ? `Completaste «${visible.titulo}»${visible.completado.minima ? ' · mínima' : ''}` : 'sin aviso';
+function noticeText(m: OracleWorld, now: number): string {
+	const visible = m.notice && noticeSees(m.notice.completion.at, now) ? m.notice : undefined;
+	return visible ? `Completaste «${visible.title}»${visible.completion.minimal ? ' · mínima' : ''}` : 'sin aviso';
 }
 
 /** §5.4 y §6.1: el «Vuelve …» del aviso visible en el último momento consultado; sin aviso a la vista, 'sin aviso'. */
-function regresoDelAviso(m: Mundo): string {
-	const ahora = m.avisoEn ?? indeciso('sin consulta del aviso');
-	if (!m.aviso || !avisoSeVe(m.aviso.completado.en, ahora)) return 'sin aviso';
-	const tarea = m.documentos.find((d) => d.id === m.aviso?.completado.tareaId) ?? indeciso('la tarea del aviso ya no existe');
-	return regresoDelAvisoDe(situacionDe(m, derivada(tarea), ahora), ahora) ?? indeciso('regreso del aviso');
+function noticeReturn(m: OracleWorld): string {
+	const now = m.noticeIn ?? undecided('sin consulta del aviso');
+	if (!m.notice || !noticeSees(m.notice.completion.at, now)) return 'sin aviso';
+	const task = m.docs.find((d) => d.id === m.notice?.completion.taskId) ?? undecided('la tarea del aviso ya no existe');
+	return returnOfNoticeOf(situationOf(m, derived(task), now), now) ?? undecided('regreso del aviso');
 }
 
 // ---- Historial (§6.3) ----
 
-function consultarHistorial(m: Mundo, ahora: number): string {
-	const entradas = m.completados.flatMap((c): EntradaDelOraculo[] => {
-		const tarea = m.documentos.find((d) => d.id === c.tareaId);
-		return tarea ? [{ completadoEn: c.en, id: c.ident, titulo: nombreDe(tarea), minima: c.minima }] : [];
+function queryHistory(m: OracleWorld, now: number): string {
+	const entries = m.completions.flatMap((c): OracleEntry[] => {
+		const task = m.docs.find((d) => d.id === c.taskId);
+		return task ? [{ completedAt: c.at, id: c.ident, title: nameOf(task), minimal: c.minimal }] : [];
 	});
-	return textoDelHistorial(entradas, ahora) ?? indeciso('empate sin desempate en el Historial');
+	return historyText(entries, now) ?? undecided('empate sin desempate en el Historial');
 }
 
 /** §6.2: la última vez de la única tarea, por el completadoEn más reciente de sus completados. */
-function consultarUltimaVez(m: Mundo, ahora: number): string {
-	const tarea = unica(m);
-	return textoDeUltimaVez(m.completados.filter((c) => c.tareaId === tarea.id).map((c) => c.en), ahora);
+function queryLastTime(m: OracleWorld, now: number): string {
+	const task = only(m);
+	return textOfLastTime(m.completions.filter((c) => c.taskId === task.id).map((c) => c.at), now);
 }
 
 // ---- Estado (§5) ----
 
-function situacionBase(datos: { cubiertas: Date[]; creada?: number }): Situacion {
+function situationBase(data: { covered: Date[]; created?: number }): Situation {
 	return {
-		completados: [],
-		cualquierMomento: false,
-		cubiertas: datos.cubiertas,
-		sinCubierta: [],
-		creada: datos.creada === undefined ? undefined : new Date(datos.creada)
+		completions: [],
+		anyMoment: false,
+		covered: data.covered,
+		withoutCovered: [],
+		created: data.created === undefined ? undefined : new Date(data.created)
 	};
 }
 
-function situacionDe(m: Guardado, tarea: Documento, ahora: number | undefined): Situacion {
-	const propios = vigentesDe(m, tarea);
-	const s: Situacion = {
-		...situacionBase({ cubiertas: [], creada: creadaVigente(tarea) }),
-		reanudada: tarea.tipo === 'periodica' ? tarea.reanudada : undefined,
-		completados: propios.map((c) => c.en),
-		cubiertasConHora: iniciosCubiertos(propios),
-		cualquierMomento: ahora === undefined,
-		ahora,
-		horario: tarea.horario,
-		pospuesta: tarea.pospuesta
+function situationOf(m: Saved, task: Doc, now: number | undefined): Situation {
+	const own = activeOf(m, task);
+	const s: Situation = {
+		...situationBase({ covered: [], created: createdActive(task) }),
+		resumed: task.kind === 'periodica' ? task.resumed : undefined,
+		completions: own.map((c) => c.at),
+		coveredWithHour: startsCovered(own),
+		anyMoment: now === undefined,
+		now,
+		schedule: task.schedule,
+		postponed: task.postponed
 	};
-	const recurrencia = tarea.recurrencia;
-	if (tarea.tipo === 'puntual') return { ...s, puntual: { limite: tarea.limite } };
-	if (!recurrencia) return indeciso('periódica sin recurrencia');
-	if ('relativa' in recurrencia) {
+	const recurrence = task.recurrence;
+	if (task.kind === 'puntual') return { ...s, oneOff: { limit: task.limit } };
+	if (!recurrence) return undecided('periódica sin recurrencia');
+	if ('relative' in recurrence) {
 		// §5.7: los completados sin ocurrencia cubierta cubren el día entero de su completadoEn.
-		return { ...s, cada: recurrencia.relativa.cada, unidad: recurrencia.relativa.unidad, sinCubierta: aportes(propios) };
+		return { ...s, every: recurrence.relative.every, unit: recurrence.relative.unit, withoutCovered: contributions(own) };
 	}
-	return { ...s, calendario: recurrencia, cubiertas: aportes(propios) };
+	return { ...s, calendar: recurrence, covered: contributions(own) };
 }
 
 /** Clasificación con progreso; "no aparece en Pendientes" si la puntual está completada. */
-function clasificar(m: Mundo, ahora: number | undefined): string {
-	const tarea = unica(m);
-	if (tarea.tipo === 'periodica' && tarea.pausada) return 'pausada';
-	return clasificarSituacion(situacionDe(m, tarea, ahora), { progreso: true }) ?? indeciso('estado');
+function classify(m: OracleWorld, now: number | undefined): string {
+	const task = only(m);
+	if (task.kind === 'periodica' && task.paused) return 'pausada';
+	return classifySituation(situationOf(m, task, now), { progress: true }) ?? undecided('estado');
 }
 
-function tareaDelOrden(m: Mundo, d: Documento): TareaDelOrden | undefined {
-	const propios = completadosDe(m, d.id);
+function orderTask(m: OracleWorld, d: Doc): OrderTask | undefined {
+	const own = completionsOf(m, d.id);
 	const base = {
-		titulo: d.titulo,
-		creada: d.creada ?? 0,
-		completados: propios.map((c) => c.en),
-		cubiertas: [] as Date[],
-		cubiertasConHora: iniciosCubiertos(propios),
-		horario: d.horario,
-		pospuesta: d.pospuesta
+		title: d.title,
+		created: d.created ?? 0,
+		completions: own.map((c) => c.at),
+		covered: [] as Date[],
+		coveredWithHour: startsCovered(own),
+		schedule: d.schedule,
+		postponed: d.postponed
 	};
-	if (d.tipo === 'puntual') return { ...base, puntual: true, limite: d.limite };
-	const r = d.recurrencia ?? indeciso('periódica sin recurrencia');
-	if ('relativa' in r) {
-		const ms = (Number(r.relativa.cada) * (r.relativa.unidad === 'horas' ? 1 : 24) * 3_600_000) as number;
-		return { ...base, puntual: false, intervalo: ms };
+	if (d.kind === 'puntual') return { ...base, oneOff: true, limit: d.limit };
+	const r = d.recurrence ?? undecided('periódica sin recurrencia');
+	if ('relative' in r) {
+		const ms = (Number(r.relative.every) * (r.relative.unit === 'horas' ? 1 : 24) * 3_600_000) as number;
+		return { ...base, oneOff: false, interval: ms };
 	}
-	return { ...base, puntual: false, calendario: r, cubiertas: aportes(propios) };
+	return { ...base, oneOff: false, calendar: r, covered: contributions(own) };
 }
 
-function ordenEn(m: Mundo, ahora: number | undefined): string {
-	if (m.documentos.some((d) => d.pausada || d.reanudada !== undefined)) indeciso('Pendientes con pausa o reanudación');
-	const tareas = m.documentos.flatMap((d) => tareaDelOrden(m, d) ?? []);
-	if (ahora === undefined && tareas.some((t) => !t.puntual || t.limite)) indeciso('Pendientes en cualquier momento');
-	return ordenarPendientes(tareas, ahora, m.mostrarCompletadas) ?? indeciso('orden');
+function orderIn(m: OracleWorld, now: number | undefined): string {
+	if (m.docs.some((d) => d.paused || d.resumed !== undefined)) undecided('Pendientes con pausa o reanudación');
+	const tasks = m.docs.flatMap((d) => orderTask(m, d) ?? []);
+	if (now === undefined && tasks.some((t) => !t.oneOff || t.limit)) undecided('Pendientes en cualquier momento');
+	return sortPending(tasks, now, m.showCompleted) ?? undecided('orden');
 }
 
 // ---- El checkbox de la fila (§6.1) ----
 
 /** §6.1: completada en ese momento (puntual con completados, o periódica en espera con completados). */
-function completadaEn(m: Mundo, tarea: Documento, en: number): boolean {
-	if (tarea.pausada) return false;
-	const s = situacionDe(m, tarea, en);
-	const clasificacion = clasificarSituacion(s, { progreso: false }) ?? indeciso('estado');
+function completedAt(m: OracleWorld, task: Doc, at: number): boolean {
+	if (task.paused) return false;
+	const s = situationOf(m, task, at);
+	const classification = classifySituation(s, { progress: false }) ?? undecided('estado');
 	// §5.9: una pospuesta no está completada.
-	return esCompletada(tarea.tipo === 'puntual', clasificacion === 'en espera' && !enEsperaPorPosposicion(s), vigentesDe(m, tarea).length > 0);
+	return isCompleted(task.kind === 'puntual', classification === 'en espera' && !inWaitByPostponement(s), activeOf(m, task).length > 0);
 }
 
 /** El completado de completadoEn mayor; si dos empatan, el spec no dice cuál. */
-function elMasReciente(comps: Completado[]): Completado {
-	const ultimo = Math.max(...comps.map((c) => c.en));
-	const ultimos = comps.filter((c) => c.en === ultimo);
-	return ultimos.length === 1 ? ultimos[0] : indeciso('completados más recientes empatados');
+function theMoreRecent(comps: Completion[]): Completion {
+	const last = Math.max(...comps.map((c) => c.at));
+	const lastOnes = comps.filter((c) => c.at === last);
+	return lastOnes.length === 1 ? lastOnes[0] : undecided('completados más recientes empatados');
 }
 
 /** §5.5: completar fuera de la ventana del horario no es posible: el checkbox está deshabilitado y no hace nada. */
-function completoSiSePuede(m: Mundo, tarea: Documento, en: number, minima = false): void {
-	if (!tarea.horario || dentroDeVentana(tarea.horario, en)) completoYo(m, tarea, en, minima);
+function completeIfPossible(m: OracleWorld, task: Doc, at: number, minimal = false): void {
+	if (!task.schedule || insideOfTimeWindow(task.schedule, at)) completeMe(m, task, at, minimal);
 }
 
 /**
@@ -697,741 +697,741 @@ function completoSiSePuede(m: Mundo, tarea: Documento, en: number, minima = fals
  * si es de hoy o posterior (día local de completadoEn); si es de un día anterior, se completa de nuevo. Borrar se
  * puede a cualquier hora; completar, solo dentro de la ventana (§5.5).
  */
-function tocoElCheckbox(m: Mundo, en: number): void {
-	const tarea = derivada(unica(m));
-	m.tocadoEn ??= en;
-	if (tarea.pausada) return;
-	if (!completadaEn(m, tarea, en)) return completoSiSePuede(m, tarea, en);
-	const masReciente = elMasReciente(completadosDe(m, tarea.id));
-	if (tarea.tipo === 'periodica' && masReciente.en < inicioDelDia(en).getTime()) return completoSiSePuede(m, tarea, en);
-	m.antes = copiar(m);
-	deshacerCompletado(m, masReciente.id);
+function tapCheckbox(m: OracleWorld, at: number): void {
+	const task = derived(only(m));
+	m.touchedAt ??= at;
+	if (task.paused) return;
+	if (!completedAt(m, task, at)) return completeIfPossible(m, task, at);
+	const moreRecent = theMoreRecent(completionsOf(m, task.id));
+	if (task.kind === 'periodica' && moreRecent.at < dayStart(at).getTime()) return completeIfPossible(m, task, at);
+	m.before = copy(m);
+	undoCompletion(m, moreRecent.id);
 }
 
 // ---- Pasos ----
 
-type Paso = [RegExp, (m: Mundo, c: string[]) => void];
+type Step = [RegExp, (m: OracleWorld, c: string[]) => void];
 
-const MOMENTO_DE_CREACION = (c: string | undefined) => (c === undefined ? undefined : momento(c));
+const CREATION_MOMENT = (c: string | undefined) => (c === undefined ? undefined : moment(c));
 /** Las tareas con título que no dicen cuándo se crearon: antes de cualquier otra fecha del escenario. */
-const ANTES_DEL_ESCENARIO = 0;
+const SCENARIO_BEFORE = 0;
 
-const FORMAS = '(?:semanal|mensual)';
-const creada = '(?: creada el (\\S+))?';
+const SHAPES = '(?:semanal|mensual)';
+const created = '(?: creada el (\\S+))?';
 
 /** Un horario ya guardado (no es un cambio de este dispositivo); uno inválido no se decide (§4.1). */
-function guardarHorario(tarea: Documento, horas: string[]): void {
-	const datos = conIntervaloDelHorario(conHorarioEscrito(datosDeDocumento(tarea), escritasDe(horas)));
-	tarea.horario = datos.motivos.length > 0 ? indeciso(`horario ${horas.join(' ')}`) : datos.horario;
+function saveSchedule(task: Doc, hours: string[]): void {
+	const data = withIntervalOfSchedule(withScheduleWritten(docData(task), writtenOf(hours)));
+	task.schedule = data.reasons.length > 0 ? undecided(`horario ${hours.join(' ')}`) : data.schedule;
 }
 
 /** Deja la tarea ya guardada con esa lista de pasos: el primero es el primer paso. */
-function guardarPasos(tarea: Documento, texto: string): void {
-	const { primerPaso, pasos } = pasosEscritos(...(([primero, ...mas]) => [primero, mas] as const)(elementos(texto) ?? indeciso(`pasos ${texto}`)));
-	tarea.primerPaso = primerPaso;
-	tarea.pasos = pasos;
+function saveSteps(task: Doc, text: string): void {
+	const { firstStep, steps } = stepsWritten(...(([first, ...more]) => [first, more] as const)(elements(text) ?? undecided(`pasos ${text}`)));
+	task.firstStep = firstStep;
+	task.steps = steps;
 }
 
-const CREACIONES: Paso[] = [
-	[new RegExp(`^la tarea se puede completar ${HORARIO}$`), (m, horas) => guardarHorario(unica(m), horas)],
-	[new RegExp(`^la tarea (\\S+) se puede completar ${HORARIO}$`), (m, [t, ...horas]) => guardarHorario(conTitulo(m, t), horas)],
+const CREATIONS: Step[] = [
+	[new RegExp(`^la tarea se puede completar ${SCHEDULE}$`), (m, hours) => saveSchedule(only(m), hours)],
+	[new RegExp(`^la tarea (\\S+) se puede completar ${SCHEDULE}$`), (m, [t, ...hours]) => saveSchedule(withTitle(m, t), hours)],
 	[
 		/^una tarea puntual con fecha límite (\S+) creada el (\S+)$/,
-		(m, [l, c]) => crear(m, datosDe(`puntual con fecha límite ${l}`, 'Tarea'), momento(c))
+		(m, [l, c]) => create(m, dataOf(`puntual con fecha límite ${l}`, 'Tarea'), moment(c))
 	],
 	[
 		/^una tarea puntual sin fecha límite con emoji (.*)$/,
-		(m, [e]) => crear(m, conEscritos(datosDe('puntual sin fecha límite', 'Tarea'), { emoji: e }), undefined)
+		(m, [e]) => create(m, withWritten(dataOf('puntual sin fecha límite', 'Tarea'), { emoji: e }), undefined)
 	],
 	[
 		/^una tarea puntual (\S+) sin fecha límite con emoji (.*)$/,
-		(m, [t, e]) => crear(m, conEscritos(datosDe('puntual sin fecha límite', t), { emoji: e }), ANTES_DEL_ESCENARIO)
+		(m, [t, e]) => create(m, withWritten(dataOf('puntual sin fecha límite', t), { emoji: e }), SCENARIO_BEFORE)
 	],
 	[
 		/^una tarea puntual sin fecha límite con nota (.*)$/,
-		(m, [n]) => crear(m, conEscritos(datosDe('puntual sin fecha límite', 'Tarea'), { nota: n }), undefined)
+		(m, [n]) => create(m, withWritten(dataOf('puntual sin fecha límite', 'Tarea'), { note: n }), undefined)
 	],
 	// §4.1: un primer paso ya guardado (no es un cambio de este dispositivo); se guarda recortado.
-	[/^el primer paso de la tarea es (.*)$/, (m, [p]) => void (unica(m).primerPaso = p.trim() || undefined)],
-	[/^el primer paso de la tarea (\S+) es (.*)$/, (m, [t, p]) => void (conTitulo(m, t).primerPaso = p.trim() || undefined)],
+	[/^el primer paso de la tarea es (.*)$/, (m, [p]) => void (only(m).firstStep = p.trim() || undefined)],
+	[/^el primer paso de la tarea (\S+) es (.*)$/, (m, [t, p]) => void (withTitle(m, t).firstStep = p.trim() || undefined)],
 	// §4.1 (Versión mínima): una ya guardada (no es un cambio de este dispositivo); se guarda recortada.
-	[/^la versión mínima de la tarea es (.*)$/, (m, [v]) => void (unica(m).versionMinima = v.trim() || undefined)],
-	[/^la versión mínima de la tarea (\S+) es (.*)$/, (m, [t, v]) => void (conTitulo(m, t).versionMinima = v.trim() || undefined)],
+	[/^la versión mínima de la tarea es (.*)$/, (m, [v]) => void (only(m).minimalVersion = v.trim() || undefined)],
+	[/^la versión mínima de la tarea (\S+) es (.*)$/, (m, [t, v]) => void (withTitle(m, t).minimalVersion = v.trim() || undefined)],
 	// §4.1 (Pasos): los pasos ya guardados (no es un cambio de este dispositivo), con el primer paso y los pasos más.
-	[/^los pasos de la tarea son (.*)$/, (m, [p]) => guardarPasos(unica(m), p)],
-	[/^los pasos de la tarea (\S+) son (.*)$/, (m, [t, p]) => guardarPasos(conTitulo(m, t), p)],
-	[/^el paso actual de la tarea es (\S+)$/, (m, [p]) => void (unica(m).pasoActual = numeroDePaso(p) === 1 ? undefined : numeroDePaso(p))],
+	[/^los pasos de la tarea son (.*)$/, (m, [p]) => saveSteps(only(m), p)],
+	[/^los pasos de la tarea (\S+) son (.*)$/, (m, [t, p]) => saveSteps(withTitle(m, t), p)],
+	[/^el paso actual de la tarea es (\S+)$/, (m, [p]) => void (only(m).currentStep = stepNumber(p) === 1 ? undefined : stepNumber(p))],
 	[
 		/^una tarea puntual (\S+) sin fecha límite$/,
-		(m, [t]) => crear(m, datosDe('puntual sin fecha límite', t), ANTES_DEL_ESCENARIO)
+		(m, [t]) => create(m, dataOf('puntual sin fecha límite', t), SCENARIO_BEFORE)
 	],
 	[
 		/^creo una tarea puntual con título (.*), emoji (.*) y nota (.*)$/,
-		(m, [t, e, n]) => crear(m, conEscritos(datosDe('puntual sin fecha límite', t), { emoji: e, nota: n }), undefined)
+		(m, [t, e, n]) => create(m, withWritten(dataOf('puntual sin fecha límite', t), { emoji: e, note: n }), undefined)
 	],
-	[new RegExp(`^una tarea puntual sin fecha límite${creada}$`), (m, [c]) => crear(m, datosDe('puntual sin fecha límite', 'Tarea'), MOMENTO_DE_CREACION(c))],
-	[/^una tarea puntual con fecha límite (\S+)$/, (m, [l]) => crear(m, datosDe(`puntual con fecha límite ${l}`, 'Tarea'), undefined)],
+	[new RegExp(`^una tarea puntual sin fecha límite${created}$`), (m, [c]) => create(m, dataOf('puntual sin fecha límite', 'Tarea'), CREATION_MOMENT(c))],
+	[/^una tarea puntual con fecha límite (\S+)$/, (m, [l]) => create(m, dataOf(`puntual con fecha límite ${l}`, 'Tarea'), undefined)],
 	[
 		/^una tarea puntual (\S+) con fecha límite (\S+)$/,
-		(m, [t, l]) => crear(m, datosDe(`puntual con fecha límite ${l}`, t), ANTES_DEL_ESCENARIO)
+		(m, [t, l]) => create(m, dataOf(`puntual con fecha límite ${l}`, t), SCENARIO_BEFORE)
 	],
 	[
-		new RegExp(`^una tarea periódica relativa cada (\\S+) (\\S+)${creada}$`),
-		(m, [n, u, c]) => crear(m, datosDe(`periódica relativa cada ${n} ${u}`, 'Tarea'), MOMENTO_DE_CREACION(c))
+		new RegExp(`^una tarea periódica relativa cada (\\S+) (\\S+)${created}$`),
+		(m, [n, u, c]) => create(m, dataOf(`periódica relativa cada ${n} ${u}`, 'Tarea'), CREATION_MOMENT(c))
 	],
-	[/^una tarea periódica relativa nunca completada$/, (m) => crear(m, datosDe('periódica relativa cada 1 horas', 'Tarea'), undefined)],
+	[/^una tarea periódica relativa nunca completada$/, (m) => create(m, dataOf('periódica relativa cada 1 horas', 'Tarea'), undefined)],
 	[
 		/^una tarea periódica relativa (?!cada )(\S+) cada (\S+) (\S+)$/,
-		(m, [t, n, u]) => crear(m, datosDe(`periódica relativa cada ${n} ${u}`, t), ANTES_DEL_ESCENARIO)
+		(m, [t, n, u]) => create(m, dataOf(`periódica relativa cada ${n} ${u}`, t), SCENARIO_BEFORE)
 	],
 	[
 		/^una tarea periódica relativa (\S+) nunca completada creada el (\S+)$/,
-		(m, [t, c]) => crear(m, datosDe('periódica relativa cada 1 horas', t), momento(c))
+		(m, [t, c]) => create(m, dataOf('periódica relativa cada 1 horas', t), moment(c))
 	],
 	[
-		new RegExp(`^una tarea periódica (semanal los|mensual los días) (.*?)${creada}$`),
-		(m, [f, d, c]) => crear(m, datosDe(`periódica ${f} ${d}`, 'Tarea'), MOMENTO_DE_CREACION(c))
+		new RegExp(`^una tarea periódica (semanal los|mensual los días) (.*?)${created}$`),
+		(m, [f, d, c]) => create(m, dataOf(`periódica ${f} ${d}`, 'Tarea'), CREATION_MOMENT(c))
 	],
 	[
-		new RegExp(`^una tarea periódica (${FORMAS}) (\\S+) (?:los|los días) (.*?)${creada}$`),
+		new RegExp(`^una tarea periódica (${SHAPES}) (\\S+) (?:los|los días) (.*?)${created}$`),
 		(m, [f, t, d, c]) =>
-			crear(m, datosDe(`periódica ${f === 'semanal' ? 'semanal los' : 'mensual los días'} ${d}`, t), MOMENTO_DE_CREACION(c) ?? ANTES_DEL_ESCENARIO)
+			create(m, dataOf(`periódica ${f === 'semanal' ? 'semanal los' : 'mensual los días'} ${d}`, t), CREATION_MOMENT(c) ?? SCENARIO_BEFORE)
 	]
 ];
 
 /** "la tarea tiene un completado ..." ya guardado: su momento es el inicio del día cubierto si el paso no lo da. */
-function guardarCompletado(m: Mundo, tarea: Documento, en: number, cubierta: Date): void {
-	m.completados = [...m.completados, { id: m.siguiente++, tareaId: tarea.id, en, cubierta }];
+function saveCompletion(m: OracleWorld, task: Doc, at: number, covered: Date): void {
+	m.completions = [...m.completions, { id: m.next++, taskId: task.id, at, covered }];
 }
 
 /** §4.4: una ocurrencia cubierta es una fecha (sin hora) o, con hora, el inicio de una ocurrencia. */
-function guardarCompletadoDel(m: Mundo, tarea: Documento, en: number, cubierta: string): void {
-	const inicio = fecha(cubierta);
-	if (inicio === undefined) return guardarCompletado(m, tarea, en, diaDe(cubierta));
-	m.completados = [...m.completados, { id: m.siguiente++, tareaId: tarea.id, en, inicioCubierto: inicio }];
+function saveCompletionOf(m: OracleWorld, task: Doc, at: number, covered: string): void {
+	const start = date(covered);
+	if (start === undefined) return saveCompletion(m, task, at, dayOf(covered));
+	m.completions = [...m.completions, { id: m.next++, taskId: task.id, at, startCovered: start }];
 }
 
-const COMPLETADOS: Paso[] = [
+const COMPLETIONS: Step[] = [
 	// §4.4: un completado de la mínima, ya guardado (sin aviso y sin tocar el paso en que va la tarea).
 	[
 		/^la tarea fue completada el (\S+) en el paso (\S+) con la mínima$/,
-		(m, [t, paso]) => {
-			const completado = completar(m, unica(m), m.completados, momento(t), undefined, true);
-			completado.paso = numeroDePaso(paso);
+		(m, [t, step]) => {
+			const completion = complete(m, only(m), m.completions, moment(t), undefined, true);
+			completion.step = stepNumber(step);
 		}
 	],
-	[/^la tarea fue completada el (\S+) con la mínima$/, (m, [t]) => void completar(m, unica(m), m.completados, momento(t), undefined, true)],
-	[/^la tarea (\S+) fue completada el (\S+) con la mínima$/, (m, [t, e]) => void completar(m, conTitulo(m, t), m.completados, momento(e), undefined, true)],
+	[/^la tarea fue completada el (\S+) con la mínima$/, (m, [t]) => void complete(m, only(m), m.completions, moment(t), undefined, true)],
+	[/^la tarea (\S+) fue completada el (\S+) con la mínima$/, (m, [t, e]) => void complete(m, withTitle(m, t), m.completions, moment(e), undefined, true)],
 	// §4.4: un completado que guarda el paso en que iba la tarea, sin tocar el paso en que va hoy.
 	[
 		/^la tarea fue completada el (\S+) en el paso (\S+)$/,
-		(m, [t, paso]) => void (completar(m, unica(m), m.completados, momento(t)).paso = numeroDePaso(paso))
+		(m, [t, step]) => void (complete(m, only(m), m.completions, moment(t)).step = stepNumber(step))
 	],
-	[/^la tarea fue completada el (\S+)$/, (m, [t]) => void completar(m, unica(m), m.completados, momento(t))],
-	[/^la tarea (\S+) fue completada el (\S+)$/, (m, [t, e]) => void completar(m, conTitulo(m, t), m.completados, momento(e))],
-	[/^completo la tarea el (\S+)$/, (m, [e]) => completoYo(m, unica(m), momento(e))],
-	[/^completo la tarea (\S+) el (\S+)$/, (m, [t, e]) => completoYo(m, conTitulo(m, t), momento(e))],
+	[/^la tarea fue completada el (\S+)$/, (m, [t]) => void complete(m, only(m), m.completions, moment(t))],
+	[/^la tarea (\S+) fue completada el (\S+)$/, (m, [t, e]) => void complete(m, withTitle(m, t), m.completions, moment(e))],
+	[/^completo la tarea el (\S+)$/, (m, [e]) => completeMe(m, only(m), moment(e))],
+	[/^completo la tarea (\S+) el (\S+)$/, (m, [t, e]) => completeMe(m, withTitle(m, t), moment(e))],
 	[
 		/^la tarea (\S+) fue completada el (\S+) con id (\S+)$/,
-		(m, [t, e, id]) => void completar(m, conTitulo(m, t), m.completados, momento(e), id)
+		(m, [t, e, id]) => void complete(m, withTitle(m, t), m.completions, moment(e), id)
 	],
 	[
 		/^la tarea tiene un completado del (\S+) que cubre el (\S+)$/,
-		(m, [e, c]) => guardarCompletadoDel(m, unica(m), momento(e), c)
+		(m, [e, c]) => saveCompletionOf(m, only(m), moment(e), c)
 	],
 	[
 		/^la tarea tiene un completado que cubre el (\S+)$/,
-		(m, [c]) => guardarCompletado(m, unica(m), diaDe(c).getTime(), diaDe(c))
+		(m, [c]) => saveCompletion(m, only(m), dayOf(c).getTime(), dayOf(c))
 	],
 	[
 		/^la tarea (\S+) tiene un completado que cubre el (\S+)$/,
-		(m, [t, c]) => guardarCompletado(m, conTitulo(m, t), diaDe(c).getTime(), diaDe(c))
+		(m, [t, c]) => saveCompletion(m, withTitle(m, t), dayOf(c).getTime(), dayOf(c))
 	]
 ];
 
-const OTRO = 'otro dispositivo, sin ver ese cambio,';
+const OTHER = 'otro dispositivo, sin ver ese cambio,';
 
-const SOLO_ESPACIOS = '   ';
+const ONLY_SPACES = '   ';
 
 /** Cambios de la nota (§4.1, §6.2): lo escrito en el panel, con el resto de la tarea como está. */
-const CAMBIOS_DE_NOTA: [string, (c: string[]) => Escritos][] = [
-	['la nota a (.*) con espacios al inicio y al final', ([n]) => ({ nota: `  \n ${n} \n  ` })],
-	['la nota a (.*) y (.*) en líneas separadas', ([a, b]) => ({ nota: `${a}\n${b}` })],
-	['la nota a una de solo espacios', () => ({ nota: SOLO_ESPACIOS })],
-	['la nota a una de (\\S+) caracteres', ([l]) => ({ nota: 'x'.repeat(numero(l)) })],
-	['la nota a (.*)', ([n]) => ({ nota: n })]
+const NOTE_CHANGES: [string, (c: string[]) => WrittenData][] = [
+	['la nota a (.*) con espacios al inicio y al final', ([n]) => ({ note: `  \n ${n} \n  ` })],
+	['la nota a (.*) y (.*) en líneas separadas', ([a, b]) => ({ note: `${a}\n${b}` })],
+	['la nota a una de solo espacios', () => ({ note: ONLY_SPACES })],
+	['la nota a una de (\\S+) caracteres', ([l]) => ({ note: 'x'.repeat(numeric(l)) })],
+	['la nota a (.*)', ([n]) => ({ note: n })]
 ];
 
 /** Cambios del primer paso (§4.1, §6.2): lo escrito en el campo; quitarlo es vaciarlo. */
-const CAMBIOS_DE_PRIMER_PASO: [string, (c: string[]) => Escritos][] = [
-	['el primer paso a (.*) con espacios al inicio y al final', ([p]) => ({ primerPaso: `  ${p}  ` })],
-	['el primer paso a uno de solo espacios', () => ({ primerPaso: SOLO_ESPACIOS })],
-	['el primer paso a uno de (\\S+) caracteres', ([l]) => ({ primerPaso: 'x'.repeat(numero(l)) })],
-	['el primer paso a (.*)', ([p]) => ({ primerPaso: p })]
+const CHANGES_OF_FIRST_STEP: [string, (c: string[]) => WrittenData][] = [
+	['el primer paso a (.*) con espacios al inicio y al final', ([p]) => ({ firstStep: `  ${p}  ` })],
+	['el primer paso a uno de solo espacios', () => ({ firstStep: ONLY_SPACES })],
+	['el primer paso a uno de (\\S+) caracteres', ([l]) => ({ firstStep: 'x'.repeat(numeric(l)) })],
+	['el primer paso a (.*)', ([p]) => ({ firstStep: p })]
 ];
 
-const edicionesDePrimerPaso = (): Paso[] => [
-	...CAMBIOS_DE_PRIMER_PASO.flatMap(([texto, escritos]): Paso[] => [
-		[new RegExp(`^edito ${texto}$`), (m, c) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), escritos(c)))],
-		[new RegExp(`^${OTRO} edita ${texto}$`), (m, c) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), escritos(c)))]
+const editsOfFirstStep = (): Step[] => [
+	...CHANGES_OF_FIRST_STEP.flatMap(([text, written]): Step[] => [
+		[new RegExp(`^edito ${text}$`), (m, c) => editMe(m, undefined, (base) => keeping(base, docData(base), written(c)))],
+		[new RegExp(`^${OTHER} edita ${text}$`), (m, c) => editsOther(m, (base) => keeping(base, docData(base), written(c)))]
 	]),
-	[/^quito el primer paso$/, (m) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), { primerPaso: '' }))],
-	[new RegExp(`^${OTRO} quita el primer paso$`), (m) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), { primerPaso: '' }))]
+	[/^quito el primer paso$/, (m) => editMe(m, undefined, (base) => keeping(base, docData(base), { firstStep: '' }))],
+	[new RegExp(`^${OTHER} quita el primer paso$`), (m) => editsOther(m, (base) => keeping(base, docData(base), { firstStep: '' }))]
 ];
 
 /** Cambios de la versión mínima (§4.1, §6.2): lo escrito en el campo; quitarla es vaciarlo. */
-const CAMBIOS_DE_VERSION_MINIMA: [string, (c: string[]) => Escritos][] = [
-	['la versión mínima a (.*) con espacios al inicio y al final', ([v]) => ({ versionMinima: `  ${v}  ` })],
-	['la versión mínima a una de solo espacios', () => ({ versionMinima: SOLO_ESPACIOS })],
-	['la versión mínima a una de (\\S+) caracteres', ([l]) => ({ versionMinima: 'x'.repeat(numero(l)) })],
-	['la versión mínima a (.*)', ([v]) => ({ versionMinima: v })]
+const CHANGES_OF_MINIMAL_VERSION: [string, (c: string[]) => WrittenData][] = [
+	['la versión mínima a (.*) con espacios al inicio y al final', ([v]) => ({ minimalVersion: `  ${v}  ` })],
+	['la versión mínima a una de solo espacios', () => ({ minimalVersion: ONLY_SPACES })],
+	['la versión mínima a una de (\\S+) caracteres', ([l]) => ({ minimalVersion: 'x'.repeat(numeric(l)) })],
+	['la versión mínima a (.*)', ([v]) => ({ minimalVersion: v })]
 ];
 
-const edicionesDeVersionMinima = (): Paso[] => [
-	...CAMBIOS_DE_VERSION_MINIMA.flatMap(([texto, escritos]): Paso[] => [
-		[new RegExp(`^edito ${texto}$`), (m, c) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), escritos(c)))],
-		[new RegExp(`^${OTRO} edita ${texto}$`), (m, c) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), escritos(c)))]
+const editsOfMinimalVersion = (): Step[] => [
+	...CHANGES_OF_MINIMAL_VERSION.flatMap(([text, written]): Step[] => [
+		[new RegExp(`^edito ${text}$`), (m, c) => editMe(m, undefined, (base) => keeping(base, docData(base), written(c)))],
+		[new RegExp(`^${OTHER} edita ${text}$`), (m, c) => editsOther(m, (base) => keeping(base, docData(base), written(c)))]
 	]),
-	[/^quito la versión mínima$/, (m) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), { versionMinima: '' }))],
-	[new RegExp(`^${OTRO} quita la versión mínima$`), (m) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), { versionMinima: '' }))]
+	[/^quito la versión mínima$/, (m) => editMe(m, undefined, (base) => keeping(base, docData(base), { minimalVersion: '' }))],
+	[new RegExp(`^${OTHER} quita la versión mínima$`), (m) => editsOther(m, (base) => keeping(base, docData(base), { minimalVersion: '' }))]
 ];
 
 /** Cambios de un paso (§4.1, Pasos): lo escrito en su campo; vaciarlo lo descarta y los de abajo suben. */
-const CAMBIOS_DE_PASO: [string, (c: string[]) => string][] = [
+const STEP_CHANGES: [string, (c: string[]) => string][] = [
 	['(.*) con espacios al inicio y al final', ([p]) => `  ${p}  `],
-	['uno de solo espacios', () => SOLO_ESPACIOS],
-	['uno de (\\S+) caracteres', ([l]) => 'x'.repeat(numero(l))],
+	['uno de solo espacios', () => ONLY_SPACES],
+	['uno de (\\S+) caracteres', ([l]) => 'x'.repeat(numeric(l))],
 	['(.*)', ([p]) => p]
 ];
 
 /** Los pasos de la tarea con el paso `n` escrito; uno más que la cantidad lo agrega al final. */
-function conElPaso(base: Documento, n: string, texto: string): Escritos {
-	const lista = pasosDe(base);
-	const lugar = numero(n);
-	if (!Number.isInteger(lugar) || lugar < 1 || lugar > lista.length + 1) indeciso(`paso ${n}`);
-	const nueva = lugar === lista.length + 1 ? [...lista, texto] : lista.map((paso, i) => (i === lugar - 1 ? texto : paso));
-	return { primerPaso: nueva[0], pasos: nueva.slice(1) };
+function withStep(base: Doc, n: string, text: string): WrittenData {
+	const list = stepsOf(base);
+	const place = numeric(n);
+	if (!Number.isInteger(place) || place < 1 || place > list.length + 1) undecided(`paso ${n}`);
+	const fresh = place === list.length + 1 ? [...list, text] : list.map((step, i) => (i === place - 1 ? text : step));
+	return { firstStep: fresh[0], steps: fresh.slice(1) };
 }
 
-const edicionesDePasos = (): Paso[] => [
-	...CAMBIOS_DE_PASO.flatMap(([texto, escrito]): Paso[] => [
-		[new RegExp(`^edito el paso (\\S+) a ${texto}$`), (m, [n, ...c]) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), conElPaso(base, n, escrito(c))))],
-		[new RegExp(`^${OTRO} edita el paso (\\S+) a ${texto}$`), (m, [n, ...c]) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), conElPaso(base, n, escrito(c))))]
+const stepsEdits = (): Step[] => [
+	...STEP_CHANGES.flatMap(([text, written]): Step[] => [
+		[new RegExp(`^edito el paso (\\S+) a ${text}$`), (m, [n, ...c]) => editMe(m, undefined, (base) => keeping(base, docData(base), withStep(base, n, written(c))))],
+		[new RegExp(`^${OTHER} edita el paso (\\S+) a ${text}$`), (m, [n, ...c]) => editsOther(m, (base) => keeping(base, docData(base), withStep(base, n, written(c))))]
 	]),
-	[/^vacío el paso (\S+)$/, (m, [n]) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), conElPaso(base, n, '')))],
+	[/^vacío el paso (\S+)$/, (m, [n]) => editMe(m, undefined, (base) => keeping(base, docData(base), withStep(base, n, '')))],
 	[
 		/^edito la tarea con (\S+) pasos$/,
-		(m, [cantidad]) => {
-			const pasos = Array.from({ length: numero(cantidad) }, (_, i) => `Paso ${i + 1}`);
-			editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), { primerPaso: pasos[0], pasos: pasos.slice(1) }));
+		(m, [count]) => {
+			const steps = Array.from({ length: numeric(count) }, (_, i) => `Paso ${i + 1}`);
+			editMe(m, undefined, (base) => keeping(base, docData(base), { firstStep: steps[0], steps: steps.slice(1) }));
 		}
 	]
 ];
 
 /** §4.1 (Pasos: Avance) y §6.1: «Hecho» pasa al paso siguiente; en el último completa la tarea como el checkbox. */
-function tocoHecho(m: Mundo, tarea: Documento, en: number): void {
-	m.tocadoEn ??= en;
-	const d = derivada(tarea);
-	if (!variosPasos(d) || !seVeLaLinea(estadoDeLaFila(m, d, en))) indeciso('«Hecho» no se ve');
-	const paso = pasoEnQueVa(d);
-	if (paso === pasosDe(d).length) return completoSiSePuede(m, d, en);
-	m.antes = copiar(m);
-	irAlPaso(m, d.id, paso + 1);
+function tapDone(m: OracleWorld, task: Doc, at: number): void {
+	m.touchedAt ??= at;
+	const d = derived(task);
+	if (!severalSteps(d) || !seesLine(rowStatus(m, d, at))) undecided('«Hecho» no se ve');
+	const step = stepInThatGoes(d);
+	if (step === stepsOf(d).length) return completeIfPossible(m, d, at);
+	m.before = copy(m);
+	goOnStep(m, d.id, step + 1);
 }
 
 /** El otro dispositivo decide con la tarea que veía, y su cambio llega a lo guardado hoy (§7). */
-function tocaHechoElOtro(m: Mundo, en: number): void {
-	const visto = loQueVioElOtro(m);
-	const d = derivada(unica(visto));
-	if (!variosPasos(d)) indeciso('«Hecho» no se ve');
-	const paso = pasoEnQueVa(d);
-	if (paso < pasosDe(d).length) return irAlPaso(m, d.id, paso + 1);
-	if (d.horario && !dentroDeVentana(d.horario, en)) return;
-	completar(m, d, visto.completados, en);
-	irAlPaso(m, d.id, 1);
+function dueDoneOther(m: OracleWorld, at: number): void {
+	const seen = thatSawOther(m);
+	const d = derived(only(seen));
+	if (!severalSteps(d)) undecided('«Hecho» no se ve');
+	const step = stepInThatGoes(d);
+	if (step < stepsOf(d).length) return goOnStep(m, d.id, step + 1);
+	if (d.schedule && !insideOfTimeWindow(d.schedule, at)) return;
+	complete(m, d, seen.completions, at);
+	goOnStep(m, d.id, 1);
 }
 
 /**
  * §6.1: «Hice la mínima» está en las filas pendiente y atrasada con versión mínima; completa como el checkbox, con el
  * completado de la mínima, y deshabilitado (fuera de la ventana, §5.5) no hace nada.
  */
-function tocoLaMinima(m: Mundo, tarea: Documento, en: number): void {
-	m.tocadoEn ??= en;
-	const d = derivada(tarea);
-	if (d.versionMinima === undefined || !seVeLaLinea(estadoDeLaFila(m, d, en))) indeciso('«Hice la mínima» no se ve');
-	completoSiSePuede(m, d, en, true);
+function tapMinimal(m: OracleWorld, task: Doc, at: number): void {
+	m.touchedAt ??= at;
+	const d = derived(task);
+	if (d.minimalVersion === undefined || !seesLine(rowStatus(m, d, at))) undecided('«Hice la mínima» no se ve');
+	completeIfPossible(m, d, at, true);
 }
 
 /** El otro dispositivo decide con la tarea que veía, y su completado llega a lo guardado hoy (§7). */
-function tocaLaMinimaElOtro(m: Mundo, en: number): void {
-	const visto = loQueVioElOtro(m);
-	const d = derivada(unica(visto));
-	if (d.versionMinima === undefined || !seVeLaLinea(estadoDeLaFila(visto, d, en))) indeciso('«Hice la mínima» no se ve');
-	if (d.horario && !dentroDeVentana(d.horario, en)) return;
-	completar(m, d, visto.completados, en, undefined, true);
-	irAlPaso(m, d.id, 1);
+function dueMinimalOther(m: OracleWorld, at: number): void {
+	const seen = thatSawOther(m);
+	const d = derived(only(seen));
+	if (d.minimalVersion === undefined || !seesLine(rowStatus(seen, d, at))) undecided('«Hice la mínima» no se ve');
+	if (d.schedule && !insideOfTimeWindow(d.schedule, at)) return;
+	complete(m, d, seen.completions, at, undefined, true);
+	goOnStep(m, d.id, 1);
 }
 
-const PASOS_DE_LA_FILA: Paso[] = [
-	[/^toco Hice la mínima el (\S+)$/, (m, [e]) => tocoLaMinima(m, unica(m), momento(e))],
-	[/^toco Hice la mínima en la tarea (\S+) el (\S+)$/, (m, [t, e]) => tocoLaMinima(m, conTitulo(m, t), momento(e))],
-	[new RegExp(`^${OTRO} toca Hice la mínima el (\\S+)$`), (m, [e]) => tocaLaMinimaElOtro(m, momento(e))],
-	[/^toco Hecho el (\S+)$/, (m, [e]) => tocoHecho(m, unica(m), momento(e))],
-	[/^toco Hecho en la tarea (\S+) el (\S+)$/, (m, [t, e]) => tocoHecho(m, conTitulo(m, t), momento(e))],
+const ROW_STEPS: Step[] = [
+	[/^toco Hice la mínima el (\S+)$/, (m, [e]) => tapMinimal(m, only(m), moment(e))],
+	[/^toco Hice la mínima en la tarea (\S+) el (\S+)$/, (m, [t, e]) => tapMinimal(m, withTitle(m, t), moment(e))],
+	[new RegExp(`^${OTHER} toca Hice la mínima el (\\S+)$`), (m, [e]) => dueMinimalOther(m, moment(e))],
+	[/^toco Hecho el (\S+)$/, (m, [e]) => tapDone(m, only(m), moment(e))],
+	[/^toco Hecho en la tarea (\S+) el (\S+)$/, (m, [t, e]) => tapDone(m, withTitle(m, t), moment(e))],
 	[
 		/^toco Paso anterior$/,
 		(m) => {
-			const d = derivada(unica(m));
-			if (!variosPasos(d)) indeciso('«Paso anterior» no se ve');
-			m.antes = copiar(m);
-			irAlPaso(m, d.id, Math.max(1, pasoEnQueVa(d) - 1));
+			const d = derived(only(m));
+			if (!severalSteps(d)) undecided('«Paso anterior» no se ve');
+			m.before = copy(m);
+			goOnStep(m, d.id, Math.max(1, stepInThatGoes(d) - 1));
 		}
 	],
-	[new RegExp(`^${OTRO} toca Hecho el (\\S+)$`), (m, [e]) => tocaHechoElOtro(m, momento(e))]
+	[new RegExp(`^${OTHER} toca Hecho el (\\S+)$`), (m, [e]) => dueDoneOther(m, moment(e))]
 ];
 
 /** Elegir un emoji en el selector o quitarlo (§6.2): quien edita elige o quita; quitar es dejar el campo vacío. */
-const CAMBIOS_DE_EMOJI: [RegExp, string, (c: string[]) => Escritos][] = [
-	[/^elijo el emoji (.*) y edito la nota a (.*)$/, 'yo', ([e, n]) => ({ emoji: e, nota: n })],
+const EMOJI_CHANGES: [RegExp, string, (c: string[]) => WrittenData][] = [
+	[/^elijo el emoji (.*) y edito la nota a (.*)$/, 'yo', ([e, n]) => ({ emoji: e, note: n })],
 	[/^elijo el emoji (.*)$/, 'yo', ([e]) => ({ emoji: e })],
 	[/^quito el emoji$/, 'yo', () => ({ emoji: '' })],
-	[new RegExp(`^${OTRO} elige el emoji (.*)$`), 'otro', ([e]) => ({ emoji: e })]
+	[new RegExp(`^${OTHER} elige el emoji (.*)$`), 'otro', ([e]) => ({ emoji: e })]
 ];
 
-function edicionesDeEmojiYNota(): Paso[] {
-	const deNota = CAMBIOS_DE_NOTA.flatMap(([texto, escritos]): Paso[] => [
+function editsOfEmojiAndNote(): Step[] {
+	const ofNote = NOTE_CHANGES.flatMap(([text, written]): Step[] => [
 		[
-			new RegExp(`^edito ${texto}$`),
-			(m, c) => editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), escritos(c)))
+			new RegExp(`^edito ${text}$`),
+			(m, c) => editMe(m, undefined, (base) => keeping(base, docData(base), written(c)))
 		],
 		[
-			new RegExp(`^${OTRO} edita ${texto}$`),
-			(m, c) => editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), escritos(c)))
+			new RegExp(`^${OTHER} edita ${text}$`),
+			(m, c) => editsOther(m, (base) => keeping(base, docData(base), written(c)))
 		]
 	]);
-	const deEmoji = CAMBIOS_DE_EMOJI.map(([patron, quien, escritos]): Paso => [
-		patron,
+	const ofEmoji = EMOJI_CHANGES.map(([pattern, who, written]): Step => [
+		pattern,
 		(m, c) =>
-			quien === 'yo'
-				? editoYo(m, undefined, (base) => conservando(base, datosDeDocumento(base), escritos(c)))
-				: editaElOtro(m, (base) => conservando(base, datosDeDocumento(base), escritos(c)))
+			who === 'yo'
+				? editMe(m, undefined, (base) => keeping(base, docData(base), written(c)))
+				: editsOther(m, (base) => keeping(base, docData(base), written(c)))
 	]);
-	return [...deNota, ...deEmoji];
+	return [...ofNote, ...ofEmoji];
 }
 
 /** Cambiar el horario (§6.2): quien edita escribe una o más ventanas, ninguna (lo quita) o una con una sola hora. */
-const conHorario = (escritas: Escritas) => (base: Documento) => conHorarioEscrito(datosDeDocumento(base), escritas);
+const withSchedule = (written: WrittenPairs) => (base: Doc) => withScheduleWritten(docData(base), written);
 
-const EDICIONES_DE_HORARIO: Paso[] = [
-	[new RegExp(`^pongo el horario ${HORARIO}$`), (m, horas) => editoYo(m, undefined, conHorario(escritasDe(horas)))],
-	[/^quito el horario$/, (m) => editoYo(m, undefined, conHorario([]))],
-	[/^pongo un horario con solo la hora de inicio (\S+)$/, (m, [d]) => editoYo(m, undefined, conHorario([[d, undefined]]))],
-	[new RegExp(`^${OTRO} pone el horario ${HORARIO}$`), (m, horas) => editaElOtro(m, conHorario(escritasDe(horas)))],
-	[new RegExp(`^${OTRO} quita el horario$`), (m) => editaElOtro(m, conHorario([]))],
+const SCHEDULE_EDITS: Step[] = [
+	[new RegExp(`^pongo el horario ${SCHEDULE}$`), (m, hours) => editMe(m, undefined, withSchedule(writtenOf(hours)))],
+	[/^quito el horario$/, (m) => editMe(m, undefined, withSchedule([]))],
+	[/^pongo un horario con solo la hora de inicio (\S+)$/, (m, [d]) => editMe(m, undefined, withSchedule([[d, undefined]]))],
+	[new RegExp(`^${OTHER} pone el horario ${SCHEDULE}$`), (m, hours) => editsOther(m, withSchedule(writtenOf(hours)))],
+	[new RegExp(`^${OTHER} quita el horario$`), (m) => editsOther(m, withSchedule([]))],
 	[
-		new RegExp(`^edito en una misma edición el título a (.+) y el horario ${HORARIO}$`),
-		(m, [t, ...horas]) => editoYo(m, undefined, (base) => conValidacion({ ...conHorario(escritasDe(horas))(base), titulo: t }))
+		new RegExp(`^edito en una misma edición el título a (.+) y el horario ${SCHEDULE}$`),
+		(m, [t, ...hours]) => editMe(m, undefined, (base) => withValidation({ ...withSchedule(writtenOf(hours))(base), title: t }))
 	]
 ];
 
-const EDICIONES: Paso[] = [
-	...EDICIONES_DE_HORARIO,
+const EDITS: Step[] = [
+	...SCHEDULE_EDITS,
 	// §5.8: pasar una periódica pausada a puntual la reanuda en ese momento.
 	[
 		/^edito la tarea a puntual sin fecha límite el (\S+)$/,
-		(m, [e]) => editoYo(m, undefined, (base) => conservando(base, datosDe('puntual sin fecha límite', base.titulo)), momento(e))
+		(m, [e]) => editMe(m, undefined, (base) => keeping(base, dataOf('puntual sin fecha límite', base.title)), moment(e))
 	],
 	[
 		/^edito la tarea a (.*)$/,
-		(m, [def]) => editoYo(m, undefined, (base) => conservando(base, datosDe(def, base.titulo)))
+		(m, [def]) => editMe(m, undefined, (base) => keeping(base, dataOf(def, base.title)))
 	],
 	[
 		/^edito la tarea (\S+) a (.*)$/,
-		(m, [t, def]) => editoYo(m, t, (base) => conservando(base, datosDe(def, base.titulo)))
+		(m, [t, def]) => editMe(m, t, (base) => keeping(base, dataOf(def, base.title)))
 	],
-	[new RegExp(`^${OTRO} edita la tarea a (.*)$`), (m, [def]) => editaElOtro(m, (base) => conservando(base, datosDe(def, base.titulo)))],
+	[new RegExp(`^${OTHER} edita la tarea a (.*)$`), (m, [def]) => editsOther(m, (base) => keeping(base, dataOf(def, base.title)))],
 	[
 		/^edito el título a uno de solo espacios$/,
-		(m) => editoYo(m, undefined, (base) => conValidacion({ ...datosDeDocumento(base), titulo: '   ' }))
+		(m) => editMe(m, undefined, (base) => withValidation({ ...docData(base), title: '   ' }))
 	],
 	[
 		/^edito el título a (.*)$/,
-		(m, [t]) => editoYo(m, undefined, (base) => conValidacion({ ...datosDeDocumento(base), titulo: t }))
+		(m, [t]) => editMe(m, undefined, (base) => withValidation({ ...docData(base), title: t }))
 	],
 	[
-		new RegExp(`^${OTRO} edita el título a (.*)$`),
-		(m, [t]) => editaElOtro(m, (base) => conValidacion({ ...datosDeDocumento(base), titulo: t }))
+		new RegExp(`^${OTHER} edita el título a (.*)$`),
+		(m, [t]) => editsOther(m, (base) => withValidation({ ...docData(base), title: t }))
 	],
 	[
 		/^edito en una misma edición el título a (.+) y la fecha límite a (\S+)$/,
-		(m, [t, l]) => editoYo(m, undefined, (base) => conservando(base, conValidacion(datosDe(`puntual con fecha límite ${l}`, t))))
+		(m, [t, l]) => editMe(m, undefined, (base) => keeping(base, withValidation(dataOf(`puntual con fecha límite ${l}`, t))))
 	],
-	[new RegExp(`^${OTRO} guarda la tarea sin cambios$`), (m) => editaElOtro(m, datosDeDocumento)],
-	...edicionesDeEmojiYNota(),
-	...edicionesDePrimerPaso(),
-	...edicionesDeVersionMinima(),
-	...edicionesDePasos(),
-	...PASOS_DE_LA_FILA
+	[new RegExp(`^${OTHER} guarda la tarea sin cambios$`), (m) => editsOther(m, docData)],
+	...editsOfEmojiAndNote(),
+	...editsOfFirstStep(),
+	...editsOfMinimalVersion(),
+	...stepsEdits(),
+	...ROW_STEPS
 ];
 
 /** Pausar y reanudar (§5.8, §6.2): el botón del panel actúa en el momento; solo las periódicas se pausan. */
-function pausar(m: Mundo, d: Documento): void {
-	if (d.tipo !== 'periodica') indeciso('la tarea no se puede pausar');
-	m.documentos = m.documentos.map((x) => (x.id === d.id ? { ...x, pausada: true } : x));
+function pause(m: OracleWorld, d: Doc): void {
+	if (d.kind !== 'periodica') undecided('la tarea no se puede pausar');
+	m.docs = m.docs.map((x) => (x.id === d.id ? { ...x, paused: true } : x));
 }
 
-function reanudar(m: Mundo, d: Documento, en: number): void {
-	if (!d.pausada) indeciso('la tarea no está pausada');
-	m.documentos = m.documentos.map((x) => (x.id === d.id ? { ...x, pausada: undefined, reanudada: en } : x));
+function resume(m: OracleWorld, d: Doc, at: number): void {
+	if (!d.paused) undecided('la tarea no está pausada');
+	m.docs = m.docs.map((x) => (x.id === d.id ? { ...x, paused: undefined, resumed: at } : x));
 }
 
 /**
  * §5.9 y §6.2: Posponer solo actúa si el panel, con lo que ve quien pospone, lo ofrece en ese momento. El cambio
  * escribe solo `pospuesta`, entera (§7), y llega a lo guardado hoy.
  */
-function posponer(m: Mundo, vista: Guardado, opcion: string, valor: string): void {
-	const pospuesta = posposicionDe(opcion, valor) ?? indeciso('opción de posponer');
-	const d = derivada(unica(vista));
-	if (botonDePosponer({ ...situacionDe(vista, d, pospuesta.desde), pausada: d.pausada }) !== 'Posponer') indeciso('el panel no ofrece Posponer');
-	m.documentos = m.documentos.map((x) => (x.id === d.id ? { ...x, pospuesta } : x));
+function postpone(m: OracleWorld, view: Saved, option: string, value: string): void {
+	const postponed = postponementOf(option, value) ?? undecided('opción de posponer');
+	const d = derived(only(view));
+	if (postponeButton({ ...situationOf(view, d, postponed.from), paused: d.paused }) !== 'Posponer') undecided('el panel no ofrece Posponer');
+	m.docs = m.docs.map((x) => (x.id === d.id ? { ...x, postponed } : x));
 }
 
-const POSPOSICIONES: Paso[] = [
-	[/^la tarea fue pospuesta con la opción (.+) el (\S+)$/, (m, [o, e]) => posponer(m, m, o, e)],
+const POSTPONEMENTS: Step[] = [
+	[/^la tarea fue pospuesta con la opción (.+) el (\S+)$/, (m, [o, e]) => postpone(m, m, o, e)],
 	[
 		/^pospongo la tarea con la opción (.+) el (\S+)$/,
 		(m, [o, e]) => {
-			m.antes = copiar(m);
-			posponer(m, m, o, e);
+			m.before = copy(m);
+			postpone(m, m, o, e);
 		}
 	],
-	[new RegExp(`^${OTRO} pospone la tarea con la opción (.+) el (\\S+)$`), (m, [o, e]) => posponer(m, loQueVioElOtro(m), o, e)]
+	[new RegExp(`^${OTHER} pospone la tarea con la opción (.+) el (\\S+)$`), (m, [o, e]) => postpone(m, thatSawOther(m), o, e)]
 ];
 
-const PAUSAS: Paso[] = [
-	[/^la tarea fue pausada$/, (m) => pausar(m, derivada(unica(m)))],
-	[/^la tarea (\S+) fue pausada$/, (m, [t]) => pausar(m, derivada(conTitulo(m, t)))],
+const PAUSES: Step[] = [
+	[/^la tarea fue pausada$/, (m) => pause(m, derived(only(m)))],
+	[/^la tarea (\S+) fue pausada$/, (m, [t]) => pause(m, derived(withTitle(m, t)))],
 	[
 		/^pauso la tarea$/,
 		(m) => {
-			m.antes = copiar(m);
-			pausar(m, derivada(unica(m)));
+			m.before = copy(m);
+			pause(m, derived(only(m)));
 		}
 	],
 	// §7: pausar escribe solo `pausada`; llega a lo guardado hoy aunque el otro dispositivo no haya visto la reanudación.
-	[new RegExp(`^${OTRO} pausa la tarea$`), (m) => pausar(m, derivada(unica(m)))],
+	[new RegExp(`^${OTHER} pausa la tarea$`), (m) => pause(m, derived(only(m)))],
 	[
 		/^reanudo la tarea el (\S+)$/,
 		(m, [e]) => {
-			m.antes = copiar(m);
-			reanudar(m, derivada(unica(m)), momento(e));
+			m.before = copy(m);
+			resume(m, derived(only(m)), moment(e));
 		}
 	],
 	[
 		/^reanudo la tarea (\S+) el (\S+)$/,
 		(m, [t, e]) => {
-			m.antes = copiar(m);
-			reanudar(m, derivada(conTitulo(m, t)), momento(e));
+			m.before = copy(m);
+			resume(m, derived(withTitle(m, t)), moment(e));
 		}
 	]
 ];
 
-const BORRADOS: Paso[] = [
+const DELETED: Step[] = [
 	[
 		/^borro la tarea$/,
 		(m) => {
-			m.antes = copiar(m);
-			borrar(m, unica(m), m.completados);
+			m.before = copy(m);
+			remove(m, only(m), m.completions);
 		}
 	],
 	[
 		/^borro la tarea (\S+)$/,
 		(m, [t]) => {
-			m.antes = copiar(m);
-			borrar(m, conTitulo(m, t), m.completados);
+			m.before = copy(m);
+			remove(m, withTitle(m, t), m.completions);
 		}
 	],
 	[
-		new RegExp(`^${OTRO} borra la tarea$`),
+		new RegExp(`^${OTHER} borra la tarea$`),
 		(m) => {
-			const visto = loQueVioElOtro(m);
-			borrar(m, unica(visto), visto.completados);
+			const seen = thatSawOther(m);
+			remove(m, only(seen), seen.completions);
 		}
 	],
 	[
-		new RegExp(`^${OTRO} completa la tarea (\\S+) el (\\S+)$`),
+		new RegExp(`^${OTHER} completa la tarea (\\S+) el (\\S+)$`),
 		(m, [t, e]) => {
-			const visto = loQueVioElOtro(m);
-			const tarea = conTitulo(visto, t);
-			completar(m, tarea, visto.completados, momento(e));
-			irAlPaso(m, tarea.id, 1);
+			const seen = thatSawOther(m);
+			const task = withTitle(seen, t);
+			complete(m, task, seen.completions, moment(e));
+			goOnStep(m, task.id, 1);
 		}
 	]
 ];
 
-const DESHACERES: Paso[] = [
+const UNDOS: Step[] = [
 	[
 		/^borro el completado del (\S+)$/,
 		(m, [e]) => {
-			m.antes = copiar(m);
-			deshacerCompletado(m, elCompletadoDel(m, momento(e)).id);
+			m.before = copy(m);
+			undoCompletion(m, theCompletionOf(m, moment(e)).id);
 		}
 	],
-	[new RegExp(`^${OTRO} borra el completado del (\\S+)$`), (m, [e]) => deshacerCompletado(m, elCompletadoDel(m, momento(e)).id)],
-	[/^toco Deshacer en el aviso el (\S+)$/, (m, [e]) => tocoDeshacer(m, momento(e))],
-	[/^toco el checkbox de la tarea el (\S+)$/, (m, [e]) => tocoElCheckbox(m, momento(e))]
+	[new RegExp(`^${OTHER} borra el completado del (\\S+)$`), (m, [e]) => undoCompletion(m, theCompletionOf(m, moment(e)).id)],
+	[/^toco Deshacer en el aviso el (\S+)$/, (m, [e]) => tapUndo(m, moment(e))],
+	[/^toco el checkbox de la tarea el (\S+)$/, (m, [e]) => tapCheckbox(m, moment(e))]
 ];
 
 /** El orden de la lista no se decide a veces: solo importa si un Then lo mira; la fila de los pasos no lo necesita. */
-function consultarPendientes(m: Mundo, ahora: number | undefined): void {
-	m.pendientesEn = ahora;
-	m.consultoPendientes = true;
+function queryPending(m: OracleWorld, now: number | undefined): void {
+	m.pendingAt = now;
+	m.queryPending = true;
 	try {
-		m.orden = ordenEn(m, ahora);
-		m.ordenIndeciso = false;
+		m.order = orderIn(m, now);
+		m.orderUndecided = false;
 	} catch (error) {
-		if (!(error instanceof Indeciso)) throw error;
-		m.orden = undefined;
-		m.ordenIndeciso = true;
+		if (!(error instanceof Undecided)) throw error;
+		m.order = undefined;
+		m.orderUndecided = true;
 	}
 }
 
-const CONSULTAS: Paso[] = [
+const QUERIES: Step[] = [
 	[
 		/^consulto el aviso el (\S+)$/,
 		(m, [t]) => {
-			m.avisoVisto = consultarAviso(m, momento(t));
-			m.avisoTexto = textoDelAviso(m, momento(t));
-			m.avisoEn = momento(t);
+			m.noticeSeen = queryNotice(m, moment(t));
+			m.noticeText = noticeText(m, moment(t));
+			m.noticeIn = moment(t);
 		}
 	],
-	[/^consulto el Historial el (\S+)$/, (m, [t]) => void (m.historial = consultarHistorial(m, momento(t)))],
-	[/^consulto la última vez el (\S+)$/, (m, [t]) => void (m.ultimaVez = consultarUltimaVez(m, momento(t)))],
+	[/^consulto el Historial el (\S+)$/, (m, [t]) => void (m.history = queryHistory(m, moment(t)))],
+	[/^consulto la última vez el (\S+)$/, (m, [t]) => void (m.lastTime = queryLastTime(m, moment(t)))],
 	[
 		/^consulto el estado el (\S+)$/,
 		(m, [t]) => {
-			m.consultadoEn = momento(t);
-			m.estado = clasificar(m, m.consultadoEn);
+			m.queriedAt = moment(t);
+			m.status = classify(m, m.queriedAt);
 		}
 	],
-	[/^consulto el estado en cualquier momento$/, (m) => void (m.estado = clasificar(m, undefined))],
-	[/^consulto Pendientes el (\S+)$/, (m, [t]) => consultarPendientes(m, momento(t))],
-	[/^consulto Pendientes en cualquier momento$/, (m) => consultarPendientes(m, undefined)],
-	[new RegExp(`^${MOSTRAR_COMPLETADAS}$`), (m) => void (m.mostrarCompletadas = true)],
+	[/^consulto el estado en cualquier momento$/, (m) => void (m.status = classify(m, undefined))],
+	[/^consulto Pendientes el (\S+)$/, (m, [t]) => queryPending(m, moment(t))],
+	[/^consulto Pendientes en cualquier momento$/, (m) => queryPending(m, undefined)],
+	[new RegExp(`^${SHOW_COMPLETED}$`), (m) => void (m.showCompleted = true)],
 	// §6.1: las pausadas se ven con este check; la línea del paso no se ve en ellas.
 	[/^Mostrar pausadas está encendido$/, () => undefined]
 ];
 
-const PASOS: Paso[] = [...CREACIONES, ...COMPLETADOS, ...PAUSAS, ...POSPOSICIONES, ...EDICIONES, ...BORRADOS, ...DESHACERES, ...CONSULTAS];
+const STEPS: Step[] = [...CREATIONS, ...COMPLETIONS, ...PAUSES, ...POSTPONEMENTS, ...EDITS, ...DELETED, ...UNDOS, ...QUERIES];
 
 // ---- Lo que cada Then observa ----
 
-const estadoConsultado = (m: Mundo) => m.estado ?? (m.tocadoEn === undefined ? indeciso('sin consulta de estado') : clasificar(m, m.tocadoEn));
-const tipoDeEstado = (clasificacion: string) => (clasificacion.startsWith('en espera') ? 'en espera' : clasificacion);
-const dia_ = (d: Date | undefined) => (d === undefined ? '-' : isoDia(d));
+const statusQueried = (m: OracleWorld) => m.status ?? (m.touchedAt === undefined ? undecided('sin consulta de estado') : classify(m, m.touchedAt));
+const statusKind = (classification: string) => (classification.startsWith('en espera') ? 'en espera' : classification);
+const day_ = (d: Date | undefined) => (d === undefined ? '-' : isoDay(d));
 
 /** §4.4: la ocurrencia cubierta, con hora si la tiene (formatos distintos). */
-const cubiertaEnTexto = (c: Completado) => (c.inicioCubierto === undefined ? dia_(c.cubierta) : `inicio ${c.inicioCubierto}`);
-const laTarea = (m: Mundo) => derivada(unica(m));
-const laQueTenia = laQueTuvo;
+const coveredInText = (c: Completion) => (c.startCovered === undefined ? day_(c.covered) : `inicio ${c.startCovered}`);
+const theTask = (m: OracleWorld) => derived(only(m));
+const theOneThatHadBefore = theOneThatHad;
 /** §6.1: la tarea consultada está completada (puntual con completados, o periódica en espera con completados). */
-const completadaConsultada = (m: Mundo) =>
-	!estaPausada(m) && esCompletada(laTarea(m).tipo === 'puntual', tipoDeEstado(estadoConsultado(m)) === 'en espera' && !pospuestaConsultada(m), vigentesDe(m, unica(m)).length > 0);
+const completedQueried = (m: OracleWorld) =>
+	!isPaused(m) && isCompleted(theTask(m).kind === 'puntual', statusKind(statusQueried(m)) === 'en espera' && !postponedQueried(m), activeOf(m, only(m)).length > 0);
 /** §5.9: en espera por la posposición en el momento consultado: no está completada. */
-const pospuestaConsultada = (m: Mundo) => {
-	const en = m.consultadoEn ?? m.tocadoEn;
-	return en !== undefined && enEsperaPorPosposicion(situacionDe(m, unica(m), en));
+const postponedQueried = (m: OracleWorld) => {
+	const at = m.queriedAt ?? m.touchedAt;
+	return at !== undefined && inWaitByPostponement(situationOf(m, only(m), at));
 };
-const claveDePosposicion = (p: Posposicion | undefined) => (p ? `${p.desde} ${p.hasta}` : '-');
+const postponementKey = (p: Postponement | undefined) => (p ? `${p.from} ${p.to}` : '-');
 /** §5.8: una pausada no tiene estado, no está completada y su checkbox está deshabilitado. */
-const estaPausada = (m: Mundo) => laTarea(m).pausada === true;
-const elNuevo = (m: Mundo) => m.nuevo ?? indeciso('no se completó');
+const isPaused = (m: OracleWorld) => theTask(m).paused === true;
+const fresh = (m: OracleWorld) => m.updated ?? undecided('no se completó');
 /** Lo que queda de la tarea: si cada completado es del momento que el paso nombra, y si cubre una ocurrencia. */
-const unSoloCompletadoDe = (m: Mundo, d: Documento, nombrado: string) =>
-	JSON.stringify(completadosDe(m, d.id).map((c) => [c.en === momento(nombrado), c.cubierta !== undefined || c.inicioCubierto !== undefined]));
+const onlyCompletionOf = (m: OracleWorld, d: Doc, named: string) =>
+	JSON.stringify(completionsOf(m, d.id).map((c) => [c.at === moment(named), c.covered !== undefined || c.startCovered !== undefined]));
 
 /** §6.1: la fila de la tarea en ese momento (o en cualquiera): pausada, en espera por la posposición o el estado de §5. */
-function estadoDeLaFila(m: Guardado, tarea: Documento, en: number | undefined): string {
-	if (tarea.tipo === 'periodica' && tarea.pausada) return 'pausada';
-	if (en === undefined && tarea.pospuesta) indeciso('posposición en cualquier momento');
-	const s = situacionDe(m, tarea, en);
-	return en !== undefined && enEsperaPorPosposicion(s) ? 'en espera' : (clasificarSituacion(s, { progreso: false }) ?? indeciso('estado'));
+function rowStatus(m: Saved, task: Doc, at: number | undefined): string {
+	if (task.kind === 'periodica' && task.paused) return 'pausada';
+	if (at === undefined && task.postponed) undecided('posposición en cualquier momento');
+	const s = situationOf(m, task, at);
+	return at !== undefined && inWaitByPostponement(s) ? 'en espera' : (classifySituation(s, { progress: false }) ?? undecided('estado'));
 }
 
 /** §6.1: la línea del paso (y sus botones) solo se ve en las filas pendiente y atrasada; no en `en espera` ni pausadas. */
-const seVeLaLinea = (estado: string) => estado === 'pendiente' || estado === 'atrasada';
+const seesLine = (status: string) => status === 'pendiente' || status === 'atrasada';
 
 /** Lo que la fila muestra de los pasos en la última consulta de Pendientes (§6.1). */
-interface FilaDeLosPasos {
-	linea: string;
-	botones: string;
+interface StepsRow {
+	line: string;
+	buttons: string;
 	/** Si «Hecho» está habilitado; solo se decide cuando un Then lo mira (el checkbox puede no decidirse). */
-	hecho: () => string;
+	done: () => string;
 }
 
-const SIN_BOTONES = 'sin botones';
+const WITHOUT_BUTTONS = 'sin botones';
 
 /**
  * §6.1: la línea del paso en que va la tarea, «Primer paso: …» en el paso 1 y «Paso: …» en otro; con dos pasos o más,
  * «Paso anterior» (no en el paso 1) y «Hecho», habilitado salvo en el último paso si el checkbox está deshabilitado.
  */
-function laFilaDeLosPasos(m: Mundo): FilaDeLosPasos {
-	if (!m.consultoPendientes) indeciso('sin consulta de Pendientes');
-	const tarea = unica(m);
-	const pasos = pasosDe(tarea);
-	const sinBotones = () => SIN_BOTONES;
-	const sinLinea = { linea: 'sin texto', botones: SIN_BOTONES, hecho: sinBotones };
-	if (pasos.length === 0 || !seVeLaLinea(estadoDeLaFila(m, tarea, m.pendientesEn))) return sinLinea;
-	const paso = pasoEnQueVa(tarea);
-	const linea = `${paso === 1 ? 'Primer paso' : 'Paso'}: ${pasos[paso - 1]}`;
-	if (pasos.length < 2) return { linea, botones: SIN_BOTONES, hecho: sinBotones };
-	const checkbox = () => clasificarSituacion(situacionDe(m, tarea, m.pendientesEn), { progreso: false, checkbox: true, soloCheckbox: true })?.replace('checkbox ', '') ?? indeciso('checkbox');
-	return { linea, botones: paso > 1 ? 'Paso anterior y Hecho' : 'Hecho', hecho: () => (paso < pasos.length ? 'habilitado' : checkbox()) };
+function theRowOfSteps(m: OracleWorld): StepsRow {
+	if (!m.queryPending) undecided('sin consulta de Pendientes');
+	const task = only(m);
+	const steps = stepsOf(task);
+	const withoutButtons = () => WITHOUT_BUTTONS;
+	const withoutLine = { line: 'sin texto', buttons: WITHOUT_BUTTONS, done: withoutButtons };
+	if (steps.length === 0 || !seesLine(rowStatus(m, task, m.pendingAt))) return withoutLine;
+	const step = stepInThatGoes(task);
+	const line = `${step === 1 ? 'Primer paso' : 'Paso'}: ${steps[step - 1]}`;
+	if (steps.length < 2) return { line, buttons: WITHOUT_BUTTONS, done: withoutButtons };
+	const checkbox = () => classifySituation(situationOf(m, task, m.pendingAt), { progress: false, checkbox: true, onlyCheckbox: true })?.replace('checkbox ', '') ?? undecided('checkbox');
+	return { line, buttons: step > 1 ? 'Paso anterior y Hecho' : 'Hecho', done: () => (step < steps.length ? 'habilitado' : checkbox()) };
 }
 
 /**
  * §6.1: la línea de la mínima y su botón: se ven solo en las filas pendiente y atrasada con versión mínima; el botón
  * está habilitado como el checkbox que completaría (§5.5).
  */
-function laFilaDeLaMinima(m: Mundo): { linea: string; boton: () => string } {
-	if (!m.consultoPendientes) indeciso('sin consulta de Pendientes');
-	const tarea = unica(m);
-	if (tarea.versionMinima === undefined || !seVeLaLinea(estadoDeLaFila(m, tarea, m.pendientesEn))) return { linea: 'sin mínima', boton: () => 'sin mínima' };
-	const checkbox = () => clasificarSituacion(situacionDe(m, tarea, m.pendientesEn), { progreso: false, checkbox: true, soloCheckbox: true })?.replace('checkbox ', '') ?? indeciso('checkbox');
-	return { linea: `Mínima: ${tarea.versionMinima}`, boton: checkbox };
+function theRowOfMinimal(m: OracleWorld): { line: string; button: () => string } {
+	if (!m.queryPending) undecided('sin consulta de Pendientes');
+	const task = only(m);
+	if (task.minimalVersion === undefined || !seesLine(rowStatus(m, task, m.pendingAt))) return { line: 'sin mínima', button: () => 'sin mínima' };
+	const checkbox = () => classifySituation(situationOf(m, task, m.pendingAt), { progress: false, checkbox: true, onlyCheckbox: true })?.replace('checkbox ', '') ?? undecided('checkbox');
+	return { line: `Mínima: ${task.minimalVersion}`, button: checkbox };
 }
 
-const DE_LA_FILA_DE_LOS_PASOS = /^(?:la fila de la tarea (?:muestra el paso |muestra los botones |no muestra botones de paso$|no muestra primer paso$|muestra la mínima |no muestra mínima$)|el botón Hecho de la tarea está |el botón Hice la mínima de la tarea está |el checkbox de la tarea está )/;
+const OF_ROW_OF_STEPS = /^(?:la fila de la tarea (?:muestra el paso |muestra los botones |no muestra botones de paso$|no muestra primer paso$|muestra la mínima |no muestra mínima$)|el botón Hecho de la tarea está |el botón Hice la mínima de la tarea está |el checkbox de la tarea está )/;
 
-type Observacion = [RegExp, (m: Mundo, c: string[]) => string];
+type Observation = [RegExp, (m: OracleWorld, c: string[]) => string];
 
-const OBSERVACIONES: Observacion[] = [
-	[/^el estado es (?:pendiente|en espera|atrasada)$/, (m) => tipoDeEstado(estadoConsultado(m))],
-	[/^el progreso es (\S+)$/, (m) => estadoConsultado(m)],
+const OBSERVATIONS: Observation[] = [
+	[/^el estado es (?:pendiente|en espera|atrasada)$/, (m) => statusKind(statusQueried(m))],
+	[/^el progreso es (\S+)$/, (m) => statusQueried(m)],
 	// Con Mostrar completadas apagado, las completadas no tienen fila (§6.1).
-	[/^la tarea no aparece en Pendientes$/, (m) => String(!m.mostrarCompletadas && completadaConsultada(m))],
-	[/^la tarea está completada$/, (m) => String(completadaConsultada(m))],
-	[/^la tarea no está completada$/, (m) => String(!completadaConsultada(m))],
-	[/^la tarea está pausada$/, (m) => String(estaPausada(m))],
-	[/^la tarea no está pausada$/, (m) => String(!estaPausada(m))],
-	[/^la tarea no tiene estado$/, (m) => String(estaPausada(m))],
-	[/^la tarea está pospuesta desde (\S+) hasta (\S+)$/, (m) => claveDePosposicion(unica(m).pospuesta)],
-	[/^la tarea no está pospuesta$/, (m) => String(unica(m).pospuesta === undefined)],
-	[/^la tarea tiene (?:un completado|dos completados)$/, (m) => String(completadosDe(m, unica(m).id).length)],
-	[/^el nuevo completado se agrega sin modificar los anteriores$/, (m) => String(m.nuevo !== undefined)],
-	[/^se registró un completado sin ocurrencia cubierta$/, (m) => String(elNuevo(m).cubierta === undefined && elNuevo(m).inicioCubierto === undefined)],
-	[/^el completado registrado es del (\S+)$/, (m) => String(elNuevo(m).en)],
-	[/^Pendientes muestra en orden (.*)$/, (m) => m.orden ?? indeciso('sin consulta de Pendientes')],
-	[/^la tarea tiene título (.+)$/, (m) => laTarea(m).titulo],
-	[/^la tarea es (?:puntual|periódica)$/, (m) => laTarea(m).tipo],
-	[/^su fecha límite es (\S+)$/, (m) => (laTarea(m).tipo === 'puntual' ? dia_(laTarea(m).limite) : indeciso('no es puntual'))],
-	[/^la tarea no tiene fecha límite$/, (m) => String(unica(m).limite === undefined)],
-	[/^la tarea tiene emoji (.*)$/, (m) => unica(m).emoji ?? '-'],
-	[/^la tarea no tiene emoji$/, (m) => String(unica(m).emoji === undefined)],
-	[/^la tarea tiene nota (.*)$/, (m) => unica(m).nota ?? '-'],
-	[/^la tarea no tiene nota$/, (m) => String(unica(m).nota === undefined)],
-	[/^la tarea tiene primer paso (.*)$/, (m) => unica(m).primerPaso ?? '-'],
-	[/^la fila de la tarea (?:muestra el primer paso .*|muestra el paso .*|no muestra primer paso)$/, (m) => laFilaDeLosPasos(m).linea],
-	[/^la fila de la tarea (?:muestra los botones .*|no muestra botones de paso)$/, (m) => laFilaDeLosPasos(m).botones],
-	[/^el botón Hecho de la tarea está (?:habilitado|deshabilitado)$/, (m) => laFilaDeLosPasos(m).hecho()],
+	[/^la tarea no aparece en Pendientes$/, (m) => String(!m.showCompleted && completedQueried(m))],
+	[/^la tarea está completada$/, (m) => String(completedQueried(m))],
+	[/^la tarea no está completada$/, (m) => String(!completedQueried(m))],
+	[/^la tarea está pausada$/, (m) => String(isPaused(m))],
+	[/^la tarea no está pausada$/, (m) => String(!isPaused(m))],
+	[/^la tarea no tiene estado$/, (m) => String(isPaused(m))],
+	[/^la tarea está pospuesta desde (\S+) hasta (\S+)$/, (m) => postponementKey(only(m).postponed)],
+	[/^la tarea no está pospuesta$/, (m) => String(only(m).postponed === undefined)],
+	[/^la tarea tiene (?:un completado|dos completados)$/, (m) => String(completionsOf(m, only(m).id).length)],
+	[/^el nuevo completado se agrega sin modificar los anteriores$/, (m) => String(m.updated !== undefined)],
+	[/^se registró un completado sin ocurrencia cubierta$/, (m) => String(fresh(m).covered === undefined && fresh(m).startCovered === undefined)],
+	[/^el completado registrado es del (\S+)$/, (m) => String(fresh(m).at)],
+	[/^Pendientes muestra en orden (.*)$/, (m) => m.order ?? undecided('sin consulta de Pendientes')],
+	[/^la tarea tiene título (.+)$/, (m) => theTask(m).title],
+	[/^la tarea es (?:puntual|periódica)$/, (m) => theTask(m).kind],
+	[/^su fecha límite es (\S+)$/, (m) => (theTask(m).kind === 'puntual' ? day_(theTask(m).limit) : undecided('no es puntual'))],
+	[/^la tarea no tiene fecha límite$/, (m) => String(only(m).limit === undefined)],
+	[/^la tarea tiene emoji (.*)$/, (m) => only(m).emoji ?? '-'],
+	[/^la tarea no tiene emoji$/, (m) => String(only(m).emoji === undefined)],
+	[/^la tarea tiene nota (.*)$/, (m) => only(m).note ?? '-'],
+	[/^la tarea no tiene nota$/, (m) => String(only(m).note === undefined)],
+	[/^la tarea tiene primer paso (.*)$/, (m) => only(m).firstStep ?? '-'],
+	[/^la fila de la tarea (?:muestra el primer paso .*|muestra el paso .*|no muestra primer paso)$/, (m) => theRowOfSteps(m).line],
+	[/^la fila de la tarea (?:muestra los botones .*|no muestra botones de paso)$/, (m) => theRowOfSteps(m).buttons],
+	[/^el botón Hecho de la tarea está (?:habilitado|deshabilitado)$/, (m) => theRowOfSteps(m).done()],
 	[
 		/^el checkbox de la tarea está (?:habilitado|deshabilitado)$/,
 		(m) => {
-			const en = m.pendientesEn ?? m.consultadoEn ?? m.tocadoEn ?? indeciso('sin momento');
-			return clasificarSituacion(situacionDe(m, derivada(unica(m)), en), { progreso: false, checkbox: true, soloCheckbox: true }) ?? indeciso('checkbox');
+			const at = m.pendingAt ?? m.queriedAt ?? m.touchedAt ?? undecided('sin momento');
+			return classifySituation(situationOf(m, derived(only(m)), at), { progress: false, checkbox: true, onlyCheckbox: true }) ?? undecided('checkbox');
 		}
 	],
-	[/^la tarea va en el paso (\S+)$/, (m) => String(pasoEnQueVa(derivada(unica(m))))],
-	[/^la tarea tiene los pasos (.*)$/, (m) => pasosDe(unica(m)).join(', ')],
-	[/^la tarea no tiene más pasos$/, (m) => String(unica(m).pasos === undefined)],
-	[/^la tarea tiene (\S+) pasos$/, (m) => String(pasosDe(unica(m)).length)],
-	[/^el paso (\S+) de la tarea tiene (\S+) caracteres$/, (m, [n]) => String(pasosDe(unica(m))[numeroDePaso(n) - 1]?.length)],
-	[/^el último completado de la tarea guarda el paso (\S+)$/, (m) => String(elMasReciente(completadosDe(m, unica(m).id)).paso)],
-	[/^el último completado de la tarea no guarda paso$/, (m) => String(elMasReciente(completadosDe(m, unica(m).id)).paso === undefined)],
-	[/^la tarea no tiene primer paso$/, (m) => String(unica(m).primerPaso === undefined)],
-	[/^la tarea tiene versión mínima (.*)$/, (m) => unica(m).versionMinima ?? '-'],
-	[/^la tarea no tiene versión mínima$/, (m) => String(unica(m).versionMinima === undefined)],
-	[/^la tarea tiene una versión mínima de (\S+) caracteres$/, (m) => String(unica(m).versionMinima?.length)],
-	[/^la fila de la tarea (?:muestra la mínima .*|no muestra mínima)$/, (m) => laFilaDeLaMinima(m).linea],
-	[/^el botón Hice la mínima de la tarea está (?:habilitado|deshabilitado)$/, (m) => laFilaDeLaMinima(m).boton()],
-	[/^el último completado de la tarea fue (?:la mínima|entero)$/, (m) => String(elMasReciente(completadosDe(m, unica(m).id)).minima === true)],
-	[/^la tarea tiene dos completados, uno entero y uno de la mínima$/, (m) => JSON.stringify(completadosDe(m, unica(m).id).map((c) => c.minima === true).sort())],
-	[/^el aviso del completado dice (.*)$/, (m) => m.avisoTexto ?? indeciso('sin consulta del aviso')],
-	[/^la tarea tiene un primer paso de (\S+) caracteres$/, (m) => String(unica(m).primerPaso?.length)],
-	[/^la nota de la tarea tiene dos líneas: .*$/, (m) => JSON.stringify(unica(m).nota?.split('\n'))],
-	[/^la tarea tiene una nota de (\S+) caracteres$/, (m) => String(unica(m).nota?.length)],
-	[/^el nombre de la tarea es .*$/, (m) => nombreDe(unica(m))],
-	[/^la tarea no tiene recurrencia$/, (m) => String(unica(m).recurrencia === undefined)],
+	[/^la tarea va en el paso (\S+)$/, (m) => String(stepInThatGoes(derived(only(m))))],
+	[/^la tarea tiene los pasos (.*)$/, (m) => stepsOf(only(m)).join(', ')],
+	[/^la tarea no tiene más pasos$/, (m) => String(only(m).steps === undefined)],
+	[/^la tarea tiene (\S+) pasos$/, (m) => String(stepsOf(only(m)).length)],
+	[/^el paso (\S+) de la tarea tiene (\S+) caracteres$/, (m, [n]) => String(stepsOf(only(m))[stepNumber(n) - 1]?.length)],
+	[/^el último completado de la tarea guarda el paso (\S+)$/, (m) => String(theMoreRecent(completionsOf(m, only(m).id)).step)],
+	[/^el último completado de la tarea no guarda paso$/, (m) => String(theMoreRecent(completionsOf(m, only(m).id)).step === undefined)],
+	[/^la tarea no tiene primer paso$/, (m) => String(only(m).firstStep === undefined)],
+	[/^la tarea tiene versión mínima (.*)$/, (m) => only(m).minimalVersion ?? '-'],
+	[/^la tarea no tiene versión mínima$/, (m) => String(only(m).minimalVersion === undefined)],
+	[/^la tarea tiene una versión mínima de (\S+) caracteres$/, (m) => String(only(m).minimalVersion?.length)],
+	[/^la fila de la tarea (?:muestra la mínima .*|no muestra mínima)$/, (m) => theRowOfMinimal(m).line],
+	[/^el botón Hice la mínima de la tarea está (?:habilitado|deshabilitado)$/, (m) => theRowOfMinimal(m).button()],
+	[/^el último completado de la tarea fue (?:la mínima|entero)$/, (m) => String(theMoreRecent(completionsOf(m, only(m).id)).minimal === true)],
+	[/^la tarea tiene dos completados, uno entero y uno de la mínima$/, (m) => JSON.stringify(completionsOf(m, only(m).id).map((c) => c.minimal === true).sort())],
+	[/^el aviso del completado dice (.*)$/, (m) => m.noticeText ?? undecided('sin consulta del aviso')],
+	[/^la tarea tiene un primer paso de (\S+) caracteres$/, (m) => String(only(m).firstStep?.length)],
+	[/^la nota de la tarea tiene dos líneas: .*$/, (m) => JSON.stringify(only(m).note?.split('\n'))],
+	[/^la tarea tiene una nota de (\S+) caracteres$/, (m) => String(only(m).note?.length)],
+	[/^el nombre de la tarea es .*$/, (m) => nameOf(only(m))],
+	[/^la tarea no tiene recurrencia$/, (m) => String(only(m).recurrence === undefined)],
 	[
 		/^su recurrencia es (?:relativa cada|semanal los|mensual los días) .*$/,
-		(m) => (laTarea(m).tipo === 'periodica' ? claveDeRecurrencia(laTarea(m).recurrencia) : indeciso('no es periódica'))
+		(m) => (theTask(m).kind === 'periodica' ? recurrenceKey(theTask(m).recurrence) : undecided('no es periódica'))
 	],
-	[/^la tarea sigue creada el (\S+)$/, (m) => String(unica(m).creada)],
-	[/^la tarea conserva su id$/, (m) => String(unica(m).id === unica(loQueVioElOtro(m)).id)],
-	[/^la tarea conserva un solo completado, del (\S+)$/, (m, [e]) => unSoloCompletadoDe(m, unica(m), e)],
-	[/^la tarea (\S+) conserva un solo completado, del (\S+)$/, (m, [t, e]) => unSoloCompletadoDe(m, conTitulo(m, t), e)],
-	[/^el aviso del completado (?:muestra el regreso .*|no muestra regreso)$/, (m) => regresoDelAviso(m)],
-	[/^la tarea no tiene completados$/, (m) => String(completadosDe(m, unica(m).id).length === 0)],
-	[/^el aviso ofrece deshacer el completado de (\S+) del (\S+)$/, (m) => m.avisoVisto ?? indeciso('sin consulta del aviso')],
-	[/^no hay aviso$/, (m) => String((m.avisoVisto ?? indeciso('sin consulta del aviso')) === 'sin aviso')],
-	[/^el Historial muestra (.*)$/, (m) => m.historial ?? indeciso('sin consulta del Historial')],
-	[/^la última vez muestra (.*)$/, (m) => m.ultimaVez ?? indeciso('sin consulta de la última vez')],
-	[/^el Historial está vacío$/, (m) => String((m.historial ?? indeciso('sin consulta del Historial')) === '')],
-	[/^la edición se rechaza por .*$/, (m) => m.rechazo ?? indeciso('no hubo rechazo')],
-	[/^la edición se rechaza porque la hora de fin no es posterior a la de inicio$/, (m) => m.rechazo ?? indeciso('no hubo rechazo')],
-	[new RegExp(`^la tarea tiene horario ${HORARIO}$`), (m) => claveDeHorario(unica(m).horario)],
-	[/^la tarea no tiene horario$/, (m) => String(unica(m).horario === undefined)],
+	[/^la tarea sigue creada el (\S+)$/, (m) => String(only(m).created)],
+	[/^la tarea conserva su id$/, (m) => String(only(m).id === only(thatSawOther(m)).id)],
+	[/^la tarea conserva un solo completado, del (\S+)$/, (m, [e]) => onlyCompletionOf(m, only(m), e)],
+	[/^la tarea (\S+) conserva un solo completado, del (\S+)$/, (m, [t, e]) => onlyCompletionOf(m, withTitle(m, t), e)],
+	[/^el aviso del completado (?:muestra el regreso .*|no muestra regreso)$/, (m) => noticeReturn(m)],
+	[/^la tarea no tiene completados$/, (m) => String(completionsOf(m, only(m).id).length === 0)],
+	[/^el aviso ofrece deshacer el completado de (\S+) del (\S+)$/, (m) => m.noticeSeen ?? undecided('sin consulta del aviso')],
+	[/^no hay aviso$/, (m) => String((m.noticeSeen ?? undecided('sin consulta del aviso')) === 'sin aviso')],
+	[/^el Historial muestra (.*)$/, (m) => m.history ?? undecided('sin consulta del Historial')],
+	[/^la última vez muestra (.*)$/, (m) => m.lastTime ?? undecided('sin consulta de la última vez')],
+	[/^el Historial está vacío$/, (m) => String((m.history ?? undecided('sin consulta del Historial')) === '')],
+	[/^la edición se rechaza por .*$/, (m) => m.rejection ?? undecided('no hubo rechazo')],
+	[/^la edición se rechaza porque la hora de fin no es posterior a la de inicio$/, (m) => m.rejection ?? undecided('no hubo rechazo')],
+	[new RegExp(`^la tarea tiene horario ${SCHEDULE}$`), (m) => scheduleKey(only(m).schedule)],
+	[/^la tarea no tiene horario$/, (m) => String(only(m).schedule === undefined)],
 	[
 		/^la tarea no cambia$/,
-		(m) => String(JSON.stringify(m.documentos.map(claveDeDocumento)) === JSON.stringify(loQueVioElOtro(m).documentos.map(claveDeDocumento)))
+		(m) => String(JSON.stringify(m.docs.map(docKey)) === JSON.stringify(thatSawOther(m).docs.map(docKey)))
 	],
 	[
 		/^no existe la tarea (\S+)$/,
 		(m, [t]) => {
-			const id = laQueTenia(m, t).id;
-			return String(!m.documentos.some((d) => d.id === id) && !m.documentos.some((d) => d.titulo === t));
+			const id = theOneThatHadBefore(m, t).id;
+			return String(!m.docs.some((d) => d.id === id) && !m.docs.some((d) => d.title === t));
 		}
 	],
-	[/^no queda ningún completado de (\S+)$/, (m, [t]) => String(completadosDe(m, laQueTenia(m, t).id).length === 0)],
-	[/^no queda ninguna tarea$/, (m) => String(m.documentos.length === 0)],
+	[/^no queda ningún completado de (\S+)$/, (m, [t]) => String(completionsOf(m, theOneThatHadBefore(m, t).id).length === 0)],
+	[/^no queda ninguna tarea$/, (m) => String(m.docs.length === 0)],
 	[
 		/^los completados huérfanos a limpiar son solo el de (\S+) del (\S+)$/,
 		(m, [t]) => {
-			const huerfanos = m.completados.filter((c) => !m.documentos.some((d) => d.id === c.tareaId));
-			return JSON.stringify([laQueTenia(m, t).id, huerfanos.map((c) => [c.tareaId, c.en])]);
+			const orphaned = m.completions.filter((c) => !m.docs.some((d) => d.id === c.taskId));
+			return JSON.stringify([theOneThatHadBefore(m, t).id, orphaned.map((c) => [c.taskId, c.at])]);
 		}
 	],
 	[
 		/^se registró un completado que cubre el (\S+)$/,
 		// Que el completado quede en el momento de completar es una invariante; lo que varía es la ocurrencia que cubre.
-		(m) => (m.nuevo ? cubiertaEnTexto(m.nuevo) : indeciso('no se completó'))
+		(m) => (m.updated ? coveredInText(m.updated) : undecided('no se completó'))
 	]
 ];
 
 /** Los pasos propios de este oráculo: escenarios que editan, borran o modifican concurrentemente. */
-const ES_DE_EDICION =
+const IS_OF_EDITING =
 	/^(?:edito |vacío el paso |los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está |elijo |quito el emoji$|quito el horario$|quito el primer paso$|el primer paso de la tarea |la versión mínima de la tarea |quito la versión mínima$|toco Hice la mínima |la fila de la tarea (?:muestra la mínima |no muestra mínima$)|el botón Hice la mínima |pongo |borro |toco Deshacer |toco el checkbox |consulto el aviso |consulto el Historial |consulto la última vez |otro dispositivo, sin ver ese cambio,)/;
 
-export const esEscenarioDeEdicion = (textos: string[]) => textos.some((texto) => ES_DE_EDICION.test(texto));
+export const isScenarioOfEditing = (texts: string[]) => texts.some((text) => IS_OF_EDITING.test(text));
 
-function ejecutar(pasos: PasoOraculo[], fila: FilaOraculo, m: Mundo): void {
-	for (const paso of pasos) {
-		const texto = resolver(paso.text, fila) ?? indeciso(`columna faltante en ${paso.text}`);
-		const regla = PASOS.map(([patron, aplicar]) => ({ coincide: patron.exec(texto), aplicar })).find((r) => r.coincide);
-		if (!regla?.coincide) indeciso(`paso ${texto}`);
-		else regla.aplicar(m, regla.coincide.slice(1));
+function run(steps: StepOracle[], row: RowOracle, m: OracleWorld): void {
+	for (const step of steps) {
+		const text = resolve(step.text, row) ?? undecided(`columna faltante en ${step.text}`);
+		const rule = STEPS.map(([pattern, apply]) => ({ matches: pattern.exec(text), apply })).find((r) => r.matches);
+		if (!rule?.matches) undecided(`paso ${text}`);
+		else rule.apply(m, rule.matches.slice(1));
 	}
 }
 
-function observar(entradas: PasoOraculo[], thens: PasoOraculo[], fila: FilaOraculo): string[] {
-	const m: Mundo = { documentos: [], completados: [], siguiente: 1, borradasDocs: [], borradosCompletados: [] };
-	ejecutar(entradas, fila, m);
-	const textos = thens.map((paso) => resolver(paso.text, fila) ?? indeciso(`columna faltante en ${paso.text}`));
+function observe(entries: StepOracle[], thens: StepOracle[], row: RowOracle): string[] {
+	const m: OracleWorld = { docs: [], completions: [], next: 1, deletedDocs: [], deletedCompletions: [] };
+	run(entries, row, m);
+	const texts = thens.map((step) => resolve(step.text, row) ?? undecided(`columna faltante en ${step.text}`));
 	// Sin orden decidido, solo los Then de la fila de los pasos se pueden observar.
-	if (m.ordenIndeciso && !textos.every((texto) => DE_LA_FILA_DE_LOS_PASOS.test(texto))) indeciso('orden de Pendientes');
-	return textos.map((texto) => {
-		const regla = OBSERVACIONES.map(([patron, ver]) => ({ coincide: patron.exec(texto), ver })).find((r) => r.coincide);
-		return regla?.coincide ? regla.ver(m, regla.coincide.slice(1)) : indeciso(`Then ${texto}`);
+	if (m.orderUndecided && !texts.every((text) => OF_ROW_OF_STEPS.test(text))) undecided('orden de Pendientes');
+	return texts.map((text) => {
+		const rule = OBSERVATIONS.map(([pattern, view]) => ({ matches: pattern.exec(text), view })).find((r) => r.matches);
+		return rule?.matches ? rule.view(m, rule.matches.slice(1)) : undecided(`Then ${text}`);
 	});
 }
 
@@ -1439,11 +1439,11 @@ function observar(entradas: PasoOraculo[], thens: PasoOraculo[], fila: FilaOracu
  * Lo que observa cada Then tras ejecutar los pasos de entrada con la fila, o undefined si el oráculo no
  * reconoce algún paso o el spec no decide el resultado (por ejemplo, la tarea no existe).
  */
-export function observarEdicion(entradas: PasoOraculo[], thens: PasoOraculo[], fila: FilaOraculo): string[] | undefined {
+export function observeEditing(entries: StepOracle[], thens: StepOracle[], row: RowOracle): string[] | undefined {
 	try {
-		return observar(entradas, thens, fila);
+		return observe(entries, thens, row);
 	} catch (error) {
-		if (error instanceof Indeciso) return undefined;
+		if (error instanceof Undecided) return undefined;
 		throw error;
 	}
 }

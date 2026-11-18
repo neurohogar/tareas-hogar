@@ -1,70 +1,70 @@
 import { expect } from 'vitest';
 import { pendingRows } from '../../src/lib/core/pending';
-import { CUALQUIER_MOMENTO } from './recurring-relative';
-import { P, fechaHora, lista } from './values';
-import { tareasDe, type FilaConsultada, type StepDefinition, type World } from './world';
+import { ANY_MOMENT } from './recurring-relative';
+import { P, dateHour, list } from './values';
+import { tasksOf, type RowQueried, type StepDefinition, type World } from './world';
 
 /** Las filas de la lista, con los checks Mostrar completadas y Mostrar pausadas (§6.1). */
-function filasEn(world: World, ahora: Date): FilaConsultada[] {
-	const filas = pendingRows(tareasDe(world), world.completions, ahora, world.mostrarCompletadas, world.mostrarPausadas);
-	return filas.map(({ task: tarea, completed: completada, status: estado, dateText: textoDeFecha, firstStepText: textoDePrimerPaso, stepButtons: botonesDePaso, minimal: minima }) => ({
-		title: tarea.title,
-		completed: completada,
-		paused: estado.kind === 'pausada',
-		dateText: textoDeFecha,
-		firstStepText: textoDePrimerPaso,
-		stepButtons: botonesDePaso,
-		minimal: minima
+function rowsIn(world: World, now: Date): RowQueried[] {
+	const rows = pendingRows(tasksOf(world), world.completions, now, world.showCompleted, world.showPaused);
+	return rows.map(({ task, completed, status, dateText, firstStepText: textOfFirstStep, stepButtons, minimal }) => ({
+		title: task.title,
+		completed,
+		paused: status.kind === 'pausada',
+		dateText,
+		firstStepText: textOfFirstStep,
+		stepButtons,
+		minimal
 	}));
 }
 
 /** En cada momento consultado, los títulos de las filas que cumplen `incluida`, de arriba hacia abajo. */
-function cadaConsultaMuestra(world: World, titulos: string[], incluida = (_: FilaConsultada) => true): void {
-	expect(world.consultasDePendientes.length).toBeGreaterThan(0);
-	for (const filas of world.consultasDePendientes) expect(filas.filter(incluida).map(({ title: titulo }) => titulo)).toEqual(titulos);
+function everyQueryShows(world: World, titles: string[], included = (_: RowQueried) => true): void {
+	expect(world.pendingQueries.length).toBeGreaterThan(0);
+	for (const rows of world.pendingQueries) expect(rows.filter(included).map(({ title }) => title)).toEqual(titles);
 }
 
-export const pendientesSteps: StepDefinition[] = [
+export const pendingSteps: StepDefinition[] = [
 	{
 		pattern: /^Mostrar completadas está encendido$/,
 		run: (world) => {
-			world.mostrarCompletadas = true;
+			world.showCompleted = true;
 		}
 	},
 	{
 		pattern: /^Mostrar pausadas está encendido$/,
 		run: (world) => {
-			world.mostrarPausadas = true;
+			world.showPaused = true;
 		}
 	},
 	{
 		pattern: new RegExp(`^consulto Pendientes el ${P}$`),
-		run: (world, ahora) => {
-			const momento = fechaHora(ahora);
-			world.momentosDelEstado = [momento];
-			world.consultasDePendientes = [filasEn(world, momento)];
+		run: (world, now) => {
+			const moment = dateHour(now);
+			world.statusMoments = [moment];
+			world.pendingQueries = [rowsIn(world, moment)];
 		}
 	},
 	{
 		pattern: /^consulto Pendientes en cualquier momento$/,
 		run: (world) => {
-			world.consultasDePendientes = CUALQUIER_MOMENTO.map((ahora) => filasEn(world, ahora));
+			world.pendingQueries = ANY_MOMENT.map((now) => rowsIn(world, now));
 		}
 	},
 	{
 		pattern: new RegExp(`^Pendientes muestra en orden ${P}$`),
-		run: (world, orden) => cadaConsultaMuestra(world, lista(orden))
+		run: (world, order) => everyQueryShows(world, list(order))
 	},
 	{
 		pattern: new RegExp(`^Pendientes muestra como completadas ${P}$`),
-		run: (world, completadas) => cadaConsultaMuestra(world, lista(completadas), ({ completed: completada }) => completada)
+		run: (world, completedList) => everyQueryShows(world, list(completedList), ({ completed }) => completed)
 	},
 	{
 		pattern: new RegExp(`^Pendientes muestra como pausadas ${P}$`),
-		run: (world, pausadas) => cadaConsultaMuestra(world, lista(pausadas), ({ paused: pausada }) => pausada)
+		run: (world, paused) => everyQueryShows(world, list(paused), ({ paused }) => paused)
 	},
 	{
 		pattern: /^Pendientes no muestra ninguna tarea$/,
-		run: (world) => cadaConsultaMuestra(world, [])
+		run: (world) => everyQueryShows(world, [])
 	}
 ];

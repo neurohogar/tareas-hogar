@@ -5,9 +5,9 @@ import type { Page } from '@playwright/test';
 
 // Dos builds servidos en el mismo origen (puerto 4174), para simular que se publica una versión nueva.
 
-export const ORIGEN_VERSIONES = 'http://127.0.0.1:4174';
+export const ORIGIN_VERSIONS = 'http://127.0.0.1:4174';
 
-const TIPOS: Record<string, string> = {
+const KINDS: Record<string, string> = {
 	'.html': 'text/html; charset=utf-8',
 	'.js': 'text/javascript; charset=utf-8',
 	'.css': 'text/css; charset=utf-8',
@@ -19,51 +19,51 @@ const TIPOS: Record<string, string> = {
 };
 
 /** Sirve `estado.dir`; cambiar `estado.dir` publica otro build. */
-export function servir(estado: { dir: string }): Promise<Server> {
-	const servidor = createServer((req, res) => {
-		const ruta = decodeURIComponent((req.url ?? '/').split('?')[0]);
-		let archivo = join(estado.dir, ruta);
-		if (!existsSync(archivo) || !statSync(archivo).isFile()) archivo = join(estado.dir, 'index.html');
-		res.writeHead(200, { 'content-type': TIPOS[extname(archivo)] ?? 'application/octet-stream' });
-		createReadStream(archivo).pipe(res);
+export function serve(status: { dir: string }): Promise<Server> {
+	const server = createServer((req, res) => {
+		const path = decodeURIComponent((req.url ?? '/').split('?')[0]);
+		let file = join(status.dir, path);
+		if (!existsSync(file) || !statSync(file).isFile()) file = join(status.dir, 'index.html');
+		res.writeHead(200, { 'content-type': KINDS[extname(file)] ?? 'application/octet-stream' });
+		createReadStream(file).pipe(res);
 	});
-	return new Promise((ok) => servidor.listen(4174, '127.0.0.1', () => ok(servidor)));
+	return new Promise((ok) => server.listen(4174, '127.0.0.1', () => ok(server)));
 }
 
-export const versionDe = (dir: string): string => JSON.parse(readFileSync(join(dir, '_app/version.json'), 'utf8')).version;
+export const versionOf = (dir: string): string => JSON.parse(readFileSync(join(dir, '_app/version.json'), 'utf8')).version;
 
 /** Las cachés de la app, una por versión; la de las fuentes sobrevive a las versiones (spec §6.6) y no cuenta. */
-export const cachesDe = (p: Page) =>
-	p.evaluate(() => caches.keys().then((claves) => claves.filter((c) => c !== 'tareas-hogar-fuentes')));
+export const cachesOf = (p: Page) =>
+	p.evaluate(() => caches.keys().then((keys) => keys.filter((c) => c !== 'tareas-hogar-fuentes')));
 
-export const hayVersionEsperando = (p: Page) =>
+export const hasVersionWaiting = (p: Page) =>
 	p.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => !!r?.waiting));
 
-const CARPETA_DE_FUENTES = '/fuentes/';
-const ARCHIVO_DE_NOTO = 'noto-color-emoji-emoji-400-normal.woff2';
+const FONTS_FOLDER = '/fuentes/';
+const NOTO_FILE = 'noto-color-emoji-emoji-400-normal.woff2';
 
-const archivosJs = (dir: string): string[] =>
+const filesJs = (dir: string): string[] =>
 	(readdirSync(dir, { recursive: true }) as string[]).filter((a) => a.endsWith('.js')).map((a) => join(dir, a));
 
 /** Un string del código minificado con sus comillas, que según el minificador son ", ' o `. */
-const COMILLA = '(["\'`])';
+const QUOTE = '(["\'`])';
 
-const codigoDe = (destino: string): string =>
-	archivosJs(join(destino, '_app/immutable')).map((a) => readFileSync(a, 'utf8')).join();
+const codeOf = (target: string): string =>
+	filesJs(join(target, '_app/immutable')).map((a) => readFileSync(a, 'utf8')).join();
 
 /** Reemplaza un texto en el código de la app. Falla si no estaba: así un cambio en el build no pasa inadvertido. */
-function reemplazarEnElCodigo(destino: string, viejo: string, nuevo: string): void {
-	const conTexto = archivosJs(join(destino, '_app/immutable')).filter((a) => readFileSync(a, 'utf8').includes(viejo));
-	if (conTexto.length === 0) throw new Error(`el build no contiene ${viejo}`);
-	for (const a of conTexto) writeFileSync(a, readFileSync(a, 'utf8').replaceAll(viejo, nuevo));
+function replaceInCode(target: string, old: string, updated: string): void {
+	const withText = filesJs(join(target, '_app/immutable')).filter((a) => readFileSync(a, 'utf8').includes(old));
+	if (withText.length === 0) throw new Error(`el build no contiene ${old}`);
+	for (const a of withText) writeFileSync(a, readFileSync(a, 'utf8').replaceAll(old, updated));
 }
 
 /** Otra versión del service worker: al publicarse se instala y espera. */
-function cambiarVersion(origen: string, destino: string, sufijo: string): void {
-	const version = versionDe(origen);
-	const otra = `${version}${sufijo}`;
-	writeFileSync(join(destino, 'service-worker.js'), readFileSync(join(origen, 'service-worker.js'), 'utf8').replaceAll(version, otra));
-	writeFileSync(join(destino, '_app/version.json'), JSON.stringify({ version: otra }));
+function changeVersion(origin: string, target: string, suffix: string): void {
+	const version = versionOf(origin);
+	const other = `${version}${suffix}`;
+	writeFileSync(join(target, 'service-worker.js'), readFileSync(join(origin, 'service-worker.js'), 'utf8').replaceAll(version, other));
+	writeFileSync(join(target, '_app/version.json'), JSON.stringify({ version: other }));
 }
 
 /**
@@ -71,26 +71,26 @@ function cambiarVersion(origen: string, destino: string, sufijo: string): void {
  * de fuentes, con la página pidiéndolos en una ruta que no existe (nunca llegan) y con otra versión.
  * No hace falta reconstruir, así el preview de 4173 sigue en pie.
  */
-export function versionSinFuentes(origen: string, destino: string): void {
-	cpSync(origen, destino, { recursive: true });
-	rmSync(join(destino, 'fuentes'), { recursive: true });
-	const carpeta = codigoDe(destino).match(new RegExp(`${COMILLA}${CARPETA_DE_FUENTES}\\1`))?.[0];
-	if (carpeta === undefined) throw new Error(`el build no contiene ${CARPETA_DE_FUENTES}`);
-	reemplazarEnElCodigo(destino, carpeta, carpeta.replace(CARPETA_DE_FUENTES, '/sin-fuentes/'));
-	cambiarVersion(origen, destino, '0');
+export function versionWithoutFonts(origin: string, target: string): void {
+	cpSync(origin, target, { recursive: true });
+	rmSync(join(target, 'fuentes'), { recursive: true });
+	const folder = codeOf(target).match(new RegExp(`${QUOTE}${FONTS_FOLDER}\\1`))?.[0];
+	if (folder === undefined) throw new Error(`el build no contiene ${FONTS_FOLDER}`);
+	replaceInCode(target, folder, folder.replace(FONTS_FOLDER, '/sin-fuentes/'));
+	changeVersion(origin, target, '0');
 }
 
 /** Una versión nueva que no toca la fuente ni el juego de emoji. */
-export function versionConLasMismasFuentes(origen: string, destino: string): void {
-	cpSync(origen, destino, { recursive: true });
-	cambiarVersion(origen, destino, '1');
+export function versionWithSameFonts(origin: string, target: string): void {
+	cpSync(origin, target, { recursive: true });
+	changeVersion(origin, target, '1');
 }
 
 /** Una versión nueva cuyo juego de emoji cambió: lo que cambia es la huella de su contenido (vite.config.ts). */
-export function versionConOtroJuego(origen: string, destino: string): void {
-	cpSync(origen, destino, { recursive: true });
-	const huella = codigoDe(destino).match(new RegExp(`${COMILLA}${ARCHIVO_DE_NOTO}\\1:${COMILLA}(\\w+)\\2`))?.[3];
-	if (huella === undefined) throw new Error('el build no declara la huella de Noto');
-	reemplazarEnElCodigo(destino, huella, huella.replace(/^./, (c) => (c === '0' ? '1' : '0')));
-	cambiarVersion(origen, destino, '2');
+export function versionWithOtherSet(origin: string, target: string): void {
+	cpSync(origin, target, { recursive: true });
+	const fingerprint = codeOf(target).match(new RegExp(`${QUOTE}${NOTO_FILE}\\1:${QUOTE}(\\w+)\\2`))?.[3];
+	if (fingerprint === undefined) throw new Error('el build no declara la huella de Noto');
+	replaceInCode(target, fingerprint, fingerprint.replace(/^./, (c) => (c === '0' ? '1' : '0')));
+	changeVersion(origin, target, '2');
 }

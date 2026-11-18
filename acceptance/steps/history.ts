@@ -2,41 +2,41 @@
 import { expect } from 'vitest';
 import { complete } from '../../src/lib/core/completions';
 import { history, type HistoryGroup } from '../../src/lib/core/history';
-import { P, TITULO, fechaHora } from './values';
-import { laTareaTitulada, tareasDe, type StepDefinition, type World } from './world';
+import { P, TITLE, dateHour } from './values';
+import { theTaskTitled, tasksOf, type StepDefinition, type World } from './world';
 
 /** "Hoy: Pagar 10:00, Regar 08:05; Ayer: Basura 21:30": grupos con "; ", entradas con ", ". */
-function enTexto(grupos: HistoryGroup[]): string {
-	return grupos
-		.map(({ header: encabezado, entries: entradas }) => `${encabezado}: ${entradas.map(({ task: tarea, timeText: textoDeHora }) => `${tarea.title} ${textoDeHora}`).join(', ')}`)
+function inText(groups: HistoryGroup[]): string {
+	return groups
+		.map(({ header: heading, entries }) => `${heading}: ${entries.map(({ task, timeText: hourText }) => `${task.title} ${hourText}`).join(', ')}`)
 		.join('; ');
 }
 
-function elHistorialConsultado(world: World): HistoryGroup[] {
-	if (!world.historial) throw new Error('No se consultó el Historial');
-	return world.historial;
+function theHistoryQueried(world: World): HistoryGroup[] {
+	if (!world.history) throw new Error('No se consultó el Historial');
+	return world.history;
 }
 
-export const historialSteps: StepDefinition[] = [
+export const historySteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^la tarea ${TITULO} fue completada el ${P} con id ${P}$`),
-		run: (world, titulo, momento, id) => {
-			const tarea = laTareaTitulada(world, titulo);
-			world.completions = [...world.completions, complete(tarea, world.completions, id, fechaHora(momento))];
+		pattern: new RegExp(`^la tarea ${TITLE} fue completada el ${P} con id ${P}$`),
+		run: (world, title, moment, id) => {
+			const task = theTaskTitled(world, title);
+			world.completions = [...world.completions, complete(task, world.completions, id, dateHour(moment))];
 		}
 	},
 	{
 		pattern: new RegExp(`^consulto el Historial el ${P}$`),
-		run: (world, ahora) => {
-			world.historial = history(tareasDe(world), world.completions, fechaHora(ahora));
+		run: (world, now) => {
+			world.history = history(tasksOf(world), world.completions, dateHour(now));
 		}
 	},
 	{
 		pattern: new RegExp(`^el Historial muestra ${P}$`),
-		run: (world, esperado) => expect(enTexto(elHistorialConsultado(world))).toBe(esperado)
+		run: (world, expected) => expect(inText(theHistoryQueried(world))).toBe(expected)
 	},
 	{
 		pattern: /^el Historial está vacío$/,
-		run: (world) => expect(elHistorialConsultado(world)).toEqual([])
+		run: (world) => expect(theHistoryQueried(world)).toEqual([])
 	}
 ];

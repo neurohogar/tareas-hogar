@@ -1,263 +1,263 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
-  abrir,
-  agregarHorario,
-  campoDesde,
-  campoHasta,
-  quitarHorario,
-  adelantar,
-  asentar,
-  cerrar,
-	descartar,
-  completar,
-  conReloj,
-  conmutarMostrarCompletadas,
-  crear,
-  crearYVer,
-  detener,
-  dosDispositivos,
-  editar,
-  encenderCompletadas,
-  esperarEstado,
-  fila,
-  irA,
-  limpiarEmuladores,
-  listaEs,
-  llegaAlServidor,
-  sesionConReloj,
-  soloEnUnHorario,
-  tituloDeFila,
+  openTask,
+  addSchedule,
+  fieldFrom,
+  fieldTo,
+  removeSchedule,
+  advance,
+  settle,
+  close,
+	discard,
+  complete,
+  withClock,
+  toggleShowCompleted,
+  create,
+  createAndView,
+  stop,
+  twoDevices,
+  edit,
+  turnOnCompleted,
+  waitStatus,
+  row,
+  goA,
+  cleanEmulators,
+  listIs,
+  arrivesOnServer,
+  sessionWithClock,
+  onlyInSchedule,
+  rowTitle,
 } from "./support";
 
 test.beforeEach(async () => {
-  await limpiarEmuladores();
+  await cleanEmulators();
 });
 
-const VENTANA = { desde: "08:00", hasta: "11:00" };
-const horarioDe = (page: Page, titulo: string) =>
-  fila(page, titulo).getByText(/\d\d:\d\d–\d\d:\d\d/);
-const aviso = (page: Page) => page.getByRole("status");
+const TIME_WINDOW = { from: "08:00", to: "11:00" };
+const scheduleOf = (page: Page, title: string) =>
+  row(page, title).getByText(/\d\d:\d\d–\d\d:\d\d/);
+const notice = (page: Page) => page.getByRole("status");
 
-async function verHorario(page: Page, titulo: string, texto: string) {
-  await expect(horarioDe(page, titulo)).toHaveText(texto);
+async function viewSchedule(page: Page, title: string, text: string) {
+  await expect(scheduleOf(page, title)).toHaveText(text);
 }
 
-async function sinHorario(page: Page, titulo: string) {
-  await expect(fila(page, titulo)).toBeVisible();
-  await expect(horarioDe(page, titulo)).toHaveCount(0);
+async function withoutSchedule(page: Page, title: string) {
+  await expect(row(page, title)).toBeVisible();
+  await expect(scheduleOf(page, title)).toHaveCount(0);
 }
 
-async function verAviso(page: Page, titulo: string) {
-  await expect(aviso(page)).toHaveCount(1);
-  await expect(aviso(page)).toContainText(`Completaste «${titulo}»`);
+async function viewNotice(page: Page, title: string) {
+  await expect(notice(page)).toHaveCount(1);
+  await expect(notice(page)).toContainText(`Completaste «${title}»`);
   await expect(
-    aviso(page).getByRole("button", { name: "Deshacer" }),
+    notice(page).getByRole("button", { name: "Deshacer" }),
   ).toBeVisible();
 }
 
 /** Avanza el reloj simulado hasta `hora`, disparando los temporizadores intermedios (reloj detenido). */
-async function ir(page: Page, hora: string) {
-  const falta =
-    new Date(hora).getTime() - (await page.evaluate(() => Date.now()));
-  if (falta <= 10_000) await page.clock.runFor(falta);
-  else await adelantar(page, hora);
+async function go(page: Page, hour: string) {
+  const missing =
+    new Date(hour).getTime() - (await page.evaluate(() => Date.now()));
+  if (missing <= 10_000) await page.clock.runFor(missing);
+  else await advance(page, hour);
 }
 
 /** Sesión que termina con el reloj corriendo 10 minutos antes de `hora`. */
-const sesionAntes = (page: Page, hora: string) =>
-  sesionConReloj(
+const sessionBefore = (page: Page, hour: string) =>
+  sessionWithClock(
     page,
-    new Date(new Date(hora).getTime() - 600_000).toISOString(),
+    new Date(new Date(hour).getTime() - 600_000).toISOString(),
   );
 
 /** Tocar un checkbox deshabilitado no cambia nada: no hay aviso. */
-async function tocarDeshabilitado(page: Page, titulo: string) {
-  await fila(page, titulo).getByRole("checkbox").click({ force: true });
-  await expect(aviso(page)).toHaveCount(0);
+async function tapDisabled(page: Page, title: string) {
+  await row(page, title).getByRole("checkbox").click({ force: true });
+  await expect(notice(page)).toHaveCount(0);
 }
 
-const tamano = (l: ReturnType<typeof horarioDe>) =>
+const size = (l: ReturnType<typeof scheduleOf>) =>
   l.evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
 
-async function errorEnPanel(page: Page, texto: string) {
-  await expect(page.getByText(texto)).toBeVisible();
+async function errorInPanel(page: Page, text: string) {
+  await expect(page.getByText(text)).toBeVisible();
   await expect(page.getByRole("dialog")).toBeVisible();
 }
 
 test("Flujo 1: crear, cambiar y quitar el horario", async ({ page }) => {
-  await sesionConReloj(page, "2026-07-15T06:00:00");
+  await sessionWithClock(page, "2026-07-15T06:00:00");
   await page.getByRole("button", { name: "+" }).click();
-  await expect(soloEnUnHorario(page)).not.toBeChecked();
+  await expect(onlyInSchedule(page)).not.toBeChecked();
   await expect(page.getByLabel("Desde", { exact: true })).toHaveCount(0);
   await expect(page.getByLabel("Hasta", { exact: true })).toHaveCount(0);
   await page.getByLabel("Título").fill("Regar");
   await page.getByRole("radio", { name: "No se repite" }).check();
-  await soloEnUnHorario(page).check();
+  await onlyInSchedule(page).check();
   await expect(page.getByLabel("Desde", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Hasta", { exact: true })).toBeVisible();
   await page.getByLabel("Desde", { exact: true }).fill("08:00");
   await page.getByLabel("Hasta", { exact: true }).fill("11:00");
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await verHorario(page, "Regar", "08:00–11:00");
-  expect(await tamano(horarioDe(page, "Regar"))).toBeLessThan(
-    await tituloDeFila(fila(page, "Regar")).evaluate((e) =>
+  await viewSchedule(page, "Regar", "08:00–11:00");
+  expect(await size(scheduleOf(page, "Regar"))).toBeLessThan(
+    await rowTitle(row(page, "Regar")).evaluate((e) =>
       parseFloat(getComputedStyle(e).fontSize),
     ),
   );
 
-  await crear(page, {
-    titulo: "Ventilar",
-    tipo: "Intervalo",
-    cada: "1",
-    unidad: "días",
-    horario: { desde: "20:00", hasta: "22:30" },
+  await create(page, {
+    title: "Ventilar",
+    kind: "Intervalo",
+    every: "1",
+    unit: "días",
+    schedule: { from: "20:00", to: "22:30" },
   });
-  await verHorario(page, "Ventilar", "20:00–22:30");
-  await crear(page, {
-    titulo: "Sacar la basura",
-    tipo: "Días de la semana",
-    dias: ["jueves"],
-    horario: { desde: "09:00", hasta: "10:00" },
+  await viewSchedule(page, "Ventilar", "20:00–22:30");
+  await create(page, {
+    title: "Sacar la basura",
+    kind: "Días de la semana",
+    days: ["jueves"],
+    schedule: { from: "09:00", to: "10:00" },
   });
-  await verHorario(page, "Sacar la basura", "09:00–10:00");
-  await crear(page, { titulo: "Barrer", tipo: "No se repite" });
-  await sinHorario(page, "Barrer");
+  await viewSchedule(page, "Sacar la basura", "09:00–10:00");
+  await create(page, { title: "Barrer", kind: "No se repite" });
+  await withoutSchedule(page, "Barrer");
 
-  await abrir(page, "Regar");
-  await expect(soloEnUnHorario(page)).toBeChecked();
+  await openTask(page, "Regar");
+  await expect(onlyInSchedule(page)).toBeChecked();
   await expect(page.getByLabel("Desde", { exact: true })).toHaveValue("08:00");
   await expect(page.getByLabel("Hasta", { exact: true })).toHaveValue("11:00");
   await page.getByLabel("Desde", { exact: true }).fill("07:30");
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await verHorario(page, "Regar", "07:30–11:00");
+  await viewSchedule(page, "Regar", "07:30–11:00");
 
-  await editar(page, "Regar", { tipo: "Intervalo", cada: "2", unidad: "días" });
-  await verHorario(page, "Regar", "07:30–11:00");
+  await edit(page, "Regar", { kind: "Intervalo", every: "2", unit: "días" });
+  await viewSchedule(page, "Regar", "07:30–11:00");
 
-  await editar(page, "Regar", { horario: null });
-  await sinHorario(page, "Regar");
+  await edit(page, "Regar", { schedule: null });
+  await withoutSchedule(page, "Regar");
 
   await page.reload();
-  await sinHorario(page, "Regar");
-  await verHorario(page, "Ventilar", "20:00–22:30");
-  await verHorario(page, "Sacar la basura", "09:00–10:00");
-  await sinHorario(page, "Barrer");
+  await withoutSchedule(page, "Regar");
+  await viewSchedule(page, "Ventilar", "20:00–22:30");
+  await viewSchedule(page, "Sacar la basura", "09:00–10:00");
+  await withoutSchedule(page, "Barrer");
 });
 
 test("Flujo 2: errores del campo Horario", async ({ page }) => {
-  await sesionConReloj(page, "2026-07-15T06:00:00");
-  await crear(page, {
-    titulo: "Regar",
-    tipo: "No se repite",
-    horario: VENTANA,
+  await sessionWithClock(page, "2026-07-15T06:00:00");
+  await create(page, {
+    title: "Regar",
+    kind: "No se repite",
+    schedule: TIME_WINDOW,
   });
-  const FIN = "La hora de fin tiene que ser posterior a la de inicio";
-  const DOS = "Completá las dos horas";
-  const guardar = () => page.getByRole("button", { name: "Guardar" }).click();
+  const END = "La hora de fin tiene que ser posterior a la de inicio";
+  const TWO = "Completá las dos horas";
+  const save = () => page.getByRole("button", { name: "Guardar" }).click();
 
   await page.getByRole("button", { name: "+" }).click();
   await page.getByLabel("Título").fill("Pagar la luz");
   await page.getByRole("radio", { name: "No se repite" }).check();
-  await soloEnUnHorario(page).check();
+  await onlyInSchedule(page).check();
   await page.getByLabel("Desde", { exact: true }).fill("11:00");
   await page.getByLabel("Hasta", { exact: true }).fill("08:00");
-  await guardar();
-  await errorEnPanel(page, FIN);
+  await save();
+  await errorInPanel(page, END);
 
   await page.getByLabel("Hasta", { exact: true }).fill("11:00");
-  await guardar();
-  await errorEnPanel(page, FIN);
+  await save();
+  await errorInPanel(page, END);
 
   await page.getByLabel("Hasta", { exact: true }).fill("");
-  await guardar();
-  await errorEnPanel(page, DOS);
+  await save();
+  await errorInPanel(page, TWO);
 
   await page.getByLabel("Hasta", { exact: true }).fill("12:00");
-  await guardar();
+  await save();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await verHorario(page, "Pagar la luz", "11:00–12:00");
+  await viewSchedule(page, "Pagar la luz", "11:00–12:00");
 
-  await abrir(page, "Regar");
+  await openTask(page, "Regar");
   await page.getByLabel("Título").fill("Regar plantas");
   await page.getByLabel("Desde", { exact: true }).fill("11:30");
-  await guardar();
-  await errorEnPanel(page, FIN);
-  await descartar(page);
-  await verHorario(page, "Regar", "08:00–11:00");
-  await expect(fila(page, "Regar plantas")).toHaveCount(0);
+  await save();
+  await errorInPanel(page, END);
+  await discard(page);
+  await viewSchedule(page, "Regar", "08:00–11:00");
+  await expect(row(page, "Regar plantas")).toHaveCount(0);
 
-  await abrir(page, "Regar");
+  await openTask(page, "Regar");
   await page.getByLabel("Desde", { exact: true }).fill("");
-  await guardar();
-  await errorEnPanel(page, DOS);
-  await descartar(page);
-  await verHorario(page, "Regar", "08:00–11:00");
+  await save();
+  await errorInPanel(page, TWO);
+  await discard(page);
+  await viewSchedule(page, "Regar", "08:00–11:00");
 });
 
 test("Flujo 3: puntual con horario, checkbox y Deshacer", async ({ page }) => {
-  await sesionConReloj(page, "2026-07-15T06:00:00");
-  await crearYVer(page, {
-    titulo: "Regar",
-    tipo: "No se repite",
-    horario: VENTANA,
+  await sessionWithClock(page, "2026-07-15T06:00:00");
+  await createAndView(page, {
+    title: "Regar",
+    kind: "No se repite",
+    schedule: TIME_WINDOW,
   });
   // La barra se mide desde la creación (06:00): se detiene el reloj enseguida.
-  await detener(page, "2026-07-15T06:00:30");
+  await stop(page, "2026-07-15T06:00:30");
 
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "en espera", undefined, false, false),
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "en espera", undefined, false, false),
   );
-  await tocarDeshabilitado(page, "Regar");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "en espera", undefined, false, false),
-  );
-
-  await ir(page, "2026-07-15T07:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "en espera", 50, false, false),
+  await tapDisabled(page, "Regar");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "en espera", undefined, false, false),
   );
 
-  await ir(page, "2026-07-15T08:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "pendiente", undefined, false, true),
+  await go(page, "2026-07-15T07:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "en espera", 50, false, false),
   );
 
-  await ir(page, "2026-07-15T10:59:58");
-  await completar(page, "Regar");
-  await verAviso(page, "Regar");
-  await conReloj(page, () => listaEs(page, []));
-
-  await ir(page, "2026-07-15T11:00:02");
-  await verAviso(page, "Regar");
-  await aviso(page).getByRole("button", { name: "Deshacer" }).click();
-  await expect(aviso(page)).toHaveCount(0);
-  await asentar(page);
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "en espera", 0, false, false),
+  await go(page, "2026-07-15T08:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "pendiente", undefined, false, true),
   );
 
-  await ir(page, "2026-07-15T21:30:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "en espera", 50, false, false),
+  await go(page, "2026-07-15T10:59:58");
+  await complete(page, "Regar");
+  await viewNotice(page, "Regar");
+  await withClock(page, () => listIs(page, []));
+
+  await go(page, "2026-07-15T11:00:02");
+  await viewNotice(page, "Regar");
+  await notice(page).getByRole("button", { name: "Deshacer" }).click();
+  await expect(notice(page)).toHaveCount(0);
+  await settle(page);
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "en espera", 0, false, false),
   );
 
-  await ir(page, "2026-07-16T08:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "pendiente", undefined, false, true),
+  await go(page, "2026-07-15T21:30:00");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "en espera", 50, false, false),
+  );
+
+  await go(page, "2026-07-16T08:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "pendiente", undefined, false, true),
   );
 });
 
 test("Flujo 4: puntual con fecha límite", async ({ page }) => {
-  await sesionConReloj(page, "2026-07-15T06:00:00");
-  await crearYVer(page, {
-    titulo: "Pagar la luz",
-    tipo: "No se repite",
-    fecha: "2026-07-16",
-    horario: VENTANA,
+  await sessionWithClock(page, "2026-07-15T06:00:00");
+  await createAndView(page, {
+    title: "Pagar la luz",
+    kind: "No se repite",
+    date: "2026-07-16",
+    schedule: TIME_WINDOW,
   });
-  await esperarEstado(
+  await waitStatus(
     page,
     "Pagar la luz",
     "en espera",
@@ -266,8 +266,8 @@ test("Flujo 4: puntual con fecha límite", async ({ page }) => {
     false,
   );
 
-  await adelantar(page, "2026-07-16T10:59:00");
-  await esperarEstado(
+  await advance(page, "2026-07-16T10:59:00");
+  await waitStatus(
     page,
     "Pagar la luz",
     "pendiente",
@@ -276,8 +276,8 @@ test("Flujo 4: puntual con fecha límite", async ({ page }) => {
     true,
   );
 
-  await adelantar(page, "2026-07-16T11:00:00");
-  await esperarEstado(
+  await advance(page, "2026-07-16T11:00:00");
+  await waitStatus(
     page,
     "Pagar la luz",
     "atrasada",
@@ -286,20 +286,20 @@ test("Flujo 4: puntual con fecha límite", async ({ page }) => {
     false,
   );
 
-  await adelantar(page, "2026-07-17T08:00:00");
-  await esperarEstado(page, "Pagar la luz", "atrasada", undefined, false, true);
-  await completar(page, "Pagar la luz");
-  await verAviso(page, "Pagar la luz");
-  await listaEs(page, []);
+  await advance(page, "2026-07-17T08:00:00");
+  await waitStatus(page, "Pagar la luz", "atrasada", undefined, false, true);
+  await complete(page, "Pagar la luz");
+  await viewNotice(page, "Pagar la luz");
+  await listIs(page, []);
 
-  await adelantar(page, "2026-07-17T12:00:00");
-  await crearYVer(page, {
-    titulo: "Pagar el gas",
-    tipo: "No se repite",
-    fecha: "2026-07-17",
-    horario: VENTANA,
+  await advance(page, "2026-07-17T12:00:00");
+  await createAndView(page, {
+    title: "Pagar el gas",
+    kind: "No se repite",
+    date: "2026-07-17",
+    schedule: TIME_WINDOW,
   });
-  await esperarEstado(
+  await waitStatus(
     page,
     "Pagar el gas",
     "atrasada",
@@ -310,100 +310,100 @@ test("Flujo 4: puntual con fecha límite", async ({ page }) => {
 });
 
 test("Flujo 5: relativa con horario", async ({ page }) => {
-  await sesionAntes(page, "2026-07-15T09:00:00");
-  await encenderCompletadas(page);
-  await crearYVer(page, {
-    titulo: "Regar",
-    tipo: "Intervalo",
-    cada: "1",
-    unidad: "días",
-    horario: VENTANA,
+  await sessionBefore(page, "2026-07-15T09:00:00");
+  await turnOnCompleted(page);
+  await createAndView(page, {
+    title: "Regar",
+    kind: "Intervalo",
+    every: "1",
+    unit: "días",
+    schedule: TIME_WINDOW,
   });
-  await detener(page, "2026-07-15T09:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "pendiente", undefined, false, true),
+  await stop(page, "2026-07-15T09:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "pendiente", undefined, false, true),
   );
 
-  await completar(page, "Regar");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "en espera", 0, true, true),
+  await complete(page, "Regar");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "en espera", 0, true, true),
   );
 
-  await ir(page, "2026-07-15T15:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "en espera", 25, true, true),
+  await go(page, "2026-07-15T15:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "en espera", 25, true, true),
   );
 
-  await ir(page, "2026-07-16T09:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "pendiente", undefined, false, true),
+  await go(page, "2026-07-16T09:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "pendiente", undefined, false, true),
   );
-  await ir(page, "2026-07-16T11:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "atrasada", undefined, false, false),
+  await go(page, "2026-07-16T11:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "atrasada", undefined, false, false),
   );
-  await ir(page, "2026-07-16T20:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "atrasada", undefined, false, false),
-  );
-
-  await ir(page, "2026-07-17T08:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "atrasada", undefined, false, true),
-  );
-  await completar(page, "Regar");
-  await verAviso(page, "Regar");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "en espera", undefined, true, true),
+  await go(page, "2026-07-16T20:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "atrasada", undefined, false, false),
   );
 
-  await ir(page, "2026-07-17T20:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Regar", "en espera", 50, true, true),
+  await go(page, "2026-07-17T08:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "atrasada", undefined, false, true),
+  );
+  await complete(page, "Regar");
+  await viewNotice(page, "Regar");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "en espera", undefined, true, true),
+  );
+
+  await go(page, "2026-07-17T20:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Regar", "en espera", 50, true, true),
   );
 });
 
 test("Flujo 6: atraso antes de que abra la ventana", async ({ page }) => {
-  await sesionAntes(page, "2026-07-15T10:00:00");
-  await crearYVer(page, {
-    titulo: "Remedio",
-    tipo: "Intervalo",
-    cada: "4",
-    unidad: "horas",
-    horario: VENTANA,
+  await sessionBefore(page, "2026-07-15T10:00:00");
+  await createAndView(page, {
+    title: "Remedio",
+    kind: "Intervalo",
+    every: "4",
+    unit: "horas",
+    schedule: TIME_WINDOW,
   });
-  await detener(page, "2026-07-15T10:00:00");
-  await completar(page, "Remedio");
-  await conReloj(page, () => listaEs(page, []));
-  await conmutarMostrarCompletadas(page, true);
+  await stop(page, "2026-07-15T10:00:00");
+  await complete(page, "Remedio");
+  await withClock(page, () => listIs(page, []));
+  await toggleShowCompleted(page, true);
 
-  await ir(page, "2026-07-15T15:30:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Remedio", "en espera", 25, true, true),
+  await go(page, "2026-07-15T15:30:00");
+  await withClock(page, () =>
+    waitStatus(page, "Remedio", "en espera", 25, true, true),
   );
 
-  await ir(page, "2026-07-15T18:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Remedio", "atrasada", undefined, false, false),
+  await go(page, "2026-07-15T18:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Remedio", "atrasada", undefined, false, false),
   );
 
-  await ir(page, "2026-07-16T08:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Remedio", "atrasada", undefined, false, true),
+  await go(page, "2026-07-16T08:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Remedio", "atrasada", undefined, false, true),
   );
 });
 
 test("Flujo 7: calendario y Mostrar completadas", async ({ page }) => {
-  await sesionAntes(page, "2026-07-14T07:00:00");
-  await crearYVer(page, {
-    titulo: "Sacar la basura",
-    tipo: "Días de la semana",
-    dias: ["martes", "jueves"],
-    horario: VENTANA,
+  await sessionBefore(page, "2026-07-14T07:00:00");
+  await createAndView(page, {
+    title: "Sacar la basura",
+    kind: "Días de la semana",
+    days: ["martes", "jueves"],
+    schedule: TIME_WINDOW,
   });
-  await detener(page, "2026-07-14T07:00:00");
-  await conReloj(page, () =>
-    esperarEstado(
+  await stop(page, "2026-07-14T07:00:00");
+  await withClock(page, () =>
+    waitStatus(
       page,
       "Sacar la basura",
       "en espera",
@@ -413,79 +413,79 @@ test("Flujo 7: calendario y Mostrar completadas", async ({ page }) => {
     ),
   );
 
-  await ir(page, "2026-07-14T08:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Sacar la basura", "pendiente", undefined, false, true),
+  await go(page, "2026-07-14T08:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Sacar la basura", "pendiente", undefined, false, true),
   );
-  await completar(page, "Sacar la basura");
-  await conReloj(page, () => listaEs(page, []));
+  await complete(page, "Sacar la basura");
+  await withClock(page, () => listIs(page, []));
 
-  await ir(page, "2026-07-16T07:59:00");
-  await conReloj(page, () => listaEs(page, []));
+  await go(page, "2026-07-16T07:59:00");
+  await withClock(page, () => listIs(page, []));
 
-  await conmutarMostrarCompletadas(page, true);
-  await conReloj(page, () =>
-    esperarEstado(page, "Sacar la basura", "en espera", undefined, true, false),
+  await toggleShowCompleted(page, true);
+  await withClock(page, () =>
+    waitStatus(page, "Sacar la basura", "en espera", undefined, true, false),
   );
-  await conmutarMostrarCompletadas(page, false);
+  await toggleShowCompleted(page, false);
 
-  await ir(page, "2026-07-16T08:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Sacar la basura", "pendiente", undefined, false, true),
-  );
-
-  await ir(page, "2026-07-16T11:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Sacar la basura", "atrasada", undefined, false, false),
+  await go(page, "2026-07-16T08:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Sacar la basura", "pendiente", undefined, false, true),
   );
 
-  await ir(page, "2026-07-17T09:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Sacar la basura", "atrasada", undefined, false, true),
+  await go(page, "2026-07-16T11:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Sacar la basura", "atrasada", undefined, false, false),
   );
-  await completar(page, "Sacar la basura");
-  await conReloj(page, () => listaEs(page, []));
-  await irA(page, "Historial");
-  const entrada = page
+
+  await go(page, "2026-07-17T09:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Sacar la basura", "atrasada", undefined, false, true),
+  );
+  await complete(page, "Sacar la basura");
+  await withClock(page, () => listIs(page, []));
+  await goA(page, "Historial");
+  const entry = page
     .getByRole("listitem")
     .filter({ hasText: /^Sacar la basura\s*09:00/ });
-  await conReloj(page, () => expect(entrada).toHaveCount(1));
+  await withClock(page, () => expect(entry).toHaveCount(1));
 
-  await ir(page, "2026-07-17T20:00:00");
-  await entrada.getByRole("button", { name: "Borrar", exact: true }).click();
-  const dialogo = page.getByRole("alertdialog");
-  await dialogo.getByRole("button", { name: "Borrar", exact: true }).click();
-  await expect(dialogo).toHaveCount(0);
-  await conReloj(page, () => expect(entrada).toHaveCount(0));
-  await irA(page, "Pendientes");
-  await conReloj(page, () =>
-    esperarEstado(page, "Sacar la basura", "atrasada", undefined, false, false),
+  await go(page, "2026-07-17T20:00:00");
+  await entry.getByRole("button", { name: "Borrar", exact: true }).click();
+  const dialog = page.getByRole("alertdialog");
+  await dialog.getByRole("button", { name: "Borrar", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await withClock(page, () => expect(entry).toHaveCount(0));
+  await goA(page, "Pendientes");
+  await withClock(page, () =>
+    waitStatus(page, "Sacar la basura", "atrasada", undefined, false, false),
   );
 });
 
 test("Flujo 8: orden con horario", async ({ page }) => {
-  await sesionConReloj(page, "2026-07-15T08:00:00");
-  await crearYVer(page, {
-    titulo: "Cambiar sábanas",
-    tipo: "Días de la semana",
-    dias: ["jueves"],
+  await sessionWithClock(page, "2026-07-15T08:00:00");
+  await createAndView(page, {
+    title: "Cambiar sábanas",
+    kind: "Días de la semana",
+    days: ["jueves"],
   });
-  await adelantar(page, "2026-07-15T08:01:00");
-  await crearYVer(page, {
-    titulo: "Sacar la basura",
-    tipo: "Días de la semana",
-    dias: ["jueves"],
-    horario: { desde: "09:00", hasta: "10:00" },
+  await advance(page, "2026-07-15T08:01:00");
+  await createAndView(page, {
+    title: "Sacar la basura",
+    kind: "Días de la semana",
+    days: ["jueves"],
+    schedule: { from: "09:00", to: "10:00" },
   });
-  await adelantar(page, "2026-07-15T12:00:00");
-  await crearYVer(page, {
-    titulo: "Cambiar foco",
-    tipo: "No se repite",
-    horario: VENTANA,
+  await advance(page, "2026-07-15T12:00:00");
+  await createAndView(page, {
+    title: "Cambiar foco",
+    kind: "No se repite",
+    schedule: TIME_WINDOW,
   });
 
-  await adelantar(page, "2026-07-15T14:00:00");
-  await esperarEstado(
+  await advance(page, "2026-07-15T14:00:00");
+  await waitStatus(
     page,
     "Cambiar sábanas",
     "en espera",
@@ -493,7 +493,7 @@ test("Flujo 8: orden con horario", async ({ page }) => {
     false,
     true,
   );
-  await esperarEstado(
+  await waitStatus(
     page,
     "Cambiar foco",
     "en espera",
@@ -501,7 +501,7 @@ test("Flujo 8: orden con horario", async ({ page }) => {
     false,
     false,
   );
-  await esperarEstado(
+  await waitStatus(
     page,
     "Sacar la basura",
     "en espera",
@@ -509,17 +509,17 @@ test("Flujo 8: orden con horario", async ({ page }) => {
     false,
     false,
   );
-  await listaEs(page, ["Cambiar sábanas", "Cambiar foco", "Sacar la basura"]);
+  await listIs(page, ["Cambiar sábanas", "Cambiar foco", "Sacar la basura"]);
 
-  await editar(page, "Cambiar foco", {
-    horario: { desde: "10:00", hasta: "11:00" },
+  await edit(page, "Cambiar foco", {
+    schedule: { from: "10:00", to: "11:00" },
   });
-  await listaEs(page, ["Cambiar sábanas", "Sacar la basura", "Cambiar foco"]);
+  await listIs(page, ["Cambiar sábanas", "Sacar la basura", "Cambiar foco"]);
 
-  await adelantar(page, "2026-07-16T09:30:00");
-  await esperarEstado(page, "Cambiar sábanas", "pendiente");
-  await esperarEstado(page, "Sacar la basura", "pendiente");
-  await esperarEstado(
+  await advance(page, "2026-07-16T09:30:00");
+  await waitStatus(page, "Cambiar sábanas", "pendiente");
+  await waitStatus(page, "Sacar la basura", "pendiente");
+  await waitStatus(
     page,
     "Cambiar foco",
     "en espera",
@@ -527,22 +527,22 @@ test("Flujo 8: orden con horario", async ({ page }) => {
     false,
     false,
   );
-  await listaEs(page, ["Cambiar sábanas", "Sacar la basura", "Cambiar foco"]);
+  await listIs(page, ["Cambiar sábanas", "Sacar la basura", "Cambiar foco"]);
 
-  await crearYVer(page, {
-    titulo: "Pagar la luz",
-    tipo: "No se repite",
-    fecha: "2026-07-17",
-    horario: VENTANA,
+  await createAndView(page, {
+    title: "Pagar la luz",
+    kind: "No se repite",
+    date: "2026-07-17",
+    schedule: TIME_WINDOW,
   });
-  await crearYVer(page, {
-    titulo: "Barrer",
-    tipo: "No se repite",
-    horario: VENTANA,
+  await createAndView(page, {
+    title: "Barrer",
+    kind: "No se repite",
+    schedule: TIME_WINDOW,
   });
-  await esperarEstado(page, "Pagar la luz", "pendiente");
-  await esperarEstado(page, "Barrer", "pendiente");
-  await listaEs(page, [
+  await waitStatus(page, "Pagar la luz", "pendiente");
+  await waitStatus(page, "Barrer", "pendiente");
+  await listIs(page, [
     "Cambiar sábanas",
     "Sacar la basura",
     "Pagar la luz",
@@ -550,8 +550,8 @@ test("Flujo 8: orden con horario", async ({ page }) => {
     "Cambiar foco",
   ]);
 
-  await editar(page, "Pagar la luz", { fecha: "2026-07-16" });
-  await listaEs(page, [
+  await edit(page, "Pagar la luz", { date: "2026-07-16" });
+  await listIs(page, [
     "Cambiar sábanas",
     "Pagar la luz",
     "Sacar la basura",
@@ -565,256 +565,256 @@ test("Flujo 9: dos dispositivos", async ({ browser }) => {
     a,
     b,
     ctxB,
-    cerrar: fin,
-  } = await dosDispositivos(browser, "2026-07-15T06:00:00");
-  await crear(a, { titulo: "Regar", tipo: "No se repite", horario: VENTANA });
-  await verHorario(b, "Regar", "08:00–11:00");
+    close: end,
+  } = await twoDevices(browser, "2026-07-15T06:00:00");
+  await create(a, { title: "Regar", kind: "No se repite", schedule: TIME_WINDOW });
+  await viewSchedule(b, "Regar", "08:00–11:00");
 
   await ctxB.setOffline(true);
-  await editar(a, "Regar", { horario: { desde: "07:00" } });
-  await llegaAlServidor(a);
-  await editar(b, "Regar", { horario: { hasta: "12:00" } });
+  await edit(a, "Regar", { schedule: { from: "07:00" } });
+  await arrivesOnServer(a);
+  await edit(b, "Regar", { schedule: { to: "12:00" } });
   await ctxB.setOffline(false);
-  await llegaAlServidor(b);
-  await verHorario(a, "Regar", "08:00–12:00");
-  await verHorario(b, "Regar", "08:00–12:00");
+  await arrivesOnServer(b);
+  await viewSchedule(a, "Regar", "08:00–12:00");
+  await viewSchedule(b, "Regar", "08:00–12:00");
 
   await ctxB.setOffline(true);
-  await editar(a, "Regar", { horario: null });
-  await llegaAlServidor(a);
-  await editar(b, "Regar", { titulo: "Regar plantas" });
+  await edit(a, "Regar", { schedule: null });
+  await arrivesOnServer(a);
+  await edit(b, "Regar", { title: "Regar plantas" });
   await ctxB.setOffline(false);
-  await llegaAlServidor(b);
+  await arrivesOnServer(b);
   for (const p of [a, b]) {
-    await expect(fila(p, "Regar plantas")).toBeVisible();
-    await sinHorario(p, "Regar plantas");
+    await expect(row(p, "Regar plantas")).toBeVisible();
+    await withoutSchedule(p, "Regar plantas");
   }
-  await fin();
+  await end();
 });
 
 test("Flujo 10: sin horario, todo sigue igual", async ({ page }) => {
-  await sesionConReloj(page, "2026-07-15T02:50:00");
-  await crearYVer(page, { titulo: "Barrer", tipo: "No se repite" });
-  await adelantar(page, "2026-07-15T03:00:00");
-  await esperarEstado(page, "Barrer", "pendiente", undefined, false, true);
-  await sinHorario(page, "Barrer");
+  await sessionWithClock(page, "2026-07-15T02:50:00");
+  await createAndView(page, { title: "Barrer", kind: "No se repite" });
+  await advance(page, "2026-07-15T03:00:00");
+  await waitStatus(page, "Barrer", "pendiente", undefined, false, true);
+  await withoutSchedule(page, "Barrer");
 
-  await crearYVer(page, {
-    titulo: "Regar",
-    tipo: "Intervalo",
-    cada: "1",
-    unidad: "días",
+  await createAndView(page, {
+    title: "Regar",
+    kind: "Intervalo",
+    every: "1",
+    unit: "días",
   });
-  await completar(page, "Regar");
-  await expect(fila(page, "Regar")).toHaveCount(0);
-  await adelantar(page, "2026-07-16T03:00:00");
-  await esperarEstado(page, "Regar", "pendiente", undefined, false, true);
-  await sinHorario(page, "Regar");
+  await complete(page, "Regar");
+  await expect(row(page, "Regar")).toHaveCount(0);
+  await advance(page, "2026-07-16T03:00:00");
+  await waitStatus(page, "Regar", "pendiente", undefined, false, true);
+  await withoutSchedule(page, "Regar");
 });
 
-const DOS_VENTANAS = [
-  { desde: "07:00", hasta: "10:00" },
-  { desde: "18:00", hasta: "21:00" },
+const TWO_TIME_WINDOWS = [
+  { from: "07:00", to: "10:00" },
+  { from: "18:00", to: "21:00" },
 ];
-const DOS_TEXTO = "07:00–10:00 · 18:00–21:00";
-const SUPERPUESTOS = "Los horarios no se pueden superponer";
-const SOLO_DIAS = "Con varios horarios, el intervalo tiene que ser en días";
-const guardarPanel = (page: Page) =>
+const TWO_TEXT = "07:00–10:00 · 18:00–21:00";
+const OVERLAPPING = "Los horarios no se pueden superponer";
+const ONLY_DAYS = "Con varios horarios, el intervalo tiene que ser en días";
+const savePanel = (page: Page) =>
   page.getByRole("button", { name: "Guardar" }).click();
 
 /** Verifica estado y checkbox con el reloj detenido en `hora`. */
-async function enHora(
+async function inHour(
   page: Page,
-  hora: string,
-  titulo: string,
-  estado: "pendiente" | "en espera" | "atrasada",
-  barra: number | undefined,
-  completada: boolean,
-  habilitado: boolean,
+  hour: string,
+  title: string,
+  status: "pendiente" | "en espera" | "atrasada",
+  bar: number | undefined,
+  completed: boolean,
+  enabled: boolean,
 ) {
-  await ir(page, hora);
-  await conReloj(page, () =>
-    esperarEstado(page, titulo, estado, barra, completada, habilitado),
+  await go(page, hour);
+  await withClock(page, () =>
+    waitStatus(page, title, status, bar, completed, enabled),
   );
 }
 
 test("Flujo 11: Agregar horario y Quitar", async ({ page }) => {
-  await sesionConReloj(page, "2026-07-15T06:00:00");
+  await sessionWithClock(page, "2026-07-15T06:00:00");
   const T = "Alimentar a los perros";
   await page.getByRole("button", { name: "+" }).click();
   await page.getByLabel("Título").fill(T);
   await page.getByRole("radio", { name: "No se repite" }).check();
-  await soloEnUnHorario(page).check();
+  await onlyInSchedule(page).check();
   await expect(page.getByLabel("Desde", { exact: true })).toHaveCount(1);
   await expect(page.getByLabel("Hasta", { exact: true })).toHaveCount(1);
-  await expect(quitarHorario(page)).toHaveCount(0);
-  await expect(agregarHorario(page)).toBeVisible();
+  await expect(removeSchedule(page)).toHaveCount(0);
+  await expect(addSchedule(page)).toBeVisible();
 
-  await campoDesde(page, 0).fill("18:00");
-  await campoHasta(page, 0).fill("21:00");
-  await agregarHorario(page).click();
+  await fieldFrom(page, 0).fill("18:00");
+  await fieldTo(page, 0).fill("21:00");
+  await addSchedule(page).click();
   await expect(page.getByLabel("Desde", { exact: true })).toHaveCount(2);
-  await expect(quitarHorario(page)).toHaveCount(2);
-  await expect(campoDesde(page, 1)).toHaveValue("");
-  await expect(campoHasta(page, 1)).toHaveValue("");
-  await campoDesde(page, 1).fill("07:00");
-  await campoHasta(page, 1).fill("10:00");
-  await guardarPanel(page);
+  await expect(removeSchedule(page)).toHaveCount(2);
+  await expect(fieldFrom(page, 1)).toHaveValue("");
+  await expect(fieldTo(page, 1)).toHaveValue("");
+  await fieldFrom(page, 1).fill("07:00");
+  await fieldTo(page, 1).fill("10:00");
+  await savePanel(page);
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await verHorario(page, T, DOS_TEXTO);
+  await viewSchedule(page, T, TWO_TEXT);
 
-  await abrir(page, T);
-  await expect(soloEnUnHorario(page)).toBeChecked();
-  await expect(campoDesde(page, 0)).toHaveValue("07:00");
-  await expect(campoHasta(page, 0)).toHaveValue("10:00");
-  await expect(campoDesde(page, 1)).toHaveValue("18:00");
-  await expect(campoHasta(page, 1)).toHaveValue("21:00");
-  await quitarHorario(page).first().click();
+  await openTask(page, T);
+  await expect(onlyInSchedule(page)).toBeChecked();
+  await expect(fieldFrom(page, 0)).toHaveValue("07:00");
+  await expect(fieldTo(page, 0)).toHaveValue("10:00");
+  await expect(fieldFrom(page, 1)).toHaveValue("18:00");
+  await expect(fieldTo(page, 1)).toHaveValue("21:00");
+  await removeSchedule(page).first().click();
   await expect(page.getByLabel("Desde", { exact: true })).toHaveCount(1);
-  await guardarPanel(page);
+  await savePanel(page);
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await verHorario(page, T, "18:00–21:00");
+  await viewSchedule(page, T, "18:00–21:00");
 
-  await abrir(page, T);
+  await openTask(page, T);
   await expect(page.getByLabel("Desde", { exact: true })).toHaveCount(1);
-  await expect(quitarHorario(page)).toHaveCount(0);
-  await agregarHorario(page).click();
-  await campoDesde(page, 1).fill("10:00");
-  await campoHasta(page, 1).fill("12:00");
-  await campoDesde(page, 0).fill("08:00");
-  await campoHasta(page, 0).fill("10:00");
-  await guardarPanel(page);
+  await expect(removeSchedule(page)).toHaveCount(0);
+  await addSchedule(page).click();
+  await fieldFrom(page, 1).fill("10:00");
+  await fieldTo(page, 1).fill("12:00");
+  await fieldFrom(page, 0).fill("08:00");
+  await fieldTo(page, 0).fill("10:00");
+  await savePanel(page);
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await verHorario(page, T, "08:00–10:00 · 10:00–12:00");
+  await viewSchedule(page, T, "08:00–10:00 · 10:00–12:00");
 
-  await editar(page, T, { horario: null });
-  await sinHorario(page, T);
+  await edit(page, T, { schedule: null });
+  await withoutSchedule(page, T);
 
-  await crear(page, {
-    titulo: "Remedio",
-    tipo: "Intervalo",
-    cada: "8",
-    unidad: "horas",
-    horarios: [{ desde: "08:00", hasta: "20:00" }],
+  await create(page, {
+    title: "Remedio",
+    kind: "Intervalo",
+    every: "8",
+    unit: "horas",
+    schedules: [{ from: "08:00", to: "20:00" }],
   });
-  await verHorario(page, "Remedio", "08:00–20:00");
+  await viewSchedule(page, "Remedio", "08:00–20:00");
 
   await page.reload();
-  await expect(fila(page, "Remedio")).toBeVisible();
-  await sinHorario(page, T);
-  await verHorario(page, "Remedio", "08:00–20:00");
+  await expect(row(page, "Remedio")).toBeVisible();
+  await withoutSchedule(page, T);
+  await viewSchedule(page, "Remedio", "08:00–20:00");
 });
 
 test("Flujo 12: errores de varios horarios", async ({ page }) => {
-  await sesionConReloj(page, "2026-07-15T06:00:00");
-  await crear(page, {
-    titulo: "Regar",
-    tipo: "No se repite",
-    horario: VENTANA,
+  await sessionWithClock(page, "2026-07-15T06:00:00");
+  await create(page, {
+    title: "Regar",
+    kind: "No se repite",
+    schedule: TIME_WINDOW,
   });
-  await crear(page, {
-    titulo: "Remedio",
-    tipo: "Intervalo",
-    cada: "8",
-    unidad: "horas",
-    horario: VENTANA,
+  await create(page, {
+    title: "Remedio",
+    kind: "Intervalo",
+    every: "8",
+    unit: "horas",
+    schedule: TIME_WINDOW,
   });
-  const FIN = "La hora de fin tiene que ser posterior a la de inicio";
-  const DOS = "Completá las dos horas";
+  const END = "La hora de fin tiene que ser posterior a la de inicio";
+  const TWO = "Completá las dos horas";
 
   await page.getByRole("button", { name: "+" }).click();
   await page.getByLabel("Título").fill("Perros");
   await page.getByRole("radio", { name: "No se repite" }).check();
-  await soloEnUnHorario(page).check();
-  await campoDesde(page, 0).fill("08:00");
-  await campoHasta(page, 0).fill("11:00");
-  await agregarHorario(page).click();
-  await campoDesde(page, 1).fill("10:00");
-  await campoHasta(page, 1).fill("12:00");
-  await guardarPanel(page);
-  await errorEnPanel(page, SUPERPUESTOS);
+  await onlyInSchedule(page).check();
+  await fieldFrom(page, 0).fill("08:00");
+  await fieldTo(page, 0).fill("11:00");
+  await addSchedule(page).click();
+  await fieldFrom(page, 1).fill("10:00");
+  await fieldTo(page, 1).fill("12:00");
+  await savePanel(page);
+  await errorInPanel(page, OVERLAPPING);
 
-  await campoDesde(page, 1).fill("08:00");
-  await campoHasta(page, 1).fill("11:00");
-  await guardarPanel(page);
-  await errorEnPanel(page, SUPERPUESTOS);
+  await fieldFrom(page, 1).fill("08:00");
+  await fieldTo(page, 1).fill("11:00");
+  await savePanel(page);
+  await errorInPanel(page, OVERLAPPING);
 
-  await campoDesde(page, 1).fill("09:00");
-  await campoHasta(page, 1).fill("10:00");
-  await guardarPanel(page);
-  await errorEnPanel(page, SUPERPUESTOS);
+  await fieldFrom(page, 1).fill("09:00");
+  await fieldTo(page, 1).fill("10:00");
+  await savePanel(page);
+  await errorInPanel(page, OVERLAPPING);
 
-  await campoHasta(page, 1).fill("");
-  await guardarPanel(page);
-  await errorEnPanel(page, DOS);
+  await fieldTo(page, 1).fill("");
+  await savePanel(page);
+  await errorInPanel(page, TWO);
 
-  await campoHasta(page, 1).fill("08:00");
-  await guardarPanel(page);
-  await errorEnPanel(page, FIN);
+  await fieldTo(page, 1).fill("08:00");
+  await savePanel(page);
+  await errorInPanel(page, END);
 
-  await campoDesde(page, 1).fill("18:00");
-  await campoHasta(page, 1).fill("21:00");
+  await fieldFrom(page, 1).fill("18:00");
+  await fieldTo(page, 1).fill("21:00");
   await page.getByRole("radio", { name: "Intervalo" }).check();
   await page.getByRole("spinbutton", { name: "Cada" }).fill("8");
   await page.getByLabel("Unidad").selectOption({ label: "horas" });
-  await guardarPanel(page);
-  await errorEnPanel(page, SOLO_DIAS);
+  await savePanel(page);
+  await errorInPanel(page, ONLY_DAYS);
 
   await page.getByLabel("Unidad").selectOption({ label: "días" });
   await page.getByRole("spinbutton", { name: "Cada" }).fill("1");
-  await guardarPanel(page);
+  await savePanel(page);
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await verHorario(page, "Perros", "08:00–11:00 · 18:00–21:00");
+  await viewSchedule(page, "Perros", "08:00–11:00 · 18:00–21:00");
 
-  await abrir(page, "Regar");
+  await openTask(page, "Regar");
   await page.getByLabel("Título").fill("Regar plantas");
-  await agregarHorario(page).click();
-  await campoDesde(page, 1).fill("10:59");
-  await campoHasta(page, 1).fill("12:00");
-  await guardarPanel(page);
-  await errorEnPanel(page, SUPERPUESTOS);
-  await descartar(page);
-  await verHorario(page, "Regar", "08:00–11:00");
-  await expect(fila(page, "Regar plantas")).toHaveCount(0);
+  await addSchedule(page).click();
+  await fieldFrom(page, 1).fill("10:59");
+  await fieldTo(page, 1).fill("12:00");
+  await savePanel(page);
+  await errorInPanel(page, OVERLAPPING);
+  await discard(page);
+  await viewSchedule(page, "Regar", "08:00–11:00");
+  await expect(row(page, "Regar plantas")).toHaveCount(0);
 
-  await abrir(page, "Remedio");
-  await agregarHorario(page).click();
-  await campoDesde(page, 1).fill("18:00");
-  await campoHasta(page, 1).fill("21:00");
-  await guardarPanel(page);
-  await errorEnPanel(page, SOLO_DIAS);
-  await descartar(page);
-  await verHorario(page, "Remedio", "08:00–11:00");
+  await openTask(page, "Remedio");
+  await addSchedule(page).click();
+  await fieldFrom(page, 1).fill("18:00");
+  await fieldTo(page, 1).fill("21:00");
+  await savePanel(page);
+  await errorInPanel(page, ONLY_DAYS);
+  await discard(page);
+  await viewSchedule(page, "Remedio", "08:00–11:00");
 
-  await abrir(page, "Perros");
+  await openTask(page, "Perros");
   await page.getByRole("radio", { name: "Intervalo" }).check();
   await page.getByLabel("Unidad").selectOption({ label: "horas" });
-  await guardarPanel(page);
-  await errorEnPanel(page, SOLO_DIAS);
-  await descartar(page);
-  await verHorario(page, "Perros", "08:00–11:00 · 18:00–21:00");
-  await abrir(page, "Perros");
+  await savePanel(page);
+  await errorInPanel(page, ONLY_DAYS);
+  await discard(page);
+  await viewSchedule(page, "Perros", "08:00–11:00 · 18:00–21:00");
+  await openTask(page, "Perros");
   await expect(page.getByRole("spinbutton", { name: "Cada" })).toHaveValue("1");
   await expect(page.getByLabel("Unidad")).toHaveValue(/d/);
-  await cerrar(page);
+  await close(page);
 });
 
 test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
   // La barra cuenta desde la creación: se crea segundos antes de las 06:00 para que 06:30 marque 50.
-  await sesionConReloj(page, "2026-07-15T05:59:40");
-  await crearYVer(page, {
-    titulo: "Perros",
-    tipo: "Días de la semana",
-    dias: ["miércoles", "jueves"],
-    horarios: DOS_VENTANAS,
+  await sessionWithClock(page, "2026-07-15T05:59:40");
+  await createAndView(page, {
+    title: "Perros",
+    kind: "Días de la semana",
+    days: ["miércoles", "jueves"],
+    schedules: TWO_TIME_WINDOWS,
   });
-  await verHorario(page, "Perros", DOS_TEXTO);
-  await detener(page, "2026-07-15T06:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Perros", "en espera", undefined, false, false),
+  await viewSchedule(page, "Perros", TWO_TEXT);
+  await stop(page, "2026-07-15T06:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Perros", "en espera", undefined, false, false),
   );
 
-  await enHora(
+  await inHour(
     page,
     "2026-07-15T06:30:00",
     "Perros",
@@ -823,7 +823,7 @@ test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
     false,
     false,
   );
-  await enHora(
+  await inHour(
     page,
     "2026-07-15T08:00:00",
     "Perros",
@@ -832,19 +832,19 @@ test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
     false,
     true,
   );
-  await completar(page, "Perros");
-  await verAviso(page, "Perros");
-  await conReloj(page, () => listaEs(page, []));
+  await complete(page, "Perros");
+  await viewNotice(page, "Perros");
+  await withClock(page, () => listIs(page, []));
 
-  await ir(page, "2026-07-15T13:00:00");
-  await conReloj(page, () => listaEs(page, []));
-  await conmutarMostrarCompletadas(page, true);
-  await conReloj(page, () =>
-    esperarEstado(page, "Perros", "en espera", 50, true, true),
+  await go(page, "2026-07-15T13:00:00");
+  await withClock(page, () => listIs(page, []));
+  await toggleShowCompleted(page, true);
+  await withClock(page, () =>
+    waitStatus(page, "Perros", "en espera", 50, true, true),
   );
-  await conmutarMostrarCompletadas(page, false);
+  await toggleShowCompleted(page, false);
 
-  await enHora(
+  await inHour(
     page,
     "2026-07-15T18:00:00",
     "Perros",
@@ -853,12 +853,12 @@ test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
     false,
     true,
   );
-  await completar(page, "Perros");
-  await verAviso(page, "Perros");
-  await conReloj(page, () => listaEs(page, []));
+  await complete(page, "Perros");
+  await viewNotice(page, "Perros");
+  await withClock(page, () => listIs(page, []));
 
-  await conmutarMostrarCompletadas(page, true);
-  await enHora(
+  await toggleShowCompleted(page, true);
+  await inHour(
     page,
     "2026-07-16T05:00:00",
     "Perros",
@@ -867,9 +867,9 @@ test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
     true,
     false,
   );
-  await conmutarMostrarCompletadas(page, false);
+  await toggleShowCompleted(page, false);
 
-  await enHora(
+  await inHour(
     page,
     "2026-07-16T07:00:00",
     "Perros",
@@ -878,7 +878,7 @@ test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
     false,
     true,
   );
-  await enHora(
+  await inHour(
     page,
     "2026-07-16T10:00:00",
     "Perros",
@@ -887,7 +887,7 @@ test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
     false,
     false,
   );
-  await enHora(
+  await inHour(
     page,
     "2026-07-16T12:00:00",
     "Perros",
@@ -896,7 +896,7 @@ test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
     false,
     false,
   );
-  await enHora(
+  await inHour(
     page,
     "2026-07-16T18:00:00",
     "Perros",
@@ -905,97 +905,97 @@ test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
     false,
     true,
   );
-  await completar(page, "Perros");
-  await conReloj(page, () => listaEs(page, []));
+  await complete(page, "Perros");
+  await withClock(page, () => listIs(page, []));
 
-  await irA(page, "Historial");
-  const entradas = page.getByRole("listitem").filter({ hasText: /^Perros/ });
-  await conReloj(page, () => expect(entradas).toHaveCount(3));
-  await expect(entradas.filter({ hasText: /08:00/ })).toHaveCount(1);
-  await expect(entradas.filter({ hasText: /18:00/ })).toHaveCount(2);
-  await irA(page, "Pendientes");
+  await goA(page, "Historial");
+  const entries = page.getByRole("listitem").filter({ hasText: /^Perros/ });
+  await withClock(page, () => expect(entries).toHaveCount(3));
+  await expect(entries.filter({ hasText: /08:00/ })).toHaveCount(1);
+  await expect(entries.filter({ hasText: /18:00/ })).toHaveCount(2);
+  await goA(page, "Pendientes");
 
-  await ir(page, "2026-07-16T22:00:00");
-  await conReloj(page, () => listaEs(page, []));
-  await conmutarMostrarCompletadas(page, true);
-  await conReloj(page, () =>
-    esperarEstado(page, "Perros", "en espera", undefined, true, true),
+  await go(page, "2026-07-16T22:00:00");
+  await withClock(page, () => listIs(page, []));
+  await toggleShowCompleted(page, true);
+  await withClock(page, () =>
+    waitStatus(page, "Perros", "en espera", undefined, true, true),
   );
 });
 
 test("Flujo 14: puntual con dos ventanas", async ({ page }) => {
-  await sesionAntes(page, "2026-07-15T06:00:00");
-  await crearYVer(page, {
-    titulo: "Comprar pan",
-    tipo: "No se repite",
-    horarios: DOS_VENTANAS,
+  await sessionBefore(page, "2026-07-15T06:00:00");
+  await createAndView(page, {
+    title: "Comprar pan",
+    kind: "No se repite",
+    schedules: TWO_TIME_WINDOWS,
   });
-  await crearYVer(page, {
-    titulo: "Pagar la luz",
-    tipo: "No se repite",
-    fecha: "2026-07-15",
-    horarios: DOS_VENTANAS,
+  await createAndView(page, {
+    title: "Pagar la luz",
+    kind: "No se repite",
+    date: "2026-07-15",
+    schedules: TWO_TIME_WINDOWS,
   });
-  await detener(page, "2026-07-15T06:00:00");
+  await stop(page, "2026-07-15T06:00:00");
   for (const t of ["Comprar pan", "Pagar la luz"])
-    await conReloj(page, () =>
-      esperarEstado(page, t, "en espera", undefined, false, false),
+    await withClock(page, () =>
+      waitStatus(page, t, "en espera", undefined, false, false),
     );
 
-  await ir(page, "2026-07-15T07:00:00");
+  await go(page, "2026-07-15T07:00:00");
   for (const t of ["Comprar pan", "Pagar la luz"])
-    await conReloj(page, () =>
-      esperarEstado(page, t, "pendiente", undefined, false, true),
+    await withClock(page, () =>
+      waitStatus(page, t, "pendiente", undefined, false, true),
     );
 
-  await ir(page, "2026-07-15T10:00:00");
+  await go(page, "2026-07-15T10:00:00");
   for (const t of ["Comprar pan", "Pagar la luz"])
-    await conReloj(page, () =>
-      esperarEstado(page, t, "en espera", undefined, false, false),
+    await withClock(page, () =>
+      waitStatus(page, t, "en espera", undefined, false, false),
     );
-  await ir(page, "2026-07-15T14:00:00");
+  await go(page, "2026-07-15T14:00:00");
   for (const t of ["Comprar pan", "Pagar la luz"])
-    await conReloj(page, () =>
-      esperarEstado(page, t, "en espera", 50, false, false),
+    await withClock(page, () =>
+      waitStatus(page, t, "en espera", 50, false, false),
     );
 
-  await ir(page, "2026-07-15T18:00:00");
+  await go(page, "2026-07-15T18:00:00");
   for (const t of ["Comprar pan", "Pagar la luz"])
-    await conReloj(page, () =>
-      esperarEstado(page, t, "pendiente", undefined, false, true),
+    await withClock(page, () =>
+      waitStatus(page, t, "pendiente", undefined, false, true),
     );
-  await completar(page, "Comprar pan");
-  await verAviso(page, "Comprar pan");
-  await conReloj(page, () => listaEs(page, ["Pagar la luz"]));
+  await complete(page, "Comprar pan");
+  await viewNotice(page, "Comprar pan");
+  await withClock(page, () => listIs(page, ["Pagar la luz"]));
 
-  await ir(page, "2026-07-15T21:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Pagar la luz", "atrasada", undefined, false, false),
+  await go(page, "2026-07-15T21:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Pagar la luz", "atrasada", undefined, false, false),
   );
 
-  await ir(page, "2026-07-16T08:00:00");
-  await conReloj(page, () => listaEs(page, ["Pagar la luz"]));
-  await conReloj(page, () =>
-    esperarEstado(page, "Pagar la luz", "atrasada", undefined, false, true),
+  await go(page, "2026-07-16T08:00:00");
+  await withClock(page, () => listIs(page, ["Pagar la luz"]));
+  await withClock(page, () =>
+    waitStatus(page, "Pagar la luz", "atrasada", undefined, false, true),
   );
 });
 
 test("Flujo 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
-  await sesionAntes(page, "2026-07-13T06:00:00");
-  await encenderCompletadas(page);
-  await crearYVer(page, {
-    titulo: "Perros",
-    tipo: "Intervalo",
-    cada: "2",
-    unidad: "días",
-    horarios: DOS_VENTANAS,
+  await sessionBefore(page, "2026-07-13T06:00:00");
+  await turnOnCompleted(page);
+  await createAndView(page, {
+    title: "Perros",
+    kind: "Intervalo",
+    every: "2",
+    unit: "días",
+    schedules: TWO_TIME_WINDOWS,
   });
-  await detener(page, "2026-07-13T06:00:00");
-  await conReloj(page, () =>
-    esperarEstado(page, "Perros", "en espera", undefined, false, false),
+  await stop(page, "2026-07-13T06:00:00");
+  await withClock(page, () =>
+    waitStatus(page, "Perros", "en espera", undefined, false, false),
   );
 
-  await enHora(
+  await inHour(
     page,
     "2026-07-13T08:00:00",
     "Perros",
@@ -1004,12 +1004,12 @@ test("Flujo 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
     false,
     true,
   );
-  await completar(page, "Perros");
-  await conReloj(page, () =>
-    esperarEstado(page, "Perros", "en espera", undefined, true, true),
+  await complete(page, "Perros");
+  await withClock(page, () =>
+    waitStatus(page, "Perros", "en espera", undefined, true, true),
   );
 
-  await enHora(
+  await inHour(
     page,
     "2026-07-13T13:00:00",
     "Perros",
@@ -1018,7 +1018,7 @@ test("Flujo 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
     true,
     true,
   );
-  await enHora(
+  await inHour(
     page,
     "2026-07-13T18:00:00",
     "Perros",
@@ -1027,12 +1027,12 @@ test("Flujo 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
     false,
     true,
   );
-  await completar(page, "Perros");
-  await conReloj(page, () =>
-    esperarEstado(page, "Perros", "en espera", undefined, true, true),
+  await complete(page, "Perros");
+  await withClock(page, () =>
+    waitStatus(page, "Perros", "en espera", undefined, true, true),
   );
 
-  await enHora(
+  await inHour(
     page,
     "2026-07-14T12:30:00",
     "Perros",
@@ -1041,7 +1041,7 @@ test("Flujo 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
     true,
     false,
   );
-  await enHora(
+  await inHour(
     page,
     "2026-07-14T19:00:00",
     "Perros",
@@ -1051,7 +1051,7 @@ test("Flujo 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
     true,
   );
 
-  await enHora(
+  await inHour(
     page,
     "2026-07-15T07:00:00",
     "Perros",
@@ -1060,7 +1060,7 @@ test("Flujo 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
     false,
     true,
   );
-  await enHora(
+  await inHour(
     page,
     "2026-07-15T10:00:00",
     "Perros",
@@ -1070,7 +1070,7 @@ test("Flujo 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
     false,
   );
 
-  await enHora(
+  await inHour(
     page,
     "2026-07-16T08:00:00",
     "Perros",
@@ -1079,12 +1079,12 @@ test("Flujo 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
     false,
     true,
   );
-  await completar(page, "Perros");
-  await conReloj(page, () =>
-    esperarEstado(page, "Perros", "en espera", undefined, true, true),
+  await complete(page, "Perros");
+  await withClock(page, () =>
+    waitStatus(page, "Perros", "en espera", undefined, true, true),
   );
 
-  await enHora(
+  await inHour(
     page,
     "2026-07-16T13:00:00",
     "Perros",
@@ -1093,7 +1093,7 @@ test("Flujo 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
     true,
     true,
   );
-  await enHora(
+  await inHour(
     page,
     "2026-07-16T18:00:00",
     "Perros",

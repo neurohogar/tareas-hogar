@@ -1,47 +1,47 @@
 import { expect, test, type Page } from '@playwright/test';
-import { adelantar, descartar, encenderCompletadas, esperarEstado, fila, limpiarEmuladores, retroceder, sesionConReloj } from './support';
+import { advance, discard, turnOnCompleted, waitStatus, row, cleanEmulators, goBack, sessionWithClock } from './support';
 
-const LUNES = '2026-07-13T08:00:00';
-const SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-const BASURA = 'Sacar la basura';
+const MONDAY = '2026-07-13T08:00:00';
+const WEEK = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+const JUNK = 'Sacar la basura';
 
 test.beforeEach(async () => {
-	await limpiarEmuladores();
+	await cleanEmulators();
 });
 
-async function abrirPanel(page: Page, titulo: string) {
+async function openPanel(page: Page, title: string) {
 	await page.getByRole('button', { name: '+' }).click();
-	await page.getByLabel('Título').fill(titulo);
+	await page.getByLabel('Título').fill(title);
 }
 
-async function elegirDias(page: Page, modo: 'Días de la semana' | 'Días del mes', dias: string[]) {
-	await page.getByRole('radio', { name: modo }).check();
-	for (const dia of dias) await page.getByRole('button', { name: dia, exact: true }).click();
+async function chooseDays(page: Page, mode: 'Días de la semana' | 'Días del mes', days: string[]) {
+	await page.getByRole('radio', { name: mode }).check();
+	for (const day of days) await page.getByRole('button', { name: day, exact: true }).click();
 }
 
-async function crearCalendario(page: Page, titulo: string, modo: 'Días de la semana' | 'Días del mes', dias: string[]) {
-	await abrirPanel(page, titulo);
-	await elegirDias(page, modo, dias);
+async function createCalendar(page: Page, title: string, mode: 'Días de la semana' | 'Días del mes', days: string[]) {
+	await openPanel(page, title);
+	await chooseDays(page, mode, days);
 	await page.getByRole('button', { name: 'Guardar' }).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
-const crearBasura = (page: Page) => crearCalendario(page, BASURA, 'Días de la semana', ['martes', 'jueves']);
+const createJunk = (page: Page) => createCalendar(page, JUNK, 'Días de la semana', ['martes', 'jueves']);
 /** Sesión con reloj y Mostrar completadas encendido: una calendario en espera con completados solo tiene fila así. */
-async function sesion(page: Page, hora: string) {
-	await sesionConReloj(page, hora);
-	await encenderCompletadas(page);
+async function session(page: Page, hour: string) {
+	await sessionWithClock(page, hour);
+	await turnOnCompleted(page);
 }
-const completar = (page: Page, titulo: string) => fila(page, titulo).getByRole('checkbox').click();
+const complete = (page: Page, title: string) => row(page, title).getByRole('checkbox').click();
 
 test('Contrato del panel', async ({ page }) => {
-	await sesionConReloj(page, LUNES);
+	await sessionWithClock(page, MONDAY);
 	await page.getByRole('button', { name: '+' }).click();
-	const grupo = page.getByRole('group', { name: 'Se repite' });
-	await expect(grupo.getByRole('radio')).toHaveCount(4);
-	await expect(grupo.getByRole('radio', { name: 'No se repite' })).toBeVisible();
-	await expect(grupo.getByRole('radio', { name: 'No se repite' })).toBeChecked();
-	await grupo.getByRole('radio', { name: 'Intervalo' }).check();
+	const group = page.getByRole('group', { name: 'Se repite' });
+	await expect(group.getByRole('radio')).toHaveCount(4);
+	await expect(group.getByRole('radio', { name: 'No se repite' })).toBeVisible();
+	await expect(group.getByRole('radio', { name: 'No se repite' })).toBeChecked();
+	await group.getByRole('radio', { name: 'Intervalo' }).check();
 	await expect(page.getByRole('spinbutton', { name: 'Cada' })).toBeVisible();
 	await expect(page.getByLabel('Unidad')).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Cerrar' })).toBeVisible();
@@ -49,8 +49,8 @@ test('Contrato del panel', async ({ page }) => {
 
 	await page.getByRole('radio', { name: 'Días de la semana' }).check();
 	await expect(page.getByRole('spinbutton', { name: 'Cada' })).toHaveCount(0);
-	const dias = page.getByRole('group', { name: 'Días de la semana' }).getByRole('button');
-	await expect(dias).toHaveText(SEMANA);
+	const days = page.getByRole('group', { name: 'Días de la semana' }).getByRole('button');
+	await expect(days).toHaveText(WEEK);
 	await page.getByRole('button', { name: 'martes' }).click();
 	await page.getByRole('button', { name: 'jueves' }).click();
 	await expect(page.getByRole('button', { name: 'martes' })).toHaveAttribute('aria-pressed', 'true');
@@ -59,8 +59,8 @@ test('Contrato del panel', async ({ page }) => {
 
 	await page.getByRole('radio', { name: 'Días del mes' }).check();
 	await expect(page.getByRole('button', { name: 'martes' })).toHaveCount(0);
-	const mes = page.getByRole('group', { name: 'Días del mes' }).getByRole('button');
-	await expect(mes).toHaveText(Array.from({ length: 31 }, (_, i) => String(i + 1)));
+	const month = page.getByRole('group', { name: 'Días del mes' }).getByRole('button');
+	await expect(month).toHaveText(Array.from({ length: 31 }, (_, i) => String(i + 1)));
 	await page.getByRole('button', { name: '10', exact: true }).click();
 	await page.getByRole('button', { name: '20', exact: true }).click();
 	await expect(page.getByRole('button', { name: '10', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -68,8 +68,8 @@ test('Contrato del panel', async ({ page }) => {
 });
 
 test('Flujo 1: crear una semanal y una mensual', async ({ page }) => {
-	await sesion(page, LUNES);
-	await abrirPanel(page, BASURA);
+	await session(page, MONDAY);
+	await openPanel(page, JUNK);
 	await page.getByRole('radio', { name: 'Días de la semana' }).check();
 	await page.getByRole('button', { name: 'martes' }).click();
 	await page.getByRole('button', { name: 'jueves' }).click();
@@ -77,218 +77,218 @@ test('Flujo 1: crear una semanal y una mensual', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'jueves' })).toHaveAttribute('aria-pressed', 'true');
 	await page.getByRole('button', { name: 'Guardar' }).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
-	await esperarEstado(page, BASURA, 'en espera', 0, false);
+	await waitStatus(page, JUNK, 'en espera', 0, false);
 
-	await crearCalendario(page, 'Pagar expensas', 'Días del mes', ['10']);
-	await esperarEstado(page, 'Pagar expensas', 'en espera', 0, false);
+	await createCalendar(page, 'Pagar expensas', 'Días del mes', ['10']);
+	await waitStatus(page, 'Pagar expensas', 'en espera', 0, false);
 
-	await crearCalendario(page, 'Regar plantas', 'Días de la semana', ['lunes']);
-	await esperarEstado(page, 'Regar plantas', 'pendiente');
+	await createCalendar(page, 'Regar plantas', 'Días de la semana', ['lunes']);
+	await waitStatus(page, 'Regar plantas', 'pendiente');
 
 	await page.reload();
-	await esperarEstado(page, BASURA, 'en espera', 0, false);
-	await esperarEstado(page, 'Pagar expensas', 'en espera', 0, false);
-	await esperarEstado(page, 'Regar plantas', 'pendiente');
+	await waitStatus(page, JUNK, 'en espera', 0, false);
+	await waitStatus(page, 'Pagar expensas', 'en espera', 0, false);
+	await waitStatus(page, 'Regar plantas', 'pendiente');
 });
 
 test('Flujo 2: validación del panel', async ({ page }) => {
-	await sesion(page, LUNES);
+	await session(page, MONDAY);
 	const panel = page.getByRole('dialog');
-	const guardar = page.getByRole('button', { name: 'Guardar' });
-	const titulo = page.getByLabel('Título');
-	const grupoSemana = page.getByRole('group', { name: 'Días de la semana' });
-	const sinFilas = async () => {
+	const save = page.getByRole('button', { name: 'Guardar' });
+	const title = page.getByLabel('Título');
+	const groupWeek = page.getByRole('group', { name: 'Días de la semana' });
+	const withoutRows = async () => {
 		await expect(panel).toBeVisible();
 		await expect(page.getByRole('listitem')).toHaveCount(0);
 	};
 
 	await page.getByRole('button', { name: '+' }).click();
-	await elegirDias(page, 'Días de la semana', ['martes']);
-	await guardar.click();
-	await expect(titulo).toHaveAccessibleDescription(/título/i);
-	await sinFilas();
+	await chooseDays(page, 'Días de la semana', ['martes']);
+	await save.click();
+	await expect(title).toHaveAccessibleDescription(/título/i);
+	await withoutRows();
 
-	await titulo.fill('   ');
-	await guardar.click();
-	await expect(titulo).toHaveAccessibleDescription(/título/i);
-	await sinFilas();
+	await title.fill('   ');
+	await save.click();
+	await expect(title).toHaveAccessibleDescription(/título/i);
+	await withoutRows();
 
-	await titulo.fill(BASURA);
+	await title.fill(JUNK);
 	await page.getByRole('button', { name: 'martes' }).click();
 	await expect(page.getByRole('button', { name: 'martes' })).toHaveAttribute('aria-pressed', 'false');
-	await guardar.click();
-	await expect(grupoSemana).toHaveAccessibleDescription(/al menos un día/i);
-	await sinFilas();
+	await save.click();
+	await expect(groupWeek).toHaveAccessibleDescription(/al menos un día/i);
+	await withoutRows();
 
 	await page.getByRole('radio', { name: 'Días del mes' }).check();
-	await guardar.click();
+	await save.click();
 	await expect(page.getByRole('group', { name: 'Días del mes' })).toHaveAccessibleDescription(/al menos un día/i);
-	await sinFilas();
+	await withoutRows();
 
 	await expect(page.getByRole('group', { name: 'Días del mes' }).getByRole('button')).toHaveCount(31);
 
-	await descartar(page);
+	await discard(page);
 	await expect(panel).toHaveCount(0);
 	await expect(page.getByRole('listitem')).toHaveCount(0);
 
-	await abrirPanel(page, 'Combinada');
-	await elegirDias(page, 'Días de la semana', ['martes']);
-	await elegirDias(page, 'Días del mes', ['15']);
-	await guardar.click();
+	await openPanel(page, 'Combinada');
+	await chooseDays(page, 'Días de la semana', ['martes']);
+	await chooseDays(page, 'Días del mes', ['15']);
+	await save.click();
 	await expect(panel).toHaveCount(0);
 	await expect(page.getByRole('listitem')).toHaveCount(1);
-	await esperarEstado(page, 'Combinada', 'en espera', 0, false);
+	await waitStatus(page, 'Combinada', 'en espera', 0, false);
 
-	await adelantar(page, '2026-07-14T00:00:00');
-	await esperarEstado(page, 'Combinada', 'en espera', 40, false);
-	await adelantar(page, '2026-07-15T00:00:00');
-	await esperarEstado(page, 'Combinada', 'pendiente');
+	await advance(page, '2026-07-14T00:00:00');
+	await waitStatus(page, 'Combinada', 'en espera', 40, false);
+	await advance(page, '2026-07-15T00:00:00');
+	await waitStatus(page, 'Combinada', 'pendiente');
 });
 
 test('Flujo 3: ciclo de estados de una semanal', async ({ page }) => {
-	await sesion(page, LUNES);
-	await crearBasura(page);
-	await esperarEstado(page, BASURA, 'en espera', 0, false);
-	await adelantar(page, '2026-07-13T16:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 50, false);
-	await adelantar(page, '2026-07-13T23:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 94, false);
-	await adelantar(page, '2026-07-14T00:00:00');
-	await esperarEstado(page, BASURA, 'pendiente');
-	await adelantar(page, '2026-07-14T23:59:59');
-	await esperarEstado(page, BASURA, 'pendiente');
-	await adelantar(page, '2026-07-15T00:00:00');
-	await esperarEstado(page, BASURA, 'atrasada');
+	await session(page, MONDAY);
+	await createJunk(page);
+	await waitStatus(page, JUNK, 'en espera', 0, false);
+	await advance(page, '2026-07-13T16:00:00');
+	await waitStatus(page, JUNK, 'en espera', 50, false);
+	await advance(page, '2026-07-13T23:00:00');
+	await waitStatus(page, JUNK, 'en espera', 94, false);
+	await advance(page, '2026-07-14T00:00:00');
+	await waitStatus(page, JUNK, 'pendiente');
+	await advance(page, '2026-07-14T23:59:59');
+	await waitStatus(page, JUNK, 'pendiente');
+	await advance(page, '2026-07-15T00:00:00');
+	await waitStatus(page, JUNK, 'atrasada');
 	await page.reload();
-	await esperarEstado(page, BASURA, 'atrasada');
-	await adelantar(page, '2026-07-15T08:00:00');
-	await completar(page, BASURA);
-	await esperarEstado(page, BASURA, 'en espera', 0);
-	await adelantar(page, '2026-07-15T16:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 50);
-	await adelantar(page, '2026-07-16T00:00:00');
-	await esperarEstado(page, BASURA, 'pendiente');
-	await adelantar(page, '2026-07-16T12:00:00');
-	await completar(page, BASURA);
-	await esperarEstado(page, BASURA, 'en espera', 0);
-	await adelantar(page, '2026-07-18T18:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 50);
-	await adelantar(page, '2026-07-21T00:00:00');
-	await esperarEstado(page, BASURA, 'pendiente');
+	await waitStatus(page, JUNK, 'atrasada');
+	await advance(page, '2026-07-15T08:00:00');
+	await complete(page, JUNK);
+	await waitStatus(page, JUNK, 'en espera', 0);
+	await advance(page, '2026-07-15T16:00:00');
+	await waitStatus(page, JUNK, 'en espera', 50);
+	await advance(page, '2026-07-16T00:00:00');
+	await waitStatus(page, JUNK, 'pendiente');
+	await advance(page, '2026-07-16T12:00:00');
+	await complete(page, JUNK);
+	await waitStatus(page, JUNK, 'en espera', 0);
+	await advance(page, '2026-07-18T18:00:00');
+	await waitStatus(page, JUNK, 'en espera', 50);
+	await advance(page, '2026-07-21T00:00:00');
+	await waitStatus(page, JUNK, 'pendiente');
 });
 
 test('Flujo 4: completar antes de tiempo y ocurrencias perdidas', async ({ page }) => {
-	await sesion(page, LUNES);
-	await crearBasura(page);
-	await esperarEstado(page, BASURA, 'en espera', 0, false);
-	await completar(page, BASURA);
-	await esperarEstado(page, BASURA, 'en espera', 0);
-	await adelantar(page, '2026-07-14T00:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 25);
-	await adelantar(page, '2026-07-14T16:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 50);
-	await adelantar(page, '2026-07-16T00:00:00');
-	await esperarEstado(page, BASURA, 'pendiente');
-	await adelantar(page, '2026-07-17T10:00:00');
-	await esperarEstado(page, BASURA, 'atrasada');
+	await session(page, MONDAY);
+	await createJunk(page);
+	await waitStatus(page, JUNK, 'en espera', 0, false);
+	await complete(page, JUNK);
+	await waitStatus(page, JUNK, 'en espera', 0);
+	await advance(page, '2026-07-14T00:00:00');
+	await waitStatus(page, JUNK, 'en espera', 25);
+	await advance(page, '2026-07-14T16:00:00');
+	await waitStatus(page, JUNK, 'en espera', 50);
+	await advance(page, '2026-07-16T00:00:00');
+	await waitStatus(page, JUNK, 'pendiente');
+	await advance(page, '2026-07-17T10:00:00');
+	await waitStatus(page, JUNK, 'atrasada');
 	await expect(page.getByRole('listitem')).toHaveCount(1);
 	await expect(page.getByText(/^Tocaba /)).toHaveCount(1);
-	await completar(page, BASURA);
-	await esperarEstado(page, BASURA, 'en espera', 0);
-	await adelantar(page, '2026-07-19T05:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 50);
-	await adelantar(page, '2026-07-21T00:00:00');
-	await esperarEstado(page, BASURA, 'pendiente');
+	await complete(page, JUNK);
+	await waitStatus(page, JUNK, 'en espera', 0);
+	await advance(page, '2026-07-19T05:00:00');
+	await waitStatus(page, JUNK, 'en espera', 50);
+	await advance(page, '2026-07-21T00:00:00');
+	await waitStatus(page, JUNK, 'pendiente');
 });
 
 test('Flujo 5: mensual con día 31 en un mes de 30 días', async ({ page }) => {
 	const T = 'Revisar filtro';
-	await sesion(page, '2026-06-20T00:00:00');
-	await crearCalendario(page, T, 'Días del mes', ['31']);
-	await esperarEstado(page, T, 'en espera', 0, false);
-	await adelantar(page, '2026-06-25T00:00:00');
-	await esperarEstado(page, T, 'en espera', 50, false);
-	await adelantar(page, '2026-06-30T00:00:00');
-	await esperarEstado(page, T, 'pendiente');
-	await adelantar(page, '2026-07-01T00:00:00');
-	await esperarEstado(page, T, 'atrasada');
-	await adelantar(page, '2026-07-01T08:00:00');
-	await completar(page, T);
-	await esperarEstado(page, T, 'en espera', 0);
-	await adelantar(page, '2026-07-15T04:00:00');
-	await esperarEstado(page, T, 'en espera', 47);
-	await adelantar(page, '2026-07-31T00:00:00');
-	await esperarEstado(page, T, 'pendiente');
+	await session(page, '2026-06-20T00:00:00');
+	await createCalendar(page, T, 'Días del mes', ['31']);
+	await waitStatus(page, T, 'en espera', 0, false);
+	await advance(page, '2026-06-25T00:00:00');
+	await waitStatus(page, T, 'en espera', 50, false);
+	await advance(page, '2026-06-30T00:00:00');
+	await waitStatus(page, T, 'pendiente');
+	await advance(page, '2026-07-01T00:00:00');
+	await waitStatus(page, T, 'atrasada');
+	await advance(page, '2026-07-01T08:00:00');
+	await complete(page, T);
+	await waitStatus(page, T, 'en espera', 0);
+	await advance(page, '2026-07-15T04:00:00');
+	await waitStatus(page, T, 'en espera', 47);
+	await advance(page, '2026-07-31T00:00:00');
+	await waitStatus(page, T, 'pendiente');
 });
 
 test('Flujo 6: el checkbox en espera borra el completado de hoy', async ({ page }) => {
-	await sesion(page, LUNES);
-	await crearBasura(page);
-	await esperarEstado(page, BASURA, 'en espera', 0, false);
-	await completar(page, BASURA);
-	await esperarEstado(page, BASURA, 'en espera', 0);
-	await adelantar(page, '2026-07-13T12:00:00');
-	await completar(page, BASURA);
-	await esperarEstado(page, BASURA, 'en espera', 25, false);
-	await completar(page, BASURA);
-	await esperarEstado(page, BASURA, 'en espera', 0);
-	await adelantar(page, '2026-07-16T00:00:00');
-	await esperarEstado(page, BASURA, 'pendiente');
+	await session(page, MONDAY);
+	await createJunk(page);
+	await waitStatus(page, JUNK, 'en espera', 0, false);
+	await complete(page, JUNK);
+	await waitStatus(page, JUNK, 'en espera', 0);
+	await advance(page, '2026-07-13T12:00:00');
+	await complete(page, JUNK);
+	await waitStatus(page, JUNK, 'en espera', 25, false);
+	await complete(page, JUNK);
+	await waitStatus(page, JUNK, 'en espera', 0);
+	await advance(page, '2026-07-16T00:00:00');
+	await waitStatus(page, JUNK, 'pendiente');
 });
 
 test('Flujo 7: persistencia entre sesiones', async ({ browser }) => {
-	const contexto = await browser.newContext();
-	const page = await contexto.newPage();
-	await sesion(page, LUNES);
-	await crearBasura(page);
-	await completar(page, BASURA);
-	await adelantar(page, '2026-07-14T16:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 50);
+	const context = await browser.newContext();
+	const page = await context.newPage();
+	await session(page, MONDAY);
+	await createJunk(page);
+	await complete(page, JUNK);
+	await advance(page, '2026-07-14T16:00:00');
+	await waitStatus(page, JUNK, 'en espera', 50);
 
 	await page.close();
-	const nueva = await contexto.newPage();
-	await nueva.clock.install({ time: new Date('2026-07-14T16:00:00') });
-	await nueva.goto('/');
-	await expect(nueva.getByRole('heading', { name: 'Pendientes' })).toBeVisible();
-	await expect(nueva.getByRole('button', { name: 'Entrar con Google' })).toHaveCount(0);
-	await esperarEstado(nueva, BASURA, 'en espera', 50);
-	await adelantar(nueva, '2026-07-16T00:00:00');
-	await esperarEstado(nueva, BASURA, 'pendiente');
-	await contexto.close();
+	const fresh = await context.newPage();
+	await fresh.clock.install({ time: new Date('2026-07-14T16:00:00') });
+	await fresh.goto('/');
+	await expect(fresh.getByRole('heading', { name: 'Pendientes' })).toBeVisible();
+	await expect(fresh.getByRole('button', { name: 'Entrar con Google' })).toHaveCount(0);
+	await waitStatus(fresh, JUNK, 'en espera', 50);
+	await advance(fresh, '2026-07-16T00:00:00');
+	await waitStatus(fresh, JUNK, 'pendiente');
+	await context.close();
 });
 
 test('Flujo 8: relojes desfasados (completado del futuro)', async ({ page }) => {
-	await sesion(page, LUNES);
-	await crearBasura(page);
-	await esperarEstado(page, BASURA, 'en espera', 0, false);
-	await adelantar(page, '2026-07-15T20:00:00');
-	await esperarEstado(page, BASURA, 'atrasada');
-	await completar(page, BASURA);
-	await esperarEstado(page, BASURA, 'en espera', 0);
-	await retroceder(page, '2026-07-15T10:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 0);
+	await session(page, MONDAY);
+	await createJunk(page);
+	await waitStatus(page, JUNK, 'en espera', 0, false);
+	await advance(page, '2026-07-15T20:00:00');
+	await waitStatus(page, JUNK, 'atrasada');
+	await complete(page, JUNK);
+	await waitStatus(page, JUNK, 'en espera', 0);
+	await goBack(page, '2026-07-15T10:00:00');
+	await waitStatus(page, JUNK, 'en espera', 0);
 	await page.reload();
-	await esperarEstado(page, BASURA, 'en espera', 0);
-	await adelantar(page, '2026-07-15T20:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 0);
-	await adelantar(page, '2026-07-15T22:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 50);
-	await adelantar(page, '2026-07-16T00:00:00');
-	await esperarEstado(page, BASURA, 'pendiente');
+	await waitStatus(page, JUNK, 'en espera', 0);
+	await advance(page, '2026-07-15T20:00:00');
+	await waitStatus(page, JUNK, 'en espera', 0);
+	await advance(page, '2026-07-15T22:00:00');
+	await waitStatus(page, JUNK, 'en espera', 50);
+	await advance(page, '2026-07-16T00:00:00');
+	await waitStatus(page, JUNK, 'pendiente');
 });
 
 test('Flujo 9: completar dos veces antes de tiempo, en días distintos', async ({ page }) => {
-	await sesion(page, LUNES);
-	await crearBasura(page);
-	await completar(page, BASURA);
-	await esperarEstado(page, BASURA, 'en espera', 0);
-	await adelantar(page, '2026-07-14T16:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 50);
-	await completar(page, BASURA);
+	await session(page, MONDAY);
+	await createJunk(page);
+	await complete(page, JUNK);
+	await waitStatus(page, JUNK, 'en espera', 0);
+	await advance(page, '2026-07-14T16:00:00');
+	await waitStatus(page, JUNK, 'en espera', 50);
+	await complete(page, JUNK);
 	await expect(page.getByRole('status')).toContainText('Completaste «Sacar la basura»');
-	await esperarEstado(page, BASURA, 'en espera', 0);
-	await adelantar(page, '2026-07-16T00:00:00');
-	await esperarEstado(page, BASURA, 'en espera', 21);
-	await adelantar(page, '2026-07-21T00:00:00');
-	await esperarEstado(page, BASURA, 'pendiente');
+	await waitStatus(page, JUNK, 'en espera', 0);
+	await advance(page, '2026-07-16T00:00:00');
+	await waitStatus(page, JUNK, 'en espera', 21);
+	await advance(page, '2026-07-21T00:00:00');
+	await waitStatus(page, JUNK, 'pendiente');
 });

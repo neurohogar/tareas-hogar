@@ -7,56 +7,56 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
-type Capa = 'core' | 'acceptance-oracle' | 'acceptance-ir' | 'core-test' | 'adapters' | 'adapters-firebase' | 'ui' | 'acceptance' | 'service-worker';
+type Layer = 'core' | 'acceptance-oracle' | 'acceptance-ir' | 'core-test' | 'adapters' | 'adapters-firebase' | 'ui' | 'acceptance' | 'service-worker';
 
-interface Regla {
-	capas: Capa[];
+interface Rule {
+	layers: Layer[];
 	/** Prefijos de paquetes externos permitidos ('firebase/' cubre 'firebase/auth'). */
-	paquetes: string[];
+	packages: string[];
 }
 
-const REGLAS: Record<Capa, Regla> = {
+const RULES: Record<Layer, Rule> = {
 	// TypeScript puro: ni IO, ni Firebase, ni Svelte, ni SvelteKit.
-	core: { capas: ['core'], paquetes: [] },
-	'core-test': { capas: ['core'], paquetes: ['vitest', 'fast-check'] },
+	core: { layers: ['core'], packages: [] },
+	'core-test': { layers: ['core'], packages: ['vitest', 'fast-check'] },
 	// Cáscaras finas: traducen entre el core y Firebase/el navegador.
-	adapters: { capas: ['core', 'adapters', 'adapters-firebase'], paquetes: ['firebase/'] },
-	'adapters-firebase': { capas: [], paquetes: ['firebase/'] },
+	adapters: { layers: ['core', 'adapters', 'adapters-firebase'], packages: ['firebase/'] },
+	'adapters-firebase': { layers: [], packages: ['firebase/'] },
 	// La UI pregunta al core y usa los adapters por su API pública; nunca a Firebase directo.
-	ui: { capas: ['core', 'adapters', 'ui'], paquetes: ['svelte', '$app/', 'emoji-picker-element', 'emoji-picker-element-data/'] },
+	ui: { layers: ['core', 'adapters', 'ui'], packages: ['svelte', '$app/', 'emoji-picker-element', 'emoji-picker-element-data/'] },
 	// Corre en un worker del navegador: solo el core (puro) y el módulo virtual de SvelteKit; nunca adapters.
-	'service-worker': { capas: ['core'], paquetes: ['$service-worker'] },
+	'service-worker': { layers: ['core'], packages: ['$service-worker'] },
 	// La aceptación ejercita solo el core.
-	acceptance: { capas: ['core', 'acceptance', 'acceptance-ir'], paquetes: ['vitest', 'node:'] },
+	acceptance: { layers: ['core', 'acceptance', 'acceptance-ir'], packages: ['vitest', 'node:'] },
 	// Forma del IR: tipos puros.
-	'acceptance-ir': { capas: [], paquetes: [] },
+	'acceptance-ir': { layers: [], packages: [] },
 	// Oráculo del filtro de equivalentes: reglas del spec reescritas de forma independiente.
 	// Nunca importa el core, los step handlers ni el despacho (sería circular).
-	'acceptance-oracle': { capas: ['acceptance-oracle', 'acceptance-ir'], paquetes: [] }
+	'acceptance-oracle': { layers: ['acceptance-oracle', 'acceptance-ir'], packages: [] }
 };
 
-const RAIZ = resolve(import.meta.dirname, '..');
-const LIB = join(RAIZ, 'src/lib');
-const EXTENSIONES = ['.ts', '.svelte'];
+const ROOT = resolve(import.meta.dirname, '..');
+const LIB = join(ROOT, 'src/lib');
+const EXTENSIONS = ['.ts', '.svelte'];
 
-function capaDe(archivo: string): Capa | null {
-	const ruta = relative(RAIZ, archivo);
-	if (ruta.startsWith('src/lib/core/')) return ruta.endsWith('.test.ts') ? 'core-test' : 'core';
-	if (ruta === 'src/lib/adapters/firebase.ts') return 'adapters-firebase';
-	if (ruta.startsWith('src/lib/adapters/')) return 'adapters';
-	if (ruta === 'src/service-worker.ts') return 'service-worker';
-	if (ruta.startsWith('src/lib/ui/') || ruta.startsWith('src/routes/')) return 'ui';
-	if (['acceptance/oracle.ts', 'acceptance/oracle-editing.ts', 'acceptance/oracle-history.ts', 'acceptance/oracle-annotations.ts', 'acceptance/oracle-panel.ts', 'acceptance/oracle-loading-screen.ts', 'acceptance/oracle-date-text.ts', 'acceptance/equivalence.ts'].includes(ruta)) return 'acceptance-oracle';
-	if (ruta === 'acceptance/ir.ts') return 'acceptance-ir';
-	if (ruta.startsWith('acceptance/') && !ruta.startsWith('acceptance/generated/')) return 'acceptance';
+function layerOf(file: string): Layer | null {
+	const path = relative(ROOT, file);
+	if (path.startsWith('src/lib/core/')) return path.endsWith('.test.ts') ? 'core-test' : 'core';
+	if (path === 'src/lib/adapters/firebase.ts') return 'adapters-firebase';
+	if (path.startsWith('src/lib/adapters/')) return 'adapters';
+	if (path === 'src/service-worker.ts') return 'service-worker';
+	if (path.startsWith('src/lib/ui/') || path.startsWith('src/routes/')) return 'ui';
+	if (['acceptance/oracle.ts', 'acceptance/oracle-editing.ts', 'acceptance/oracle-history.ts', 'acceptance/oracle-annotations.ts', 'acceptance/oracle-panel.ts', 'acceptance/oracle-loading-screen.ts', 'acceptance/oracle-date-text.ts', 'acceptance/equivalence.ts'].includes(path)) return 'acceptance-oracle';
+	if (path === 'acceptance/ir.ts') return 'acceptance-ir';
+	if (path.startsWith('acceptance/') && !path.startsWith('acceptance/generated/')) return 'acceptance';
 	return null;
 }
 
-function archivos(dir: string): string[] {
-	return readdirSync(dir).flatMap((nombre) => {
-		const ruta = join(dir, nombre);
-		if (statSync(ruta).isDirectory()) return nombre === 'generated' ? [] : archivos(ruta);
-		return EXTENSIONES.some((ext) => nombre.endsWith(ext)) ? [ruta] : [];
+function files(dir: string): string[] {
+	return readdirSync(dir).flatMap((name) => {
+		const path = join(dir, name);
+		if (statSync(path).isDirectory()) return name === 'generated' ? [] : files(path);
+		return EXTENSIONS.some((ext) => name.endsWith(ext)) ? [path] : [];
 	});
 }
 
@@ -64,23 +64,23 @@ function archivos(dir: string): string[] {
 const IMPORT =
 	/^\s*(?:import|export)\s[^'"]*?from\s*['"]([^'"]+)['"]|^\s*import\s*['"]([^'"]+)['"]|\bimport\(\s*['"]([^'"]+)['"]\s*\)/gm;
 
-function especificadores(archivo: string): string[] {
-	const fuente = readFileSync(archivo, 'utf8');
-	return [...fuente.matchAll(IMPORT)].map((m) => m[1] ?? m[2] ?? m[3]);
+function specifiers(file: string): string[] {
+	const font = readFileSync(file, 'utf8');
+	return [...font.matchAll(IMPORT)].map((m) => m[1] ?? m[2] ?? m[3]);
 }
 
 /** Ruta absoluta de un import interno, o null si es un paquete externo. */
-function resolverInterno(desde: string, especificador: string): string | null {
+function resolveInternal(from: string, specifier: string): string | null {
 	let base: string;
-	if (especificador.startsWith('#lib/')) base = join(LIB, especificador.slice('#lib/'.length));
-	else if (especificador.startsWith('.')) base = resolve(dirname(desde), especificador);
+	if (specifier.startsWith('#lib/')) base = join(LIB, specifier.slice('#lib/'.length));
+	else if (specifier.startsWith('.')) base = resolve(dirname(from), specifier);
 	else return null;
-	const candidatos = [base, ...EXTENSIONES.map((ext) => base + ext), join(base, 'index.ts')];
-	return candidatos.find((c) => existsSync(c) && statSync(c).isFile()) ?? base;
+	const candidates = [base, ...EXTENSIONS.map((ext) => base + ext), join(base, 'index.ts')];
+	return candidates.find((c) => existsSync(c) && statSync(c).isFile()) ?? base;
 }
 
 /** IO que el core no toca: recibe "ahora" e ids como parámetros (CLAUDE.md, Arquitectura). */
-const IO_PROHIBIDO_EN_CORE: [RegExp, string][] = [
+const IO_FORBIDDEN_IN_CORE: [RegExp, string][] = [
 	[/\bnew Date\(\s*\)/, 'new Date() sin argumentos (leer el reloj)'],
 	[/\bDate\.now\(/, 'Date.now()'],
 	[/\bMath\.random\(/, 'Math.random()'],
@@ -95,70 +95,70 @@ const IO_PROHIBIDO_EN_CORE: [RegExp, string][] = [
  * según la zona horaria del proceso. En el core vive solo en DIAS_LOCALES; el
  * resto compara instantes (getTime) o le pregunta a ese módulo.
  */
-const DIAS_LOCALES = join(LIB, 'core/days.ts');
-const CALENDARIO_LOCAL: [RegExp, string][] = [
+const DAYS_LOCAL = join(LIB, 'core/days.ts');
+const CALENDAR_LOCAL: [RegExp, string][] = [
 	[/\.(get|set)(FullYear|Month|Date|Day|Hours|Minutes|Seconds|Milliseconds)\(/, 'getters/setters locales de Date'],
 	[/\.getTimezoneOffset\(|\.toLocale\w*\(|\bIntl\./, 'zona horaria o formato local'],
 	[/\bnew Date\([^()]*,/, 'new Date(año, mes, …) en hora local'],
 	[/\bnew Date\(\s*['"`]|\bDate\.parse\(/, 'parseo de fechas en texto']
 ];
 
-const errores: string[] = [];
-const grafo = new Map<string, string[]>();
-const todos = [...archivos(join(RAIZ, 'src')), ...archivos(join(RAIZ, 'acceptance'))];
+const errors: string[] = [];
+const graph = new Map<string, string[]>();
+const all = [...files(join(ROOT, 'src')), ...files(join(ROOT, 'acceptance'))];
 
-for (const archivo of todos) {
-	const capa = capaDe(archivo);
-	if (capa === 'core') {
-		const sinComentarios = readFileSync(archivo, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '').replace(/\bfrom\s*'[^'\n]*'/g, "from ''");
-		for (const [patron, que] of IO_PROHIBIDO_EN_CORE)
-			if (patron.test(sinComentarios)) errores.push(`${relative(RAIZ, archivo)}: el core no usa ${que}`);
-		if (archivo !== DIAS_LOCALES)
-			for (const [patron, que] of CALENDARIO_LOCAL)
-				if (patron.test(sinComentarios))
-					errores.push(`${relative(RAIZ, archivo)}: ${que} solo en ${relative(RAIZ, DIAS_LOCALES)}`);
+for (const file of all) {
+	const layer = layerOf(file);
+	if (layer === 'core') {
+		const withoutComments = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '').replace(/\bfrom\s*'[^'\n]*'/g, "from ''");
+		for (const [pattern, that] of IO_FORBIDDEN_IN_CORE)
+			if (pattern.test(withoutComments)) errors.push(`${relative(ROOT, file)}: el core no usa ${that}`);
+		if (file !== DAYS_LOCAL)
+			for (const [pattern, that] of CALENDAR_LOCAL)
+				if (pattern.test(withoutComments))
+					errors.push(`${relative(ROOT, file)}: ${that} solo en ${relative(ROOT, DAYS_LOCAL)}`);
 	}
-	const regla = capa && REGLAS[capa];
-	const internos: string[] = [];
-	for (const especificador of especificadores(archivo)) {
-		const destino = resolverInterno(archivo, especificador);
-		const donde = `${relative(RAIZ, archivo)} → ${especificador}`;
-		if (destino === null) {
-			if (regla && !regla.paquetes.some((p) => especificador === p || especificador.startsWith(p)))
-				errores.push(`${donde}: la capa ${capa} no puede importar el paquete "${especificador}"`);
+	const rule = layer && RULES[layer];
+	const internal: string[] = [];
+	for (const specifier of specifiers(file)) {
+		const target = resolveInternal(file, specifier);
+		const where = `${relative(ROOT, file)} → ${specifier}`;
+		if (target === null) {
+			if (rule && !rule.packages.some((p) => specifier === p || specifier.startsWith(p)))
+				errors.push(`${where}: la capa ${layer} no puede importar el paquete "${specifier}"`);
 			continue;
 		}
-		if (destino.endsWith('.css')) continue;
-		if (!existsSync(destino)) {
-			errores.push(`${donde}: no se encuentra el módulo`);
+		if (target.endsWith('.css')) continue;
+		if (!existsSync(target)) {
+			errors.push(`${where}: no se encuentra el módulo`);
 			continue;
 		}
-		internos.push(destino);
-		const capaDestino = capaDe(destino);
-		if (regla && capaDestino && capaDestino !== capa && !regla.capas.includes(capaDestino))
-			errores.push(`${donde}: la capa ${capa} no puede depender de ${capaDestino}`);
-		if (regla && capa !== 'core-test' && capaDestino === 'core-test')
-			errores.push(`${donde}: solo los tests importan tests`);
+		internal.push(target);
+		const layerTarget = layerOf(target);
+		if (rule && layerTarget && layerTarget !== layer && !rule.layers.includes(layerTarget))
+			errors.push(`${where}: la capa ${layer} no puede depender de ${layerTarget}`);
+		if (rule && layer !== 'core-test' && layerTarget === 'core-test')
+			errors.push(`${where}: solo los tests importan tests`);
 	}
-	grafo.set(archivo, internos);
+	graph.set(file, internal);
 }
 
 // Ciclos: DFS con colores sobre el grafo de imports internos.
 const color = new Map<string, 'gris' | 'negro'>();
-function visitar(nodo: string, camino: string[]): void {
-	color.set(nodo, 'gris');
-	for (const vecino of grafo.get(nodo) ?? []) {
-		if (color.get(vecino) === 'gris') {
-			const ciclo = [...camino.slice(camino.indexOf(vecino)), vecino];
-			errores.push(`ciclo de imports: ${ciclo.map((c) => relative(RAIZ, c)).join(' → ')}`);
-		} else if (!color.has(vecino)) visitar(vecino, [...camino, vecino]);
+function visit(node: string, path: string[]): void {
+	color.set(node, 'gris');
+	for (const neighbor of graph.get(node) ?? []) {
+		if (color.get(neighbor) === 'gris') {
+			const cycle = [...path.slice(path.indexOf(neighbor)), neighbor];
+			errors.push(`ciclo de imports: ${cycle.map((c) => relative(ROOT, c)).join(' → ')}`);
+		} else if (!color.has(neighbor)) visit(neighbor, [...path, neighbor]);
 	}
-	color.set(nodo, 'negro');
+	color.set(node, 'negro');
 }
-for (const nodo of grafo.keys()) if (!color.has(nodo)) visitar(nodo, [nodo]);
+for (const node of graph.keys()) if (!color.has(node)) visit(node, [node]);
 
-if (errores.length > 0) {
-	console.error(`check:arch: ${errores.length} violación(es)\n${errores.map((e) => `  - ${e}`).join('\n')}`);
+if (errors.length > 0) {
+	console.error(`check:arch: ${errors.length} violación(es)\n${errors.map((e) => `  - ${e}`).join('\n')}`);
 	process.exit(1);
 }
-console.log(`check:arch: OK (${todos.length} archivos, sin violaciones ni ciclos)`);
+console.log(`check:arch: OK (${all.length} archivos, sin violaciones ni ciclos)`);

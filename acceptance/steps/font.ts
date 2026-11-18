@@ -4,15 +4,15 @@ import { textFonts } from '../../src/lib/core/character-font';
 import { P } from './values';
 import type { StepDefinition } from './world';
 
-export const fuenteSteps: StepDefinition[] = [
+export const fontSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^el texto ${P}$`),
-		run: (world, texto) => {
-			world.text = texto;
+		run: (world, text) => {
+			world.text = text;
 		}
 	},
 	{
 		pattern: new RegExp(`^el texto se dibuja con ${P}$`),
-		run: (world, fuente) => expect(new Set(textFonts(world.text ?? ''))).toEqual(new Set([fuente]))
+		run: (world, font) => expect(new Set(textFonts(world.text ?? ''))).toEqual(new Set([font]))
 	}
 ];

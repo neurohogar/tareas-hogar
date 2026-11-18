@@ -9,244 +9,244 @@ import { applyChange } from '../../src/lib/core/task-document';
 import { edit } from '../../src/lib/core/editing';
 import { changeOnComplete } from '../../src/lib/core/current-step';
 import type { Task } from '../../src/lib/core/task';
-import { DIAS_VALIDOS, FORMA_Y_DIAS, SIN_DIAS, diasDe, formaDe } from './recurring-calendar';
-import { P, TITULO, fechaHora, numero, unidad } from './values';
+import { DAYS_VALID, SHAPE_AND_DAYS, WITHOUT_DAYS, daysOf, shapeOf } from './recurring-calendar';
+import { P, TITLE, dateHour, numeric, unit } from './values';
 import {
-	OTRO,
-	borrarGuardado,
-	elDocumento,
-	laTarea,
-	laTareaTitulada,
-	loQueHuboGuardado,
-	loQueVioElOtro,
-	nuevoId,
-	recordarAntesDeMiCambio,
-	tareasDe,
-	type Guardado,
+	OTHER,
+	deleteSaved,
+	theDoc,
+	theTask,
+	theTaskTitled,
+	thatWasSaved,
+	thatSawOther,
+	newId,
+	rememberBeforeOfMyChange,
+	tasksOf,
+	type Saved,
 	type StepDefinition,
 	type World
 } from './world';
 
 /** Los datos nuevos que se cargan en el panel, a partir de la tarea que se edita. */
-type DatosNuevos = (tarea: Task) => TaskData;
+type DataNew = (task: Task) => TaskData;
 
 /** Quién edita y qué tarea elige, según lo que ve. */
 interface Editor {
-	sujeto: string;
+	subject: string;
 	/** El sujeto nombra la tarea por su título (la primera captura). */
-	nombraLaTarea: boolean;
-	editar: (world: World, datos: DatosNuevos, titulo?: string) => void;
+	namesTask: boolean;
+	edit: (world: World, data: DataNew, title?: string) => void;
 }
 
 /** `ahora`: el momento de guardar, si el paso lo da (pasar una pausada a puntual la reanuda, §5.8). */
-export function editarYGuardar(world: World, tarea: Task, datos: DatosNuevos, ahora?: Date): void {
-	const resultado = edit(tarea, datos(tarea), ahora);
-	if (!resultado.ok) world.errors = resultado.errors;
-	else world.documentos = applyChange(world.documentos, tarea.id, resultado.change);
+export function editAndSave(world: World, task: Task, data: DataNew, now?: Date): void {
+	const result = edit(task, data(task), now);
+	if (!result.ok) world.errors = result.errors;
+	else world.docs = applyChange(world.docs, task.id, result.change);
 }
 
-const tareaElegida = (guardado: Guardado, titulo?: string) =>
-	titulo === undefined ? laTarea(guardado) : laTareaTitulada(guardado, titulo);
+const taskChosen = (saved: Saved, title?: string) =>
+	title === undefined ? theTask(saved) : theTaskTitled(saved, title);
 
-export function editoYo(world: World, datos: DatosNuevos, titulo?: string, ahora?: Date): void {
-	recordarAntesDeMiCambio(world);
-	editarYGuardar(world, tareaElegida(world, titulo), datos, ahora);
+export function editMe(world: World, data: DataNew, title?: string, now?: Date): void {
+	rememberBeforeOfMyChange(world);
+	editAndSave(world, taskChosen(world, title), data, now);
 }
 
-export function editaElOtro(world: World, datos: DatosNuevos): void {
-	editarYGuardar(world, laTarea(loQueVioElOtro(world)), datos);
+export function editsOther(world: World, data: DataNew): void {
+	editAndSave(world, theTask(thatSawOther(world)), data);
 }
 
 /** Borra la tarea y los completados y anotaciones suyos que conoce quien borra (§6.2, §7). */
-function borrar(world: World, tarea: Task, completadosConocidos: Guardado['completions']): void {
-	const { taskId: tareaId, completionIds: completadoIds, annotationIds: anotacionIds } = deletion(tarea.id, completadosConocidos, world.anotaciones);
-	borrarGuardado(world, [tareaId], completadoIds, anotacionIds);
+function remove(world: World, task: Task, completionsKnown: Saved['completions']): void {
+	const { taskId, completionIds, annotationIds } = deletion(task.id, completionsKnown, world.annotations);
+	deleteSaved(world, [taskId], completionIds, annotationIds);
 }
 
-const EDITORES: Editor[] = [
-	{ sujeto: 'edito la tarea', nombraLaTarea: false, editar: editoYo },
-	{ sujeto: `edito la tarea ${TITULO}`, nombraLaTarea: true, editar: editoYo },
-	{ sujeto: `${OTRO} edita la tarea`, nombraLaTarea: false, editar: editaElOtro }
+const EDITORS: Editor[] = [
+	{ subject: 'edito la tarea', namesTask: false, edit: editMe },
+	{ subject: `edito la tarea ${TITLE}`, namesTask: true, edit: editMe },
+	{ subject: `${OTHER} edita la tarea`, namesTask: false, edit: editsOther }
 ];
 
 /** Cada forma de "... a <definición>": los datos que carga, con el título actual. */
-const DEFINICIONES: { text: string; data: (titulo: string, ...valores: string[]) => TaskData }[] = [
+const DEFINITIONS: { text: string; data: (title: string, ...values: string[]) => TaskData }[] = [
 	{
 		text: `puntual con fecha límite ${P}`,
-		data: (titulo, fechaLimite) => ({ shape: 'puntual', title: titulo, dueDate: fechaLimite })
+		data: (title, dueDate) => ({ shape: 'puntual', title, dueDate })
 	},
-	{ text: 'puntual sin fecha límite', data: (titulo) => ({ shape: 'puntual', title: titulo }) },
+	{ text: 'puntual sin fecha límite', data: (title) => ({ shape: 'puntual', title }) },
 	{
 		text: `periódica relativa cada ${P} ${P}`,
-		data: (titulo, cada, u) => ({ shape: 'relativa', title: titulo, every: numero(cada), unit: unidad(u) })
+		data: (title, every, u) => ({ shape: 'relativa', title, every: numeric(every), unit: unit(u) })
 	},
 	{
-		text: `periódica ${FORMA_Y_DIAS}`,
-		data: (titulo, formaYConector, dias) => ({ shape: 'calendario', title: titulo, ...diasDe(formaDe(formaYConector), dias) })
+		text: `periódica ${SHAPE_AND_DAYS}`,
+		data: (title, shapeAndConnector, days) => ({ shape: 'calendario', title, ...daysOf(shapeOf(shapeAndConnector), days) })
 	},
-	{ text: 'periódica (?:semanal|mensual) sin días', data: (titulo) => ({ shape: 'calendario', title: titulo, ...SIN_DIAS }) },
+	{ text: 'periódica (?:semanal|mensual) sin días', data: (title) => ({ shape: 'calendario', title, ...WITHOUT_DAYS }) },
 	{
 		text: 'periódica de calendario con días de la semana y del mes a la vez',
-		data: (titulo) => ({
+		data: (title) => ({
 			shape: 'calendario',
-			title: titulo,
-			weekdays: DIAS_VALIDOS.semanal.weekdays,
-			monthDays: DIAS_VALIDOS.mensual.monthDays
+			title,
+			weekdays: DAYS_VALID.semanal.weekdays,
+			monthDays: DAYS_VALID.mensual.monthDays
 		})
 	}
 ];
 
 /** Cambiar el tipo en el panel deja como estaban el emoji, la nota, los pasos, la versión mínima y el horario. */
-function camposQueConserva(tarea: Task): Pick<TaskData, 'emoji' | 'note' | 'firstStep' | 'steps' | 'minimalVersion' | 'schedule'> {
-	const { emoji, note: nota, firstStep: primerPaso, steps: pasos, minimalVersion: versionMinima, schedule: horario } = taskData(tarea);
-	return { ...(emoji && { emoji }), ...(nota && { note: nota }), ...(primerPaso && { firstStep: primerPaso }), ...(pasos && { steps: pasos }), ...(versionMinima && { minimalVersion: versionMinima }), ...(horario && { schedule: horario }) };
+function fieldsThatKeeps(task: Task): Pick<TaskData, 'emoji' | 'note' | 'firstStep' | 'steps' | 'minimalVersion' | 'schedule'> {
+	const { emoji, note, firstStep, steps, minimalVersion, schedule } = taskData(task);
+	return { ...(emoji && { emoji }), ...(note && { note }), ...(firstStep && { firstStep }), ...(steps && { steps }), ...(minimalVersion && { minimalVersion }), ...(schedule && { schedule }) };
 }
 
-const pasosDeEditarA: StepDefinition[] = EDITORES.flatMap((editor) =>
-	DEFINICIONES.map(({ text: texto, data: datos }) => ({
-		pattern: new RegExp(`^${editor.sujeto} a ${texto}$`),
-		run: (world: World, ...valores: string[]) => {
-			const titulo = editor.nombraLaTarea ? valores.shift() : undefined;
-			editor.editar(world, (tarea) => ({ ...camposQueConserva(tarea), ...datos(tarea.title, ...valores) }), titulo);
+const stepsOfEditA: StepDefinition[] = EDITORS.flatMap((editor) =>
+	DEFINITIONS.map(({ text, data }) => ({
+		pattern: new RegExp(`^${editor.subject} a ${text}$`),
+		run: (world: World, ...values: string[]) => {
+			const title = editor.namesTask ? values.shift() : undefined;
+			editor.edit(world, (task) => ({ ...fieldsThatKeeps(task), ...data(task.title, ...values) }), title);
 		}
 	}))
 );
 
-const conTitulo = (titulo: string) => (tarea: Task) => ({ ...taskData(tarea), title: titulo });
+const withTitle = (title: string) => (task: Task) => ({ ...taskData(task), title });
 
 /**
  * La tarea tiene un solo completado, de ese momento. Si es de calendario lleva
  * además su ocurrenciaCubierta (§5.3) y, si fue la mínima, su fueMinima (§4.4), que este paso no afirma; ningún otro campo.
  */
-function elUnicoCompletadoEs(world: World, tarea: Task, completada: string): void {
-	const completados = completionsOfTask(world.completions, tarea.id);
-	expect(completados).toHaveLength(1);
-	const { coveredOccurrence: ocurrenciaCubierta, wasMinimal: fueMinima, ...resto } = completados[0];
-	expect(resto).toStrictEqual({ id: expect.any(String), taskId: tarea.id, completedAt: fechaHora(completada) });
-	if (ocurrenciaCubierta !== undefined) expect(ocurrenciaCubierta).toBeInstanceOf(Date);
+function theOnlyCompletionIs(world: World, task: Task, completed: string): void {
+	const completions = completionsOfTask(world.completions, task.id);
+	expect(completions).toHaveLength(1);
+	const { coveredOccurrence: occurrenceCovered, wasMinimal, ...rest } = completions[0];
+	expect(rest).toStrictEqual({ id: expect.any(String), taskId: task.id, completedAt: dateHour(completed) });
+	if (occurrenceCovered !== undefined) expect(occurrenceCovered).toBeInstanceOf(Date);
 	// Si fue la mínima (§4.4), lo afirman los pasos de la mínima; solo se escribe en true.
-	if (fueMinima !== undefined) expect(fueMinima).toBe(true);
+	if (wasMinimal !== undefined) expect(wasMinimal).toBe(true);
 }
 
 /** La tarea con ese título, aunque ya se haya borrado. */
-const laQueTenia = (world: World, titulo: string) => laTareaTitulada(loQueHuboGuardado(world), titulo);
+const theOneThatHadBefore = (world: World, title: string) => theTaskTitled(thatWasSaved(world), title);
 
-export const edicionSteps: StepDefinition[] = [
-	...pasosDeEditarA,
+export const editingSteps: StepDefinition[] = [
+	...stepsOfEditA,
 	{
 		pattern: new RegExp(`^edito la tarea a puntual sin fecha límite el ${P}$`),
-		run: (world, momento) =>
-			editoYo(world, (tarea) => ({ ...camposQueConserva(tarea), shape: 'puntual', title: tarea.title }), undefined, fechaHora(momento))
+		run: (world, moment) =>
+			editMe(world, (task) => ({ ...fieldsThatKeeps(task), shape: 'puntual', title: task.title }), undefined, dateHour(moment))
 	},
 	{
 		pattern: new RegExp(`^edito el título a ${P}$`),
-		run: (world, titulo) => editoYo(world, conTitulo(titulo))
+		run: (world, title) => editMe(world, withTitle(title))
 	},
 	{
 		pattern: /^edito el título a uno de solo espacios$/,
-		run: (world) => editoYo(world, conTitulo('   '))
+		run: (world) => editMe(world, withTitle('   '))
 	},
 	{
-		pattern: new RegExp(`^${OTRO} edita el título a ${P}$`),
-		run: (world, titulo) => editaElOtro(world, conTitulo(titulo))
+		pattern: new RegExp(`^${OTHER} edita el título a ${P}$`),
+		run: (world, title) => editsOther(world, withTitle(title))
 	},
 	{
 		pattern: new RegExp(`^edito en una misma edición el título a ${P} y la fecha límite a ${P}$`),
-		run: (world, titulo, fechaLimite) => editoYo(world, () => ({ shape: 'puntual', title: titulo, dueDate: fechaLimite }))
+		run: (world, title, dueDate) => editMe(world, () => ({ shape: 'puntual', title, dueDate }))
 	},
 	{
-		pattern: new RegExp(`^${OTRO} edita el título de la tarea ${TITULO} a ${TITULO}$`),
-		run: (world, titulo, nuevo) => editarYGuardar(world, laTareaTitulada(loQueVioElOtro(world), titulo), conTitulo(nuevo))
+		pattern: new RegExp(`^${OTHER} edita el título de la tarea ${TITLE} a ${TITLE}$`),
+		run: (world, title, updated) => editAndSave(world, theTaskTitled(thatSawOther(world), title), withTitle(updated))
 	},
 	{
-		pattern: new RegExp(`^${OTRO} guarda la tarea sin cambios$`),
-		run: (world) => editaElOtro(world, taskData)
+		pattern: new RegExp(`^${OTHER} guarda la tarea sin cambios$`),
+		run: (world) => editsOther(world, taskData)
 	},
 	{
 		pattern: /^borro la tarea$/,
 		run: (world) => {
-			recordarAntesDeMiCambio(world);
-			borrar(world, laTarea(world), world.completions);
+			rememberBeforeOfMyChange(world);
+			remove(world, theTask(world), world.completions);
 		}
 	},
 	{
-		pattern: new RegExp(`^borro la tarea ${TITULO}$`),
-		run: (world, titulo) => {
-			recordarAntesDeMiCambio(world);
-			borrar(world, laTareaTitulada(world, titulo), world.completions);
+		pattern: new RegExp(`^borro la tarea ${TITLE}$`),
+		run: (world, title) => {
+			rememberBeforeOfMyChange(world);
+			remove(world, theTaskTitled(world, title), world.completions);
 		}
 	},
 	{
-		pattern: new RegExp(`^${OTRO} borra la tarea$`),
+		pattern: new RegExp(`^${OTHER} borra la tarea$`),
 		run: (world) => {
-			const visto = loQueVioElOtro(world);
-			borrar(world, laTarea(visto), visto.completions);
+			const seen = thatSawOther(world);
+			remove(world, theTask(seen), seen.completions);
 		}
 	},
 	{
-		pattern: new RegExp(`^${OTRO} completa la tarea ${TITULO} el ${P}$`),
-		run: (world, titulo, momento) => {
-			const visto = loQueVioElOtro(world);
-			const tarea = laTareaTitulada(visto, titulo);
-			const completado = complete(tarea, visto.completions, nuevoId(world, 'completado'), fechaHora(momento));
-			world.completions = [...world.completions, completado];
+		pattern: new RegExp(`^${OTHER} completa la tarea ${TITLE} el ${P}$`),
+		run: (world, title, moment) => {
+			const seen = thatSawOther(world);
+			const task = theTaskTitled(seen, title);
+			const completion = complete(task, seen.completions, newId(world, 'completado'), dateHour(moment));
+			world.completions = [...world.completions, completion];
 			// Completar, desde cualquier dispositivo, vuelve la tarea al paso 1 (§4.1, Pasos).
-			world.documentos = applyChange(world.documentos, tarea.id, changeOnComplete(tarea));
+			world.docs = applyChange(world.docs, task.id, changeOnComplete(task));
 		}
 	},
 	{
 		pattern: /^la tarea no cambia$/,
-		run: (world) => expect(world.documentos).toStrictEqual(loQueVioElOtro(world).documentos)
+		run: (world) => expect(world.docs).toStrictEqual(thatSawOther(world).docs)
 	},
 	{
 		pattern: /^la tarea es (puntual|periódica)$/,
-		run: (world, tipo) => expect(laTarea(world).kind).toBe(tipo === 'puntual' ? 'puntual' : 'periodica')
+		run: (world, kind) => expect(theTask(world).kind).toBe(kind === 'puntual' ? 'puntual' : 'periodica')
 	},
 	{
 		pattern: /^la tarea no tiene recurrencia$/,
-		run: (world) => expect(elDocumento(world)).not.toHaveProperty('recurrence')
+		run: (world) => expect(theDoc(world)).not.toHaveProperty('recurrence')
 	},
 	{
 		pattern: new RegExp(`^la tarea tiene título ${P}$`),
-		run: (world, titulo) => expect(laTarea(world).title).toBe(titulo)
+		run: (world, title) => expect(theTask(world).title).toBe(title)
 	},
 	{
 		pattern: new RegExp(`^la tarea sigue creada el ${P}$`),
-		run: (world, creada) => expect(laTarea(world).createdAt).toEqual(fechaHora(creada))
+		run: (world, created) => expect(theTask(world).createdAt).toEqual(dateHour(created))
 	},
 	{
 		pattern: /^la tarea conserva su id$/,
-		run: (world) => expect(laTarea(world).id).toBe(laTarea(loQueVioElOtro(world)).id)
+		run: (world) => expect(theTask(world).id).toBe(theTask(thatSawOther(world)).id)
 	},
 	{
 		pattern: new RegExp(`^la tarea conserva un solo completado, del ${P}$`),
-		run: (world, completada) => elUnicoCompletadoEs(world, laTarea(world), completada)
+		run: (world, completed) => theOnlyCompletionIs(world, theTask(world), completed)
 	},
 	{
-		pattern: new RegExp(`^la tarea ${TITULO} conserva un solo completado, del ${P}$`),
-		run: (world, titulo, completada) => elUnicoCompletadoEs(world, laTareaTitulada(world, titulo), completada)
+		pattern: new RegExp(`^la tarea ${TITLE} conserva un solo completado, del ${P}$`),
+		run: (world, title, completed) => theOnlyCompletionIs(world, theTaskTitled(world, title), completed)
 	},
 	{
-		pattern: new RegExp(`^no existe la tarea ${TITULO}$`),
-		run: (world, titulo) => {
-			const id = laQueTenia(world, titulo).id;
-			expect(world.documentos.map((documento) => documento.id)).not.toContain(id);
-			expect(tareasDe(world).map((tarea) => tarea.title)).not.toContain(titulo);
+		pattern: new RegExp(`^no existe la tarea ${TITLE}$`),
+		run: (world, title) => {
+			const id = theOneThatHadBefore(world, title).id;
+			expect(world.docs.map((doc) => doc.id)).not.toContain(id);
+			expect(tasksOf(world).map((task) => task.title)).not.toContain(title);
 		}
 	},
 	{
-		pattern: new RegExp(`^no queda ningún completado de ${TITULO}$`),
-		run: (world, titulo) => expect(completionsOfTask(world.completions, laQueTenia(world, titulo).id)).toEqual([])
+		pattern: new RegExp(`^no queda ningún completado de ${TITLE}$`),
+		run: (world, title) => expect(completionsOfTask(world.completions, theOneThatHadBefore(world, title).id)).toEqual([])
 	},
 	{
 		pattern: /^no queda ninguna tarea$/,
-		run: (world) => expect(world.documentos).toEqual([])
+		run: (world) => expect(world.docs).toEqual([])
 	},
 	{
-		pattern: new RegExp(`^los completados huérfanos a limpiar son solo el de ${TITULO} del ${P}$`),
-		run: (world, titulo, completada) => {
-			expect(orphanCompletions(tareasDe(world), world.completions)).toEqual([
-				{ id: expect.any(String), taskId: laQueTenia(world, titulo).id, completedAt: fechaHora(completada) }
+		pattern: new RegExp(`^los completados huérfanos a limpiar son solo el de ${TITLE} del ${P}$`),
+		run: (world, title, completed) => {
+			expect(orphanCompletions(tasksOf(world), world.completions)).toEqual([
+				{ id: expect.any(String), taskId: theOneThatHadBefore(world, title).id, completedAt: dateHour(completed) }
 			]);
 		}
 	}

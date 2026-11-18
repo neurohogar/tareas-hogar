@@ -9,316 +9,316 @@ import { orphanAnnotations } from '../../src/lib/core/deletion';
 import { noticeOnComplete } from '../../src/lib/core/notice';
 import { hasChanges } from '../../src/lib/core/unsaved-changes';
 import { DATA_ON_CREATE } from '../../src/lib/core/task-data';
-import { OTRO, borrarGuardado, cambiosAlCrear, cambiosAlEditar, laTareaTitulada, loQueHuboGuardado, nuevoId, tareasDe, type StepDefinition, type World } from './world';
-import { P, TITULO, fechaHora, numero } from './values';
+import { OTHER, deleteSaved, changesOnCreate, changesOnEdit, theTaskTitled, thatWasSaved, newId, tasksOf, type StepDefinition, type World } from './world';
+import { P, TITLE, dateHour, numeric } from './values';
 
-const SENTIDOS = ['Me sirvió', 'Me molestó'];
-const PANTALLAS_ACTUALES = ['Pendientes', 'Historial', 'Anotaciones'];
+const DIRECTIONS = ['Me sirvió', 'Me molestó'];
+const SCREENS_CURRENT = ['Pendientes', 'Historial', 'Anotaciones'];
 /** Las pantallas que puede tener una anotación guardada: «Etiquetas» solo existe como valor guardado (§4.5, D20), ya no se anota ahí. */
-const PANTALLAS = [...PANTALLAS_ACTUALES, 'Etiquetas', 'Panel de edición'];
+const SCREENS = [...SCREENS_CURRENT, 'Etiquetas', 'Panel de edición'];
 
 /** Un sentido o una pantalla, escritos en el paso o como `<placeholder>`. */
-const SENTIDO = `(<[A-Za-z0-9_]+>|${SENTIDOS.join('|')})`;
-const PANTALLA = `(<[A-Za-z0-9_]+>|${PANTALLAS.join('|')})`;
+const DIRECTION = `(<[A-Za-z0-9_]+>|${DIRECTIONS.join('|')})`;
+const SCREEN = `(<[A-Za-z0-9_]+>|${SCREENS.join('|')})`;
 
-function sentido(valor: string): Sense {
-	if (!SENTIDOS.includes(valor)) throw new Error(`Sentido inválido: "${valor}"`);
-	return valor as Sense;
+function direction(value: string): Sense {
+	if (!DIRECTIONS.includes(value)) throw new Error(`Sentido inválido: "${value}"`);
+	return value as Sense;
 }
 
-function pantallaActual(valor: string): CurrentScreen {
-	if (!PANTALLAS_ACTUALES.includes(valor)) throw new Error(`Pantalla inválida: "${valor}"`);
-	return valor as CurrentScreen;
+function screenCurrent(value: string): CurrentScreen {
+	if (!SCREENS_CURRENT.includes(value)) throw new Error(`Pantalla inválida: "${value}"`);
+	return value as CurrentScreen;
 }
 
 /** Lo que se ve de la persona al anotar: dónde está, el panel abierto y el aviso de deshacer. */
-function contextoDe(world: World): AnnotateContext {
-	if (!world.pantallaActual) throw new Error('No se dijo en qué pantalla está la persona');
+function contextOf(world: World): AnnotateContext {
+	if (!world.screenCurrent) throw new Error('No se dijo en qué pantalla está la persona');
 	return {
-		screen: world.pantallaActual,
-		...(world.panelDeAnotar && { panel: world.panelDeAnotar.taskId === undefined ? {} : { taskId: world.panelDeAnotar.taskId } }),
+		screen: world.screenCurrent,
+		...(world.annotatePanel && { panel: world.annotatePanel.taskId === undefined ? {} : { taskId: world.annotatePanel.taskId } }),
 		notice: world.notice
 	};
 }
 
 /** «Etiquetas» ya no es una pantalla actual: la anotación guardada la conserva como valor viejo (§4.5, D20); se arma en Pendientes y se le pone ese valor. */
-const pantallaParaArmar = (pantalla: string): string => (pantalla === 'Etiquetas' ? 'Pendientes' : pantalla);
+const screenForBuild = (screenName: string): string => (screenName === 'Etiquetas' ? 'Pendientes' : screenName);
 
-const conPantallaGuardada = (anotacion: Annotation, pantalla: string): Annotation => (pantalla === 'Etiquetas' ? { ...anotacion, screen: 'Etiquetas' } : anotacion);
+const withScreenSaved = (annotation: Annotation, screenName: string): Annotation => (screenName === 'Etiquetas' ? { ...annotation, screen: 'Etiquetas' } : annotation);
 
-function guardar(world: World, anotacion: Annotation): void {
-	world.anotaciones = [...world.anotaciones, anotacion];
-	world.ultimaAnotacionId = anotacion.id;
+function save(world: World, annotation: Annotation): void {
+	world.annotations = [...world.annotations, annotation];
+	world.lastAnnotationId = annotation.id;
 }
 
-function anotoYo(world: World, sentidoElegido: string, ahora: string, texto = ''): void {
-	guardar(world, annotate(nuevoId(world, 'anotacion'), sentido(sentidoElegido), fechaHora(ahora), contextoDe(world), texto));
+function annotateMe(world: World, directionChosen: string, now: string, text = ''): void {
+	save(world, annotate(newId(world, 'anotacion'), direction(directionChosen), dateHour(now), contextOf(world), text));
 	// Un valor que el core no rechaza en silencio: la anotación se guardó con el texto que se escribió.
 	expect(world.errors).toBeUndefined();
 }
 
 /** Otro dispositivo en la pantalla dada, sin panel; sobre una tarea solo por un aviso de deshacer a la vista. */
-function anotaElOtro(world: World, sentidoElegido: string, pantalla: string, ahora: string, titulo?: string): void {
-	const momento = fechaHora(ahora);
-	const aviso =
-		titulo === undefined
+function annotatesOther(world: World, directionChosen: string, screenName: string, now: string, title?: string): void {
+	const moment = dateHour(now);
+	const notice =
+		title === undefined
 			? undefined
-			: noticeOnComplete(laTareaTitulada(loQueHuboGuardado(world), titulo), { id: nuevoId(world, 'completado'), taskId: laTareaTitulada(loQueHuboGuardado(world), titulo).id, completedAt: momento });
-	guardar(world, conPantallaGuardada(annotate(nuevoId(world, 'anotacion'), sentido(sentidoElegido), momento, { screen: pantallaActual(pantallaParaArmar(pantalla)), notice: aviso }), pantalla));
+			: noticeOnComplete(theTaskTitled(thatWasSaved(world), title), { id: newId(world, 'completado'), taskId: theTaskTitled(thatWasSaved(world), title).id, completedAt: moment });
+	save(world, withScreenSaved(annotate(newId(world, 'anotacion'), direction(directionChosen), moment, { screen: screenCurrent(screenForBuild(screenName)), notice }), screenName));
 }
 
 /** Declara una anotación guardada, con el contexto que dice el paso. */
-function declaro(world: World, sentidoElegido: string, pantalla: string, anotada: string): void {
-	const alAbrirPanel = pantalla === 'Panel de edición';
-	if (!PANTALLAS.includes(pantalla)) throw new Error(`Pantalla inválida: "${pantalla}"`);
-	const contexto: AnnotateContext = { screen: alAbrirPanel ? 'Pendientes' : pantallaActual(pantallaParaArmar(pantalla)), ...(alAbrirPanel && { panel: {} }) };
-	guardar(world, conPantallaGuardada(annotate(nuevoId(world, 'anotacion'), sentido(sentidoElegido), fechaHora(anotada), contexto), pantalla));
+function declare(world: World, directionChosen: string, screenName: string, annotated: string): void {
+	const onOpenPanel = screenName === 'Panel de edición';
+	if (!SCREENS.includes(screenName)) throw new Error(`Pantalla inválida: "${screenName}"`);
+	const context: AnnotateContext = { screen: onOpenPanel ? 'Pendientes' : screenCurrent(screenForBuild(screenName)), ...(onOpenPanel && { panel: {} }) };
+	save(world, withScreenSaved(annotate(newId(world, 'anotacion'), direction(directionChosen), dateHour(annotated), context), screenName));
 }
 
-const todas = (world: World): Annotation[] => [...world.anotaciones, ...world.anotacionesBorradas];
+const all = (world: World): Annotation[] => [...world.annotations, ...world.annotationsDeleted];
 
 /** La única anotación de ese instante, aunque ya se haya borrado. */
-function laDelMomento(world: World, anotada: string): Annotation {
-	const instante = fechaHora(anotada).getTime();
-	const delMomento = todas(world).filter(({ annotatedAt: anotadaEn }) => anotadaEn.getTime() === instante);
-	if (delMomento.length !== 1) throw new Error(`Se esperaba una anotación del ${anotada}, hay ${delMomento.length}`);
-	return delMomento[0];
+function momentThe(world: World, annotated: string): Annotation {
+	const instant = dateHour(annotated).getTime();
+	const ofMoment = all(world).filter(({ annotatedAt }) => annotatedAt.getTime() === instant);
+	if (ofMoment.length !== 1) throw new Error(`Se esperaba una anotación del ${annotated}, hay ${ofMoment.length}`);
+	return ofMoment[0];
 }
 
-function laVigente(world: World, anotada: string): Annotation {
-	const { id } = laDelMomento(world, anotada);
-	const vigente = world.anotaciones.find((anotacion) => anotacion.id === id);
-	if (!vigente) throw new Error(`La anotación del ${anotada} ya no existe`);
-	return vigente;
+function theActive(world: World, annotated: string): Annotation {
+	const { id } = momentThe(world, annotated);
+	const active = world.annotations.find((annotation) => annotation.id === id);
+	if (!active) throw new Error(`La anotación del ${annotated} ya no existe`);
+	return active;
 }
 
-function laUltima(world: World): Annotation {
-	const ultima = world.anotaciones.find(({ id }) => id === world.ultimaAnotacionId);
-	if (!ultima) throw new Error('No se declaró ninguna anotación');
-	return ultima;
+function theLast(world: World): Annotation {
+	const last = world.annotations.find(({ id }) => id === world.lastAnnotationId);
+	if (!last) throw new Error('No se declaró ninguna anotación');
+	return last;
 }
 
 /** Cambia la última anotación declarada. */
-function cambiarLaUltima(world: World, cambio: (anotacion: Annotation) => Annotation): void {
-	const ultima = laUltima(world);
-	world.anotaciones = world.anotaciones.map((anotacion) => (anotacion === ultima ? cambio(anotacion) : anotacion));
-	world.ultimaAnotacionId = cambio(ultima).id;
+function changeLast(world: World, change: (annotation: Annotation) => Annotation): void {
+	const last = theLast(world);
+	world.annotations = world.annotations.map((annotation) => (annotation === last ? change(annotation) : annotation));
+	world.lastAnnotationId = change(last).id;
 }
 
-const espacios = (cantidad: string) => ' '.repeat(numero(cantidad));
+const spaces = (count: string) => ' '.repeat(numeric(count));
 
 /** Como setDoc de un campo: editar el texto de una anotación ya borrada no la revive. */
-function editarElTexto(world: World, anotada: string, texto: string): void {
-	world.anotaciones = editText(world.anotaciones, laDelMomento(world, anotada).id, texto);
+function editTheText(world: World, annotated: string, text: string): void {
+	world.annotations = editText(world.annotations, momentThe(world, annotated).id, text);
 }
 
 /** Como deleteDoc: borrar una anotación que ya no existe no hace nada. */
-function borrarLaAnotacion(world: World, anotada: string): void {
-	borrarGuardado(world, [], [], [laDelMomento(world, anotada).id]);
+function deleteAnnotation(world: World, annotated: string): void {
+	deleteSaved(world, [], [], [momentThe(world, annotated).id]);
 }
 
 /** "Hoy: 09:10 · Me molestó · Historial, 08:05 · ...; Ayer: ...": grupos con "; ", anotaciones con ", ", partes con " · ". */
-function enTexto(grupos: AnnotationsGroup[]): string {
-	const entrada = ({ hour: hora, annotation: anotacion, taskName: nombreDeTarea }: AnnotationsGroup['entries'][number]) =>
-		[hora, anotacion.sense, anotacion.screen, nombreDeTarea, anotacion.text].filter((parte) => parte !== undefined).join(' · ');
-	return grupos.map(({ header: encabezado, entries: entradas }) => `${encabezado}: ${entradas.map(entrada).join(', ')}`).join('; ');
+function inText(groups: AnnotationsGroup[]): string {
+	const entry = ({ hour, annotation, taskName }: AnnotationsGroup['entries'][number]) =>
+		[hour, annotation.sense, annotation.screen, taskName, annotation.text].filter((part) => part !== undefined).join(' · ');
+	return groups.map(({ header: heading, entries }) => `${heading}: ${entries.map(entry).join(', ')}`).join('; ');
 }
 
-function lasConsultadas(world: World): AnnotationsGroup[] {
-	if (!world.anotacionesConsultadas) throw new Error('No se consultó Anotaciones');
-	return world.anotacionesConsultadas;
+function theQueried(world: World): AnnotationsGroup[] {
+	if (!world.annotationsQueried) throw new Error('No se consultó Anotaciones');
+	return world.annotationsQueried;
 }
 
-function elPanelAbierto(world: World) {
-	if (!world.panelDeAnotar) throw new Error('El panel de edición no está abierto');
-	return world.panelDeAnotar;
+function thePanelOpen(world: World) {
+	if (!world.annotatePanel) throw new Error('El panel de edición no está abierto');
+	return world.annotatePanel;
 }
 
-export const anotacionSteps: StepDefinition[] = [
+export const annotationSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^estoy en ${PANTALLA}$`),
-		run: (world, pantalla) => void (world.pantallaActual = pantallaActual(pantalla))
+		pattern: new RegExp(`^estoy en ${SCREEN}$`),
+		run: (world, screenName) => void (world.screenCurrent = screenCurrent(screenName))
 	},
 	{
-		pattern: new RegExp(`^el panel de edición está abierto al editar la tarea ${TITULO}$`),
-		run: (world, titulo) => {
-			const tarea = laTareaTitulada(world, titulo);
-			world.panelDeAnotar = { taskId: tarea.id, cambios: cambiosAlEditar(tarea), documentosAlAbrir: structuredClone(world.documentos) };
+		pattern: new RegExp(`^el panel de edición está abierto al editar la tarea ${TITLE}$`),
+		run: (world, title) => {
+			const task = theTaskTitled(world, title);
+			world.annotatePanel = { taskId: task.id, changes: changesOnEdit(task), docsOnOpen: structuredClone(world.docs) };
 		}
 	},
 	{
 		pattern: /^el panel de edición está abierto al crear una tarea$/,
 		run: (world) => {
-			world.panelDeAnotar = { cambios: cambiosAlCrear(DATA_ON_CREATE), documentosAlAbrir: structuredClone(world.documentos) };
+			world.annotatePanel = { changes: changesOnCreate(DATA_ON_CREATE), docsOnOpen: structuredClone(world.docs) };
 		}
 	},
 	{
-		pattern: new RegExp(`^anoto ${SENTIDO} el ${P}$`),
-		run: (world, elegido, ahora) => anotoYo(world, elegido, ahora)
+		pattern: new RegExp(`^anoto ${DIRECTION} el ${P}$`),
+		run: (world, chosen, now) => annotateMe(world, chosen, now)
 	},
 	{
-		pattern: new RegExp(`^anoto ${SENTIDO} el ${P} con el texto ${P}$`),
-		run: (world, elegido, ahora, texto) => anotoYo(world, elegido, ahora, texto)
+		pattern: new RegExp(`^anoto ${DIRECTION} el ${P} con el texto ${P}$`),
+		run: (world, chosen, now, text) => annotateMe(world, chosen, now, text)
 	},
 	{
-		pattern: new RegExp(`^anoto ${SENTIDO} el ${P} con el texto ${P} entre ${P} espacios$`),
-		run: (world, elegido, ahora, texto, cantidad) => anotoYo(world, elegido, ahora, `${espacios(cantidad)}${texto}${espacios(cantidad)}`)
+		pattern: new RegExp(`^anoto ${DIRECTION} el ${P} con el texto ${P} entre ${P} espacios$`),
+		run: (world, chosen, now, text, count) => annotateMe(world, chosen, now, `${spaces(count)}${text}${spaces(count)}`)
 	},
 	{
-		pattern: new RegExp(`^anoto ${SENTIDO} el ${P} con ${P} espacios como texto$`),
-		run: (world, elegido, ahora, cantidad) => anotoYo(world, elegido, ahora, espacios(cantidad))
+		pattern: new RegExp(`^anoto ${DIRECTION} el ${P} con ${P} espacios como texto$`),
+		run: (world, chosen, now, count) => annotateMe(world, chosen, now, spaces(count))
 	},
 	{
-		pattern: new RegExp(`^anoto ${SENTIDO} el ${P} con un texto de ${P} caracteres$`),
-		run: (world, elegido, ahora, largo) => anotoYo(world, elegido, ahora, 'a'.repeat(numero(largo)))
+		pattern: new RegExp(`^anoto ${DIRECTION} el ${P} con un texto de ${P} caracteres$`),
+		run: (world, chosen, now, length) => annotateMe(world, chosen, now, 'a'.repeat(numeric(length)))
 	},
 	{
-		pattern: new RegExp(`^${OTRO} anota ${SENTIDO} en ${PANTALLA} el ${P}$`),
-		run: (world, elegido, pantalla, ahora) => anotaElOtro(world, elegido, pantalla, ahora)
+		pattern: new RegExp(`^${OTHER} anota ${DIRECTION} en ${SCREEN} el ${P}$`),
+		run: (world, chosen, screenName, now) => annotatesOther(world, chosen, screenName, now)
 	},
 	{
-		pattern: new RegExp(`^${OTRO} anota ${SENTIDO} en ${PANTALLA} el ${P} sobre la tarea ${TITULO}$`),
-		run: (world, elegido, pantalla, ahora, titulo) => anotaElOtro(world, elegido, pantalla, ahora, titulo)
+		pattern: new RegExp(`^${OTHER} anota ${DIRECTION} en ${SCREEN} el ${P} sobre la tarea ${TITLE}$`),
+		run: (world, chosen, screenName, now, title) => annotatesOther(world, chosen, screenName, now, title)
 	},
 	{
-		pattern: new RegExp(`^una anotación ${SENTIDO} en ${PANTALLA} del ${P}$`),
-		run: (world, elegido, pantalla, anotada) => declaro(world, elegido, pantalla, anotada)
+		pattern: new RegExp(`^una anotación ${DIRECTION} en ${SCREEN} del ${P}$`),
+		run: (world, chosen, screenName, annotated) => declare(world, chosen, screenName, annotated)
 	},
 	{
-		pattern: new RegExp(`^la anotación se refiere a la tarea ${TITULO}$`),
-		run: (world, titulo) => cambiarLaUltima(world, (anotacion) => ({ ...anotacion, taskId: laTareaTitulada(world, titulo).id }))
+		pattern: new RegExp(`^la anotación se refiere a la tarea ${TITLE}$`),
+		run: (world, title) => changeLast(world, (annotation) => ({ ...annotation, taskId: theTaskTitled(world, title).id }))
 	},
 	{
 		pattern: new RegExp(`^la anotación dice ${P}$`),
-		run: (world, texto) => {
-			const { id } = laUltima(world);
-			world.anotaciones = editText(world.anotaciones, id, texto);
+		run: (world, text) => {
+			const { id } = theLast(world);
+			world.annotations = editText(world.annotations, id, text);
 		}
 	},
 	{
 		pattern: new RegExp(`^la anotación se registró con id ${P}$`),
-		run: (world, id) => cambiarLaUltima(world, (anotacion) => ({ ...anotacion, id }))
+		run: (world, id) => changeLast(world, (annotation) => ({ ...annotation, id }))
 	},
 	{
 		pattern: /^queda una sola anotación$/,
-		run: (world) => expect(world.anotaciones).toHaveLength(1)
+		run: (world) => expect(world.annotations).toHaveLength(1)
 	},
 	{
 		pattern: new RegExp(`^quedan ${P} anotaciones$`),
-		run: (world, cantidad) => expect(world.anotaciones).toHaveLength(numero(cantidad))
+		run: (world, count) => expect(world.annotations).toHaveLength(numeric(count))
 	},
 	{
 		pattern: /^no queda ninguna anotación$/,
-		run: (world) => expect(world.anotaciones).toEqual([])
+		run: (world) => expect(world.annotations).toEqual([])
 	},
 	{
 		pattern: new RegExp(`^no existe la anotación del ${P}$`),
-		run: (world, anotada) => {
-			const { id } = laDelMomento(world, anotada);
-			expect(world.anotaciones.map((anotacion) => anotacion.id)).not.toContain(id);
+		run: (world, annotated) => {
+			const { id } = momentThe(world, annotated);
+			expect(world.annotations.map((annotation) => annotation.id)).not.toContain(id);
 		}
 	},
 	{
-		pattern: new RegExp(`^la anotación del ${P} tiene sentido ${SENTIDO} en ${PANTALLA}$`),
-		run: (world, anotada, elegido, pantalla) => {
-			const anotacion = laVigente(world, anotada);
-			expect(anotacion.sense).toBe(elegido);
-			expect(anotacion.screen).toBe(pantalla);
+		pattern: new RegExp(`^la anotación del ${P} tiene sentido ${DIRECTION} en ${SCREEN}$`),
+		run: (world, annotated, chosen, screenName) => {
+			const annotation = theActive(world, annotated);
+			expect(annotation.sense).toBe(chosen);
+			expect(annotation.screen).toBe(screenName);
 		}
 	},
 	{
-		pattern: new RegExp(`^la anotación del ${P} es de la tarea ${TITULO}$`),
-		run: (world, anotada, titulo) =>
-			expect(laVigente(world, anotada).taskId).toBe(laTareaTitulada(loQueHuboGuardado(world), titulo).id)
+		pattern: new RegExp(`^la anotación del ${P} es de la tarea ${TITLE}$`),
+		run: (world, annotated, title) =>
+			expect(theActive(world, annotated).taskId).toBe(theTaskTitled(thatWasSaved(world), title).id)
 	},
 	{
 		pattern: new RegExp(`^la anotación del ${P} no es de ninguna tarea$`),
-		run: (world, anotada) => expect(laVigente(world, anotada)).not.toHaveProperty('taskId')
+		run: (world, annotated) => expect(theActive(world, annotated)).not.toHaveProperty('taskId')
 	},
 	{
 		pattern: new RegExp(`^la anotación del ${P} dice ${P}$`),
-		run: (world, anotada, texto) => expect(laVigente(world, anotada).text).toBe(texto)
+		run: (world, annotated, text) => expect(theActive(world, annotated).text).toBe(text)
 	},
 	{
 		pattern: new RegExp(`^la anotación del ${P} dice un texto de ${P} caracteres$`),
-		run: (world, anotada, largo) => expect(laVigente(world, anotada).text).toBe('a'.repeat(numero(largo)))
+		run: (world, annotated, length) => expect(theActive(world, annotated).text).toBe('a'.repeat(numeric(length)))
 	},
 	{
 		pattern: new RegExp(`^la anotación del ${P} no tiene texto$`),
-		run: (world, anotada) => expect(laVigente(world, anotada)).not.toHaveProperty('text')
+		run: (world, annotated) => expect(theActive(world, annotated)).not.toHaveProperty('text')
 	},
 	{
 		// §5.10: anotar no toca la tarea ni el panel; no cierra el panel ni abre un aviso de acción.
 		pattern: /^el panel sigue abierto sin cambios sin guardar$/,
 		run: (world) => {
-			const { cambios, documentosAlAbrir } = elPanelAbierto(world);
-			expect(world.anotaciones).toHaveLength(1);
-			expect(hasChanges(cambios.alAbrir, cambios.form)).toBe(false);
-			expect(cambios.top).toBe('nada');
-			expect(world.documentos).toStrictEqual(documentosAlAbrir);
+			const { changes, docsOnOpen } = thePanelOpen(world);
+			expect(world.annotations).toHaveLength(1);
+			expect(hasChanges(changes.onOpen, changes.form)).toBe(false);
+			expect(changes.top).toBe('nada');
+			expect(world.docs).toStrictEqual(docsOnOpen);
 		}
 	},
 	{
 		pattern: new RegExp(`^consulto Anotaciones el ${P}$`),
-		run: (world, ahora) => {
-			world.anotacionesConsultadas = annotationsOnScreen(tareasDe(world), world.anotaciones, fechaHora(ahora));
+		run: (world, now) => {
+			world.annotationsQueried = annotationsOnScreen(tasksOf(world), world.annotations, dateHour(now));
 		}
 	},
 	{
 		pattern: new RegExp(`^Anotaciones muestra ${P}$`),
-		run: (world, esperado) => expect(enTexto(lasConsultadas(world))).toBe(esperado)
+		run: (world, expected) => expect(inText(theQueried(world))).toBe(expected)
 	},
 	{
 		pattern: /^Anotaciones está vacía$/,
-		run: (world) => expect(lasConsultadas(world)).toEqual([])
+		run: (world) => expect(theQueried(world)).toEqual([])
 	},
 	{
 		pattern: /^copio las anotaciones$/,
 		run: (world) => {
-			world.copiado = { text: annotationsText(tareasDe(world), world.anotaciones) };
+			world.copied = { text: annotationsText(tasksOf(world), world.annotations) };
 		}
 	},
 	{
 		pattern: new RegExp(`^el texto copiado tiene las líneas ${P}$`),
-		run: (world, lineas) => {
-			if (!world.copiado) throw new Error('No se copió');
-			expect(world.copiado.text?.split('\n')).toEqual(lineas.split('; '));
+		run: (world, lines) => {
+			if (!world.copied) throw new Error('No se copió');
+			expect(world.copied.text?.split('\n')).toEqual(lines.split('; '));
 		}
 	},
 	{
 		pattern: /^no hay nada para copiar$/,
 		run: (world) => {
-			if (!world.copiado) throw new Error('No se copió');
-			expect(world.copiado.text).toBeUndefined();
+			if (!world.copied) throw new Error('No se copió');
+			expect(world.copied.text).toBeUndefined();
 		}
 	},
 	{
 		pattern: new RegExp(`^edito el texto de la anotación del ${P} a ${P}$`),
-		run: (world, anotada, texto) => editarElTexto(world, anotada, texto)
+		run: (world, annotated, text) => editTheText(world, annotated, text)
 	},
 	{
 		pattern: new RegExp(`^edito el texto de la anotación del ${P} a ${P} entre ${P} espacios$`),
-		run: (world, anotada, texto, cantidad) => editarElTexto(world, anotada, `${espacios(cantidad)}${texto}${espacios(cantidad)}`)
+		run: (world, annotated, text, count) => editTheText(world, annotated, `${spaces(count)}${text}${spaces(count)}`)
 	},
 	{
 		pattern: new RegExp(`^edito el texto de la anotación del ${P} a ${P} espacios$`),
-		run: (world, anotada, cantidad) => editarElTexto(world, anotada, espacios(cantidad))
+		run: (world, annotated, count) => editTheText(world, annotated, spaces(count))
 	},
 	{
-		pattern: new RegExp(`^${OTRO} edita el texto de la anotación del ${P} a ${P}$`),
-		run: (world, anotada, texto) => editarElTexto(world, anotada, texto)
+		pattern: new RegExp(`^${OTHER} edita el texto de la anotación del ${P} a ${P}$`),
+		run: (world, annotated, text) => editTheText(world, annotated, text)
 	},
 	{
 		pattern: new RegExp(`^borro la anotación del ${P}$`),
-		run: (world, anotada) => borrarLaAnotacion(world, anotada)
+		run: (world, annotated) => deleteAnnotation(world, annotated)
 	},
 	{
-		pattern: new RegExp(`^${OTRO} borra la anotación del ${P}$`),
-		run: (world, anotada) => borrarLaAnotacion(world, anotada)
+		pattern: new RegExp(`^${OTHER} borra la anotación del ${P}$`),
+		run: (world, annotated) => deleteAnnotation(world, annotated)
 	},
 	{
 		pattern: new RegExp(`^las anotaciones huérfanas a limpiar son solo la del ${P}$`),
-		run: (world, anotada) =>
-			expect(orphanAnnotations(tareasDe(world), world.anotaciones).map(({ id }) => id)).toEqual([laDelMomento(world, anotada).id])
+		run: (world, annotated) =>
+			expect(orphanAnnotations(tasksOf(world), world.annotations).map(({ id }) => id)).toEqual([momentThe(world, annotated).id])
 	}
 ];

@@ -1,142 +1,142 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
-  abrir,
-  abrirSelector,
-  buscadorEmoji,
-  cerrar,
-  controlada,
-  completar,
-  conReloj,
-  crear,
-  crearYVer,
-  detener,
-  dispositivo,
-  dosDispositivos,
-  editar,
-  elegirEmoji,
-  emojiExacto,
-  emojisDelSelector,
-  esperarEstado,
-  fila,
-  irA,
-  limpiarEmuladores,
-  llegaAlServidor,
+  openTask,
+  openSelector,
+  searchBoxEmoji,
+  close,
+  controlled,
+  complete,
+  withClock,
+  create,
+  createAndView,
+  stop,
+  device,
+  twoDevices,
+  edit,
+  chooseEmoji,
+  emojiExact,
+  selectorEmojis,
+  waitStatus,
+  row,
+  goA,
+  cleanEmulators,
+  arrivesOnServer,
   selectorEmoji,
-  sesionConReloj,
+  sessionWithClock,
 } from "./support";
 
-const LUNES = "2026-07-13T08:00:00";
-const SIN_RESULTADOS = "No se encontró ningún emoji.";
+const MONDAY = "2026-07-13T08:00:00";
+const WITHOUT_RESULTS = "No se encontró ningún emoji.";
 
 test.beforeEach(async () => {
-  await limpiarEmuladores();
+  await cleanEmulators();
 });
 
 /** El nombre visible de la tarea en su fila (botón que abre el panel). */
-const nombre = (page: Page, texto: string) =>
-  fila(page, "Regar").getByRole("button", { name: texto, exact: true });
+const name = (page: Page, text: string) =>
+  row(page, "Regar").getByRole("button", { name: text, exact: true });
 
-async function guardar(page: Page) {
+async function save(page: Page) {
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
 /** El botón de la fila de Regar, con o sin el emoji que el último guardado haya llegado a poner en el nombre. */
-const abrirRegar = (page: Page) =>
-  fila(page, "Regar").getByRole("button", { name: /Regar$/ });
+const openWater = (page: Page) =>
+  row(page, "Regar").getByRole("button", { name: /Regar$/ });
 
-const botonElegir = (page: Page) =>
+const buttonChoose = (page: Page) =>
   page.getByRole("button", { name: "Elegir emoji" });
-const botonQuitar = (page: Page) =>
+const buttonRemove = (page: Page) =>
   page.getByRole("button", { name: "Quitar emoji" });
-const botonCambiar = (page: Page, emoji: string) =>
+const buttonChange = (page: Page, emoji: string) =>
   page.getByRole("button", { name: `Cambiar emoji ${emoji}` });
 
-async function verPanel(page: Page, emoji: string, nota: string) {
+async function viewPanel(page: Page, emoji: string, note: string) {
   if (emoji === "") {
-    await expect(botonElegir(page)).toBeVisible();
-    await expect(botonQuitar(page)).toHaveCount(0);
+    await expect(buttonChoose(page)).toBeVisible();
+    await expect(buttonRemove(page)).toHaveCount(0);
   } else {
-    await expect(botonCambiar(page, emoji)).toBeVisible();
-    await expect(botonQuitar(page)).toBeVisible();
-    await expect(botonElegir(page)).toHaveCount(0);
+    await expect(buttonChange(page, emoji)).toBeVisible();
+    await expect(buttonRemove(page)).toBeVisible();
+    await expect(buttonChoose(page)).toHaveCount(0);
   }
-  await expect(page.getByLabel("Nota")).toHaveValue(nota);
+  await expect(page.getByLabel("Nota")).toHaveValue(note);
 }
 
 /** Los recientes que muestra el selector, en orden; abre el selector y lo cierra con Cerrar. */
-async function recientes(page: Page): Promise<string[]> {
-  await abrirSelector(page);
-  const botones = selectorEmoji(page)
+async function recent(page: Page): Promise<string[]> {
+  await openSelector(page);
+  const buttons = selectorEmoji(page)
     .locator('section[aria-labelledby="title-recents"]')
     .getByRole("button");
-  const lista =
-    (await botones.count()) === 0
+  const list =
+    (await buttons.count()) === 0
       ? []
-      : await botones.evaluateAll((l) =>
+      : await buttons.evaluateAll((l) =>
           l.map((b) => b.getAttribute("aria-label") ?? ""),
         );
   await selectorEmoji(page).getByRole("button", { name: "Cerrar" }).click();
   await expect(selectorEmoji(page)).toHaveCount(0);
-  return lista;
+  return list;
 }
 
-const seccionRecientes = (page: Page) =>
+const sectionRecent = (page: Page) =>
   selectorEmoji(page).getByRole("heading", { name: "Recientes" });
 
 test("Flujo 1: elegir el emoji y verlo en la fila", async ({ page }) => {
-  await sesionConReloj(page, LUNES);
-  await crear(page, {
-    titulo: "Regar",
-    tipo: "Intervalo",
-    cada: "2",
-    unidad: "días",
+  await sessionWithClock(page, MONDAY);
+  await create(page, {
+    title: "Regar",
+    kind: "Intervalo",
+    every: "2",
+    unit: "días",
   });
-  await expect(nombre(page, "Regar")).toBeVisible();
+  await expect(name(page, "Regar")).toBeVisible();
 
-  await abrir(page, "Regar");
+  await openTask(page, "Regar");
   await expect(page.getByRole("textbox", { name: "Emoji" })).toHaveCount(0);
-  await verPanel(page, "", "");
-  await abrirSelector(page);
-  await buscadorEmoji(page).fill("planta");
-  await expect(emojiExacto(page, "🌱")).toHaveCount(1);
-  await emojiExacto(page, "🌱").click();
+  await viewPanel(page, "", "");
+  await openSelector(page);
+  await searchBoxEmoji(page).fill("planta");
+  await expect(emojiExact(page, "🌱")).toHaveCount(1);
+  await emojiExact(page, "🌱").click();
   await expect(selectorEmoji(page)).toHaveCount(0);
-  await verPanel(page, "🌱", "");
-  await guardar(page);
-  await expect(nombre(page, "🌱 Regar")).toBeVisible();
+  await viewPanel(page, "🌱", "");
+  await save(page);
+  await expect(name(page, "🌱 Regar")).toBeVisible();
 
   await page.reload();
-  await expect(nombre(page, "🌱 Regar")).toBeVisible();
-  await abrir(page, "Regar");
-  await verPanel(page, "🌱", "");
-  await cerrar(page);
+  await expect(name(page, "🌱 Regar")).toBeVisible();
+  await openTask(page, "Regar");
+  await viewPanel(page, "🌱", "");
+  await close(page);
 
-  const variantes: [string, string, number?][] = [
+  const variants: [string, string, number?][] = [
     ["👨‍👩‍👧", "familia"],
     ["👍🏽", "pulgar", 3],
     ["❤️", "corazón rojo"],
     ["🇦🇷", "argentina"],
   ];
-  for (const [e, busqueda, tono] of variantes) {
-    await abrir(page, "Regar");
-    await botonQuitar(page).waitFor();
-    await elegirEmoji(page, e, busqueda, tono);
-    await verPanel(page, e, "");
-    await guardar(page);
-    await expect(nombre(page, `${e} Regar`)).toBeVisible();
+  for (const [e, search, tone] of variants) {
+    await openTask(page, "Regar");
+    await buttonRemove(page).waitFor();
+    await chooseEmoji(page, e, search, tone);
+    await viewPanel(page, e, "");
+    await save(page);
+    await expect(name(page, `${e} Regar`)).toBeVisible();
   }
 
-  await crear(page, {
-    titulo: "Barrer",
-    tipo: "Intervalo",
-    cada: "1",
-    unidad: "días",
+  await create(page, {
+    title: "Barrer",
+    kind: "Intervalo",
+    every: "1",
+    unit: "días",
     emoji: "🧹",
-    nota: "Debajo de la mesa",
+    note: "Debajo de la mesa",
   });
   await expect(
-    fila(page, "Barrer").getByRole("button", {
+    row(page, "Barrer").getByRole("button", {
       name: "🧹 Barrer",
       exact: true,
     }),
@@ -148,71 +148,71 @@ test("Flujo 1: elegir el emoji y verlo en la fila", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Nueva tarea" }),
   ).toBeVisible();
-  await abrirSelector(page);
+  await openSelector(page);
   // Opening the selector focuses the dialog, not the search field: the on-screen keyboard stays down.
   await expect(selectorEmoji(page)).toBeFocused();
-  await expect(buscadorEmoji(page)).not.toBeFocused();
+  await expect(searchBoxEmoji(page)).not.toBeFocused();
   await selectorEmoji(page).getByRole("button", { name: "Cerrar" }).click();
   await expect(selectorEmoji(page)).toHaveCount(0);
-  await verPanel(page, "", "");
-  await abrirSelector(page);
+  await viewPanel(page, "", "");
+  await openSelector(page);
   await page.keyboard.press("Escape");
   await expect(selectorEmoji(page)).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "Nueva tarea" }),
   ).toBeVisible();
-  await verPanel(page, "", "");
+  await viewPanel(page, "", "");
 });
 
 test("Flujo 2: quitar el emoji", async ({ page }) => {
-  await sesionConReloj(page, LUNES);
-  await crear(page, {
-    titulo: "Regar",
-    tipo: "Intervalo",
-    cada: "2",
-    unidad: "días",
+  await sessionWithClock(page, MONDAY);
+  await create(page, {
+    title: "Regar",
+    kind: "Intervalo",
+    every: "2",
+    unit: "días",
     emoji: "🌱",
   });
-  await expect(nombre(page, "🌱 Regar")).toBeVisible();
+  await expect(name(page, "🌱 Regar")).toBeVisible();
 
-  await abrir(page, "Regar");
-  await botonQuitar(page).click();
-  await verPanel(page, "", "");
-  await guardar(page);
-  await expect(nombre(page, "Regar")).toBeVisible();
+  await openTask(page, "Regar");
+  await buttonRemove(page).click();
+  await viewPanel(page, "", "");
+  await save(page);
+  await expect(name(page, "Regar")).toBeVisible();
 
-  await abrir(page, "Regar");
-  await verPanel(page, "", "");
-  await cerrar(page);
+  await openTask(page, "Regar");
+  await viewPanel(page, "", "");
+  await close(page);
   await page.reload();
-  await expect(nombre(page, "Regar")).toBeVisible();
+  await expect(name(page, "Regar")).toBeVisible();
 
-  await abrir(page, "Regar");
-  await elegirEmoji(page, "🔥");
-  await botonQuitar(page).click();
-  await cerrar(page);
-  await expect(nombre(page, "Regar")).toBeVisible();
+  await openTask(page, "Regar");
+  await chooseEmoji(page, "🔥");
+  await buttonRemove(page).click();
+  await close(page);
+  await expect(name(page, "Regar")).toBeVisible();
 });
 
 test("Flujo 3: catálogo, categorías y búsqueda en español", async ({
   page,
 }) => {
-  await sesionConReloj(page, LUNES);
-  await crear(page, {
-    titulo: "Regar",
-    tipo: "Intervalo",
-    cada: "2",
-    unidad: "días",
+  await sessionWithClock(page, MONDAY);
+  await create(page, {
+    title: "Regar",
+    kind: "Intervalo",
+    every: "2",
+    unit: "días",
   });
-  await abrir(page, "Regar");
-  await abrirSelector(page);
+  await openTask(page, "Regar");
+  await openSelector(page);
 
-  const categorias = selectorEmoji(page).getByRole("tab");
-  await expect(categorias).toHaveCount(9);
-  const nombres = await categorias.evaluateAll((l) =>
+  const categories = selectorEmoji(page).getByRole("tab");
+  await expect(categories).toHaveCount(9);
+  const names = await categories.evaluateAll((l) =>
     l.map((t) => t.getAttribute("aria-label") ?? ""),
   );
-  for (const esperado of [
+  for (const expected of [
     /emoticones|caras/i,
     /Personas/,
     /Animales y naturaleza/,
@@ -223,124 +223,124 @@ test("Flujo 3: catálogo, categorías y búsqueda en español", async ({
     /Símbolos/,
     /Banderas/,
   ])
-    expect(nombres.some((n) => esperado.test(n))).toBe(true);
+    expect(names.some((n) => expected.test(n))).toBe(true);
 
-  const propios: Record<string, string> = {
+  const own: Record<string, string> = {
     "Animales y naturaleza": "🐶",
     Banderas: "🇦🇷",
   };
-  for (const n of nombres) {
+  for (const n of names) {
     const tab = selectorEmoji(page).getByRole("tab", { name: n, exact: true });
     await tab.click();
     await expect(tab).toHaveAttribute("aria-selected", "true");
-    await expect(emojisDelSelector(page).first()).toBeVisible();
-    if (propios[n])
-      await expect(emojiExacto(page, propios[n]).first()).toBeVisible();
+    await expect(selectorEmojis(page).first()).toBeVisible();
+    if (own[n])
+      await expect(emojiExact(page, own[n]).first()).toBeVisible();
   }
 
-  const buscar = async (texto: string, emoji: string) => {
-    await buscadorEmoji(page).fill(texto);
-    await expect(emojiExacto(page, emoji).first()).toBeVisible();
+  const search = async (text: string, emoji: string) => {
+    await searchBoxEmoji(page).fill(text);
+    await expect(emojiExact(page, emoji).first()).toBeVisible();
   };
-  await buscar("planta", "🌱");
-  await buscar("escoba", "🧹");
-  await buscar("perro", "🐶");
-  await buscar("PERRO", "🐶");
-  await buscar("perró", "🐶");
+  await search("planta", "🌱");
+  await search("escoba", "🧹");
+  await search("perro", "🐶");
+  await search("PERRO", "🐶");
+  await search("perró", "🐶");
 
-  await buscadorEmoji(page).fill("zzzzqq");
-  await expect(emojisDelSelector(page)).toHaveCount(0);
-  await expect(selectorEmoji(page).getByText(SIN_RESULTADOS)).toBeVisible();
-  await buscadorEmoji(page).fill("");
-  await expect(selectorEmoji(page).getByText(SIN_RESULTADOS)).toHaveCount(0);
-  await expect(emojisDelSelector(page).first()).toBeVisible();
-  expect(await emojisDelSelector(page).count()).toBeGreaterThan(20);
+  await searchBoxEmoji(page).fill("zzzzqq");
+  await expect(selectorEmojis(page)).toHaveCount(0);
+  await expect(selectorEmoji(page).getByText(WITHOUT_RESULTS)).toBeVisible();
+  await searchBoxEmoji(page).fill("");
+  await expect(selectorEmoji(page).getByText(WITHOUT_RESULTS)).toHaveCount(0);
+  await expect(selectorEmojis(page).first()).toBeVisible();
+  expect(await selectorEmojis(page).count()).toBeGreaterThan(20);
 
-  await buscar("escoba", "🧹");
-  await emojiExacto(page, "🧹").first().click();
+  await search("escoba", "🧹");
+  await emojiExact(page, "🧹").first().click();
   await expect(selectorEmoji(page)).toHaveCount(0);
-  await verPanel(page, "🧹", "");
+  await viewPanel(page, "🧹", "");
 });
 
 test("Flujo 4: recientes", async ({ browser }) => {
-  const { a, b, cerrar: fin } = await dosDispositivos(browser, LUNES);
-  await crear(a, {
-    titulo: "Regar",
-    tipo: "Intervalo",
-    cada: "2",
-    unidad: "días",
+  const { a, b, close: end } = await twoDevices(browser, MONDAY);
+  await create(a, {
+    title: "Regar",
+    kind: "Intervalo",
+    every: "2",
+    unit: "días",
   });
-  await expect(nombre(a, "Regar")).toBeVisible();
+  await expect(name(a, "Regar")).toBeVisible();
 
-  await abrir(a, "Regar");
-  await abrirSelector(a);
-  await expect(seccionRecientes(a)).toHaveCount(0);
+  await openTask(a, "Regar");
+  await openSelector(a);
+  await expect(sectionRecent(a)).toHaveCount(0);
   await selectorEmoji(a).getByRole("button", { name: "Cerrar" }).click();
-  await elegirEmoji(a, "🌱");
-  await guardar(a);
+  await chooseEmoji(a, "🌱");
+  await save(a);
 
-  await abrir(a, "Regar");
-  expect(await recientes(a)).toEqual(["🌱"]);
-  await elegirEmoji(a, "🔥");
-  await guardar(a);
+  await openTask(a, "Regar");
+  expect(await recent(a)).toEqual(["🌱"]);
+  await chooseEmoji(a, "🔥");
+  await save(a);
 
-  await abrir(a, "Regar");
-  expect(await recientes(a)).toEqual(["🔥", "🌱"]);
-  await elegirEmoji(a, "🌱");
-  await guardar(a);
+  await openTask(a, "Regar");
+  expect(await recent(a)).toEqual(["🔥", "🌱"]);
+  await chooseEmoji(a, "🌱");
+  await save(a);
 
-  await abrir(a, "Regar");
-  expect(await recientes(a)).toEqual(["🌱", "🔥"]);
-  await botonQuitar(a).click();
-  await guardar(a);
-  await abrir(a, "Regar");
-  expect(await recientes(a)).toEqual(["🌱", "🔥"]);
+  await openTask(a, "Regar");
+  expect(await recent(a)).toEqual(["🌱", "🔥"]);
+  await buttonRemove(a).click();
+  await save(a);
+  await openTask(a, "Regar");
+  expect(await recent(a)).toEqual(["🌱", "🔥"]);
 
   // 16 emojis distintos más: los primeros 16 de la grilla (ninguno es 🔥 ni 🌱).
-  const elegidos: string[] = [];
+  const chosen: string[] = [];
   for (let i = 0; i < 16; i++) {
-    await abrirSelector(a);
-    const e = emojisDelSelector(a).nth(i);
-    elegidos.push((await e.textContent()) ?? "");
+    await openSelector(a);
+    const e = selectorEmojis(a).nth(i);
+    chosen.push((await e.textContent()) ?? "");
     await e.click();
     await expect(selectorEmoji(a)).toHaveCount(0);
   }
-  expect(new Set(elegidos).size).toBe(16);
-  const esperados = [...elegidos].reverse();
-  expect(await recientes(a)).toEqual(esperados);
-  await guardar(a);
+  expect(new Set(chosen).size).toBe(16);
+  const expected = [...chosen].reverse();
+  expect(await recent(a)).toEqual(expected);
+  await save(a);
 
   await a.reload();
-  await expect(abrirRegar(a)).toBeVisible();
-  await abrirRegar(a).click();
+  await expect(openWater(a)).toBeVisible();
+  await openWater(a).click();
   await expect(a.getByRole("heading", { name: "Editar tarea" })).toBeVisible();
-  expect(await recientes(a)).toEqual(esperados);
-  await cerrar(a);
+  expect(await recent(a)).toEqual(expected);
+  await close(a);
 
   await a.getByRole("button", { name: "+" }).click();
   await expect(a.getByRole("heading", { name: "Nueva tarea" })).toBeVisible();
-  expect(await recientes(a)).toEqual(esperados);
-  await cerrar(a);
+  expect(await recent(a)).toEqual(expected);
+  await close(a);
 
   // B (otro dispositivo, misma cuenta) no recibe los recientes de A.
-  await expect(abrirRegar(b)).toBeVisible();
-  await abrirRegar(b).click();
+  await expect(openWater(b)).toBeVisible();
+  await openWater(b).click();
   await expect(b.getByRole("heading", { name: "Editar tarea" })).toBeVisible();
-  await abrirSelector(b);
-  await expect(seccionRecientes(b)).toHaveCount(0);
+  await openSelector(b);
+  await expect(sectionRecent(b)).toHaveCount(0);
   await expect(
     selectorEmoji(b).locator('section[aria-labelledby="title-recents"]'),
   ).toHaveCount(0);
-  await fin();
+  await end();
 });
 
 test.describe("sin conexión", () => {
   test.use({ serviceWorkers: "allow" });
-  const HORA = "2026-07-15T08:00:00";
+  const HOUR = "2026-07-15T08:00:00";
 
-  async function sesionPwa(browser: Browser) {
-    const d = await dispositivo(browser, HORA, true);
-    await controlada(d.page);
+  async function sessionPwa(browser: Browser) {
+    const d = await device(browser, HOUR, true);
+    await controlled(d.page);
     await expect(
       d.page.getByRole("heading", { name: "Pendientes", level: 1 }),
     ).toBeVisible();
@@ -348,156 +348,156 @@ test.describe("sin conexión", () => {
   }
 
   test("Flujo 5: el selector sin conexión", async ({ browser }) => {
-    const { ctx, page } = await sesionPwa(browser);
-    const externas: string[] = [];
+    const { ctx, page } = await sessionPwa(browser);
+    const external: string[] = [];
     ctx.on("request", (r) => {
       const u = new URL(r.url());
       // cleardot.gif es el sondeo de red de Firestore (WebChannel), no del selector.
-      const esFirestore =
+      const isFirestore =
         u.hostname === "www.google.com" &&
         u.pathname === "/images/cleardot.gif";
       if (
         !["127.0.0.1", "localhost"].includes(u.hostname) &&
         u.protocol.startsWith("http") &&
-        !esFirestore
+        !isFirestore
       )
-        externas.push(r.url());
+        external.push(r.url());
     });
-    await crear(page, { titulo: "Regar", tipo: "No se repite" });
-    await expect(nombre(page, "Regar")).toBeVisible();
+    await create(page, { title: "Regar", kind: "No se repite" });
+    await expect(name(page, "Regar")).toBeVisible();
 
     // Con conexión: abrir el selector una vez y cerrarlo.
-    await abrir(page, "Regar");
-    await abrirSelector(page);
+    await openTask(page, "Regar");
+    await openSelector(page);
     await selectorEmoji(page).getByRole("button", { name: "Cerrar" }).click();
-    await cerrar(page);
-    await llegaAlServidor(page);
+    await close(page);
+    await arrivesOnServer(page);
 
     await ctx.setOffline(true);
     await page.reload();
-    await expect(nombre(page, "Regar")).toBeVisible();
-    await abrir(page, "Regar");
-    await abrirSelector(page);
+    await expect(name(page, "Regar")).toBeVisible();
+    await openTask(page, "Regar");
+    await openSelector(page);
     await expect(selectorEmoji(page).getByRole("tab")).toHaveCount(9);
-    expect(await emojisDelSelector(page).count()).toBeGreaterThan(20);
+    expect(await selectorEmojis(page).count()).toBeGreaterThan(20);
     await expect(selectorEmoji(page).getByText("Cargando…")).toHaveCount(0);
 
-    await buscadorEmoji(page).fill("planta");
-    await expect(emojiExacto(page, "🌱").first()).toBeVisible();
-    await emojiExacto(page, "🌱").first().click();
+    await searchBoxEmoji(page).fill("planta");
+    await expect(emojiExact(page, "🌱").first()).toBeVisible();
+    await emojiExact(page, "🌱").first().click();
     await expect(selectorEmoji(page)).toHaveCount(0);
-    await guardar(page);
-    await expect(nombre(page, "🌱 Regar")).toBeVisible();
+    await save(page);
+    await expect(name(page, "🌱 Regar")).toBeVisible();
 
-    expect(externas).toEqual([]);
+    expect(external).toEqual([]);
     await ctx.setOffline(false);
-    await expect(nombre(page, "🌱 Regar")).toBeVisible();
-    expect(externas).toEqual([]);
+    await expect(name(page, "🌱 Regar")).toBeVisible();
+    expect(external).toEqual([]);
     await ctx.close();
   });
 });
 
 test("Flujo 6: la nota, solo en el panel", async ({ page }) => {
-  await sesionConReloj(page, LUNES);
-  await crear(page, {
-    titulo: "Regar",
-    tipo: "Intervalo",
-    cada: "2",
-    unidad: "días",
+  await sessionWithClock(page, MONDAY);
+  await create(page, {
+    title: "Regar",
+    kind: "Intervalo",
+    every: "2",
+    unit: "días",
   });
 
-  await editar(page, "Regar", { nota: "  Usar guantes  " });
+  await edit(page, "Regar", { note: "  Usar guantes  " });
   await expect(page.getByText("Usar guantes")).toHaveCount(0);
-  await abrir(page, "Regar");
+  await openTask(page, "Regar");
   await expect(page.getByLabel("Nota")).toHaveValue("Usar guantes");
-  await cerrar(page);
+  await close(page);
 
-  await editar(page, "Regar", { nota: "Usar guantes\nVentilar" });
-  await abrir(page, "Regar");
+  await edit(page, "Regar", { note: "Usar guantes\nVentilar" });
+  await openTask(page, "Regar");
   await expect(page.getByLabel("Nota")).toHaveValue("Usar guantes\nVentilar");
-  await cerrar(page);
+  await close(page);
 
-  const larga = "x".repeat(5000);
-  await editar(page, "Regar", { nota: larga });
-  await abrir(page, "Regar");
-  expect(await page.getByLabel("Nota").inputValue()).toBe(larga);
-  await cerrar(page);
+  const long = "x".repeat(5000);
+  await edit(page, "Regar", { note: long });
+  await openTask(page, "Regar");
+  expect(await page.getByLabel("Nota").inputValue()).toBe(long);
+  await close(page);
 
-  await editar(page, "Regar", { nota: "   \n  " });
-  await abrir(page, "Regar");
+  await edit(page, "Regar", { note: "   \n  " });
+  await openTask(page, "Regar");
   await expect(page.getByLabel("Nota")).toHaveValue("");
-  await cerrar(page);
+  await close(page);
 
   await page.reload();
-  await expect(nombre(page, "Regar")).toBeVisible();
-  await abrir(page, "Regar");
+  await expect(name(page, "Regar")).toBeVisible();
+  await openTask(page, "Regar");
   await expect(page.getByLabel("Nota")).toHaveValue("");
-  await cerrar(page);
-  await expect(fila(page, "Regar")).not.toContainText("guantes");
+  await close(page);
+  await expect(row(page, "Regar")).not.toContainText("guantes");
 });
 
 // --- Flujo 7: reloj detenido para el aviso ---
-const aviso = (page: Page) => page.getByRole("status");
+const notice = (page: Page) => page.getByRole("status");
 
-const entrada = (page: Page, texto: string) =>
+const entry = (page: Page, text: string) =>
   page
     .getByRole("listitem")
-    .filter({ hasText: new RegExp(`^${texto}\\s*\\d\\d:\\d\\d`) });
+    .filter({ hasText: new RegExp(`^${text}\\s*\\d\\d:\\d\\d`) });
 
 test("Flujo 7: el emoji en Historial y en el aviso de deshacer", async ({
   page,
 }) => {
-  await sesionConReloj(page, "2026-07-13T07:50:00");
-  await crearYVer(page, {
-    titulo: "Regar",
-    tipo: "Intervalo",
-    cada: "4",
-    unidad: "horas",
+  await sessionWithClock(page, "2026-07-13T07:50:00");
+  await createAndView(page, {
+    title: "Regar",
+    kind: "Intervalo",
+    every: "4",
+    unit: "horas",
     emoji: "🌱",
   });
-  await crearYVer(page, {
-    titulo: "Barrer",
-    tipo: "Intervalo",
-    cada: "4",
-    unidad: "horas",
+  await createAndView(page, {
+    title: "Barrer",
+    kind: "Intervalo",
+    every: "4",
+    unit: "horas",
   });
-  await detener(page, LUNES);
+  await stop(page, MONDAY);
 
-  await completar(page, "🌱 Regar");
-  await conReloj(page, () =>
-    expect(aviso(page)).toContainText("Completaste «🌱 Regar»"),
+  await complete(page, "🌱 Regar");
+  await withClock(page, () =>
+    expect(notice(page)).toContainText("Completaste «🌱 Regar»"),
   );
   await expect(
-    aviso(page).getByRole("button", { name: "Deshacer" }),
+    notice(page).getByRole("button", { name: "Deshacer" }),
   ).toBeVisible();
   await page.clock.runFor(5100);
-  await expect(aviso(page)).toHaveCount(0);
+  await expect(notice(page)).toHaveCount(0);
 
-  await completar(page, "Barrer");
-  await conReloj(page, () =>
-    expect(aviso(page)).toHaveText(/^Completaste «Barrer»/),
+  await complete(page, "Barrer");
+  await withClock(page, () =>
+    expect(notice(page)).toHaveText(/^Completaste «Barrer»/),
   );
   await page.clock.runFor(5100);
-  await expect(aviso(page)).toHaveCount(0);
+  await expect(notice(page)).toHaveCount(0);
 
-  await irA(page, "Historial");
+  await goA(page, "Historial");
   await expect(page.getByRole("heading", { level: 2 })).toHaveText(["Hoy"]);
   await expect(page.getByRole("listitem")).toHaveCount(2);
-  await expect(entrada(page, "🌱 Regar")).toHaveCount(1);
-  await expect(entrada(page, "Barrer")).toHaveCount(1);
+  await expect(entry(page, "🌱 Regar")).toHaveCount(1);
+  await expect(entry(page, "Barrer")).toHaveCount(1);
 
   await page.clock.resume();
-  await abrir(page, "🌱 Regar");
-  await elegirEmoji(page, "🔥");
-  await guardar(page);
-  await expect(entrada(page, "🔥 Regar")).toHaveCount(1);
-  await abrir(page, "Regar");
-  await botonQuitar(page).click();
-  await guardar(page);
-  await expect(entrada(page, "Regar")).toHaveCount(1);
+  await openTask(page, "🌱 Regar");
+  await chooseEmoji(page, "🔥");
+  await save(page);
+  await expect(entry(page, "🔥 Regar")).toHaveCount(1);
+  await openTask(page, "Regar");
+  await buttonRemove(page).click();
+  await save(page);
+  await expect(entry(page, "Regar")).toHaveCount(1);
   await expect(page.getByText("🔥")).toHaveCount(0);
 
-  await entrada(page, "Barrer")
+  await entry(page, "Barrer")
     .getByRole("button", { name: "Borrar", exact: true })
     .click();
   await expect(page.getByRole("alertdialog")).toHaveText(
@@ -508,10 +508,10 @@ test("Flujo 7: el emoji en Historial y en el aviso de deshacer", async ({
     .getByRole("button", { name: "Cancelar" })
     .click();
 
-  await abrir(page, "Regar");
-  await elegirEmoji(page, "🌿");
-  await guardar(page);
-  await entrada(page, "🌿 Regar")
+  await openTask(page, "Regar");
+  await chooseEmoji(page, "🌿");
+  await save(page);
+  await entry(page, "🌿 Regar")
     .getByRole("button", { name: "Borrar", exact: true })
     .click();
   await expect(page.getByRole("alertdialog")).toHaveText(
@@ -523,10 +523,10 @@ test("Flujo 7: el emoji en Historial y en el aviso de deshacer", async ({
     .click();
 });
 
-async function abrirEn(page: Page, emoji: string, nota: string) {
-  await abrir(page, "Regar");
-  await verPanel(page, emoji, nota);
-  await cerrar(page);
+async function openIn(page: Page, emoji: string, note: string) {
+  await openTask(page, "Regar");
+  await viewPanel(page, emoji, note);
+  await close(page);
 }
 
 // Con el service worker activo en B, el selector (carga diferida) está en su caché cuando B pierde la conexión.
@@ -534,49 +534,49 @@ test.describe("dos dispositivos", () => {
   test.use({ serviceWorkers: "allow" });
 
   test("Flujo 8: dos dispositivos, emoji y nota", async ({ browser }) => {
-    const { a, b, ctxB, cerrar: fin } = await dosDispositivos(browser);
-    await crear(a, { titulo: "Regar", tipo: "No se repite" });
-    await esperarEstado(b, "Regar", "pendiente");
+    const { a, b, ctxB, close: end } = await twoDevices(browser);
+    await create(a, { title: "Regar", kind: "No se repite" });
+    await waitStatus(b, "Regar", "pendiente");
     // B ya tiene el service worker activo: el selector (carga diferida) está en su caché antes de cortar la red.
-    await controlada(b);
+    await controlled(b);
 
     await ctxB.setOffline(true);
-    await editar(b, "Regar", { emoji: "🌱" });
-    await editar(a, "Regar", { nota: "Usar guantes" });
-    await llegaAlServidor(a);
+    await edit(b, "Regar", { emoji: "🌱" });
+    await edit(a, "Regar", { note: "Usar guantes" });
+    await arrivesOnServer(a);
     await ctxB.setOffline(false);
     for (const p of [a, b]) {
       await expect(
         p.getByRole("button", { name: "🌱 Regar", exact: true }),
       ).toBeVisible();
-      await abrirEn(p, "🌱", "Usar guantes");
+      await openIn(p, "🌱", "Usar guantes");
     }
 
     await ctxB.setOffline(true);
-    await editar(b, "Regar", { emoji: "🔥", nota: "Ventilar" });
-    await editar(a, "Regar", { emoji: "🌿" });
-    await llegaAlServidor(a);
+    await edit(b, "Regar", { emoji: "🔥", note: "Ventilar" });
+    await edit(a, "Regar", { emoji: "🌿" });
+    await arrivesOnServer(a);
     await ctxB.setOffline(false);
     for (const p of [a, b]) {
       await expect(
         p.getByRole("button", { name: "🔥 Regar", exact: true }),
       ).toBeVisible();
-      await abrirEn(p, "🔥", "Ventilar");
+      await openIn(p, "🔥", "Ventilar");
     }
 
     await ctxB.setOffline(true);
-    await abrir(b, "Regar");
-    await botonQuitar(b).click();
-    await guardar(b);
-    await editar(a, "Regar", { nota: "Barrer abajo" });
-    await llegaAlServidor(a);
+    await openTask(b, "Regar");
+    await buttonRemove(b).click();
+    await save(b);
+    await edit(a, "Regar", { note: "Barrer abajo" });
+    await arrivesOnServer(a);
     await ctxB.setOffline(false);
     for (const p of [a, b]) {
       await expect(
         p.getByRole("button", { name: "Regar", exact: true }),
       ).toBeVisible();
-      await abrirEn(p, "", "Barrer abajo");
+      await openIn(p, "", "Barrer abajo");
     }
-    await fin();
+    await end();
   });
 });

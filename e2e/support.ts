@@ -6,16 +6,16 @@ import {
   type Locator,
 } from "@playwright/test";
 
-const PROYECTO = "demo-tareas-hogar";
+const PROJECT = "demo-tareas-hogar";
 
 /** Datos limpios: vacía Auth y Firestore del emulador. */
-export async function limpiarEmuladores(): Promise<void> {
+export async function cleanEmulators(): Promise<void> {
   await fetch(
-    `http://127.0.0.1:9099/emulator/v1/projects/${PROYECTO}/accounts`,
+    `http://127.0.0.1:9099/emulator/v1/projects/${PROJECT}/accounts`,
     { method: "DELETE" },
   );
   await fetch(
-    `http://127.0.0.1:8080/emulator/v1/projects/${PROYECTO}/databases/(default)/documents`,
+    `http://127.0.0.1:8080/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
     {
       method: "DELETE",
     },
@@ -23,72 +23,72 @@ export async function limpiarEmuladores(): Promise<void> {
 }
 
 /** Flujo 1 pasos 1-4: abre la app sin reloj y entra con qa@example.com. */
-export async function entrar(page: Page): Promise<void> {
+export async function enter(page: Page): Promise<void> {
   await page.goto("/");
-  await completarEntrada(page);
+  await completeEntry(page);
 }
 
 /** Flujo 1 pasos 2-4: con la pantalla de entrada a la vista, entra con qa@example.com. */
-export async function completarEntrada(page: Page): Promise<void> {
+export async function completeEntry(page: Page): Promise<void> {
   const popup = page.waitForEvent("popup");
   await page.getByRole("button", { name: "Entrar con Google" }).click();
-  const emulador = await popup;
-  await emulador.waitForLoadState();
-  await emulador.getByText("Add new account").click();
-  await emulador.getByLabel("Email").fill("qa@example.com");
-  await emulador
+  const emulator = await popup;
+  await emulator.waitForLoadState();
+  await emulator.getByText("Add new account").click();
+  await emulator.getByLabel("Email").fill("qa@example.com");
+  await emulator
     .getByRole("button", { name: /Auto-generate/ })
     .click()
     .catch(() => {});
-  await emulador.getByRole("button", { name: /Sign in with Google/ }).click();
+  await emulator.getByRole("button", { name: /Sign in with Google/ }).click();
   await expect(page.getByRole("heading", { name: "Pendientes" })).toBeVisible();
 }
 
 /** Instala el reloj simulado después del login (el popup del emulador no tolera el reloj) y recarga. */
-export async function fijarReloj(page: Page, hora: string): Promise<void> {
-  await page.clock.install({ time: new Date(hora) });
+export async function setClock(page: Page, hour: string): Promise<void> {
+  await page.clock.install({ time: new Date(hour) });
   await page.reload();
   await expect(page.getByRole("heading", { name: "Pendientes" })).toBeVisible();
 }
 
-export async function adelantar(page: Page, hora: string): Promise<void> {
+export async function advance(page: Page, hour: string): Promise<void> {
   // fastForward no admite saltos de más de ~24 días: se avanza por tramos de una semana.
-  const destino = new Date(hora).getTime();
-  const SEMANA_MS = 7 * 24 * 3600 * 1000;
+  const target = new Date(hour).getTime();
+  const WEEK_MS = 7 * 24 * 3600 * 1000;
   for (;;) {
-    const ahora = await page.evaluate(() => Date.now());
-    const falta = destino - ahora;
-    await page.clock.fastForward(Math.min(falta, SEMANA_MS));
-    if (falta <= SEMANA_MS) return;
+    const now = await page.evaluate(() => Date.now());
+    const missing = target - now;
+    await page.clock.fastForward(Math.min(missing, WEEK_MS));
+    if (missing <= WEEK_MS) return;
   }
 }
 
-export async function crearTarea(
+export async function createTask(
   page: Page,
-  titulo: string,
-  cada: string,
-  unidad: "horas" | "días",
+  title: string,
+  every: string,
+  unit: "horas" | "días",
 ): Promise<void> {
   await page.getByRole("button", { name: "+" }).click();
-  await page.getByLabel("Título").fill(titulo);
+  await page.getByLabel("Título").fill(title);
   await page.getByRole("radio", { name: "Intervalo" }).check();
-  await page.getByRole("spinbutton", { name: "Cada" }).fill(cada);
-  await page.getByLabel("Unidad").selectOption({ label: unidad });
+  await page.getByRole("spinbutton", { name: "Cada" }).fill(every);
+  await page.getByLabel("Unidad").selectOption({ label: unit });
   await page.getByRole("button", { name: "Guardar" }).click();
 }
 
-export function fila(page: Page, titulo: string): Locator {
-  return page.getByRole("listitem").filter({ hasText: titulo });
+export function row(page: Page, title: string): Locator {
+  return page.getByRole("listitem").filter({ hasText: title });
 }
 
-type Estado = "pendiente" | "en espera" | "atrasada";
+type Status = "pendiente" | "en espera" | "atrasada";
 
-async function opacidad(l: Locator): Promise<number> {
+async function opacity(l: Locator): Promise<number> {
   return Number(await l.evaluate((e) => getComputedStyle(e).opacity));
 }
 
 /** Producto de las opacidades computadas del elemento y de sus ancestros. */
-export async function opacidadEfectiva(l: Locator): Promise<number> {
+export async function opacityEffective(l: Locator): Promise<number> {
   return l.evaluate((e) => {
     let o = 1;
     for (let n: Element | null = e; n; n = n.parentElement)
@@ -97,14 +97,14 @@ export async function opacidadEfectiva(l: Locator): Promise<number> {
   });
 }
 
-export const tituloDeFila = (f: Locator) => f.getByRole("button").first();
+export const rowTitle = (f: Locator) => f.getByRole("button").first();
 
 /**
  * Dimmed row (spec §6: "atenuado"): its title is translucent or drawn in a softer color than the
  * page text. Either way counts, so the test does not pin how the UI dims it.
  */
-export async function atenuada(f: Locator): Promise<boolean> {
-  return tituloDeFila(f).evaluate((e) => {
+export async function dimmed(f: Locator): Promise<boolean> {
+  return rowTitle(f).evaluate((e) => {
     let o = 1;
     for (let n: Element | null = e; n; n = n.parentElement)
       o *= Number(getComputedStyle(n).opacity);
@@ -113,17 +113,17 @@ export async function atenuada(f: Locator): Promise<boolean> {
 }
 
 /** Contraste (qa/mostrar-completadas.md): negrita sin tachar, o tachado, peso normal y atenuado. */
-async function verificarContraste(f: Locator, completada: boolean) {
-  const t = tituloDeFila(f);
-  const peso = Number(await t.evaluate((e) => getComputedStyle(e).fontWeight));
-  const linea = await t.evaluate((e) => getComputedStyle(e).textDecorationLine);
-  if (completada) {
-    expect(peso).toBeLessThanOrEqual(400);
-    expect(linea).toContain("line-through");
-    expect(await opacidadEfectiva(t)).toBeLessThan(1);
+async function verifyContrast(f: Locator, completed: boolean) {
+  const t = rowTitle(f);
+  const weight = Number(await t.evaluate((e) => getComputedStyle(e).fontWeight));
+  const line = await t.evaluate((e) => getComputedStyle(e).textDecorationLine);
+  if (completed) {
+    expect(weight).toBeLessThanOrEqual(400);
+    expect(line).toContain("line-through");
+    expect(await opacityEffective(t)).toBeLessThan(1);
   } else {
-    expect(peso).toBeGreaterThanOrEqual(600);
-    expect(linea).not.toContain("line-through");
+    expect(weight).toBeGreaterThanOrEqual(600);
+    expect(line).not.toContain("line-through");
   }
 }
 
@@ -131,88 +131,88 @@ async function verificarContraste(f: Locator, completada: boolean) {
  * Estado de la fila. `completada` (por defecto, la de `en espera`: una periódica en espera con
  * completados está completada) fija checkbox marcado y contraste.
  */
-export async function esperarEstado(
+export async function waitStatus(
   page: Page,
-  titulo: string,
-  estado: Estado,
-  barra?: number,
-  completada: boolean = estado === "en espera",
-  habilitado: boolean = true,
+  title: string,
+  status: Status,
+  bar?: number,
+  completed: boolean = status === "en espera",
+  enabled: boolean = true,
 ): Promise<void> {
-  const f = fila(page, titulo);
-  const check = f.getByRole("checkbox", { name: new RegExp(titulo) });
+  const f = row(page, title);
+  const check = f.getByRole("checkbox", { name: new RegExp(title) });
   await expect(check).toBeVisible();
-  if (completada) await expect(check).toBeChecked();
+  if (completed) await expect(check).toBeChecked();
   else await expect(check).not.toBeChecked();
-  if (habilitado) await expect(check).toBeEnabled();
+  if (enabled) await expect(check).toBeEnabled();
   else await expect(check).toBeDisabled();
-  const caja = await f.locator("label").first().boundingBox();
-  expect(caja!.width).toBeGreaterThanOrEqual(48);
-  expect(caja!.height).toBeGreaterThanOrEqual(48);
-  await verificarContraste(f, completada);
-  const progreso = f.getByRole("progressbar");
-  const atraso = f.getByText(/^Tocaba /);
-  if (estado === "en espera") {
-    await expect(progreso).toHaveCount(1);
-    await expect(progreso).toHaveAttribute("aria-valuemin", "0");
-    await expect(progreso).toHaveAttribute("aria-valuemax", "100");
-    if (barra !== undefined)
-      await expect(progreso).toHaveAttribute("aria-valuenow", String(barra));
-    await expect(atraso).toHaveCount(0);
+  const box = await f.locator("label").first().boundingBox();
+  expect(box!.width).toBeGreaterThanOrEqual(48);
+  expect(box!.height).toBeGreaterThanOrEqual(48);
+  await verifyContrast(f, completed);
+  const progress = f.getByRole("progressbar");
+  const lateness = f.getByText(/^Tocaba /);
+  if (status === "en espera") {
+    await expect(progress).toHaveCount(1);
+    await expect(progress).toHaveAttribute("aria-valuemin", "0");
+    await expect(progress).toHaveAttribute("aria-valuemax", "100");
+    if (bar !== undefined)
+      await expect(progress).toHaveAttribute("aria-valuenow", String(bar));
+    await expect(lateness).toHaveCount(0);
     await expect(f.getByText("Atrasada")).toHaveCount(0);
-    expect(await atenuada(f)).toBe(true);
+    expect(await dimmed(f)).toBe(true);
   } else {
-    await expect(progreso).toHaveCount(0);
-    expect(await opacidad(f)).toBe(1);
-    await expect(atraso).toHaveCount(estado === "atrasada" ? 1 : 0);
+    await expect(progress).toHaveCount(0);
+    expect(await opacity(f)).toBe(1);
+    await expect(lateness).toHaveCount(status === "atrasada" ? 1 : 0);
   }
 }
 
-export const mostrarCompletadas = (page: Page) =>
+export const showCompleted = (page: Page) =>
   page.getByRole("checkbox", { name: "Completadas" });
 
 /** Toca el check Mostrar completadas y verifica que quedó en `encendido`. */
-export async function conmutarMostrarCompletadas(
+export async function toggleShowCompleted(
   page: Page,
-  encendido: boolean,
+  on: boolean,
 ): Promise<void> {
-  await mostrarCompletadas(page).click();
-  if (encendido) await expect(mostrarCompletadas(page)).toBeChecked();
-  else await expect(mostrarCompletadas(page)).not.toBeChecked();
+  await showCompleted(page).click();
+  if (on) await expect(showCompleted(page)).toBeChecked();
+  else await expect(showCompleted(page)).not.toBeChecked();
 }
 
 /** Enciende Mostrar completadas (apagado por defecto) y verifica que quedó marcado. */
-export const encenderCompletadas = (page: Page) =>
-  conmutarMostrarCompletadas(page, true);
+export const turnOnCompleted = (page: Page) =>
+  toggleShowCompleted(page, true);
 
 /** La lista (filas de Pendientes) es exactamente `titulos`, de arriba hacia abajo. */
-export async function listaEs(page: Page, titulos: string[]): Promise<void> {
+export async function listIs(page: Page, titles: string[]): Promise<void> {
   // Solo las filas de tarea (con checkbox).
   const items = page
     .getByRole("listitem")
     .filter({ has: page.getByRole("checkbox") });
-  await expect(items).toHaveCount(titulos.length);
-  await expect(items).toHaveText(titulos.map((t) => new RegExp(t)));
+  await expect(items).toHaveCount(titles.length);
+  await expect(items).toHaveText(titles.map((t) => new RegExp(t)));
 }
 
 /** Retrocede el reloj simulado a `hora` y deja correr un segundo para que la pantalla se refresque sola. */
-export async function retroceder(page: Page, hora: string): Promise<void> {
-  await page.clock.setSystemTime(new Date(hora));
+export async function goBack(page: Page, hour: string): Promise<void> {
+  await page.clock.setSystemTime(new Date(hour));
   await page.clock.runFor(1000);
 }
 
 /** Como `entrar`, pero para un segundo dispositivo: elige la cuenta que ya existe en el emulador. */
-export async function entrarComoSegundoDispositivo(page: Page): Promise<void> {
+export async function enterAsSecondDevice(page: Page): Promise<void> {
   await page.goto("/");
   const popup = page.waitForEvent("popup");
   await page.getByRole("button", { name: "Entrar con Google" }).click();
-  const emulador = await popup;
-  await emulador.waitForLoadState();
-  await emulador.locator(".js-reuse-account").first().click();
+  const emulator = await popup;
+  await emulator.waitForLoadState();
+  await emulator.locator(".js-reuse-account").first().click();
   await expect(page.getByRole("heading", { name: "Pendientes" })).toBeVisible();
 }
 
-export const SEMANA = [
+export const WEEK = [
   "lunes",
   "martes",
   "miércoles",
@@ -222,58 +222,58 @@ export const SEMANA = [
   "domingo",
 ];
 
-export type Tipo =
+export type Kind =
   "No se repite" | "Intervalo" | "Días de la semana" | "Días del mes";
-export interface Definicion {
-  titulo?: string;
-  tipo?: Tipo;
-  fecha?: string;
-  cada?: string;
-  unidad?: "horas" | "días";
-  dias?: string[];
+export interface Definition {
+  title?: string;
+  kind?: Kind;
+  date?: string;
+  every?: string;
+  unit?: "horas" | "días";
+  days?: string[];
   emoji?: string;
-  nota?: string;
+  note?: string;
   /** Primer paso: el campo Primer paso del panel (`""` lo vacía). */
-  primerPaso?: string;
+  firstStep?: string;
   /** Pasos más: por cada uno, Agregar paso y escribir en el campo Paso N que sigue. */
-  pasos?: string[];
+  steps?: string[];
   /** Versión mínima: el campo Versión mínima del panel (`""` lo vacía). */
-  versionMinima?: string;
+  minimalVersion?: string;
   /** Horario: `null` apaga "Solo en un horario"; un objeto lo enciende y escribe Desde/Hasta (`""` vacía el campo). */
-  horario?: { desde?: string; hasta?: string } | null;
+  schedule?: { from?: string; to?: string } | null;
   /** Varias ventanas: enciende "Solo en un horario" y, por cada una, usa Agregar horario si hace falta y escribe Desde/Hasta. */
-  horarios?: { desde: string; hasta: string }[];
+  schedules?: { from: string; to: string }[];
 }
 
 /** Campos Desde/Hasta de la fila `i` del panel (la primera conserva los ids field-from/field-to). */
-export const campoDesde = (page: Page, i = 0) =>
+export const fieldFrom = (page: Page, i = 0) =>
   page.getByLabel("Desde", { exact: true }).nth(i);
-export const campoHasta = (page: Page, i = 0) =>
+export const fieldTo = (page: Page, i = 0) =>
   page.getByLabel("Hasta", { exact: true }).nth(i);
-export const agregarHorario = (page: Page) =>
+export const addSchedule = (page: Page) =>
   page.getByRole("button", { name: "Agregar horario" });
-export const quitarHorario = (page: Page) =>
+export const removeSchedule = (page: Page) =>
   page.getByRole("button", { name: "Quitar", exact: true });
 
-export async function sesionConReloj(page: Page, hora: string) {
-  await entrar(page);
-  await fijarReloj(page, hora);
+export async function sessionWithClock(page: Page, hour: string) {
+  await enter(page);
+  await setClock(page, hour);
 }
 
-export async function fijarDias(page: Page, dias: string[]) {
-  for (const nombre of [
-    ...SEMANA,
+export async function setDays(page: Page, days: string[]) {
+  for (const name of [
+    ...WEEK,
     ...Array.from({ length: 31 }, (_, i) => String(i + 1)),
   ]) {
-    const boton = page.getByRole("button", { name: nombre, exact: true });
-    if ((await boton.count()) === 0) continue;
-    const marcado = (await boton.getAttribute("aria-pressed")) === "true";
-    if (marcado !== dias.includes(nombre)) await boton.click();
+    const button = page.getByRole("button", { name, exact: true });
+    if ((await button.count()) === 0) continue;
+    const marked = (await button.getAttribute("aria-pressed")) === "true";
+    if (marked !== days.includes(name)) await button.click();
   }
 }
 
 /** Términos en español con los que se encuentra cada emoji en el buscador del selector. */
-const BUSQUEDA: Record<string, string> = {
+const SEARCH: Record<string, string> = {
   "🌱": "planta",
   "🔥": "fuego",
   "🧹": "escoba",
@@ -287,135 +287,135 @@ const BUSQUEDA: Record<string, string> = {
 
 export const selectorEmoji = (page: Page) =>
   page.getByRole("dialog", { name: "Elegir emoji" });
-const botonDelSelector = (page: Page) =>
+const selectorButton = (page: Page) =>
   page.getByRole("button", { name: /^(Elegir emoji|Cambiar emoji)/ });
-export const buscadorEmoji = (page: Page) =>
+export const searchBoxEmoji = (page: Page) =>
   selectorEmoji(page).locator("input.search");
-export const emojisDelSelector = (page: Page) =>
+export const selectorEmojis = (page: Page) =>
   selectorEmoji(page).locator(".tabpanel button.emoji");
 
 /** El botón de la grilla cuyo texto es exactamente `emoji` (🔥 no es ❤️‍🔥). */
-export const emojiExacto = (page: Page, emoji: string) =>
-  emojisDelSelector(page).filter({ hasText: new RegExp(`^${emoji}$`) });
+export const emojiExact = (page: Page, emoji: string) =>
+  selectorEmojis(page).filter({ hasText: new RegExp(`^${emoji}$`) });
 
 /** Abre el selector desde el panel y espera a que la librería diferida cargue su grilla. */
-export async function abrirSelector(page: Page) {
-  await botonDelSelector(page).click();
+export async function openSelector(page: Page) {
+  await selectorButton(page).click();
   await expect(selectorEmoji(page)).toBeVisible();
-  await expect(emojisDelSelector(page).first()).toBeVisible();
+  await expect(selectorEmojis(page).first()).toBeVisible();
 }
 
 /** Abre el selector, busca por texto en español y elige el emoji; el selector se cierra. */
-export async function elegirEmoji(
+export async function chooseEmoji(
   page: Page,
   emoji: string,
-  busqueda = BUSQUEDA[emoji],
-  tono?: number,
+  search = SEARCH[emoji],
+  tone?: number,
 ) {
-  await abrirSelector(page);
-  if (tono !== undefined) {
+  await openSelector(page);
+  if (tone !== undefined) {
     await selectorEmoji(page).locator("#skintone-button").click();
     await selectorEmoji(page)
       .locator("#skintone-list [role=option]")
-      .nth(tono)
+      .nth(tone)
       .click();
   }
-  await buscadorEmoji(page).fill(busqueda);
-  await emojiExacto(page, emoji).click();
+  await searchBoxEmoji(page).fill(search);
+  await emojiExact(page, emoji).click();
   await expect(selectorEmoji(page)).toHaveCount(0);
 }
 
 /** En el celular el panel tiene pestañas: abre la de la sección; en pantallas anchas no hace nada. */
-export async function abrirPestana(page: Page, nombre: "Tarea" | "Cuándo") {
-  const tab = page.getByRole("tab", { name: new RegExp(`^${nombre}`) });
+export async function openTab(page: Page, name: "Tarea" | "Cuándo") {
+  const tab = page.getByRole("tab", { name: new RegExp(`^${name}`) });
   if ((await tab.count()) > 0) await tab.click();
 }
 
-export async function completarPanel(page: Page, d: Definicion) {
-  await abrirPestana(page, "Tarea");
-  if (d.titulo !== undefined) await page.getByLabel("Título").fill(d.titulo);
-  if (d.emoji !== undefined) await elegirEmoji(page, d.emoji);
-  if (d.nota !== undefined) await page.getByLabel("Nota").fill(d.nota);
-  if (d.primerPaso !== undefined)
-    await page.getByRole("textbox", { name: "Primer paso", exact: true }).fill(d.primerPaso);
-  for (const texto of d.pasos ?? []) {
+export async function completePanel(page: Page, d: Definition) {
+  await openTab(page, "Tarea");
+  if (d.title !== undefined) await page.getByLabel("Título").fill(d.title);
+  if (d.emoji !== undefined) await chooseEmoji(page, d.emoji);
+  if (d.note !== undefined) await page.getByLabel("Nota").fill(d.note);
+  if (d.firstStep !== undefined)
+    await page.getByRole("textbox", { name: "Primer paso", exact: true }).fill(d.firstStep);
+  for (const text of d.steps ?? []) {
     const n = (await page.getByRole("textbox", { name: /^Paso \d+$/ }).count()) + 2;
     await page.getByRole("button", { name: "Agregar paso", exact: true }).click();
-    await page.getByRole("textbox", { name: `Paso ${n}`, exact: true }).fill(texto);
+    await page.getByRole("textbox", { name: `Paso ${n}`, exact: true }).fill(text);
   }
-  if (d.versionMinima !== undefined)
-    await page.getByRole("textbox", { name: "Versión mínima", exact: true }).fill(d.versionMinima);
-  await abrirPestana(page, "Cuándo");
-  if (d.tipo) await page.getByRole("radio", { name: d.tipo }).check();
-  if (d.fecha !== undefined)
-    await page.getByLabel("Fecha límite").fill(d.fecha);
-  if (d.cada !== undefined)
-    await page.getByRole("spinbutton", { name: "Cada" }).fill(d.cada);
-  if (d.unidad)
-    await page.getByLabel("Unidad").selectOption({ label: d.unidad });
-  if (d.dias) await fijarDias(page, d.dias);
-  if (d.horario !== undefined) await completarHorario(page, d.horario);
-  if (d.horarios) await completarHorarios(page, d.horarios);
+  if (d.minimalVersion !== undefined)
+    await page.getByRole("textbox", { name: "Versión mínima", exact: true }).fill(d.minimalVersion);
+  await openTab(page, "Cuándo");
+  if (d.kind) await page.getByRole("radio", { name: d.kind }).check();
+  if (d.date !== undefined)
+    await page.getByLabel("Fecha límite").fill(d.date);
+  if (d.every !== undefined)
+    await page.getByRole("spinbutton", { name: "Cada" }).fill(d.every);
+  if (d.unit)
+    await page.getByLabel("Unidad").selectOption({ label: d.unit });
+  if (d.days) await setDays(page, d.days);
+  if (d.schedule !== undefined) await completeSchedule(page, d.schedule);
+  if (d.schedules) await completeSchedules(page, d.schedules);
 }
 
-async function completarHorarios(
+async function completeSchedules(
   page: Page,
-  ventanas: { desde: string; hasta: string }[],
+  timeWindows: { from: string; to: string }[],
 ) {
-  await soloEnUnHorario(page).check();
-  for (const [i, v] of ventanas.entries()) {
+  await onlyInSchedule(page).check();
+  for (const [i, v] of timeWindows.entries()) {
     if ((await page.getByLabel("Desde", { exact: true }).count()) <= i)
-      await agregarHorario(page).click();
-    await campoDesde(page, i).fill(v.desde);
-    await campoHasta(page, i).fill(v.hasta);
+      await addSchedule(page).click();
+    await fieldFrom(page, i).fill(v.from);
+    await fieldTo(page, i).fill(v.to);
   }
 }
 
-export const soloEnUnHorario = (page: Page) =>
+export const onlyInSchedule = (page: Page) =>
   page.getByRole("checkbox", { name: "Solo en un horario" });
 
-async function completarHorario(page: Page, h: Definicion["horario"]) {
-  const check = soloEnUnHorario(page);
+async function completeSchedule(page: Page, h: Definition["schedule"]) {
+  const check = onlyInSchedule(page);
   if (h === null) {
     await check.uncheck();
     return;
   }
   await check.check();
-  if (h?.desde !== undefined) await campoDesde(page).fill(h.desde);
-  if (h?.hasta !== undefined) await campoHasta(page).fill(h.hasta);
+  if (h?.from !== undefined) await fieldFrom(page).fill(h.from);
+  if (h?.to !== undefined) await fieldTo(page).fill(h.to);
 }
 
-export async function crear(page: Page, d: Definicion & { titulo: string }) {
+export async function create(page: Page, d: Definition & { title: string }) {
   await page.getByRole("button", { name: "+" }).click();
   await expect(
     page.getByRole("heading", { name: "Nueva tarea" }),
   ).toBeVisible();
-  await completarPanel(page, d);
+  await completePanel(page, d);
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
-export async function abrir(page: Page, titulo: string) {
-  await fila(page, titulo).getByRole("button", { name: titulo }).click();
+export async function openTask(page: Page, title: string) {
+  await row(page, title).getByRole("button", { name: title }).click();
   await expect(
     page.getByRole("heading", { name: "Editar tarea" }),
   ).toBeVisible();
 }
 
-export async function editar(page: Page, titulo: string, d: Definicion) {
-  await abrir(page, titulo);
-  await completarPanel(page, d);
+export async function edit(page: Page, title: string, d: Definition) {
+  await openTask(page, title);
+  await completePanel(page, d);
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
-export async function cerrar(page: Page) {
+export async function close(page: Page) {
   await page.getByRole("button", { name: "Cerrar" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
 /** Cerrar un panel con cambios: abre el aviso (spec §6.2) y se elige Descartar. */
-export async function descartar(page: Page) {
+export async function discard(page: Page) {
   await page.getByRole("button", { name: "Cerrar" }).click();
   await page
     .getByRole("alertdialog", { name: "Tenés cambios sin guardar" })
@@ -425,8 +425,8 @@ export async function descartar(page: Page) {
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
 }
 
-export async function borrar(page: Page, titulo: string) {
-  await abrir(page, titulo);
+export async function remove(page: Page, title: string) {
+  await openTask(page, title);
   await page.getByRole("button", { name: "Borrar tarea" }).click();
   await page
     .getByRole("alertdialog")
@@ -436,30 +436,30 @@ export async function borrar(page: Page, titulo: string) {
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
 }
 
-export const completar = (page: Page, titulo: string) =>
-  fila(page, titulo).getByRole("checkbox").click();
+export const complete = (page: Page, title: string) =>
+  row(page, title).getByRole("checkbox").click();
 
-export async function verificarDias(
+export async function verifyDays(
   page: Page,
-  grupo: "Días de la semana" | "Días del mes",
-  marcados: string[],
-  todos: string[],
+  group: "Días de la semana" | "Días del mes",
+  marked: string[],
+  all: string[],
 ) {
-  const g = page.getByRole("group", { name: grupo });
-  for (const d of todos)
+  const g = page.getByRole("group", { name: group });
+  for (const d of all)
     await expect(
       g.getByRole("button", { name: d, exact: true }),
-    ).toHaveAttribute("aria-pressed", String(marcados.includes(d)));
+    ).toHaveAttribute("aria-pressed", String(marked.includes(d)));
 }
 
 /** Deja que lo que A escribió llegue al servidor antes de que B vuelva a tener conexión (la UI no muestra el acuse). */
-export const llegaAlServidor = (page: Page) => page.waitForTimeout(2000);
+export const arrivesOnServer = (page: Page) => page.waitForTimeout(2000);
 
 // Dos dispositivos: dos contextos de navegador con la misma cuenta y el mismo reloj.
-export async function dispositivo(
+export async function device(
   browser: Browser,
-  hora: string,
-  primero: boolean,
+  hour: string,
+  first: boolean,
 ): Promise<{ ctx: BrowserContext; page: Page }> {
   const ctx = await browser.newContext({
     baseURL: "http://127.0.0.1:4173",
@@ -467,23 +467,23 @@ export async function dispositivo(
     timezoneId: "America/Argentina/Buenos_Aires",
   });
   const page = await ctx.newPage();
-  if (primero) await entrar(page);
-  else await entrarComoSegundoDispositivo(page);
-  await fijarReloj(page, hora);
+  if (first) await enter(page);
+  else await enterAsSecondDevice(page);
+  await setClock(page, hour);
   return { ctx, page };
 }
 
-export async function dosDispositivos(
+export async function twoDevices(
   browser: Browser,
-  hora = "2026-07-13T08:00:00",
+  hour = "2026-07-13T08:00:00",
 ) {
-  const a = await dispositivo(browser, hora, true);
-  const b = await dispositivo(browser, hora, false);
+  const a = await device(browser, hour, true);
+  const b = await device(browser, hour, false);
   return {
     a: a.page,
     b: b.page,
     ctxB: b.ctx,
-    cerrar: async () => {
+    close: async () => {
       await a.ctx.close();
       await b.ctx.close();
     },
@@ -491,32 +491,32 @@ export async function dosDispositivos(
 }
 
 /** Crear y esperar a ver la fila: así la escritura ya llegó a la pantalla antes de detener el reloj. */
-export async function crearYVer(
+export async function createAndView(
   page: Page,
-  d: Definicion & { titulo: string },
+  d: Definition & { title: string },
 ) {
-  await crear(page, d);
-  await expect(fila(page, d.titulo)).toBeVisible();
+  await create(page, d);
+  await expect(row(page, d.title)).toBeVisible();
 }
 
-export type Pestana = "Pendientes" | "Historial" | "Anotaciones";
+export type Tab = "Pendientes" | "Historial" | "Anotaciones";
 
 /** Toca una pestaña; el router de SvelteKit necesita que corra el reloj simulado (100 ms). */
-export async function irA(page: Page, pestana: Pestana) {
+export async function goA(page: Page, tab: Tab) {
   await page
     .getByRole("navigation")
-    .getByRole("link", { name: pestana })
+    .getByRole("link", { name: tab })
     .click();
   await page.clock.runFor(100);
   await expect(
-    page.getByRole("heading", { name: pestana, level: 1 }),
+    page.getByRole("heading", { name: tab, level: 1 }),
   ).toBeVisible();
 }
 
 /** Con el reloj detenido (después de crear las tareas): lo para exactamente en `hora`. */
-export async function detener(page: Page, hora: string) {
+export async function stop(page: Page, hour: string) {
   // Los últimos 200 ms corren detenidos para que lleguen los snapshots y quede exactamente en `hora`.
-  await page.clock.pauseAt(new Date(new Date(hora).getTime() - 200));
+  await page.clock.pauseAt(new Date(new Date(hour).getTime() - 200));
   await page.clock.runFor(200);
 }
 
@@ -524,31 +524,31 @@ export async function detener(page: Page, hora: string) {
  * Con el reloj detenido, deja correr un poco el tiempo simulado mientras la aserción espera
  * (para que lleguen los snapshots, cuyos temporizadores el reloj detenido no dispara).
  */
-export async function conReloj(
+export async function withClock(
   page: Page,
-  aserciones: () => Promise<void>,
+  assertions: () => Promise<void>,
   ms = 10,
 ): Promise<void> {
-  let fin = false;
+  let end = false;
   const tic = (async () => {
-    while (!fin) {
+    while (!end) {
       await page.clock.runFor(ms);
       await page.waitForTimeout(50);
     }
   })();
   try {
-    await aserciones();
+    await assertions();
   } finally {
-    fin = true;
+    end = true;
     await tic;
   }
 }
 
 /** Después de Deshacer (reloj detenido), el borrado tarda unos segundos simulados en volver como snapshot. */
-export const asentar = (page: Page) => page.clock.runFor(3000);
+export const settle = (page: Page) => page.clock.runFor(3000);
 
 /** Espera al service worker activo y recarga (con conexión) hasta que la página queda controlada. */
-export async function controlada(page: Page) {
+export async function controlled(page: Page) {
   await page.evaluate(() =>
     navigator.serviceWorker.ready.then(() => undefined),
   );
@@ -561,33 +561,33 @@ export async function controlada(page: Page) {
   }).toPass({ timeout: 8000 });
 }
 
-const VACIO = "Todavía no completaste nada";
+const EMPTY = "Todavía no completaste nada";
 
-export type Grupos = [
+export type Groups = [
   encabezado: string,
   entradas: [titulo: string, hora: string][],
 ][];
 
 /** Verifica los grupos del Historial, en orden: encabezados de nivel 2 y entradas de cada lista. */
-export async function verHistorial(page: Page, grupos: Grupos) {
+export async function viewHistory(page: Page, groups: Groups) {
   await expect(
     page.getByRole("heading", { name: "Historial", level: 1 }),
   ).toBeVisible();
-  if (grupos.length === 0) {
-    await expect(page.getByText(VACIO)).toBeVisible();
+  if (groups.length === 0) {
+    await expect(page.getByText(EMPTY)).toBeVisible();
     await expect(page.getByRole("heading", { level: 2 })).toHaveCount(0);
     await expect(page.getByRole("listitem")).toHaveCount(0);
     return;
   }
-  await expect(page.getByText(VACIO)).toHaveCount(0);
+  await expect(page.getByText(EMPTY)).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 2 })).toHaveText(
-    grupos.map(([e]) => e),
+    groups.map(([e]) => e),
   );
-  await expect(page.getByRole("list")).toHaveCount(grupos.length);
-  for (const [i, [, entradas]] of grupos.entries())
+  await expect(page.getByRole("list")).toHaveCount(groups.length);
+  for (const [i, [, entries]] of groups.entries())
     await expect(
       page.getByRole("list").nth(i).getByRole("listitem"),
     ).toHaveText(
-      entradas.map(([t, h]) => new RegExp(`^${t}\\s*${h}\\s*Borrar$`)),
+      entries.map(([t, h]) => new RegExp(`^${t}\\s*${h}\\s*Borrar$`)),
     );
 }

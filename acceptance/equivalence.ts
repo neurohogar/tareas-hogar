@@ -11,15 +11,15 @@
 // Si algún paso Then verifica otra cosa (valores, progreso, el completado
 // registrado), la mutación nunca se filtra.
 import type { Feature, Scenario } from './ir';
-import { clasificarFila, elementos, esCronologiaImposible, esEscenarioDeFuente, observarFuente, ordenDePendientes, type FilaOraculo, type PasoOraculo, type VistaDePendientes } from './oracle';
-import { esEscenarioDeCambios, esEscenarioDelPanel, observarCambios, observarPanel } from './oracle-panel';
-import { esEscenarioDeAnotaciones, esEscenarioDeLimpiezas, observarAnotaciones, observarLimpiezas } from './oracle-annotations';
-import { esEscenarioDeEdicion, observarEdicion } from './oracle-editing';
-import { esEscenarioDeTextoDeFecha, observarTextoDeFecha } from './oracle-date-text';
-import { esEscenarioDePantallaDeCarga, observarPantallaDeCarga } from './oracle-loading-screen';
+import { classifyRow, elements, isChronologyImpossible, isScenarioOfFont, observeFont, pendingOrder, type RowOracle, type StepOracle, type PendingView } from './oracle';
+import { isScenarioOfChanges, isScenarioOfPanel, observeChanges, observePanel } from './oracle-panel';
+import { isScenarioOfAnnotations, isScenarioOfCleanups, observeAnnotations, observeCleanups } from './oracle-annotations';
+import { isScenarioOfEditing, observeEditing } from './oracle-editing';
+import { isScenarioOfTextOfDate, observeTextOfDate } from './oracle-date-text';
+import { isScenarioOfScreenOfLoading, observeScreenOfLoading } from './oracle-loading-screen';
 
 /** Pasos Then que solo observan la clasificación de la regla. */
-const THEN_DE_CLASIFICACION = [
+const CLASSIFICATION_THEN = [
 	/^el estado es (pendiente|en espera|atrasada)$/,
 	/^el estado es <[A-Za-z0-9_]+>$/,
 	/^la creación se rechaza por (título vacío|intervalo inválido|falta de días|día del mes inválido|semanal y mensual combinados|fecha límite inválida|emoji inválido|horario incompleto|horarios superpuestos|varios horarios en una relativa en horas)$/,
@@ -49,24 +49,24 @@ const THEN_DE_CLASIFICACION = [
 	/^el progreso es <[A-Za-z0-9_]+>$/
 ];
 
-const esThen = (keyword: string, anterior: boolean) => keyword === 'Then' || (keyword === 'And' && anterior);
+const isThen = (keyword: string, previous: boolean) => keyword === 'Then' || (keyword === 'And' && previous);
 
-function pasosDe(feature: Feature, scenario: Scenario) {
-	const todos = [...(feature.background ?? []), ...scenario.steps];
-	let enThen = false;
-	return todos.map((step) => {
-		enThen = esThen(step.keyword, enThen);
-		return { step, enThen };
+function stepsOf(feature: Feature, scenario: Scenario) {
+	const all = [...(feature.background ?? []), ...scenario.steps];
+	let inThen = false;
+	return all.map((step) => {
+		inThen = isThen(step.keyword, inThen);
+		return { step, inThen };
 	});
 }
 
-function soloObservaClasificacion(feature: Feature, scenario: Scenario): boolean {
-	return pasosDe(feature, scenario)
-		.filter(({ enThen }) => enThen)
-		.every(({ step }) => THEN_DE_CLASIFICACION.some((patron) => patron.test(step.text)));
+function onlyObservesClassification(feature: Feature, scenario: Scenario): boolean {
+	return stepsOf(feature, scenario)
+		.filter(({ inThen }) => inThen)
+		.every(({ step }) => CLASSIFICATION_THEN.some((pattern) => pattern.test(step.text)));
 }
 
-export interface Candidata {
+export interface Candidate {
 	scenario: number;
 	example: number;
 	key: string;
@@ -74,55 +74,55 @@ export interface Candidata {
 }
 
 /** Una columna que un Then nombra es un valor esperado: mutarla cambia lo que se afirma. */
-function loNombraUnThen(feature: Feature, scenario: Scenario, columna: string): boolean {
-	return pasosDe(feature, scenario).some(({ step, enThen }) => enThen && step.text.includes(`<${columna}>`));
+function namesThen(feature: Feature, scenario: Scenario, column: string): boolean {
+	return stepsOf(feature, scenario).some(({ step, inThen }) => inThen && step.text.includes(`<${column}>`));
 }
 
 /** Los Then de Pendientes (§6.1) y la parte de la vista que cada uno afirma. */
-const THENS_DE_PENDIENTES: [RegExp, keyof VistaDePendientes][] = [
-	[/^Pendientes no muestra ninguna tarea$/, 'orden'],
-	[/^Pendientes muestra en orden <([A-Za-z0-9_]+)>$/, 'orden'],
-	[/^Pendientes muestra como completadas <([A-Za-z0-9_]+)>$/, 'completadas'],
-	[/^Pendientes muestra como pausadas <([A-Za-z0-9_]+)>$/, 'pausadas']
+const PENDING_THENS: [RegExp, keyof PendingView][] = [
+	[/^Pendientes no muestra ninguna tarea$/, 'order'],
+	[/^Pendientes muestra en orden <([A-Za-z0-9_]+)>$/, 'order'],
+	[/^Pendientes muestra como completadas <([A-Za-z0-9_]+)>$/, 'completedList'],
+	[/^Pendientes muestra como pausadas <([A-Za-z0-9_]+)>$/, 'paused']
 ];
 
-function thenDePendientes(texto: string): { columna?: string; parte: keyof VistaDePendientes } | undefined {
-	for (const [patron, parte] of THENS_DE_PENDIENTES) {
-		const coincide = patron.exec(texto);
-		if (coincide) return { columna: coincide[1], parte };
+function pendingThen(text: string): { column?: string; part: keyof PendingView } | undefined {
+	for (const [pattern, part] of PENDING_THENS) {
+		const matches = pattern.exec(text);
+		if (matches) return { column: matches[1], part };
 	}
 	return undefined;
 }
 
 /** La lista de títulos de la celda, como la arma el oráculo; undefined si la celda no es una lista. */
-const comoLista = (valor: string | undefined) => (valor === undefined ? undefined : elementos(valor)?.join(', '));
+const asList = (value: string | undefined) => (value === undefined ? undefined : elements(value)?.join(', '));
 
 /**
  * Escenario cuyos Then son solo lo que muestra Pendientes (§6.1): una mutación es equivalente cuando la vista
  * que el oráculo deduce del spec es la misma con el valor mutado, y coincide con lo que afirma la fila.
  */
-function esEquivalenteDeOrden(feature: Feature, scenario: Scenario, candidata: Candidata): boolean | undefined {
-	const pasos = pasosDe(feature, scenario);
-	const thens = pasos.filter(({ enThen }) => enThen).map(({ step }) => thenDePendientes(step.text));
+function isEquivalentOfOrder(feature: Feature, scenario: Scenario, candidate: Candidate): boolean | undefined {
+	const steps = stepsOf(feature, scenario);
+	const thens = steps.filter(({ inThen }) => inThen).map(({ step }) => pendingThen(step.text));
 	if (thens.length === 0 || thens.some((then) => then === undefined)) return undefined;
-	if (thens.some((then) => then?.columna === candidata.key)) return false;
-	const original = scenario.examples[candidata.example];
-	const entradas = pasos.filter(({ enThen }) => !enThen).map(({ step }) => step);
-	const esperada = ordenDePendientes(entradas, original);
-	if (esperada === undefined || thens.some((then) => then && esperada[then.parte] !== (then.columna === undefined ? '' : comoLista(original[then.columna])))) return false;
-	return JSON.stringify(ordenDePendientes(entradas, { ...original, [candidata.key]: candidata.mutated })) === JSON.stringify(esperada);
+	if (thens.some((then) => then?.column === candidate.key)) return false;
+	const original = scenario.examples[candidate.example];
+	const entries = steps.filter(({ inThen }) => !inThen).map(({ step }) => step);
+	const expected = pendingOrder(entries, original);
+	if (expected === undefined || thens.some((then) => then && expected[then.part] !== (then.column === undefined ? '' : asList(original[then.column])))) return false;
+	return JSON.stringify(pendingOrder(entries, { ...original, [candidate.key]: candidate.mutated })) === JSON.stringify(expected);
 }
 
 /** Thens que el oráculo de edición verifica contra el valor que nombran: si ese valor cambia, lo observado cambia. */
-const THEN_QUE_VERIFICA_LO_QUE_NOMBRA = /^la tarea (?:\S+ )?conserva un solo completado, del <[A-Za-z0-9_]+>$/;
+const THEN_THAT_VERIFIES_THAT_NAMES = /^la tarea (?:\S+ )?conserva un solo completado, del <[A-Za-z0-9_]+>$/;
 
 /**
  * Una columna que solo nombran Thens verificados y que también da un paso de entrada llega mutada a los dos lados:
  * el oráculo compara el valor del Then con el de la entrada, así que si siguen coincidiendo, nada cambia.
  */
-function loNombranSoloThenVerificadosYUnaEntrada(pasos: ReturnType<typeof pasosDe>, columna: string): boolean {
-	const nombran = pasos.filter(({ step }) => step.text.includes(`<${columna}>`));
-	return nombran.some(({ enThen }) => !enThen) && nombran.filter(({ enThen }) => enThen).every(({ step }) => THEN_QUE_VERIFICA_LO_QUE_NOMBRA.test(step.text));
+function nameOnlyThenVerifiedAndEntry(steps: ReturnType<typeof stepsOf>, column: string): boolean {
+	const name = steps.filter(({ step }) => step.text.includes(`<${column}>`));
+	return name.some(({ inThen }) => !inThen) && name.filter(({ inThen }) => inThen).every(({ step }) => THEN_THAT_VERIFIES_THAT_NAMES.test(step.text));
 }
 
 /**
@@ -130,34 +130,34 @@ function loNombranSoloThenVerificadosYUnaEntrada(pasos: ReturnType<typeof pasosD
  * cuando ningún Then nombra la columna y el oráculo de edición deduce, con el valor mutado, lo mismo que
  * observa cada Then con el valor original.
  */
-function esEquivalenteDeEdicion(feature: Feature, scenario: Scenario, candidata: Candidata): boolean {
-	const pasos = pasosDe(feature, scenario);
-	if (loNombraUnThen(feature, scenario, candidata.key) && !loNombranSoloThenVerificadosYUnaEntrada(pasos, candidata.key)) return false;
-	const entradas = pasos.filter(({ enThen }) => !enThen).map(({ step }) => step);
-	const thens = pasos.filter(({ enThen }) => enThen).map(({ step }) => step);
-	const original = scenario.examples[candidata.example];
-	const antes = observarEdicion(entradas, thens, original);
-	const despues = observarEdicion(entradas, thens, { ...original, [candidata.key]: candidata.mutated });
-	return antes !== undefined && JSON.stringify(antes) === JSON.stringify(despues);
+function isEquivalentOfEditing(feature: Feature, scenario: Scenario, candidate: Candidate): boolean {
+	const steps = stepsOf(feature, scenario);
+	if (namesThen(feature, scenario, candidate.key) && !nameOnlyThenVerifiedAndEntry(steps, candidate.key)) return false;
+	const entries = steps.filter(({ inThen }) => !inThen).map(({ step }) => step);
+	const thens = steps.filter(({ inThen }) => inThen).map(({ step }) => step);
+	const original = scenario.examples[candidate.example];
+	const before = observeEditing(entries, thens, original);
+	const after = observeEditing(entries, thens, { ...original, [candidate.key]: candidate.mutated });
+	return before !== undefined && JSON.stringify(before) === JSON.stringify(after);
 }
 
-type Observador = (entradas: PasoOraculo[], thens: PasoOraculo[], fila: FilaOraculo) => { observado: string[]; afirmado: string[] } | undefined;
+type Observer = (entries: StepOracle[], thens: StepOracle[], row: RowOracle) => { observed: string[]; asserted: string[] } | undefined;
 
 /**
  * Escenario de anotaciones (§4.5, §5.10, §6.7), del panel en pestañas (§6.2), de qué fuente dibuja cada carácter (§6) o de la pantalla de carga (§6.6): una mutación
  * es equivalente cuando ningún Then nombra la columna, el oráculo reproduce lo que el escenario afirma con la
  * fila original (auditoría en línea) y, con el valor mutado, deduce lo mismo que observa cada Then.
  */
-function esEquivalenteSegun(observar: Observador, feature: Feature, scenario: Scenario, candidata: Candidata): boolean {
-	if (loNombraUnThen(feature, scenario, candidata.key)) return false;
-	const pasos = pasosDe(feature, scenario);
-	const entradas = pasos.filter(({ enThen }) => !enThen).map(({ step }) => step);
-	const thens = pasos.filter(({ enThen }) => enThen).map(({ step }) => step);
-	const original = scenario.examples[candidata.example];
-	const antes = observar(entradas, thens, original);
-	const despues = observar(entradas, thens, { ...original, [candidata.key]: candidata.mutated });
-	if (!antes || !despues || JSON.stringify(antes.observado) !== JSON.stringify(antes.afirmado)) return false;
-	return JSON.stringify(antes.observado) === JSON.stringify(despues.observado);
+function isEquivalentPer(observe: Observer, feature: Feature, scenario: Scenario, candidate: Candidate): boolean {
+	if (namesThen(feature, scenario, candidate.key)) return false;
+	const steps = stepsOf(feature, scenario);
+	const entries = steps.filter(({ inThen }) => !inThen).map(({ step }) => step);
+	const thens = steps.filter(({ inThen }) => inThen).map(({ step }) => step);
+	const original = scenario.examples[candidate.example];
+	const before = observe(entries, thens, original);
+	const after = observe(entries, thens, { ...original, [candidate.key]: candidate.mutated });
+	if (!before || !after || JSON.stringify(before.observed) !== JSON.stringify(before.asserted)) return false;
+	return JSON.stringify(before.observed) === JSON.stringify(after.observed);
 }
 
 /**
@@ -168,63 +168,63 @@ function esEquivalenteSegun(observar: Observador, feature: Feature, scenario: Sc
  * afirma deja de coincidir con lo observado y no se filtra. Los ids de limpieza (§7) son identificadores opacos:
  * renombrar uno de forma consistente en el dado y en el Then que lo repite no cambia lo observado.
  */
-function esEquivalenteSiSigueCumpliendo(observar: Observador, feature: Feature, scenario: Scenario, candidata: Candidata): boolean {
-	const pasos = pasosDe(feature, scenario);
-	const entradas = pasos.filter(({ enThen }) => !enThen).map(({ step }) => step);
-	const thens = pasos.filter(({ enThen }) => enThen).map(({ step }) => step);
-	const original = scenario.examples[candidata.example];
-	const reproduce = (fila: FilaOraculo) => {
-		const observacion = observar(entradas, thens, fila);
-		return observacion !== undefined && JSON.stringify(observacion.observado) === JSON.stringify(observacion.afirmado);
+function isEquivalentWhetherStaysFulfilling(observe: Observer, feature: Feature, scenario: Scenario, candidate: Candidate): boolean {
+	const steps = stepsOf(feature, scenario);
+	const entries = steps.filter(({ inThen }) => !inThen).map(({ step }) => step);
+	const thens = steps.filter(({ inThen }) => inThen).map(({ step }) => step);
+	const original = scenario.examples[candidate.example];
+	const plays = (row: RowOracle) => {
+		const observation = observe(entries, thens, row);
+		return observation !== undefined && JSON.stringify(observation.observed) === JSON.stringify(observation.asserted);
 	};
-	return reproduce(original) && reproduce({ ...original, [candidata.key]: candidata.mutated });
+	return plays(original) && plays({ ...original, [candidate.key]: candidate.mutated });
 }
 
-export function esEquivalente(feature: Feature, candidata: Candidata): boolean {
-	const scenario = feature.scenarios[candidata.scenario];
-	if (esEscenarioDeLimpiezas(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteSiSigueCumpliendo(observarLimpiezas, feature, scenario, candidata);
+export function esEquivalente(feature: Feature, candidate: Candidate): boolean {
+	const scenario = feature.scenarios[candidate.scenario];
+	if (isScenarioOfCleanups(stepsOf(feature, scenario).map(({ step }) => step.text))) {
+		return isEquivalentWhetherStaysFulfilling(observeCleanups, feature, scenario, candidate);
 	}
-	if (esEscenarioDeAnotaciones(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteSiSigueCumpliendo(observarAnotaciones, feature, scenario, candidata);
+	if (isScenarioOfAnnotations(stepsOf(feature, scenario).map(({ step }) => step.text))) {
+		return isEquivalentWhetherStaysFulfilling(observeAnnotations, feature, scenario, candidate);
 	}
-	if (esEscenarioDeFuente(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteSegun(observarFuente, feature, scenario, candidata);
+	if (isScenarioOfFont(stepsOf(feature, scenario).map(({ step }) => step.text))) {
+		return isEquivalentPer(observeFont, feature, scenario, candidate);
 	}
-	if (esEscenarioDePantallaDeCarga(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteSegun(observarPantallaDeCarga, feature, scenario, candidata);
+	if (isScenarioOfScreenOfLoading(stepsOf(feature, scenario).map(({ step }) => step.text))) {
+		return isEquivalentPer(observeScreenOfLoading, feature, scenario, candidate);
 	}
-	if (esEscenarioDeTextoDeFecha(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteSegun(observarTextoDeFecha, feature, scenario, candidata);
+	if (isScenarioOfTextOfDate(stepsOf(feature, scenario).map(({ step }) => step.text))) {
+		return isEquivalentPer(observeTextOfDate, feature, scenario, candidate);
 	}
-	if (esEscenarioDeCambios(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteSiSigueCumpliendo(observarCambios, feature, scenario, candidata);
+	if (isScenarioOfChanges(stepsOf(feature, scenario).map(({ step }) => step.text))) {
+		return isEquivalentWhetherStaysFulfilling(observeChanges, feature, scenario, candidate);
 	}
-	if (esEscenarioDelPanel(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteSegun(observarPanel, feature, scenario, candidata);
+	if (isScenarioOfPanel(stepsOf(feature, scenario).map(({ step }) => step.text))) {
+		return isEquivalentPer(observePanel, feature, scenario, candidate);
 	}
-	if (esEscenarioDeEdicion(pasosDe(feature, scenario).map(({ step }) => step.text))) {
-		return esEquivalenteDeEdicion(feature, scenario, candidata);
+	if (isScenarioOfEditing(stepsOf(feature, scenario).map(({ step }) => step.text))) {
+		return isEquivalentOfEditing(feature, scenario, candidate);
 	}
-	const deOrden = esEquivalenteDeOrden(feature, scenario, candidata);
-	if (deOrden !== undefined) return deOrden;
-	if (!soloObservaClasificacion(feature, scenario) || loNombraUnThen(feature, scenario, candidata.key)) return false;
-	const original = scenario.examples[candidata.example];
-	const mutado = { ...original, [candidata.key]: candidata.mutated };
-	const entradas = pasosDe(feature, scenario)
-		.filter(({ enThen }) => !enThen)
+	const ofOrder = isEquivalentOfOrder(feature, scenario, candidate);
+	if (ofOrder !== undefined) return ofOrder;
+	if (!onlyObservesClassification(feature, scenario) || namesThen(feature, scenario, candidate.key)) return false;
+	const original = scenario.examples[candidate.example];
+	const mutated = { ...original, [candidate.key]: candidate.mutated };
+	const entries = stepsOf(feature, scenario)
+		.filter(({ inThen }) => !inThen)
 		.map(({ step }) => step);
 	// §5.8: una fila donde se completa después de reanudar con un momento anterior no es un escenario posible.
-	if (!esCronologiaImposible(entradas, original) && esCronologiaImposible(entradas, mutado)) return true;
-	const observaEnThen = (patron: RegExp) => pasosDe(feature, scenario).some(({ step, enThen }) => enThen && patron.test(step.text));
-	const progreso = observaEnThen(/^el progreso es /);
-	const estado = observaEnThen(/^el estado es |^la tarea (no )?está completada$|^la tarea no tiene estado$/);
-	const aparicion = observaEnThen(/^la tarea (no )?aparece en Pendientes$/);
-	const checkbox = observaEnThen(/^el checkbox de la tarea está /);
-	const cubierta = observaEnThen(/^se registró un completado que cubre /);
-	const pospuesta = observaEnThen(/^la tarea está pospuesta desde /);
-	const textoDelPanel = observaEnThen(/^el panel de edición (?:muestra|no dice que está pospuesta)/);
-	const observa = { progreso, checkbox, cubierta, pospuesta, textoDelPanel, soloAparicion: !estado && !progreso, soloCheckbox: checkbox && !estado && !progreso && !aparicion };
-	const antes = clasificarFila(entradas, original, observa);
-	return antes !== undefined && antes === clasificarFila(entradas, mutado, observa);
+	if (!isChronologyImpossible(entries, original) && isChronologyImpossible(entries, mutated)) return true;
+	const observesInThen = (pattern: RegExp) => stepsOf(feature, scenario).some(({ step, inThen }) => inThen && pattern.test(step.text));
+	const progress = observesInThen(/^el progreso es /);
+	const status = observesInThen(/^el estado es |^la tarea (no )?está completada$|^la tarea no tiene estado$/);
+	const appearance = observesInThen(/^la tarea (no )?aparece en Pendientes$/);
+	const checkbox = observesInThen(/^el checkbox de la tarea está /);
+	const covered = observesInThen(/^se registró un completado que cubre /);
+	const postponed = observesInThen(/^la tarea está pospuesta desde /);
+	const panelText = observesInThen(/^el panel de edición (?:muestra|no dice que está pospuesta)/);
+	const observes = { progress, checkbox, covered, postponed, panelText, onlyAppearance: !status && !progress, onlyCheckbox: checkbox && !status && !progress && !appearance };
+	const before = classifyRow(entries, original, observes);
+	return before !== undefined && before === classifyRow(entries, mutated, observes);
 }

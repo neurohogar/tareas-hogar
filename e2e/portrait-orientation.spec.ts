@@ -2,35 +2,35 @@ import { expect, test, type Browser, type BrowserContext, type Page } from '@pla
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-	abrir,
-	cerrar,
-	controlada,
-	crear,
-	entrar,
-	fijarReloj,
-	fila,
-	irA,
-	limpiarEmuladores
+	openTask,
+	close,
+	controlled,
+	create,
+	enter,
+	setClock,
+	row,
+	goA,
+	cleanEmulators
 } from './support';
-import { abrirDetenida, pantalla, sinAvisos, textoVisible } from './screen-support';
-import { cachesDe, hayVersionEsperando, ORIGEN_VERSIONES, servir, versionConLasMismasFuentes, versionDe } from './versions-support';
+import { openStopped, screenName, withoutNotices, textVisible } from './screen-support';
+import { cachesOf, hasVersionWaiting, ORIGIN_VERSIONS, serve, versionWithSameFonts, versionOf } from './versions-support';
 
 // qa/orientacion-vertical.md. Esta suite habla del service worker (Flujo 5) y de la PWA: lo permite
 // (las demás lo bloquean). Celular: 360x640 con emulación táctil.
 test.use({ serviceWorkers: 'allow', viewport: { width: 360, height: 640 }, hasTouch: true });
 
-const HORA = '2026-07-15T08:00:00';
-const CELULAR_VERTICAL = { width: 360, height: 640 };
-const CELULAR_HORIZONTAL = { width: 740, height: 360 };
-const COMPU = { width: 1280, height: 800 };
+const HOUR = '2026-07-15T08:00:00';
+const PHONE_VERTICAL = { width: 360, height: 640 };
+const PHONE_HORIZONTAL = { width: 740, height: 360 };
+const COMPUTER = { width: 1280, height: 800 };
 
 test.beforeEach(async () => {
-	await limpiarEmuladores();
+	await cleanEmulators();
 });
 
-const pendientes = (page: Page) => page.getByRole('heading', { name: 'Pendientes', level: 1 });
-const regar = (page: Page) => crear(page, { titulo: 'Regar', tipo: 'Intervalo', cada: '2', unidad: 'días' });
-const barraDePestanas = (page: Page) => page.getByRole('tablist');
+const pending = (page: Page) => page.getByRole('heading', { name: 'Pendientes', level: 1 });
+const water = (page: Page) => create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
+const tabsBar = (page: Page) => page.getByRole('tablist');
 
 // ---------------------------------------------------------------------------
 // Espía de orientación y contrato de «Sin bloqueo propio»
@@ -41,61 +41,61 @@ const barraDePestanas = (page: Page) => page.getByRole('tablist');
  * registra los eventos de giro, sin cambiar lo que hacen. Las anotaciones viven en el contexto, no
  * en la página: sobreviven a las recargas y valen para cualquier pestaña.
  */
-async function espiar(ctx: BrowserContext): Promise<string[]> {
-	const anotaciones: string[] = [];
-	await ctx.exposeBinding('qaOrientacion', (_fuente, texto: string) => {
-		anotaciones.push(texto);
+async function spy(ctx: BrowserContext): Promise<string[]> {
+	const annotations: string[] = [];
+	await ctx.exposeBinding('qaOrientacion', (_font, text: string) => {
+		annotations.push(text);
 	});
 	await ctx.addInitScript(() => {
-		const anotar = (texto: string) => (window as unknown as Record<string, (t: string) => void>).qaOrientacion(texto);
-		const orientacion = screen.orientation;
-		for (const metodo of ['lock', 'unlock'] as const) {
-			const original = orientacion[metodo] as (...argumentos: unknown[]) => unknown;
-			(orientacion as unknown as Record<string, unknown>)[metodo] = function (this: unknown, ...argumentos: unknown[]) {
-				anotar(metodo);
-				return original.apply(orientacion, argumentos);
+		const annotate = (text: string) => (window as unknown as Record<string, (t: string) => void>).qaOrientacion(text);
+		const orientationValue = screen.orientation;
+		for (const method of ['lock', 'unlock'] as const) {
+			const original = orientationValue[method] as (...args: unknown[]) => unknown;
+			(orientationValue as unknown as Record<string, unknown>)[method] = function (this: unknown, ...args: unknown[]) {
+				annotate(method);
+				return original.apply(orientationValue, args);
 			};
 		}
-		window.addEventListener('orientationchange', () => anotar('orientationchange'));
-		orientacion.addEventListener('change', () => anotar('change'));
+		window.addEventListener('orientationchange', () => annotate('orientationchange'));
+		orientationValue.addEventListener('change', () => annotate('change'));
 	});
-	return anotaciones;
+	return annotations;
 }
 
 /** Sin bloqueo propio: ninguna llamada a lock ni unlock, y nada gira el contenido. */
-async function sinBloqueoPropio(page: Page, anotaciones: string[]) {
-	expect(anotaciones.filter((a) => a === 'lock' || a === 'unlock')).toEqual([]);
-	const transformaciones = await page.evaluate(() => [document.documentElement, document.body].map((e) => getComputedStyle(e).transform));
-	expect(transformaciones).toEqual(['none', 'none']);
+async function withoutLockOwn(page: Page, annotations: string[]) {
+	expect(annotations.filter((a) => a === 'lock' || a === 'unlock')).toEqual([]);
+	const transformations = await page.evaluate(() => [document.documentElement, document.body].map((e) => getComputedStyle(e).transform));
+	expect(transformations).toEqual(['none', 'none']);
 }
 
 /** Sin pedido de girar el teléfono ni mención de la orientación. */
-async function sinPedidoDeGirar(page: Page) {
-	await sinAvisos(page);
-	expect(await textoVisible(page)).not.toMatch(/gir(á|a|ar|e)\b|orientaci|vertical|horizontal/i);
+async function withoutRequestOfRotate(page: Page) {
+	await withoutNotices(page);
+	expect(await textVisible(page)).not.toMatch(/gir(á|a|ar|e)\b|orientaci|vertical|horizontal/i);
 }
 
 /** Entera: sin desplazamiento horizontal en la página. */
-async function sinDesbordeHorizontal(page: Page) {
-	const [ancho, visible] = await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
-	expect(ancho).toBeLessThanOrEqual(visible);
+async function withoutOverflowHorizontal(page: Page) {
+	const [width, visible] = await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
+	expect(width).toBeLessThanOrEqual(visible);
 }
 
 /** Abre la app en un contexto nuevo con el espía puesto, la sesión iniciada y el service worker activo. */
-async function sesion(browser: Browser, opciones: { viewport?: { width: number; height: number }; hasTouch?: boolean } = {}) {
+async function session(browser: Browser, options: { viewport?: { width: number; height: number }; hasTouch?: boolean } = {}) {
 	const ctx = await browser.newContext({
 		baseURL: 'http://127.0.0.1:4173',
 		locale: 'es-AR',
 		timezoneId: 'America/Argentina/Buenos_Aires',
-		...opciones
+		...options
 	});
-	const anotaciones = await espiar(ctx);
+	const annotations = await spy(ctx);
 	const page = await ctx.newPage();
-	await entrar(page);
-	await fijarReloj(page, HORA);
-	await controlada(page);
-	await expect(pendientes(page)).toBeVisible();
-	return { ctx, page, anotaciones };
+	await enter(page);
+	await setClock(page, HOUR);
+	await controlled(page);
+	await expect(pending(page)).toBeVisible();
+	return { ctx, page, annotations };
 }
 
 // ---------------------------------------------------------------------------
@@ -103,7 +103,7 @@ async function sesion(browser: Browser, opciones: { viewport?: { width: number; 
 // ---------------------------------------------------------------------------
 
 /** Contrato de «Manifest»: se descarga desde la página (por el service worker, si controla) y se parsea. */
-async function verificarManifest(page: Page) {
+async function verifyManifest(page: Page) {
 	const href = await page.locator('link[rel="manifest"]').getAttribute('href');
 	expect(href).toBeTruthy();
 	const manifest = await page.evaluate((h) => fetch(h).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))), href!);
@@ -116,23 +116,23 @@ async function verificarManifest(page: Page) {
 }
 
 test('Flujo 1: el manifest declara la orientación vertical', async ({ browser }) => {
-	const { ctx, page } = await sesion(browser);
-	const mismo = await verificarManifest(page);
+	const { ctx, page } = await session(browser);
+	const same = await verifyManifest(page);
 
 	// Desde Historial y Anotaciones: es el mismo documento.
-	for (const ruta of ['/historial', '/anotaciones']) {
-		await page.goto(ruta);
+	for (const path of ['/historial', '/anotaciones']) {
+		await page.goto(path);
 		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-		expect(await verificarManifest(page)).toEqual(mismo);
+		expect(await verifyManifest(page)).toEqual(same);
 	}
 
 	// Sin sesión, en la pantalla de entrada.
-	const sinSesion = await browser.newContext({ baseURL: 'http://127.0.0.1:4173', locale: 'es-AR' });
-	const entrada = await sinSesion.newPage();
-	await entrada.goto('/');
-	await expect(entrada.getByRole('button', { name: 'Entrar con Google' })).toBeVisible();
-	expect(await verificarManifest(entrada)).toEqual(mismo);
-	await sinSesion.close();
+	const withoutSession = await browser.newContext({ baseURL: 'http://127.0.0.1:4173', locale: 'es-AR' });
+	const entry = await withoutSession.newPage();
+	await entry.goto('/');
+	await expect(entry.getByRole('button', { name: 'Entrar con Google' })).toBeVisible();
+	expect(await verifyManifest(entry)).toEqual(same);
+	await withoutSession.close();
 	await ctx.close();
 });
 
@@ -141,58 +141,58 @@ test('Flujo 1: el manifest declara la orientación vertical', async ({ browser }
 // ---------------------------------------------------------------------------
 
 test('Flujo 2: ninguna pantalla fija la orientación por su cuenta', async ({ browser }) => {
-	const { ctx, page, anotaciones } = await sesion(browser);
-	await regar(page);
-	await expect(fila(page, 'Regar')).toBeVisible();
+	const { ctx, page, annotations } = await session(browser);
+	await water(page);
+	await expect(row(page, 'Regar')).toBeVisible();
 
 	// La pantalla de carga, al abrir.
-	const apertura = await abrirDetenida(page, HORA);
-	await apertura.sigueA(0.4);
-	await sinBloqueoPropio(page, anotaciones);
-	await apertura.seVaA(0.5);
-	await expect(pendientes(page)).toBeVisible();
+	const opening = await openStopped(page, HOUR);
+	await opening.staysA(0.4);
+	await withoutLockOwn(page, annotations);
+	await opening.goesA(0.5);
+	await expect(pending(page)).toBeVisible();
 	await page.clock.resume();
 
 	// Pendientes, Historial, Anotaciones.
-	await sinBloqueoPropio(page, anotaciones);
-	await irA(page, 'Historial');
-	await sinBloqueoPropio(page, anotaciones);
-	await irA(page, 'Anotaciones');
-	await sinBloqueoPropio(page, anotaciones);
-	await irA(page, 'Pendientes');
+	await withoutLockOwn(page, annotations);
+	await goA(page, 'Historial');
+	await withoutLockOwn(page, annotations);
+	await goA(page, 'Anotaciones');
+	await withoutLockOwn(page, annotations);
+	await goA(page, 'Pendientes');
 
 	// El panel de una tarea nueva.
 	await page.getByRole('button', { name: '+' }).click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
-	await sinBloqueoPropio(page, anotaciones);
-	await cerrar(page);
+	await withoutLockOwn(page, annotations);
+	await close(page);
 
 	// El de una existente, en sus tres pestañas.
-	await abrir(page, 'Regar');
+	await openTask(page, 'Regar');
 	await expect(page.getByRole('tab')).toHaveCount(3);
-	for (const nombre of ['Tarea', 'Cuándo', 'Acciones']) {
-		await page.getByRole('tab', { name: new RegExp(`^${nombre}`) }).click();
-		await sinBloqueoPropio(page, anotaciones);
+	for (const name of ['Tarea', 'Cuándo', 'Acciones']) {
+		await page.getByRole('tab', { name: new RegExp(`^${name}`) }).click();
+		await withoutLockOwn(page, annotations);
 	}
 
 	// Un aviso del panel: cerrar con cambios sin guardar.
 	await page.getByRole('tab', { name: /^Tarea/ }).click();
 	await page.getByLabel('Título').fill('Regar mucho');
 	await page.getByRole('button', { name: 'Cerrar' }).click();
-	const aviso = page.getByRole('alertdialog', { name: 'Tenés cambios sin guardar' });
-	await expect(aviso).toBeVisible();
-	await sinBloqueoPropio(page, anotaciones);
-	await aviso.getByRole('button', { name: 'Descartar', exact: true }).click();
+	const notice = page.getByRole('alertdialog', { name: 'Tenés cambios sin guardar' });
+	await expect(notice).toBeVisible();
+	await withoutLockOwn(page, annotations);
+	await notice.getByRole('button', { name: 'Descartar', exact: true }).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 
 	// Sin sesión, la pantalla de entrada.
-	const sinSesion = await browser.newContext({ baseURL: 'http://127.0.0.1:4173', locale: 'es-AR', timezoneId: 'America/Argentina/Buenos_Aires' });
-	const anotacionesDeEntrada = await espiar(sinSesion);
-	const entrada = await sinSesion.newPage();
-	await entrada.goto('/');
-	await expect(entrada.getByRole('button', { name: 'Entrar con Google' })).toBeVisible();
-	await sinBloqueoPropio(entrada, anotacionesDeEntrada);
-	await sinSesion.close();
+	const withoutSession = await browser.newContext({ baseURL: 'http://127.0.0.1:4173', locale: 'es-AR', timezoneId: 'America/Argentina/Buenos_Aires' });
+	const entryAnnotations = await spy(withoutSession);
+	const entry = await withoutSession.newPage();
+	await entry.goto('/');
+	await expect(entry.getByRole('button', { name: 'Entrar con Google' })).toBeVisible();
+	await withoutLockOwn(entry, entryAnnotations);
+	await withoutSession.close();
 	await ctx.close();
 });
 
@@ -201,45 +201,45 @@ test('Flujo 2: ninguna pantalla fija la orientación por su cuenta', async ({ br
 // ---------------------------------------------------------------------------
 
 test('Flujo 3: en una pestaña del navegador sigue girando con el diseño ancho en horizontal', async ({ browser }) => {
-	const { ctx, page, anotaciones } = await sesion(browser);
-	await regar(page);
+	const { ctx, page, annotations } = await session(browser);
+	await water(page);
 
 	// 1: en vertical, el panel tiene barra de pestañas.
-	await expect(fila(page, 'Regar')).toBeVisible();
-	await abrir(page, 'Regar');
-	await expect(barraDePestanas(page)).toBeVisible();
+	await expect(row(page, 'Regar')).toBeVisible();
+	await openTask(page, 'Regar');
+	await expect(tabsBar(page)).toBeVisible();
 
 	// 2: se gira sin recargar.
-	await page.setViewportSize(CELULAR_HORIZONTAL);
+	await page.setViewportSize(PHONE_HORIZONTAL);
 	await expect.poll(() => page.evaluate(() => screen.orientation.type)).toMatch(/^landscape/);
-	await expect.poll(() => page.evaluate(() => document.documentElement.clientWidth)).toBe(CELULAR_HORIZONTAL.width);
-	await expect(barraDePestanas(page)).toHaveCount(0);
+	await expect.poll(() => page.evaluate(() => document.documentElement.clientWidth)).toBe(PHONE_HORIZONTAL.width);
+	await expect(tabsBar(page)).toHaveCount(0);
 	await expect(page.getByRole('heading', { level: 3 })).toHaveText(['Tarea', 'Cuándo', 'Acciones']);
 	const ys: number[] = [];
-	for (const nombre of ['Tarea', 'Cuándo', 'Acciones'])
-		ys.push((await page.getByRole('heading', { name: nombre, level: 3 }).boundingBox())!.y);
+	for (const name of ['Tarea', 'Cuándo', 'Acciones'])
+		ys.push((await page.getByRole('heading', { name, level: 3 }).boundingBox())!.y);
 	expect(ys[0]).toBeLessThan(ys[1]);
 	expect(ys[1]).toBeLessThan(ys[2]);
-	await sinPedidoDeGirar(page);
+	await withoutRequestOfRotate(page);
 
 	// 3: sin el panel, Historial y Anotaciones se ven enteras.
-	await cerrar(page);
-	for (const pestana of ['Pendientes', 'Historial', 'Anotaciones'] as const) {
-		await irA(page, pestana);
+	await close(page);
+	for (const tab of ['Pendientes', 'Historial', 'Anotaciones'] as const) {
+		await goA(page, tab);
 		await expect(page.getByRole('navigation')).toBeVisible();
-		await sinDesbordeHorizontal(page);
-		await sinPedidoDeGirar(page);
+		await withoutOverflowHorizontal(page);
+		await withoutRequestOfRotate(page);
 	}
-	await irA(page, 'Pendientes');
+	await goA(page, 'Pendientes');
 
 	// 4: de vuelta en vertical, el panel vuelve al diseño de celular.
-	await page.setViewportSize(CELULAR_VERTICAL);
-	await expect.poll(() => page.evaluate(() => document.documentElement.clientWidth)).toBe(CELULAR_VERTICAL.width);
-	await abrir(page, 'Regar');
-	await expect(barraDePestanas(page)).toBeVisible();
+	await page.setViewportSize(PHONE_VERTICAL);
+	await expect.poll(() => page.evaluate(() => document.documentElement.clientWidth)).toBe(PHONE_VERTICAL.width);
+	await openTask(page, 'Regar');
+	await expect(tabsBar(page)).toBeVisible();
 
 	// 5
-	await sinBloqueoPropio(page, anotaciones);
+	await withoutLockOwn(page, annotations);
 	await ctx.close();
 });
 
@@ -248,22 +248,22 @@ test('Flujo 3: en una pestaña del navegador sigue girando con el diseño ancho 
 // ---------------------------------------------------------------------------
 
 test('Flujo 4: en la compu no cambia nada', async ({ browser }) => {
-	const { ctx, page, anotaciones } = await sesion(browser, { viewport: COMPU, hasTouch: false });
-	await regar(page);
-	await expect(fila(page, 'Regar')).toBeVisible();
-	await sinPedidoDeGirar(page);
+	const { ctx, page, annotations } = await session(browser, { viewport: COMPUTER, hasTouch: false });
+	await water(page);
+	await expect(row(page, 'Regar')).toBeVisible();
+	await withoutRequestOfRotate(page);
 
-	await irA(page, 'Historial');
-	await sinPedidoDeGirar(page);
-	await irA(page, 'Anotaciones');
-	await sinPedidoDeGirar(page);
-	await irA(page, 'Pendientes');
+	await goA(page, 'Historial');
+	await withoutRequestOfRotate(page);
+	await goA(page, 'Anotaciones');
+	await withoutRequestOfRotate(page);
+	await goA(page, 'Pendientes');
 
-	await abrir(page, 'Regar');
-	await expect(barraDePestanas(page)).toHaveCount(0);
+	await openTask(page, 'Regar');
+	await expect(tabsBar(page)).toHaveCount(0);
 	await expect(page.getByRole('heading', { level: 3 })).toHaveText(['Tarea', 'Cuándo', 'Acciones']);
-	await sinPedidoDeGirar(page);
-	await sinBloqueoPropio(page, anotaciones);
+	await withoutRequestOfRotate(page);
+	await withoutLockOwn(page, annotations);
 	await ctx.close();
 });
 
@@ -271,87 +271,87 @@ test('Flujo 4: en la compu no cambia nada', async ({ browser }) => {
 // Flujo 5: versión nueva (dos builds en el mismo origen, e2e/versiones-apoyo.ts)
 // ---------------------------------------------------------------------------
 
-const AVISO = /actualiz|nueva versi[oó]n|recarg|reinici|instal/i;
+const NOTICE = /actualiz|nueva versi[oó]n|recarg|reinici|instal/i;
 
 /** El build actual (`nueva`) y una copia suya con otra versión y el manifest sin `orientation` (`anterior`). */
-function dosBuilds() {
-	const raiz = join(process.cwd(), 'tmp', 'orientacion-versiones');
-	const nueva = join(raiz, 'nueva');
-	const anterior = join(raiz, 'anterior');
-	rmSync(raiz, { recursive: true, force: true });
-	mkdirSync(raiz, { recursive: true });
-	cpSync(join(process.cwd(), 'build'), nueva, { recursive: true });
-	versionConLasMismasFuentes(nueva, anterior);
-	const archivo = join(anterior, 'manifest.webmanifest');
-	const { orientation, ...sinOrientacion } = JSON.parse(readFileSync(archivo, 'utf8'));
+function twoBuilds() {
+	const root = join(process.cwd(), 'tmp', 'orientacion-versiones');
+	const fresh = join(root, 'nueva');
+	const previous = join(root, 'anterior');
+	rmSync(root, { recursive: true, force: true });
+	mkdirSync(root, { recursive: true });
+	cpSync(join(process.cwd(), 'build'), fresh, { recursive: true });
+	versionWithSameFonts(fresh, previous);
+	const file = join(previous, 'manifest.webmanifest');
+	const { orientation, ...withoutOrientation } = JSON.parse(readFileSync(file, 'utf8'));
 	expect(orientation).toBe('portrait');
-	writeFileSync(archivo, JSON.stringify(sinOrientacion));
-	return { nueva, anterior };
+	writeFileSync(file, JSON.stringify(withoutOrientation));
+	return { fresh, previous };
 }
 
 test('Flujo 5: la versión con la orientación vertical llega sola, sin avisos ni preguntas', async ({ browser }) => {
 	test.setTimeout(180_000);
-	const { nueva, anterior } = dosBuilds();
-	const estado = { dir: anterior };
-	const servidor = await servir(estado);
-	const ctx = await browser.newContext({ baseURL: ORIGEN_VERSIONES, locale: 'es-AR', timezoneId: 'America/Argentina/Buenos_Aires' });
-	const vistos: string[] = [];
+	const { fresh, previous } = twoBuilds();
+	const status = { dir: previous };
+	const server = await serve(status);
+	const ctx = await browser.newContext({ baseURL: ORIGIN_VERSIONS, locale: 'es-AR', timezoneId: 'America/Argentina/Buenos_Aires' });
+	const seen: string[] = [];
 	ctx.on('dialog', (d) => {
-		vistos.push(`dialog: ${d.message()}`);
+		seen.push(`dialog: ${d.message()}`);
 		void d.dismiss();
 	});
 	try {
 		// Paso 1: la app instalada, controlada por el build anterior (sin orientación).
 		let page = await ctx.newPage();
-		await entrar(page);
-		await regar(page);
-		await expect(fila(page, 'Regar')).toBeVisible();
-		await controlada(page);
-		expect(await cachesDe(page)).toEqual([`tareas-hogar-${versionDe(anterior)}`]);
+		await enter(page);
+		await water(page);
+		await expect(row(page, 'Regar')).toBeVisible();
+		await controlled(page);
+		expect(await cachesOf(page)).toEqual([`tareas-hogar-${versionOf(previous)}`]);
 		const href = await page.locator('link[rel="manifest"]').getAttribute('href');
-		const antes = await page.evaluate((h) => fetch(h).then((r) => r.json()), href!);
-		expect(antes.orientation).toBeUndefined();
+		const before = await page.evaluate((h) => fetch(h).then((r) => r.json()), href!);
+		expect(before.orientation).toBeUndefined();
 
 		// Se publica el build actual y se abre la app de nuevo: sin aviso ni pregunta.
-		estado.dir = nueva;
-		const otra = await ctx.newPage();
-		await otra.goto('/');
-		await expect(pendientes(otra)).toBeVisible();
+		status.dir = fresh;
+		const other = await ctx.newPage();
+		await other.goto('/');
+		await expect(pending(other)).toBeVisible();
 		await expect(async () => {
-			expect(await hayVersionEsperando(otra)).toBe(true);
+			expect(await hasVersionWaiting(other)).toBe(true);
 		}).toPass();
-		for (const p of [page, otra]) {
-			await expect(p.getByText(AVISO)).toHaveCount(0);
+		for (const p of [page, other]) {
+			await expect(p.getByText(NOTICE)).toHaveCount(0);
 			await expect(p.getByRole('alert')).toHaveCount(0);
 			await expect(p.getByRole('alertdialog')).toHaveCount(0);
 			await expect(p.getByRole('dialog')).toHaveCount(0);
 		}
-		await otra.close();
+		await other.close();
 
 		// Paso 3: se cierra la app y se vuelve a abrir; manda el service worker nuevo con el manifest nuevo.
 		await page.close();
 		await expect(async () => {
-			const intento = await ctx.newPage();
+			const attempt = await ctx.newPage();
 			try {
-				await intento.goto('/');
-				await expect(pendientes(intento)).toBeVisible();
-				expect(await cachesDe(intento)).toEqual([`tareas-hogar-${versionDe(nueva)}`]);
-				expect(await intento.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
-				await verificarManifest(intento);
+				await attempt.goto('/');
+				await expect(pending(attempt)).toBeVisible();
+				expect(await cachesOf(attempt)).toEqual([`tareas-hogar-${versionOf(fresh)}`]);
+				expect(await attempt.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+				await verifyManifest(attempt);
 			} finally {
-				await intento.close();
+				await attempt.close();
 			}
 		}).toPass({ timeout: 30_000 });
 
 		// Los datos y la sesión siguen intactos, y no hubo avisos ni preguntas.
 		page = await ctx.newPage();
 		await page.goto('/');
-		await expect(fila(page, 'Regar')).toBeVisible();
+		await expect(row(page, 'Regar')).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Entrar con Google' })).toHaveCount(0);
-		await expect(page.getByText(AVISO)).toHaveCount(0);
-		expect(vistos).toEqual([]);
+		await expect(page.getByText(NOTICE)).toHaveCount(0);
+		expect(seen).toEqual([]);
 	} finally {
 		await ctx.close();
-		servidor.close();
+		server.close();
 	}
 });

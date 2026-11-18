@@ -1,173 +1,173 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
-  abrir,
-  borrar,
-  cerrar,
-  completar,
-  crearYVer,
-  dosDispositivos,
-  editar,
-  fila,
-  limpiarEmuladores,
-  llegaAlServidor,
-  sesionConReloj,
+  openTask,
+  remove,
+  close,
+  complete,
+  createAndView,
+  twoDevices,
+  edit,
+  row,
+  cleanEmulators,
+  arrivesOnServer,
+  sessionWithClock,
 } from "./support";
 
-const PROYECTO = "demo-tareas-hogar";
+const PROJECT = "demo-tareas-hogar";
 
 test.beforeEach(async () => {
-  await limpiarEmuladores();
+  await cleanEmulators();
 });
 
-const botonAnotar = (page: Page) =>
+const buttonAnnotate = (page: Page) =>
   page.getByRole("button", { name: "Anotar", exact: true });
-const recuadro = (page: Page) =>
+const box = (page: Page) =>
   page.getByRole("dialog", { name: "Anotar", exact: true });
-const confirmacion = (page: Page) =>
+const confirmation = (page: Page) =>
   page.getByRole("status").filter({ hasText: "Anotación guardada" });
-const copiadas = (page: Page) =>
+const copiedNotice = (page: Page) =>
   page.getByRole("status").filter({ hasText: "Anotaciones copiadas" });
-const noCopio = (page: Page) =>
+const doNotCopy = (page: Page) =>
   page.getByRole("status").filter({ hasText: "No se pudo copiar" });
-const deshacerAviso = (page: Page) =>
+const undoNotice = (page: Page) =>
   page.getByRole("status").filter({ hasText: "Completaste" });
-const copiar = (page: Page) => page.getByRole("button", { name: "Copiar" });
-const entradas = (page: Page) =>
+const copy = (page: Page) => page.getByRole("button", { name: "Copiar" });
+const entries = (page: Page) =>
   page
     .getByRole("listitem")
     .filter({ has: page.getByRole("button", { name: "Editar texto" }) });
-const portapapeles = (page: Page) =>
+const clipboard = (page: Page) =>
   page.evaluate(() => navigator.clipboard.readText());
 
-type Pantalla = "Pendientes" | "Historial" | "Anotaciones";
+type ScreenName = "Pendientes" | "Historial" | "Anotaciones";
 
-async function ir(page: Page, pantalla: Pantalla) {
+async function go(page: Page, screenName: ScreenName) {
   await page
     .getByRole("navigation")
-    .getByRole("link", { name: pantalla, exact: true })
+    .getByRole("link", { name: screenName, exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: pantalla, level: 1 }),
+    page.getByRole("heading", { name: screenName, level: 1 }),
   ).toBeVisible();
 }
 
-async function anotar(
+async function annotate(
   page: Page,
-  texto: string,
-  sentido: "Me sirvió" | "Me molestó" = "Me sirvió",
+  text: string,
+  direction: "Me sirvió" | "Me molestó" = "Me sirvió",
 ) {
-  await botonAnotar(page).click();
-  await expect(recuadro(page)).toBeVisible();
-  await recuadro(page).getByRole("textbox", { name: "Texto" }).fill(texto);
-  await recuadro(page).getByRole("button", { name: sentido }).click();
-  await expect(recuadro(page)).toHaveCount(0);
-  await expect(confirmacion(page)).toBeVisible();
+  await buttonAnnotate(page).click();
+  await expect(box(page)).toBeVisible();
+  await box(page).getByRole("textbox", { name: "Texto" }).fill(text);
+  await box(page).getByRole("button", { name: direction }).click();
+  await expect(box(page)).toHaveCount(0);
+  await expect(confirmation(page)).toBeVisible();
 }
 
 /** Script de inicio: `writeText` rechaza con NotAllowedError mientras la bandera de la pestaña lo pida; si no, funciona. */
-async function portapapelesControlado(page: Page) {
+async function clipboardControlled(page: Page) {
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.addInitScript(() => {
     const original = Clipboard.prototype.writeText;
-    Clipboard.prototype.writeText = function (texto: string) {
+    Clipboard.prototype.writeText = function (text: string) {
       if (sessionStorage.getItem("qa-rechaza") === "1")
         return Promise.reject(new DOMException("rechazado", "NotAllowedError"));
-      return original.call(this, texto);
+      return original.call(this, text);
     };
   });
 }
 
-const rechaza = (page: Page, si: boolean) =>
-  page.evaluate((v) => sessionStorage.setItem("qa-rechaza", v ? "1" : "0"), si);
+const rejects = (page: Page, whether: boolean) =>
+  page.evaluate((v) => sessionStorage.setItem("qa-rechaza", v ? "1" : "0"), whether);
 
 /** Pausa el reloj de la app en una hora fija y deja que los datos ya estén en pantalla. */
-const detenerEn = (page: Page, hora: string) =>
-  page.clock.pauseAt(new Date(hora));
+const stopIn = (page: Page, hour: string) =>
+  page.clock.pauseAt(new Date(hour));
 
 // ---------------------------------------------------------------------------
 // Lectura auxiliar del emulador (REST de Firestore): la interfaz no muestra las huérfanas.
 // ---------------------------------------------------------------------------
 
-const RAIZ = `http://127.0.0.1:8080/v1/projects/${PROYECTO}/databases/(default)/documents`;
-const AUTORIZADO = { Authorization: "Bearer owner" };
+const ROOT = `http://127.0.0.1:8080/v1/projects/${PROJECT}/databases/(default)/documents`;
+const AUTHORIZED = { Authorization: "Bearer owner" };
 
-async function uidDelEmulador(): Promise<string> {
-  const respuesta = await fetch(
-    `http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/${PROYECTO}/accounts:query`,
+async function emulatorUid(): Promise<string> {
+  const response = await fetch(
+    `http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/${PROJECT}/accounts:query`,
     {
       method: "POST",
-      headers: { ...AUTORIZADO, "Content-Type": "application/json" },
+      headers: { ...AUTHORIZED, "Content-Type": "application/json" },
       body: "{}",
     },
   );
-  const cuerpo = (await respuesta.json()) as {
+  const body = (await response.json()) as {
     userInfo?: { localId: string }[];
   };
-  const uid = cuerpo.userInfo?.[0]?.localId;
+  const uid = body.userInfo?.[0]?.localId;
   if (!uid) throw new Error("el emulador de Auth no tiene ningún usuario");
   return uid;
 }
 
-type Documento = { id: string; campos: Record<string, any> };
+type Doc = { id: string; fields: Record<string, any> };
 
-async function documentos(
-  coleccion: "anotaciones" | "completados" | "tareas" | "etiquetas",
-): Promise<Documento[]> {
-  const uid = await uidDelEmulador();
-  const respuesta = await fetch(
-    `${RAIZ}/users/${uid}/${coleccion}?pageSize=300`,
-    { headers: AUTORIZADO },
+async function docs(
+  collection: "anotaciones" | "completados" | "tareas" | "etiquetas",
+): Promise<Doc[]> {
+  const uid = await emulatorUid();
+  const response = await fetch(
+    `${ROOT}/users/${uid}/${collection}?pageSize=300`,
+    { headers: AUTHORIZED },
   );
-  const cuerpo = (await respuesta.json()) as {
+  const body = (await response.json()) as {
     documents?: { name: string; fields: Record<string, any> }[];
   };
-  return (cuerpo.documents ?? []).map((d) => ({
+  return (body.documents ?? []).map((d) => ({
     id: d.name.split("/").pop()!,
-    campos: d.fields,
+    fields: d.fields,
   }));
 }
 
-const texto = (campos: Record<string, any>, campo: string) =>
-  campos[campo]?.stringValue as string | undefined;
-const textosDeAnotaciones = async () =>
-  (await documentos("anotaciones")).map((d) => texto(d.campos, "texto")).sort();
+const text = (fields: Record<string, any>, field: string) =>
+  fields[field]?.stringValue as string | undefined;
+const annotationsTexts = async () =>
+  (await docs("anotaciones")).map((d) => text(d.fields, "texto")).sort();
 
 // ---------------------------------------------------------------------------
 // Flujos 1 a 3: el aviso de copia rechazada
 // ---------------------------------------------------------------------------
 
 /** Regar y una anotación de hoy 08:05 con el texto `quedó lindo`, en Anotaciones con el portapapeles rechazando. */
-async function conUnaAnotacion(page: Page) {
-  await portapapelesControlado(page);
-  await sesionConReloj(page, "2026-07-15T08:04:30");
-  await crearYVer(page, { titulo: "Regar", tipo: "No se repite" });
+async function withAnnotation(page: Page) {
+  await clipboardControlled(page);
+  await sessionWithClock(page, "2026-07-15T08:04:30");
+  await createAndView(page, { title: "Regar", kind: "No se repite" });
   await page.clock.setFixedTime(new Date("2026-07-15T08:05:00"));
   await page.waitForTimeout(1200);
-  await abrir(page, "Regar");
-  await anotar(page, "quedó lindo");
+  await openTask(page, "Regar");
+  await annotate(page, "quedó lindo");
   await page.getByRole("button", { name: "Cerrar" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await ir(page, "Anotaciones");
-  await expect(entradas(page)).toHaveCount(1);
-  await expect(confirmacion(page)).toHaveCount(0, { timeout: 15_000 });
+  await go(page, "Anotaciones");
+  await expect(entries(page)).toHaveCount(1);
+  await expect(confirmation(page)).toHaveCount(0, { timeout: 15_000 });
   await page.evaluate(() => navigator.clipboard.writeText("previo"));
-  await rechaza(page, true);
+  await rejects(page, true);
 }
 
 test("Flujo 1: el portapapeles rechaza la copia", async ({ page }) => {
-  await conUnaAnotacion(page);
-  const lista = await entradas(page).allInnerTexts();
+  await withAnnotation(page);
+  const list = await entries(page).allInnerTexts();
 
   // Paso 2 (con el reloj detenido para medir el paso 4).
-  await detenerEn(page, "2026-07-15T08:30:00");
-  await copiar(page).click();
-  await expect(noCopio(page)).toBeVisible();
-  await expect(noCopio(page)).toHaveText("No se pudo copiar");
-  await expect(noCopio(page).getByRole("button")).toHaveCount(0);
-  await expect(copiadas(page)).toHaveCount(0);
+  await stopIn(page, "2026-07-15T08:30:00");
+  await copy(page).click();
+  await expect(doNotCopy(page)).toBeVisible();
+  await expect(doNotCopy(page)).toHaveText("No se pudo copiar");
+  await expect(doNotCopy(page).getByRole("button")).toHaveCount(0);
+  await expect(copiedNotice(page)).toHaveCount(0);
 
   // Paso 3.
-  expect(await entradas(page).allInnerTexts()).toEqual(lista);
+  expect(await entries(page).allInnerTexts()).toEqual(list);
   await expect(
     page.getByRole("heading", { name: "Anotaciones", level: 1 }),
   ).toBeVisible();
@@ -179,154 +179,154 @@ test("Flujo 1: el portapapeles rechaza la copia", async ({ page }) => {
       .getByRole("status")
       .filter({ hasNotText: /No se pudo copiar|Sin conexión/ }),
   ).toHaveCount(0);
-  expect(await portapapeles(page)).toBe("previo");
+  expect(await clipboard(page)).toBe("previo");
 
   // Paso 4: con el reloj detenido, a los 4 s sigue; a los 5 s se va solo.
   await page.clock.runFor(4000);
-  await expect(noCopio(page)).toBeVisible();
+  await expect(doNotCopy(page)).toBeVisible();
   await page.clock.runFor(1000);
-  await expect(noCopio(page)).toHaveCount(0);
-  expect(await portapapeles(page)).toBe("previo");
+  await expect(doNotCopy(page)).toHaveCount(0);
+  expect(await clipboard(page)).toBe("previo");
 });
 
 test("Flujo 2: volver a tocar Copiar", async ({ page }) => {
-  await conUnaAnotacion(page);
+  await withAnnotation(page);
 
   // Pasos 1 y 2.
-  await detenerEn(page, "2026-07-15T08:30:00");
-  await copiar(page).click();
-  await expect(noCopio(page)).toHaveCount(1);
+  await stopIn(page, "2026-07-15T08:30:00");
+  await copy(page).click();
+  await expect(doNotCopy(page)).toHaveCount(1);
   await page.clock.runFor(3000);
-  await copiar(page).click();
-  await expect(noCopio(page)).toHaveCount(1);
+  await copy(page).click();
+  await expect(doNotCopy(page)).toHaveCount(1);
   await page.clock.runFor(4000);
-  await expect(noCopio(page)).toHaveCount(1);
+  await expect(doNotCopy(page)).toHaveCount(1);
   await page.clock.runFor(1000);
-  await expect(noCopio(page)).toHaveCount(0);
+  await expect(doNotCopy(page)).toHaveCount(0);
 
   // Paso 4: la app no copia sola, aunque pasen minutos.
   await page.clock.runFor(10 * 60_000);
-  expect(await portapapeles(page)).toBe("previo");
-  await expect(noCopio(page)).toHaveCount(0);
+  expect(await clipboard(page)).toBe("previo");
+  await expect(doNotCopy(page)).toHaveCount(0);
 
   // Paso 3: recargar con el portapapeles funcionando.
   await page.clock.resume();
-  await rechaza(page, false);
+  await rejects(page, false);
   await page.reload();
   await expect(
     page.getByRole("heading", { name: "Anotaciones", level: 1 }),
   ).toBeVisible();
-  await expect(entradas(page)).toHaveCount(1);
-  await copiar(page).click();
-  await expect(copiadas(page)).toHaveCount(1);
-  expect(await portapapeles(page)).toBe(
+  await expect(entries(page)).toHaveCount(1);
+  await copy(page).click();
+  await expect(copiedNotice(page)).toHaveCount(1);
+  expect(await clipboard(page)).toBe(
     "2026-07-15 08:05 · Me sirvió · Panel de edición · Regar · quedó lindo",
   );
   // Con el rechazo de nuevo, mientras se ve "Anotaciones copiadas": solo el nuevo texto.
-  await rechaza(page, true);
-  await copiar(page).click();
-  await expect(noCopio(page)).toHaveCount(1);
-  await expect(copiadas(page)).toHaveCount(0);
+  await rejects(page, true);
+  await copy(page).click();
+  await expect(doNotCopy(page)).toHaveCount(1);
+  await expect(copiedNotice(page)).toHaveCount(0);
   // Y al revés: con "No se pudo copiar" visible, un Copiar que funciona deja solo "Anotaciones copiadas".
-  await rechaza(page, false);
-  await copiar(page).click();
-  await expect(copiadas(page)).toHaveCount(1);
-  await expect(noCopio(page)).toHaveCount(0);
+  await rejects(page, false);
+  await copy(page).click();
+  await expect(copiedNotice(page)).toHaveCount(1);
+  await expect(doNotCopy(page)).toHaveCount(0);
   await expect(
     page.getByRole("status").filter({ hasText: /copiar|copiadas/ }),
   ).toHaveCount(1);
 });
 
 /** Completa Pagar a las 08:00 y a las 08:00:02 abre Anotaciones con el aviso de deshacer a la vista. */
-async function conAvisoDeDeshacer(page: Page) {
-  await portapapelesControlado(page);
-  await sesionConReloj(page, "2026-07-15T07:59:00");
-  await crearYVer(page, { titulo: "Pagar", tipo: "No se repite" });
-  await anotar(page, "suelta");
-  await expect(confirmacion(page)).toHaveCount(0, { timeout: 15_000 });
+async function withNoticeOfUndo(page: Page) {
+  await clipboardControlled(page);
+  await sessionWithClock(page, "2026-07-15T07:59:00");
+  await createAndView(page, { title: "Pagar", kind: "No se repite" });
+  await annotate(page, "suelta");
+  await expect(confirmation(page)).toHaveCount(0, { timeout: 15_000 });
   await page.clock.setFixedTime(new Date("2026-07-15T08:00:00"));
   await page.waitForTimeout(1200);
-  await completar(page, "Pagar");
-  await expect(deshacerAviso(page)).toBeVisible();
+  await complete(page, "Pagar");
+  await expect(undoNotice(page)).toBeVisible();
   await page.clock.setFixedTime(new Date("2026-07-15T08:00:02"));
   await page.waitForTimeout(1200);
-  await ir(page, "Anotaciones");
-  await expect(deshacerAviso(page)).toBeVisible();
-  await rechaza(page, true);
+  await go(page, "Anotaciones");
+  await expect(undoNotice(page)).toBeVisible();
+  await rejects(page, true);
 }
 
-async function sinSuperponerse(page: Page) {
-  const aviso = await deshacerAviso(page).boundingBox();
-  const texto = await noCopio(page).boundingBox();
-  expect(aviso && texto).toBeTruthy();
-  const separados =
-    aviso!.y + aviso!.height <= texto!.y ||
-    texto!.y + texto!.height <= aviso!.y ||
-    aviso!.x + aviso!.width <= texto!.x ||
-    texto!.x + texto!.width <= aviso!.x;
-  expect(separados).toBe(true);
+async function withoutOverlap(page: Page) {
+  const notice = await undoNotice(page).boundingBox();
+  const text = await doNotCopy(page).boundingBox();
+  expect(notice && text).toBeTruthy();
+  const separate =
+    notice!.y + notice!.height <= text!.y ||
+    text!.y + text!.height <= notice!.y ||
+    notice!.x + notice!.width <= text!.x ||
+    text!.x + text!.width <= notice!.x;
+  expect(separate).toBe(true);
   // El botón Deshacer se puede tocar: es lo que está en su centro.
-  const boton = (await deshacerAviso(page)
+  const button = (await undoNotice(page)
     .getByRole("button", { name: "Deshacer" })
     .boundingBox())!;
-  const encima = await page.evaluate(
+  const onTop = await page.evaluate(
     ({ x, y }) => document.elementFromPoint(x, y)?.textContent?.trim(),
-    { x: boton.x + boton.width / 2, y: boton.y + boton.height / 2 },
+    { x: button.x + button.width / 2, y: button.y + button.height / 2 },
   );
-  expect(encima).toBe("Deshacer");
+  expect(onTop).toBe("Deshacer");
 }
 
 test("Flujo 3: no tapa el aviso de deshacer", async ({ page }) => {
-  await conAvisoDeDeshacer(page);
+  await withNoticeOfUndo(page);
 
   // Paso 2.
-  await copiar(page).click();
-  await expect(noCopio(page)).toBeVisible();
-  await expect(deshacerAviso(page)).toBeVisible();
-  await sinSuperponerse(page);
+  await copy(page).click();
+  await expect(doNotCopy(page)).toBeVisible();
+  await expect(undoNotice(page)).toBeVisible();
+  await withoutOverlap(page);
 
   // Paso 3: Deshacer mientras se ve el texto.
-  await deshacerAviso(page).getByRole("button", { name: "Deshacer" }).click();
-  await expect(deshacerAviso(page)).toHaveCount(0);
-  await ir(page, "Pendientes");
-  await expect(fila(page, "Pagar").getByRole("checkbox")).not.toBeChecked();
-  await ir(page, "Historial");
+  await undoNotice(page).getByRole("button", { name: "Deshacer" }).click();
+  await expect(undoNotice(page)).toHaveCount(0);
+  await go(page, "Pendientes");
+  await expect(row(page, "Pagar").getByRole("checkbox")).not.toBeChecked();
+  await go(page, "Historial");
   await expect(page.getByText("Todavía no completaste nada")).toBeVisible();
 });
 
 test("Flujo 3 (celular): no tapa el aviso de deshacer", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await conAvisoDeDeshacer(page);
-  await copiar(page).click();
-  await expect(noCopio(page)).toBeVisible();
-  await expect(deshacerAviso(page)).toBeVisible();
-  await sinSuperponerse(page);
-  await deshacerAviso(page).getByRole("button", { name: "Deshacer" }).click();
-  await expect(deshacerAviso(page)).toHaveCount(0);
-  await ir(page, "Pendientes");
-  await expect(fila(page, "Pagar").getByRole("checkbox")).not.toBeChecked();
+  await withNoticeOfUndo(page);
+  await copy(page).click();
+  await expect(doNotCopy(page)).toBeVisible();
+  await expect(undoNotice(page)).toBeVisible();
+  await withoutOverlap(page);
+  await undoNotice(page).getByRole("button", { name: "Deshacer" }).click();
+  await expect(undoNotice(page)).toHaveCount(0);
+  await go(page, "Pendientes");
+  await expect(row(page, "Pagar").getByRole("checkbox")).not.toBeChecked();
 });
 
 // ---------------------------------------------------------------------------
 // Flujos 4 a 7: las limpiezas se reintentan
 // ---------------------------------------------------------------------------
 
-const HOY = "2026-07-15T08:00:00";
+const TODAY = "2026-07-15T08:00:00";
 
-type Dos = Awaited<ReturnType<typeof dosDispositivos>>;
+type Two = Awaited<ReturnType<typeof twoDevices>>;
 
 /** Con B cargando todas las pantallas (sin service worker no podría abrirlas sin conexión), termina en Pendientes. */
-async function cargarPantallas(page: Page) {
-  for (const pantalla of [
+async function loadScreens(page: Page) {
+  for (const screenName of [
     "Historial",
     "Anotaciones",
     "Pendientes",
   ] as const)
-    await ir(page, pantalla);
+    await go(page, screenName);
 }
 
 /** Ningún texto, contador ni indicador de pendientes: solo la franja "Sin conexión" y el aviso de deshacer de siempre. */
-async function silencio(page: Page) {
+async function silence(page: Page) {
   await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await expect(
@@ -341,7 +341,7 @@ async function silencio(page: Page) {
  * B vuelve a tener conexión con la red demorada (CDP, latencia de 3 s); cuando `llego` dice que el dato huérfano
  * ya está donde B lo ve, B vuelve a quedarse sin conexión, antes de que termine el intento de limpiarlo.
  */
-async function reconectarYCortar(d: Dos, llego: () => Promise<boolean>) {
+async function reconnectAndCut(d: Two, arrive: () => Promise<boolean>) {
   await d.ctxB.setOffline(false);
   const cdp = await d.b.context().newCDPSession(d.b);
   await cdp.send("Network.emulateNetworkConditions", {
@@ -350,96 +350,96 @@ async function reconectarYCortar(d: Dos, llego: () => Promise<boolean>) {
     downloadThroughput: -1,
     uploadThroughput: -1,
   });
-  await esperarA(llego);
+  await waitA(arrive);
   await d.ctxB.setOffline(true);
 }
 
-async function esperarA(condicion: () => Promise<boolean>, ms = 40_000) {
-  const limite = Date.now() + ms;
-  while (Date.now() < limite) {
-    if (await condicion().catch(() => false)) return;
+async function waitA(condition: () => Promise<boolean>, ms = 40_000) {
+  const limit = Date.now() + ms;
+  while (Date.now() < limit) {
+    if (await condition().catch(() => false)) return;
     await new Promise((r) => setTimeout(r, 100));
   }
   throw new Error("la condición no se cumplió a tiempo");
 }
 
 /** Sigue verdadero durante `ms` (el estado del emulador no cambia solo). */
-async function sigueDurante(ms: number, condicion: () => Promise<boolean>) {
-  const limite = Date.now() + ms;
+async function staysDuring(ms: number, condition: () => Promise<boolean>) {
+  const limit = Date.now() + ms;
   do {
-    expect(await condicion()).toBe(true);
+    expect(await condition()).toBe(true);
     await new Promise((r) => setTimeout(r, 500));
-  } while (Date.now() < limite);
+  } while (Date.now() < limit);
 }
 
-const huerfanaEnServidor = async () =>
-  (await textosDeAnotaciones()).includes("huérfana");
-const lineasCopiadas = async (page: Page) => {
-  await ir(page, "Anotaciones");
-  await copiar(page).click();
-  await expect(copiadas(page)).toBeVisible();
-  return (await portapapeles(page)).split("\n");
+const orphanInServer = async () =>
+  (await annotationsTexts()).includes("huérfana");
+const linesCopied = async (page: Page) => {
+  await go(page, "Anotaciones");
+  await copy(page).click();
+  await expect(copiedNotice(page)).toBeVisible();
+  return (await clipboard(page)).split("\n");
 };
 
 /**
  * Deja una anotación huérfana: B (con `queda`, una anotación suelta) se queda sin conexión, A borra `Regar` con su
  * anotación `sana` y se va, y B, que todavía ve `Regar`, anota `huérfana` sobre ella. B termina en Anotaciones, sin conexión.
  */
-async function conHuerfanaPorLimpiar(browser: Browser): Promise<Dos> {
-  const d = await dosDispositivos(browser, HOY);
+async function withOrphanByClean(browser: Browser): Promise<Two> {
+  const d = await twoDevices(browser, TODAY);
   await d.ctxB.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await crearYVer(d.a, { titulo: "Regar", tipo: "No se repite" });
-  await expect(fila(d.b, "Regar")).toBeVisible();
-  await abrir(d.a, "Regar");
-  await anotar(d.a, "sana");
-  await cerrar(d.a);
-  await anotar(d.b, "queda");
-  await cargarPantallas(d.b);
-  await ir(d.b, "Anotaciones");
-  await expect(entradas(d.b)).toHaveCount(2);
-  await ir(d.b, "Pendientes");
+  await createAndView(d.a, { title: "Regar", kind: "No se repite" });
+  await expect(row(d.b, "Regar")).toBeVisible();
+  await openTask(d.a, "Regar");
+  await annotate(d.a, "sana");
+  await close(d.a);
+  await annotate(d.b, "queda");
+  await loadScreens(d.b);
+  await go(d.b, "Anotaciones");
+  await expect(entries(d.b)).toHaveCount(2);
+  await go(d.b, "Pendientes");
   await d.ctxB.setOffline(true);
-  await borrar(d.a, "Regar");
-  await llegaAlServidor(d.a);
-  expect(await textosDeAnotaciones()).toEqual(["queda"]);
+  await remove(d.a, "Regar");
+  await arrivesOnServer(d.a);
+  expect(await annotationsTexts()).toEqual(["queda"]);
   await d.a.context().close();
-  await abrir(d.b, "Regar");
-  await anotar(d.b, "huérfana");
-  await cerrar(d.b);
-  await ir(d.b, "Anotaciones");
+  await openTask(d.b, "Regar");
+  await annotate(d.b, "huérfana");
+  await close(d.b);
+  await go(d.b, "Anotaciones");
   return d;
 }
 
 /** El intento de B se corta: la huérfana está en el servidor, B no la ve y no limpió nada. */
-async function cortarElIntento(d: Dos) {
-  await reconectarYCortar(
+async function cutAttempt(d: Two) {
+  await reconnectAndCut(
     d,
     async () =>
-      (await huerfanaEnServidor()) && (await entradas(d.b).count()) === 1,
+      (await orphanInServer()) && (await entries(d.b).count()) === 1,
   );
-  await expect(entradas(d.b)).toHaveCount(1);
-  await expect(entradas(d.b).first()).toContainText("queda");
-  await sigueDurante(6000, huerfanaEnServidor);
+  await expect(entries(d.b)).toHaveCount(1);
+  await expect(entries(d.b).first()).toContainText("queda");
+  await staysDuring(6000, orphanInServer);
 }
 
 test("Flujo 4: una huérfana se limpia al volver la conexión", async ({
   browser,
 }) => {
   test.setTimeout(240_000);
-  const d = await conHuerfanaPorLimpiar(browser);
+  const d = await withOrphanByClean(browser);
   try {
     // Pasos 2 y 3.
-    await cortarElIntento(d);
+    await cutAttempt(d);
     await expect(d.b.getByText("huérfana")).toHaveCount(0);
-    await silencio(d.b);
+    await silence(d.b);
 
     // Paso 4: B vuelve a tener conexión y no toca nada.
     await d.ctxB.setOffline(false);
-    await esperarA(async () => !(await huerfanaEnServidor()));
-    expect(await textosDeAnotaciones()).toEqual(["queda"]);
-    await expect(entradas(d.b)).toHaveCount(1);
-    await silencio(d.b);
-    expect(await lineasCopiadas(d.b)).toHaveLength(1);
+    await waitA(async () => !(await orphanInServer()));
+    expect(await annotationsTexts()).toEqual(["queda"]);
+    await expect(entries(d.b)).toHaveCount(1);
+    await silence(d.b);
+    expect(await linesCopied(d.b)).toHaveLength(1);
   } finally {
     await d.b.context().close();
   }
@@ -449,19 +449,19 @@ test("Flujo 4 (paso 5): un cambio de datos sin conexión no limpia; al volver la
   browser,
 }) => {
   test.setTimeout(240_000);
-  const d = await conHuerfanaPorLimpiar(browser);
+  const d = await withOrphanByClean(browser);
   try {
-    await cortarElIntento(d);
-    await ir(d.b, "Pendientes");
-    await anotar(d.b, "Me sirvió");
-    await ir(d.b, "Anotaciones");
-    await expect(entradas(d.b)).toHaveCount(2);
-    await sigueDurante(6000, huerfanaEnServidor);
-    await silencio(d.b);
+    await cutAttempt(d);
+    await go(d.b, "Pendientes");
+    await annotate(d.b, "Me sirvió");
+    await go(d.b, "Anotaciones");
+    await expect(entries(d.b)).toHaveCount(2);
+    await staysDuring(6000, orphanInServer);
+    await silence(d.b);
     await d.ctxB.setOffline(false);
-    await esperarA(async () => !(await huerfanaEnServidor()));
-    expect(await textosDeAnotaciones()).toEqual(["Me sirvió", "queda"]);
-    await silencio(d.b);
+    await waitA(async () => !(await orphanInServer()));
+    expect(await annotationsTexts()).toEqual(["Me sirvió", "queda"]);
+    await silence(d.b);
   } finally {
     await d.b.context().close();
   }
@@ -471,57 +471,57 @@ test("Flujo 4 (paso 5): un cambio de datos sin conexión no limpia; al volver la
 // Flujo 5: una falla no impide limpiar las demás
 // ---------------------------------------------------------------------------
 
-const TAREAS = ["Regar", "Pagar", "Limpiar"];
+const TASKS = ["Regar", "Pagar", "Limpiar"];
 
-const huerfanasEnServidor = async () =>
-  (await textosDeAnotaciones()).filter((t) => t?.startsWith("h"));
+const orphanedInServer = async () =>
+  (await annotationsTexts()).filter((t) => t?.startsWith("h"));
 
 /** Tres tareas borradas por A mientras B, sin conexión, anota `h1`, `h2` y `h3` sobre ellas (y `queda`, suelta). */
-async function conTresHuerfanas(browser: Browser): Promise<Dos> {
-  const d = await dosDispositivos(browser, HOY);
-  for (const titulo of TAREAS) {
-    await crearYVer(d.a, { titulo, tipo: "No se repite" });
-    await expect(fila(d.b, titulo)).toBeVisible();
+async function withThreeOrphaned(browser: Browser): Promise<Two> {
+  const d = await twoDevices(browser, TODAY);
+  for (const title of TASKS) {
+    await createAndView(d.a, { title, kind: "No se repite" });
+    await expect(row(d.b, title)).toBeVisible();
   }
-  await anotar(d.b, "queda");
-  await cargarPantallas(d.b);
+  await annotate(d.b, "queda");
+  await loadScreens(d.b);
   await d.ctxB.setOffline(true);
-  for (const titulo of TAREAS) await borrar(d.a, titulo);
-  await llegaAlServidor(d.a);
+  for (const title of TASKS) await remove(d.a, title);
+  await arrivesOnServer(d.a);
   await d.a.context().close();
-  for (const [i, titulo] of TAREAS.entries()) {
-    await abrir(d.b, titulo);
-    await anotar(d.b, `h${i + 1}`);
-    await cerrar(d.b);
+  for (const [i, title] of TASKS.entries()) {
+    await openTask(d.b, title);
+    await annotate(d.b, `h${i + 1}`);
+    await close(d.b);
   }
-  await ir(d.b, "Anotaciones");
-  await expect(entradas(d.b)).toHaveCount(4);
+  await go(d.b, "Anotaciones");
+  await expect(entries(d.b)).toHaveCount(4);
   return d;
 }
 
-for (const restantes of [3, 2]) {
-  test(`Flujo 5: tres anotaciones huérfanas, el intento se corta con ${restantes} por limpiar`, async ({
+for (const remaining of [3, 2]) {
+  test(`Flujo 5: tres anotaciones huérfanas, el intento se corta con ${remaining} por limpiar`, async ({
     browser,
   }) => {
     test.setTimeout(240_000);
-    const d = await conTresHuerfanas(browser);
+    const d = await withThreeOrphaned(browser);
     try {
-      await reconectarYCortar(
+      await reconnectAndCut(
         d,
         async () =>
-          (await huerfanasEnServidor()).length === restantes &&
-          (await entradas(d.b).count()) === 1,
+          (await orphanedInServer()).length === remaining &&
+          (await entries(d.b).count()) === 1,
       );
-      await expect(entradas(d.b)).toHaveCount(1);
-      await sigueDurante(
+      await expect(entries(d.b)).toHaveCount(1);
+      await staysDuring(
         6000,
-        async () => (await huerfanasEnServidor()).length === restantes,
+        async () => (await orphanedInServer()).length === remaining,
       );
-      await silencio(d.b);
+      await silence(d.b);
       await d.ctxB.setOffline(false);
-      await esperarA(async () => (await huerfanasEnServidor()).length === 0);
-      expect(await textosDeAnotaciones()).toEqual(["queda"]);
-      await silencio(d.b);
+      await waitA(async () => (await orphanedInServer()).length === 0);
+      expect(await annotationsTexts()).toEqual(["queda"]);
+      await silence(d.b);
     } finally {
       await d.b.context().close();
     }
@@ -532,33 +532,33 @@ test("Flujo 5: un completado huérfano se limpia y el Historial nunca lo muestra
   browser,
 }) => {
   test.setTimeout(240_000);
-  const d = await dosDispositivos(browser, HOY);
+  const d = await twoDevices(browser, TODAY);
   try {
-    await crearYVer(d.a, { titulo: "Regar", tipo: "No se repite" });
-    await expect(fila(d.b, "Regar")).toBeVisible();
-    await cargarPantallas(d.b);
+    await createAndView(d.a, { title: "Regar", kind: "No se repite" });
+    await expect(row(d.b, "Regar")).toBeVisible();
+    await loadScreens(d.b);
     await d.ctxB.setOffline(true);
-    await borrar(d.a, "Regar");
-    await llegaAlServidor(d.a);
+    await remove(d.a, "Regar");
+    await arrivesOnServer(d.a);
     await d.a.context().close();
-    await completar(d.b, "Regar");
-    await ir(d.b, "Historial");
+    await complete(d.b, "Regar");
+    await go(d.b, "Historial");
     await expect(d.b.getByRole("listitem")).toHaveCount(1);
-    const completados = async () => (await documentos("completados")).length;
-    await reconectarYCortar(
+    const completions = async () => (await docs("completados")).length;
+    await reconnectAndCut(
       d,
       async () =>
-        (await completados()) === 1 &&
+        (await completions()) === 1 &&
         (await d.b.getByRole("listitem").count()) === 0,
     );
     await expect(d.b.getByText("Todavía no completaste nada")).toBeVisible();
-    await sigueDurante(6000, async () => (await completados()) === 1);
-    await silencio(d.b);
+    await staysDuring(6000, async () => (await completions()) === 1);
+    await silence(d.b);
     await d.ctxB.setOffline(false);
-    await esperarA(async () => (await completados()) === 0);
+    await waitA(async () => (await completions()) === 0);
     await expect(d.b.getByText("Todavía no completaste nada")).toBeVisible();
     await expect(d.b.getByRole("listitem")).toHaveCount(0);
-    await silencio(d.b);
+    await silence(d.b);
   } finally {
     await d.b.context().close();
   }
@@ -572,33 +572,33 @@ test("Flujo 6: sin temporizadores, solo al cambiar los datos", async ({
   browser,
 }) => {
   test.setTimeout(300_000);
-  const d = await conHuerfanaPorLimpiar(browser);
+  const d = await withOrphanByClean(browser);
   try {
-    await cortarElIntento(d);
+    await cutAttempt(d);
 
     // Paso 1: B con conexión, pero con el servidor inalcanzable el intento de la vuelta de la conexión también falla.
     await d.b
       .context()
-      .route(/127\.0\.0\.1:8080/, (ruta) => ruta.abort("connectionfailed"));
+      .route(/127\.0\.0\.1:8080/, (path) => path.abort("connectionfailed"));
     await d.ctxB.setOffline(false);
     await d.b.waitForTimeout(15_000);
-    expect(await huerfanaEnServidor()).toBe(true);
+    expect(await orphanInServer()).toBe(true);
     // El servidor vuelve a estar a mano; la persona no cambia nada y pasa 1 hora simulada.
     await d.b.context().unroute(/127\.0\.0\.1:8080/);
     await d.b.clock.pauseAt(new Date("2026-07-15T08:30:00"));
     await d.b.clock.runFor(60 * 60_000);
     await d.b.clock.resume();
     await d.b.waitForTimeout(15_000);
-    expect(await huerfanaEnServidor()).toBe(true);
-    await expect(entradas(d.b)).toHaveCount(1);
-    await silencio(d.b);
+    expect(await orphanInServer()).toBe(true);
+    await expect(entries(d.b)).toHaveCount(1);
+    await silence(d.b);
 
     // Paso 2: cambian los datos.
-    await ir(d.b, "Pendientes");
-    await anotar(d.b, "cambio");
-    await esperarA(async () => !(await huerfanaEnServidor()));
-    expect(await textosDeAnotaciones()).toEqual(["cambio", "queda"]);
-    await silencio(d.b);
+    await go(d.b, "Pendientes");
+    await annotate(d.b, "cambio");
+    await waitA(async () => !(await orphanInServer()));
+    expect(await annotationsTexts()).toEqual(["cambio", "queda"]);
+    await silence(d.b);
   } finally {
     await d.b.context().close();
   }
@@ -608,27 +608,27 @@ test("Flujo 6: sin temporizadores, solo al cambiar los datos", async ({
 // Flujo 7: datos que ya no se usan (campos `etiquetas` y `esfuerzo`, colección `etiquetas`)
 // ---------------------------------------------------------------------------
 
-async function escribirEnEmulador(
-  ruta: string,
-  campos: Record<string, unknown>,
+async function writeInEmulator(
+  path: string,
+  fields: Record<string, unknown>,
   mascara: string[] = [],
-  metodo: "PATCH" | "POST" = "PATCH",
+  method: "PATCH" | "POST" = "PATCH",
 ) {
-  const consulta = mascara.map((m) => `updateMask.fieldPaths=${m}`).join("&");
-  const url = `${RAIZ}/${ruta}${ruta.includes("?") ? "&" : "?"}${consulta}`;
-  const respuesta = await fetch(url, {
-    method: metodo,
-    headers: { ...AUTORIZADO, "Content-Type": "application/json" },
-    body: JSON.stringify({ fields: campos }),
+  const query = mascara.map((m) => `updateMask.fieldPaths=${m}`).join("&");
+  const url = `${ROOT}/${path}${path.includes("?") ? "&" : "?"}${query}`;
+  const response = await fetch(url, {
+    method,
+    headers: { ...AUTHORIZED, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields }),
   });
-  if (!respuesta.ok) throw new Error(`REST ${metodo} ${ruta}: ${respuesta.status}`);
+  if (!response.ok) throw new Error(`REST ${method} ${path}: ${response.status}`);
 }
 
-const tareaEnServidor = async (titulo: string) =>
-  (await documentos("tareas")).find((t) => texto(t.campos, "titulo") === titulo);
+const taskInServer = async (title: string) =>
+  (await docs("tareas")).find((t) => text(t.fields, "titulo") === title);
 
-const etiquetasViejas = (campos: Record<string, any>) =>
-  (campos.etiquetas?.arrayValue?.values ?? []).map(
+const labelsViejas = (fields: Record<string, any>) =>
+  (fields.etiquetas?.arrayValue?.values ?? []).map(
     (v: { stringValue: string }) => v.stringValue,
   );
 
@@ -636,22 +636,22 @@ test("Flujo 7: los campos viejos etiquetas y esfuerzo quedan intactos al editar"
   page,
 }) => {
   test.setTimeout(120_000);
-  await sesionConReloj(page, HOY);
-  const uid = await uidDelEmulador();
+  await sessionWithClock(page, TODAY);
+  const uid = await emulatorUid();
 
   // Paso 1: dos tareas, los campos viejos escritos por el REST del emulador y la colección vieja.
-  await crearYVer(page, {
-    titulo: "Regar",
-    tipo: "Intervalo",
-    cada: "2",
-    unidad: "días",
+  await createAndView(page, {
+    title: "Regar",
+    kind: "Intervalo",
+    every: "2",
+    unit: "días",
   });
-  await crearYVer(page, { titulo: "Pagar", tipo: "No se repite" });
-  await anotar(page, "queda");
-  const anotacionesAntes = await documentos("anotaciones");
-  const regar = await tareaEnServidor("Regar");
-  await escribirEnEmulador(
-    `users/${uid}/tareas/${regar!.id}`,
+  await createAndView(page, { title: "Pagar", kind: "No se repite" });
+  await annotate(page, "queda");
+  const annotationsBefore = await docs("anotaciones");
+  const water = await taskInServer("Regar");
+  await writeInEmulator(
+    `users/${uid}/tareas/${water!.id}`,
     {
       etiquetas: { arrayValue: { values: [{ stringValue: "x" }] } },
       esfuerzo: { stringValue: "media" },
@@ -659,14 +659,14 @@ test("Flujo 7: los campos viejos etiquetas y esfuerzo quedan intactos al editar"
     ["etiquetas", "esfuerzo"],
   );
   const casa = { nombre: { stringValue: "Casa" }, color: { stringValue: "rojo" } };
-  await escribirEnEmulador(`users/${uid}/etiquetas?documentId=casa`, casa, [], "POST");
-  await esperarA(async () => etiquetasViejas((await tareaEnServidor("Regar"))!.campos).length === 1);
+  await writeInEmulator(`users/${uid}/etiquetas?documentId=casa`, casa, [], "POST");
+  await waitA(async () => labelsViejas((await taskInServer("Regar"))!.fields).length === 1);
   await page.reload();
-  await expect(fila(page, "Regar")).toBeVisible();
+  await expect(row(page, "Regar")).toBeVisible();
 
   // Paso 2: la app se ve igual que sin esos datos.
-  await expect(fila(page, "Regar").getByRole("listitem")).toHaveCount(0);
-  await expect(fila(page, "Regar")).not.toContainText(/Rápida|Media|Larga|Sin estimar/);
+  await expect(row(page, "Regar").getByRole("listitem")).toHaveCount(0);
+  await expect(row(page, "Regar")).not.toContainText(/Rápida|Media|Larga|Sin estimar/);
   await expect(page.getByRole("group", { name: "Filtrar por etiqueta" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Solo rápidas" })).toHaveCount(0);
   await expect(page.getByRole("navigation").getByRole("link")).toHaveText([
@@ -674,32 +674,32 @@ test("Flujo 7: los campos viejos etiquetas y esfuerzo quedan intactos al editar"
     "Historial",
     "Anotaciones",
   ]);
-  await silencio(page);
+  await silence(page);
 
   // Paso 3: el panel no tiene los campos; guardar el título no toca los campos viejos.
-  await abrir(page, "Regar");
+  await openTask(page, "Regar");
   await expect(page.getByRole("combobox", { name: "Etiquetas" })).toHaveCount(0);
   await expect(page.getByRole("combobox", { name: "Esfuerzo" })).toHaveCount(0);
-  await cerrar(page);
-  await editar(page, "Regar", { titulo: "Regar plantas" });
-  await esperarA(async () => !!(await tareaEnServidor("Regar plantas")));
-  let doc = (await tareaEnServidor("Regar plantas"))!;
-  expect(etiquetasViejas(doc.campos)).toEqual(["x"]);
-  expect(texto(doc.campos, "esfuerzo")).toBe("media");
+  await close(page);
+  await edit(page, "Regar", { title: "Regar plantas" });
+  await waitA(async () => !!(await taskInServer("Regar plantas")));
+  let doc = (await taskInServer("Regar plantas"))!;
+  expect(labelsViejas(doc.fields)).toEqual(["x"]);
+  expect(text(doc.fields, "esfuerzo")).toBe("media");
 
   // Paso 4: cambiar la recurrencia quita sus campos y deja los viejos.
-  await editar(page, "Regar plantas", { tipo: "No se repite" });
-  await esperarA(async () => (await tareaEnServidor("Regar plantas"))!.campos.recurrencia === undefined);
-  doc = (await tareaEnServidor("Regar plantas"))!;
-  expect(doc.campos.recurrencia).toBeUndefined();
-  expect(etiquetasViejas(doc.campos)).toEqual(["x"]);
-  expect(texto(doc.campos, "esfuerzo")).toBe("media");
+  await edit(page, "Regar plantas", { kind: "No se repite" });
+  await waitA(async () => (await taskInServer("Regar plantas"))!.fields.recurrencia === undefined);
+  doc = (await taskInServer("Regar plantas"))!;
+  expect(doc.fields.recurrencia).toBeUndefined();
+  expect(labelsViejas(doc.fields)).toEqual(["x"]);
+  expect(text(doc.fields, "esfuerzo")).toBe("media");
 
   // Paso 5: la colección vieja y las anotaciones no cambian; borrar la tarea no toca la colección vieja.
-  expect((await documentos("etiquetas")).map((d) => d.campos)).toEqual([casa]);
-  expect(await documentos("anotaciones")).toEqual(anotacionesAntes);
-  await borrar(page, "Regar plantas");
-  await esperarA(async () => !(await tareaEnServidor("Regar plantas")));
-  expect((await documentos("etiquetas")).map((d) => d.campos)).toEqual([casa]);
-  await silencio(page);
+  expect((await docs("etiquetas")).map((d) => d.fields)).toEqual([casa]);
+  expect(await docs("anotaciones")).toEqual(annotationsBefore);
+  await remove(page, "Regar plantas");
+  await waitA(async () => !(await taskInServer("Regar plantas")));
+  expect((await docs("etiquetas")).map((d) => d.fields)).toEqual([casa]);
+  await silence(page);
 });

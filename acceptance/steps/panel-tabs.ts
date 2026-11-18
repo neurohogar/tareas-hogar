@@ -14,157 +14,157 @@ import {
 	type PanelPresentation,
 	type PanelSection
 } from '../../src/lib/core/panel-tabs';
-import { P, numero } from './values';
+import { P, numeric } from './values';
 import type { StepDefinition, World } from './world';
 
 /** Lo que el escenario declaró del panel; vive lo que vive su World. */
-interface DeclaradoDelPanel {
-	anchoRem?: number;
+interface PanelDeclared {
+	widthRem?: number;
 	mode?: PanelMode;
-	camposConError?: FieldWithError[];
-	camposDelGuardado?: FieldWithError[];
+	fieldsWithError?: FieldWithError[];
+	savedFields?: FieldWithError[];
 	keyboardOpen?: boolean;
 }
 
-const declarados = new WeakMap<World, DeclaradoDelPanel>();
+const declaredByWorld = new WeakMap<World, PanelDeclared>();
 
-function declaradoDe(world: World): DeclaradoDelPanel {
-	const declarado = declarados.get(world) ?? {};
-	declarados.set(world, declarado);
-	return declarado;
+function declaredOf(world: World): PanelDeclared {
+	const declared = declaredByWorld.get(world) ?? {};
+	declaredByWorld.set(world, declared);
+	return declared;
 }
 
-function declarada<T>(valor: T | undefined, que: string): T {
-	if (valor === undefined) throw new Error(`El escenario no declaró ${que}`);
-	return valor;
+function requireDeclared<T>(value: T | undefined, that: string): T {
+	if (value === undefined) throw new Error(`El escenario no declaró ${that}`);
+	return value;
 }
 
 /** Un valor malformado falla el escenario: nada se interpreta por parecido. */
-function unoDe<T extends string>(permitidos: readonly T[], valor: string, que: string): T {
-	const permitido = permitidos.find((p) => p === valor);
-	if (permitido === undefined) throw new Error(`${que} inválido: "${valor}"`);
-	return permitido;
+function oneOf<T extends string>(allowedValues: readonly T[], value: string, that: string): T {
+	const allowedValue = allowedValues.find((p) => p === value);
+	if (allowedValue === undefined) throw new Error(`${that} inválido: "${value}"`);
+	return allowedValue;
 }
 
-const CAMPOS: readonly FieldWithError[] = ['Título', 'fecha límite', 'Cada', 'días', 'horario'];
-const SECCIONES: readonly PanelSection[] = ['Tarea', 'Cuándo', 'Acciones'];
-const MODOS: readonly PanelMode[] = ['crear', 'editar'];
-const FOCOS = ['un campo está enfocado', 'ningún campo está enfocado'] as const;
+const FIELDS: readonly FieldWithError[] = ['Título', 'fecha límite', 'Cada', 'días', 'horario'];
+const SECTIONS: readonly PanelSection[] = ['Tarea', 'Cuándo', 'Acciones'];
+const MODES: readonly PanelMode[] = ['crear', 'editar'];
+const FOCUSES = ['un campo está enfocado', 'ningún campo está enfocado'] as const;
 
-const PRESENTACIONES: Record<string, PanelPresentation> = { 'en pestañas': 'pestanas', 'en secciones seguidas': 'secciones' };
-const TECLADOS: Record<string, boolean> = { abierto: true, cerrado: false };
-const BARRAS: Record<string, boolean> = { visible: true, oculta: false };
+const PRESENTATIONS: Record<string, PanelPresentation> = { 'en pestañas': 'pestanas', 'en secciones seguidas': 'secciones' };
+const KEYBOARDS: Record<string, boolean> = { abierto: true, cerrado: false };
+const BARS: Record<string, boolean> = { visible: true, oculta: false };
 
-function deLaTabla<T>(tabla: Record<string, T>, valor: string, que: string): T {
-	return tabla[unoDe(Object.keys(tabla), valor, que)];
+function ofTable<T>(table: Record<string, T>, value: string, that: string): T {
+	return table[oneOf(Object.keys(table), value, that)];
 }
 
-const lista = (valor: string) => valor.split(',').map((parte) => parte.trim());
+const list = (value: string) => value.split(',').map((part) => part.trim());
 
-function camposDe(valor: string): FieldWithError[] {
-	return valor === 'ninguno' ? [] : lista(valor).map((campo) => unoDe(CAMPOS, campo, 'Campo'));
+function fieldsOf(value: string): FieldWithError[] {
+	return value === 'ninguno' ? [] : list(value).map((field) => oneOf(FIELDS, field, 'Campo'));
 }
 
-function seccionesDe(valor: string): PanelSection[] {
-	return lista(valor).map((seccion) => unoDe(SECCIONES, seccion, 'Sección'));
+function sectionsOf(value: string): PanelSection[] {
+	return list(value).map((section) => oneOf(SECTIONS, section, 'Sección'));
 }
 
-function anchoDe(valor: string): number {
-	const ancho = numero(valor);
-	if (ancho <= 0) throw new Error(`Ancho de pantalla inválido: "${valor}"`);
-	return ancho;
+function widthOf(value: string): number {
+	const width = numeric(value);
+	if (width <= 0) throw new Error(`Ancho de pantalla inválido: "${value}"`);
+	return width;
 }
 
-function destinoDe(world: World) {
-	const declarado = declaradoDe(world);
-	const presentacion = panelPresentation(declarada(declarado.anchoRem, 'el ancho de la pantalla'));
-	const destino = destinationOnSaveFailure(declarada(declarado.camposDelGuardado, 'el guardado que falla'), presentacion);
-	return declarada(destino, 'un guardado con errores');
+function targetOf(world: World) {
+	const declared = declaredOf(world);
+	const presentation = panelPresentation(requireDeclared(declared.widthRem, 'el ancho de la pantalla'));
+	const target = destinationOnSaveFailure(requireDeclared(declared.savedFields, 'el guardado que falla'), presentation);
+	return requireDeclared(target, 'un guardado con errores');
 }
 
-export const panelPestanasSteps: StepDefinition[] = [
+export const panelTabsSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^una pantalla de ${P} rem de ancho$`),
-		run: (world, ancho) => {
-			declaradoDe(world).anchoRem = anchoDe(ancho);
+		run: (world, width) => {
+			declaredOf(world).widthRem = widthOf(width);
 		}
 	},
 	{
 		pattern: new RegExp(`^el panel se presenta ${P}$`),
-		run: (world, presentacion) => {
-			const ancho = declarada(declaradoDe(world).anchoRem, 'el ancho de la pantalla');
-			expect(panelPresentation(ancho)).toBe(deLaTabla(PRESENTACIONES, presentacion, 'Presentación'));
+		run: (world, presentation) => {
+			const width = requireDeclared(declaredOf(world).widthRem, 'el ancho de la pantalla');
+			expect(panelPresentation(width)).toBe(ofTable(PRESENTATIONS, presentation, 'Presentación'));
 		}
 	},
 	{
 		pattern: new RegExp(`^el panel se abre para ${P}$`),
-		run: (world, modo) => {
-			declaradoDe(world).mode = unoDe(MODOS, modo, 'Modo');
+		run: (world, mode) => {
+			declaredOf(world).mode = oneOf(MODES, mode, 'Modo');
 		}
 	},
 	{
 		pattern: new RegExp(`^el panel ofrece las secciones ${P}$`),
-		run: (world, secciones) => {
-			expect(panelSections(declarada(declaradoDe(world).mode, 'el modo del panel'))).toEqual(seccionesDe(secciones));
+		run: (world, sections) => {
+			expect(panelSections(requireDeclared(declaredOf(world).mode, 'el modo del panel'))).toEqual(sectionsOf(sections));
 		}
 	},
 	{
 		pattern: new RegExp(`^la pestaña abierta es ${P}$`),
-		run: (world, abierta) => {
-			declarada(declaradoDe(world).mode, 'el modo del panel');
-			expect(TAB_ON_OPEN).toBe(unoDe(SECCIONES, abierta, 'Sección'));
+		run: (world, opened) => {
+			requireDeclared(declaredOf(world).mode, 'el modo del panel');
+			expect(TAB_ON_OPEN).toBe(oneOf(SECTIONS, opened, 'Sección'));
 		}
 	},
 	{
 		pattern: new RegExp(`^el panel muestra errores en los campos ${P}$`),
-		run: (world, campos) => {
-			declaradoDe(world).camposConError = camposDe(campos);
+		run: (world, fields) => {
+			declaredOf(world).fieldsWithError = fieldsOf(fields);
 		}
 	},
 	{
 		pattern: new RegExp(`^las secciones marcadas son ${P}$`),
-		run: (world, marcadas) => {
-			const esperadas = marcadas === 'ninguna' ? [] : seccionesDe(marcadas);
-			expect(markedSections(declarada(declaradoDe(world).camposConError, 'los campos con error'))).toEqual(esperadas);
+		run: (world, marked) => {
+			const expected = marked === 'ninguna' ? [] : sectionsOf(marked);
+			expect(markedSections(requireDeclared(declaredOf(world).fieldsWithError, 'los campos con error'))).toEqual(expected);
 		}
 	},
 	{
 		pattern: new RegExp(`^el guardado falla con errores en los campos ${P}$`),
-		run: (world, campos) => {
-			declaradoDe(world).camposDelGuardado = camposDe(campos);
+		run: (world, fields) => {
+			declaredOf(world).savedFields = fieldsOf(fields);
 		}
 	},
 	{
 		pattern: new RegExp(`^el panel salta a la pestaña ${P}$`),
-		run: (world, pestana) => {
-			const esperada = pestana === 'ninguna' ? undefined : unoDe(SECCIONES, pestana, 'Sección');
-			expect(destinoDe(world).tab).toBe(esperada);
+		run: (world, tab) => {
+			const expected = tab === 'ninguna' ? undefined : oneOf(SECTIONS, tab, 'Sección');
+			expect(targetOf(world).tab).toBe(expected);
 		}
 	},
 	{
 		pattern: new RegExp(`^el contenido se desplaza hasta el campo ${P}$`),
-		run: (world, campo) => {
-			expect(destinoDe(world).field).toBe(unoDe(CAMPOS, campo, 'Campo'));
+		run: (world, field) => {
+			expect(targetOf(world).field).toBe(oneOf(FIELDS, field, 'Campo'));
 		}
 	},
 	{
 		pattern: new RegExp(`^el teclado en pantalla está ${P}$`),
-		run: (world, teclado) => {
-			declaradoDe(world).keyboardOpen = deLaTabla(TECLADOS, teclado, 'Teclado');
+		run: (world, keyboard) => {
+			declaredOf(world).keyboardOpen = ofTable(KEYBOARDS, keyboard, 'Teclado');
 		}
 	},
 	{
 		// §6.2: la barra depende del teclado y no del foco; por eso el foco solo se valida.
 		pattern: new RegExp(`^el foco está ${P}$`),
-		run: (_world, foco) => {
-			unoDe(FOCOS, foco, 'Foco');
+		run: (_world, focus) => {
+			oneOf(FOCUSES, focus, 'Foco');
 		}
 	},
 	{
 		pattern: new RegExp(`^la barra de Guardar está ${P}$`),
-		run: (world, barra) => {
-			const tecladoAbierto = declarada(declaradoDe(world).keyboardOpen, 'el teclado en pantalla');
-			expect(saveBarVisible(tecladoAbierto)).toBe(deLaTabla(BARRAS, barra, 'Barra'));
+		run: (world, bar) => {
+			const keyboardOpen = requireDeclared(declaredOf(world).keyboardOpen, 'el teclado en pantalla');
+			expect(saveBarVisible(keyboardOpen)).toBe(ofTable(BARS, bar, 'Barra'));
 		}
 	}
 ];

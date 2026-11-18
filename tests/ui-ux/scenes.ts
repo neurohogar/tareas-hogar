@@ -1,21 +1,21 @@
 import type { Page } from '@playwright/test';
 import {
-  limpiarEmuladores,
-  entrar,
-  fijarReloj,
-  crear,
+  cleanEmulators,
+  enter,
+  setClock,
+  create,
 } from '../../e2e/support.ts';
 
-export const HORA_PILOTO = '2026-07-15T09:00:00';
+export const HOUR_PILOT = '2026-07-15T09:00:00';
 
 /**
  * Escena 1: Lista vacía.
  * Usuario con sesión iniciada, sin ninguna tarea cargada.
  */
-export async function sembrarEscenaVacia(page: Page): Promise<void> {
-  await limpiarEmuladores();
-  await entrar(page);
-  await fijarReloj(page, HORA_PILOTO);
+export async function seedSceneEmpty(page: Page): Promise<void> {
+  await cleanEmulators();
+  await enter(page);
+  await setClock(page, HOUR_PILOT);
 }
 
 /**
@@ -25,35 +25,35 @@ export async function sembrarEscenaVacia(page: Page): Promise<void> {
  * - Una periódica con horario acotado que vence en breve.
  * - Una tarea puntual para hoy.
  */
-export async function sembrarEscenaNormal(page: Page): Promise<void> {
-  await limpiarEmuladores();
-  await entrar(page);
-  await fijarReloj(page, HORA_PILOTO);
+export async function seedSceneNormal(page: Page): Promise<void> {
+  await cleanEmulators();
+  await enter(page);
+  await setClock(page, HOUR_PILOT);
 
   // 1. Tarea periódica sin horario estricto
-  await crear(page, {
-    titulo: 'Regar las plantas',
-    tipo: 'Intervalo',
-    cada: '2',
-    unidad: 'días',
+  await create(page, {
+    title: 'Regar las plantas',
+    kind: 'Intervalo',
+    every: '2',
+    unit: 'días',
     emoji: '🌱',
   });
 
   // 2. Tarea con horario para hoy por la mañana
-  await crear(page, {
-    titulo: 'Tomar infusión',
-    tipo: 'Intervalo',
-    cada: '1',
-    unidad: 'días',
-    horario: { desde: '08:00', hasta: '10:00' },
+  await create(page, {
+    title: 'Tomar infusión',
+    kind: 'Intervalo',
+    every: '1',
+    unit: 'días',
+    schedule: { from: '08:00', to: '10:00' },
     emoji: '🌿',
   });
 
   // 3. Tarea puntual para hoy
-  await crear(page, {
-    titulo: 'Pasear a Simón',
-    tipo: 'No se repite',
-    fecha: '2026-07-15',
+  await create(page, {
+    title: 'Pasear a Simón',
+    kind: 'No se repite',
+    date: '2026-07-15',
     emoji: '🐶',
   });
 }
@@ -63,51 +63,51 @@ export async function sembrarEscenaNormal(page: Page): Promise<void> {
  * Múltiples tareas pendientes, varias de ellas vencidas y con aviso de atraso.
  * Prueba el estrés visual y la jerarquía de alertas para personas con TDAH.
  */
-export async function sembrarEscenaAtrasadas(page: Page): Promise<void> {
-  await limpiarEmuladores();
-  await entrar(page);
-  await fijarReloj(page, HORA_PILOTO);
+export async function seedSceneOverdue(page: Page): Promise<void> {
+  await cleanEmulators();
+  await enter(page);
+  await setClock(page, HOUR_PILOT);
 
   // Tarea atrasada hace 2 días
-  await crear(page, {
-    titulo: 'Hacer fuego para el asado',
-    tipo: 'No se repite',
-    fecha: '2026-07-13',
+  await create(page, {
+    title: 'Hacer fuego para el asado',
+    kind: 'No se repite',
+    date: '2026-07-13',
     emoji: '🔥',
   });
 
   // Tarea periódica vencida
-  await crear(page, {
-    titulo: 'Barrer la vereda',
-    tipo: 'Intervalo',
-    cada: '1',
-    unidad: 'días',
-    horario: { desde: '06:00', hasta: '08:00' },
+  await create(page, {
+    title: 'Barrer la vereda',
+    kind: 'Intervalo',
+    every: '1',
+    unit: 'días',
+    schedule: { from: '06:00', to: '08:00' },
     emoji: '🧹',
   });
 
   // Tarea atrasada puntual
-  await crear(page, {
-    titulo: 'Llamar a la abuela',
-    tipo: 'No se repite',
-    fecha: '2026-07-10',
+  await create(page, {
+    title: 'Llamar a la abuela',
+    kind: 'No se repite',
+    date: '2026-07-10',
     emoji: '❤️',
   });
 
   // Tareas normales en el mismo estado para ver el contraste
-  await crear(page, {
-    titulo: 'Cuidar el huerto',
-    tipo: 'Intervalo',
-    cada: '3',
-    unidad: 'días',
+  await create(page, {
+    title: 'Cuidar el huerto',
+    kind: 'Intervalo',
+    every: '3',
+    unit: 'días',
     emoji: '🌱',
   });
 
-  await crear(page, {
-    titulo: 'Jugar con el perro',
-    tipo: 'Intervalo',
-    cada: '1',
-    unidad: 'días',
+  await create(page, {
+    title: 'Jugar con el perro',
+    kind: 'Intervalo',
+    every: '1',
+    unit: 'días',
     emoji: '🐶',
   });
 }
