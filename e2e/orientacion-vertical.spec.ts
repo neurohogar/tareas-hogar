@@ -119,8 +119,8 @@ test('Flujo 1: el manifest declara la orientación vertical', async ({ browser }
 	const { ctx, page } = await sesion(browser);
 	const mismo = await verificarManifest(page);
 
-	// Desde Historial y Etiquetas: es el mismo documento.
-	for (const ruta of ['/historial', '/etiquetas']) {
+	// Desde Historial y Anotaciones: es el mismo documento.
+	for (const ruta of ['/historial', '/anotaciones']) {
 		await page.goto(ruta);
 		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 		expect(await verificarManifest(page)).toEqual(mismo);
@@ -153,11 +153,11 @@ test('Flujo 2: ninguna pantalla fija la orientación por su cuenta', async ({ br
 	await expect(pendientes(page)).toBeVisible();
 	await page.clock.resume();
 
-	// Pendientes, Historial, Etiquetas.
+	// Pendientes, Historial, Anotaciones.
 	await sinBloqueoPropio(page, anotaciones);
 	await irA(page, 'Historial');
 	await sinBloqueoPropio(page, anotaciones);
-	await irA(page, 'Etiquetas');
+	await irA(page, 'Anotaciones');
 	await sinBloqueoPropio(page, anotaciones);
 	await irA(page, 'Pendientes');
 
@@ -222,9 +222,9 @@ test('Flujo 3: en una pestaña del navegador sigue girando con el diseño ancho 
 	expect(ys[1]).toBeLessThan(ys[2]);
 	await sinPedidoDeGirar(page);
 
-	// 3: sin el panel, Historial y Etiquetas se ven enteras.
+	// 3: sin el panel, Historial y Anotaciones se ven enteras.
 	await cerrar(page);
-	for (const pestana of ['Pendientes', 'Historial', 'Etiquetas'] as const) {
+	for (const pestana of ['Pendientes', 'Historial', 'Anotaciones'] as const) {
 		await irA(page, pestana);
 		await expect(page.getByRole('navigation')).toBeVisible();
 		await sinDesbordeHorizontal(page);
@@ -255,7 +255,7 @@ test('Flujo 4: en la compu no cambia nada', async ({ browser }) => {
 
 	await irA(page, 'Historial');
 	await sinPedidoDeGirar(page);
-	await irA(page, 'Etiquetas');
+	await irA(page, 'Anotaciones');
 	await sinPedidoDeGirar(page);
 	await irA(page, 'Pendientes');
 

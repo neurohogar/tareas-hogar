@@ -187,7 +187,7 @@ export const encenderCompletadas = (page: Page) =>
 
 /** La lista (filas de Pendientes) es exactamente `titulos`, de arriba hacia abajo. */
 export async function listaEs(page: Page, titulos: string[]): Promise<void> {
-  // Solo las filas de tarea (con checkbox): los chips de etiqueta también son listitem.
+  // Solo las filas de tarea (con checkbox).
   const items = page
     .getByRole("listitem")
     .filter({ has: page.getByRole("checkbox") });
@@ -239,10 +239,6 @@ export interface Definicion {
   pasos?: string[];
   /** Versión mínima: el campo Versión mínima del panel (`""` lo vacía). */
   versionMinima?: string;
-  /** Esfuerzo: la opción del selector Esfuerzo, por su texto completo. */
-  esfuerzo?: "Sin estimar" | "Rápida (≤ 5 min)" | "Media (≈ 15 min)" | "Larga";
-  /** Etiquetas por agregar en el campo Etiquetas, en este orden (cada una: escribir y Enter). */
-  etiquetas?: string[];
   /** Horario: `null` apaga "Solo en un horario"; un objeto lo enciende y escribe Desde/Hasta (`""` vacía el campo). */
   horario?: { desde?: string; hasta?: string } | null;
   /** Varias ventanas: enciende "Solo en un horario" y, por cada una, usa Agregar horario si hace falta y escribe Desde/Hasta. */
@@ -274,15 +270,6 @@ export async function fijarDias(page: Page, dias: string[]) {
     const marcado = (await boton.getAttribute("aria-pressed")) === "true";
     if (marcado !== dias.includes(nombre)) await boton.click();
   }
-}
-
-export const campoEtiquetas = (page: Page) =>
-  page.getByRole("combobox", { name: "Etiquetas" });
-
-/** Agregar una etiqueta en el panel: escribir el nombre y apretar Enter. */
-export async function agregarEtiqueta(page: Page, nombre: string) {
-  await campoEtiquetas(page).fill(nombre);
-  await campoEtiquetas(page).press("Enter");
 }
 
 /** Términos en español con los que se encuentra cada emoji en el buscador del selector. */
@@ -347,9 +334,6 @@ export async function abrirPestana(page: Page, nombre: "Tarea" | "Cuándo") {
 export async function completarPanel(page: Page, d: Definicion) {
   await abrirPestana(page, "Tarea");
   if (d.titulo !== undefined) await page.getByLabel("Título").fill(d.titulo);
-  for (const e of d.etiquetas ?? []) await agregarEtiqueta(page, e);
-  if (d.esfuerzo !== undefined)
-    await page.getByRole("combobox", { name: "Esfuerzo" }).selectOption({ label: d.esfuerzo });
   if (d.emoji !== undefined) await elegirEmoji(page, d.emoji);
   if (d.nota !== undefined) await page.getByLabel("Nota").fill(d.nota);
   if (d.primerPaso !== undefined)
@@ -515,7 +499,7 @@ export async function crearYVer(
   await expect(fila(page, d.titulo)).toBeVisible();
 }
 
-export type Pestana = "Pendientes" | "Historial" | "Etiquetas";
+export type Pestana = "Pendientes" | "Historial" | "Anotaciones";
 
 /** Toca una pestaña; el router de SvelteKit necesita que corra el reloj simulado (100 ms). */
 export async function irA(page: Page, pestana: Pestana) {

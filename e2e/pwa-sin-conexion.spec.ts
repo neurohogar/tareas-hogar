@@ -23,7 +23,7 @@ test.use({ serviceWorkers: 'allow' });
 
 const HORA = '2026-07-15T08:00:00';
 const VACIO_HISTORIAL = 'Todavía no completaste nada';
-const VACIO_ETIQUETAS = 'Todavía no hay etiquetas';
+const VACIO_ANOTACIONES = 'Todavía no hay anotaciones';
 
 test.beforeEach(async () => {
 	await limpiarEmuladores();
@@ -133,10 +133,10 @@ test('Flujo 2: abrir sin conexión tras el primer login', async ({ browser }) =>
 	await expect(page.getByText(VACIO_HISTORIAL)).toBeVisible();
 	await page.reload();
 	await expect(page.getByText(VACIO_HISTORIAL)).toBeVisible();
-	await page.goto('/etiquetas');
-	await expect(page.getByRole('heading', { name: 'Etiquetas', level: 1 })).toBeVisible();
+	await page.goto('/anotaciones');
+	await expect(page.getByRole('heading', { name: 'Anotaciones', level: 1 })).toBeVisible();
 	await page.reload();
-	await expect(page.getByText(VACIO_ETIQUETAS)).toBeVisible();
+	await expect(page.getByText(VACIO_ANOTACIONES)).toBeVisible();
 
 	await page.close();
 	const nueva = await ctx.newPage();
@@ -424,7 +424,7 @@ test('Flujo 10: versión nueva del service worker', async ({ browser }) => {
 		await ctx.setOffline(true);
 		await page.reload();
 		await expect(pendientes(page)).toBeVisible();
-		for (const pestana of ['Historial', 'Etiquetas', 'Pendientes'] as const) {
+		for (const pestana of ['Historial', 'Anotaciones', 'Pendientes'] as const) {
 			await irA(page, pestana);
 			await page.reload();
 			await expect(page.getByRole('heading', { name: pestana, level: 1 })).toBeVisible();

@@ -90,7 +90,7 @@ async function posponer(page: Page, titulo: string, opcion: '3 horas' | 'Hasta m
 
 test('Flujo 1: atraso con fecha y distancia, sin color de alarma', async ({ page }) => {
 	await sesion(page, '2026-11-13T10:00:00');
-	await crearYVer(page, { titulo: 'Pagar la luz', tipo: 'No se repite', fecha: '2026-11-10', esfuerzo: 'Rápida (≤ 5 min)' });
+	await crearYVer(page, { titulo: 'Pagar la luz', tipo: 'No se repite', fecha: '2026-11-10' });
 	await crearYVer(page, { titulo: 'Pagar agua', tipo: 'No se repite', fecha: '2026-11-12' });
 	await crearYVer(page, { titulo: 'Cambiar foco', tipo: 'No se repite' });
 	await crearYVer(page, { titulo: 'Barrer', tipo: 'Días de la semana', dias: ['viernes'] });
@@ -111,20 +111,18 @@ test('Flujo 1: atraso con fecha y distancia, sin color de alarma', async ({ page
 	});
 
 	// 3
-	await estiloDeAtraso(textoDe(page, 'Pagar la luz'), fila(page, 'Pagar la luz').getByText('Rápida', { exact: true }));
-	expect((await estilo(fila(page, 'Pagar la luz'))).fondo).toBe((await estilo(fila(page, 'Cambiar foco'))).fondo);
-
-	// 4
 	await conReloj(page, () => crearYVer(page, { titulo: 'Lavar', tipo: 'No se repite', fecha: '2026-11-13', horario: { desde: '08:00', hasta: '11:00' } }));
 	await ir(page, '2026-11-13T10:59:00');
 	await esperarEstado(page, 'Lavar', 'pendiente');
 	await sinTexto(page, 'Lavar');
+	await estiloDeAtraso(textoDe(page, 'Pagar la luz'), fila(page, 'Lavar').getByText(/\d\d:\d\d–\d\d:\d\d/));
+	expect((await estilo(fila(page, 'Pagar la luz'))).fondo).toBe((await estilo(fila(page, 'Cambiar foco'))).fondo);
 	await ir(page, '2026-11-13T11:00:00');
 	await esperarEstado(page, 'Lavar', 'atrasada', undefined, false, false);
 	await dice(page, 'Lavar', 'Tocaba hoy');
 	await estiloDeAtraso(textoDe(page, 'Lavar'), fila(page, 'Lavar').getByText(/\d\d:\d\d–\d\d:\d\d/));
 
-	// 5
+	// 4
 	await fijar(page, '2026-11-13T10:59:50');
 	await conReloj(page, () => crearYVer(page, { titulo: 'Regar', tipo: 'Intervalo', cada: '1', unidad: 'horas' }));
 	await fijar(page, '2026-11-13T11:00:00');
@@ -137,13 +135,13 @@ test('Flujo 1: atraso con fecha y distancia, sin color de alarma', async ({ page
 	await ir(page, '2026-11-13T14:30:00');
 	await dice(page, 'Regar', 'Tocaba hoy 12:00 · hace 2 horas');
 
-	// 6
+	// 5
 	await ir(page, '2026-11-14T00:00:00');
 	await esperarEstado(page, 'Barrer', 'atrasada', undefined, false);
 	await dice(page, 'Barrer', 'Tocaba ayer');
 	await dice(page, 'Regar', 'Tocaba ayer 12:00 · hace 12 horas');
 
-	// 7
+	// 6
 	await ir(page, '2026-11-15T10:00:00');
 	await dice(page, 'Barrer', 'Tocaba el viernes 13 · hace 2 días');
 	await dice(page, 'Pagar la luz', 'Tocaba el martes 10 · hace 5 días');

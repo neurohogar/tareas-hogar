@@ -26,7 +26,6 @@ test.beforeEach(async () => {
 
 const VIERNES = '2026-11-13T10:00:00';
 const NO_SE_REPITE = 'No se repite' as const;
-const RAPIDA = 'Rápida (≤ 5 min)' as const;
 const P1 = 'Separar la ropa blanca';
 const P2 = 'Poner el lavarropas';
 const P3 = 'Tender la ropa';
@@ -187,17 +186,13 @@ test('Flujo 1: el campo en el panel, crear y editar', async ({ page }) => {
 	const emoji = page.getByRole('button', { name: /^(Elegir emoji|Cambiar emoji)/ });
 	const primero = page.getByRole('textbox', { name: 'Primer paso', exact: true });
 	const nota = page.getByLabel('Nota');
-	const esfuerzo = page.getByRole('combobox', { name: 'Esfuerzo' });
-	const etiquetas = page.getByRole('combobox', { name: 'Etiquetas' });
 	await expect(emoji).toBeVisible();
 	ascendente([
 		await y(titulo),
 		await y(primero),
 		await y(boton(page, 'Agregar paso')),
 		await y(minima(page)),
-		await y(nota),
-		await y(esfuerzo),
-		await y(etiquetas)
+		await y(nota)
 	]);
 	expect(Math.abs((await y(emoji)) - (await y(titulo)))).toBeLessThan((await y(primero)) - (await y(titulo)));
 	await boton(page, 'Agregar paso').click();
@@ -271,10 +266,8 @@ test('Flujo 1: el campo en el panel, crear y editar', async ({ page }) => {
 	// 9
 	await crear(page, { titulo: 'Regar', tipo: 'Intervalo', cada: '2', unidad: 'días', versionMinima: 'Solo los helechos' });
 	await crear(page, { titulo: 'Basura', tipo: 'Días de la semana', dias: ['martes'], versionMinima: 'Solo la de la cocina' });
-	await crear(page, { titulo: 'Mudanza', tipo: NO_SE_REPITE, fecha: '', esfuerzo: 'Larga', versionMinima: 'Solo los libros' });
 	await panelTiene(page, 'Regar', 'Solo los helechos');
 	await panelTiene(page, 'Basura', 'Solo la de la cocina');
-	await panelTiene(page, 'Mudanza', 'Solo los libros');
 	await abrirFila(page, 'Regar');
 	await abrirPestana(page, 'Tarea');
 	await page.getByRole('radio', { name: NO_SE_REPITE }).check();
@@ -305,7 +298,7 @@ test('Flujo 1: el campo en el panel, crear y editar', async ({ page }) => {
 test('Flujo 2: la línea y el botón en la fila', async ({ page }) => {
 	await sesion(page, VIERNES, false);
 	await crear(page, { titulo: 'Lavar', tipo: NO_SE_REPITE, fecha: '', primerPaso: 'Separar la ropa blanca', versionMinima: 'Solo el inodoro' });
-	await crear(page, { titulo: 'Barrer', tipo: NO_SE_REPITE, fecha: '', esfuerzo: RAPIDA, versionMinima: 'Solo el pasillo' });
+	await crear(page, { titulo: 'Barrer', tipo: NO_SE_REPITE, fecha: '', versionMinima: 'Solo el pasillo' });
 
 	// 1
 	await expect(lineaDePaso(page, 'Lavar')).toHaveText('Primer paso: Separar la ropa blanca');
@@ -319,11 +312,8 @@ test('Flujo 2: la línea y el botón en la fila', async ({ page }) => {
 	// 2
 	const l = await estilo(linea(page, 'Lavar'));
 	const p = await estilo(lineaDePaso(page, 'Lavar'));
-	const r = await estilo(f(page, 'Barrer').getByText('Rápida', { exact: true }));
 	expect(l.color).toBe(p.color);
 	expect(l.tamano).toBe(p.tamano);
-	expect(l.color).toBe(r.color);
-	expect(l.tamano).toBe(r.tamano);
 	expect(l.peso).toBeLessThan(600);
 	expect(l.linea).not.toContain('underline');
 	const b = await estilo(hice(page, 'Lavar'));
@@ -774,13 +764,12 @@ test('Flujo 5: Historial y Borrar', async ({ page }) => {
 
 test('Flujo 6: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await sesion(page, VIERNES, true);
-	const filtro = page.getByRole('group', { name: 'Filtrar por etiqueta' });
 	const textos = async (t: string[]) => Promise.all(t.map((x) => f(page, x).innerText()));
 
 	// 1
-	await crear(page, { titulo: 'Barrer', tipo: NO_SE_REPITE, fecha: '', esfuerzo: RAPIDA });
-	await crear(page, { titulo: 'Lavar', tipo: NO_SE_REPITE, fecha: '', esfuerzo: RAPIDA });
-	await crear(page, { titulo: 'Planchar', tipo: NO_SE_REPITE, fecha: '', esfuerzo: 'Larga', etiquetas: ['Patio', 'Cocina'] });
+	await crear(page, { titulo: 'Barrer', tipo: NO_SE_REPITE, fecha: '' });
+	await crear(page, { titulo: 'Lavar', tipo: NO_SE_REPITE, fecha: '' });
+	await crear(page, { titulo: 'Planchar', tipo: NO_SE_REPITE, fecha: '' });
 	const orden = await titulos(page);
 	expect([...orden].sort()).toEqual(['Barrer', 'Lavar', 'Planchar']);
 	const antes = await textos(['Barrer', 'Planchar']);
@@ -795,23 +784,6 @@ test('Flujo 6: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	expect(await titulos(page)).toEqual(orden);
 
 	// 3
-	const solo = boton(page, 'Solo rápidas');
-	await solo.click();
-	await expect.poll(() => titulos(page)).toEqual(orden.filter((t) => t !== 'Planchar'));
-	await dice(page, 'Barrer', 'Solo el pasillo');
-	await dice(page, 'Lavar', 'Solo el inodoro');
-	await solo.click();
-	await expect.poll(() => titulos(page)).toEqual(orden);
-	await abrirFila(page, 'Lavar');
-	await completarPanel(page, { etiquetas: ['Casa'] });
-	await guardar(page);
-	await filtro.getByRole('button', { name: 'Casa', exact: true }).click();
-	await expect.poll(() => titulos(page)).toEqual(['Lavar']);
-	await dice(page, 'Lavar', 'Solo el inodoro');
-	await filtro.getByRole('button', { name: 'Todas', exact: true }).click();
-	await expect.poll(() => titulos(page)).toEqual(orden);
-
-	// 4
 	await abrirFila(page, 'Lavar');
 	await elegirEmoji(page, '🧺', 'cesta');
 	await guardar(page);
@@ -823,7 +795,7 @@ test('Flujo 6: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await expect(tit).not.toContainText('Solo el inodoro');
 	await expect(tit).not.toContainText('Mínima');
 
-	// 5
+	// 4
 	await hice(page, '🧺 Lavar').click();
 	await expect(aviso(page)).toContainText('Completaste «🧺 Lavar» · mínima');
 	await expect(aviso(page)).not.toContainText('Solo el inodoro');
@@ -850,7 +822,7 @@ test('Flujo 6: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	expect(copiado).not.toContain('Mínima');
 	await irA(page, 'Pendientes');
 
-	// 6
+	// 5
 	const c = (await linea(page, 'Barrer').boundingBox())!;
 	await page.mouse.click(c.x + 4, c.y + c.height / 2);
 	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();

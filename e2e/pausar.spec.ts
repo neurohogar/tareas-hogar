@@ -252,12 +252,12 @@ test('Flujo 4: reanudar con horario', async ({ page }) => {
 	await esperarEstado(page, 'Ventilar', 'atrasada', undefined, false, false);
 });
 
-test('Flujo 5: Mostrar pausadas, orden y filtro', async ({ page }) => {
+test('Flujo 5: Mostrar pausadas y orden', async ({ page }) => {
 	await sesionConReloj(page, '2026-07-15T08:00:00');
-	await crear(page, { titulo: 'Ñandú', tipo: 'Intervalo', cada: '1', unidad: 'días', etiquetas: ['Patio'] });
-	await crear(page, { titulo: 'Nube', tipo: 'Intervalo', cada: '1', unidad: 'días', etiquetas: ['Casa'] });
-	await crear(page, { titulo: 'Árbol', tipo: 'Días de la semana', dias: ['lunes'], etiquetas: ['Patio'] });
-	await crear(page, { titulo: 'Pagar la luz', tipo: 'No se repite', etiquetas: ['Casa'] });
+	await crear(page, { titulo: 'Ñandú', tipo: 'Intervalo', cada: '1', unidad: 'días' });
+	await crear(page, { titulo: 'Nube', tipo: 'Intervalo', cada: '1', unidad: 'días' });
+	await crear(page, { titulo: 'Árbol', tipo: 'Días de la semana', dias: ['lunes'] });
+	await crear(page, { titulo: 'Pagar la luz', tipo: 'No se repite' });
 	await crear(page, { titulo: 'Cambiar foco', tipo: 'No se repite' });
 
 	await completar(page, 'Pagar la luz');
@@ -273,13 +273,6 @@ test('Flujo 5: Mostrar pausadas, orden y filtro', async ({ page }) => {
 	await listaEs(page, ['Cambiar foco', 'Pagar la luz', 'Árbol', 'Nube', 'Ñandú']);
 	await esperarEstado(page, 'Pagar la luz', 'pendiente', undefined, true);
 	for (const t of ['Árbol', 'Nube', 'Ñandú']) await verPausada(page, t);
-
-	const filtro = (nombre: string) => page.getByRole('button', { name: nombre, exact: true });
-	await filtro('Casa').click();
-	await listaEs(page, ['Pagar la luz', 'Nube']);
-	await filtro('Patio').click();
-	await listaEs(page, ['Árbol', 'Ñandú']);
-	await filtro('Todas').click();
 
 	await conmutarMostrarCompletadas(page, false);
 	await listaEs(page, ['Cambiar foco', 'Árbol', 'Nube', 'Ñandú']);

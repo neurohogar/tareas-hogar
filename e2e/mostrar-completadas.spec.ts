@@ -51,9 +51,6 @@ async function verAviso(page: Page, titulo: string) {
 	await expect(aviso(page).getByRole('button', { name: 'Deshacer' })).toBeVisible();
 }
 
-const filtro = (page: Page, nombre: string) =>
-	page.getByRole('group', { name: 'Filtrar por etiqueta' }).getByRole('button', { name: nombre, exact: true });
-
 test('Flujo 1: apagado por defecto, encender y apagar', async ({ page }) => {
 	await sesionConReloj(page, HOY);
 	await crear(page, { titulo: 'Cambiar foco', tipo: 'No se repite' });
@@ -94,14 +91,14 @@ test('Flujo 1: apagado por defecto, encender y apagar', async ({ page }) => {
 	expect(opFoco).toBeLessThan(opRegar);
 });
 
-test('Flujo 2: orden de las completadas y filtro por etiqueta', async ({ page }) => {
+test('Flujo 2: orden de las completadas', async ({ page }) => {
 	await sesionConReloj(page, HOY);
 	await encenderCompletadas(page);
-	await crear(page, { titulo: 'Pagar la luz', tipo: 'No se repite', etiquetas: ['Casa'] });
+	await crear(page, { titulo: 'Pagar la luz', tipo: 'No se repite' });
 	await adelantar(page, '2026-07-15T08:01:00');
-	await crear(page, { titulo: 'Ventilar', tipo: 'Intervalo', cada: '4', unidad: 'horas', etiquetas: ['Patio'] });
+	await crear(page, { titulo: 'Ventilar', tipo: 'Intervalo', cada: '4', unidad: 'horas' });
 	await adelantar(page, '2026-07-15T08:02:00');
-	await crear(page, { titulo: 'Barrer', tipo: 'No se repite', etiquetas: ['Casa'] });
+	await crear(page, { titulo: 'Barrer', tipo: 'No se repite' });
 	await adelantar(page, '2026-07-15T08:03:00');
 	await crear(page, { titulo: 'Lavar ropa', tipo: 'No se repite' });
 
@@ -117,20 +114,12 @@ test('Flujo 2: orden de las completadas y filtro por etiqueta', async ({ page })
 	await esperarEstado(page, 'Ventilar', 'en espera');
 	await esperarEstado(page, 'Barrer', 'pendiente', undefined, true);
 
-	await filtro(page, 'Casa').click();
-	await listaEs(page, ['Pagar la luz', 'Barrer']);
-	await filtro(page, 'Patio').click();
-	await listaEs(page, ['Ventilar']);
-	await esperarEstado(page, 'Ventilar', 'en espera');
-
-	await filtro(page, 'Todas').click();
 	await adelantar(page, '2026-07-15T13:30:00');
 	await esperarEstado(page, 'Ventilar', 'pendiente');
 	await listaEs(page, ['Ventilar', 'Lavar ropa', 'Pagar la luz', 'Barrer']);
 
 	await page.reload();
 	await expect(mostrarCompletadas(page)).toBeChecked();
-	await expect(filtro(page, 'Todas')).toHaveAttribute('aria-pressed', 'true');
 	await listaEs(page, ['Ventilar', 'Lavar ropa', 'Pagar la luz', 'Barrer']);
 });
 

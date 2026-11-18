@@ -13,7 +13,7 @@ export const ATKINSON_ARCHIVOS = /\/fuentes\/atkinson-.*\.woff2/;
 export const UN_ARCHIVO_DE_ATKINSON =
   /\/fuentes\/atkinson-hyperlegible-next-latin-400-normal\.woff2/;
 export const NOTO_ARCHIVO = /\/fuentes\/noto-color-emoji.*\.woff2/;
-/** Tareas, completados y etiquetas viajan juntos: el SDK manda las tres consultas en un solo pedido. */
+/** Tareas y completados viajan juntos: el SDK manda las consultas en un solo pedido. */
 export const DATOS = /\/google\.firestore\.v1\.Firestore\/Listen\/channel/;
 export const AUTH = /127\.0\.0\.1:9099\//;
 

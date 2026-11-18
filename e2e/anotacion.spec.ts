@@ -48,7 +48,7 @@ async function anotar(page: Page, texto?: string, sentido: Sentido = 'Me sirvió
 	await expect(confirmacion(page)).toBeVisible();
 }
 
-type Pantalla = 'Pendientes' | 'Historial' | 'Etiquetas' | 'Anotaciones';
+type Pantalla = 'Pendientes' | 'Historial' | 'Anotaciones';
 
 async function ir(page: Page, pantalla: Pantalla) {
 	await page.getByRole('navigation').getByRole('link', { name: pantalla, exact: true }).click();
@@ -97,7 +97,7 @@ test('Flujo 1: dónde está el botón', async ({ page }) => {
 	await completarEntrada(page);
 	const recorrer = async () => {
 		const posiciones = [];
-		for (const p of ['Pendientes', 'Historial', 'Etiquetas', 'Anotaciones'] as const) {
+		for (const p of ['Pendientes', 'Historial', 'Anotaciones'] as const) {
 			await ir(page, p);
 			await expect(botonAnotar(page)).toBeVisible();
 			const pos = await posicion(page);
@@ -134,7 +134,7 @@ test('Flujo 1: dónde está el botón', async ({ page }) => {
 	await cerrar(page);
 
 	// Paso 6: no hay opción para ocultarlo.
-	for (const p of ['Pendientes', 'Historial', 'Etiquetas', 'Anotaciones'] as const) {
+	for (const p of ['Pendientes', 'Historial', 'Anotaciones'] as const) {
 		await ir(page, p);
 		await expect(page.getByText(/ocultar/i)).toHaveCount(0);
 		await expect(page.getByRole('checkbox', { name: /anotar/i })).toHaveCount(0);
@@ -195,7 +195,7 @@ test('Flujo 2: los dos toques', async ({ page }) => {
 
 	// Paso 7: cada pantalla queda registrada.
 	let minuto = 10;
-	for (const p of ['Historial', 'Etiquetas', 'Anotaciones'] as const) {
+	for (const p of ['Historial', 'Anotaciones'] as const) {
 		const hora = `08:${minuto}`;
 		await en(page, `2026-07-15T${hora}:00`);
 		await ir(page, p);
@@ -204,8 +204,7 @@ test('Flujo 2: los dos toques', async ({ page }) => {
 	}
 	await ir(page, 'Anotaciones');
 	await expect(entrada(page, '08:10')).toHaveText(textoDe('08:10', 'Me sirvió', 'Historial', undefined, 'desde Historial'));
-	await expect(entrada(page, '08:11')).toHaveText(textoDe('08:11', 'Me sirvió', 'Etiquetas', undefined, 'desde Etiquetas'));
-	await expect(entrada(page, '08:12')).toHaveText(textoDe('08:12', 'Me sirvió', 'Anotaciones', undefined, 'desde Anotaciones'));
+	await expect(entrada(page, '08:11')).toHaveText(textoDe('08:11', 'Me sirvió', 'Anotaciones', undefined, 'desde Anotaciones'));
 });
 
 test('Flujo 3: contexto con el panel y con el aviso', async ({ page }) => {
@@ -238,7 +237,7 @@ test('Flujo 3 paso 3: el panel abierto sobre Historial dice Panel de edición', 
 	await completar(page, 'Regar');
 	await en(page, '2026-07-15T08:03:00');
 	await ir(page, 'Historial');
-	// Desde el Historial el título de la entrada abre el panel de esa tarea; el panel cubre la barra (no hay forma de abrirlo sobre Etiquetas).
+	// Desde el Historial el título de la entrada abre el panel de esa tarea; el panel cubre la barra.
 	await page.getByRole('listitem').filter({ hasText: 'Regar' }).getByRole('button', { name: 'Regar' }).click();
 	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();
 	await anotar(page);
@@ -389,7 +388,7 @@ test('Flujo 5: Atrás y cerrar sin anotar', async ({ page }) => {
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 
 	// Paso 4: con el panel cerrado, en cada pantalla la app se queda en ella.
-	for (const p of ['Historial', 'Etiquetas', 'Anotaciones'] as const) {
+	for (const p of ['Historial', 'Anotaciones'] as const) {
 		await ir(page, p);
 		await botonAnotar(page).click();
 		await expect(recuadro(page)).toBeVisible();
@@ -408,33 +407,19 @@ test('Flujo 5: Atrás y cerrar sin anotar', async ({ page }) => {
 	}
 	await expect(page).toHaveURL(/\/historial$/);
 	await page.goBack();
-	await expect(page).toHaveURL(/\/anotaciones$|\/etiquetas$/);
+	await expect(page).toHaveURL(/\/anotaciones$/);
 	await page.goForward();
 	await expect(page).toHaveURL(/\/historial$/);
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
-test('Flujo 5 paso 6: los diálogos de Historial y Etiquetas se comportan como antes', async ({ page }) => {
+test('Flujo 5 paso 6: el diálogo de Historial se comporta como antes', async ({ page }) => {
 	await sesionConReloj(page, HOY);
-	await crearYVer(page, { titulo: 'Regar', tipo: 'No se repite', etiquetas: ['Casa'] });
+	await crearYVer(page, { titulo: 'Regar', tipo: 'No se repite' });
 	await completar(page, 'Regar');
 	await ir(page, 'Historial');
 	await expect(page.getByRole('listitem').filter({ hasText: 'Regar' }).getByRole('button', { name: 'Borrar' })).toBeVisible();
 	await page.getByRole('listitem').filter({ hasText: 'Regar' }).getByRole('button', { name: 'Borrar' }).click();
-	await expect(page.getByRole('alertdialog')).toBeVisible();
-	await page.goBack();
-	await expect(page.getByRole('alertdialog')).toHaveCount(0);
-	await expect(page).toHaveURL(/\/$/);
-
-	await ir(page, 'Etiquetas');
-	await page.getByRole('button', { name: 'Renombrar' }).first().click();
-	await expect(page.getByRole('dialog')).toBeVisible();
-	await page.goBack();
-	await expect(page.getByRole('dialog')).toHaveCount(0);
-	await expect(page).toHaveURL(/\/$/);
-
-	await ir(page, 'Etiquetas');
-	await page.getByRole('button', { name: 'Borrar' }).first().click();
 	await expect(page.getByRole('alertdialog')).toBeVisible();
 	await page.goBack();
 	await expect(page.getByRole('alertdialog')).toHaveCount(0);
@@ -452,7 +437,7 @@ async function anotacionesDelFlujo6(page: Page) {
 	await ir(page, 'Pendientes');
 	await crearYVer(page, { titulo: 'Regar', emoji: '🌱', tipo: 'No se repite' });
 	await en(page, '2026-07-14T21:30:00');
-	await ir(page, 'Etiquetas');
+	await ir(page, 'Historial');
 	await anotar(page, 'muy lento');
 	await en(page, '2026-07-15T08:05:00');
 	await ir(page, 'Pendientes');
@@ -480,7 +465,7 @@ test('Flujo 6: la pantalla Anotaciones', async ({ page }) => {
 	await expect(entradas(page)).toHaveText([
 		textoDe('09:10', 'Me molestó', 'Historial'),
 		textoDe('08:05', 'Me sirvió', 'Panel de edición', '🌱 Regar', 'quedó lindo'),
-		textoDe('21:30', 'Me sirvió', 'Etiquetas', undefined, 'muy lento')
+		textoDe('21:30', 'Me sirvió', 'Historial', undefined, 'muy lento')
 	]);
 
 	// Paso 4: el reloj avanza y los grupos se renombran.
@@ -499,7 +484,7 @@ test('Flujo 6: la pantalla Anotaciones', async ({ page }) => {
 
 	// Paso 6: nada cambia en la barra por haber anotado.
 	expect(await page.getByRole('navigation').innerText()).toBe(antes);
-	await expect(page.getByRole('navigation').getByRole('link')).toHaveText(['Pendientes', 'Historial', 'Etiquetas', 'Anotaciones']);
+	await expect(page.getByRole('navigation').getByRole('link')).toHaveText(['Pendientes', 'Historial', 'Anotaciones']);
 });
 
 test('Flujo 7: editar el texto', async ({ page }) => {
@@ -521,7 +506,7 @@ test('Flujo 7: editar el texto', async ({ page }) => {
 	await expect(entradas(page)).toHaveText([
 		textoDe('09:10', 'Me molestó', 'Historial'),
 		textoDe('08:05', 'Me sirvió', 'Panel de edición', '🌱 Regar', 'quedó mal'),
-		textoDe('21:30', 'Me sirvió', 'Etiquetas', undefined, 'muy lento')
+		textoDe('21:30', 'Me sirvió', 'Historial', undefined, 'muy lento')
 	]);
 	await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Hoy', 'Ayer']);
 
@@ -546,7 +531,7 @@ test('Flujo 7: editar el texto', async ({ page }) => {
 	await expect(entradas(page)).toHaveText([
 		textoDe('09:10', 'Me molestó', 'Historial'),
 		textoDe('08:05', 'Me sirvió', 'Panel de edición', '🌱 Regar', 'quedó bien'),
-		textoDe('21:30', 'Me sirvió', 'Etiquetas', undefined, 'muy lento')
+		textoDe('21:30', 'Me sirvió', 'Historial', undefined, 'muy lento')
 	]);
 });
 
@@ -569,7 +554,7 @@ test('Flujo 8: borrar una anotación', async ({ page }) => {
 	await expect(confirmar).toHaveCount(0);
 	await expect(entradas(page)).toHaveText([
 		textoDe('09:10', 'Me molestó', 'Historial'),
-		textoDe('21:30', 'Me sirvió', 'Etiquetas', undefined, 'muy lento')
+		textoDe('21:30', 'Me sirvió', 'Historial', undefined, 'muy lento')
 	]);
 	await ir(page, 'Pendientes');
 	await expect(fila(page, 'Regar')).toBeVisible();
@@ -793,7 +778,7 @@ test('Flujo 13: la app nunca pide una anotación', async ({ page }) => {
 		await expect(page.getByRole('alertdialog')).toHaveCount(0);
 		await expect(page.getByRole('dialog')).toHaveCount(0);
 		await expect(page.getByRole('status').filter({ hasNotText: /Completaste/ })).toHaveCount(0);
-		await expect(page.getByRole('navigation').getByRole('link')).toHaveText(['Pendientes', 'Historial', 'Etiquetas', 'Anotaciones']);
+		await expect(page.getByRole('navigation').getByRole('link')).toHaveText(['Pendientes', 'Historial', 'Anotaciones']);
 		await expect(botonAnotar(page)).toHaveText('Anotar');
 	};
 	await completar(page, 'Regar');
@@ -801,7 +786,7 @@ test('Flujo 13: la app nunca pide una anotación', async ({ page }) => {
 	await sinAvisos();
 	await completar(page, 'Pagar').catch(() => {});
 	await adelantar(page, '2026-07-22T08:00:00');
-	for (const p of ['Historial', 'Etiquetas', 'Anotaciones', 'Pendientes'] as const) {
+	for (const p of ['Historial', 'Anotaciones', 'Pendientes'] as const) {
 		await ir(page, p);
 		await sinAvisos();
 	}
@@ -826,4 +811,41 @@ test('Flujo 13: la app nunca pide una anotación', async ({ page }) => {
 	await sinAvisos();
 	// Quedó sin conexión de red a Auth: nada más que ver.
 	void descartar;
+});
+
+test('Flujo 14: la ruta /etiquetas ya no existe', async ({ page, context }) => {
+	await sesionConReloj(page, HOY);
+	await page.setViewportSize({ width: 390, height: 844 });
+	const nav = page.getByRole('navigation');
+	const sinAviso = async (p: Page) => {
+		await expect(p.getByRole('alert')).toHaveCount(0);
+		await expect(p.getByRole('alertdialog')).toHaveCount(0);
+		await expect(p.getByText(/no existe|not found|404/i)).toHaveCount(0);
+	};
+
+	// Paso 1: ir directo a /etiquetas desde Historial abre Pendientes.
+	await ir(page, 'Historial');
+	await expect(page).toHaveURL(/\/historial$/);
+	await page.goto('/etiquetas');
+	await expect(page.getByRole('heading', { name: 'Pendientes', level: 1 })).toBeVisible();
+	await expect(page).toHaveURL(/\/$/);
+	await expect(nav.getByRole('link', { name: 'Pendientes', exact: true })).toHaveAttribute('aria-current', 'page');
+	await sinAviso(page);
+
+	// Paso 2: Atrás vuelve a Historial, sin pantalla vacía.
+	await page.goBack();
+	await expect(page).toHaveURL(/\/historial$/);
+	await expect(page.getByRole('heading', { name: 'Historial', level: 1 })).toBeVisible();
+
+	// Paso 3: como primera dirección de una pestaña nueva.
+	const otra = await context.newPage();
+	await otra.goto('/etiquetas');
+	await expect(otra.getByRole('heading', { name: 'Pendientes', level: 1 })).toBeVisible();
+	await expect(otra).toHaveURL(/\/$/);
+	await sinAviso(otra);
+	await otra.close();
+
+	// Paso 4: la barra tiene solo tres enlaces.
+	await expect(nav.getByRole('link')).toHaveText(['Pendientes', 'Historial', 'Anotaciones']);
+	await expect(nav.getByRole('link', { name: 'Etiquetas' })).toHaveCount(0);
 });

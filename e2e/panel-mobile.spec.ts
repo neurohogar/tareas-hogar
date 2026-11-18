@@ -1,10 +1,8 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import {
 	abrir,
-	agregarEtiqueta,
 	agregarHorario,
 	campoDesde,
-	campoEtiquetas,
 	campoHasta,
 	cerrar,
 	descartar,
@@ -113,8 +111,6 @@ test('Flujo 1: crear en el celular', async ({ page }) => {
 	await expect(titulo(page)).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Elegir emoji' })).toBeVisible();
 	await expect(page.getByLabel('Nota')).toBeVisible();
-	await expect(page.getByRole('combobox', { name: 'Esfuerzo' })).toBeVisible();
-	await expect(campoEtiquetas(page)).toBeVisible();
 	await expect(page.getByRole('radio', { name: 'Intervalo' })).toBeHidden();
 	await expect(soloEnUnHorario(page)).toBeHidden();
 	await visibleSinTapar(page, guardar(page));
@@ -163,7 +159,7 @@ test('Flujo 1: crear en el celular', async ({ page }) => {
 
 test('Flujo 2: editar y las tres pestañas', async ({ page }) => {
 	await sesionConReloj(page, HORA);
-	await crear(page, { titulo: 'Regar', tipo: 'Intervalo', cada: '2', unidad: 'horas', emoji: '🌱', nota: 'Las del balcón', esfuerzo: 'Media (≈ 15 min)', etiquetas: ['casa'] });
+	await crear(page, { titulo: 'Regar', tipo: 'Intervalo', cada: '2', unidad: 'horas', emoji: '🌱', nota: 'Las del balcón' });
 	await expect(fila(page, 'Regar')).toBeVisible();
 	await page.clock.setSystemTime(new Date('2026-07-15T08:00:00'));
 	await completar(page, 'Regar');
@@ -186,13 +182,9 @@ test('Flujo 2: editar y las tres pestañas', async ({ page }) => {
 	const yTitulo = (await caja(titulo(page))).y;
 	const yQuitar = (await caja(page.getByRole('button', { name: 'Quitar emoji' }))).y;
 	const yNota = (await caja(page.getByLabel('Nota'))).y;
-	const yEsfuerzo = (await caja(page.getByRole('combobox', { name: 'Esfuerzo' }))).y;
-	const yEtiquetas = (await caja(campoEtiquetas(page))).y;
 	expect(yUltima).toBeLessThan(yTitulo);
 	expect(yTitulo).toBeLessThan(yQuitar);
 	expect(yQuitar).toBeLessThan(yNota);
-	expect(yNota).toBeLessThan(yEsfuerzo);
-	expect(yEsfuerzo).toBeLessThan(yEtiquetas);
 	await expect(titulo(page)).toHaveValue('Regar');
 	const boton = page.getByRole('button', { name: /Cambiar emoji/ });
 	await expect(boton).toHaveText('🌱');
@@ -293,8 +285,7 @@ test('Flujo 3: pantalla completa y barras fijas', async ({ page }) => {
 		g: await caja(guardar(page))
 	});
 	// 2: con lo mucho que se escribe y un viewport bajo, el contenido no entra.
-	for (const e of ['casa', 'cocina', 'jardín', 'limpieza', 'compras']) await agregarEtiqueta(page, e);
-	await page.getByLabel('Nota').fill(Array.from({ length: 10 }, (_, i) => `línea ${i + 1}`).join('\n'));
+	await page.getByLabel('Nota').fill(Array.from({ length: 30 }, (_, i) => `línea ${i + 1}`).join('\n'));
 	await page.getByRole('heading', { name: 'Editar tarea' }).click();
 	await page.setViewportSize({ width: 360, height: 440 });
 	const antes = await pos();
@@ -375,7 +366,6 @@ test('Flujo 4: nada se pierde', async ({ page }) => {
 	// 1
 	await titulo(page).fill('Barrer');
 	await page.getByLabel('Nota').fill('Con cuidado');
-	await campoEtiquetas(page).fill('cas');
 	await pestana(page, 'Cuándo').click();
 	await page.getByRole('radio', { name: 'Días de la semana' }).check();
 	await fijarDias(page, ['lunes', 'jueves']);
@@ -387,7 +377,6 @@ test('Flujo 4: nada se pierde', async ({ page }) => {
 	await pestana(page, 'Tarea').click();
 	await expect(titulo(page)).toHaveValue('Barrer');
 	await expect(page.getByLabel('Nota')).toHaveValue('Con cuidado');
-	await expect(campoEtiquetas(page)).toHaveValue('cas');
 	await pestana(page, 'Cuándo').click();
 	const semana = page.getByRole('group', { name: 'Días de la semana' });
 	await expect(semana.getByRole('button', { name: 'lunes', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -399,12 +388,10 @@ test('Flujo 4: nada se pierde', async ({ page }) => {
 	await expect(page.getByRole('tablist')).toHaveCount(0);
 	await expect(titulo(page)).toHaveValue('Barrer');
 	await expect(page.getByLabel('Nota')).toHaveValue('Con cuidado');
-	await expect(campoEtiquetas(page)).toHaveValue('cas');
 	await expect(campoDesde(page)).toBeVisible();
 	await page.setViewportSize({ width: 360, height: 640 });
 	await expect(page.getByRole('tablist')).toBeVisible();
 	await pestana(page, 'Tarea').click();
-	await expect(campoEtiquetas(page)).toHaveValue('cas');
 	await expect(titulo(page)).toHaveValue('Barrer');
 	await pestana(page, 'Cuándo').click();
 
@@ -414,7 +401,6 @@ test('Flujo 4: nada se pierde', async ({ page }) => {
 	await expect(fila(page, 'Barrer')).toBeVisible();
 	await abrir(page, 'Barrer');
 	await expect(page.getByLabel('Nota')).toHaveValue('Con cuidado');
-	await expect(page.getByRole('list', { name: 'Etiquetas de la tarea' }).getByRole('listitem')).toHaveCount(0);
 	await pestana(page, 'Cuándo').click();
 	await expect(page.getByRole('radio', { name: 'Días de la semana' })).toBeChecked();
 	await expect(campoDesde(page)).toHaveValue('08:00');
@@ -467,15 +453,6 @@ test('Flujo 5: errores', async ({ page }) => {
 	await expect(marca(page, 'Cuándo')).toBeVisible();
 
 	// 3
-	await campoEtiquetas(page).fill('x'.repeat(31));
-	await campoEtiquetas(page).press('Enter');
-	await expect(marca(page, 'Tarea')).toBeVisible();
-	await expect(page.getByRole('alert').or(page.locator('.error')).first()).toBeVisible();
-	await campoEtiquetas(page).fill('x'.repeat(30));
-	await expect(marca(page, 'Tarea')).toHaveCount(0);
-	await campoEtiquetas(page).fill('');
-
-	// 4
 	await guardar(page).click();
 	await expect(pestana(page, 'Cuándo')).toHaveAttribute('aria-selected', 'true');
 	await expect(page.locator('#error-every')).toBeVisible();
@@ -492,7 +469,7 @@ test('Flujo 5: errores', async ({ page }) => {
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 	await expect(fila(page, 'Regar')).toBeVisible();
 
-	// 5: ancho.
+	// 4: ancho.
 	await page.setViewportSize({ width: 1024, height: 768 });
 	await nuevaTarea(page);
 	await soloEnUnHorario(page).check();
@@ -510,7 +487,7 @@ test('Flujo 5: errores', async ({ page }) => {
 	}).toBe(true);
 	await descartar(page);
 
-	// 6
+	// 5
 	await nuevaTarea(page);
 	await titulo(page).fill('Otra');
 	await soloEnUnHorario(page).check();
@@ -591,10 +568,6 @@ test('Flujo 6: teclado en pantalla', async ({ page }) => {
 	await page.getByLabel('Nota').pressSequentially('dos');
 	await expect(page.getByRole('dialog')).toHaveCount(1);
 	await expect(page.getByLabel('Nota')).toHaveValue('uno\ndos');
-	await campoEtiquetas(page).fill('cas');
-	await campoEtiquetas(page).press('Enter');
-	await expect(page.getByRole('dialog')).toHaveCount(1);
-	await expect(page.getByRole('list', { name: 'Etiquetas de la tarea' }).getByRole('listitem')).toHaveCount(1);
 });
 
 test('Flujo 7: iconos y nombres accesibles', async ({ page }) => {

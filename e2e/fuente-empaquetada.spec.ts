@@ -156,7 +156,6 @@ for (const c of combinaciones) {
       cada: "2",
       unidad: "días",
       emoji: "🌱",
-      etiquetas: ["Cocina"],
       nota: "Año 2026 ✈",
     });
 
@@ -176,19 +175,18 @@ for (const c of combinaciones) {
       page.getByRole("heading", { name: "Pendientes", level: 1 }),
     );
 
-    // Paso 3: Historial y Etiquetas.
+    // Paso 3: Historial y Anotaciones.
     await irA(page, "Historial");
     await conAtkinson(
       page,
       page.getByRole("heading", { name: "Historial", level: 1 }),
     );
     await conAtkinson(page, barra(page));
-    await irA(page, "Etiquetas");
+    await irA(page, "Anotaciones");
     await conAtkinson(
       page,
-      page.getByRole("heading", { name: "Etiquetas", level: 1 }),
+      page.getByRole("heading", { name: "Anotaciones", level: 1 }),
     );
-    await conAtkinson(page, page.getByText("Cocina").first());
     await irA(page, "Pendientes");
 
     // Paso 4: el panel.
@@ -504,7 +502,7 @@ test("Flujo 4: ningún pedido a un servicio externo", async ({ page }) => {
     emoji: "🌱",
   });
   await irA(page, "Historial");
-  await irA(page, "Etiquetas");
+  await irA(page, "Anotaciones");
   await irA(page, "Pendientes");
   await abrir(page, "Regar");
   await abrirSelector(page);

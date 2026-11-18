@@ -146,12 +146,10 @@ test('Flujo 1: el campo en el panel y crear con primer paso', async ({ page }) =
 	const titulo = page.getByLabel('Título');
 	const emoji = page.getByRole('button', { name: /^(Elegir emoji|Cambiar emoji)/ });
 	const nota = page.getByLabel('Nota');
-	const esfuerzo = page.getByRole('combobox', { name: 'Esfuerzo' });
-	const etiquetas = page.getByRole('combobox', { name: 'Etiquetas' });
 	await expect(emoji).toBeVisible();
-	const ys = [await y(titulo), await y(campo(page)), await y(nota), await y(esfuerzo), await y(etiquetas)];
+	const ys = [await y(titulo), await y(campo(page)), await y(nota)];
 	expect(ys).toEqual([...ys].sort((a, b) => a - b));
-	expect(new Set(ys).size).toBe(5);
+	expect(new Set(ys).size).toBe(3);
 	expect(Math.abs((await y(emoji)) - ys[0])).toBeLessThan(ys[1] - ys[0]);
 
 	// 2
@@ -176,24 +174,15 @@ test('Flujo 1: el campo en el panel y crear con primer paso', async ({ page }) =
 		tipo: 'Intervalo',
 		cada: '2',
 		unidad: 'días',
-		primerPaso: 'Llenar la regadera',
-		esfuerzo: 'Rápida (≤ 5 min)'
+		primerPaso: 'Llenar la regadera'
 	});
 	await dice(page, 'Regar', 'Llenar la regadera');
-	await expect(f(page, 'Regar').getByText('Rápida', { exact: true })).toBeVisible();
 	await crear(page, {
 		titulo: 'Basura',
 		tipo: 'Días de la semana',
 		dias: ['martes'],
 		primerPaso: 'Atar la bolsa llena'
 	});
-	await crear(page, {
-		titulo: 'Lavar los platos',
-		tipo: NO_SE_REPITE,
-		primerPaso: 'Poner el agua a calentar',
-		esfuerzo: 'Sin estimar'
-	});
-	await dice(page, 'Lavar los platos', 'Poner el agua a calentar');
 	await sinLinea(page, 'Basura'); // en espera hasta el martes
 
 	// 5
@@ -203,7 +192,6 @@ test('Flujo 1: el campo en el panel y crear con primer paso', async ({ page }) =
 	await dice(page, 'Lavar', LAVAR);
 	await sinLinea(page, 'Barrer');
 	await dice(page, 'Regar', 'Llenar la regadera');
-	await dice(page, 'Lavar los platos', 'Poner el agua a calentar');
 });
 
 test('Flujo 2: editar, recortar, vaciar y texto largo', async ({ page }) => {
@@ -279,10 +267,15 @@ test('Flujo 3: la línea en la fila (posición, estilo, toque)', async ({ page }
 		titulo: 'Pagar la luz',
 		tipo: NO_SE_REPITE,
 		fecha: '2026-11-10',
-		esfuerzo: 'Rápida (≤ 5 min)',
 		primerPaso: 'Buscar la factura'
 	});
-	await crear(page, { titulo: 'Cambiar foco', tipo: NO_SE_REPITE, fecha: '', primerPaso: 'Sacar la escalera' });
+	await crear(page, {
+		titulo: 'Cambiar foco',
+		tipo: NO_SE_REPITE,
+		fecha: '',
+		horario: { desde: '08:00', hasta: '12:00' },
+		primerPaso: 'Sacar la escalera'
+	});
 	await crear(page, { titulo: 'Barrer', tipo: NO_SE_REPITE, fecha: '' });
 
 	// 1
@@ -299,7 +292,7 @@ test('Flujo 3: la línea en la fila (posición, estilo, toque)', async ({ page }
 	// 2
 	const l = linea(page, 'Pagar la luz');
 	const a = await estilo(l);
-	const r = await estilo(f(page, 'Pagar la luz').getByText('Rápida', { exact: true }));
+	const r = await estilo(f(page, 'Cambiar foco').getByText(/\d\d:\d\d–\d\d:\d\d/));
 	expect(a.color).toBe(r.color);
 	expect(a.tamano).toBe(r.tamano);
 	expect(a.peso).toBeLessThan(600);
@@ -547,8 +540,6 @@ test('Flujo 6: el primer paso no cambia con las acciones de la tarea', async ({ 
 
 test('Flujo 7: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await sesionConReloj(page, VIERNES);
-	const RAPIDA = 'Rápida (≤ 5 min)' as const;
-	const filtro = page.getByRole('group', { name: 'Filtrar por etiqueta' });
 	const titulos = () =>
 		page
 			.getByRole('listitem')
@@ -557,9 +548,9 @@ test('Flujo 7: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	const textos = async (t: string[]) => Promise.all(t.map((x) => f(page, x).innerText()));
 
 	// 1
-	await crear(page, { titulo: 'Barrer', tipo: NO_SE_REPITE, fecha: '', esfuerzo: RAPIDA });
-	await crear(page, { titulo: 'Lavar', tipo: NO_SE_REPITE, fecha: '', esfuerzo: RAPIDA });
-	await crear(page, { titulo: 'Planchar', tipo: NO_SE_REPITE, fecha: '', esfuerzo: 'Larga', etiquetas: ['Patio', 'Cocina'] });
+	await crear(page, { titulo: 'Barrer', tipo: NO_SE_REPITE, fecha: '' });
+	await crear(page, { titulo: 'Lavar', tipo: NO_SE_REPITE, fecha: '' });
+	await crear(page, { titulo: 'Planchar', tipo: NO_SE_REPITE, fecha: '' });
 	const orden = await titulos();
 	expect([...orden].sort()).toEqual(['Barrer', 'Lavar', 'Planchar']);
 	const antes = await textos(['Barrer', 'Planchar']);
@@ -578,24 +569,6 @@ test('Flujo 7: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await escribir(page, 'Lavar', LAVAR);
 
 	// 3
-	const solo = page.getByRole('button', { name: 'Solo rápidas', exact: true });
-	await solo.click();
-	await expect.poll(titulos).toEqual(orden.filter((t) => t !== 'Planchar'));
-	await escribir(page, 'Barrer', 'Barrer abajo');
-	await expect.poll(titulos).toEqual(orden.filter((t) => t !== 'Planchar'));
-	await escribir(page, 'Barrer', '');
-	await solo.click();
-	await expect.poll(titulos).toEqual(orden);
-	await abrirFila(page, 'Lavar');
-	await completarPanel(page, { etiquetas: ['Casa'] });
-	await guardar(page);
-	await filtro.getByRole('button', { name: 'Casa', exact: true }).click();
-	await expect.poll(titulos).toEqual(['Lavar']);
-	await dice(page, 'Lavar', LAVAR);
-	await filtro.getByRole('button', { name: 'Todas', exact: true }).click();
-	await expect.poll(titulos).toEqual(orden);
-
-	// 4
 	await abrirFila(page, 'Lavar');
 	await elegirEmoji(page, '🧺', 'cesta');
 	await guardar(page);
@@ -604,7 +577,7 @@ test('Flujo 7: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	const b = (await f(page, '🧺 Lavar').getByRole('button', { name: '🧺 Lavar', exact: true }).boundingBox())!;
 	expect((await linea(page, '🧺 Lavar').boundingBox())!.y).toBeGreaterThanOrEqual(b.y + b.height - 2);
 
-	// 5
+	// 4
 	await f(page, '🧺 Lavar').getByRole('checkbox').click();
 	await expect(aviso(page)).toContainText('Completaste «🧺 Lavar»');
 	await expect(aviso(page)).not.toContainText('Primer paso');
@@ -614,7 +587,7 @@ test('Flujo 7: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await expect(page.locator('body')).not.toContainText(LAVAR);
 	await irA(page, 'Pendientes');
 
-	// 6: Anotar con la tarea en la lista (completada: se ve con Mostrar completadas).
+	// 5: Anotar con la tarea en la lista (completada: se ve con Mostrar completadas).
 	await encenderCompletadas(page);
 	await expect(f(page, '🧺 Lavar')).toBeVisible();
 	await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);

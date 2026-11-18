@@ -74,13 +74,3 @@ test('the history delete confirmation covers the navigation tabs', async ({ page
 
 	await pestanas(page, false);
 });
-
-test('the label dialogs cover the navigation tabs', async ({ page }) => {
-	await sesionConReloj(page, HOY);
-	await crear(page, { ...REGAR, etiquetas: ['Patio'] });
-	await irA(page, 'Etiquetas');
-	await page.getByRole('button', { name: 'Renombrar' }).click();
-	await expect(page.getByRole('dialog')).toBeVisible();
-
-	await pestanas(page, false);
-});

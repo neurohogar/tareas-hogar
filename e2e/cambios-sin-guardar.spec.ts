@@ -1,10 +1,8 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import {
 	abrir,
-	agregarEtiqueta,
 	agregarHorario,
 	campoDesde,
-	campoEtiquetas,
 	campoHasta,
 	completar,
 	crear,
@@ -156,20 +154,6 @@ test('Flujo 1: cerrar con cambios al editar', async ({ page }) => {
 	await panelCerrado(page);
 
 	// 8
-	await abrir(page, 'Regar plantas');
-	await campoEtiquetas(page).fill('x'.repeat(31));
-	await tocar(page, 'Cerrar');
-	await tocarEnAviso(page, 'Guardar');
-	await sinAviso(page);
-	await panelAbierto(page);
-	await expect(page.getByRole('img', { name: 'con errores' })).toBeVisible();
-	await expect(page.getByText(/30 caracteres|demasiado larg|máximo/i).first()).toBeVisible();
-	await tocar(page, 'Cerrar');
-	await tocarEnAviso(page, 'Descartar');
-	await panelCerrado(page);
-	await expect(fila(page, 'Regar plantas')).toBeVisible();
-
-	// 9
 	await ancho(page);
 	await abrir(page, 'Regar plantas');
 	await titulo(page).fill('Regar flores');
@@ -185,7 +169,7 @@ test('Flujo 1: cerrar con cambios al editar', async ({ page }) => {
 
 test('Flujo 2: qué cuenta como cambio', async ({ page, browser }) => {
 	await sesionConReloj(page, HOY);
-	await crear(page, { titulo: 'Otra', tipo: 'No se repite', etiquetas: ['casa'] });
+	await crear(page, { titulo: 'Otra', tipo: 'No se repite' });
 	await crearRegar(page, { horarios: [{ desde: '08:00', hasta: '10:00' }, { desde: '12:00', hasta: '14:00' }] });
 	const abrirRegar = () => abrir(page, 'Regar');
 
@@ -224,34 +208,6 @@ test('Flujo 2: qué cuenta como cambio', async ({ page, browser }) => {
 
 	// 6
 	await abrirRegar();
-	await campoEtiquetas(page).fill('   ');
-	await cierraDirecto(page);
-
-	// 7
-	await abrirRegar();
-	await campoEtiquetas(page).fill('ca');
-	await pideConfirmacion(page);
-	await abrirRegar();
-	await campoEtiquetas(page).fill('  ca  ');
-	await cerrarYVerAviso(page);
-	await tocarEnAviso(page, 'Guardar');
-	await panelCerrado(page);
-	await irA(page, 'Etiquetas');
-	await expect(page.getByText('ca', { exact: true })).toHaveCount(0);
-	await irA(page, 'Pendientes');
-
-	// 8
-	await abrirRegar();
-	await agregarEtiqueta(page, 'casa');
-	await page.getByRole('button', { name: 'Quitar «casa»' }).click();
-	await cierraDirecto(page);
-	await abrirRegar();
-	await agregarEtiqueta(page, 'casa');
-	await expect(page.getByRole('button', { name: 'Quitar «casa»' })).toBeVisible();
-	await pideConfirmacion(page);
-
-	// 9
-	await abrirRegar();
 	await irAPestana(page, 'Cuándo');
 	await page.getByRole('radio', { name: 'Días de la semana' }).check();
 	await page.getByRole('radio', { name: 'Intervalo' }).check();
@@ -263,16 +219,7 @@ test('Flujo 2: qué cuenta como cambio', async ({ page, browser }) => {
 	await page.getByRole('radio', { name: 'Días de la semana' }).check();
 	await pideConfirmacion(page);
 
-	// 10
-	await abrirRegar();
-	await page.getByRole('combobox', { name: 'Esfuerzo' }).selectOption({ label: 'Media (≈ 15 min)' });
-	await page.getByRole('combobox', { name: 'Esfuerzo' }).selectOption({ label: 'Sin estimar' });
-	await cierraDirecto(page);
-	await abrirRegar();
-	await page.getByRole('combobox', { name: 'Esfuerzo' }).selectOption({ label: 'Media (≈ 15 min)' });
-	await pideConfirmacion(page);
-
-	// 11
+	// 7
 	await abrirRegar();
 	await irAPestana(page, 'Cuándo');
 	await campoDesde(page, 0).fill('12:00');
@@ -285,13 +232,13 @@ test('Flujo 2: qué cuenta como cambio', async ({ page, browser }) => {
 	await campoHasta(page, 0).fill('15:00');
 	await pideConfirmacion(page);
 
-	// 12
+	// 8
 	await abrirRegar();
 	await irAPestana(page, 'Cuándo');
 	await agregarHorario(page).click();
 	await pideConfirmacion(page);
 
-	// 13
+	// 9
 	await abrirRegar();
 	await elegirEmoji(page, '🌱');
 	await pideConfirmacion(page);
@@ -300,7 +247,7 @@ test('Flujo 2: qué cuenta como cambio', async ({ page, browser }) => {
 	await tocar(page, 'Quitar emoji');
 	await cierraDirecto(page);
 
-	// 14
+	// 10
 	await crear(page, { titulo: 'Pagar', tipo: 'No se repite' });
 	await expect(fila(page, 'Pagar')).toBeVisible();
 	await abrir(page, 'Pagar');
@@ -370,16 +317,11 @@ test('Flujo 3: crear con cambios sin guardar', async ({ page }) => {
 
 	// 5
 	await nueva();
-	await page.getByRole('combobox', { name: 'Esfuerzo' }).selectOption({ label: 'Media (≈ 15 min)' });
-	await pideConfirmacion(page);
-
-	// 6
-	await nueva();
 	await titulo(page).fill('Pagar');
 	await titulo(page).fill('');
 	await cierraDirecto(page);
 
-	// 7
+	// 6
 	await nueva();
 	await titulo(page).fill('Pagar');
 	await tocar(page, 'Cerrar');
@@ -730,14 +672,6 @@ test('Flujo 6: botón Atrás', async ({ page }) => {
 	await panelCerrado(page);
 
 	// 7
-	await abrir(page, 'Regar');
-	await campoEtiquetas(page).fill('ca');
-	await atras();
-	await expect(aviso(page)).toBeVisible();
-	await tocarEnAviso(page, 'Descartar');
-	await panelCerrado(page);
-
-	// 8
 	await crear(page, { titulo: 'Pagar', tipo: 'No se repite' });
 	await completar(page, 'Pagar');
 	const deshacer = page.getByRole('status').filter({ hasText: 'Completaste' });
@@ -752,7 +686,7 @@ test('Flujo 6: botón Atrás', async ({ page }) => {
 	await page.clock.runFor(4000);
 	await expect(deshacer).toHaveCount(0);
 
-	// 9
+	// 8
 	await abrir(page, 'Regar');
 	await titulo(page).click();
 	await page.setViewportSize({ width: 360, height: 300 });
@@ -776,7 +710,7 @@ test('Flujo 6: botón Atrás', async ({ page }) => {
 	await tocarEnAviso(page, 'Descartar');
 	await panelCerrado(page);
 
-	// 10
+	// 9
 	await irA(page, 'Historial');
 	await irA(page, 'Pendientes');
 	await crear(page, { titulo: 'Otra', tipo: 'No se repite' });
@@ -801,7 +735,7 @@ test('Flujo 6: botón Atrás', async ({ page }) => {
 		if (como === 'Acción') break;
 	}
 
-	// 12
+	// 11
 	await abrir(page, 'Pagar');
 	await titulo(page).fill('Pagar luz');
 	const dialogos: string[] = [];
@@ -814,7 +748,7 @@ test('Flujo 6: botón Atrás', async ({ page }) => {
 	expect(dialogos).toEqual([]);
 });
 
-test('Flujo 6 paso 11: Atrás en ancho', async ({ page }) => {
+test('Flujo 6 paso 10: Atrás en ancho', async ({ page }) => {
 	await sesionConReloj(page, HOY);
 	await ancho(page);
 	await crearRegar(page);
@@ -897,15 +831,7 @@ test('Flujo 7: recargar o cerrar la app', async ({ page }) => {
 	await abrir(page, 'Regar');
 	await recargarSin();
 
-	// 3
-	await abrir(page, 'Regar');
-	await campoEtiquetas(page).fill('ca');
-	await recargarCon();
-	await abrir(page, 'Regar');
-	await campoEtiquetas(page).fill('   ');
-	await recargarSin();
-
-	// 5
+	// 4
 	await abrir(page, 'Regar');
 	await titulo(page).fill('Regar plantas');
 	await irAPestana(page, 'Acciones');
@@ -913,7 +839,7 @@ test('Flujo 7: recargar o cerrar la app', async ({ page }) => {
 	await expect(aviso(page)).toBeVisible();
 	await recargarCon();
 
-	// 6
+	// 5
 	await abrir(page, 'Regar');
 	await titulo(page).fill('Regar plantas');
 	await tocar(page, 'Cerrar');
@@ -921,14 +847,14 @@ test('Flujo 7: recargar o cerrar la app', async ({ page }) => {
 	await panelCerrado(page);
 	await recargarSin();
 
-	// 7
+	// 6
 	await tocar(page, '+');
 	await recargarSin();
 	await tocar(page, '+');
 	await titulo(page).fill('Pagar');
 	await recargarCon();
 
-	// 8
+	// 7
 	await abrir(page, 'Regar');
 	await titulo(page).fill('Regar plantas');
 	confirmaciones.length = 0;
@@ -939,7 +865,7 @@ test('Flujo 7: recargar o cerrar la app', async ({ page }) => {
 	await tocarEnAviso(page, 'Descartar');
 	await panelCerrado(page);
 
-	// 4 (cierra la página)
+	// 3 (cierra la página)
 	await abrir(page, 'Regar');
 	await titulo(page).fill('Regar plantas');
 	await tocar(page, 'Cerrar');

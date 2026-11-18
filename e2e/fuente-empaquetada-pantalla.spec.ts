@@ -181,7 +181,7 @@ test("Flujo 9 paso 5: al abrir y al recargar, en las tres pantallas de destino",
   const destinos = [
     { ruta: "/", encabezado: "Pendientes" },
     { ruta: "/historial", encabezado: "Historial" },
-    { ruta: "/etiquetas", encabezado: "Etiquetas" },
+    { ruta: "/anotaciones", encabezado: "Anotaciones" },
   ];
   for (const { ruta, encabezado } of destinos) {
     await page.clock.pauseAt(new Date(Date.parse(HORA) + 3_600_000 * (destinos.findIndex((d) => d.ruta === ruta) + 1)));
@@ -261,7 +261,7 @@ test("Flujo 9 paso 10: con los datos demorados 3 s, sigue hasta los 3 s y se va 
 }) => {
   await sesionConTarea(page);
   const b = await otroDispositivoConSesion(browser, page);
-  // Las tres colecciones van en un solo pedido, que es lo que se puede demorar por la red: la espera
+  // Las colecciones van en un solo pedido, que es lo que se puede demorar por la red: la espera
   // de cada una por separado la decide features/pantalla-de-carga.feature.
   const datos = await retener(b.page, DATOS);
   const a = await abrirDetenida(b.page, HORA);

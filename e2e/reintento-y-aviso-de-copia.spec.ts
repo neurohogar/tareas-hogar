@@ -39,7 +39,7 @@ const entradas = (page: Page) =>
 const portapapeles = (page: Page) =>
   page.evaluate(() => navigator.clipboard.readText());
 
-type Pantalla = "Pendientes" | "Historial" | "Etiquetas" | "Anotaciones";
+type Pantalla = "Pendientes" | "Historial" | "Anotaciones";
 
 async function ir(page: Page, pantalla: Pantalla) {
   await page
@@ -319,7 +319,6 @@ type Dos = Awaited<ReturnType<typeof dosDispositivos>>;
 async function cargarPantallas(page: Page) {
   for (const pantalla of [
     "Historial",
-    "Etiquetas",
     "Anotaciones",
     "Pendientes",
   ] as const)
@@ -606,177 +605,101 @@ test("Flujo 6: sin temporizadores, solo al cambiar los datos", async ({
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 7: etiquetas duplicadas y referencias a etiquetas borradas
+// Flujo 7: datos que ya no se usan (campos `etiquetas` y `esfuerzo`, colección `etiquetas`)
 // ---------------------------------------------------------------------------
 
-const chipsDeFila = (page: Page, titulo: string) =>
-  fila(page, titulo)
-    .getByRole("list", { name: "Etiquetas", exact: true })
-    .getByRole("listitem");
-const chipsDeLaPantalla = (page: Page) => page.getByRole("listitem");
-const entradaEtiqueta = (page: Page, nombre: string) =>
-  page.getByRole("listitem", { name: nombre, exact: true });
-
-const etiquetasDeTareaEnServidor = async (titulo: string) => {
-  const tarea = (await documentos("tareas")).find(
-    (t) => texto(t.campos, "titulo") === titulo,
-  );
-  return (
-    (tarea?.campos.etiquetas?.arrayValue?.values ?? []) as {
-      stringValue: string;
-    }[]
-  ).map((v) => v.stringValue);
-};
-
-/** A y B ven `Regar`; los dos se quedan sin conexión. */
-async function dosSinConexionConRegar(browser: Browser): Promise<Dos> {
-  const d = await dosDispositivos(browser, HOY);
-  await crearYVer(d.a, { titulo: "Regar", tipo: "No se repite" });
-  await expect(fila(d.b, "Regar")).toBeVisible();
-  await cargarPantallas(d.a);
-  await cargarPantallas(d.b);
-  await d.a.context().setOffline(true);
-  await d.ctxB.setOffline(true);
-  return d;
+async function escribirEnEmulador(
+  ruta: string,
+  campos: Record<string, unknown>,
+  mascara: string[] = [],
+  metodo: "PATCH" | "POST" = "PATCH",
+) {
+  const consulta = mascara.map((m) => `updateMask.fieldPaths=${m}`).join("&");
+  const url = `${RAIZ}/${ruta}${ruta.includes("?") ? "&" : "?"}${consulta}`;
+  const respuesta = await fetch(url, {
+    method: metodo,
+    headers: { ...AUTORIZADO, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields: campos }),
+  });
+  if (!respuesta.ok) throw new Error(`REST ${metodo} ${ruta}: ${respuesta.status}`);
 }
 
-test("Flujo 7: etiquetas duplicadas de dos dispositivos quedan en una sola", async ({
-  browser,
+const tareaEnServidor = async (titulo: string) =>
+  (await documentos("tareas")).find((t) => texto(t.campos, "titulo") === titulo);
+
+const etiquetasViejas = (campos: Record<string, any>) =>
+  (campos.etiquetas?.arrayValue?.values ?? []).map(
+    (v: { stringValue: string }) => v.stringValue,
+  );
+
+test("Flujo 7: los campos viejos etiquetas y esfuerzo quedan intactos al editar", async ({
+  page,
 }) => {
-  test.setTimeout(240_000);
-  const d = await dosSinConexionConRegar(browser);
-  try {
-    // Paso 1.
-    await editar(d.a, "Regar", { etiquetas: ["Cocina"] });
-    await editar(d.b, "Regar", { etiquetas: ["cocina"] });
-    await d.a.context().setOffline(false);
-    await llegaAlServidor(d.a);
-    await d.ctxB.setOffline(false);
-    for (const p of [d.a, d.b]) {
-      await ir(p, "Etiquetas");
-      await expect(chipsDeLaPantalla(p)).toHaveCount(1, { timeout: 30_000 });
-      await silencio(p);
-    }
-    await esperarA(async () => (await documentos("etiquetas")).length === 1);
-    const [unica] = await documentos("etiquetas");
-    const nombre = texto(unica.campos, "nombre")!;
-    expect(["Cocina", "cocina"]).toContain(nombre);
-    for (const p of [d.a, d.b]) {
-      await expect(entradaEtiqueta(p, nombre)).toHaveCount(1);
-      await ir(p, "Pendientes");
-      await expect(chipsDeFila(p, "Regar")).toHaveCount(1);
-      await expect(chipsDeFila(p, "Regar")).toHaveAttribute(
-        "aria-label",
-        nombre,
-      );
-      await silencio(p);
-    }
-    expect(await etiquetasDeTareaEnServidor("Regar")).toEqual([unica.id]);
-  } finally {
-    await d.cerrar();
-  }
-});
+  test.setTimeout(120_000);
+  await sesionConReloj(page, HOY);
+  const uid = await uidDelEmulador();
 
-test("Flujo 7: una fusión cortada no se pierde", async ({ browser }) => {
-  test.setTimeout(240_000);
-  const d = await dosSinConexionConRegar(browser);
-  try {
-    // Paso 2: A llega primero y se va; B recibe sus datos con la red demorada y se corta justo cuando llegan.
-    await editar(d.a, "Regar", { etiquetas: ["Cocina"] });
-    await editar(d.b, "Regar", { etiquetas: ["cocina"] });
-    await d.a.context().setOffline(false);
-    await esperarA(async () => (await documentos("etiquetas")).length === 1);
-    await llegaAlServidor(d.a);
-    await d.a.context().close();
-    await ir(d.b, "Etiquetas");
-    await reconectarYCortar(
-      d,
-      async () => (await documentos("etiquetas")).length === 2,
-    );
-    await d.b.waitForTimeout(4000);
-    await silencio(d.b);
-    await d.ctxB.setOffline(false);
-    await expect(chipsDeLaPantalla(d.b)).toHaveCount(1, { timeout: 30_000 });
-    await esperarA(async () => (await documentos("etiquetas")).length === 1);
-    const [unica] = await documentos("etiquetas");
-    expect(await etiquetasDeTareaEnServidor("Regar")).toEqual([unica.id]);
-    await ir(d.b, "Pendientes");
-    await expect(chipsDeFila(d.b, "Regar")).toHaveCount(1);
-    await silencio(d.b);
-  } finally {
-    await d.b.context().close();
-  }
-});
+  // Paso 1: dos tareas, los campos viejos escritos por el REST del emulador y la colección vieja.
+  await crearYVer(page, {
+    titulo: "Regar",
+    tipo: "Intervalo",
+    cada: "2",
+    unidad: "días",
+  });
+  await crearYVer(page, { titulo: "Pagar", tipo: "No se repite" });
+  await anotar(page, "queda");
+  const anotacionesAntes = await documentos("anotaciones");
+  const regar = await tareaEnServidor("Regar");
+  await escribirEnEmulador(
+    `users/${uid}/tareas/${regar!.id}`,
+    {
+      etiquetas: { arrayValue: { values: [{ stringValue: "x" }] } },
+      esfuerzo: { stringValue: "media" },
+    },
+    ["etiquetas", "esfuerzo"],
+  );
+  const casa = { nombre: { stringValue: "Casa" }, color: { stringValue: "rojo" } };
+  await escribirEnEmulador(`users/${uid}/etiquetas?documentId=casa`, casa, [], "POST");
+  await esperarA(async () => etiquetasViejas((await tareaEnServidor("Regar"))!.campos).length === 1);
+  await page.reload();
+  await expect(fila(page, "Regar")).toBeVisible();
 
-test("Flujo 7: la referencia a una etiqueta borrada se quita, al volver la conexión o al cambiar los datos", async ({
-  browser,
-}) => {
-  test.setTimeout(300_000);
-  const d = await dosDispositivos(browser, HOY);
-  try {
-    // Paso 3: A borra `Hogar` mientras B, sin conexión, se la asigna a `Pagar`.
-    await crearYVer(d.a, {
-      titulo: "Regar",
-      tipo: "No se repite",
-      etiquetas: ["Hogar"],
-    });
-    await crearYVer(d.a, { titulo: "Pagar", tipo: "No se repite" });
-    await expect(chipsDeFila(d.b, "Regar")).toHaveCount(1);
-    await expect(fila(d.b, "Pagar")).toBeVisible();
-    await cargarPantallas(d.b);
-    await d.ctxB.setOffline(true);
-    await ir(d.a, "Etiquetas");
-    await entradaEtiqueta(d.a, "Hogar")
-      .getByRole("button", { name: "Borrar" })
-      .click();
-    await d.a
-      .getByRole("alertdialog")
-      .getByRole("button", { name: "Borrar", exact: true })
-      .click();
-    await expect(d.a.getByText("Todavía no hay etiquetas")).toBeVisible();
-    await llegaAlServidor(d.a);
-    await d.a.context().close();
-    await editar(d.b, "Pagar", { etiquetas: ["Hogar"] });
-    await expect(chipsDeFila(d.b, "Pagar")).toHaveCount(1);
+  // Paso 2: la app se ve igual que sin esos datos.
+  await expect(fila(page, "Regar").getByRole("listitem")).toHaveCount(0);
+  await expect(fila(page, "Regar")).not.toContainText(/Rápida|Media|Larga|Sin estimar/);
+  await expect(page.getByRole("group", { name: "Filtrar por etiqueta" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Solo rápidas" })).toHaveCount(0);
+  await expect(page.getByRole("navigation").getByRole("link")).toHaveText([
+    "Pendientes",
+    "Historial",
+    "Anotaciones",
+  ]);
+  await silencio(page);
 
-    // B vuelve a tener conexión con la red demorada y se corta cuando ya ve que la etiqueta no existe.
-    await reconectarYCortar(
-      d,
-      async () =>
-        (await etiquetasDeTareaEnServidor("Pagar")).length === 1 &&
-        (await chipsDeFila(d.b, "Pagar").count()) === 0,
-    );
-    await expect(chipsDeFila(d.b, "Pagar")).toHaveCount(0);
-    await expect(d.b.getByText("Hogar", { exact: true })).toHaveCount(0);
-    await sigueDurante(
-      6000,
-      async () => (await etiquetasDeTareaEnServidor("Pagar")).length === 1,
-    );
-    await silencio(d.b);
+  // Paso 3: el panel no tiene los campos; guardar el título no toca los campos viejos.
+  await abrir(page, "Regar");
+  await expect(page.getByRole("combobox", { name: "Etiquetas" })).toHaveCount(0);
+  await expect(page.getByRole("combobox", { name: "Esfuerzo" })).toHaveCount(0);
+  await cerrar(page);
+  await editar(page, "Regar", { titulo: "Regar plantas" });
+  await esperarA(async () => !!(await tareaEnServidor("Regar plantas")));
+  let doc = (await tareaEnServidor("Regar plantas"))!;
+  expect(etiquetasViejas(doc.campos)).toEqual(["x"]);
+  expect(texto(doc.campos, "esfuerzo")).toBe("media");
 
-    // Con conexión pero sin el servidor a mano, el intento de la vuelta de la conexión también falla; con el servidor de vuelta y 1 hora simulada sin cambios no hay reintento: solo un cambio de datos reintenta.
-    await d.b
-      .context()
-      .route(/127\.0\.0\.1:8080/, (ruta) => ruta.abort("connectionfailed"));
-    await d.ctxB.setOffline(false);
-    await d.b.waitForTimeout(15_000);
-    expect((await etiquetasDeTareaEnServidor("Pagar")).length).toBe(1);
-    await d.b.context().unroute(/127\.0\.0\.1:8080/);
-    await d.b.clock.pauseAt(new Date("2026-07-15T08:30:00"));
-    await d.b.clock.runFor(60 * 60_000);
-    await d.b.clock.resume();
-    await sigueDurante(
-      10_000,
-      async () => (await etiquetasDeTareaEnServidor("Pagar")).length === 1,
-    );
-    await editar(d.b, "Regar", { titulo: "Regar plantas" });
-    await esperarA(
-      async () => (await etiquetasDeTareaEnServidor("Pagar")).length === 0,
-    );
-    await expect(chipsDeFila(d.b, "Pagar")).toHaveCount(0);
-    await expect(chipsDeFila(d.b, "Regar plantas")).toHaveCount(0);
-    await silencio(d.b);
-  } finally {
-    await d.b.context().close();
-  }
+  // Paso 4: cambiar la recurrencia quita sus campos y deja los viejos.
+  await editar(page, "Regar plantas", { tipo: "No se repite" });
+  await esperarA(async () => (await tareaEnServidor("Regar plantas"))!.campos.recurrencia === undefined);
+  doc = (await tareaEnServidor("Regar plantas"))!;
+  expect(doc.campos.recurrencia).toBeUndefined();
+  expect(etiquetasViejas(doc.campos)).toEqual(["x"]);
+  expect(texto(doc.campos, "esfuerzo")).toBe("media");
+
+  // Paso 5: la colección vieja y las anotaciones no cambian; borrar la tarea no toca la colección vieja.
+  expect((await documentos("etiquetas")).map((d) => d.campos)).toEqual([casa]);
+  expect(await documentos("anotaciones")).toEqual(anotacionesAntes);
+  await borrar(page, "Regar plantas");
+  await esperarA(async () => !(await tareaEnServidor("Regar plantas")));
+  expect((await documentos("etiquetas")).map((d) => d.campos)).toEqual([casa]);
+  await silencio(page);
 });
