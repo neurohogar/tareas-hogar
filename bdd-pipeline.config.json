@@ -132,7 +132,7 @@
 				"match": "^src/lib/core/[^/]+\\.ts$",
 				"exclude": "\\.test\\.ts$",
 				"name": "mutator {{file}}",
-				"command": "{{tools.mutator}} --max-workers 4 --coverage-command '{{coverageCommand}}' --test-command '{{testCommand}}' {{file}}",
+				"command": "{{tools.mutator}} --scan {{file}} | grep '^Scan: 0 mutation sites' || {{tools.mutator}} --max-workers 4 --coverage-command '{{coverageCommand}}' --test-command '{{testCommand}}' {{file}}",
 				"check": "mutantsMeasured"
 			},
 			"acceptance:mutate": {
