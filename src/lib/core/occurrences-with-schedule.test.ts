@@ -53,6 +53,15 @@ describe('next calendar occurrence with a schedule (spec §5.6)', () => {
 		const n = nextCalendarOccurrence(WEDNESDAY_AND_THURSDAY, midnight, at(1), [completion(at(15, 1), at(15))]);
 		expect(n).toStrictEqual(occurrence(16, 0, 2));
 	});
+
+	it('of a task resumed exactly at the epoch, an occurrence closed before it does not count (spec §5.8)', () => {
+		const everyDay: CalendarRecurrence = {
+			mode: 'calendario',
+			weekdays: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+		};
+		const n = nextCalendarOccurrence(everyDay, MORNING_AND_AFTERNOON, new Date(1969, 11, 30, 12), [], new Date(0));
+		expect(n.closing).toBeGreaterThan(0);
+	});
 });
 
 describe('which occurrence a calendar completion with a schedule covers (spec §5.6)', () => {
