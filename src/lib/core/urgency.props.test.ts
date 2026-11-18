@@ -31,20 +31,20 @@ const completions = fc
 		list.map(([completedAt, coveredOccurrence], i): Completion => ({ id: `c${i}`, taskId: 't', completedAt, ...(coveredOccurrence && { coveredOccurrence }) }))
 	);
 
-/** El estado justo antes del instante de urgencia y en él (spec §6.1: "desde cuándo", "cuándo vuelve"). */
+/** The status right before the urgency instant and at it (spec §6.1: "since when", "when it returns"). */
 const transition = (t: Task, cs: readonly Completion[], moment: Date): [Status['kind'], Status['kind']] => [
 	taskStatus(t, cs, new Date(moment.getTime() - 1)).kind,
 	taskStatus(t, cs, moment).kind
 ];
 
-describe('instanteDeUrgencia (propiedades)', () => {
-	it('es el momento en que la tarea entró en su estado (atrasada, pendiente) o en que sale de la espera', () => {
+describe('urgencyInstant (properties)', () => {
+	it('is the moment the task entered its status (overdue, pending) or leaves waiting', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				const status = taskStatus(t, cs, now);
 				if (status.kind === 'completada' || status.kind === 'pausada') return;
 				const moment = urgencyInstant(t, cs, status, now);
-				// Una puntual pendiente cuenta desde su fecha límite (o no tiene instante) y una relativa nunca completada desde creadaEn: no son transiciones.
+				// A pending one-off counts from its due date (or has no instant) and a relative one never completed from createdAt: they are not transitions.
 				const withoutTransition = status.kind === 'pendiente' && (t.kind === 'puntual' || (t.recurrence.mode === 'relativo' && cs.length === 0));
 				if (withoutTransition || moment === undefined) return;
 				if (status.kind === 'en espera') {
@@ -58,7 +58,7 @@ describe('instanteDeUrgencia (propiedades)', () => {
 		);
 	});
 
-	it('una puntual pendiente cuenta desde su fecha límite y, sin ella, no tiene instante', () => {
+	it('a pending one-off counts from its due date and, without it, has no instant', () => {
 		fc.assert(
 			fc.property(task, instant, (t, now) => {
 				fc.pre(t.kind === 'puntual');

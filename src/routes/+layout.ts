@@ -1,3 +1,3 @@
-// SPA estática: todo corre en el navegador (Firebase necesita window).
+// Static SPA: everything runs in the browser (Firebase needs window).
 export const ssr = false;
 export const prerender = false;

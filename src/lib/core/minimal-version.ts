@@ -1,5 +1,5 @@
-// Spec §4.1 (Versión mínima) y §6.1: la línea «Mínima: …» de la fila y su
-// botón «Hice la mínima», que completa la tarea como el checkbox.
+// Spec §4.1 (Minimal version) and §6.1: the «Mínima: …» line of the row and its
+// «Hice la mínima» button, which completes the task like the checkbox.
 import { checkboxAction } from './checkbox';
 import { classifyInPending } from './completed';
 import { complete } from './completions';
@@ -7,16 +7,16 @@ import type { Status } from './status';
 import { visibleLine } from './current-step';
 import type { Completion, Task } from './task';
 
-/** Lo que la fila muestra de la mínima: la línea con su prefijo y si «Hice la mínima» está habilitado. */
+/** What the row shows of the minimal version: the line with its prefix and whether «Hice la mínima» is enabled. */
 export interface MinimalLine {
 	text: string;
 	enabled: boolean;
 }
 
 /**
- * Spec §6.1: con versión mínima y la fila pendiente o atrasada, «Mínima: »
- * y el texto completo; el botón está habilitado si el checkbox completaría
- * (§5.5). En cualquier otra fila, ninguna.
+ * Spec §6.1: with a minimal version and a pending or overdue row, «Mínima: »
+ * and the full text; the button is enabled if the checkbox would complete
+ * (§5.5). On any other row, none.
  */
 export function minimalLine(task: Task, status: Pick<Status, 'kind'>, completions: readonly Completion[], now: Date): MinimalLine | undefined {
 	if (task.minimalVersion === undefined || !visibleLine(status)) return undefined;
@@ -24,9 +24,9 @@ export function minimalLine(task: Task, status: Pick<Status, 'kind'>, completion
 }
 
 /**
- * Spec §6.1 y §4.4: tocar «Hice la mínima» agrega el completado de `completar`
- * con fueMinima en true; si la fila no la ofrece o el botón está deshabilitado,
- * no completa (undefined).
+ * Spec §6.1 and §4.4: tapping «Hice la mínima» adds the completion of `complete`
+ * with wasMinimal set to true; if the row does not offer it or the button is disabled,
+ * it does not complete (undefined).
  */
 export function doTheMinimal(task: Task, completions: readonly Completion[], id: string, now: Date): Completion | undefined {
 	const { status } = classifyInPending(task, completions, now);

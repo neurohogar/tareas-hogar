@@ -5,7 +5,7 @@ import { recurringRelativeStatus } from './recurring-relative-status';
 import type { Completion, RelativeRecurrence } from './task';
 
 const MS_PER_HOUR = 3_600_000;
-/** Momentos entre 1970 y ~2096, en ms: cualquier diferencia entre dos es exacta. */
+/** Moments between 1970 and ~2096, in ms: any difference between two is exact. */
 const instant = fc.integer({ min: 0, max: 4_000_000_000_000 });
 const recurrence = fc.record({
 	mode: fc.constant('relativo' as const),
@@ -25,8 +25,8 @@ const status = (r: RelativeRecurrence, cs: readonly Completion[], ms: number) =>
 const intervalInMs = (r: RelativeRecurrence) => r.every * (r.unit === 'dias' ? 24 : 1) * MS_PER_HOUR;
 const last = (cs: readonly Completion[]) => Math.max(...cs.map((c) => c.completedAt.getTime()));
 
-describe('estadoPeriodicaRelativa (propiedades)', () => {
-	it('nunca completada: pendiente en cualquier momento', () => {
+describe('recurringRelativeStatus (properties)', () => {
+	it('never completed: pending at any moment', () => {
 		fc.assert(
 			fc.property(recurrence, instant, (r, now) => {
 				expect(status(r, [], now)).toEqual({ kind: 'pendiente' });
@@ -34,7 +34,7 @@ describe('estadoPeriodicaRelativa (propiedades)', () => {
 		);
 	});
 
-	it('el progreso de en espera está en [0, 1)', () => {
+	it('the waiting progress is in [0, 1)', () => {
 		fc.assert(
 			fc.property(recurrence, completions, instant, (r, cs, now) => {
 				const e = status(r, cs, now);
@@ -45,7 +45,7 @@ describe('estadoPeriodicaRelativa (propiedades)', () => {
 		);
 	});
 
-	it('no depende del orden de los completados', () => {
+	it('does not depend on the order of the completions', () => {
 		fc.assert(
 			fc.property(recurrence, withPermutation, instant, (r, [cs, permutedOnes], now) => {
 				expect(status(r, permutedOnes, now)).toEqual(status(r, cs, now));
@@ -53,7 +53,7 @@ describe('estadoPeriodicaRelativa (propiedades)', () => {
 		);
 	});
 
-	it('solo cuenta el completado más reciente: agregar uno anterior no cambia nada', () => {
+	it('only the most recent completion counts: adding an earlier one changes nothing', () => {
 		fc.assert(
 			fc.property(recurrence, completions, instant, fc.integer({ min: 0, max: 1e12 }), (r, cs, now, before) => {
 				const oldOne: Completion = { id: 'viejo', taskId: 't', completedAt: new Date(last(cs) - before) };
@@ -62,7 +62,7 @@ describe('estadoPeriodicaRelativa (propiedades)', () => {
 		);
 	});
 
-	it('avanza en un solo sentido: en espera → pendiente → atrasada, con progreso creciente', () => {
+	it('moves in one direction only: waiting → pending → overdue, with increasing progress', () => {
 		fc.assert(
 			fc.property(recurrence, completions, instant, instant, (r, cs, a, b) => {
 				const [before, after] = [status(r, cs, Math.min(a, b)), status(r, cs, Math.max(a, b))];
@@ -73,7 +73,7 @@ describe('estadoPeriodicaRelativa (propiedades)', () => {
 		);
 	});
 
-	it('cambia de estado exactamente en V = U + intervalo y en V + intervalo', () => {
+	it('changes status exactly at V = U + interval and at V + interval', () => {
 		fc.assert(
 			fc.property(recurrence, completions, (r, cs) => {
 				const expiry = last(cs) + intervalInMs(r);
@@ -85,7 +85,7 @@ describe('estadoPeriodicaRelativa (propiedades)', () => {
 		);
 	});
 
-	it('completar reinicia: justo al completar queda en espera con progreso 0, desde cualquier estado', () => {
+	it('completing resets: right on completing it is waiting with progress 0, from any status', () => {
 		fc.assert(
 			fc.property(recurrence, completions, fc.integer({ min: 0, max: 1e12 }), (r, cs, after) => {
 				const now = last(cs) + after;
@@ -95,7 +95,7 @@ describe('estadoPeriodicaRelativa (propiedades)', () => {
 		);
 	});
 
-	it('"cada N días" equivale a "cada N × 24 horas"', () => {
+	it('"every N days" is equivalent to "every N × 24 hours"', () => {
 		fc.assert(
 			fc.property(fc.integer({ min: 1, max: 1_000 }), completions, instant, (n, cs, now) => {
 				const days: RelativeRecurrence = { mode: 'relativo', every: n, unit: 'dias' };
@@ -105,7 +105,7 @@ describe('estadoPeriodicaRelativa (propiedades)', () => {
 		);
 	});
 
-	it('solo importa el tiempo transcurrido: desplazar todos los momentos no cambia el estado', () => {
+	it('only the elapsed time matters: shifting all the moments does not change the status', () => {
 		fc.assert(
 			fc.property(recurrence, completions, instant, fc.integer({ min: -1e12, max: 1e12 }), (r, cs, now, delta) => {
 				const shifted = cs.map((c) => ({ ...c, completedAt: new Date(c.completedAt.getTime() + delta) }));

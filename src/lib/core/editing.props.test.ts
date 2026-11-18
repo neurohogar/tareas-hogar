@@ -1,5 +1,5 @@
-// Spec §6.2 (Editar) y §7 (Conflictos): editar produce un cambio parcial que,
-// aplicado al documento guardado, deja la tarea que describen los datos.
+// Spec §6.2 (Editar) and §7 (Conflictos): editing produces a partial change that,
+// applied to the stored document, leaves the task that the data describes.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { createFromData, taskData, type TaskData } from './task-data';
@@ -11,25 +11,25 @@ import { WEEKDAYS, type Recurrence, type Task } from './task';
 const ID = 't';
 const createdAt = fc.date({ min: new Date(1990, 0, 1), max: new Date(2100, 0, 1), noInvalidDate: true });
 
-/** Un título con algo más que espacios (con espacios en los extremos, que se recortan). */
+/** A title with something more than spaces (with spaces at the ends, which are trimmed). */
 const validTitle = fc
 	.tuple(fc.string({ maxLength: 3 }).map((s) => s.replace(/\S/g, ' ')), fc.string({ minLength: 1, maxLength: 12 }))
 	.filter(([, text]) => text.trim() !== '')
 	.map(([spaces, text]) => `${spaces}${text}${spaces}`);
 const isoDate = createdAt.map(isoDay);
 const unit = fc.constantFrom('horas' as const, 'dias' as const);
-/** Días de la semana en cualquier orden y con repetidos: crear los guarda como conjunto. */
+/** Weekdays in any order and with repeats: creating saves them as a set. */
 const weekdays = fc.array(fc.constantFrom(...WEEKDAYS), { minLength: 1, maxLength: 9 });
 const monthDays = fc.array(fc.integer({ min: 1, max: 31 }), { minLength: 1, maxLength: 8 });
 
 const hour = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 const minutesOfDay = fc.integer({ min: 0, max: 1439 });
-/** Un horario válido (§4.1), o ninguno. */
+/** A valid schedule (§4.1), or none. */
 const validSchedule = fc.option(
 	fc.uniqueArray(minutesOfDay, { minLength: 2, maxLength: 2 }).map(([a, b]) => [{ from: hour(Math.min(a, b)), to: hour(Math.max(a, b)) }]),
 	{ nil: undefined }
 );
-/** Cualquier horario que escriba el panel: horas vacías, invertidas o iguales. */
+/** Any schedule the panel may write: empty, inverted or equal hours. */
 const anySchedule = fc.option(
 	fc.record({ from: fc.oneof(minutesOfDay.map(hour), fc.constant('')), to: fc.oneof(minutesOfDay.map(hour), fc.constant('')) }).map((timeWindow) => [timeWindow]),
 	{ nil: undefined }
@@ -37,7 +37,7 @@ const anySchedule = fc.option(
 const withSchedule = (data: fc.Arbitrary<TaskData>, schedule: typeof anySchedule) =>
 	fc.tuple(data, schedule).map(([d, h]): TaskData => ({ ...d, ...(h && { schedule: h }) }));
 
-/** Datos que pasan las validaciones de crear (§4.1–§4.2), sin horario. */
+/** Data that passes the creation validations (§4.1–§4.2), without a schedule. */
 const dataWithoutSchedule: fc.Arbitrary<TaskData> = fc.oneof(
 	fc.record({ shape: fc.constant('puntual' as const), title: validTitle }),
 	fc.record({ shape: fc.constant('puntual' as const), title: validTitle, dueDate: isoDate }),
@@ -45,10 +45,10 @@ const dataWithoutSchedule: fc.Arbitrary<TaskData> = fc.oneof(
 	fc.record({ shape: fc.constant('calendario' as const), title: validTitle, weekdays, monthDays: fc.constant([]) }),
 	fc.record({ shape: fc.constant('calendario' as const), title: validTitle, weekdays: fc.constant([]), monthDays })
 );
-/** Datos que pasan las validaciones de crear, con o sin horario. */
+/** Data that passes the creation validations, with or without a schedule. */
 const validData = withSchedule(dataWithoutSchedule, validSchedule);
 
-/** Cualquier dato que pueda cargar el panel, válido o no. */
+/** Any data the panel may load, valid or not. */
 const anyData: fc.Arbitrary<TaskData> = withSchedule(
 	fc.oneof(
 		dataWithoutSchedule,
@@ -75,30 +75,30 @@ const anyData: fc.Arbitrary<TaskData> = withSchedule(
 
 function create(data: TaskData, created: Date): Task {
 	const result = createFromData(data, ID, created);
-	if (!result.ok) throw new Error('los datos válidos siempre crean');
+	if (!result.ok) throw new Error('valid data always creates');
 	return result.task;
 }
 
-/** Una tarea guardada, como la deja crear. */
+/** A stored task, as creating leaves it. */
 const task = fc.tuple(validData, createdAt).map(([data, created]) => create(data, created));
 
 function editOk(t: Task, data: TaskData): TaskChange {
 	const result = edit(t, data);
-	if (!result.ok) throw new Error('los datos válidos siempre editan');
+	if (!result.ok) throw new Error('valid data always edits');
 	return result.change;
 }
 
 const apply = (doc: TaskDocument, ...changes: TaskChange[]): TaskDocument =>
 	changes.reduce<TaskDocument>((doc, change) => applyChange([doc], doc.id, change)[0], doc);
 
-/** Una recurrencia de un solo modo, con exactamente sus campos (§7: nunca se mezcla por subcampo). */
+/** A recurrence of a single mode, with exactly its fields (§7: never mixed by subfield). */
 function isRecurrenceOfOneMode(recurrence: Recurrence): boolean {
 	const fields = Object.keys(recurrence).sort().join(',');
 	return ['every,mode,unit', 'mode,weekdays', 'mode,monthDays'].includes(fields);
 }
 
-describe('datosDeTarea (propiedades)', () => {
-	it('es la inversa de crear: crear con los datos de una tarea da la misma tarea', () => {
+describe('taskData (properties)', () => {
+	it('is the inverse of creating: creating with the data of a task gives the same task', () => {
 		fc.assert(
 			fc.property(task, (t) => {
 				expect(createFromData(taskData(t), t.id, t.createdAt)).toStrictEqual({ ok: true, task: t });
@@ -107,8 +107,8 @@ describe('datosDeTarea (propiedades)', () => {
 	});
 });
 
-describe('editar (propiedades)', () => {
-	it('guardar con los valores que cargó el panel no cambia ningún campo', () => {
+describe('edit (properties)', () => {
+	it('saving with the values the panel loaded changes no field', () => {
 		fc.assert(
 			fc.property(task, (t) => {
 				expect(editOk(t, taskData(t))).toStrictEqual({});
@@ -116,7 +116,7 @@ describe('editar (propiedades)', () => {
 		);
 	});
 
-	it('valida exactamente como crear: se rechaza con los mismos errores', () => {
+	it('validates exactly like creating: it is rejected with the same errors', () => {
 		fc.assert(
 			fc.property(task, anyData, (t, data) => {
 				const creation = createFromData(data, t.id, t.createdAt);
@@ -127,17 +127,17 @@ describe('editar (propiedades)', () => {
 		);
 	});
 
-	it('aplicado al documento, deja la tarea que se crearía con esos datos, con el mismo id y creadaEn', () => {
+	it('applied to the document, leaves the task that would be created with that data, with the same id and createdAt', () => {
 		fc.assert(
 			fc.property(task, validData, (t, data) => {
 				const doc = apply(t, editOk(t, data));
-				// Igualdad estricta del documento: ningún campo del otro tipo, ninguna recurrencia mezclada.
+				// Strict equality of the document: no field of the other kind, no mixed recurrence.
 				expect(doc).toStrictEqual(create(data, t.createdAt));
 			})
 		);
 	});
 
-	it('escribe solo los campos que cambiaron y, al cambiar de tipo, los dos campos de tipo', () => {
+	it('writes only the fields that changed and, when the kind changes, both kind fields', () => {
 		fc.assert(
 			fc.property(task, validData, (t, data) => {
 				const newLabel = create(data, t.createdAt) as unknown as Record<string, unknown>;
@@ -146,7 +146,7 @@ describe('editar (propiedades)', () => {
 				const expectedItems = ['title', 'kind', 'dueDate', 'recurrence'].filter(
 					(field) => newLabel.kind !== before.kind || JSON.stringify(newLabel[field]) !== JSON.stringify(before[field])
 				);
-				// El horario es un campo común: se escribe solo si cambió, también al cambiar de tipo.
+				// The schedule is a common field: it is written only if it changed, also when the kind changes.
 				const schedule = JSON.stringify(newLabel.schedule) !== JSON.stringify(before.schedule) ? ['schedule'] : [];
 				expect(Object.keys(change).sort()).toEqual(
 					[...expectedItems.filter((field) => field !== 'title' || newLabel.title !== before.title), ...schedule].sort()
@@ -155,7 +155,7 @@ describe('editar (propiedades)', () => {
 		);
 	});
 
-	it('una recurrencia escrita es siempre entera y de un solo modo', () => {
+	it('a written recurrence is always whole and of a single mode', () => {
 		fc.assert(
 			fc.property(task, validData, (t, data) => {
 				const { recurrence } = editOk(t, data);
@@ -164,7 +164,7 @@ describe('editar (propiedades)', () => {
 		);
 	});
 
-	it('al cambiar de tipo quita el campo del otro tipo, aunque una edición concurrente lo haya dejado', () => {
+	it('when the kind changes it removes the field of the other kind, even if a concurrent edit left it', () => {
 		const foreign = { dueDate: new Date(2026, 6, 14), recurrence: { mode: 'relativo', every: 3, unit: 'horas' } } as const;
 		fc.assert(
 			fc.property(task, validData, (t, data) => {
@@ -176,7 +176,7 @@ describe('editar (propiedades)', () => {
 		);
 	});
 
-	it('dos ediciones concurrentes de campos distintos (el título y la definición) conmutan', () => {
+	it('two concurrent edits of different fields (the title and the definition) commute', () => {
 		fc.assert(
 			fc.property(task, validTitle, validData, (t, title, definition) => {
 				const c1 = editOk(t, { ...taskData(t), title });
@@ -187,7 +187,7 @@ describe('editar (propiedades)', () => {
 		);
 	});
 
-	it('gana el último cambio por campo', () => {
+	it('the last change per field wins', () => {
 		fc.assert(
 			fc.property(task, validData, validData, (t, data1, data2) => {
 				const c2 = editOk(t, data2);
@@ -201,10 +201,10 @@ describe('editar (propiedades)', () => {
 	});
 });
 
-describe('aplicarCambio (propiedades)', () => {
+describe('applyChange (properties)', () => {
 	const otherOnes = fc.array(task, { maxLength: 3 }).map((ts) => ts.map((t, i) => ({ ...t, id: `otra-${i}` })));
 
-	it('aplicar el mismo cambio dos veces es como aplicarlo una', () => {
+	it('applying the same change twice is like applying it once', () => {
 		fc.assert(
 			fc.property(task, validData, (t, data) => {
 				const change = editOk(t, data);
@@ -213,7 +213,7 @@ describe('aplicarCambio (propiedades)', () => {
 		);
 	});
 
-	it('gana el borrado: ningún cambio revive una tarea que ya no existe ni toca las demás', () => {
+	it('deletion wins: no change revives a task that no longer exists or touches the others', () => {
 		fc.assert(
 			fc.property(task, validData, otherOnes, (t, data, docs) => {
 				expect(applyChange(docs, t.id, editOk(t, data))).toStrictEqual(docs);
@@ -221,7 +221,7 @@ describe('aplicarCambio (propiedades)', () => {
 		);
 	});
 
-	it('cambia solo el documento de esa tarea', () => {
+	it('changes only the document of that task', () => {
 		fc.assert(
 			fc.property(task, validData, otherOnes, (t, data, docs) => {
 				const change = editOk(t, data);

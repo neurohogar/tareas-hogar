@@ -13,7 +13,7 @@ export function git(repo: string, ...args: string[]): string {
 	return gitWithDate(repo, undefined, ...args);
 }
 
-/** `fecha` en segundos desde la época, para las duraciones que salen de los commits. */
+/** `date` in seconds since the epoch, for the durations derived from the commits. */
 export function gitWithDate(repo: string, date: number | undefined, ...args: string[]): string {
 	const moment = date === undefined ? {} : { GIT_COMMITTER_DATE: `${date} +0000`, GIT_AUTHOR_DATE: `${date} +0000` };
 	const options: SpawnSyncOptions = {
@@ -27,7 +27,7 @@ export function gitWithDate(repo: string, date: number | undefined, ...args: str
 	return String(r.stdout).trim();
 }
 
-/** Un repo con rama v2, un commit y tmp/ ignorado. */
+/** A repo with a v2 branch, one commit and tmp/ ignored. */
 export function repoNew(repo: string, date?: number): void {
 	mkdirSync(join(repo, 'tmp'), { recursive: true });
 	mkdirSync(join(repo, 'features'), { recursive: true });

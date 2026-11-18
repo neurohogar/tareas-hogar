@@ -1,6 +1,6 @@
-// Editar y borrar tareas (spec §6.2) y conflictos entre dispositivos (§7).
-// "otro dispositivo, sin ver ese cambio, ..." actúa sobre lo guardado antes
-// de mi último cambio, y su cambio llega después del mío.
+// Edit and delete tasks (spec §6.2) and conflicts between devices (§7).
+// "otro dispositivo, sin ver ese cambio, ..." acts on what was stored before
+// my last change, and its change arrives after mine.
 import { expect } from 'vitest';
 import { deletion, orphanCompletions } from '../../src/lib/core/deletion';
 import { completionsOfTask, complete } from '../../src/lib/core/completions';
@@ -27,18 +27,18 @@ import {
 	type World
 } from './world';
 
-/** Los datos nuevos que se cargan en el panel, a partir de la tarea que se edita. */
+/** The new data loaded into the panel, starting from the task being edited. */
 type DataNew = (task: Task) => TaskData;
 
-/** Quién edita y qué tarea elige, según lo que ve. */
+/** Who edits and which task they pick, according to what they see. */
 interface Editor {
 	subject: string;
-	/** El sujeto nombra la tarea por su título (la primera captura). */
+	/** The subject names the task by its title (the first capture). */
 	namesTask: boolean;
 	edit: (world: World, data: DataNew, title?: string) => void;
 }
 
-/** `ahora`: el momento de guardar, si el paso lo da (pasar una pausada a puntual la reanuda, §5.8). */
+/** `now`: the moment of saving, if the step gives it (turning a paused task into a one-off resumes it, §5.8). */
 export function editAndSave(world: World, task: Task, data: DataNew, now?: Date): void {
 	const result = edit(task, data(task), now);
 	if (!result.ok) world.errors = result.errors;
@@ -57,7 +57,7 @@ export function editsOther(world: World, data: DataNew): void {
 	editAndSave(world, theTask(thatSawOther(world)), data);
 }
 
-/** Borra la tarea y los completados y anotaciones suyos que conoce quien borra (§6.2, §7). */
+/** Deletes the task and its completions and annotations known to whoever deletes (§6.2, §7). */
 function remove(world: World, task: Task, completionsKnown: Saved['completions']): void {
 	const { taskId, completionIds, annotationIds } = deletion(task.id, completionsKnown, world.annotations);
 	deleteSaved(world, [taskId], completionIds, annotationIds);
@@ -69,7 +69,7 @@ const EDITORS: Editor[] = [
 	{ subject: `${OTHER} edita la tarea`, namesTask: false, edit: editsOther }
 ];
 
-/** Cada forma de "... a <definición>": los datos que carga, con el título actual. */
+/** Each form of "... a <definition>": the data it loads, with the current title. */
 const DEFINITIONS: { text: string; data: (title: string, ...values: string[]) => TaskData }[] = [
 	{
 		text: `puntual con fecha límite ${P}`,
@@ -96,7 +96,7 @@ const DEFINITIONS: { text: string; data: (title: string, ...values: string[]) =>
 	}
 ];
 
-/** Cambiar el tipo en el panel deja como estaban el emoji, la nota, los pasos, la versión mínima y el horario. */
+/** Changing the kind in the panel leaves the emoji, note, steps, minimal version and schedule as they were. */
 function fieldsThatKeeps(task: Task): Pick<TaskData, 'emoji' | 'note' | 'firstStep' | 'steps' | 'minimalVersion' | 'schedule'> {
 	const { emoji, note, firstStep, steps, minimalVersion, schedule } = taskData(task);
 	return { ...(emoji && { emoji }), ...(note && { note }), ...(firstStep && { firstStep }), ...(steps && { steps }), ...(minimalVersion && { minimalVersion }), ...(schedule && { schedule }) };
@@ -115,8 +115,8 @@ const stepsOfEditA: StepDefinition[] = EDITORS.flatMap((editor) =>
 const withTitle = (title: string) => (task: Task) => ({ ...taskData(task), title });
 
 /**
- * La tarea tiene un solo completado, de ese momento. Si es de calendario lleva
- * además su ocurrenciaCubierta (§5.3) y, si fue la mínima, su fueMinima (§4.4), que este paso no afirma; ningún otro campo.
+ * The task has a single completion, of that moment. If it is a calendar one it also carries
+ * its coveredOccurrence (§5.3) and, if it was the minimal one, its wasMinimal (§4.4), which this step does not assert; no other field.
  */
 function theOnlyCompletionIs(world: World, task: Task, completed: string): void {
 	const completions = completionsOfTask(world.completions, task.id);
@@ -124,11 +124,11 @@ function theOnlyCompletionIs(world: World, task: Task, completed: string): void 
 	const { coveredOccurrence: occurrenceCovered, wasMinimal, ...rest } = completions[0];
 	expect(rest).toStrictEqual({ id: expect.any(String), taskId: task.id, completedAt: dateHour(completed) });
 	if (occurrenceCovered !== undefined) expect(occurrenceCovered).toBeInstanceOf(Date);
-	// Si fue la mínima (§4.4), lo afirman los pasos de la mínima; solo se escribe en true.
+	// If it was the minimal one (§4.4), the minimal-version steps assert it; it is only ever written as true.
 	if (wasMinimal !== undefined) expect(wasMinimal).toBe(true);
 }
 
-/** La tarea con ese título, aunque ya se haya borrado. */
+/** The task with that title, even if it has been deleted. */
 const theOneThatHadBefore = (world: World, title: string) => theTaskTitled(thatWasSaved(world), title);
 
 export const editingSteps: StepDefinition[] = [
@@ -190,7 +190,7 @@ export const editingSteps: StepDefinition[] = [
 			const task = theTaskTitled(seen, title);
 			const completion = complete(task, seen.completions, newId(world, 'completado'), dateHour(moment));
 			world.completions = [...world.completions, completion];
-			// Completar, desde cualquier dispositivo, vuelve la tarea al paso 1 (§4.1, Pasos).
+			// Completing, from any device, returns the task to step 1 (§4.1, Pasos).
 			world.docs = applyChange(world.docs, task.id, changeOnComplete(task));
 		}
 	},

@@ -1,15 +1,15 @@
-// Spec §6.1 (Fecha y distancia): la frase «Tocaba …» o «Vuelve …» que nombra un
-// instante respecto de ahora, con la fecha exacta y la distancia relativa.
+// Spec §6.1 (Fecha y distancia): the phrase «Tocaba …» or «Vuelve …» that names an
+// instant relative to now, with the exact date and the relative distance.
 import { yearOf, weekday, dayOfMonth, daysBetween, startOfDay, monthOf } from './days';
 import { timeInText, monthName } from './dates-in-text';
 
-/** «Tocaba» en una atrasada; «Vuelve» en una en espera. */
+/** «Tocaba» for an overdue task; «Vuelve» for a waiting one. */
 export type DateVerb = 'Tocaba' | 'Vuelve';
 
 const MS_PER_MINUTE = 60_000;
 const MINUTES_PER_HOUR = 60;
 
-/** Los días locales que se nombran con una palabra, por su distancia a hoy. */
+/** The local days that are named with a word, by their distance from today. */
 const DAY_WORD = new Map([
 	[-1, 'ayer'],
 	[0, 'hoy'],
@@ -17,9 +17,9 @@ const DAY_WORD = new Map([
 ]);
 
 /**
- * Spec §6.1: «<verbo> <fecha>[ · <distancia>]». «el» va solo delante de la fecha
- * con día de la semana; con «hoy», «ayer» o «mañana» no, y sin hora esas
- * palabras ya son la distancia. Ej.: «Tocaba el martes 10 · hace 3 días»,
+ * Spec §6.1: «<verb> <date>[ · <distance>]». «el» goes only before the date
+ * with a weekday; with «hoy», «ayer» or «mañana» it does not, and without a time those
+ * words are already the distance. E.g.: «Tocaba el martes 10 · hace 3 días»,
  * «Vuelve hoy 18:00 · en 8 horas», «Vuelve mañana».
  */
 export function datePhrase(verb: DateVerb, instant: Date, now: Date): string {
@@ -31,7 +31,7 @@ export function datePhrase(verb: DateVerb, instant: Date, now: Date): string {
 	return withTime ? `${verb} ${word}${hour} · ${distanceInHoursOrMinutes(instant, now)}` : `${verb} ${word}`;
 }
 
-/** «martes 10», con « de <mes>» si el mes no es el de ahora y « de <año>» si el año no es el de ahora. */
+/** «martes 10», with « de <month>» if the month is not the one of now and « de <year>» if the year is not the one of now. */
 function dayWithNumber(day: Date, now: Date): string {
 	const ofMonth = `${weekday(day)} ${dayOfMonth(day)}`;
 	if (yearOf(day) !== yearOf(now)) return `${ofMonth} de ${monthName(day)} de ${yearOf(day)}`;
@@ -43,18 +43,18 @@ const DISTANCE_PREFIX = new Map([
 	[1, 'en']
 ]);
 
-/** A 2 o más días locales: «hace N días» / «en N días». */
+/** At 2 or more local days: «hace N días» / «en N días». */
 const distanceInDays = (days: number) => `${DISTANCE_PREFIX.get(Math.sign(days))} ${Math.abs(days)} días`;
 
 const count = (amount: number, singular: string, plural: string) => `${amount} ${amount === 1 ? singular : plural}`;
 
 /**
- * Desde ahora, aunque cruce la medianoche: en horas o, a menos de una hora, en
- * minutos. Lo pasado se redondea hacia abajo y lo futuro hacia arriba; lo
- * pasado a menos de un minuto es «ahora» (lo futuro nunca llega a 0 minutos).
+ * From now, even if it crosses midnight: in hours or, under one hour, in
+ * minutes. The past is rounded down and the future up; the
+ * past under a minute is «ahora» (the future never reaches 0 minutes).
  */
 function distanceInHoursOrMinutes(instant: Date, now: Date): string {
-	// Con signo, ceil redondea lo futuro hacia arriba y lo pasado hacia abajo (en valor absoluto).
+	// With sign, ceil rounds the future up and the past down (in absolute value).
 	const minutes = Math.ceil((instant.getTime() - now.getTime()) / MS_PER_MINUTE);
 	if (minutes === 0) return 'ahora';
 	const amount =

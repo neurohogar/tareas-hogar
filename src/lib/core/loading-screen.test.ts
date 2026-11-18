@@ -10,7 +10,7 @@ import {
 	type WaitStatus
 } from './loading-screen';
 
-/** Con sesión, en línea y con todo listo, a los 2 s: se va; cada test cambia lo que prueba. */
+/** With a session, online and with everything ready, at 2 s: it leaves; each test changes what it tests. */
 function wait(changes: Partial<WaitStatus> = {}): WaitStatus {
 	return {
 		secondsSinceStart: 2,
@@ -25,38 +25,38 @@ function wait(changes: Partial<WaitStatus> = {}): WaitStatus {
 	};
 }
 
-describe('límites de la pantalla', () => {
-	it('el mínimo es de 0,5 s y el tope de 10 s', () => {
+describe('screen limits', () => {
+	it('the minimum is 0.5 s and the limit is 10 s', () => {
 		expect(SCREEN_MINIMUM_IN_SECONDS).toBe(0.5);
 		expect(SCREEN_LIMIT_IN_SECONDS).toBe(10);
 	});
 });
 
-describe('pantallaDeCargaSeVa: con sesión', () => {
-	it('se va cuando todo lo que espera está listo', () => {
+describe('loadingScreenLeaves: with a session', () => {
+	it('leaves when everything it waits for is ready', () => {
 		expect(loadingScreenLeaves(wait())).toBe(true);
 	});
 
 	it.each([
-		['las tareas', { tasksResponded: false }],
-		['los completados', { completionsResponded: false }],
+		['the tasks', { tasksResponded: false }],
+		['the completions', { completionsResponded: false }],
 		['Atkinson', { atkinson: 'sin-guardar' }],
 		['Noto', { noto: 'sin-guardar' }]
-	] as const)('espera a %s', (_name, changes) => {
+	] as const)('waits for %s', (_name, changes) => {
 		expect(loadingScreenLeaves(wait(changes))).toBe(false);
 	});
 });
 
-describe('pantallaDeCargaSeVa: mínimo de 0,5 s', () => {
-	it('con todo listo no se va antes del mínimo', () => {
+describe('loadingScreenLeaves: minimum of 0.5 s', () => {
+	it('with everything ready it does not leave before the minimum', () => {
 		expect(loadingScreenLeaves(wait({ secondsSinceStart: 0.4 }))).toBe(false);
 	});
 
-	it('se va justo al llegar al mínimo', () => {
+	it('leaves right on reaching the minimum', () => {
 		expect(loadingScreenLeaves(wait({ secondsSinceStart: 0.5 }))).toBe(true);
 	});
 
-	it('vale también sin sesión, sin conexión y con las fuentes falladas', () => {
+	it('it also holds without a session, offline and with the fonts failed', () => {
 		const status = wait({
 			secondsSinceStart: 0.4,
 			auth: 'sin-sesion',
@@ -68,7 +68,7 @@ describe('pantallaDeCargaSeVa: mínimo de 0,5 s', () => {
 	});
 });
 
-describe('pantallaDeCargaSeVa: tope de 10 s', () => {
+describe('loadingScreenLeaves: limit of 10 s', () => {
 	const nothingReady = {
 		tasksResponded: false,
 		completionsResponded: false,
@@ -76,50 +76,50 @@ describe('pantallaDeCargaSeVa: tope de 10 s', () => {
 		noto: 'sin-guardar'
 	} as const;
 
-	it('antes del tope sigue esperando', () => {
+	it('before the limit it keeps waiting', () => {
 		expect(loadingScreenLeaves(wait({ ...nothingReady, secondsSinceStart: 9.9 }))).toBe(false);
 	});
 
-	it('al llegar al tope entra con lo que haya', () => {
+	it('on reaching the limit it enters with what there is', () => {
 		expect(loadingScreenLeaves(wait({ ...nothingReady, secondsSinceStart: 10 }))).toBe(true);
 	});
 
-	it('la espera de Auth no entra en el tope', () => {
+	it('the wait for Auth does not count toward the limit', () => {
 		expect(loadingScreenLeaves(wait({ auth: 'esperando', secondsSinceStart: 60 }))).toBe(
 			false
 		);
 	});
 
-	it('si Auth responde pasado el tope, se va en ese momento aunque falte lo demás', () => {
+	it('if Auth answers after the limit, it leaves at that moment even if the rest is missing', () => {
 		expect(loadingScreenLeaves(wait({ ...nothingReady, secondsSinceStart: 12 }))).toBe(true);
 	});
 });
 
-describe('pantallaDeCargaSeVa: sin sesión', () => {
+describe('loadingScreenLeaves: without a session', () => {
 	const withoutSession = {
 		auth: 'sin-sesion',
 		tasksResponded: false,
 		completionsResponded: false
 	} as const;
 
-	it('no espera datos ni a Noto', () => {
+	it('does not wait for data or for Noto', () => {
 		expect(loadingScreenLeaves(wait({ ...withoutSession, noto: 'sin-guardar' }))).toBe(true);
 	});
 
-	it('espera a Atkinson', () => {
+	it('waits for Atkinson', () => {
 		expect(loadingScreenLeaves(wait({ ...withoutSession, atkinson: 'sin-guardar' }))).toBe(false);
 	});
 });
 
-describe('pantallaDeCargaSeVa: no espera lo que no va a llegar', () => {
+describe('loadingScreenLeaves: does not wait for what will not arrive', () => {
 	it.each([
 		['Atkinson', { atkinson: 'fallida' }],
 		['Noto', { noto: 'fallida' }]
-	] as const)('%s fallida se deja de esperar con conexión', (_name, changes) => {
+	] as const)('%s failed stops being waited for when online', (_name, changes) => {
 		expect(loadingScreenLeaves(wait(changes))).toBe(true);
 	});
 
-	it('una fuente fallida no libera lo demás pendiente', () => {
+	it('a failed font does not release the rest still pending', () => {
 		expect(loadingScreenLeaves(wait({ noto: 'fallida', atkinson: 'sin-guardar' }))).toBe(false);
 		expect(loadingScreenLeaves(wait({ noto: 'fallida', tasksResponded: false }))).toBe(false);
 	});
@@ -127,122 +127,122 @@ describe('pantallaDeCargaSeVa: no espera lo que no va a llegar', () => {
 	it.each([
 		['Atkinson', { atkinson: 'sin-guardar' }],
 		['Noto', { noto: 'sin-guardar' }]
-	] as const)('sin conexión no espera a %s sin guardar', (_name, changes) => {
+	] as const)('offline it does not wait for %s not stored', (_name, changes) => {
 		expect(loadingScreenLeaves(wait({ ...changes, online: false }))).toBe(true);
 	});
 
 	it.each([
 		['Atkinson', { atkinson: 'guardada' }],
 		['Noto', { noto: 'guardada' }]
-	] as const)('sin conexión sigue esperando a %s guardada', (_name, changes) => {
+	] as const)('offline it keeps waiting for %s stored', (_name, changes) => {
 		const status = wait({ ...changes, online: false });
 		expect(loadingScreenLeaves(status)).toBe(false);
 	});
 
-	it('sin conexión sigue esperando el caché local de los datos', () => {
+	it('offline it keeps waiting for the local cache of the data', () => {
 		expect(loadingScreenLeaves(wait({ online: false, completionsResponded: false }))).toBe(
 			false
 		);
 	});
 });
 
-describe('pantallaDeCargaSeVa: después de un tope con Noto sin bajar', () => {
-	it('con sesión no espera a Noto', () => {
+describe('loadingScreenLeaves: after a limit reached with Noto not downloaded', () => {
+	it('with a session it does not wait for Noto', () => {
 		expect(loadingScreenLeaves(wait({ remembersNotoLimit: true, noto: 'sin-guardar' }))).toBe(
 			true
 		);
 	});
 
-	it('lo demás se sigue esperando', () => {
+	it('the rest is still waited for', () => {
 		const status = wait({ remembersNotoLimit: true, noto: 'sin-guardar', atkinson: 'guardada' });
 		expect(loadingScreenLeaves(status)).toBe(false);
 	});
 });
 
-describe('recuerdoDeTopeDeNoto', () => {
+describe('notoLimitMemory', () => {
 	const atLimit = { secondsSinceStart: 10, noto: 'sin-guardar' } as const;
 
-	it('un tope con Noto sin bajar en una apertura que lo esperaba se recuerda', () => {
+	it('a limit reached with Noto not downloaded in an opening that waited for it is remembered', () => {
 		expect(notoLimitMemory(wait(atLimit))).toBe(true);
 	});
 
-	it('también cuando Noto se estaba leyendo del dispositivo', () => {
+	it('also when Noto was being read from the device', () => {
 		expect(notoLimitMemory(wait({ ...atLimit, noto: 'guardada' }))).toBe(true);
 	});
 
-	it('si la pantalla se fue antes del tope no hay nada que recordar', () => {
+	it('if the screen left before the limit there is nothing to remember', () => {
 		expect(notoLimitMemory(wait({ ...atLimit, secondsSinceStart: 9.9 }))).toBe(false);
 	});
 
-	it('un Auth tardío también cuenta como tope alcanzado', () => {
+	it('a late Auth also counts as limit reached', () => {
 		expect(notoLimitMemory(wait({ ...atLimit, secondsSinceStart: 12 }))).toBe(true);
 	});
 
-	it('sin sesión no cuenta: no lo esperaba', () => {
+	it('without a session it does not count: it did not wait for it', () => {
 		expect(notoLimitMemory(wait({ ...atLimit, auth: 'sin-sesion' }))).toBe(false);
 	});
 
-	it('Noto fallido antes del tope no cuenta: ya no se esperaba', () => {
+	it('Noto failed before the limit does not count: it was no longer waited for', () => {
 		expect(notoLimitMemory(wait({ ...atLimit, noto: 'fallida' }))).toBe(false);
 	});
 
-	it('Noto sin guardar y sin conexión no cuenta: ya no se esperaba', () => {
+	it('Noto not stored and offline does not count: it was no longer waited for', () => {
 		expect(notoLimitMemory(wait({ ...atLimit, online: false }))).toBe(false);
 	});
 
-	it('Noto guardado y sin conexión cuenta: se seguía esperando', () => {
+	it('Noto stored and offline counts: it was still waited for', () => {
 		expect(notoLimitMemory(wait({ ...atLimit, online: false, noto: 'guardada' }))).toBe(true);
 	});
 
-	it('con Noto listo al llegar el tope no se recuerda', () => {
+	it('with Noto ready at the limit it is not remembered', () => {
 		expect(notoLimitMemory(wait({ secondsSinceStart: 10 }))).toBe(false);
 	});
 
 	it.each([
-		['sin sesión', { auth: 'sin-sesion' }],
-		['con Noto fallido', { noto: 'fallida' }],
-		['sin conexión', { online: false }],
-		['antes del tope', { secondsSinceStart: 1 }]
-	] as const)('lo ya recordado se conserva %s', (_name, changes) => {
+		['without a session', { auth: 'sin-sesion' }],
+		['with Noto failed', { noto: 'fallida' }],
+		['offline', { online: false }],
+		['before the limit', { secondsSinceStart: 1 }]
+	] as const)('what was already remembered is kept %s', (_name, changes) => {
 		const status = wait({ noto: 'sin-guardar', remembersNotoLimit: true, ...changes });
 		expect(notoLimitMemory(status)).toBe(true);
 	});
 
-	it('se olvida cuando Noto queda guardado', () => {
+	it('it is forgotten when Noto is stored', () => {
 		expect(notoLimitMemory(wait({ remembersNotoLimit: true, noto: 'lista' }))).toBe(false);
 	});
 
-	it('se olvida aunque la apertura no tenga sesión', () => {
+	it('it is forgotten even if the opening has no session', () => {
 		const status = wait({ remembersNotoLimit: true, noto: 'lista', auth: 'sin-sesion' });
 		expect(notoLimitMemory(status)).toBe(false);
 	});
 });
 
-describe('recuerdoAlArrancar', () => {
-	it('sin versión que cambie el juego, lo recordado sigue', () => {
+describe('rememberedOnStart', () => {
+	it('without a version that changes the font set, what was remembered stays', () => {
 		expect(rememberedOnStart(true, false)).toBe(true);
 	});
 
-	it('una versión que cambia el juego vuelve a esperarlo una vez', () => {
+	it('a version that changes the font set makes it wait for it once more', () => {
 		expect(rememberedOnStart(true, true)).toBe(false);
 	});
 
-	it('sin nada recordado, no aparece nada que recordar', () => {
+	it('with nothing remembered, nothing to remember appears', () => {
 		expect(rememberedOnStart(false, false)).toBe(false);
 		expect(rememberedOnStart(false, true)).toBe(false);
 	});
 });
 
-describe('próximo límite', () => {
-	it('es el mínimo, luego el tope, y después no hay', () => {
+describe('next limit', () => {
+	it('is the minimum, then the limit, and then there is none', () => {
 		expect(nextScreenLimit(0)).toBe(0.5);
 		expect(nextScreenLimit(0.5)).toBe(10);
 		expect(nextScreenLimit(10)).toBeUndefined();
 	});
 });
 
-describe('resumen de fuentes', () => {
-	it('manda la peor: fallida, luego sin guardar, luego guardada', () => {
+describe('fonts summary', () => {
+	it('the worst rules: failed, then not stored, then stored', () => {
 		expect(fontsSummary(['guardada', 'sin-guardar', 'fallida'])).toBe('fallida');
 		expect(fontsSummary(['guardada', 'sin-guardar'])).toBe('sin-guardar');
 		expect(fontsSummary(['guardada'])).toBe('guardada');

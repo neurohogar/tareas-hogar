@@ -3,8 +3,8 @@ import { createRecurringCalendar } from './create-recurring-calendar';
 
 const NOW = new Date(2026, 6, 15, 8, 0, 0);
 
-describe('crearPeriodicaCalendario', () => {
-	it('crea una semanal con id, creadaEn y solo los días de la semana', () => {
+describe('createRecurringCalendar', () => {
+	it('creates a weekly one with id, createdAt and only the weekdays', () => {
 		const result = createRecurringCalendar(
 			{ title: ' Sacar la basura ', weekdays: ['martes', 'jueves'], monthDays: [] },
 			't1',
@@ -23,13 +23,13 @@ describe('crearPeriodicaCalendario', () => {
 		});
 	});
 
-	it('crea una mensual con solo los días del mes', () => {
+	it('creates a monthly one with only the month days', () => {
 		const result = createRecurringCalendar({ title: 'Pagar', weekdays: [], monthDays: [10, 31] }, 't1', NOW);
 
 		expect(result.ok && result.task.recurrence).toStrictEqual({ mode: 'calendario', monthDays: [10, 31] });
 	});
 
-	it('guarda los días como conjunto: en el orden de la semana y sin repetir', () => {
+	it('saves the days as a set: in week order and without repeats', () => {
 		const result = createRecurringCalendar(
 			{ title: 'T', weekdays: ['domingo', 'jueves', 'lunes', 'jueves'], monthDays: [] },
 			't1',
@@ -42,20 +42,20 @@ describe('crearPeriodicaCalendario', () => {
 		});
 	});
 
-	it('guarda los días del mes de menor a mayor y sin repetir', () => {
+	it('saves the month days from lowest to highest and without repeats', () => {
 		const result = createRecurringCalendar({ title: 'T', weekdays: [], monthDays: [20, 5, 20, 31] }, 't1', NOW);
 
 		expect(result.ok && result.task.recurrence).toStrictEqual({ mode: 'calendario', monthDays: [5, 20, 31] });
 	});
 
-	it.each(['', '   '])('rechaza el título vacío o de solo espacios (%j)', (title) => {
+	it.each(['', '   '])('rejects an empty title or one of only spaces (%j)', (title) => {
 		expect(createRecurringCalendar({ title, weekdays: ['lunes'], monthDays: [] }, 't1', NOW)).toEqual({
 			ok: false,
 			errors: { title: 'vacio' }
 		});
 	});
 
-	it('rechaza la falta de días', () => {
+	it('rejects the lack of days', () => {
 		expect(createRecurringCalendar({ title: 'T', weekdays: [], monthDays: [] }, 't1', NOW)).toEqual({
 			ok: false,
 			errors: { days: 'faltan' }
@@ -63,7 +63,7 @@ describe('crearPeriodicaCalendario', () => {
 	});
 
 	it.each([[[0]], [[32]], [[-1]], [[1.5]], [[Number.NaN]], [[15, 32]], [[0, 10]]])(
-		'rechaza toda la tarea si algún día del mes no es entero entre 1 y 31 (%j)',
+		'rejects the whole task if some month day is not an integer between 1 and 31 (%j)',
 		(monthDays) => {
 			expect(createRecurringCalendar({ title: 'T', weekdays: [], monthDays }, 't1', NOW)).toEqual({
 				ok: false,
@@ -72,18 +72,18 @@ describe('crearPeriodicaCalendario', () => {
 		}
 	);
 
-	it('acepta los extremos 1 y 31', () => {
+	it('accepts the extremes 1 and 31', () => {
 		expect(createRecurringCalendar({ title: 'T', weekdays: [], monthDays: [1, 31] }, 't1', NOW).ok).toBe(true);
 	});
 
-	it('rechaza combinar días de la semana y del mes', () => {
+	it('rejects combining weekdays and month days', () => {
 		expect(createRecurringCalendar({ title: 'T', weekdays: ['martes'], monthDays: [15] }, 't1', NOW)).toEqual({
 			ok: false,
 			errors: { days: 'combinados' }
 		});
 	});
 
-	it('informa el título vacío junto con el error de días', () => {
+	it('reports the empty title together with the days error', () => {
 		expect(createRecurringCalendar({ title: ' ', weekdays: [], monthDays: [] }, 't1', NOW)).toEqual({
 			ok: false,
 			errors: { title: 'vacio', days: 'faltan' }

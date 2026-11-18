@@ -9,8 +9,8 @@ const titleWithText = fc.string({ minLength: 1 }).filter((t) => t.trim() !== '')
 const validEvery = fc.integer({ min: 1, max: 1_000_000 });
 const anyEvery = fc.oneof(fc.double(), fc.integer({ min: -1_000, max: 1_000 }));
 
-describe('crearPeriodicaRelativa (propiedades)', () => {
-	it('acepta exactamente los datos con título con texto y cada entero ≥ 1', () => {
+describe('createRecurringRelative (properties)', () => {
+	it('accepts exactly the data with a title with text and an integer every ≥ 1', () => {
 		fc.assert(
 			fc.property(fc.string(), anyEvery, unit, (title, every, u) => {
 				const valid = title.trim() !== '' && Number.isInteger(every) && every >= 1;
@@ -19,7 +19,7 @@ describe('crearPeriodicaRelativa (propiedades)', () => {
 		);
 	});
 
-	it('cada error corresponde a un campo inválido y viceversa', () => {
+	it('each error corresponds to an invalid field and vice versa', () => {
 		fc.assert(
 			fc.property(fc.string(), anyEvery, unit, (title, every, u) => {
 				const result = createRecurringRelative({ title, every, unit: u }, 'id', NOW);
@@ -30,7 +30,7 @@ describe('crearPeriodicaRelativa (propiedades)', () => {
 		);
 	});
 
-	it('guarda el título recortado, la recurrencia pedida, el id y el momento de creación', () => {
+	it('saves the trimmed title, the requested recurrence, the id and the creation moment', () => {
 		fc.assert(
 			fc.property(spaces, titleWithText, spaces, validEvery, unit, fc.uuid(), (before, title, after, every, u, id) => {
 				const result = createRecurringRelative({ title: before + title + after, every, unit: u }, id, NOW);
@@ -48,13 +48,13 @@ describe('crearPeriodicaRelativa (propiedades)', () => {
 		);
 	});
 
-	it('es idempotente: recrear con los datos de una tarea creada da la misma tarea', () => {
+	it('is idempotent: recreating with the data of a created task gives the same task', () => {
 		fc.assert(
 			fc.property(titleWithText, validEvery, unit, (title, every, u) => {
 				const first = createRecurringRelative({ title, every, unit: u }, 'id', NOW);
-				if (!first.ok) throw new Error('debía crearse');
+				if (!first.ok) throw new Error('it should have been created');
 				const { title: savedValue, recurrence } = first.task;
-				if (recurrence.mode !== 'relativo') throw new Error('debía ser relativa');
+				if (recurrence.mode !== 'relativo') throw new Error('it should have been relative');
 				const second = createRecurringRelative({ title: savedValue, every: recurrence.every, unit: recurrence.unit }, 'id', NOW);
 				expect(second).toEqual(first);
 			})

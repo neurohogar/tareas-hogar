@@ -1,4 +1,4 @@
-// Spec §7 (Limpiezas y reintentos): propiedades de las reglas de limpiezas.
+// Spec §7 (Cleanups and retries): properties of the cleanup rules.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { itemsToAttempt, retriesWith, attemptResult, type AppEvent } from './cleanups';
@@ -7,8 +7,8 @@ const ids = fc.uniqueArray(fc.constantFrom<string[]>('a1', 'a2', 'a3', 'a4', 'a5
 const failures = fc.array(fc.constantFrom<string[]>('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'z9'), { maxLength: 8 });
 const appEvents = fc.constantFrom<AppEvent>('vuelve la conexión', 'cambian los datos', 'pasa el tiempo');
 
-describe('resultadoDelIntento (propiedades)', () => {
-	it('limpios y pendientes particionan lo intentado, conservando el orden', () => {
+describe('attemptResult (properties)', () => {
+	it('cleaned and pending partition what was attempted, keeping the order', () => {
 		fc.assert(
 			fc.property(ids, failures, (attempted, failed) => {
 				const { cleaned, pendings } = attemptResult(attempted, failed);
@@ -19,14 +19,14 @@ describe('resultadoDelIntento (propiedades)', () => {
 			})
 		);
 	});
-	it('quedan por limpiar exactamente los intentados que fallaron', () => {
+	it('exactly the attempted ones that failed are left to clean', () => {
 		fc.assert(
 			fc.property(ids, failures, (attempted, failed) => {
 				expect(attemptResult(attempted, failed).pendings).toEqual(attempted.filter((id) => failed.includes(id)));
 			})
 		);
 	});
-	it('sin conexión (fallan todos) no se limpia ninguno, y si nada falla se limpian todos', () => {
+	it('without a connection (all fail) none is cleaned, and if nothing fails all are cleaned', () => {
 		fc.assert(
 			fc.property(ids, (attempted) => {
 				expect(attemptResult(attempted, attempted).cleaned).toEqual([]);
@@ -36,8 +36,8 @@ describe('resultadoDelIntento (propiedades)', () => {
 	});
 });
 
-describe('elementosAIntentar (propiedades)', () => {
-	it('es lo detectado sin intento en curso, en el mismo orden', () => {
+describe('itemsToAttempt (properties)', () => {
+	it('is what was detected without an attempt in progress, in the same order', () => {
 		fc.assert(
 			fc.property(ids, ids, (toClean, inProgress) => {
 				const a = itemsToAttempt(toClean, new Set<string>(inProgress));
@@ -45,7 +45,7 @@ describe('elementosAIntentar (propiedades)', () => {
 			})
 		);
 	});
-	it('nunca devuelve un elemento en curso y, sin nada en curso, devuelve todo', () => {
+	it('never returns an item in progress and, with nothing in progress, returns everything', () => {
 		fc.assert(
 			fc.property(ids, ids, (toClean, inProgress) => {
 				expect(itemsToAttempt(toClean, new Set<string>(inProgress)).some((id) => inProgress.includes(id))).toBe(false);
@@ -53,7 +53,7 @@ describe('elementosAIntentar (propiedades)', () => {
 			})
 		);
 	});
-	it('es idempotente: lo que ya se mandó a intentar no se manda de nuevo', () => {
+	it('is idempotent: what was already sent to be attempted is not sent again', () => {
 		fc.assert(
 			fc.property(ids, ids, (toClean, inProgress) => {
 				const firstOne = itemsToAttempt(toClean, new Set<string>(inProgress));
@@ -63,8 +63,8 @@ describe('elementosAIntentar (propiedades)', () => {
 	});
 });
 
-describe('reintentaCon (propiedades)', () => {
-	it('reintenta con todo suceso salvo el paso del tiempo', () => {
+describe('retriesWith (properties)', () => {
+	it('retries on every event except the passing of time', () => {
 		fc.assert(
 			fc.property(appEvents, (occurrenceEvent) => {
 				expect(retriesWith(occurrenceEvent)).toBe(occurrenceEvent !== 'pasa el tiempo');

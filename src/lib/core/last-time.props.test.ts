@@ -1,4 +1,4 @@
-// Spec §6.2: "Última vez" del panel de edición.
+// Spec §6.2: "Última vez" of the edit panel.
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { daysBetween } from "./days";
@@ -9,7 +9,7 @@ import { lastTime } from "./last-time";
 const instant = fc
   .integer({ min: 0, max: 4_000_000_000_000 })
   .map((ms) => new Date(ms));
-/** Completados de la tarea t1 o de otra, alrededor de ahora (± ~3 años). */
+/** Completions of task t1 or of another, around now (± ~3 years). */
 const completions = (now: Date) =>
   fc
     .array(
@@ -31,8 +31,8 @@ const withNow = instant.chain((now) =>
   fc.tuple(fc.constant(now), completions(now)),
 );
 
-describe("ultimaVez (propiedades)", () => {
-  it('sin completados de la tarea es "nunca", sin importar los de otras tareas', () => {
+describe("lastTime (properties)", () => {
+  it('without completions of the task it is "nunca", regardless of those of other tasks', () => {
     fc.assert(
       fc.property(withNow, ([now, cs]) => {
         const foreigns = cs.filter((c) => c.taskId !== "t1");
@@ -41,7 +41,7 @@ describe("ultimaVez (propiedades)", () => {
     );
   });
 
-  it("depende solo del completado más reciente de la tarea, no del orden ni de los ajenos", () => {
+  it("depends only on the most recent completion of the task, not on the order or the others'", () => {
     fc.assert(
       fc.property(withNow, ([now, cs]) => {
         const owns = cs.filter((c) => c.taskId === "t1");
@@ -56,7 +56,7 @@ describe("ultimaVez (propiedades)", () => {
     );
   });
 
-  it('hoy y ayer con la hora, "hace N días" desde dos, y la fecha con la hora si es posterior a hoy', () => {
+  it('today and yesterday with the time, "hace N días" from two, and the date with the time if it is after today', () => {
     fc.assert(
       fc.property(
         instant,

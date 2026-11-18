@@ -7,7 +7,7 @@ import { defineConfig } from 'vite';
 
 const FONTS_DIR = 'static/fuentes';
 
-/** Spec §6.6: cada archivo de fuente se identifica por su contenido; una versión que no lo cambia no lo vuelve a bajar. */
+/** Spec §6.6: each font file is identified by its content; a version that does not change it is not downloaded again. */
 const fontFingerprints = Object.fromEntries(
 	readdirSync(FONTS_DIR)
 		.filter((name) => name.endsWith('.woff2'))

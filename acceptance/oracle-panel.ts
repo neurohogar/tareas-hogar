@@ -1,14 +1,14 @@
-// Oráculo del panel (§6.2), reescrito desde el spec. Dos partes:
-// - En pestañas: corte de 40rem, secciones por modo, sección de cada campo, orden del primer error
-//   y barra de Guardar con el teclado.
-// - Cambios sin guardar y Atrás: qué cuenta como cambio, los avisos de cierre y de acción, y qué
-//   cierra Atrás (también §5.8, §5.9 y §7, "gana el borrado").
-// NO importa el core ni los step handlers.
+// Oracle for the panel (§6.2), rewritten from the spec. Two parts:
+// - Tabbed: 40rem cutoff, sections per mode, section of each field, order of the first error
+//   and the Save bar with the keyboard.
+// - Unsaved changes and Back: what counts as a change, the close and action notices, and what
+//   Back closes (also §5.8, §5.9 and §7, "deletion wins").
+// It does NOT import the core or the step handlers.
 import { NUMBER, elements, writtenOf, date, scheduleValid, intervalMs, intervalValid, postponementOf, resolve, type RowOracle, type StepOracle, type Postponement } from './oracle';
 
-/** §6.2: "celular" es una pantalla de hasta 40rem de ancho, inclusive. */
+/** §6.2: "celular" is a screen up to 40rem wide, inclusive. */
 const MAX_PHONE_WIDTH = 40;
-/** §6.2 Errores: la sección de cada campo, en el orden en que se ven los campos (§6.2 Tarea y Cuándo). */
+/** §6.2 Errors: the section of each field, in the order the fields appear (§6.2 Tarea and Cuándo). */
 const FIELD_SECTION: [string, string][] = [
 	['Título', 'Tarea'],
 	['fecha límite', 'Cuándo'],
@@ -16,20 +16,20 @@ const FIELD_SECTION: [string, string][] = [
 	['días', 'Cuándo'],
 	['horario', 'Cuándo']
 ];
-/** §6.2: al crear no hay Acciones; al editar aparece siempre. */
+/** §6.2: when creating there are no Actions; when editing it always appears. */
 const SECTIONS_BY_MODE: Record<string, string> = { crear: 'Tarea, Cuándo', editar: 'Tarea, Cuándo, Acciones' };
-/** §6.2: un campo enfocado sin teclado en pantalla no oculta la barra: el foco no decide. */
+/** §6.2: a focused field with no on-screen keyboard does not hide the bar: focus does not decide. */
 const PANEL_FOCUSES = ['un campo está enfocado', 'ningún campo está enfocado'];
 
 interface PanelWorld {
 	width?: number;
 	mode?: string;
-	/** Los campos con error, en el orden en que se ven; undefined hasta que un paso los declara. */
+	/** The fields with an error, in the order they appear; undefined until a step declares them. */
 	fields?: [string, string][];
 	keyboard?: string;
 }
 
-/** Los campos de la celda en el orden de §6.2; undefined si alguno no es un campo del panel. */
+/** The cell's fields in the order of §6.2; undefined if any is not a panel field. */
 function panelFields(value: string): [string, string][] | undefined {
 	if (value === 'ninguno') return [];
 	const names = elements(value);
@@ -39,7 +39,7 @@ function panelFields(value: string): [string, string][] | undefined {
 
 const inTabs = (m: PanelWorld) => m.width !== undefined && m.width <= MAX_PHONE_WIDTH;
 
-/** Cada Given del panel deja lo suyo en el mundo; devuelve false si el valor no es uno de los que el spec define. */
+/** Each panel Given leaves its part in the world; returns false if the value is not one the spec defines. */
 const PANEL_ENTRIES: [RegExp, (m: PanelWorld, value: string) => boolean][] = [
 	[
 		/^una pantalla de (\S+) rem de ancho$/,
@@ -72,20 +72,20 @@ const PANEL_ENTRIES: [RegExp, (m: PanelWorld, value: string) => boolean][] = [
 	[/^el foco está (.+)$/, (_m, value) => PANEL_FOCUSES.includes(value)]
 ];
 
-/** Lo que cada Then observa según el spec; undefined si el mundo no alcanza para decidirlo. */
+/** What each Then observes according to the spec; undefined if the world is not enough to decide it. */
 const PANEL_OBSERVATIONS: [RegExp, (m: PanelWorld) => string | undefined][] = [
 	[/^el panel se presenta (.+)$/, (m) => (m.width === undefined ? undefined : inTabs(m) ? 'en pestañas' : 'en secciones seguidas')],
 	[/^el panel ofrece las secciones (.+)$/, (m) => (m.mode === undefined ? undefined : SECTIONS_BY_MODE[m.mode])],
-	// §6.2: siempre abre en Tarea, al crear y al editar.
+	// §6.2: it always opens on Tarea, when creating and when editing.
 	[/^la pestaña abierta es (.+)$/, (m) => (m.mode === undefined ? undefined : 'Tarea')],
 	[
 		/^las secciones marcadas son (.+)$/,
 		(m) => (m.fields === undefined ? undefined : [...new Set(m.fields.map(([, section]) => section))].join(', ') || 'ninguna')
 	],
-	// §6.2: Tarea antes que Cuándo; en pantallas anchas no hay pestañas.
+	// §6.2: Tarea before Cuándo; on wide screens there are no tabs.
 	[/^el panel salta a la pestaña (.+)$/, (m) => (m.width === undefined || !m.fields?.length ? undefined : inTabs(m) ? m.fields[0][1] : 'ninguna')],
 	[/^el contenido se desplaza hasta el campo (.+)$/, (m) => m.fields?.[0]?.[0]],
-	// §6.2: la barra se oculta solo mientras el teclado en pantalla está abierto.
+	// §6.2: the bar is hidden only while the on-screen keyboard is open.
 	[/^la barra de Guardar está (.+)$/, (m) => (m.keyboard === undefined ? undefined : m.keyboard === 'abierto' ? 'oculta' : 'visible')]
 ];
 
@@ -105,8 +105,8 @@ function observeThenOfPanel(text: string, m: PanelWorld): [string, string] | und
 }
 
 /**
- * Lo que observa y afirma cada Then tras los Given con la fila, o undefined si el oráculo no reconoce
- * algún paso o valor.
+ * What each Then observes and asserts after the Givens with the row, or undefined if the oracle does not recognize
+ * some step or value.
  */
 export function observePanel(entries: StepOracle[], thens: StepOracle[], row: RowOracle): { observed: string[]; asserted: string[] } | undefined {
 	const m: PanelWorld = {};
@@ -123,25 +123,25 @@ export function observePanel(entries: StepOracle[], thens: StepOracle[], row: Ro
 	return { observed: pairs.map(([observed]) => observed), asserted: pairs.map(([, asserted]) => asserted) };
 }
 
-// ---- §6.2: Cambios sin guardar y Atrás ----
+// ---- §6.2: Unsaved changes and Back ----
 
 class Undecided extends Error {}
 const undecided = (reason: string): never => {
 	throw new Undecided(reason);
 };
 
-/** Lo que tiene el formulario del panel: los valores que Guardar normalizaría, sin normalizar. */
+/** What the panel form holds: the values Save would normalize, not yet normalized. */
 interface Form {
 	title: string;
 	note: string;
-	/** §4.1: una línea; Guardar la recorta y vacío es sin primer paso. */
+	/** §4.1: one line; Save trims it and empty means no first step. */
 	firstStep: string;
-	/** §4.1 (Pasos): los pasos más, uno por campo «Paso 2», «Paso 3»…; Guardar los recorta y descarta los vacíos. */
+	/** §4.1 (Pasos): the steps plus, one per field «Paso 2», «Paso 3»…; Save trims them and drops the empty ones. */
 	steps: string[];
-	/** §4.1 (Versión mínima): una línea; Guardar la recorta y vacío es sin versión mínima. */
+	/** §4.1 (Versión mínima): one line; Save trims it and empty means no minimal version. */
 	minimalVersion: string;
 	repeats: string;
-	/** Las ventanas tal como se escribieron; '' es una fila vacía. */
+	/** The windows as typed; '' is an empty row. */
 	schedules: string[];
 	emoji: string;
 }
@@ -149,7 +149,7 @@ interface Form {
 interface TaskSaved {
 	title: string;
 	recurring: boolean;
-	/** El intervalo en ms; undefined en una puntual. */
+	/** The interval in ms; undefined for a one-off. */
 	interval?: number;
 	paused: boolean;
 	postponed?: Postponement;
@@ -160,7 +160,7 @@ interface ChangesWorld {
 	onOpen?: Form;
 	written?: Form;
 	mode?: 'crear' | 'editar';
-	/** Lo que está arriba del panel; 'nada' sin nada arriba. */
+	/** What is on top of the panel; 'nada' with nothing on top. */
 	onTop: string;
 	action?: string;
 	now?: string;
@@ -172,13 +172,13 @@ interface ChangesWorld {
 
 const FORM_ON_CREATE: Form = { title: '', note: '', firstStep: '', steps: [], minimalVersion: '', repeats: 'No se repite', schedules: [], emoji: '' };
 const OF_TOP = ['nada', 'el aviso de cierre', 'el aviso de acción', 'la confirmación de Borrar tarea', 'el selector de emoji'];
-/** §6.2 Atrás: lo que no cuenta como algo abierto encima del panel. */
+/** §6.2 Back: what does not count as something open on top of the panel. */
 const DOES_NOT_COUNT_AS_OPEN = ['nada'];
 const REPEATS_THAT_KNOWS = ['No se repite', 'Intervalo'];
 const ACTIONS = ['pausar', 'reanudar', 'quitar posponer', 'posponer 1 hora', 'posponer 3 horas', 'posponer hasta mañana'];
 const POSTPONE_OPTION = /^posponer (.+)$/;
 const CHANGES_MESSAGE = 'Tenés cambios sin guardar';
-/** El momento en que se crean las tareas de estos pasos: anterior a cualquier fecha del escenario (2000-01-01). */
+/** The moment the tasks of these steps are created: earlier than any scenario date (2000-01-01). */
 const CREATED_BEFORE_OF_SCENARIO = new Date(2000, 0, 1).getTime();
 const TIME_WINDOW_WRITTEN = /^(\d{2}:\d{2})-(\d{2}:\d{2})$/;
 
@@ -186,28 +186,28 @@ const theWritten = (m: ChangesWorld): Form => m.written ?? undecided('panel cerr
 
 const schedulesKey = (schedules: string[]) => [...schedules].sort().join(' ');
 
-/** §4.1 (Pasos): Guardar recorta cada paso, descarta los vacíos y los de abajo suben. */
+/** §4.1 (Pasos): Save trims each step, drops the empty ones and those below move up. */
 const stepsSaved = (f: Form) => [f.firstStep, ...f.steps].map((step) => step.trim()).filter((step) => step !== '');
 
-/** §6.2: Guardar recorta el título, la nota, los pasos y la versión mínima y ordena las ventanas. */
+/** §6.2: Save trims the title, the note, the steps and the minimal version and sorts the windows. */
 const formKey = (f: Form) =>
 	JSON.stringify([f.title.trim(), f.note.trim(), stepsSaved(f), f.minimalVersion.trim(), f.repeats, schedulesKey(f.schedules), f.emoji]);
 
-/** §6.2: lo que Guardar cambiaría. */
+/** §6.2: what Save would change. */
 function hasChanges(m: ChangesWorld): boolean {
 	const written = theWritten(m);
 	if (!m.onOpen) return undecided('panel sin valores al abrir');
 	return formKey(m.onOpen) !== formKey(written);
 }
 
-/** §4.1 y §4.2: lo escrito se puede guardar. Intervalo sin Cada, si la tarea no era de intervalo, no. */
+/** §4.1 and §4.2: what is typed can be saved. Interval without Cada, if the task was not an interval one, cannot. */
 function savable(m: ChangesWorld): boolean {
 	const f = theWritten(m);
 	const everyEmpty = f.repeats === 'Intervalo' && m.task?.interval === undefined;
 	return f.title.trim() !== '' && !f.schedules.includes('') && !everyEmpty;
 }
 
-/** §5.8: pasar a puntual reanuda. El estado de la tarea se recalcula con la definición nueva (§6.2). */
+/** §5.8: switching to one-off resumes. The task's state is recomputed with the new definition (§6.2). */
 function asWouldRemain(m: ChangesWorld, task: TaskSaved): TaskSaved {
 	const f = theWritten(m);
 	const recurring = f.repeats !== 'No se repite';
@@ -221,13 +221,13 @@ function active({ postponed }: TaskSaved, now: number): Postponement | undefined
 	return postponed && now < postponed.to ? postponed : undefined;
 }
 
-/** §5.1–§5.3: sin completados, una puntual sin fecha límite está pendiente y una relativa, cumplido su intervalo, también. */
+/** §5.1–§5.3: with no completions, a one-off without a due date is pending and a relative one, once its interval has elapsed, too. */
 function pendingOOverdue({ recurring, interval }: TaskSaved, now: number): boolean {
 	if (!recurring) return true;
 	return interval !== undefined && now - CREATED_BEFORE_OF_SCENARIO >= interval ? true : undecided('estado de la periódica');
 }
 
-/** §5.8, §5.9 y §6.2: las condiciones con que el panel muestra cada acción. */
+/** §5.8, §5.9 and §6.2: the conditions under which the panel shows each action. */
 function shows(action: string, task: TaskSaved, now: number): boolean {
 	if (action === 'pausar') return task.recurring && !task.paused;
 	if (action === 'reanudar') return task.recurring && task.paused;
@@ -235,7 +235,7 @@ function shows(action: string, task: TaskSaved, now: number): boolean {
 	return !task.paused && !active(task, now) && pendingOOverdue(task, now);
 }
 
-/** §6.2: el aviso de la acción con la tarea y el ahora del momento; undefined si la acción ya no corresponde. */
+/** §6.2: the action's notice with the task and the now of the moment; undefined if the action no longer applies. */
 function actionNotice(m: ChangesWorld): { message: string; buttons: string[] } | undefined {
 	const action = m.action ?? undecided('aviso sin acción');
 	const task = m.task ?? undecided('aviso sin tarea');
@@ -247,7 +247,7 @@ function actionNotice(m: ChangesWorld): { message: string; buttons: string[] } |
 	return { message: CHANGES_MESSAGE, buttons: withSave };
 }
 
-/** §6.2 y §7: lo que hizo otro dispositivo o el tiempo con el panel abierto. */
+/** §6.2 and §7: what another device or time did with the panel open. */
 function onDay(m: ChangesWorld): void {
 	if (m.mode === 'editar' && !m.task) closePanel(m);
 	if (m.onTop === 'el aviso de acción' && m.action !== undefined && !actionNotice(m)) topClose(m);
@@ -307,7 +307,7 @@ function tapInNotice(m: ChangesWorld, button: string): void {
 	else undecided(`botón ${button}`);
 }
 
-/** §6.2: el botón Borrar tarea solo pide su confirmación; las otras acciones, con cambios, abren su aviso; sin cambios, actúan. */
+/** §6.2: the Delete task button only asks for confirmation; the other actions, with changes, open their notice; without changes, they act. */
 function chooseAction(m: ChangesWorld, text: string, moment: string): void {
 	m.now = moment;
 	const action = text.toLowerCase();
@@ -327,7 +327,7 @@ function chooseAction(m: ChangesWorld, text: string, moment: string): void {
 	closePanel(m);
 }
 
-/** §6.2 Atrás: el teclado primero; después solo lo de más arriba; sin nada arriba, como la X. */
+/** §6.2 Back: the keyboard first; then only the topmost thing; with nothing on top, like the X. */
 function tapBack(m: ChangesWorld): void {
 	m.tapBack = true;
 	if (m.keyboard) m.keyboard = false;
@@ -335,7 +335,7 @@ function tapBack(m: ChangesWorld): void {
 	else topClose(m);
 }
 
-/** Crea la puntual del paso (§4.1: título no vacío) y abre el panel con sus valores (§6.2). */
+/** Creates the step's one-off (§4.1: non-empty title) and opens the panel with its values (§6.2). */
 function openForEdit(m: ChangesWorld, values: Partial<Form> & { title: string }): void {
 	if (values.title.trim() === '') undecided('título vacío');
 	m.task = { title: values.title.trim(), recurring: false, paused: false };
@@ -347,7 +347,7 @@ function openWithTask(m: ChangesWorld, values: Partial<Form> & { title: string }
 	openWith(m, { ...FORM_ON_CREATE, repeats: m.task?.recurring ? 'Intervalo' : 'No se repite', ...values });
 }
 
-/** El formulario arranca con los valores al abrir; lo que se escribe no cambia esos valores. */
+/** The form starts with the values on opening; what is typed does not change those values. */
 function openWith(m: ChangesWorld, onOpen: Form): void {
 	m.onOpen = onOpen;
 	m.written = { ...onOpen, steps: [...onOpen.steps], schedules: [...onOpen.schedules] };
@@ -359,7 +359,7 @@ function timeWindowsValid(first: string, second: string): string[] {
 	return [first, second];
 }
 
-/** §6.2: el campo «Paso N» (N ≥ 2) es el lugar N - 2 de los pasos más; tiene que existir. */
+/** §6.2: the field «Paso N» (N ≥ 2) is slot N - 2 of the extra steps; it has to exist. */
 const STEP_PLACE = /^Paso (\d+)$/;
 
 function stepPlace(f: Form, field: string): number {
@@ -418,7 +418,7 @@ const CHANGES_STEPS: [RegExp, (m: ChangesWorld, ...groups: string[]) => void][] 
 			if (status !== 'con cambios sin guardar' && status !== 'sin cambios') undecided(`estado ${status}`);
 			openForEdit(m, { title: 'Pagar' });
 			if (status === 'con cambios sin guardar') theWritten(m).title = 'Pagar luz';
-			// El aviso de acción que declara "encima del panel hay" es el de una puntual que se puede posponer.
+			// The action notice declared by "encima del panel hay" is that of a one-off that can be postponed.
 			m.now = '2026-07-15T08:00:00';
 		}
 	],
@@ -506,7 +506,7 @@ const whetherHasTask = (m: ChangesWorld, view: (t: TaskSaved) => string) => (m.t
 const instant = (value: string) => String(date(value) ?? undecided(`fecha ${value}`));
 const thePostponed = ({ postponed }: TaskSaved) => (postponed ? `${postponed.from} ${postponed.to}` : 'sin posponer');
 
-/** Lo que observa y lo que afirma cada Then. */
+/** What each Then observes and asserts. */
 const CHANGES_THENS: [RegExp, (m: ChangesWorld, ...groups: string[]) => [string, string]][] = [
 	[/^queda abierto (.+)$/, (m, opened) => [m.written ? (OPEN_ON_TOP[m.onTop] ?? 'el panel') : 'nada', opened]],
 	[/^el aviso dice (.+)$/, (m, message) => [theNoticeOpen(m).message, message]],
@@ -523,7 +523,7 @@ const CHANGES_THENS: [RegExp, (m: ChangesWorld, ...groups: string[]) => [string,
 	[/^el primero es el que elegí$/, (m) => [String(m.choseEmoji), 'true']],
 	[/^el aviso de deshacer sigue abierto$/, (m) => [String(m.undo), 'true']],
 	[/^al recargar la app el navegador (.+)$/, (m, response) => [m.written && hasChanges(m) ? 'pide confirmación' : 'no pregunta', response]],
-	// §6.2: nunca por Atrás con el panel abierto.
+	// §6.2: never by Back with the panel open.
 	[/^el navegador (.+)$/, (m, response) => [m.tapBack ? 'no pregunta' : undecided('sin Atrás'), response]]
 ];
 
@@ -542,8 +542,8 @@ function applyFirst<R>(rules: [RegExp, (m: ChangesWorld, ...groups: string[]) =>
 const resolved = (step: StepOracle, row: RowOracle) => resolve(step.text, row) ?? undecided(`columna en ${step.text}`);
 
 /**
- * Lo que observa y afirma cada Then tras los pasos con la fila, o undefined si el oráculo no reconoce o no
- * puede decidir algún paso o valor. Los Then se observan tras todos los pasos de entrada.
+ * What each Then observes and asserts after the steps with the row, or undefined if the oracle does not recognize or cannot
+ * decide some step or value. The Thens are observed after all the input steps.
  */
 export function observeChanges(entries: StepOracle[], thens: StepOracle[], row: RowOracle): { observed: string[]; asserted: string[] } | undefined {
 	const m: ChangesWorld = { onTop: 'nada', keyboard: false, undo: false, tapBack: false, choseEmoji: false };

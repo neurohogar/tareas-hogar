@@ -1,7 +1,7 @@
-// Spec §6, §7 y §8: la fuente y el juego de emoji se bajan aparte de la instalación,
-// con reintentos, y se guardan para funcionar sin conexión. Se registran por código y
-// no con @font-face: así hay un solo pedido por intento, el navegador nunca se queda
-// con una descarga abortada, y un juego que no puede dibujar nunca deja un emoji en blanco.
+// Spec §6, §7 and §8: the font and the emoji set are downloaded apart from the install,
+// with retries, and stored to work offline. They are registered in code rather than
+// with @font-face: that way there is a single request per attempt, the browser never ends up
+// with an aborted download, and a set that cannot draw never leaves a blank emoji.
 import {
 	FONT_CACHE,
 	FIRST_RETRY_IN_MS,
@@ -12,7 +12,7 @@ import {
 } from '#lib/core/bundled-fonts.ts';
 import { fontsSummary, type FontStatus } from '#lib/core/loading-screen.ts';
 
-/** Por archivo de fuente, la huella de su contenido (vite.config.ts). */
+/** For each font file, the fingerprint of its contents (vite.config.ts). */
 declare const __FONT_FINGERPRINTS__: Record<string, string>;
 
 interface FontFile {
@@ -43,17 +43,17 @@ const NOTO: FontSet = {
 };
 
 /**
- * Noto también tiene el espacio, las cifras, `#`, `*`, `©`, `®` y `™`: sin Atkinson, va antes que la fuente
- * del sistema y dibujaría ese texto, que tiene que verse con la del sistema (spec §6). Un emoji con marca
- * que empieza con uno de esos caracteres queda, mientras tanto, con el del dispositivo.
+ * Noto also has the space, the digits, `#`, `*`, `©`, `®` and `™`: without Atkinson, it goes before the system
+ * font and would draw that text, which has to show in the system font (spec §6). An emoji with a mark
+ * that starts with one of those characters stays, meanwhile, with the device's.
  */
 const EMOJI_ONLY = 'U+0-1F, U+21-22, U+24-29, U+2B-2F, U+3A-A8, U+AA-AD, U+AF-2121, U+2123-10FFFF';
 const WHOLE_SET = 'U+0-10FFFF';
 
-/** El contenido del juego de emoji de esta versión: identifica si una versión nueva lo cambió. */
+/** The contents of this version's emoji set: tells whether a new version changed it. */
 export const notoFingerprint = (): string => __FONT_FINGERPRINTS__[NOTO_FILE];
 
-/** Los glifos de Noto son solo capas de color: un navegador que no dibuja esas tablas los deja en blanco. */
+/** Noto's glyphs are only color layers: a browser that does not draw those tables leaves them blank. */
 function canDrawNoto(): boolean {
 	const canvas = document.createElement('canvas');
 	canvas.width = canvas.height = 32;
@@ -71,7 +71,7 @@ async function createFace(family: string, { weight }: FontFile, data: ArrayBuffe
 	return new FontFace(family, data, { weight: String(weight), style: 'normal' }).load();
 }
 
-/** La cara guardada en el dispositivo, si hay una que se pueda usar. */
+/** The face stored on the device, if there is one that can be used. */
 async function readCached(family: string, file: FontFile): Promise<FontFace | undefined> {
 	try {
 		const cached = await (await caches.open(FONT_CACHE)).match(keyOf(file));
@@ -81,7 +81,7 @@ async function readCached(family: string, file: FontFile): Promise<FontFace | un
 	}
 }
 
-/** Guarda el archivo y borra las versiones que reemplaza. Sin almacenamiento, la fuente dura lo que dure la página. */
+/** Stores the file and deletes the versions it replaces. Without storage, the font lasts as long as the page. */
 async function saveToCache(file: FontFile, data: ArrayBuffer): Promise<void> {
 	try {
 		const cache = await caches.open(FONT_CACHE);
@@ -90,18 +90,18 @@ async function saveToCache(file: FontFile, data: ArrayBuffer): Promise<void> {
 		const cachedUrls = (await cache.keys()).map(({ url }) => url);
 		await Promise.all(replacedKeys(cachedUrls, file.name, key).map((old) => cache.delete(old)));
 	} catch {
-		// Se vuelve a bajar en la próxima apertura.
+		// It is downloaded again on the next launch.
 	}
 }
 
-/** `no-cache`: el archivo guardado tiene que ser el de esta versión, no uno viejo de la caché HTTP. */
+/** `no-cache`: the stored file has to be this version's, not an old one from the HTTP cache. */
 async function download({ name }: FontFile): Promise<ArrayBuffer> {
 	const response = await fetch(fontPath(name), { cache: 'no-cache' });
-	if (!response.ok) throw new Error(`Sin ${name}: ${response.status}`);
+	if (!response.ok) throw new Error(`Could not fetch ${name}: ${response.status}`);
 	return response.arrayBuffer();
 }
 
-/** Spec §6: se reintenta al vencer la espera o al volver la red, sin recargar; sin red, solo al volver. */
+/** Spec §6: retries when the wait expires or the network returns, without reloading; offline, only when it returns. */
 function nextAttempt(waitInMs: number): Promise<void> {
 	return new Promise((resolve) => {
 		const attempt = () => {
@@ -115,8 +115,8 @@ function nextAttempt(waitInMs: number): Promise<void> {
 }
 
 /**
- * Lo guardado o, si no, lo que se baje: reintenta hasta conseguirlo. Un archivo que no es
- * una fuente válida (la respuesta de otra ruta, por ejemplo) cuenta como falla y no se guarda.
+ * What is stored or, failing that, what gets downloaded: retries until it succeeds. A file that is not
+ * a valid font (the response of another route, for example) counts as a failure and is not stored.
  */
 async function obtainFace(family: string, file: FontFile, notify: (status: FontStatus) => void): Promise<FontFace> {
 	const cached = await readCached(family, file);
@@ -137,8 +137,8 @@ async function obtainFace(family: string, file: FontFile, notify: (status: FontS
 }
 
 /**
- * Registra el juego entero de una vez: con un peso solo, el navegador lo usaría también
- * para los otros pesos, y el diseño cambiaría (spec §6). Avisa `lista` recién al poder dibujar.
+ * Registers the whole set at once: with a single weight, the browser would use it also
+ * for the other weights, and the design would change (spec §6). Reports `lista` only once it can draw.
  */
 async function loadFontSet({ family, files, canDraw }: FontSet, notify: (status: FontStatus) => void): Promise<void> {
 	const statuses = files.map((): FontStatus => 'guardada');
@@ -150,7 +150,7 @@ async function loadFontSet({ family, files, canDraw }: FontSet, notify: (status:
 			})
 		)
 	);
-	// FontFaceSet es un Set de caras, aunque los tipos del DOM no lo digan.
+	// FontFaceSet is a Set of faces, although the DOM types do not say so.
 	const registered = document.fonts as unknown as Set<FontFace>;
 	faces.forEach((face) => registered.add(face));
 	if (canDraw()) return notify('lista');
@@ -164,8 +164,8 @@ export interface FontsStatus {
 }
 
 /**
- * Empieza a cargar la fuente y el juego y avisa cómo va cada uno. Dura lo que dure la
- * página: la descarga sigue aunque la pantalla de carga ya se haya ido (spec §6.6).
+ * Starts loading the font and the set and reports how each one is going. It lasts as long as the
+ * page: the download continues even after the loading screen has gone (spec §6.6).
  */
 export function loadFonts(onChange: (change: Partial<FontsStatus>) => void): void {
 	let notoScope = EMOJI_ONLY;

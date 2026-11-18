@@ -22,8 +22,8 @@ const completions = fc
 	.array(instant, { maxLength: 8 })
 	.map((list) => list.map((completedAt, i): Completion => ({ id: `c${i}`, taskId: 't', completedAt })));
 
-describe('pausa: propiedades (spec §5.8)', () => {
-	it('una puntual nunca está pausada ni tiene botón de pausa', () => {
+describe('pause: properties (spec §5.8)', () => {
+	it('a one-off is never paused nor has a pause button', () => {
 		fc.assert(
 			fc.property(oneOff, instant, (task, now) => {
 				expect(isPaused(task)).toBe(false);
@@ -32,7 +32,7 @@ describe('pausa: propiedades (spec §5.8)', () => {
 		);
 	});
 
-	it('el botón de una periódica es pausar o reanudar según esté pausada', () => {
+	it('the button of a recurring task is pause or resume depending on whether it is paused', () => {
 		fc.assert(
 			fc.property(recurring, (task) => {
 				expect(pauseAction(task)).toBe(isPaused(task) ? 'reanudar' : 'pausar');
@@ -40,7 +40,7 @@ describe('pausa: propiedades (spec §5.8)', () => {
 		);
 	});
 
-	it('comoRecienCreada: una puntual o una periódica sin reanudadaEn queda igual', () => {
+	it('asJustCreated: a one-off or a recurring task without resumedAt stays the same', () => {
 		fc.assert(
 			fc.property(fc.oneof(oneOff, recurring.filter((t) => t.kind === 'periodica' && !t.resumedAt)), completions, (task, owns) => {
 				expect(asJustCreated(task, owns)).toStrictEqual({ task, owns });
@@ -48,7 +48,7 @@ describe('pausa: propiedades (spec §5.8)', () => {
 		);
 	});
 
-	it('comoRecienCreada: con reanudadaEn, creadaEn = reanudadaEn y solo quedan los completados desde ahí', () => {
+	it('asJustCreated: with resumedAt, createdAt = resumedAt and only the completions from then on remain', () => {
 		fc.assert(
 			fc.property(recurring.filter((t) => t.kind === 'periodica' && !!t.resumedAt), completions, (task, owns) => {
 				const from = task.kind === 'periodica' ? task.resumedAt! : task.createdAt;
@@ -59,7 +59,7 @@ describe('pausa: propiedades (spec §5.8)', () => {
 		);
 	});
 
-	it('comoRecienCreada es idempotente', () => {
+	it('asJustCreated is idempotent', () => {
 		fc.assert(
 			fc.property(recurring, completions, (task, owns) => {
 				const one = asJustCreated(task, owns);

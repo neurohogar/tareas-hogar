@@ -1,12 +1,12 @@
-// Oráculo de edición y borrado: simula, con las reglas de docs/spec.md (§5 estado,
-// §6.2 editar y borrar, §7 conflictos), los escenarios que editan, borran o
-// modifican concurrentemente una tarea, y devuelve lo que cada paso Then observa.
-// NO importa el core ni los step handlers: es una segunda implementación escrita
-// desde el spec, así que la implementación no juzga a sus propios tests.
+// Editing and deletion oracle: simulates, with the rules of docs/spec.md (§5 state,
+// §6.2 edit and delete, §7 conflicts), the scenarios that edit, delete or
+// concurrently modify a task, and returns what each Then step observes.
+// It does NOT import the core or the step handlers: it is a second implementation written
+// from the spec, so the implementation does not judge its own tests.
 //
-// Una mutación es equivalente cuando todas las observaciones son las mismas con
-// el valor mutado (ver equivalence.ts). Todo lo que el oráculo no reconoce o no
-// puede decidir lanza `Indeciso`, y el resultado es undefined (no se filtra).
+// A mutation is equivalent when all the observations are the same with
+// the mutated value (see equivalence.ts). Anything the oracle does not recognize or cannot
+// decide throws `Indeciso`, and the result is undefined (not filtered).
 import {
 	SCHEDULE,
 	SHOW_COMPLETED,
@@ -60,30 +60,30 @@ const undecided = (reason: string): never => {
 
 type Recurrence = { relative: { every: string; unit: string } } | Calendar;
 
-/** Lo guardado de una tarea (§4.1): puede tener un campo que no corresponde al tipo (§7). */
+/** What is stored of a task (§4.1): it may have a field that does not match the kind (§7). */
 interface Doc {
 	id: number;
 	title: string;
 	emoji?: string;
 	note?: string;
-	/** §4.1: una línea, recortada; sin el campo, sin primer paso. Un campo independiente (§7). */
+	/** §4.1: one line, trimmed; without the field, no first step. An independent field (§7). */
 	firstStep?: string;
-	/** §4.1 (Pasos): los pasos 2 en adelante, en orden; sin el campo, no hay más pasos. Un solo campo, se reemplaza entero (§7). */
+	/** §4.1 (Pasos): steps 2 onward, in order; without the field, there are no more steps. A single field, replaced whole (§7). */
 	steps?: string[];
-	/** §4.1 (Pasos): el paso en que va la tarea; sin el campo, el paso 1. Otro campo independiente (§7). */
+	/** §4.1 (Pasos): the step the task is on; without the field, step 1. Another independent field (§7). */
 	currentStep?: number;
-	/** §4.1 (Versión mínima): una línea, recortada; sin el campo, sin versión mínima. Un campo independiente (§7). */
+	/** §4.1 (Versión mínima): one line, trimmed; without the field, no minimal version. An independent field (§7). */
 	minimalVersion?: string;
 	kind: 'puntual' | 'periodica';
 	limit?: Date;
 	recurrence?: Recurrence;
-	/** §4.1: una o más ventanas, ordenadas; un solo campo (§7). */
+	/** §4.1: one or more windows, sorted; a single field (§7). */
 	schedule?: TimeWindow[];
 	created?: number;
-	/** §5.8: pausada, y el momento de la última reanudación. */
+	/** §5.8: paused, and the moment of the last resume. */
 	paused?: boolean;
 	resumed?: number;
-	/** §5.9: la posposición guardada; un solo campo (§7). */
+	/** §5.9: the stored postponement; a single field (§7). */
 	postponed?: Postponement;
 }
 
@@ -91,18 +91,18 @@ interface Completion {
 	id: number;
 	taskId: number;
 	at: number;
-	/** §4.4: la ocurrencia cubierta sin hora (un día) o, con horario, su inicio. */
+	/** §4.4: the covered occurrence without a time (a day) or, with a schedule, its start. */
 	covered?: Date;
 	startCovered?: number;
-	/** El id que el escenario le fija ("con id c1"); sirve para desempatar en el Historial. */
+	/** The id the scenario fixes for it ("con id c1"); used to break ties in History. */
 	ident?: string;
-	/** §4.4: el paso en que iba la tarea al completarla; solo en tareas de dos pasos o más. */
+	/** §4.4: the step the task was on when completed; only on tasks with two or more steps. */
 	step?: number;
-	/** §4.4: `true` si fue «Hice la mínima»; sin el campo, fue entero. Se fija al completar. */
+	/** §4.4: `true` if it was «Hice la mínima»; without the field, it was the full one. Set on completion. */
 	minimal?: boolean;
 }
 
-/** El aviso del último completado de este dispositivo (§5.4): nombra la tarea como se llamaba al completarla. */
+/** The notice of this device's last completion (§5.4): it names the task as it was called when completed. */
 interface Notice {
 	title: string;
 	completion: Completion;
@@ -115,42 +115,42 @@ interface Saved {
 
 interface OracleWorld extends Saved {
 	next: number;
-	/** Lo guardado justo antes de mi último cambio: lo que ve otro dispositivo "sin ver ese cambio". */
+	/** What was stored right before my last change: what another device "that has not seen that change" sees. */
 	before?: Saved;
 	rejection?: string;
-	/** Clasificación de la última consulta de estado, con progreso. */
+	/** Classification of the last state query, with progress. */
 	status?: string;
-	/** El momento consultado; sin consulta, lo que se afirma es del momento en que se tocó el checkbox. */
+	/** The queried moment; without a query, what is asserted is from the moment the checkbox was tapped. */
 	queriedAt?: number;
 	touchedAt?: number;
 	order?: string;
-	/** El momento en que se consultó Pendientes (§6.1); sin él pero con `consultoPendientes`, en cualquier momento. */
+	/** The moment Pending was queried (§6.1); without it but with `consultoPendientes`, at any moment. */
 	pendingAt?: number;
 	queryPending?: boolean;
-	/** Por qué no se decide el orden de la última consulta de Pendientes: solo importa si un Then mira el orden. */
+	/** Why the order of the last Pending query is not decided: it only matters if a Then looks at the order. */
 	orderUndecided?: boolean;
-	/** El check "Mostrar completadas" (§6.1); sin él, apagado. */
+	/** The "Mostrar completadas" check (§6.1); without it, off. */
 	showCompleted?: boolean;
 	updated?: Completion;
-	/** Lo que se borró alguna vez: se puede nombrar aunque ya no exista. */
+	/** What was ever deleted: it can be named even if it no longer exists. */
 	deletedDocs: Doc[];
 	deletedCompletions: Completion[];
 	notice?: Notice;
-	/** Lo que mostraba el aviso en el último momento consultado. */
+	/** What the notice showed at the last queried moment. */
 	noticeSeen?: string;
-	/** El texto del aviso en el último momento consultado (§5.4); sin aviso, 'sin aviso'. */
+	/** The notice text at the last queried moment (§5.4); without a notice, 'sin aviso'. */
 	noticeText?: string;
-	/** El momento en que se consultó el aviso por última vez. */
+	/** The moment the notice was last queried. */
 	noticeIn?: number;
 	history?: string;
-	/** Lo que mostraba "Última vez" en el último momento consultado (§6.2). */
+	/** What "Última vez" showed at the last queried moment (§6.2). */
 	lastTime?: string;
 }
 
-/** Los datos que carga el panel (§6.2). */
+/** The data the panel loads (§6.2). */
 interface Data {
 	title: string;
-	/** Lo que quedaría guardado: ya sin espacios; sin valor, la tarea queda sin el campo (§4.1). */
+	/** What would be stored: already without spaces; without a value, the task is left without the field (§4.1). */
 	emoji?: string;
 	note?: string;
 	firstStep?: string;
@@ -160,14 +160,14 @@ interface Data {
 	limit?: Date;
 	recurrence?: Recurrence;
 	schedule?: TimeWindow[];
-	/** Cuántas ventanas se escribieron, válidas o no (§4.1: más de una no va en una relativa en horas). */
+	/** How many windows were written, valid or not (§4.1: more than one does not go on a relative task in hours). */
 	timeWindowsWritten: number;
 	reasons: string[];
 }
 
-// ---- Valores ----
+// ---- Values ----
 
-/** §4.2 los lista de lunes a domingo. */
+/** §4.2 lists them from Monday to Sunday. */
 const MONDAY_A_SUNDAY = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 const daysKey = (days: string[]) => [...days].sort((a, b) => MONDAY_A_SUNDAY.indexOf(a) - MONDAY_A_SUNDAY.indexOf(b));
 
@@ -188,14 +188,14 @@ const dayOf = (value: string) => day(value) ?? undecided(`fecha ${value}`);
 const numeric = (value: string) => (NUMBER.test(value) ? Number(value) : undecided(`número ${value}`));
 const unitOf = (value: string) => (value === 'horas' || value === 'dias' ? value : undecided(`unidad ${value}`));
 
-// ---- Datos nuevos de una edición y de una creación ----
+// ---- New data of an edit and of a creation ----
 
 function relativeRecurrence(every: string, unit: string): Data['recurrence'] {
 	numeric(every);
 	return { relative: { every, unit: unitOf(unit) } };
 }
 
-/** Semanal o mensual con días: los nombres o números ilegibles no se deciden; los fuera de rango son rechazo (§4.2). */
+/** Weekly or monthly with days: unreadable names or numbers are not decided; out-of-range ones are a rejection (§4.2). */
 function calendarData(shape: string, value: string): Pick<Data, 'recurrence' | 'reasons'> {
 	if (shape === 'semanal') {
 		const calendar = weekdays(value) ?? undecided(`días ${value}`);
@@ -209,7 +209,7 @@ function calendarData(shape: string, value: string): Pick<Data, 'recurrence' | '
 
 const withoutDays = (): Pick<Data, 'recurrence' | 'reasons'> => ({ reasons: ['falta de días'] });
 
-/** Sin horario escrito: el que corresponde lo agrega quien edita o crea. */
+/** Without a written schedule: the one that applies is added by whoever edits or creates. */
 type Definition = [RegExp, (title: string, c: string[]) => Omit<Data, 'timeWindowsWritten'>];
 
 const DEFINITIONS: Definition[] = [
@@ -238,20 +238,20 @@ const DEFINITIONS: Definition[] = [
 	]
 ];
 
-/** Los campos de texto escritos en el panel (§4.1): emoji, nota y primer paso recortados, vacío es sin campo; un emoji que no es uno solo es inválido; un primer paso nunca es inválido. */
+/** The text fields written in the panel (§4.1): emoji, note and first step trimmed, empty means no field; an emoji that is not a single one is invalid; a first step is never invalid. */
 interface WrittenData {
 	emoji?: string;
 	note?: string;
 	firstStep?: string;
-	/** Los pasos más, tal como se escribieron (§4.1, Pasos). */
+	/** The extra steps, as written (§4.1, Pasos). */
 	steps?: string[];
-	/** §4.1 (Versión mínima): una línea; Guardar la recorta y vacío es sin versión mínima; nunca es inválida. */
+	/** §4.1 (Versión mínima): one line; Guardar trims it and empty means no minimal version; it is never invalid. */
 	minimalVersion?: string;
 }
 
 /**
- * §4.1 (Pasos): el primer paso y los pasos más se recortan, los vacíos se descartan y los de abajo suben: si el
- * primer paso queda vacío y el paso 2 no, el paso 2 pasa a ser el primer paso. Sin pasos más, el campo no se guarda.
+ * §4.1 (Pasos): the first step and the extra steps are trimmed, the empty ones are dropped and those below move up: if the
+ * first step ends up empty and step 2 does not, step 2 becomes the first step. Without extra steps, the field is not stored.
  */
 function stepsWritten(firstStep: string | undefined, steps: string[] | undefined): Pick<Data, 'firstStep' | 'steps'> {
 	const list = [firstStep ?? '', ...(steps ?? [])].map((step) => step.trim()).filter((step) => step !== '');
@@ -269,22 +269,22 @@ function withWritten(data: Data, { emoji, note, firstStep, steps, minimalVersion
 	};
 }
 
-/** Spec §4.1: el título no puede ser vacío (solo espacios cuenta como vacío). */
+/** Spec §4.1: the title cannot be empty (only spaces counts as empty). */
 function withValidation(data: Data): Data {
 	return data.title.trim() === '' ? { ...data, reasons: ['título vacío', ...data.reasons] } : data;
 }
 
-/** Los campos de texto y el horario de la tarea que se edita siguen igual salvo los que la edición escribe. */
+/** The text fields and the schedule of the task being edited stay the same except those the edit writes. */
 const keeping = (base: Doc, data: Data, written: WrittenData = {}): Data => ({
 	...withWritten(data, { emoji: base.emoji, note: base.note, firstStep: base.firstStep, steps: base.steps, minimalVersion: base.minimalVersion, ...written }),
 	schedule: base.schedule,
 	timeWindowsWritten: base.schedule?.length ?? 0
 });
 
-/** Ventanas escritas en el panel: cada una con sus dos horas, o alguna sin escribir. */
+/** Windows written in the panel: each with its two times, or some left unwritten. */
 type WrittenPairs = [string | undefined, string | undefined][];
 
-/** §4.1: los datos de la tarea con el horario escrito (sin ventanas, sin horario); uno inválido es un motivo de rechazo. */
+/** §4.1: the task's data with the written schedule (no windows, no schedule); an invalid one is a rejection reason. */
 function withScheduleWritten(data: Data, written: WrittenPairs): Data {
 	if (written.length === 0) return { ...data, schedule: undefined, timeWindowsWritten: 0 };
 	const read = readSchedule(written);
@@ -296,8 +296,8 @@ function withScheduleWritten(data: Data, written: WrittenPairs): Data {
 const SCHEDULE_REASONS = ['horario incompleto', 'hora de fin no posterior', 'horarios superpuestos'];
 
 /**
- * §4.1: una relativa en horas no puede tener más de una ventana. Si además el horario mismo es inválido, el spec
- * no dice cuál de los dos errores se ve.
+ * §4.1: a relative task in hours cannot have more than one window. If the schedule itself is also invalid, the spec
+ * does not say which of the two errors is seen.
  */
 function withIntervalOfSchedule(data: Data): Data {
 	const r = data.recurrence;
@@ -315,14 +315,14 @@ function dataOf(text: string, title: string): Data {
 	return undecided(`definición ${text}`);
 }
 
-/** Los valores actuales de una tarea, como los carga el panel al editar. */
+/** The current values of a task, as the panel loads them when editing. */
 function docData(d: Doc): Data {
 	const fields = { title: d.title, emoji: d.emoji, note: d.note, firstStep: d.firstStep, steps: d.steps, minimalVersion: d.minimalVersion, schedule: d.schedule, timeWindowsWritten: d.schedule?.length ?? 0, reasons: [] };
 	if (d.kind === 'puntual') return { ...fields, kind: 'puntual', limit: d.limit };
 	return { ...fields, kind: 'periodica', recurrence: d.recurrence };
 }
 
-// ---- Mundo ----
+// ---- World ----
 
 const copy = (g: Saved): Saved => ({ docs: [...g.docs], completions: [...g.completions] });
 
@@ -335,7 +335,7 @@ function withTitle(g: Saved, title: string): Doc {
 	return found.length === 1 ? found[0] : undecided(`tarea ${title}`);
 }
 
-/** La tarea con ese título, aunque ya se haya borrado. */
+/** The task with that title, even if it has already been deleted. */
 function theOneThatHad(m: OracleWorld, title: string): Doc {
 	const found = [...m.docs, ...m.deletedDocs].filter((d) => d.title === title);
 	return found.length === 1 ? found[0] : undecided(`tarea ${title}`);
@@ -343,13 +343,13 @@ function theOneThatHad(m: OracleWorld, title: string): Doc {
 
 const allCompletions = (m: OracleWorld) => [...m.completions, ...m.deletedCompletions];
 
-/** Si todavía no hice ningún cambio, el otro dispositivo vio todo lo guardado. */
+/** If I have not made any change yet, the other device saw everything stored. */
 const thatSawOther = (m: OracleWorld): Saved => m.before ?? copy(m);
 const completionsOf = (g: Saved, id: number) => g.completions.filter((c) => c.taskId === id);
-/** §5.8, §6.2: una periódica reanudada se evalúa sin los completados anteriores a reanudadaEn; una puntual ignora reanudadaEn. */
+/** §5.8, §6.2: a resumed recurring task is evaluated without the completions before reanudadaEn; a one-off ignores reanudadaEn. */
 const activeOf = (g: Saved, d: Doc) =>
 	completionsOf(g, d.id).filter((c) => d.kind === 'puntual' || d.resumed === undefined || c.at >= d.resumed);
-/** §5.8: la tarea se evalúa como recién creada en reanudadaEn. */
+/** §5.8: the task is evaluated as just created at reanudadaEn. */
 const createdActive = (d: Doc) => (d.kind === 'periodica' && d.resumed !== undefined ? d.resumed : d.created);
 
 function create(m: OracleWorld, data: Data, created: number | undefined): void {
@@ -373,21 +373,21 @@ function create(m: OracleWorld, data: Data, created: number | undefined): void {
 	];
 }
 
-// ---- Editar (§6.2) y conflictos (§7) ----
+// ---- Edit (§6.2) and conflicts (§7) ----
 
-/** La tarea que describe el documento: el campo que no corresponde al tipo se ignora (§7). */
+/** The task the document describes: the field that does not match the kind is ignored (§7). */
 function derived(d: Doc): Doc {
 	return d.kind === 'puntual' ? { ...d, recurrence: undefined, paused: undefined, resumed: undefined } : { ...d, limit: undefined };
 }
 
-/** Los campos que la edición escribe: solo los que cambiaron; al cambiar de tipo, los dos campos de tipo (§7). */
+/** The fields the edit writes: only those that changed; when the kind changes, both kind fields (§7). */
 function changeOf(base: Doc, updated: Data): Record<string, unknown> {
 	const change: Record<string, unknown> = {};
 	if (base.title !== updated.title) change.title = updated.title;
 	if (base.emoji !== updated.emoji) change.emoji = updated.emoji ?? null;
 	if (base.note !== updated.note) change.note = updated.note ?? null;
 	if (base.firstStep !== updated.firstStep) change.firstStep = updated.firstStep ?? null;
-	// §7: `pasos` es un solo campo que se reemplaza entero, solo si cambió; la edición nunca escribe `pasoActual`.
+	// §7: `pasos` is a single field replaced whole, only if it changed; the edit never writes `pasoActual`.
 	if (JSON.stringify(base.steps) !== JSON.stringify(updated.steps)) change.steps = updated.steps ?? null;
 	if (base.minimalVersion !== updated.minimalVersion) change.minimalVersion = updated.minimalVersion ?? null;
 	if (scheduleKey(base.schedule) !== scheduleKey(updated.schedule)) change.schedule = updated.schedule ?? null;
@@ -410,7 +410,7 @@ function apply(doc: Doc, change: Record<string, unknown>): Doc {
 	return edited as unknown as Doc;
 }
 
-/** Editar `base` (la tarea como la vio quien edita) con los datos nuevos; el cambio llega a lo guardado hoy. */
+/** Edit `base` (the task as seen by whoever edits) with the new data; the change lands on what is stored today. */
 function edit(m: OracleWorld, base: Doc, data: Data, at?: number): void {
 	const updated = withIntervalOfSchedule(data);
 	if (updated.reasons.length > 0) {
@@ -418,7 +418,7 @@ function edit(m: OracleWorld, base: Doc, data: Data, at?: number): void {
 		return;
 	}
 	const change = changeOf(base, updated);
-	// §5.8: cambiar una periódica pausada a puntual la reanuda (quita la pausa y guarda reanudadaEn).
+	// §5.8: changing a paused recurring task to one-off resumes it (removes the pause and stores reanudadaEn).
 	if (base.paused && updated.kind === 'puntual') Object.assign(change, { paused: null, resumed: at ?? undecided('sin momento de edición') });
 	m.docs = m.docs.map((d) => (d.id === base.id ? apply(d, change) : d));
 }
@@ -434,7 +434,7 @@ function editsOther(m: OracleWorld, build: (base: Doc) => Data): void {
 	edit(m, base, build(base));
 }
 
-// ---- Borrar (§6.2, §7) ----
+// ---- Delete (§6.2, §7) ----
 
 function remove(m: OracleWorld, task: Doc, known: Completion[]): void {
 	const ids = known.filter((c) => c.taskId === task.id).map((c) => c.id);
@@ -443,23 +443,23 @@ function remove(m: OracleWorld, task: Doc, known: Completion[]): void {
 	deleteCompletions(m, ids);
 }
 
-/** Borrar completados que ya no existen no hace nada (§5.4). */
+/** Deleting completions that no longer exist does nothing (§5.4). */
 function deleteCompletions(m: OracleWorld, ids: number[]): void {
 	m.deletedCompletions = [...m.deletedCompletions, ...m.completions.filter((c) => ids.includes(c.id))];
 	m.completions = m.completions.filter((c) => !ids.includes(c.id));
 }
 
-// ---- Completar (§5.3) ----
+// ---- Complete (§5.3) ----
 
-/** Los valores sin hora (§5.3, §5.6): la fecha cubierta o, sin ocurrencia cubierta, el día de completadoEn. */
+/** The values without a time (§5.3, §5.6): the covered date or, without a covered occurrence, the day of completadoEn. */
 function contributions(comps: Completion[]): Date[] {
 	return comps.filter((c) => c.startCovered === undefined).map((c) => c.covered ?? dayStart(c.at));
 }
 
-/** §5.6: las ocurrencias cubiertas con hora, por su inicio. */
+/** §5.6: the covered occurrences with a time, by their start. */
 const startsCovered = (comps: Completion[]) => comps.flatMap((c) => (c.startCovered === undefined ? [] : [c.startCovered]));
 
-/** §5.6 y §5.7: N de una de calendario con horario o de una relativa por ventana. */
+/** §5.6 and §5.7: N of a calendar task with a schedule or of a relative task per window. */
 function nextWithSchedule(task: Doc, vs: TimeWindow[], own: Completion[]): Occurrence {
 	const recurrence = task.recurrence ?? undecided('periódica sin recurrencia');
 	const from = createdActive(task);
@@ -470,14 +470,14 @@ function nextWithSchedule(task: Doc, vs: TimeWindow[], own: Completion[]): Occur
 	return nextByTimeWindow(vs, numeric(recurrence.relative.every), p);
 }
 
-/** Si la tarea cubre ocurrencias con hora (§5.6, §5.7): de calendario con horario, o relativa por ventana. */
+/** Whether the task covers occurrences with a time (§5.6, §5.7): calendar with a schedule, or relative per window. */
 function coversWithHour(task: Doc): TimeWindow[] | undefined {
 	const { schedule, recurrence } = task;
 	if (task.kind !== 'periodica' || !schedule || !recurrence) return undefined;
 	return !('relative' in recurrence) || byTimeWindow(recurrence.relative.unit, schedule) ? schedule : undefined;
 }
 
-/** La ocurrencia que cubre un completado nuevo: de calendario, un día (§5.3) o, con hora, un inicio (§5.6, §5.7). */
+/** The occurrence a new completion covers: for calendar, a day (§5.3) or, with a time, a start (§5.6, §5.7). */
 function newCovered(task: Doc, known: Completion[], at: number): Pick<Completion, 'covered' | 'startCovered'> {
 	const recurrence = task.recurrence;
 	const own = activeOf({ docs: [], completions: known }, task);
@@ -495,55 +495,55 @@ function newCovered(task: Doc, known: Completion[], at: number): Pick<Completion
 
 function complete(m: OracleWorld, task: Doc, known: Completion[], at: number, ident?: string, minimal = false): Completion {
 	const covered = newCovered(task, known, at);
-	// §4.4: el completado de una tarea de dos pasos o más guarda el paso en que iba.
+	// §4.4: the completion of a task with two or more steps stores the step it was on.
 	const step = severalSteps(task) ? { step: stepInThatGoes(task) } : {};
 	const completion = { id: m.next++, taskId: task.id, at, ...covered, ...step, ...(ident && { ident }), ...(minimal && { minimal }) };
 	m.completions = [...m.completions, completion];
 	return completion;
 }
 
-// ---- Pasos (§4.1, Pasos) ----
+// ---- Steps (§4.1, Pasos) ----
 
-/** El primer paso y los pasos más: la lista de pasos de la tarea. */
+/** The first step and the extra steps: the task's list of steps. */
 const stepsOf = (d: Doc): string[] => [...(d.firstStep === undefined ? [] : [d.firstStep]), ...(d.steps ?? [])];
 
-/** §4.1: dos pasos o más si tiene primer paso y al menos un paso más. */
+/** §4.1: two or more steps if it has a first step and at least one extra step. */
 const severalSteps = (d: Doc) => stepsOf(d).length >= 2;
 
-/** §4.1: el paso en que va la tarea: sin el campo, el 1; si quedan menos pasos que el número, el último. */
+/** §4.1: the step the task is on: without the field, 1; if fewer steps remain than the number, the last. */
 const stepInThatGoes = (d: Doc) => Math.min(d.currentStep ?? 1, Math.max(stepsOf(d).length, 1));
 
-/** Un número de paso es un entero desde 1. */
+/** A step number is an integer from 1. */
 const stepNumber = (value: string) => (/^[1-9]\d*$/.test(value) ? Number(value) : undecided(`paso ${value}`));
 
-/** Escribe el paso en que va la tarea; el paso 1 es sin el campo. */
+/** Writes the step the task is on; step 1 is without the field. */
 function goOnStep(m: OracleWorld, id: number, step: number): void {
 	m.docs = m.docs.map((d) => (d.id === id ? { ...d, currentStep: step === 1 ? undefined : step } : d));
 }
 
-/** Completo desde este dispositivo: es mi cambio (el otro dispositivo no lo ve) y abre el aviso (§5.4). */
+/** I complete from this device: it is my change (the other device does not see it) and opens the notice (§5.4). */
 function completeMe(m: OracleWorld, task: Doc, at: number, minimal = false): void {
 	m.before = copy(m);
 	m.updated = complete(m, task, m.completions, at, undefined, minimal);
 	m.notice = { title: nameOf(task), completion: m.updated };
-	// §4.1 (Pasos: Completar): completar, por el checkbox o por «Hecho», vuelve la tarea al paso 1.
+	// §4.1 (Pasos: Completar): completing, by the checkbox or by «Hecho», returns the task to step 1.
 	goOnStep(m, task.id, 1);
 }
 
-/** Spec §4.1: «emoji título», o solo el título sin emoji. */
+/** Spec §4.1: «emoji título», or just the title without an emoji. */
 const nameOf = (d: Doc) => (d.emoji === undefined ? d.title : `${d.emoji} ${d.title}`);
 
-// ---- Deshacer (§5.4) ----
+// ---- Undo (§5.4) ----
 
-/** El completado de ese momento, aunque ya se haya borrado: tiene que ser uno solo. */
+/** The completion of that moment, even if it was already deleted: there must be exactly one. */
 function theCompletionOf(m: OracleWorld, at: number): Completion {
 	const ofMoment = allCompletions(m).filter((c) => c.at === at);
 	return ofMoment.length === 1 ? ofMoment[0] : undecided(`completados del momento ${at}`);
 }
 
 /**
- * Deshacer en el aviso: borra solo el completado que nombra el aviso y lo cierra. El botón existe mientras el aviso
- * se ve (§5.4): fuera de esa ventana no hay nada que tocar y no pasa nada.
+ * Undo on the notice: deletes only the completion the notice names and closes it. The button exists while the notice
+ * is visible (§5.4): outside that window there is nothing to tap and nothing happens.
  */
 function tapUndo(m: OracleWorld, now: number): void {
 	m.before = copy(m);
@@ -553,8 +553,8 @@ function tapUndo(m: OracleWorld, now: number): void {
 }
 
 /**
- * Borrar un completado desde el aviso, el Historial o el checkbox (§5.4). Si era el más reciente de una tarea de dos
- * pasos o más y guardaba su paso, la tarea vuelve a ese paso, con el tope del último (§4.1, Pasos: Deshacer).
+ * Delete a completion from the notice, History or the checkbox (§5.4). If it was the most recent one of a task with two
+ * or more steps and it stored its step, the task returns to that step, capped at the last one (§4.1, Pasos: Deshacer).
  */
 function undoCompletion(m: OracleWorld, id: number): void {
 	const completion = m.completions.find((c) => c.id === id);
@@ -565,19 +565,19 @@ function undoCompletion(m: OracleWorld, id: number): void {
 	deleteCompletions(m, [id]);
 }
 
-/** Lo que muestra el aviso en ese momento: la tarea y el completado que ofrece deshacer, o ninguno. */
+/** What the notice shows at that moment: the task and the completion it offers to undo, or none. */
 function queryNotice(m: OracleWorld, now: number): string {
 	const visible = m.notice && noticeSees(m.notice.completion.at, now) ? m.notice : undefined;
 	return visible ? JSON.stringify([visible.title, visible.completion.at]) : 'sin aviso';
 }
 
-/** §5.4: «Completaste «nombre»», con « · mínima» si el completado fue la mínima. */
+/** §5.4: «Completaste «nombre»», with « · mínima» if the completion was the minimal one. */
 function noticeText(m: OracleWorld, now: number): string {
 	const visible = m.notice && noticeSees(m.notice.completion.at, now) ? m.notice : undefined;
 	return visible ? `Completaste «${visible.title}»${visible.completion.minimal ? ' · mínima' : ''}` : 'sin aviso';
 }
 
-/** §5.4 y §6.1: el «Vuelve …» del aviso visible en el último momento consultado; sin aviso a la vista, 'sin aviso'. */
+/** §5.4 and §6.1: the «Vuelve …» of the notice visible at the last queried moment; with no notice in view, 'sin aviso'. */
 function noticeReturn(m: OracleWorld): string {
 	const now = m.noticeIn ?? undecided('sin consulta del aviso');
 	if (!m.notice || !noticeSees(m.notice.completion.at, now)) return 'sin aviso';
@@ -585,7 +585,7 @@ function noticeReturn(m: OracleWorld): string {
 	return returnOfNoticeOf(situationOf(m, derived(task), now), now) ?? undecided('regreso del aviso');
 }
 
-// ---- Historial (§6.3) ----
+// ---- History (§6.3) ----
 
 function queryHistory(m: OracleWorld, now: number): string {
 	const entries = m.completions.flatMap((c): OracleEntry[] => {
@@ -595,13 +595,13 @@ function queryHistory(m: OracleWorld, now: number): string {
 	return historyText(entries, now) ?? undecided('empate sin desempate en el Historial');
 }
 
-/** §6.2: la última vez de la única tarea, por el completadoEn más reciente de sus completados. */
+/** §6.2: the last time of the only task, by the most recent completadoEn of its completions. */
 function queryLastTime(m: OracleWorld, now: number): string {
 	const task = only(m);
 	return textOfLastTime(m.completions.filter((c) => c.taskId === task.id).map((c) => c.at), now);
 }
 
-// ---- Estado (§5) ----
+// ---- State (§5) ----
 
 function situationBase(data: { covered: Date[]; created?: number }): Situation {
 	return {
@@ -629,13 +629,13 @@ function situationOf(m: Saved, task: Doc, now: number | undefined): Situation {
 	if (task.kind === 'puntual') return { ...s, oneOff: { limit: task.limit } };
 	if (!recurrence) return undecided('periódica sin recurrencia');
 	if ('relative' in recurrence) {
-		// §5.7: los completados sin ocurrencia cubierta cubren el día entero de su completadoEn.
+		// §5.7: completions without a covered occurrence cover the whole day of their completadoEn.
 		return { ...s, every: recurrence.relative.every, unit: recurrence.relative.unit, withoutCovered: contributions(own) };
 	}
 	return { ...s, calendar: recurrence, covered: contributions(own) };
 }
 
-/** Clasificación con progreso; "no aparece en Pendientes" si la puntual está completada. */
+/** Classification with progress; "no aparece en Pendientes" if the one-off is completed. */
 function classify(m: OracleWorld, now: number | undefined): string {
 	const task = only(m);
 	if (task.kind === 'periodica' && task.paused) return 'pausada';
@@ -669,33 +669,33 @@ function orderIn(m: OracleWorld, now: number | undefined): string {
 	return sortPending(tasks, now, m.showCompleted) ?? undecided('orden');
 }
 
-// ---- El checkbox de la fila (§6.1) ----
+// ---- The row's checkbox (§6.1) ----
 
-/** §6.1: completada en ese momento (puntual con completados, o periódica en espera con completados). */
+/** §6.1: completed at that moment (one-off with completions, or waiting recurring task with completions). */
 function completedAt(m: OracleWorld, task: Doc, at: number): boolean {
 	if (task.paused) return false;
 	const s = situationOf(m, task, at);
 	const classification = classifySituation(s, { progress: false }) ?? undecided('estado');
-	// §5.9: una pospuesta no está completada.
+	// §5.9: a postponed task is not completed.
 	return isCompleted(task.kind === 'puntual', classification === 'en espera' && !inWaitByPostponement(s), activeOf(m, task).length > 0);
 }
 
-/** El completado de completadoEn mayor; si dos empatan, el spec no dice cuál. */
+/** The completion with the greatest completadoEn; if two tie, the spec does not say which. */
 function theMoreRecent(comps: Completion[]): Completion {
 	const last = Math.max(...comps.map((c) => c.at));
 	const lastOnes = comps.filter((c) => c.at === last);
 	return lastOnes.length === 1 ? lastOnes[0] : undecided('completados más recientes empatados');
 }
 
-/** §5.5: completar fuera de la ventana del horario no es posible: el checkbox está deshabilitado y no hace nada. */
+/** §5.5: completing outside the schedule's window is not possible: the checkbox is disabled and does nothing. */
 function completeIfPossible(m: OracleWorld, task: Doc, at: number, minimal = false): void {
 	if (!task.schedule || insideOfTimeWindow(task.schedule, at)) completeMe(m, task, at, minimal);
 }
 
 /**
- * §6.1: la no completada se completa. De la completada se borra el completado más reciente si es puntual o
- * si es de hoy o posterior (día local de completadoEn); si es de un día anterior, se completa de nuevo. Borrar se
- * puede a cualquier hora; completar, solo dentro de la ventana (§5.5).
+ * §6.1: the non-completed one is completed. For the completed one, the most recent completion is deleted if it is a one-off or
+ * if it is from today or later (local day of completadoEn); if it is from an earlier day, it is completed again. Deleting is
+ * possible at any time; completing, only within the window (§5.5).
  */
 function tapCheckbox(m: OracleWorld, at: number): void {
 	const task = derived(only(m));
@@ -708,24 +708,24 @@ function tapCheckbox(m: OracleWorld, at: number): void {
 	undoCompletion(m, moreRecent.id);
 }
 
-// ---- Pasos ----
+// ---- Steps ----
 
 type Step = [RegExp, (m: OracleWorld, c: string[]) => void];
 
 const CREATION_MOMENT = (c: string | undefined) => (c === undefined ? undefined : moment(c));
-/** Las tareas con título que no dicen cuándo se crearon: antes de cualquier otra fecha del escenario. */
+/** Tasks with a title that do not say when they were created: earlier than any other date of the scenario. */
 const SCENARIO_BEFORE = 0;
 
 const SHAPES = '(?:semanal|mensual)';
 const created = '(?: creada el (\\S+))?';
 
-/** Un horario ya guardado (no es un cambio de este dispositivo); uno inválido no se decide (§4.1). */
+/** An already stored schedule (not a change from this device); an invalid one is not decided (§4.1). */
 function saveSchedule(task: Doc, hours: string[]): void {
 	const data = withIntervalOfSchedule(withScheduleWritten(docData(task), writtenOf(hours)));
 	task.schedule = data.reasons.length > 0 ? undecided(`horario ${hours.join(' ')}`) : data.schedule;
 }
 
-/** Deja la tarea ya guardada con esa lista de pasos: el primero es el primer paso. */
+/** Leaves the task already stored with that list of steps: the first is the first step. */
 function saveSteps(task: Doc, text: string): void {
 	const { firstStep, steps } = stepsWritten(...(([first, ...more]) => [first, more] as const)(elements(text) ?? undecided(`pasos ${text}`)));
 	task.firstStep = firstStep;
@@ -751,13 +751,13 @@ const CREATIONS: Step[] = [
 		/^una tarea puntual sin fecha límite con nota (.*)$/,
 		(m, [n]) => create(m, withWritten(dataOf('puntual sin fecha límite', 'Tarea'), { note: n }), undefined)
 	],
-	// §4.1: un primer paso ya guardado (no es un cambio de este dispositivo); se guarda recortado.
+	// §4.1: an already stored first step (not a change from this device); it is stored trimmed.
 	[/^el primer paso de la tarea es (.*)$/, (m, [p]) => void (only(m).firstStep = p.trim() || undefined)],
 	[/^el primer paso de la tarea (\S+) es (.*)$/, (m, [t, p]) => void (withTitle(m, t).firstStep = p.trim() || undefined)],
-	// §4.1 (Versión mínima): una ya guardada (no es un cambio de este dispositivo); se guarda recortada.
+	// §4.1 (Versión mínima): an already stored one (not a change from this device); it is stored trimmed.
 	[/^la versión mínima de la tarea es (.*)$/, (m, [v]) => void (only(m).minimalVersion = v.trim() || undefined)],
 	[/^la versión mínima de la tarea (\S+) es (.*)$/, (m, [t, v]) => void (withTitle(m, t).minimalVersion = v.trim() || undefined)],
-	// §4.1 (Pasos): los pasos ya guardados (no es un cambio de este dispositivo), con el primer paso y los pasos más.
+	// §4.1 (Pasos): the already stored steps (not a change from this device), with the first step and the extra steps.
 	[/^los pasos de la tarea son (.*)$/, (m, [p]) => saveSteps(only(m), p)],
 	[/^los pasos de la tarea (\S+) son (.*)$/, (m, [t, p]) => saveSteps(withTitle(m, t), p)],
 	[/^el paso actual de la tarea es (\S+)$/, (m, [p]) => void (only(m).currentStep = stepNumber(p) === 1 ? undefined : stepNumber(p))],
@@ -799,12 +799,12 @@ const CREATIONS: Step[] = [
 	]
 ];
 
-/** "la tarea tiene un completado ..." ya guardado: su momento es el inicio del día cubierto si el paso no lo da. */
+/** "la tarea tiene un completado ..." already stored: its moment is the start of the covered day if the step does not give it. */
 function saveCompletion(m: OracleWorld, task: Doc, at: number, covered: Date): void {
 	m.completions = [...m.completions, { id: m.next++, taskId: task.id, at, covered }];
 }
 
-/** §4.4: una ocurrencia cubierta es una fecha (sin hora) o, con hora, el inicio de una ocurrencia. */
+/** §4.4: a covered occurrence is a date (without a time) or, with a time, the start of an occurrence. */
 function saveCompletionOf(m: OracleWorld, task: Doc, at: number, covered: string): void {
 	const start = date(covered);
 	if (start === undefined) return saveCompletion(m, task, at, dayOf(covered));
@@ -812,7 +812,7 @@ function saveCompletionOf(m: OracleWorld, task: Doc, at: number, covered: string
 }
 
 const COMPLETIONS: Step[] = [
-	// §4.4: un completado de la mínima, ya guardado (sin aviso y sin tocar el paso en que va la tarea).
+	// §4.4: an already stored minimal-version completion (without a notice and without touching the step the task is on).
 	[
 		/^la tarea fue completada el (\S+) en el paso (\S+) con la mínima$/,
 		(m, [t, step]) => {
@@ -822,7 +822,7 @@ const COMPLETIONS: Step[] = [
 	],
 	[/^la tarea fue completada el (\S+) con la mínima$/, (m, [t]) => void complete(m, only(m), m.completions, moment(t), undefined, true)],
 	[/^la tarea (\S+) fue completada el (\S+) con la mínima$/, (m, [t, e]) => void complete(m, withTitle(m, t), m.completions, moment(e), undefined, true)],
-	// §4.4: un completado que guarda el paso en que iba la tarea, sin tocar el paso en que va hoy.
+	// §4.4: a completion that stores the step the task was on, without touching the step it is on today.
 	[
 		/^la tarea fue completada el (\S+) en el paso (\S+)$/,
 		(m, [t, step]) => void (complete(m, only(m), m.completions, moment(t)).step = stepNumber(step))
@@ -853,7 +853,7 @@ const OTHER = 'otro dispositivo, sin ver ese cambio,';
 
 const ONLY_SPACES = '   ';
 
-/** Cambios de la nota (§4.1, §6.2): lo escrito en el panel, con el resto de la tarea como está. */
+/** Note changes (§4.1, §6.2): what is written in the panel, with the rest of the task as it is. */
 const NOTE_CHANGES: [string, (c: string[]) => WrittenData][] = [
 	['la nota a (.*) con espacios al inicio y al final', ([n]) => ({ note: `  \n ${n} \n  ` })],
 	['la nota a (.*) y (.*) en líneas separadas', ([a, b]) => ({ note: `${a}\n${b}` })],
@@ -862,7 +862,7 @@ const NOTE_CHANGES: [string, (c: string[]) => WrittenData][] = [
 	['la nota a (.*)', ([n]) => ({ note: n })]
 ];
 
-/** Cambios del primer paso (§4.1, §6.2): lo escrito en el campo; quitarlo es vaciarlo. */
+/** First step changes (§4.1, §6.2): what is written in the field; removing it is emptying it. */
 const CHANGES_OF_FIRST_STEP: [string, (c: string[]) => WrittenData][] = [
 	['el primer paso a (.*) con espacios al inicio y al final', ([p]) => ({ firstStep: `  ${p}  ` })],
 	['el primer paso a uno de solo espacios', () => ({ firstStep: ONLY_SPACES })],
@@ -879,7 +879,7 @@ const editsOfFirstStep = (): Step[] => [
 	[new RegExp(`^${OTHER} quita el primer paso$`), (m) => editsOther(m, (base) => keeping(base, docData(base), { firstStep: '' }))]
 ];
 
-/** Cambios de la versión mínima (§4.1, §6.2): lo escrito en el campo; quitarla es vaciarlo. */
+/** Minimal version changes (§4.1, §6.2): what is written in the field; removing it is emptying it. */
 const CHANGES_OF_MINIMAL_VERSION: [string, (c: string[]) => WrittenData][] = [
 	['la versión mínima a (.*) con espacios al inicio y al final', ([v]) => ({ minimalVersion: `  ${v}  ` })],
 	['la versión mínima a una de solo espacios', () => ({ minimalVersion: ONLY_SPACES })],
@@ -896,7 +896,7 @@ const editsOfMinimalVersion = (): Step[] => [
 	[new RegExp(`^${OTHER} quita la versión mínima$`), (m) => editsOther(m, (base) => keeping(base, docData(base), { minimalVersion: '' }))]
 ];
 
-/** Cambios de un paso (§4.1, Pasos): lo escrito en su campo; vaciarlo lo descarta y los de abajo suben. */
+/** Changes to a step (§4.1, Pasos): what is written in its field; emptying it drops it and those below move up. */
 const STEP_CHANGES: [string, (c: string[]) => string][] = [
 	['(.*) con espacios al inicio y al final', ([p]) => `  ${p}  `],
 	['uno de solo espacios', () => ONLY_SPACES],
@@ -904,7 +904,7 @@ const STEP_CHANGES: [string, (c: string[]) => string][] = [
 	['(.*)', ([p]) => p]
 ];
 
-/** Los pasos de la tarea con el paso `n` escrito; uno más que la cantidad lo agrega al final. */
+/** The task's steps with step `n` written; one more than the count appends it at the end. */
 function withStep(base: Doc, n: string, text: string): WrittenData {
 	const list = stepsOf(base);
 	const place = numeric(n);
@@ -928,7 +928,7 @@ const stepsEdits = (): Step[] => [
 	]
 ];
 
-/** §4.1 (Pasos: Avance) y §6.1: «Hecho» pasa al paso siguiente; en el último completa la tarea como el checkbox. */
+/** §4.1 (Pasos: Avance) and §6.1: «Hecho» moves to the next step; on the last one it completes the task like the checkbox. */
 function tapDone(m: OracleWorld, task: Doc, at: number): void {
 	m.touchedAt ??= at;
 	const d = derived(task);
@@ -939,7 +939,7 @@ function tapDone(m: OracleWorld, task: Doc, at: number): void {
 	goOnStep(m, d.id, step + 1);
 }
 
-/** El otro dispositivo decide con la tarea que veía, y su cambio llega a lo guardado hoy (§7). */
+/** The other device decides with the task it saw, and its change lands on what is stored today (§7). */
 function dueDoneOther(m: OracleWorld, at: number): void {
 	const seen = thatSawOther(m);
 	const d = derived(only(seen));
@@ -952,8 +952,8 @@ function dueDoneOther(m: OracleWorld, at: number): void {
 }
 
 /**
- * §6.1: «Hice la mínima» está en las filas pendiente y atrasada con versión mínima; completa como el checkbox, con el
- * completado de la mínima, y deshabilitado (fuera de la ventana, §5.5) no hace nada.
+ * §6.1: «Hice la mínima» is on the pending and overdue rows with a minimal version; it completes like the checkbox, with the
+ * minimal-version completion, and when disabled (outside the window, §5.5) it does nothing.
  */
 function tapMinimal(m: OracleWorld, task: Doc, at: number): void {
 	m.touchedAt ??= at;
@@ -962,7 +962,7 @@ function tapMinimal(m: OracleWorld, task: Doc, at: number): void {
 	completeIfPossible(m, d, at, true);
 }
 
-/** El otro dispositivo decide con la tarea que veía, y su completado llega a lo guardado hoy (§7). */
+/** The other device decides with the task it saw, and its completion lands on what is stored today (§7). */
 function dueMinimalOther(m: OracleWorld, at: number): void {
 	const seen = thatSawOther(m);
 	const d = derived(only(seen));
@@ -990,7 +990,7 @@ const ROW_STEPS: Step[] = [
 	[new RegExp(`^${OTHER} toca Hecho el (\\S+)$`), (m, [e]) => dueDoneOther(m, moment(e))]
 ];
 
-/** Elegir un emoji en el selector o quitarlo (§6.2): quien edita elige o quita; quitar es dejar el campo vacío. */
+/** Choosing an emoji in the picker or removing it (§6.2): whoever edits chooses or removes; removing is leaving the field empty. */
 const EMOJI_CHANGES: [RegExp, string, (c: string[]) => WrittenData][] = [
 	[/^elijo el emoji (.*) y edito la nota a (.*)$/, 'yo', ([e, n]) => ({ emoji: e, note: n })],
 	[/^elijo el emoji (.*)$/, 'yo', ([e]) => ({ emoji: e })],
@@ -1019,7 +1019,7 @@ function editsOfEmojiAndNote(): Step[] {
 	return [...ofNote, ...ofEmoji];
 }
 
-/** Cambiar el horario (§6.2): quien edita escribe una o más ventanas, ninguna (lo quita) o una con una sola hora. */
+/** Changing the schedule (§6.2): whoever edits writes one or more windows, none (removes it) or one with a single time. */
 const withSchedule = (written: WrittenPairs) => (base: Doc) => withScheduleWritten(docData(base), written);
 
 const SCHEDULE_EDITS: Step[] = [
@@ -1036,7 +1036,7 @@ const SCHEDULE_EDITS: Step[] = [
 
 const EDITS: Step[] = [
 	...SCHEDULE_EDITS,
-	// §5.8: pasar una periódica pausada a puntual la reanuda en ese momento.
+	// §5.8: changing a paused recurring task to one-off resumes it at that moment.
 	[
 		/^edito la tarea a puntual sin fecha límite el (\S+)$/,
 		(m, [e]) => editMe(m, undefined, (base) => keeping(base, dataOf('puntual sin fecha límite', base.title)), moment(e))
@@ -1074,7 +1074,7 @@ const EDITS: Step[] = [
 	...ROW_STEPS
 ];
 
-/** Pausar y reanudar (§5.8, §6.2): el botón del panel actúa en el momento; solo las periódicas se pausan. */
+/** Pause and resume (§5.8, §6.2): the panel button acts at the moment; only recurring tasks are paused. */
 function pause(m: OracleWorld, d: Doc): void {
 	if (d.kind !== 'periodica') undecided('la tarea no se puede pausar');
 	m.docs = m.docs.map((x) => (x.id === d.id ? { ...x, paused: true } : x));
@@ -1086,8 +1086,8 @@ function resume(m: OracleWorld, d: Doc, at: number): void {
 }
 
 /**
- * §5.9 y §6.2: Posponer solo actúa si el panel, con lo que ve quien pospone, lo ofrece en ese momento. El cambio
- * escribe solo `pospuesta`, entera (§7), y llega a lo guardado hoy.
+ * §5.9 and §6.2: Posponer only acts if the panel, with what the person postponing sees, offers it at that moment. The change
+ * writes only `pospuesta`, whole (§7), and lands on what is stored today.
  */
 function postpone(m: OracleWorld, view: Saved, option: string, value: string): void {
 	const postponed = postponementOf(option, value) ?? undecided('opción de posponer');
@@ -1118,7 +1118,7 @@ const PAUSES: Step[] = [
 			pause(m, derived(only(m)));
 		}
 	],
-	// §7: pausar escribe solo `pausada`; llega a lo guardado hoy aunque el otro dispositivo no haya visto la reanudación.
+	// §7: pausing writes only `pausada`; it lands on what is stored today even if the other device has not seen the resume.
 	[new RegExp(`^${OTHER} pausa la tarea$`), (m) => pause(m, derived(only(m)))],
 	[
 		/^reanudo la tarea el (\S+)$/,
@@ -1182,7 +1182,7 @@ const UNDOS: Step[] = [
 	[/^toco el checkbox de la tarea el (\S+)$/, (m, [e]) => tapCheckbox(m, moment(e))]
 ];
 
-/** El orden de la lista no se decide a veces: solo importa si un Then lo mira; la fila de los pasos no lo necesita. */
+/** The list order is sometimes not decided: it only matters if a Then looks at it; the steps row does not need it. */
 function queryPending(m: OracleWorld, now: number | undefined): void {
 	m.pendingAt = now;
 	m.queryPending = true;
@@ -1218,39 +1218,39 @@ const QUERIES: Step[] = [
 	[/^consulto Pendientes el (\S+)$/, (m, [t]) => queryPending(m, moment(t))],
 	[/^consulto Pendientes en cualquier momento$/, (m) => queryPending(m, undefined)],
 	[new RegExp(`^${SHOW_COMPLETED}$`), (m) => void (m.showCompleted = true)],
-	// §6.1: las pausadas se ven con este check; la línea del paso no se ve en ellas.
+	// §6.1: paused tasks are shown with this check; the step line is not shown on them.
 	[/^Mostrar pausadas está encendido$/, () => undefined]
 ];
 
 const STEPS: Step[] = [...CREATIONS, ...COMPLETIONS, ...PAUSES, ...POSTPONEMENTS, ...EDITS, ...DELETED, ...UNDOS, ...QUERIES];
 
-// ---- Lo que cada Then observa ----
+// ---- What each Then observes ----
 
 const statusQueried = (m: OracleWorld) => m.status ?? (m.touchedAt === undefined ? undecided('sin consulta de estado') : classify(m, m.touchedAt));
 const statusKind = (classification: string) => (classification.startsWith('en espera') ? 'en espera' : classification);
 const day_ = (d: Date | undefined) => (d === undefined ? '-' : isoDay(d));
 
-/** §4.4: la ocurrencia cubierta, con hora si la tiene (formatos distintos). */
+/** §4.4: the covered occurrence, with a time if it has one (different formats). */
 const coveredInText = (c: Completion) => (c.startCovered === undefined ? day_(c.covered) : `inicio ${c.startCovered}`);
 const theTask = (m: OracleWorld) => derived(only(m));
 const theOneThatHadBefore = theOneThatHad;
-/** §6.1: la tarea consultada está completada (puntual con completados, o periódica en espera con completados). */
+/** §6.1: the queried task is completed (one-off with completions, or waiting recurring task with completions). */
 const completedQueried = (m: OracleWorld) =>
 	!isPaused(m) && isCompleted(theTask(m).kind === 'puntual', statusKind(statusQueried(m)) === 'en espera' && !postponedQueried(m), activeOf(m, only(m)).length > 0);
-/** §5.9: en espera por la posposición en el momento consultado: no está completada. */
+/** §5.9: waiting because of the postponement at the queried moment: it is not completed. */
 const postponedQueried = (m: OracleWorld) => {
 	const at = m.queriedAt ?? m.touchedAt;
 	return at !== undefined && inWaitByPostponement(situationOf(m, only(m), at));
 };
 const postponementKey = (p: Postponement | undefined) => (p ? `${p.from} ${p.to}` : '-');
-/** §5.8: una pausada no tiene estado, no está completada y su checkbox está deshabilitado. */
+/** §5.8: a paused task has no state, is not completed and its checkbox is disabled. */
 const isPaused = (m: OracleWorld) => theTask(m).paused === true;
 const fresh = (m: OracleWorld) => m.updated ?? undecided('no se completó');
-/** Lo que queda de la tarea: si cada completado es del momento que el paso nombra, y si cubre una ocurrencia. */
+/** What remains of the task: whether each completion is from the moment the step names, and whether it covers an occurrence. */
 const onlyCompletionOf = (m: OracleWorld, d: Doc, named: string) =>
 	JSON.stringify(completionsOf(m, d.id).map((c) => [c.at === moment(named), c.covered !== undefined || c.startCovered !== undefined]));
 
-/** §6.1: la fila de la tarea en ese momento (o en cualquiera): pausada, en espera por la posposición o el estado de §5. */
+/** §6.1: the task's row at that moment (or any): paused, waiting because of the postponement, or the state of §5. */
 function rowStatus(m: Saved, task: Doc, at: number | undefined): string {
 	if (task.kind === 'periodica' && task.paused) return 'pausada';
 	if (at === undefined && task.postponed) undecided('posposición en cualquier momento');
@@ -1258,22 +1258,22 @@ function rowStatus(m: Saved, task: Doc, at: number | undefined): string {
 	return at !== undefined && inWaitByPostponement(s) ? 'en espera' : (classifySituation(s, { progress: false }) ?? undecided('estado'));
 }
 
-/** §6.1: la línea del paso (y sus botones) solo se ve en las filas pendiente y atrasada; no en `en espera` ni pausadas. */
+/** §6.1: the step line (and its buttons) is only shown on pending and overdue rows; not on `en espera` or paused ones. */
 const seesLine = (status: string) => status === 'pendiente' || status === 'atrasada';
 
-/** Lo que la fila muestra de los pasos en la última consulta de Pendientes (§6.1). */
+/** What the row shows of the steps in the last Pending query (§6.1). */
 interface StepsRow {
 	line: string;
 	buttons: string;
-	/** Si «Hecho» está habilitado; solo se decide cuando un Then lo mira (el checkbox puede no decidirse). */
+	/** Whether «Hecho» is enabled; only decided when a Then looks at it (the checkbox may be undecided). */
 	done: () => string;
 }
 
 const WITHOUT_BUTTONS = 'sin botones';
 
 /**
- * §6.1: la línea del paso en que va la tarea, «Primer paso: …» en el paso 1 y «Paso: …» en otro; con dos pasos o más,
- * «Paso anterior» (no en el paso 1) y «Hecho», habilitado salvo en el último paso si el checkbox está deshabilitado.
+ * §6.1: the line of the step the task is on, «Primer paso: …» on step 1 and «Paso: …» on another; with two steps or more,
+ * «Paso anterior» (not on step 1) and «Hecho», enabled except on the last step if the checkbox is disabled.
  */
 function theRowOfSteps(m: OracleWorld): StepsRow {
 	if (!m.queryPending) undecided('sin consulta de Pendientes');
@@ -1290,8 +1290,8 @@ function theRowOfSteps(m: OracleWorld): StepsRow {
 }
 
 /**
- * §6.1: la línea de la mínima y su botón: se ven solo en las filas pendiente y atrasada con versión mínima; el botón
- * está habilitado como el checkbox que completaría (§5.5).
+ * §6.1: the minimal-version line and its button: shown only on pending and overdue rows with a minimal version; the button
+ * is enabled like the checkbox that would complete (§5.5).
  */
 function theRowOfMinimal(m: OracleWorld): { line: string; button: () => string } {
 	if (!m.queryPending) undecided('sin consulta de Pendientes');
@@ -1308,7 +1308,7 @@ type Observation = [RegExp, (m: OracleWorld, c: string[]) => string];
 const OBSERVATIONS: Observation[] = [
 	[/^el estado es (?:pendiente|en espera|atrasada)$/, (m) => statusKind(statusQueried(m))],
 	[/^el progreso es (\S+)$/, (m) => statusQueried(m)],
-	// Con Mostrar completadas apagado, las completadas no tienen fila (§6.1).
+	// With Mostrar completadas off, completed tasks have no row (§6.1).
 	[/^la tarea no aparece en Pendientes$/, (m) => String(!m.showCompleted && completedQueried(m))],
 	[/^la tarea está completada$/, (m) => String(completedQueried(m))],
 	[/^la tarea no está completada$/, (m) => String(!completedQueried(m))],
@@ -1403,12 +1403,12 @@ const OBSERVATIONS: Observation[] = [
 	],
 	[
 		/^se registró un completado que cubre el (\S+)$/,
-		// Que el completado quede en el momento de completar es una invariante; lo que varía es la ocurrencia que cubre.
+		// That the completion lands at the completion moment is an invariant; what varies is the occurrence it covers.
 		(m) => (m.updated ? coveredInText(m.updated) : undecided('no se completó'))
 	]
 ];
 
-/** Los pasos propios de este oráculo: escenarios que editan, borran o modifican concurrentemente. */
+/** This oracle's own steps: scenarios that edit, delete or concurrently modify. */
 const IS_OF_EDITING =
 	/^(?:edito |vacío el paso |los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está |elijo |quito el emoji$|quito el horario$|quito el primer paso$|el primer paso de la tarea |la versión mínima de la tarea |quito la versión mínima$|toco Hice la mínima |la fila de la tarea (?:muestra la mínima |no muestra mínima$)|el botón Hice la mínima |pongo |borro |toco Deshacer |toco el checkbox |consulto el aviso |consulto el Historial |consulto la última vez |otro dispositivo, sin ver ese cambio,)/;
 
@@ -1427,7 +1427,7 @@ function observe(entries: StepOracle[], thens: StepOracle[], row: RowOracle): st
 	const m: OracleWorld = { docs: [], completions: [], next: 1, deletedDocs: [], deletedCompletions: [] };
 	run(entries, row, m);
 	const texts = thens.map((step) => resolve(step.text, row) ?? undecided(`columna faltante en ${step.text}`));
-	// Sin orden decidido, solo los Then de la fila de los pasos se pueden observar.
+	// Without a decided order, only the Thens of the steps row can be observed.
 	if (m.orderUndecided && !texts.every((text) => OF_ROW_OF_STEPS.test(text))) undecided('orden de Pendientes');
 	return texts.map((text) => {
 		const rule = OBSERVATIONS.map(([pattern, view]) => ({ matches: pattern.exec(text), view })).find((r) => r.matches);
@@ -1436,8 +1436,8 @@ function observe(entries: StepOracle[], thens: StepOracle[], row: RowOracle): st
 }
 
 /**
- * Lo que observa cada Then tras ejecutar los pasos de entrada con la fila, o undefined si el oráculo no
- * reconoce algún paso o el spec no decide el resultado (por ejemplo, la tarea no existe).
+ * What each Then observes after running the input steps with the row, or undefined if the oracle does not
+ * recognize some step or the spec does not decide the result (for example, the task does not exist).
  */
 export function observeEditing(entries: StepOracle[], thens: StepOracle[], row: RowOracle): string[] | undefined {
 	try {

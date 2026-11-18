@@ -5,11 +5,11 @@
 	import AnnotateConfirmation from './AnnotateConfirmation.svelte';
 	import { useSession } from './session';
 
-	// Spec §5.10: un botón chico, siempre arriba en el mismo lugar, y el recuadro de los dos toques.
+	// Spec §5.10: a small button, always at the top in the same place, and the box of the two taps.
 	const session = useSession();
 	let text = $state('');
 	let field = $state<HTMLInputElement>();
-	/** Cuántas veces se guardó: cada una muestra su confirmación. */
+	/** How many times it was saved: each one shows its confirmation. */
 	let savedCount = $state(0);
 	let confirming = $state(false);
 
@@ -25,7 +25,7 @@
 		savedCount++;
 	}
 
-	// Con el panel abierto, Atrás lo maneja el panel; si no, el recuadro toma su propia entrada (§6.2).
+	// With the panel open, Back is handled by the panel; otherwise the box takes its own entry (§6.2).
 	$effect(() => {
 		if (!session.annotating || session.hasPanel) return;
 		const layer = takeBack(() => {
@@ -64,7 +64,7 @@
 <style>
 	.annotate {
 		position: fixed;
-		/* Al lado de la X del panel (que está a 0.5rem del borde): mismas coordenadas en todas las pantallas. */
+		/* Next to the panel's X (which is 0.5rem from the edge): same coordinates on every screen. */
 		top: calc(var(--strip-height, 0px) + 0.5rem);
 		right: calc(max(0px, 50% - 20rem) + 4rem);
 		/* Above the panel (z-index 2), under its notices. */

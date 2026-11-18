@@ -1,5 +1,5 @@
-// Spec §5.5–§5.7: A, el atraso y el inicio de espera de una periódica con
-// horario, según su recurrencia.
+// Spec §5.5–§5.7: A, the overdue point and the start of waiting of a recurring task with
+// a schedule, according to its recurrence.
 import { waitStart } from './completions';
 import { deadlinesFromMoments, type DeadlinesWithSchedule } from './status-with-schedule';
 import { relativeMoments } from './recurring-relative-status';
@@ -7,7 +7,7 @@ import type { Occurrence } from './schedule';
 import { nextCalendarOccurrence, nextWindowOccurrence, completesByWindow } from './occurrences-with-schedule';
 import type { Completion, Schedule, RecurringTask } from './task';
 
-/** Spec §5.6 y §5.7: A es el inicio de N y el atraso, su cierre (C). */
+/** Spec §5.6 and §5.7: A is the start of N and the overdue point, its close (C). */
 const deadlinesOfOccurrence = ({ start, closing }: Occurrence, from: number): DeadlinesWithSchedule => ({
 	available: start,
 	lateness: closing,

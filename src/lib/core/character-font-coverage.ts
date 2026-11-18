@@ -1,13 +1,13 @@
-// Spec §6: qué caracteres trae cada fuente empaquetada. Es un dato medido, no una regla.
-// Medido con fc-query (charset) sobre los archivos de estas versiones; si la app empaqueta
-// otros archivos, esta tabla se vuelve a medir:
-// - Atkinson: @fontsource/atkinson-hyperlegible-next 5.3.0, subconjuntos latin y latin-ext.
-// - Noto: @fontsource/noto-color-emoji 5.3.2 (Noto Color Emoji 2.057), todos sus subconjuntos.
+// Spec §6: which characters each bundled font has. It is measured data, not a rule.
+// Measured with fc-query (charset) on the files of these versions; if the app bundles
+// other files, this table is measured again:
+// - Atkinson: @fontsource/atkinson-hyperlegible-next 5.3.0, latin and latin-ext subsets.
+// - Noto: @fontsource/noto-color-emoji 5.3.2 (Noto Color Emoji 2.057), all its subsets.
 
-/** Los puntos de código que una fuente puede dibujar. */
+/** The code points a font can draw. */
 export type Coverage = ReadonlySet<number>;
 
-/** Lee rangos en hexadecimal ("20-7e 102"): cada uno es un punto de código o un intervalo cerrado. */
+/** Reads hexadecimal ranges ("20-7e 102"): each one is a code point or a closed interval. */
 function coverageOf(lines: string[]): Coverage {
 	const coverage = new Set<number>();
 	for (const range of lines.join(' ').split(' ')) {

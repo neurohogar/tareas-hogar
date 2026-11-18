@@ -1,6 +1,6 @@
-// Cuándo se va la pantalla de carga y qué recuerda el dispositivo (spec §6.6). Los
-// pasos declaran cuándo llega cada cosa en segundos desde el arranque; los Then le
-// preguntan al core el estado de cada instante en que algo cambia.
+// When the loading screen goes away and what the device remembers (spec §6.6). The
+// steps declare when each thing arrives in seconds since startup; the Thens
+// ask the core for the state at each instant where something changes.
 import { expect } from 'vitest';
 import {
 	SCREEN_MINIMUM_IN_SECONDS,
@@ -14,14 +14,14 @@ import {
 import { P } from './values';
 import type { AppOpening, OpeningFont, StepDefinition, World } from './world';
 
-/** El feature escribe 30 segundos para algo que no llega: no es un evento de la línea de tiempo. */
+/** The feature writes 30 seconds for something that never arrives: it is not a timeline event. */
 const VALUE_OF_THAT_NOT_ARRIVES = 30;
 
 const NEVER = Number.POSITIVE_INFINITY;
 
 function seconds(value: string): number {
 	const numeric = Number(value);
-	if (value.trim() === '' || !Number.isFinite(numeric)) throw new Error(`Segundos inválidos: "${value}"`);
+	if (value.trim() === '' || !Number.isFinite(numeric)) throw new Error(`Invalid seconds: "${value}"`);
 	return numeric;
 }
 
@@ -47,7 +47,7 @@ function opening(world: World): AppOpening {
 
 const fontOf = (world: World, name: string) => (name === 'Atkinson' ? opening(world).atkinson : opening(world).noto);
 
-/** Una fuente guardada queda lista desde el dispositivo: es lo único que llega sin conexión. */
+/** A stored font is ready from the device: it is the only thing that arrives offline. */
 function fontStatus(font: OpeningFont, withoutConnection: boolean, instant: number): FontStatus {
 	if (instant >= font.arrives) return 'lista';
 	if (instant >= font.failure) return 'fallida';
@@ -68,7 +68,7 @@ function statusIn(a: AppOpening, instant: number): WaitStatus {
 	};
 }
 
-/** Los instantes en que puede cambiar la respuesta: el arranque, el mínimo, el tope y cada evento declarado. */
+/** The instants at which the answer can change: startup, the minimum, the cap and each declared event. */
 function instants(a: AppOpening): number[] {
 	const events = [a.auth, a.tasks, a.completions, a.losesConnection, a.atkinson.arrives, a.atkinson.failure, a.noto.arrives, a.noto.failure];
 	const all = [0, SCREEN_MINIMUM_IN_SECONDS, SCREEN_LIMIT_IN_SECONDS, ...events].filter((t) => t >= 0 && t !== NEVER);
@@ -77,7 +77,7 @@ function instants(a: AppOpening): number[] {
 
 function output(a: AppOpening): number {
 	const moment = instants(a).find((instant) => loadingScreenLeaves(statusIn(a, instant)));
-	if (moment === undefined) throw new Error('La pantalla de carga no se va nunca');
+	if (moment === undefined) throw new Error('The loading screen never goes away');
 	return moment;
 }
 
@@ -141,7 +141,7 @@ export const loadingScreenSteps: StepDefinition[] = [
 		}
 	},
 	{
-		// §6: un navegador que recibe el juego y no puede dibujarlo se comporta como una falla.
+		// §6: a browser that receives the font set and cannot draw it behaves like a failure.
 		pattern: new RegExp(`^el navegador no puede dibujar Noto a los ${P} segundos$`),
 		run: (world, moment) => {
 			opening(world).noto.failure = seconds(moment);
@@ -170,7 +170,7 @@ export const loadingScreenSteps: StepDefinition[] = [
 		run: (world, expected) => expect(output(opening(world))).toBe(seconds(expected))
 	},
 	{
-		// El recuerdo se pregunta al irse la pantalla y otra vez si Noto queda lista después.
+		// The memory is queried when the screen goes away and again if Noto becomes ready afterwards.
 		pattern: /^el dispositivo (no )?recuerda un tope con Noto sin bajar$/,
 		run: (world, no) => {
 			const a = opening(world);

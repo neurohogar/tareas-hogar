@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { CHANGES_MESSAGE, type ChangesNotice, type NoticeButton } from '#lib/core/unsaved-changes-notice.ts';
 
-	// Spec §6.2: el aviso de cierre o de una acción, sobre el panel. El texto y los botones los decide el core.
+	// Spec §6.2: the notice for closing or for an action, over the panel. The text and the buttons are decided by the core.
 	let { notice, onChoose }: { notice: ChangesNotice; onChoose: (effect: NoticeButton['effect']) => void } = $props();
 
 	let box: HTMLDivElement;

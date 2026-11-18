@@ -1,19 +1,19 @@
-// El texto de fecha de la fila de Pendientes («Tocaba …», «Vuelve …», spec §6.1) y el
-// regreso del aviso de completar (§5.4).
+// The date text of the Pendientes row («Tocaba …», «Vuelve …», spec §6.1) and the
+// return of the completion notice (§5.4).
 import { expect } from 'vitest';
 import { noticeReturn } from '../../src/lib/core/notice';
 import { P, TITLE } from './values';
 import { theTask, type World, type StepDefinition } from './world';
 
-/** El regreso que dice el aviso consultado, que tiene que verse y nombrar la tarea. */
+/** The return the queried notice states, which has to be visible and name the task. */
 function completionReturn(world: World): string | undefined {
-	if (!world.noticeQueried) throw new Error('No se consultó el aviso');
+	if (!world.noticeQueried) throw new Error('The notice was not queried');
 	const { notice, now } = world.noticeQueried;
 	expect(notice?.name).toBe(theTask(world).title);
 	return notice && noticeReturn(notice, now);
 }
 
-/** En cada momento consultado, la lista tiene una sola fila y su texto de fecha es `texto`. */
+/** At each queried moment, the list has a single row and its date text is `text`. */
 function theRowShowsText(world: World, text: string | undefined): void {
 	expect(world.pendingQueries.length).toBeGreaterThan(0);
 	for (const rows of world.pendingQueries) {

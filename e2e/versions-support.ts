@@ -3,7 +3,7 @@ import { createServer, type Server } from 'node:http';
 import { extname, join } from 'node:path';
 import type { Page } from '@playwright/test';
 
-// Dos builds servidos en el mismo origen (puerto 4174), para simular que se publica una versión nueva.
+// Two builds served from the same origin (port 4174), to simulate a new version being published.
 
 export const ORIGIN_VERSIONS = 'http://127.0.0.1:4174';
 
@@ -18,7 +18,7 @@ const KINDS: Record<string, string> = {
 	'.woff2': 'font/woff2'
 };
 
-/** Sirve `estado.dir`; cambiar `estado.dir` publica otro build. */
+/** Serves `estado.dir`; changing `estado.dir` publishes another build. */
 export function serve(status: { dir: string }): Promise<Server> {
 	const server = createServer((req, res) => {
 		const path = decodeURIComponent((req.url ?? '/').split('?')[0]);
@@ -32,7 +32,7 @@ export function serve(status: { dir: string }): Promise<Server> {
 
 export const versionOf = (dir: string): string => JSON.parse(readFileSync(join(dir, '_app/version.json'), 'utf8')).version;
 
-/** Las cachés de la app, una por versión; la de las fuentes sobrevive a las versiones (spec §6.6) y no cuenta. */
+/** The app's caches, one per version; the fonts cache survives versions (spec §6.6) and does not count. */
 export const cachesOf = (p: Page) =>
 	p.evaluate(() => caches.keys().then((keys) => keys.filter((c) => c !== 'tareas-hogar-fuentes')));
 
@@ -45,20 +45,20 @@ const NOTO_FILE = 'noto-color-emoji-emoji-400-normal.woff2';
 const filesJs = (dir: string): string[] =>
 	(readdirSync(dir, { recursive: true }) as string[]).filter((a) => a.endsWith('.js')).map((a) => join(dir, a));
 
-/** Un string del código minificado con sus comillas, que según el minificador son ", ' o `. */
+/** A string from the minified code with its quotes, which depending on the minifier are ", ' or `. */
 const QUOTE = '(["\'`])';
 
 const codeOf = (target: string): string =>
 	filesJs(join(target, '_app/immutable')).map((a) => readFileSync(a, 'utf8')).join();
 
-/** Reemplaza un texto en el código de la app. Falla si no estaba: así un cambio en el build no pasa inadvertido. */
+/** Replaces a text in the app code. Fails if it was not there: this way a change in the build does not go unnoticed. */
 function replaceInCode(target: string, old: string, updated: string): void {
 	const withText = filesJs(join(target, '_app/immutable')).filter((a) => readFileSync(a, 'utf8').includes(old));
-	if (withText.length === 0) throw new Error(`el build no contiene ${old}`);
+	if (withText.length === 0) throw new Error(`the build does not contain ${old}`);
 	for (const a of withText) writeFileSync(a, readFileSync(a, 'utf8').replaceAll(old, updated));
 }
 
-/** Otra versión del service worker: al publicarse se instala y espera. */
+/** Another service worker version: when published it installs and waits. */
 function changeVersion(origin: string, target: string, suffix: string): void {
 	const version = versionOf(origin);
 	const other = `${version}${suffix}`;
@@ -67,30 +67,30 @@ function changeVersion(origin: string, target: string, suffix: string): void {
 }
 
 /**
- * Del build `origen` deriva en `destino` la versión anterior a la fuente empaquetada: sin los archivos
- * de fuentes, con la página pidiéndolos en una ruta que no existe (nunca llegan) y con otra versión.
- * No hace falta reconstruir, así el preview de 4173 sigue en pie.
+ * From build `origen` derives in `destino` the version prior to the bundled font: without the font files,
+ * with the page requesting them at a path that does not exist (they never arrive) and with another version.
+ * No rebuild is needed, so the 4173 preview stays up.
  */
 export function versionWithoutFonts(origin: string, target: string): void {
 	cpSync(origin, target, { recursive: true });
 	rmSync(join(target, 'fuentes'), { recursive: true });
 	const folder = codeOf(target).match(new RegExp(`${QUOTE}${FONTS_FOLDER}\\1`))?.[0];
-	if (folder === undefined) throw new Error(`el build no contiene ${FONTS_FOLDER}`);
+	if (folder === undefined) throw new Error(`the build does not contain ${FONTS_FOLDER}`);
 	replaceInCode(target, folder, folder.replace(FONTS_FOLDER, '/sin-fuentes/'));
 	changeVersion(origin, target, '0');
 }
 
-/** Una versión nueva que no toca la fuente ni el juego de emoji. */
+/** A new version that touches neither the font nor the emoji set. */
 export function versionWithSameFonts(origin: string, target: string): void {
 	cpSync(origin, target, { recursive: true });
 	changeVersion(origin, target, '1');
 }
 
-/** Una versión nueva cuyo juego de emoji cambió: lo que cambia es la huella de su contenido (vite.config.ts). */
+/** A new version whose emoji set changed: what changes is the fingerprint of its content (vite.config.ts). */
 export function versionWithOtherSet(origin: string, target: string): void {
 	cpSync(origin, target, { recursive: true });
 	const fingerprint = codeOf(target).match(new RegExp(`${QUOTE}${NOTO_FILE}\\1:${QUOTE}(\\w+)\\2`))?.[3];
-	if (fingerprint === undefined) throw new Error('el build no declara la huella de Noto');
+	if (fingerprint === undefined) throw new Error('the build does not declare the Noto fingerprint');
 	replaceInCode(target, fingerprint, fingerprint.replace(/^./, (c) => (c === '0' ? '1' : '0')));
 	changeVersion(origin, target, '2');
 }

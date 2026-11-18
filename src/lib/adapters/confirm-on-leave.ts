@@ -1,6 +1,6 @@
 /**
- * Spec §6.2: recargar o cerrar la app con cambios sin guardar muestra la confirmación del navegador.
- * `hayCambios` se consulta en el momento de salir. Devuelve cómo dejar de pedirla.
+ * Spec §6.2: reloading or closing the app with unsaved changes shows the browser's confirmation.
+ * `hasChanges` is queried at the moment of leaving. Returns how to stop asking for it.
  */
 export function confirmOnLeave(hasChanges: () => boolean): () => void {
 	const onUnload = (event: BeforeUnloadEvent) => {

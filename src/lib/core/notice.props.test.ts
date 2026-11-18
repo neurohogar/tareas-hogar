@@ -1,4 +1,4 @@
-// Spec §5.4: el aviso con Deshacer.
+// Spec §5.4: the notice with Undo.
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
@@ -31,7 +31,7 @@ const noticeAt = (ms: number) =>
     taskId: "t",
     completedAt: new Date(ms),
   });
-/** Desde completadoEn hasta ahora: alrededor de la ventana y lejos de ella. */
+/** From completedAt until now: around the window and far from it. */
 const shift = fc.oneof(
   fc.integer({
     min: -2 * NOTICE_DURATION_MS,
@@ -41,8 +41,8 @@ const shift = fc.oneof(
 );
 const inWindow = (d: number) => d >= 0 && d < NOTICE_DURATION_MS;
 
-describe("aviso (propiedades)", () => {
-  it("se ve, y ofrece deshacer su completado, exactamente en [completadoEn, completadoEn + 5 s)", () => {
+describe("notice (properties)", () => {
+  it("is visible, and offers to undo its completion, exactly in [completedAt, completedAt + 5 s)", () => {
     fc.assert(
       fc.property(instant, shift, (t, d) => {
         const notice = noticeAt(t);
@@ -57,7 +57,7 @@ describe("aviso (propiedades)", () => {
     );
   });
 
-  it("sin aviso no hay nada que ver ni deshacer", () => {
+  it("without a notice there is nothing to see or undo", () => {
     fc.assert(
       fc.property(instant, (t) => {
         expect(visibleNotice(undefined, new Date(t))).toBeUndefined();
@@ -66,7 +66,7 @@ describe("aviso (propiedades)", () => {
     );
   });
 
-  it("mientras se ve, vence justo cuando dejan de pasar msHastaQueVence", () => {
+  it("while visible, it expires right when msUntilDue stops passing", () => {
     fc.assert(
       fc.property(
         instant,
@@ -83,7 +83,7 @@ describe("aviso (propiedades)", () => {
     );
   });
 
-  it("nombra la tarea y el completado al completar; uno nuevo reemplaza al anterior", () => {
+  it("names the task and the completion on completing; a new one replaces the previous one", () => {
     fc.assert(
       fc.property(
         instant,
@@ -111,7 +111,7 @@ describe("aviso (propiedades)", () => {
   });
 });
 
-// Tareas de los tres tipos, con un historial armado con `completar` en orden.
+// Tasks of the three kinds, with a history built with `complete` in order.
 const MONTH_DAYS_ARBITRARY = fc
   .uniqueArray(fc.integer({ min: 1, max: 31 }), { minLength: 1, maxLength: 6 })
   .map((d) => d.sort((a, b) => a - b));
@@ -161,7 +161,7 @@ const task: fc.Arbitrary<Task> = fc.oneof(
 );
 const scenario = fc.record({
   task,
-  /** Horas desde creadaEn de los completados previos (en orden) y del último. */
+  /** Hours since createdAt of the previous completions (in order) and of the last one. */
   hours: fc
     .array(fc.integer({ min: 0, max: 2_000 }), { maxLength: 8 })
     .map((hs) => hs.sort((a, b) => a - b)),
@@ -170,8 +170,8 @@ const scenario = fc.record({
   queryAfter: fc.integer({ min: 0, max: 3_000 }),
 });
 
-describe("deshacer el último completado (propiedades)", () => {
-  it("borra solo ese completado: el estado y el próximo completado quedan como si no se hubiera completado", () => {
+describe("undoing the last completion (properties)", () => {
+  it("deletes only that completion: the status and the next completion stay as if it had not been completed", () => {
     fc.assert(
       fc.property(
         scenario,

@@ -32,7 +32,7 @@ test.beforeEach(async () => {
   await cleanEmulators();
 });
 
-/** El nombre visible de la tarea en su fila (botón que abre el panel). */
+/** The task's visible name in its row (the button that opens the panel). */
 const name = (page: Page, text: string) =>
   row(page, "Regar").getByRole("button", { name: text, exact: true });
 
@@ -41,7 +41,7 @@ async function save(page: Page) {
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
-/** El botón de la fila de Regar, con o sin el emoji que el último guardado haya llegado a poner en el nombre. */
+/** The button of the Regar row, with or without the emoji the last save may have put in the name. */
 const openWater = (page: Page) =>
   row(page, "Regar").getByRole("button", { name: /Regar$/ });
 
@@ -64,7 +64,7 @@ async function viewPanel(page: Page, emoji: string, note: string) {
   await expect(page.getByLabel("Nota")).toHaveValue(note);
 }
 
-/** Los recientes que muestra el selector, en orden; abre el selector y lo cierra con Cerrar. */
+/** The recents the picker shows, in order; opens the picker and closes it with Cerrar. */
 async function recent(page: Page): Promise<string[]> {
   await openSelector(page);
   const buttons = selectorEmoji(page)
@@ -143,7 +143,7 @@ test("Flujo 1: elegir el emoji y verlo en la fila", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByText("Debajo de la mesa")).toHaveCount(0);
 
-  // Cerrar el selector sin elegir deja el panel sin emoji, con "Cerrar" y con Escape.
+  // Closing the picker without choosing leaves the panel without emoji, with "Cerrar" and with Escape.
   await page.getByRole("button", { name: "+" }).click();
   await expect(
     page.getByRole("heading", { name: "Nueva tarea" }),
@@ -296,7 +296,7 @@ test("Flujo 4: recientes", async ({ browser }) => {
   await openTask(a, "Regar");
   expect(await recent(a)).toEqual(["🌱", "🔥"]);
 
-  // 16 emojis distintos más: los primeros 16 de la grilla (ninguno es 🔥 ni 🌱).
+  // 16 more distinct emoji: the first 16 of the grid (none is 🔥 or 🌱).
   const chosen: string[] = [];
   for (let i = 0; i < 16; i++) {
     await openSelector(a);
@@ -322,7 +322,7 @@ test("Flujo 4: recientes", async ({ browser }) => {
   expect(await recent(a)).toEqual(expected);
   await close(a);
 
-  // B (otro dispositivo, misma cuenta) no recibe los recientes de A.
+  // B (another device, same account) does not receive A's recents.
   await expect(openWater(b)).toBeVisible();
   await openWater(b).click();
   await expect(b.getByRole("heading", { name: "Editar tarea" })).toBeVisible();
@@ -352,7 +352,7 @@ test.describe("sin conexión", () => {
     const external: string[] = [];
     ctx.on("request", (r) => {
       const u = new URL(r.url());
-      // cleardot.gif es el sondeo de red de Firestore (WebChannel), no del selector.
+      // cleardot.gif is Firestore's network probe (WebChannel), not the picker's.
       const isFirestore =
         u.hostname === "www.google.com" &&
         u.pathname === "/images/cleardot.gif";
@@ -366,7 +366,7 @@ test.describe("sin conexión", () => {
     await create(page, { title: "Regar", kind: "No se repite" });
     await expect(name(page, "Regar")).toBeVisible();
 
-    // Con conexión: abrir el selector una vez y cerrarlo.
+    // Online: open the picker once and close it.
     await openTask(page, "Regar");
     await openSelector(page);
     await selectorEmoji(page).getByRole("button", { name: "Cerrar" }).click();
@@ -436,7 +436,7 @@ test("Flujo 6: la nota, solo en el panel", async ({ page }) => {
   await expect(row(page, "Regar")).not.toContainText("guantes");
 });
 
-// --- Flujo 7: reloj detenido para el aviso ---
+// --- Flow 7: clock stopped for the notice ---
 const notice = (page: Page) => page.getByRole("status");
 
 const entry = (page: Page, text: string) =>
@@ -529,7 +529,7 @@ async function openIn(page: Page, emoji: string, note: string) {
   await close(page);
 }
 
-// Con el service worker activo en B, el selector (carga diferida) está en su caché cuando B pierde la conexión.
+// With the service worker active in B, the picker (lazy-loaded) is in its cache when B loses the connection.
 test.describe("dos dispositivos", () => {
   test.use({ serviceWorkers: "allow" });
 
@@ -537,7 +537,7 @@ test.describe("dos dispositivos", () => {
     const { a, b, ctxB, close: end } = await twoDevices(browser);
     await create(a, { title: "Regar", kind: "No se repite" });
     await waitStatus(b, "Regar", "pendiente");
-    // B ya tiene el service worker activo: el selector (carga diferida) está en su caché antes de cortar la red.
+    // B already has the service worker active: the picker (lazy-loaded) is in its cache before the network is cut.
     await controlled(b);
 
     await ctxB.setOffline(true);

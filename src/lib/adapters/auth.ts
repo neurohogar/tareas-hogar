@@ -1,7 +1,7 @@
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 import { auth } from './firebase';
 
-/** Lo único que la UI necesita del usuario de Firebase Auth. */
+/** The only thing the UI needs from the Firebase Auth user. */
 export interface User {
 	uid: string;
 }

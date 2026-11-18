@@ -1,4 +1,4 @@
-// Modelo de dominio (spec §4). Solo lo que usa la rebanada actual.
+// Domain model (spec §4). Only what the current slice uses.
 
 export type Unit = 'horas' | 'dias';
 
@@ -8,21 +8,21 @@ export interface RelativeRecurrence {
 	unit: Unit;
 }
 
-/** De lunes a domingo, en el orden de la semana. */
+/** From Monday to Sunday, in the order of the week. */
 export const WEEKDAYS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'] as const;
 
 export type Weekday = (typeof WEEKDAYS)[number];
 
-/** Spec §4.2: al menos un día de la semana, sin repetir, en el orden de la semana. */
+/** Spec §4.2: at least one weekday, without repeating, in the order of the week. */
 export interface WeeklyRecurrence {
 	mode: 'calendario';
 	weekdays: Weekday[];
 }
 
-/** Los días del mes que se pueden elegir (spec §4.2), de menor a mayor. */
+/** The days of the month that can be chosen (spec §4.2), from lowest to highest. */
 export const MONTH_DAYS: readonly number[] = Array.from({ length: 31 }, (_, index) => index + 1);
 
-/** Spec §4.2: al menos un día del mes (1..31), sin repetir, de menor a mayor. */
+/** Spec §4.2: at least one day of the month (1..31), without repeating, from lowest to highest. */
 export interface MonthlyRecurrence {
 	mode: 'calendario';
 	monthDays: number[];
@@ -32,16 +32,16 @@ export type CalendarRecurrence = WeeklyRecurrence | MonthlyRecurrence;
 
 export type Recurrence = RelativeRecurrence | CalendarRecurrence;
 
-/** Spec §4.1: una ventana diaria [desde, hasta) en la que se puede completar; horas locales "HH:MM", desde < hasta. */
+/** Spec §4.1: a daily window [from, to) in which it can be completed; local "HH:MM" times, from < to. */
 export interface TimeWindow {
 	from: string;
 	to: string;
 }
 
-/** Spec §4.1: una o más ventanas, ordenadas por desde y sin superponerse. */
+/** Spec §4.1: one or more windows, ordered by from and non-overlapping. */
 export type Schedule = TimeWindow[];
 
-/** Spec §4.1 y §5.9: un solo campo; sin él, la tarea no está pospuesta. */
+/** Spec §4.1 and §5.9: a single field; without it, the task is not postponed. */
 export interface Postponement {
 	from: Date;
 	to: Date;
@@ -50,49 +50,49 @@ export interface Postponement {
 export interface RecurringTask {
 	id: string;
 	title: string;
-	/** Spec §4.1: un solo emoji; sin el campo, la tarea no tiene emoji. */
+	/** Spec §4.1: a single emoji; without the field, the task has no emoji. */
 	emoji?: string;
-	/** Spec §4.1: texto libre, ya recortado; sin el campo, la tarea no tiene nota. */
+	/** Spec §4.1: free text, already trimmed; without the field, the task has no note. */
 	note?: string;
-	/** Spec §4.1: una línea, ya recortada; sin el campo, la tarea no tiene primer paso. */
+	/** Spec §4.1: a line, already trimmed; without the field, the task has no first step. */
 	firstStep?: string;
-	/** Spec §4.1 (Pasos): los pasos 2 en adelante, ya recortados y sin vacíos; sin el campo, no hay más pasos. */
+	/** Spec §4.1 (Steps): steps 2 onward, already trimmed and without empties; without the field, there are no more steps. */
 	steps?: string[];
-	/** Spec §4.1 (Pasos): el número del paso en que va la tarea; sin el campo, el paso 1. */
+	/** Spec §4.1 (Steps): the number of the step the task is on; without the field, step 1. */
 	currentStep?: number;
-	/** Spec §4.1 (Versión mínima): una línea, ya recortada; sin el campo, la tarea no tiene versión mínima. */
+	/** Spec §4.1 (Minimal version): a line, already trimmed; without the field, the task has no minimal version. */
 	minimalVersion?: string;
 	kind: 'periodica';
 	recurrence: Recurrence;
-	/** Spec §4.1 y §5.5: sin el campo, se puede completar a cualquier hora. */
+	/** Spec §4.1 and §5.5: without the field, it can be completed at any hour. */
 	schedule?: Schedule;
 	createdAt: Date;
-	/** Spec §4.1 y §5.8: sin el campo (o en false), no está pausada. */
+	/** Spec §4.1 and §5.8: without the field (or false), it is not paused. */
 	paused?: boolean;
-	/** Spec §4.1 y §5.8: la última vez que se reanudó; desde ahí se evalúa como recién creada. */
+	/** Spec §4.1 and §5.8: the last time it was resumed; from then on it is evaluated as just created. */
 	resumedAt?: Date;
 	postponed?: Postponement;
 }
 
-/** Spec §4.1: se hace una sola vez; la fecha límite es un día, a las 00:00 locales. */
+/** Spec §4.1: done only once; the due date is a day, at 00:00 local. */
 export interface OneOffTask {
 	id: string;
 	title: string;
-	/** Spec §4.1: un solo emoji; sin el campo, la tarea no tiene emoji. */
+	/** Spec §4.1: a single emoji; without the field, the task has no emoji. */
 	emoji?: string;
-	/** Spec §4.1: texto libre, ya recortado; sin el campo, la tarea no tiene nota. */
+	/** Spec §4.1: free text, already trimmed; without the field, the task has no note. */
 	note?: string;
-	/** Spec §4.1: una línea, ya recortada; sin el campo, la tarea no tiene primer paso. */
+	/** Spec §4.1: a line, already trimmed; without the field, the task has no first step. */
 	firstStep?: string;
-	/** Spec §4.1 (Pasos): los pasos 2 en adelante, ya recortados y sin vacíos; sin el campo, no hay más pasos. */
+	/** Spec §4.1 (Steps): steps 2 onward, already trimmed and without empties; without the field, there are no more steps. */
 	steps?: string[];
-	/** Spec §4.1 (Pasos): el número del paso en que va la tarea; sin el campo, el paso 1. */
+	/** Spec §4.1 (Steps): the number of the step the task is on; without the field, step 1. */
 	currentStep?: number;
-	/** Spec §4.1 (Versión mínima): una línea, ya recortada; sin el campo, la tarea no tiene versión mínima. */
+	/** Spec §4.1 (Minimal version): a line, already trimmed; without the field, the task has no minimal version. */
 	minimalVersion?: string;
 	kind: 'puntual';
 	dueDate?: Date;
-	/** Spec §4.1 y §5.5: sin el campo, se puede completar a cualquier hora. */
+	/** Spec §4.1 and §5.5: without the field, it can be completed at any hour. */
 	schedule?: Schedule;
 	createdAt: Date;
 	postponed?: Postponement;
@@ -100,15 +100,15 @@ export interface OneOffTask {
 
 export type Task = RecurringTask | OneOffTask;
 
-/** Spec §4.4: una ocurrencia con horario, identificada por su inicio (el día a la hora desde de su ventana). */
+/** Spec §4.4: an occurrence with a schedule, identified by its start (the day at the from time of its window). */
 export interface OccurrenceStart {
 	start: Date;
 }
 
 /**
- * Spec §4.4: una fecha (a las 00:00 locales; sin horario, o de antes de los
- * varios horarios) o el inicio de una ocurrencia con horario. Son formatos
- * distintos: una ventana que empieza a las 00:00 no se confunde con una fecha.
+ * Spec §4.4: a date (at 00:00 local; without a schedule, or from before the
+ * several schedules) or the start of an occurrence with a schedule. They are different
+ * formats: a window that starts at 00:00 is not mistaken for a date.
  */
 export type CoveredOccurrence = Date | OccurrenceStart;
 
@@ -116,10 +116,10 @@ export interface Completion {
 	id: string;
 	taskId: string;
 	completedAt: Date;
-	/** En modo calendario (§5.3, §5.6) y en relativas con varias ventanas (§5.7). */
+	/** In calendar mode (§5.3, §5.6) and in relative tasks with several windows (§5.7). */
 	coveredOccurrence?: CoveredOccurrence;
-	/** Spec §4.4: el paso en que iba la tarea al completarla; solo en tareas de dos pasos o más. */
+	/** Spec §4.4: the step the task was on when it was completed; only in tasks of two steps or more. */
 	stepAtCompletion?: number;
-	/** Spec §4.4: true si fue «Hice la mínima»; sin el campo, el completado fue entero. Se fija al completar. */
+	/** Spec §4.4: true if it was «Hice la mínima»; without the field, the completion was full. */
 	wasMinimal?: boolean;
 }

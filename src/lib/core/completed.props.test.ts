@@ -10,7 +10,7 @@ const instant = fc.integer({ min: 0, max: 4_000_000_000_000 }).map((ms) => new D
 const postponement = fc
 	.tuple(instant, fc.integer({ min: 1, max: 100_000_000 }))
 	.map(([from, duration]) => ({ from, to: new Date(from.getTime() + duration) }));
-/** Puntual o periódica relativa, con o sin posposición, pausada o no. */
+/** One-off or relative recurring, with or without postponement, paused or not. */
 const task = fc
 	.tuple(
 		fc.boolean(),
@@ -31,8 +31,8 @@ const completions = fc.array(
 	{ maxLength: 5 }
 );
 
-describe('clasificarEnPendientes (propiedades)', () => {
-	it('conserva el estado de la tarea y coincide con estaCompletada', () => {
+describe('classifyInPending (properties)', () => {
+	it('keeps the status of the task and matches isCompleted', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				const classified = classifyInPending(t, cs, now);
@@ -42,7 +42,7 @@ describe('clasificarEnPendientes (propiedades)', () => {
 		);
 	});
 
-	it('una tarea sin completados propios nunca está completada', () => {
+	it('a task without completions of its own is never completed', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				fc.pre(completionsOfTask(cs, t.id).length === 0);
@@ -51,7 +51,7 @@ describe('clasificarEnPendientes (propiedades)', () => {
 		);
 	});
 
-	it('una pendiente o atrasada nunca está completada', () => {
+	it('a pending or overdue one is never completed', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				const { kind } = taskStatus(t, cs, now);
@@ -61,7 +61,7 @@ describe('clasificarEnPendientes (propiedades)', () => {
 		);
 	});
 
-	it('una puntual con completados está completada, esté o no pospuesta (§5.1)', () => {
+	it('a one-off with completions is completed, whether or not it is postponed (§5.1)', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				fc.pre(t.kind === 'puntual' && completionsOfTask(cs, t.id).length > 0);
@@ -70,7 +70,7 @@ describe('clasificarEnPendientes (propiedades)', () => {
 		);
 	});
 
-	it('una pospuesta vigente cuya regla propia es pendiente o atrasada no está completada (§5.9)', () => {
+	it('an active postponed one whose own rule is pending or overdue is not completed (§5.9)', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				fc.pre(activePostponement(t, now) !== undefined);
@@ -82,7 +82,7 @@ describe('clasificarEnPendientes (propiedades)', () => {
 		);
 	});
 
-	it('una pausada nunca está completada (§5.8)', () => {
+	it('a paused one is never completed (§5.8)', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				fc.pre(t.kind === 'periodica' && t.paused === true);

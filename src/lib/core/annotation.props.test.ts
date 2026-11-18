@@ -1,4 +1,4 @@
-// Spec §4.5, §5.10 y §6.7: texto de una anotación, contexto al anotar y Editar texto.
+// Spec §4.5, §5.10 and §6.7: text of an annotation, context when annotating and Editar texto.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { annotate, editText, normalizeAnnotationText, type Annotation, type CurrentScreen, type Sense } from './annotation';
@@ -16,8 +16,8 @@ const annotation = fc.record(
 );
 const annotations = fc.uniqueArray(annotation, { selector: ({ id }) => id, maxLength: 3 }) as fc.Arbitrary<Annotation[]>;
 
-describe('normalizarTextoDeAnotacion (propiedades)', () => {
-	it('es idempotente y nunca devuelve saltos de línea, espacios en los bordes ni vacío', () => {
+describe('normalizeAnnotationText (properties)', () => {
+	it('is idempotent and never returns line breaks, spaces at the edges or an empty string', () => {
 		fc.assert(
 			fc.property(text, (typedOne) => {
 				const normalizedValue = normalizeAnnotationText(typedOne);
@@ -30,7 +30,7 @@ describe('normalizarTextoDeAnotacion (propiedades)', () => {
 		);
 	});
 
-	it('sin nada visible no hay texto', () => {
+	it('with nothing visible there is no text', () => {
 		fc.assert(
 			fc.property(fc.string({ unit: fc.constantFrom(' ', '\n', '\r', '\t'), maxLength: 8 }), (blanks) => {
 				expect(normalizeAnnotationText(blanks)).toBeUndefined();
@@ -39,8 +39,8 @@ describe('normalizarTextoDeAnotacion (propiedades)', () => {
 	});
 });
 
-describe('anotar (propiedades)', () => {
-	it('con el panel abierto la pantalla es el Panel de edición y la tarea es la del panel; sin panel, la pantalla actual', () => {
+describe('annotate (properties)', () => {
+	it('with the panel open the screen is the Panel de edición and the task is the panel one; without a panel, the current screen', () => {
 		fc.assert(
 			fc.property(sense, instant, screen, panel, text, (s, now, currentScreen, p, typedOne) => {
 				const done = annotate('a1', s, now, { screen: currentScreen, ...(p && { panel: p }) }, typedOne);
@@ -53,7 +53,7 @@ describe('anotar (propiedades)', () => {
 		);
 	});
 
-	it('el campo texto está si y solo si hay texto', () => {
+	it('the text field is present if and only if there is text', () => {
 		fc.assert(
 			fc.property(sense, instant, screen, text, (s, now, currentScreen, typedOne) => {
 				const done = annotate('a1', s, now, { screen: currentScreen }, typedOne);
@@ -63,8 +63,8 @@ describe('anotar (propiedades)', () => {
 	});
 });
 
-describe('editarTexto (propiedades)', () => {
-	it('cambia solo el texto de esa anotación y deja las demás', () => {
+describe('editText (properties)', () => {
+	it('changes only the text of that annotation and leaves the others', () => {
 		fc.assert(
 			fc.property(annotations, ids, text, (list, id, typedOne) => {
 				const editedItems = editText(list, id, typedOne);
@@ -79,7 +79,7 @@ describe('editarTexto (propiedades)', () => {
 		);
 	});
 
-	it('es idempotente y no revive una anotación que ya no está', () => {
+	it('is idempotent and does not revive an annotation that is no longer there', () => {
 		fc.assert(
 			fc.property(annotations, ids, text, (list, id, typedOne) => {
 				const one = editText(list, id, typedOne);
@@ -91,8 +91,8 @@ describe('editarTexto (propiedades)', () => {
 	});
 });
 
-describe('pantalla Etiquetas guardada (propiedades, spec §4.5)', () => {
-	it('una anotación nueva nunca queda en Etiquetas', () => {
+describe('saved Etiquetas screen (properties, spec §4.5)', () => {
+	it('a new annotation never ends up in Etiquetas', () => {
 		fc.assert(
 			fc.property(sense, instant, screen, panel, text, (s, now, currentScreen, p, typedOne) => {
 				const done = annotate('a1', s, now, { screen: currentScreen, ...(p && { panel: p }) }, typedOne);
@@ -101,7 +101,7 @@ describe('pantalla Etiquetas guardada (propiedades, spec §4.5)', () => {
 		);
 	});
 
-	it('corregir el texto de una guardada en Etiquetas conserva su pantalla', () => {
+	it('correcting the text of one saved in Etiquetas keeps its screen', () => {
 		fc.assert(
 			fc.property(instant, text, (at, typedOne) => {
 				const stored: Annotation = { id: 'a1', sense: 'Me sirvió', annotatedAt: at, screen: 'Etiquetas' };

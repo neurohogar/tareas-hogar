@@ -1,30 +1,30 @@
-// Oráculo independiente del filtro de equivalentes: clasifica una fila con las
-// reglas de docs/spec.md (§5.2 estado relativo; §5.3 estado y cobertura en modo
-// calendario; §4.1 y §4.2 validez al crear; §5.1 estado de la puntual; §5.5–§5.7
-// horario, con una o más ventanas, y el checkbox fuera de ellas, §6.1; §5.8 pausa y reanudación, y el botón
-// de pausa del panel, §6.2; §5.9 posponer, y su botón y su texto en el panel, §6.2), leyendo el texto de los pasos del Gherkin. NO importa el core ni los step
-// handlers: si lo hiciera, la implementación juzgaría a sus propios tests y
-// ningún sobreviviente (ni siquiera uno que revele un bug) sería visible.
-// Si no reconoce un paso o un valor, devuelve undefined (no se filtra).
+// Independent oracle for the equivalent-mutation filter: classifies a row with the
+// rules of docs/spec.md (§5.2 relative state; §5.3 state and coverage in calendar
+// mode; §4.1 and §4.2 validity on creation; §5.1 one-off state; §5.5–§5.7
+// schedule, with one or more windows, and the checkbox outside them, §6.1; §5.8 pause and resume, and the pause button
+// of the panel, §6.2; §5.9 postpone, and its button and text in the panel, §6.2), reading the text of the Gherkin steps. It does NOT import the core or the step
+// handlers: if it did, the implementation would judge its own tests and
+// no survivor (not even one that reveals a bug) would be visible.
+// If it does not recognize a step or a value, it returns undefined (not filtered).
 
 export interface StepOracle {
 	text: string;
 }
 export type RowOracle = Record<string, string>;
-/** Lo que los Then del escenario observan además del tipo de estado. */
+/** What the scenario's Thens observe besides the state kind. */
 export interface Observes {
 	progress: boolean;
-	/** Si el checkbox de la fila está habilitado (§6.1, §5.5). */
+	/** Whether the row's checkbox is enabled (§6.1, §5.5). */
 	checkbox?: boolean;
-	/** Si no hay Then sobre el tipo de estado, el progreso ni la aparición: solo el checkbox (§6.1, §5.5). */
+	/** If there is no Then about the state kind, progress or appearance: only the checkbox (§6.1, §5.5). */
 	onlyCheckbox?: boolean;
-	/** Si ningún Then distingue pendiente de atrasada: Pendientes muestra las dos igual (§6.1). */
+	/** If no Then tells pending from overdue apart: Pending shows both the same (§6.1). */
 	onlyAppearance?: boolean;
-	/** Si un Then afirma la ocurrencia que cubrió el completado nuevo (§5.3), además del estado consultado. */
+	/** If a Then asserts the occurrence covered by the new completion (§5.3), besides the queried state. */
 	covered?: boolean;
-	/** Si un Then afirma el valor guardado de `pospuesta` (§4.1). */
+	/** If a Then asserts the stored value of `pospuesta` (§4.1). */
 	postponed?: boolean;
-	/** Si un Then afirma lo que el panel dice de la posposición (§6.2). */
+	/** If a Then asserts what the panel says about the postponement (§6.2). */
 	panelText?: boolean;
 }
 
@@ -41,12 +41,12 @@ export function date(value: string): number | undefined {
 	return exact ? f.getTime() : undefined;
 }
 
-/** Spec §4.2: N entero ≥ 1. */
+/** Spec §4.2: integer N ≥ 1. */
 export function intervalValid(every: string | undefined): boolean {
 	return every !== undefined && WHOLE_POSITIVE.test(every) && Number(every) >= 1;
 }
 
-/** "cada N dias" equivale a N × 24 horas (§5). */
+/** "cada N dias" is equivalent to N × 24 hours (§5). */
 export function intervalMs(every: string | undefined, unit: string | undefined): number | undefined {
 	if (!intervalValid(every)) return undefined;
 	if (unit === 'horas') return Number(every) * HOUR_MS;
@@ -54,10 +54,10 @@ export function intervalMs(every: string | undefined, unit: string | undefined):
 	return undefined;
 }
 
-/** §4.2: una relativa con intervalo inválido no se crea (el escenario falla, no clasifica). */
+/** §4.2: a relative task with an invalid interval is not created (the scenario fails, it does not classify). */
 const intervalDeclaredValid = (s: { every?: string; unit?: string }) => s.every === undefined || intervalMs(s.every, s.unit) !== undefined;
 
-/** Recurrencia de calendario (§4.2): días de la semana (nombres) o días del mes. */
+/** Calendar recurrence (§4.2): weekdays (names) or month days. */
 export type Calendar = { weekly: string[] } | { monthly: number[] };
 
 export interface Situation {
@@ -66,38 +66,38 @@ export interface Situation {
 	completions: number[];
 	now?: number;
 	anyMoment: boolean;
-	/** Título y motivos de rechazo propios de la forma; sin motivos y con título, se crea. */
+	/** Title and rejection reasons specific to the shape; with no reasons and a title, it is created. */
 	creation?: { title: string; reasons: string[] };
 	calendar?: Calendar;
 	created?: Date;
-	/** Ocurrencias cubiertas sin hora (días) por los completados registrados, en orden. */
+	/** Covered occurrences without a time (days) by the recorded completions, in order. */
 	covered: Date[];
-	/** §4.4: ocurrencias cubiertas con hora (con horario), por su inicio. */
+	/** §4.4: covered occurrences with a time (with a schedule), by their start. */
 	coveredWithHour?: number[];
-	/** Días de los completados hechos antes de ser de calendario (sin ocurrenciaCubierta); §5.3 los suma a P. */
+	/** Days of completions made before being calendar-based (without ocurrenciaCubierta); §5.3 adds them to P. */
 	withoutCovered: Date[];
-	/** Ocurrencia que cubrió el completado hecho por "completo la tarea". */
+	/** Occurrence covered by the completion made by "completo la tarea". */
 	coveredNew?: Date;
-	/** Tarea puntual (§5.1): su fecha límite, si la tiene; `cualquiera` si el escenario dice que no influye. */
+	/** One-off task (§5.1): its due date, if it has one; `cualquiera` if the scenario says it does not matter. */
 	oneOff?: { limit?: Date; any?: boolean };
-	/** §4.1 y §5.5: las ventanas diarias en las que se puede completar, ordenadas. */
+	/** §4.1 and §5.5: the daily windows in which it can be completed, sorted. */
 	schedule?: TimeWindow[];
-	/** §5.8: pausada; y el momento de la última reanudación (los completados anteriores ya no cuentan). */
+	/** §5.8: paused; and the moment of the last resume (earlier completions no longer count). */
 	paused?: boolean;
 	resumed?: number;
-	/** Hay una ocurrencia cubierta declarada sin el momento de su completado: no se sabe si es anterior a reanudar. */
+	/** There is a covered occurrence declared without the moment of its completion: it is unknown whether it predates the resume. */
 	coveredWithoutMoment?: boolean;
-	/** §5.8: un completado posterior a reanudar con un momento anterior a reanudadaEn: reanudadaEn es ahora, así que no puede pasar. */
+	/** §5.8: a completion after resuming with a moment earlier than reanudadaEn: reanudadaEn is now, so it cannot happen. */
 	anachronistic?: boolean;
-	/** §6.2: se abrió el panel de edición; se observa el botón de pausa que ofrece. */
+	/** §6.2: the edit panel was opened; the pause button it offers is observed. */
 	panel?: boolean;
-	/** §5.9: la posposición guardada. */
+	/** §5.9: the stored postponement. */
 	postponed?: Postponement;
-	/** §6.2: el panel se abrió en `ahora`; se observa su botón de posponer. */
+	/** §6.2: the panel was opened at `ahora`; its postpone button is observed. */
 	postponePanel?: boolean;
 }
 
-// ---- Spec §5.9: posponer ----
+// ---- Spec §5.9: postpone ----
 
 export interface Postponement {
 	from: number;
@@ -109,7 +109,7 @@ const OPTION_HOURS = new Map([
 	['3 horas', 3]
 ]);
 
-/** §5.9: pospuesta = { desde: ahora, hasta }; "hasta mañana" son las 07:00 del día local siguiente. */
+/** §5.9: pospuesta = { desde: ahora, hasta }; "hasta mañana" is 07:00 of the next local day. */
 export function postponementOf(option: string, value: string): Postponement | undefined {
 	const from = date(value);
 	if (from === undefined) return undefined;
@@ -121,9 +121,9 @@ export function postponementOf(option: string, value: string): Postponement | un
 	return hours === undefined ? undefined : { from, to: from + hours * HOUR_MS };
 }
 
-// ---- Spec §4.1, §5.5, §5.6 y §5.7: horario ----
+// ---- Spec §4.1, §5.5, §5.6 and §5.7: schedule ----
 
-/** Una ventana diaria [desde, hasta), en minutos desde las 00:00 locales. */
+/** A daily window [desde, hasta), in minutes since local 00:00. */
 export interface TimeWindow {
 	from: number;
 	to: number;
@@ -131,7 +131,7 @@ export interface TimeWindow {
 
 const HOUR_AND_MINUTE = /^(\d{2}):(\d{2})$/;
 
-/** "HH:MM" de 24 h, en minutos; undefined si no es una hora. */
+/** 24-hour "HH:MM", in minutes; undefined if it is not a time. */
 export function hourMinutes(value: string | undefined): number | undefined {
 	const parts = value === undefined ? null : HOUR_AND_MINUTE.exec(value);
 	if (!parts) return undefined;
@@ -139,7 +139,7 @@ export function hourMinutes(value: string | undefined): number | undefined {
 	return hour < 24 && minute < 60 ? hour * 60 + minute : undefined;
 }
 
-/** §4.1: con las dos horas y desde < hasta, la ventana; si no, los motivos de rechazo. */
+/** §4.1: with both times and desde < hasta, the window; otherwise, the rejection reasons. */
 function readTimeWindow(from: string | undefined, to: string | undefined): TimeWindow | string[] {
 	const d = hourMinutes(from);
 	const h = hourMinutes(to);
@@ -148,9 +148,9 @@ function readTimeWindow(from: string | undefined, to: string | undefined): TimeW
 }
 
 /**
- * §4.1: las ventanas escritas, ordenadas por desde, o todos los motivos de rechazo (el spec no dice cuál se
- * muestra si hay varios: con más de uno, la fila no se decide como equivalente a una con uno solo). Dos
- * ventanas se superponen si una empieza antes de que termine la otra; contiguas, no.
+ * §4.1: the written windows, sorted by desde, or all the rejection reasons (the spec does not say which one is
+ * shown if there are several: with more than one, the row is not decided as equivalent to one with a single one). Two
+ * windows overlap if one starts before the other ends; contiguous ones do not.
  */
 export function readSchedule(written: [string | undefined, string | undefined][]): TimeWindow[] | string[] {
 	const read = written.map(([d, h]) => readTimeWindow(d, h));
@@ -160,23 +160,23 @@ export function readSchedule(written: [string | undefined, string | undefined][]
 	return reasons.length > 0 ? reasons : timeWindows;
 }
 
-/** Un horario de un paso Given: válido, o undefined. */
+/** A schedule from a Given step: valid, or undefined. */
 export function scheduleValid(written: [string, string][]): TimeWindow[] | undefined {
 	const read = readSchedule(written);
 	return read.every((v) => typeof v !== 'string') ? (read as TimeWindow[]) : undefined;
 }
 
-/** Una o dos ventanas de un paso: "de D a H" o "de D a H y de D2 a H2". */
+/** One or two windows from a step: "de D a H" or "de D a H y de D2 a H2". */
 export const SCHEDULE = 'de (\\S+) a (\\S+)(?: y de (\\S+) a (\\S+))?';
 
-/** Las ventanas que nombran las capturas de HORARIO. */
+/** The windows named by the HORARIO captures. */
 export const writtenOf = ([d, h, d2, h2]: (string | undefined)[]): [string, string][] =>
 	(d2 === undefined ? [[d, h]] : [[d, h], [d2, h2]]) as [string, string][];
 
-/** El instante del día `d` a esos minutos, hora local. */
+/** The instant of day `d` at those minutes, local time. */
 const atMinutes = (d: Date, minutes: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, minutes).getTime();
 
-/** Una ventana en un día (§5.6: una ocurrencia), en ms. */
+/** A window on a day (§5.6: one occurrence), in ms. */
 export interface Occurrence {
 	opens: number;
 	closes: number;
@@ -184,11 +184,11 @@ export interface Occurrence {
 
 const occurrencesOf = (vs: TimeWindow[], d: Date): Occurrence[] => vs.map((v) => ({ opens: atMinutes(d, v.from), closes: atMinutes(d, v.to) }));
 
-/** Las ventanas de los días del instante, en orden: `desde` días antes hasta `hasta` días después. */
+/** The windows of the instant's days, in order: `desde` days before to `hasta` days after. */
 const timeWindowsAround = (vs: TimeWindow[], instant: number, from: number, to: number) =>
 	Array.from({ length: to - from + 1 }, (_, i) => occurrencesOf(vs, addDays(dayStart(instant), from + i))).flat();
 
-/** §5.5: A, el primer instante ≥ t dentro de una ventana, y C, el hasta de esa ventana. */
+/** §5.5: A, the first instant ≥ t within a window, and C, the hasta of that window. */
 export function availableAndClosing(vs: TimeWindow[], t: number): { a: number; c: number } {
 	const timeWindow = timeWindowsAround(vs, t, 0, 1).find(({ closes }) => t < closes) as Occurrence;
 	return { a: Math.max(t, timeWindow.opens), c: timeWindow.closes };
@@ -196,17 +196,17 @@ export function availableAndClosing(vs: TimeWindow[], t: number): { a: number; c
 
 export const insideOfTimeWindow = (vs: TimeWindow[], t: number) => availableAndClosing(vs, t).a === t;
 
-/** El hasta de la última ventana del día `d`. */
+/** The hasta of the last window of day `d`. */
 export const closingOf = (vs: TimeWindow[], d: Date) => atMinutes(d, Math.max(...vs.map((v) => v.to)));
 
-/** §5.5 en un momento: el estado, el instante que lo ordena (§6.1) y, en espera, del inicio a la vuelta. */
+/** §5.5 at a moment: the state, the instant that orders it (§6.1) and, when waiting, from the start to the return. */
 export interface WithSchedule {
 	group: 'atrasada' | 'pendiente' | 'en espera';
 	instant?: number;
 	wait?: { start: number; returns: number };
 }
 
-/** Atrasada desde el atraso; antes de A, en espera hasta A desde el inicio de espera; si no, pendiente desde A. */
+/** Overdue from the overdue point; before A, waiting until A from the waiting start; otherwise, pending from A. */
 function perDeadlines(a: number, lateness: number, start: number, now: number): WithSchedule {
 	if (now >= lateness) return { group: 'atrasada', instant: lateness };
 	if (now < a) return { group: 'en espera', instant: a, wait: { start, returns: a } };
@@ -214,21 +214,21 @@ function perDeadlines(a: number, lateness: number, start: number, now: number): 
 }
 
 /**
- * §5.5, periódica: T (pasaría a pendiente sin horario), el inicio de espera y el atraso sin horario de §5.2. Atrasada
- * desde el primero entre C y ese atraso; antes de A, en espera hasta A; si no, pendiente desde A.
+ * §5.5, recurring: T (would become pending without a schedule), the waiting start and the overdue point without a schedule of §5.2. Overdue
+ * from the first of C and that overdue point; before A, waiting until A; otherwise, pending from A.
  */
 export function recurringWithSchedule(vs: TimeWindow[], t: number, start: number, latenessWithoutSchedule: number | undefined, now: number): WithSchedule {
 	const { a, c } = availableAndClosing(vs, t);
 	return perDeadlines(a, Math.min(c, latenessWithoutSchedule ?? Infinity), start, now);
 }
 
-/** §5.6 y §5.7: A es el inicio de N y el atraso, su hasta (C). */
+/** §5.6 and §5.7: A is the start of N and the overdue point is its hasta (C). */
 export const perOccurrence = (n: Occurrence, start: number, now: number) => perDeadlines(n.opens, n.closes, start, now);
 
 /**
- * §5.5 y §5.7, puntual: con fecha límite, atrasada desde el hasta de la última ventana de ese día. Si no, antes de A
- * espera desde creadaEn; después, dentro de una ventana está pendiente (ordenada por su fecha límite, §6.1) y fuera
- * espera desde el hasta anterior hasta el desde de la próxima.
+ * §5.5 and §5.7, one-off: with a due date, overdue from the hasta of the last window of that day. Otherwise, before A
+ * waiting from creadaEn; afterwards, within a window it is pending (ordered by its due date, §6.1) and outside it
+ * waits from the previous hasta until the next desde.
  */
 export function oneOffWithSchedule(vs: TimeWindow[], created: number, limit: Date | undefined, now: number): WithSchedule {
 	const lateness = limit && closingOf(vs, limit);
@@ -241,13 +241,13 @@ export function oneOffWithSchedule(vs: TimeWindow[], created: number, limit: Dat
 	return { group: 'en espera', instant: returns, wait: { start: closed, returns } };
 }
 
-/** El último instante del día: cubre cualquier ocurrencia de ese día (§5.6, valores sin hora). */
+/** The last instant of the day: covers any occurrence of that day (§5.6, values without a time). */
 const dayEnd = (d: Date) => addDays(d, 1).getTime() - 1;
 
 /**
- * §5.6, P con horario, en ms: la mayor entre las ocurrencias cubiertas con hora (instantes) y los valores sin hora
- * (días cubiertos y días de completadoEn sin ocurrenciaCubierta), que cubren el día entero; sin ninguno, el día
- * anterior a la creación entero.
+ * §5.6, P with a schedule, in ms: the greatest of the covered occurrences with a time (instants) and the values without a time
+ * (covered days and days of completadoEn without ocurrenciaCubierta), which cover the whole day; with none, the whole day
+ * before creation.
  */
 export function pWithSchedule(days: Date[], starts: number[], created: Date | undefined): number | undefined {
 	const contributions = [...days.map(dayEnd), ...starts];
@@ -256,8 +256,8 @@ export function pWithSchedule(days: Date[], starts: number[], created: Date | un
 }
 
 /**
- * §5.6: N, la primera ocurrencia (día de ocurrencia × ventana) con inicio posterior a P. §5.8: una ocurrencia
- * cuya ventana cerró antes de reanudadaEn (o justo al reanudar: la ventana es [desde, hasta)) no cuenta.
+ * §5.6: N, the first occurrence (occurrence day × window) starting after P. §5.8: an occurrence
+ * whose window closed before reanudadaEn (or right at resume: the window is [desde, hasta)) does not count.
  */
 export function calendarNext(calendar: Calendar, vs: TimeWindow[], p: number, resumed = -Infinity): Occurrence | undefined {
 	return Array.from({ length: 33 }, (_, i) => addDays(dayStart(p), i))
@@ -266,22 +266,22 @@ export function calendarNext(calendar: Calendar, vs: TimeWindow[], p: number, re
 		.find(({ opens, closes }) => opens > p && closes > resumed);
 }
 
-/** §5.7: una relativa con más de una ventana y el intervalo en días se completa una vez por ventana. */
+/** §5.7: a relative task with more than one window and the interval in days is completed once per window. */
 export const byTimeWindow = (unit: string | undefined, vs: TimeWindow[]) => unit === 'dias' && vs.length > 1;
 
-/** §5.7, N de una relativa por ventana nunca completada: la primera ventana cuyo hasta es posterior a la creación. */
+/** §5.7, N of a relative task per window never completed: the first window whose hasta is after creation. */
 export const firstWithoutClose = (vs: TimeWindow[], created: number) =>
 	timeWindowsAround(vs, created, 0, 1).find(({ closes }) => closes > created) as Occurrence;
 
-/** §5.7, N de una relativa por ventana: la primera ventana con inicio posterior a P del día de P o de `cada` días después. */
+/** §5.7, N of a relative task per window: the first window starting after P on P's day or `cada` days later. */
 export function nextByTimeWindow(vs: TimeWindow[], every: number, p: number): Occurrence {
 	const days = [0, every].map((n) => addDays(dayStart(p), n));
 	return days.flatMap((d) => occurrencesOf(vs, d)).find(({ opens }) => opens > p) as Occurrence;
 }
 
 /**
- * §5.6 y §5.7: el inicio de la ocurrencia que cubre un completado nuevo: antes del hasta de N, N; si no, la más
- * reciente con inicio ≤ ahora entre los días que cuentan (de calendario, sus días de ocurrencia; relativa, cualquiera).
+ * §5.6 and §5.7: the start of the occurrence covered by a new completion: before the hasta of N, N; otherwise, the most
+ * recent one with start ≤ ahora among the days that count (calendar: its occurrence days; relative: any).
  */
 export function startThatCovers(n: Occurrence, vs: TimeWindow[], account: (d: Date) => boolean, now: number): number {
 	if (now < n.closes) return n.opens;
@@ -295,7 +295,7 @@ export const WEEKDAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', '
 export const NUMBER = /^-?\d+(\.\d+)?$/;
 const ONLY_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-/** ISO-8601 sin hora: el inicio de ese día local. */
+/** ISO-8601 without a time: the start of that local day. */
 export function day(value: string): Date | undefined {
 	const parts = ONLY_DATE.exec(value);
 	const moment = parts ? date(`${value}T00:00:00`) : undefined;
@@ -308,18 +308,18 @@ const lastDayOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 
 export const isoDay = (d: Date) =>
 	`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-/** §4.2: un día del mes que no existe en ese mes cae en su último día. */
+/** §4.2: a month day that does not exist in that month falls on its last day. */
 export function occurs(calendar: Calendar, d: Date): boolean {
 	if ('weekly' in calendar) return calendar.weekly.includes(WEEKDAYS[d.getDay()]);
 	return calendar.monthly.some((chosen) => Math.min(chosen, lastDayOfMonth(d)) === d.getDate());
 }
 
-/** La primera ocurrencia posterior al día `p` (N). */
+/** The first occurrence after day `p` (N). */
 export function firstLater(calendar: Calendar, p: Date): Date | undefined {
 	return Array.from({ length: 31 }, (_, i) => addDays(p, i + 1)).find((d) => occurs(calendar, d));
 }
 
-/** §5.3: en (P, hoy] la más reciente; si no hay ninguna, N. */
+/** §5.3: in (P, today] the most recent; if there is none, N. */
 export function occurrenceThatCovers(calendar: Calendar, p: Date, today: Date): Date | undefined {
 	const between = [];
 	for (let d = today; d > p; d = addDays(d, -1)) between.push(d);
@@ -327,18 +327,18 @@ export function occurrenceThatCovers(calendar: Calendar, p: Date, today: Date): 
 }
 
 /**
- * §5.3, P: la mayor entre las ocurrencias cubiertas y los días de completadoEn de los completados sin
- * ocurrenciaCubierta; si no hay completados, el día anterior a la creación.
+ * §5.3, P: the greatest of the covered occurrences and the days of completadoEn of completions without
+ * ocurrenciaCubierta; if there are no completions, the day before creation.
  */
 export function lastCovered(s: Situation): Date | undefined {
-	// Sin horario, el spec no dice cómo cuenta una ocurrencia cubierta con hora (§5.3 habla de días).
+	// Without a schedule, the spec does not say how a covered occurrence with a time counts (§5.3 speaks of days).
 	if ((s.coveredWithHour ?? []).length > 0) return undefined;
 	const contributions = [...s.covered, ...s.withoutCovered];
 	if (contributions.length > 0) return new Date(Math.max(...contributions.map((d) => d.getTime())));
 	return s.created && addDays(dayStart(s.created.getTime()), -1);
 }
 
-/** Lista separada por comas; undefined si algún elemento está vacío. */
+/** Comma-separated list; undefined if any element is empty. */
 export function elements(value: string): string[] | undefined {
 	const parts = value.split(',').map((part) => part.trim());
 	return parts.some((part) => part === '') ? undefined : parts;
@@ -363,7 +363,7 @@ const MOMENT = (value: string) => date(value);
 function record(s: Situation, value: string): boolean {
 	const moment = MOMENT(value);
 	if (moment === undefined) return false;
-	// §5.8: reanudadaEn es el momento de reanudar, y un completado posterior no puede tener un momento anterior.
+	// §5.8: reanudadaEn is the moment of resuming, and a later completion cannot have an earlier moment.
 	if (s.resumed !== undefined && moment < s.resumed) {
 		s.anachronistic = true;
 		return true;
@@ -381,7 +381,7 @@ function record(s: Situation, value: string): boolean {
 	return true;
 }
 
-/** §5.6 y §5.7: el completado guarda el inicio de la ocurrencia que cubre. */
+/** §5.6 and §5.7: the completion stores the start of the occurrence it covers. */
 function recordWithSchedule(s: Situation, vs: TimeWindow[], moment: number): boolean {
 	const n = nextWithSchedule(s, vs);
 	if (!n) return false;
@@ -391,7 +391,7 @@ function recordWithSchedule(s: Situation, vs: TimeWindow[], moment: number): boo
 	return true;
 }
 
-/** "completo la tarea el <t>": además, es el completado nuevo cuya cobertura se verifica. */
+/** "completo la tarea el <t>": it is also the new completion whose coverage is verified. */
 function complete(s: Situation, value: string): boolean {
 	const before = s.covered.length;
 	if (!record(s, value)) return false;
@@ -400,8 +400,8 @@ function complete(s: Situation, value: string): boolean {
 }
 
 /**
- * §5.8: reanudar quita la pausa y desde ahí la tarea se evalúa como recién creada en reanudadaEn: con creadaEn =
- * reanudadaEn y sin los completados anteriores. Si algún completado no es anterior (o no se sabe), no se modela.
+ * §5.8: resuming removes the pause and from then on the task is evaluated as just created at reanudadaEn: with creadaEn =
+ * reanudadaEn and without the earlier completions. If some completion is not earlier (or unknown), it is not modeled.
  */
 function resumeSituation(s: Situation, value: string): boolean {
 	const moment = MOMENT(value);
@@ -418,7 +418,7 @@ function declare(s: Situation, calendar: Calendar | undefined, created?: string)
 	return calendar !== undefined && (created === undefined || s.created !== undefined);
 }
 
-/** §4.4: una ocurrencia cubierta es una fecha (sin hora) o el inicio de una ocurrencia (con hora). */
+/** §4.4: a covered occurrence is a date (without a time) or the start of an occurrence (with a time). */
 function coveredDeclared(s: Situation, covered: string, moment?: string): boolean {
 	const d = day(covered);
 	const start = MOMENT(covered);
@@ -430,24 +430,24 @@ function coveredDeclared(s: Situation, covered: string, moment?: string): boolea
 	return (d !== undefined || start !== undefined) && (moment === undefined || completedAt !== undefined);
 }
 
-/** Creación de calendario: motivos de rechazo de los días y título. */
+/** Calendar creation: rejection reasons for the days and the title. */
 function createCalendar(s: Situation, title: string, reasons: string[] | undefined): boolean {
 	if (reasons) s.creation = { title, reasons };
 	return reasons !== undefined;
 }
 
 const reasonsWeek = (value: string) => (weekdays(value) ? [] : undefined);
-/** §4.2: cada día del mes es un entero entre 1 y 31; si no, se rechaza toda la tarea. */
+/** §4.2: each month day is an integer between 1 and 31; otherwise the whole task is rejected. */
 export function reasonsMonth(value: string): string[] | undefined {
 	const list = elements(value);
 	if (!list?.every((d) => NUMBER.test(d))) return undefined;
 	return list.every((d) => isDayOfMonth(Number(d))) ? [] : ['día del mes inválido'];
 }
 
-/** §4.1: la fecha límite debe ser una fecha AAAA-MM-DD que existe; el pasado se acepta. */
+/** §4.1: the due date must be an existing YYYY-MM-DD date; the past is accepted. */
 export const reasonsDueDate = (value: string) => (day(value) ? [] : ['fecha límite inválida']);
 
-/** §4.1: vacío o solo espacios es sin emoji; si no, exactamente un grafema emoji (pictograma, bandera o keycap). */
+/** §4.1: empty or only spaces means no emoji; otherwise exactly one emoji grapheme (pictogram, flag or keycap). */
 export function reasonsEmoji(value: string): string[] {
 	const written = value.trim();
 	const graphemes = [...new Intl.Segmenter('es', { granularity: 'grapheme' }).segment(written)].length;
@@ -456,7 +456,7 @@ export function reasonsEmoji(value: string): string[] {
 	return written === '' || emoji ? [] : ['emoji inválido'];
 }
 
-/** Puntual declarada: con fecha límite válida, sin ella, o con una cualquiera. */
+/** Declared one-off: with a valid due date, without one, or with any one. */
 function declareOneOff(s: Situation, limit?: string): boolean {
 	const d = limit === undefined ? undefined : day(limit);
 	s.oneOff = { limit: d };
@@ -465,25 +465,25 @@ function declareOneOff(s: Situation, limit?: string): boolean {
 
 const ONE_OFF_COMPLETIONS: Record<string, number> = { 'un completado': 1, 'dos completados': 2 };
 
-/** Completados ya registrados cuyo momento el escenario dice que no influye (§5.1). */
+/** Already recorded completions whose moment the scenario says does not matter (§5.1). */
 function hasCompletions(s: Situation, count: string): boolean {
 	s.completions.push(...Array.from({ length: ONE_OFF_COMPLETIONS[count] }, () => 0));
 	return true;
 }
 
-/** §4.1: los motivos de rechazo del horario escrito al crear (ninguno si es válido). */
+/** §4.1: the rejection reasons for the schedule written on creation (none if valid). */
 function scheduleReasons(written: [string | undefined, string | undefined][]): string[] {
 	const read = readSchedule(written);
 	return read.filter((reason): reason is string => typeof reason === 'string');
 }
 
-/** §4.1: una relativa en horas no puede tener más de una ventana. */
+/** §4.1: a relative task in hours cannot have more than one window. */
 const relativeReasons = (every: string, unit: string, written: unknown[]) => [
 	...(intervalValid(every) ? [] : ['intervalo inválido']),
 	...(unit === 'horas' && written.length > 1 ? ['varios horarios en una relativa en horas'] : [])
 ];
 
-/** Un horario ya guardado: tiene que ser válido, también para el intervalo de una relativa (§4.1). */
+/** An already stored schedule: it has to be valid, also for a relative task's interval (§4.1). */
 function declareSchedule(s: Situation, written: [string, string][]): boolean {
 	s.schedule = scheduleValid(written);
 	return s.schedule !== undefined && !(s.unit === 'horas' && s.schedule.length > 1);
@@ -495,7 +495,7 @@ function declareCreated(s: Situation, created: string): boolean {
 	return moment !== undefined;
 }
 
-/** Horario (§4.1, §5.5), antes que las reglas generales: sus pasos también terminan en texto libre. */
+/** Schedule (§4.1, §5.5), before the general rules: its steps also end in free text. */
 const SCHEDULE_RULES: Rule[] = [
 	[new RegExp(`^la tarea se puede completar ${SCHEDULE}$`), (s, hours) => declareSchedule(s, writtenOf(hours))],
 	[/^una tarea puntual sin fecha límite creada el (\S+)$/, (s, [c]) => declareOneOff(s) && declareCreated(s, c)],
@@ -505,7 +505,7 @@ const SCHEDULE_RULES: Rule[] = [
 		(s, [n, u, c]) => (Object.assign(s, { every: n, unit: u }), declareCreated(s, c))
 	],
 	[/^consulto Pendientes el (\S+)$/, (s, [t]) => ((s.now = MOMENT(t)), s.now !== undefined)],
-	// El check no cambia el estado ni el checkbox de la tarea (§6.1).
+	// The check changes neither the task's state nor its checkbox (§6.1).
 	[/^Mostrar completadas está encendido$/, () => true],
 	[
 		new RegExp(`^creo una tarea puntual con título (.*) y horario ${SCHEDULE}$`),
@@ -531,7 +531,7 @@ const SCHEDULE_RULES: Rule[] = [
 		new RegExp(`^creo una tarea periódica relativa con título (.*) cada (\\S+) (\\S+) y horario ${SCHEDULE}$`),
 		(s, [t, c, u, ...hours]) => {
 			const written = writtenOf(hours);
-			// Un error del horario mismo tiene prioridad sobre el de la relativa en horas: con él, el spec no decide cuál se ve.
+			// An error in the schedule itself takes priority over that of the relative task in hours: with it, the spec does not decide which one is seen.
 			const ofSchedule = scheduleReasons(written);
 			const ofRelative = relativeReasons(c, u, written);
 			if (ofSchedule.length > 0 && ofRelative.includes('varios horarios en una relativa en horas')) return false;
@@ -549,12 +549,12 @@ const SCHEDULE_RULES: Rule[] = [
 
 const RULES: Rule[] = [
 	...SCHEDULE_RULES,
-	// Puntual (§4.1 y §5.1).
+	// One-off (§4.1 and §5.1).
 	[/^una tarea puntual sin fecha límite$/, (s) => declareOneOff(s)],
 	[/^una tarea puntual con fecha límite (\S+)$/, (s, [l]) => declareOneOff(s, l)],
 	[/^una tarea puntual con una fecha límite cualquiera$/, (s) => void (s.oneOff = { any: true })],
 	[/^la tarea tiene (un completado|dos completados)$/, (s, [c]) => hasCompletions(s, c)],
-	// Creada con una fecha límite válida y consultada: creadaEn no influye en el estado (§5.1).
+	// Created with a valid due date and queried: creadaEn does not influence the state (§5.1).
 	[/^creo el (\S+) una tarea puntual con un título válido y fecha límite (\S+)$/, (s, [, l]) => declareOneOff(s, l)],
 	[
 		/^creo una tarea puntual con título (.*) y fecha límite (\S+)$/,
@@ -575,9 +575,9 @@ const RULES: Rule[] = [
 	],
 	[/^una tarea periódica relativa cada (\S+) (\S+)$/, (s, [c, u]) => void Object.assign(s, { every: c, unit: u })],
 	[/^una tarea periódica relativa nunca completada$/, () => undefined],
-	// §4.1 y §5: el primer paso no tiene estado: no cambia el estado de la tarea.
+	// §4.1 and §5: the first step has no state: it does not change the task's state.
 	[/^el primer paso de la tarea es (.*)$/, () => undefined],
-	// §4.1 y §5: la versión mínima no tiene estado: no cambia el estado de la tarea.
+	// §4.1 and §5: the minimal version has no state: it does not change the task's state.
 	[/^la versión mínima de la tarea es (.*)$/, () => undefined],
 	[/^la tarea fue completada el (\S+)$/, (s, [t]) => record(s, t)],
 	[/^completo la tarea el (\S+)$/, (s, [t]) => complete(s, t)],
@@ -600,7 +600,7 @@ const RULES: Rule[] = [
 		(s, [c]) =>
 			void (s.creation = { title: 'Regar plantas', reasons: intervalValid(c) ? [] : ['intervalo inválido'] })
 	],
-	// Estado y completado de calendario (§5.3). Con completados, creadaEn no influye.
+	// Calendar state and completion (§5.3). With completions, creadaEn does not influence.
 	[/^una tarea periódica semanal los (.*) creada el (\S+)$/, (s, [d, c]) => declare(s, weekdays(d), c)],
 	[/^una tarea periódica mensual los días (.*) creada el (\S+)$/, (s, [d, c]) => declare(s, monthDays(d), c)],
 	[/^una tarea periódica semanal los (.*)$/, (s, [d]) => declare(s, weekdays(d))],
@@ -608,15 +608,15 @@ const RULES: Rule[] = [
 	[/^la tarea tiene un completado del (\S+) que cubre el (\S+)$/, (s, [t, c]) => coveredDeclared(s, c, t)],
 	[/^la tarea tiene un completado que cubre el (\S+)$/, (s, [c]) => coveredDeclared(s, c)],
 	[/^la tarea tiene otro completado más antiguo que cubre la misma ocurrencia$/, () => undefined],
-	// §5.8 y §6.2: solo una periódica se pausa (el botón Pausar del panel); Reanudar solo la pausada.
+	// §5.8 and §6.2: only a recurring task is paused (the panel's Pausar button); Reanudar only the paused one.
 	[/^(?:la tarea fue pausada|pauso la tarea)$/, (s) => !s.oneOff && !s.paused && void (s.paused = true)],
 	[/^reanudo la tarea el (\S+)$/, (s, [t]) => resumeSituation(s, t)],
 	[/^abro la tarea en el panel de edición$/, (s) => void (s.panel = true)],
-	// §5.9 y §6.2: posponer actúa en el momento; quitar borra el campo.
+	// §5.9 and §6.2: postponing acts at the moment; removing deletes the field.
 	[/^(?:pospongo la tarea|la tarea fue pospuesta) con la opción (.+) el (\S+)$/, (s, [o, m]) => postponeSituation(s, o, m)],
 	[/^quito la posposición$/, (s) => s.postponed !== undefined && void (s.postponed = undefined)],
 	[/^abro la tarea en el panel de edición el (\S+)$/, (s, [t]) => ((s.postponePanel = true), (s.now = MOMENT(t)), s.now !== undefined)],
-	// Creación de calendario (§4.1 y §4.2).
+	// Calendar creation (§4.1 and §4.2).
 	[
 		/^creo una tarea periódica semanal con título (.*) los (.*)$/,
 		(s, [t, d]) => createCalendar(s, t, reasonsWeek(d))
@@ -644,7 +644,7 @@ const RULES: Rule[] = [
 	]
 ];
 
-/** Sustituye <columna> por su valor en la fila; undefined si falta. */
+/** Replaces <columna> with its value in the row; undefined if missing. */
 export function resolve(text: string, row: RowOracle): string | undefined {
 	let missing = false;
 	const resolved = text.replace(/<([A-Za-z0-9_]+)>/g, (_, name: string) => {
@@ -672,7 +672,7 @@ function classifyCreation(c: { title: string; reasons: string[] }): string {
 	return reasons.length === 0 ? 'creada' : `rechazada: ${reasons.join(', ')}`;
 }
 
-/** Spec §5.1: con completado, fuera de Pendientes; si no, atrasada desde el inicio del día siguiente al límite. */
+/** Spec §5.1: with a completion, out of Pending; otherwise overdue from the start of the day after the limit. */
 function classifyOneOff(s: Situation, oneOff: NonNullable<Situation['oneOff']>): string | undefined {
 	if (s.completions.length > 0) return 'no aparece en Pendientes';
 	if (oneOff.any) return undefined;
@@ -681,14 +681,14 @@ function classifyOneOff(s: Situation, oneOff: NonNullable<Situation['oneOff']>):
 	return s.now >= addDays(oneOff.limit, 1).getTime() ? 'atrasada' : 'pendiente';
 }
 
-/** §5.2 y §5.3: progreso = transcurrido / espera; con ahora < U (relojes desfasados) es 0 por regla del spec. */
+/** §5.2 and §5.3: progress = elapsed / wait; with ahora < U (skewed clocks) it is 0 by spec rule. */
 function progress(from: number, now: number, wait: number): string | undefined {
 	if (now < from) return '0';
 	if (!(wait > 0)) return undefined;
 	return String(Math.min(1, (now - from) / wait));
 }
 
-/** El "en espera" de la clasificación, con su progreso solo si el escenario lo observa. */
+/** The classification's "en espera", with its progress only if the scenario observes it. */
 function inWait(observes: Observes, p: string | undefined): string | undefined {
 	if (!observes.progress) return 'en espera';
 	return p === undefined ? undefined : `en espera ${p}`;
@@ -698,8 +698,8 @@ function inWait(observes: Observes, p: string | undefined): string | undefined {
 function classifyStatus(s: Situation, observes: Observes): string | undefined {
 	if (s.completions.length === 0) return s.anyMoment || s.now !== undefined ? 'pendiente' : undefined;
 	if (s.now === undefined) return undefined;
-	// Sin intervalo declarado ("el intervalo no influye en este borde"): con ahora ≤ U la tarea está
-	// en espera con progreso 0 sea cual sea el intervalo (§5.2: ahora < U → en espera, progreso 0).
+	// Without a declared interval ("el intervalo no influye en este borde"): with ahora ≤ U the task is
+	// waiting with progress 0 whatever the interval is (§5.2: ahora < U → waiting, progress 0).
 	if (s.every === undefined && s.now <= Math.max(...s.completions)) return inWait(observes, '0');
 	const interval = intervalMs(s.every, s.unit);
 	if (interval === undefined) return undefined;
@@ -708,7 +708,7 @@ function classifyStatus(s: Situation, observes: Observes): string | undefined {
 	return s.now < due + interval ? 'pendiente' : 'atrasada';
 }
 
-/** Spec §5.3: hoy < N en espera, hoy = N pendiente, hoy > N atrasada; o la ocurrencia que cubrió el completado nuevo. */
+/** Spec §5.3: today < N waiting, today = N pending, today > N overdue; or the occurrence covered by the new completion. */
 function classifyCalendar(s: Situation, calendar: Calendar, observes: Observes): string | undefined {
 	if (s.now === undefined) return s.coveredNew && `cubre ${isoDay(s.coveredNew)}`;
 	const p = lastCovered(s);
@@ -722,12 +722,12 @@ function classifyCalendar(s: Situation, calendar: Calendar, observes: Observes):
 	return today === n.getTime() ? 'pendiente' : 'atrasada';
 }
 
-/** §5.8: la fila pide completar después de reanudar con un momento anterior a reanudadaEn: no es un escenario posible. */
+/** §5.8: the row asks to complete after resuming with a moment earlier than reanudadaEn: not a possible scenario. */
 export function isChronologyImpossible(entrySteps: StepOracle[], row: RowOracle): boolean {
 	return build(entrySteps, row)?.anachronistic === true;
 }
 
-/** Clasificación de la fila según el spec, o undefined si el oráculo no la reconoce. */
+/** Classification of the row according to the spec, or undefined if the oracle does not recognize it. */
 export function classifyRow(
 	entrySteps: StepOracle[],
 	row: RowOracle,
@@ -740,8 +740,8 @@ export function classifyRow(
 }
 
 /**
- * §5.6 y §5.7: N de una de calendario con horario, o de una relativa por ventana; undefined si no se deduce. Los
- * completados de una relativa sin ocurrencia cubierta (sinCubierta) cubren el día entero de su completadoEn.
+ * §5.6 and §5.7: N of a calendar task with a schedule, or of a relative task per window; undefined if it cannot be deduced. The
+ * completions of a relative task without a covered occurrence (sinCubierta) cover the whole day of their completadoEn.
  */
 export function nextWithSchedule(s: Situation, vs: TimeWindow[]): Occurrence | undefined {
 	const p = pWithSchedule([...s.covered, ...s.withoutCovered], s.coveredWithHour ?? [], s.created);
@@ -750,7 +750,7 @@ export function nextWithSchedule(s: Situation, vs: TimeWindow[]): Occurrence | u
 	return p === undefined || !intervalValid(s.every) ? undefined : nextByTimeWindow(vs, Number(s.every), p);
 }
 
-/** §5.5–§5.7: el momento con horario de la tarea armada; undefined si falta algo que el spec necesita. */
+/** §5.5–§5.7: the moment with a schedule of the built task; undefined if something the spec needs is missing. */
 export function withScheduleOf(s: Situation, vs: TimeWindow[], now: number): WithSchedule | undefined {
 	if (s.oneOff) return s.oneOff.any || !s.created ? undefined : oneOffWithSchedule(vs, s.created.getTime(), s.oneOff.limit, now);
 	const last = s.completions.length > 0 ? Math.max(...s.completions) : undefined;
@@ -764,7 +764,7 @@ export function withScheduleOf(s: Situation, vs: TimeWindow[], now: number): Wit
 	return interval === undefined ? undefined : recurringWithSchedule(vs, last + interval, last, last + 2 * interval, now);
 }
 
-/** §5.5: como §5.1–§5.3, con los momentos que corre el horario. Una puntual con completados está completada (§5.1). */
+/** §5.5: like §5.1–§5.3, with the moments the schedule shifts. A one-off with completions is completed (§5.1). */
 function classifyWithSchedule(s: Situation, vs: TimeWindow[], observes: Observes): string | undefined {
 	if (s.oneOff && s.completions.length > 0) return 'no aparece en Pendientes';
 	if (s.now === undefined) return undefined;
@@ -774,7 +774,7 @@ function classifyWithSchedule(s: Situation, vs: TimeWindow[], observes: Observes
 	return inWait(observes, progress(start, s.now, returns - start));
 }
 
-/** §5.1–§5.7: el estado por la regla de la tarea, sin la posposición. */
+/** §5.1–§5.7: the state by the task's rule, without the postponement. */
 export function statusPerItsRule(s: Situation, observes: Observes): string | undefined {
 	if (s.schedule) return classifyWithSchedule(s, s.schedule, observes);
 	if (s.oneOff) return classifyOneOff(s, s.oneOff);
@@ -786,17 +786,17 @@ export const postponementActive = ({ postponed, now }: Situation) => (postponed 
 export const WITHOUT_PROGRESS: Observes = { progress: false };
 const pendingOOverdue = (status: string | undefined) => status === 'pendiente' || status === 'atrasada';
 
-/** §5.9: está en espera por la posposición: con ahora < hasta, estaría pendiente o atrasada por su regla. */
+/** §5.9: it is waiting because of the postponement: with ahora < hasta, it would be pending or overdue by its rule. */
 export function inWaitByPostponement(s: Situation): boolean {
 	return postponementActive(s) !== undefined && pendingOOverdue(statusPerItsRule(s, WITHOUT_PROGRESS));
 }
 
-/** §5.9: progreso = (ahora − desde) / (hasta − desde); con ahora < desde, 0. */
+/** §5.9: progress = (ahora − desde) / (hasta − desde); with ahora < desde, 0. */
 function postponementProgress({ from, to }: Postponement, now: number): string {
 	return now < from ? '0' : String((now - from) / (to - from));
 }
 
-/** §5.9: si estaría en espera por su propia regla, la posposición no cambia nada. */
+/** §5.9: if it would be waiting by its own rule, the postponement changes nothing. */
 function classifyStatusOfSituation(s: Situation, observes: Observes): string | undefined {
 	const active = postponementActive(s);
 	return active && inWaitByPostponement(s)
@@ -805,8 +805,8 @@ function classifyStatusOfSituation(s: Situation, observes: Observes): string | u
 }
 
 /**
- * §5.9 y §6.2: con la posposición vigente, Quitar posponer; si no, Posponer solo en una pendiente o atrasada no
- * pausada. undefined si el estado no se deduce.
+ * §5.9 and §6.2: with the postponement active, Quitar posponer; otherwise, Posponer only on a pending or overdue task that is not
+ * paused. undefined if the state cannot be deduced.
  */
 export function postponeButton(s: Situation): string | undefined {
 	if (!intervalDeclaredValid(s)) return undefined;
@@ -819,7 +819,7 @@ export function postponeButton(s: Situation): string | undefined {
 
 const twoDigits = (n: number) => String(n).padStart(2, '0');
 
-/** §6.2: "Pospuesta hasta HH:MM", con "mañana" si hasta es del día siguiente a ahora; más lejos, el spec no lo decide. */
+/** §6.2: "Pospuesta hasta HH:MM", with "mañana" if hasta is on the day after ahora; farther away, the spec does not decide. */
 function postponementText(s: Situation): string | undefined {
 	const active = postponementActive(s);
 	if (!active) return 'sin texto';
@@ -830,7 +830,7 @@ function postponementText(s: Situation): string | undefined {
 	return dayStart(active.to).getTime() === addDays(today, 1).getTime() ? `Pospuesta hasta mañana ${hour}` : undefined;
 }
 
-/** §6.2: el botón de posponer del panel y, si un Then lo afirma, lo que dice de la posposición. */
+/** §6.2: the panel's postpone button and, if a Then asserts it, what it says about the postponement. */
 function classifyPanelOfPostpone(s: Situation, observes: Observes): string | undefined {
 	const button = postponeButton(s);
 	if (!button || !observes.panelText) return button;
@@ -838,7 +838,7 @@ function classifyPanelOfPostpone(s: Situation, observes: Observes): string | und
 	return text && `${button}, ${text}`;
 }
 
-/** §6.2: Posponer solo actúa si el panel lo ofrece en ese momento. Sin creadaEn, la tarea se creó antes de todo. */
+/** §6.2: Posponer only acts if the panel offers it at that moment. Without creadaEn, the task was created before everything. */
 function postponeSituation(s: Situation, option: string, value: string): boolean {
 	const postponed = postponementOf(option, value);
 	if (!postponed) return false;
@@ -849,43 +849,43 @@ function postponeSituation(s: Situation, option: string, value: string): boolean
 }
 
 /**
- * §6.1 y §5.5: el checkbox que borraría (puntual completada, o periódica completada cuyo último completado es de hoy
- * o posterior) está habilitado; el que completaría, solo dentro de la ventana del horario.
+ * §6.1 and §5.5: the checkbox that would delete (completed one-off, or completed recurring task whose last completion is from today
+ * or later) is enabled; the one that would complete, only within the schedule's window.
  */
 function checkboxOf(s: Situation, classification: string): string | undefined {
 	if (s.now === undefined) return undefined;
 	const withCompletions = s.completions.length > 0;
-	// §5.9: una pospuesta no está completada.
+	// §5.9: a postponed task is not completed.
 	const inWaitOwn = classification.startsWith('en espera') && !inWaitByPostponement(s);
 	const completed = classification === 'no aparece en Pendientes' || isCompleted(Boolean(s.oneOff), inWaitOwn, withCompletions);
 	const wouldDelete = completed && (Boolean(s.oneOff) || Math.max(...s.completions) >= dayStart(s.now).getTime());
 	return wouldDelete || !s.schedule || insideOfTimeWindow(s.schedule, s.now) ? 'habilitado' : 'deshabilitado';
 }
 
-/** §6.2: el botón de pausa del panel: ninguno en una puntual; Reanudar si está pausada; si no, Pausar. */
+/** §6.2: the panel's pause button: none on a one-off; Reanudar if paused; otherwise Pausar. */
 function pauseButton(s: Situation): string | undefined {
 	if (!intervalDeclaredValid(s)) return undefined;
 	if (s.oneOff) return 'no ofrece pausar';
 	return s.paused ? 'ofrece Reanudar' : 'ofrece Pausar';
 }
 
-/** §5.8: una pausada no tiene estado, no está completada y su checkbox está deshabilitado, sea cual sea ahora. */
+/** §5.8: a paused task has no state, is not completed and its checkbox is disabled, whatever ahora is. */
 function classifyPaused(s: Situation, observes: Observes): string | undefined {
 	if (!intervalDeclaredValid(s) || (s.now === undefined && !s.anyMoment)) return undefined;
 	if (!observes.checkbox) return 'pausada';
 	return observes.onlyCheckbox ? 'checkbox deshabilitado' : 'pausada, checkbox deshabilitado';
 }
 
-/** §5.3: con el estado consultado, la ocurrencia que cubrió el completado nuevo, si un Then la afirma. */
+/** §5.3: with the queried state, the occurrence covered by the new completion, if a Then asserts it. */
 function withCovered(s: Situation, observes: Observes, classification: string): string | undefined {
 	if (!observes.covered || s.now === undefined) return classification;
 	return s.coveredNew && `${classification}, cubre ${isoDay(s.coveredNew)}`;
 }
 
 /**
- * Clasificación de una tarea ya armada: puntual (§5.1), relativa (§5.2), de calendario (§5.3), con horario (§5.5),
- * pausada (§5.8), pospuesta (§5.9); o, con el panel abierto, su botón de pausa o de posponer (§6.2); o el valor
- * guardado de `pospuesta` (§4.1), si es lo que un Then afirma.
+ * Classification of an already built task: one-off (§5.1), relative (§5.2), calendar (§5.3), with a schedule (§5.5),
+ * paused (§5.8), postponed (§5.9); or, with the panel open, its pause or postpone button (§6.2); or the stored
+ * value of `pospuesta` (§4.1), if that is what a Then asserts.
  */
 export function classifySituation(s: Situation, observes: Observes): string | undefined {
 	if (observes.postponed) return s.postponed && `pospuesta ${s.postponed.from} ${s.postponed.to}`;
@@ -902,42 +902,42 @@ export function classifySituation(s: Situation, observes: Observes): string | un
 	return observes.onlyCheckbox ? `checkbox ${checkbox}` : `${visible}, checkbox ${checkbox}`;
 }
 
-// ---- Spec §6.1: orden de la lista Pendientes ----
+// ---- Spec §6.1: order of the Pending list ----
 
 export interface OrderTask {
 	title: string;
 	created: number;
-	/** Puntual: su fecha límite (día), si la tiene. */
+	/** One-off: its due date (day), if it has one. */
 	limit?: Date;
 	oneOff: boolean;
-	/** Relativa: intervalo y completados; calendario: recurrencia y ocurrencias cubiertas. */
+	/** Relative: interval and completions; calendar: recurrence and covered occurrences. */
 	interval?: number;
 	completions: number[];
 	calendar?: Calendar;
 	covered: Date[];
-	/** §4.4: ocurrencias cubiertas con hora, por su inicio. */
+	/** §4.4: covered occurrences with a time, by their start. */
 	coveredWithHour?: number[];
-	/** Tiene completados cuyo momento el escenario dice que no influye ("la tarea X tiene un completado"). */
+	/** Has completions whose moment the scenario says does not matter ("la tarea X tiene un completado"). */
 	withCompletionWithoutMoment?: boolean;
-	/** §5.5: sus ventanas diarias, ordenadas, si tiene horario. */
+	/** §5.5: its daily windows, sorted, if it has a schedule. */
 	schedule?: TimeWindow[];
-	/** §5.8: pausada; y el momento de la última reanudación. */
+	/** §5.8: paused; and the moment of the last resume. */
 	paused?: boolean;
 	resumed?: number;
-	/** §4.2: el intervalo escrito no es válido (la tarea no se crea); solo lo miran las reglas de la pausa. */
+	/** §4.2: the written interval is not valid (the task is not created); only the pause rules look at it. */
 	intervalInvalid?: boolean;
-	/** §5.9: la posposición guardada. */
+	/** §5.9: the stored postponement. */
 	postponed?: Postponement;
 }
 
-/** Antes de cualquier otra fecha de los escenarios: "se crearon en el mismo instante, anterior a todo". */
+/** Before any other date of the scenarios: "they were created at the same instant, earlier than everything". */
 const CREATED_BY_DEFAULT = 0;
 
-/** Instante y grupo (0 atrasada, 1 pendiente, 2 en espera) de una tarea, según la tabla de §6.1. */
+/** Instant and group (0 overdue, 1 pending, 2 waiting) of a task, according to the §6.1 table. */
 interface Urgency {
 	group: number;
 	instant?: number;
-	/** §5.9: está en espera por la posposición: no cuenta como completada. */
+	/** §5.9: it is waiting because of the postponement: it does not count as completed. */
 	byPostponement?: boolean;
 }
 
@@ -950,7 +950,7 @@ function urgencyOneOff(t: OrderTask, now: number): Urgency | undefined {
 function urgencyRelative(t: OrderTask, now: number): Urgency | undefined {
 	if (t.completions.length === 0) return { group: 1, instant: t.created };
 	const u = Math.max(...t.completions);
-	// Sin intervalo declarado: §4.2 lo hace de al menos 1 hora, así que hasta U + 1 h está en espera (V no se deduce).
+	// Without a declared interval: §4.2 makes it at least 1 hour, so until U + 1 h it is waiting (V cannot be deduced).
 	if (t.interval === undefined) return now < u + HOUR_MS ? { group: 2 } : undefined;
 	const v = u + t.interval;
 	if (now < v) return { group: 2, instant: v };
@@ -958,7 +958,7 @@ function urgencyRelative(t: OrderTask, now: number): Urgency | undefined {
 }
 
 function urgencyCalendar(t: OrderTask, calendar: Calendar, now: number): Urgency | undefined {
-	// Sin horario, el spec no dice cómo cuenta una ocurrencia cubierta con hora (§5.3 habla de días).
+	// Without a schedule, the spec does not say how a covered occurrence with a time counts (§5.3 speaks of days).
 	if ((t.coveredWithHour ?? []).length > 0) return undefined;
 	const p =
 		t.covered.length > 0 ? new Date(Math.max(...t.covered.map((d) => d.getTime()))) : addDays(dayStart(t.created), -1);
@@ -971,7 +971,7 @@ function urgencyCalendar(t: OrderTask, calendar: Calendar, now: number): Urgency
 
 const GROUP_OF: Record<WithSchedule['group'], number> = { atrasada: 0, pendiente: 1, 'en espera': 2 };
 
-/** §5.5: T, el inicio de espera y el atraso sin horario de una relativa del orden; undefined si no se deducen. */
+/** §5.5: T, the waiting start and the overdue point without a schedule of a relative task in the ordering; undefined if they cannot be deduced. */
 function orderMoments(t: OrderTask): [number, number, number | undefined] | undefined {
 	const last = t.completions.length > 0 ? Math.max(...t.completions) : undefined;
 	if (last === undefined) return [t.created, t.created, undefined];
@@ -979,8 +979,8 @@ function orderMoments(t: OrderTask): [number, number, number | undefined] | unde
 }
 
 /**
- * §5.5–§5.6: una periódica del orden con horario. De calendario, según N (§5.6; el inicio de espera solo da el
- * progreso: no ordena). Una relativa con varias ventanas (§5.7) no se modela en el orden.
+ * §5.5–§5.6: a recurring task in the ordering with a schedule. Calendar, according to N (§5.6; the waiting start only gives the
+ * progress: it does not order). A relative task with several windows (§5.7) is not modeled in the ordering.
  */
 function orderRecurring(t: OrderTask, vs: TimeWindow[], now: number): WithSchedule | undefined {
 	if (t.calendar) {
@@ -992,7 +992,7 @@ function orderRecurring(t: OrderTask, vs: TimeWindow[], now: number): WithSchedu
 	return moments && recurringWithSchedule(vs, ...moments, now);
 }
 
-/** §5.5 y §6.1: con horario, el grupo y el instante que lo ordena. */
+/** §5.5 and §6.1: with a schedule, the group and the instant that orders it. */
 function urgencyWithSchedule(t: OrderTask, vs: TimeWindow[], now: number): Urgency | undefined {
 	const withSchedule = t.oneOff ? oneOffWithSchedule(vs, t.created, t.limit, now) : orderRecurring(t, vs, now);
 	return withSchedule && { group: GROUP_OF[withSchedule.group], instant: withSchedule.instant };
@@ -1004,14 +1004,14 @@ function urgencyPerItsRule(t: OrderTask, now: number): Urgency | undefined {
 	return t.calendar ? urgencyCalendar(t, t.calendar, now) : urgencyRelative(t, now);
 }
 
-/** §5.9 y §6.1: la pospuesta que estaría pendiente o atrasada va en espera, y su clave de orden es hasta. */
+/** §5.9 and §6.1: a postponed task that would be pending or overdue goes to waiting, and its sort key is hasta. */
 function urgencyOf(t: OrderTask, now: number): Urgency | undefined {
 	const own = urgencyPerItsRule(t, now);
 	if (!own || own.group === 2 || !t.postponed || now >= t.postponed.to) return own;
 	return { group: 2, instant: t.postponed.to, byPostponement: true };
 }
 
-/** §6.2: Posponer solo actúa si el panel lo ofrece en ese momento: pendiente o atrasada, no pausada ni pospuesta. */
+/** §6.2: Posponer only acts if the panel offers it at that moment: pending or overdue, not paused or postponed. */
 function orderPostpone(t: OrderTask, postponed: Postponement): boolean {
 	if (t.paused || t.intervalInvalid || (t.oneOff && withCompletions(t))) return false;
 	const evaluable = evaluated(t);
@@ -1043,9 +1043,9 @@ function withTitle(tasks: OrderTask[], title: string): OrderTask | undefined {
 }
 
 export const ORDER_RULES: OrderRule[] = [
-	// §4.1 y §6.1: el primer paso no cambia el orden de la lista; la tarea tiene que existir.
+	// §4.1 and §6.1: the first step does not change the list order; the task has to exist.
 	[/^el primer paso de la tarea (\S+) es (.*)$/, (ts, [t]) => withTitle(ts, t) !== undefined],
-	// §4.1 y §6.1: la versión mínima no cambia el orden de la lista; la tarea tiene que existir.
+	// §4.1 and §6.1: the minimal version does not change the list order; the task has to exist.
 	[/^la versión mínima de la tarea (\S+) es (.*)$/, (ts, [t]) => withTitle(ts, t) !== undefined],
 	[
 		/^la tarea (\S+) fue pospuesta con la opción (.+) el (\S+)$/,
@@ -1055,7 +1055,7 @@ export const ORDER_RULES: OrderRule[] = [
 			return task !== undefined && postponed !== undefined && orderPostpone(task, postponed);
 		}
 	],
-	// §5.8: solo una periódica se pausa; Reanudar solo la pausada.
+	// §5.8: only a recurring task is paused; Reanudar only the paused one.
 	[
 		/^(?:la tarea (\S+) fue pausada|pauso la tarea (\S+))$/,
 		(ts, [was, pause]) => {
@@ -1103,9 +1103,9 @@ export const ORDER_RULES: OrderRule[] = [
 		/^una tarea periódica mensual (\S+) los días (.*?)(?: creada el (\S+))?$/,
 		(ts, [t, d, c]) => monthDays(d) !== undefined && add(ts, fresh(t, c, { calendar: monthDays(d) }))
 	],
-	// De calendario, el oráculo del orden no calcula la ocurrencia que cubre (§5.3): no lo modela.
+	// For calendar tasks, the ordering oracle does not compute the occurrence it covers (§5.3): it does not model it.
 	[
-		// §4.4 y §6.1: un completado de la mínima cuenta como cualquier otro para la lista.
+		// §4.4 and §6.1: a minimal-version completion counts like any other for the list.
 		/^(?:la tarea (\S+) fue completada|completo la tarea (\S+)) el (\S+)(?: con la mínima)?$/,
 		(ts, [was, complete, m]) => {
 			const moment = MOMENT(m);
@@ -1151,7 +1151,7 @@ export const ORDER_RULES: OrderRule[] = [
 	]
 ];
 
-/** Pendientes como se ve: los títulos de arriba hacia abajo y, de ellos, los que se ven completados y pausados. */
+/** Pending as seen: the titles from top to bottom and, of them, those shown as completed and paused. */
 export interface PendingView {
 	order: string;
 	completedList: string;
@@ -1159,9 +1159,9 @@ export interface PendingView {
 }
 
 /**
- * §6.1: Pendientes, con los títulos separados por ", ". Solo se modela la consulta en un momento dado (el
- * estado de cada tarea depende de "ahora"), o en cualquier momento cuando todas las tareas son puntuales sin
- * fecha límite. undefined si el oráculo no reconoce el escenario.
+ * §6.1: Pending, with titles separated by ", ". Only the query at a given moment is modeled (each
+ * task's state depends on "ahora"), or at any moment when all the tasks are one-offs without a
+ * due date. undefined if the oracle does not recognize the scenario.
  */
 export function pendingOrder(steps: StepOracle[], row: RowOracle): PendingView | undefined {
 	const tasks: OrderTask[] = [];
@@ -1182,22 +1182,22 @@ export function pendingOrder(steps: StepOracle[], row: RowOracle): PendingView |
 			if (!rule?.c || !rule.apply(tasks, rule.c.slice(1))) return undefined;
 		}
 	}
-	// Una pausada no depende de ahora: va al final, por título (§6.1).
+	// A paused task does not depend on ahora: it goes last, by title (§6.1).
 	if (anyMoment && tasks.some((t) => !t.paused && (!t.oneOff || t.limit))) return undefined;
 	if (!anyMoment && now === undefined) return undefined;
 	return pendingView(tasks, now, showCompleted, showPaused);
 }
 
-/** El paso que enciende el check "Mostrar completadas" (§6.1); sin él, está apagado. */
+/** The step that turns on the "Mostrar completadas" check (§6.1); without it, it is off. */
 export const SHOW_COMPLETED = 'Mostrar completadas está encendido';
 
-/** El paso que enciende el check "Mostrar pausadas" (§6.1); sin él, está apagado. */
+/** The step that turns on the "Mostrar pausadas" check (§6.1); without it, it is off. */
 export const SHOW_PAUSED = 'Mostrar pausadas está encendido';
 
 /**
- * §5.8: una reanudada se evalúa como recién creada en reanudadaEn (creadaEn = reanudadaEn, sin los completados
- * anteriores); el desempate de §6.1 sigue con el creadaEn real. undefined si tiene ocurrencias cubiertas: el
- * oráculo no sabe cuáles son anteriores.
+ * §5.8: a resumed task is evaluated as just created at reanudadaEn (creadaEn = reanudadaEn, without the earlier
+ * completions); the §6.1 tie-break continues with the real creadaEn. undefined if it has covered occurrences: the
+ * oracle does not know which are earlier.
  */
 function evaluated(t: OrderTask): OrderTask | undefined {
 	const from = t.resumed;
@@ -1206,7 +1206,7 @@ function evaluated(t: OrderTask): OrderTask | undefined {
 	return { ...t, created: from, completions: t.completions.filter((c) => c >= from) };
 }
 
-/** §6.1: las pausadas por título en español; undefined si dos empatan (el id no es observable). */
+/** §6.1: paused tasks by title in Spanish collation; undefined if two tie (the id is not observable). */
 function pausedByTitle(paused: OrderTask[]): OrderTask[] | undefined {
 	const sorted = [...paused].sort((a, b) => COLLATION.compare(a.title, b.title));
 	return sorted.some((t, i) => i > 0 && COLLATION.compare(sorted[i - 1].title, t.title) === 0) ? undefined : sorted;
@@ -1214,15 +1214,15 @@ function pausedByTitle(paused: OrderTask[]): OrderTask[] | undefined {
 
 const withCompletions = (t: OrderTask) => t.completions.length > 0 || t.covered.length > 0 || t.withCompletionWithoutMoment === true;
 
-/** §6.1: completada es una puntual con al menos un completado, o una periódica en espera con al menos uno. */
+/** §6.1: completed is a one-off with at least one completion, or a waiting recurring task with at least one. */
 export function isCompleted(oneOff: boolean, inWait: boolean, completions: boolean): boolean {
 	return completions && (oneOff || inWait);
 }
 
-/** El desempate de §6.1: creadaEn más antigua, después título en español (el id no es observable). */
+/** The §6.1 tie-break: oldest creadaEn, then title in Spanish collation (the id is not observable). */
 const tiebreak = (a: OrderTask, b: OrderTask) => a.created - b.created || COLLATION.compare(a.title, b.title);
 
-/** Las no completadas por urgencia (§6.1); undefined si alguna urgencia no se deduce. */
+/** The non-completed by urgency (§6.1); undefined if any urgency cannot be deduced. */
 function notCompletedByUrgency(tasks: OrderTask[], now: number): OrderTask[] | undefined {
 	const urgencies = tasks.map((t) => ({ t, u: urgencyOf(evaluated(t) as OrderTask, now) }));
 	if (urgencies.some(({ u }) => u === undefined)) return undefined;
@@ -1237,7 +1237,7 @@ function notCompletedByUrgency(tasks: OrderTask[], now: number): OrderTask[] | u
 		.map(({ t }) => t);
 }
 
-/** Las completadas, de completadoEn más reciente a más antiguo (§6.1); undefined si hay que ordenar alguna sin momento. */
+/** The completed, from most recent completadoEn to oldest (§6.1); undefined if one has to be ordered without a moment. */
 function completedByRecent(completedList: OrderTask[]): OrderTask[] | undefined {
 	if (completedList.length > 1 && completedList.some((t) => t.completions.length === 0 || t.withCompletionWithoutMoment)) return undefined;
 	const last = (t: OrderTask) => Math.max(...t.completions);
@@ -1245,9 +1245,9 @@ function completedByRecent(completedList: OrderTask[]): OrderTask[] | undefined 
 }
 
 /**
- * §6.1 con "ahora" (o, sin él, en un momento cualquiera): primero las no completadas por urgencia; las
- * completadas, solo con Mostrar completadas encendido; al final las pausadas (§5.8), solo con Mostrar pausadas
- * encendido. undefined si algo no se deduce.
+ * §6.1 with "ahora" (or, without it, at any moment): first the non-completed by urgency; the
+ * completed, only with Mostrar completadas on; at the end the paused (§5.8), only with Mostrar pausadas
+ * on. undefined if something cannot be deduced.
  */
 export function pendingView(
 	tasks: OrderTask[],
@@ -1271,7 +1271,7 @@ export function pendingView(
 	return { order: titles([...notCompleted, ...completedList, ...paused]), completedList: titles(completedList), paused: titles(paused) };
 }
 
-/** Los títulos de Pendientes en el orden de §6.1; undefined si algo no se deduce. */
+/** The Pending titles in the order of §6.1; undefined if something cannot be deduced. */
 export function sortPending(
 	tasks: OrderTask[],
 	now: number | undefined,
@@ -1289,19 +1289,19 @@ const SYSTEM = 'la fuente del sistema';
 const DEVICE = 'el emoji del dispositivo';
 
 /**
- * Lo que §6 asegura que Atkinson tiene: español, cifras, `#`, `*`, `©`, `®`, `™`, y los signos de un título.
- * El resto del latín no lo decide el spec: es indeciso, no se filtra.
+ * What §6 guarantees Atkinson has: Spanish, digits, `#`, `*`, `©`, `®`, `™`, and a title's punctuation marks.
+ * The rest of Latin is not decided by the spec: it is undecided, not filtered.
  */
 const THAT_HAS_ATKINSON = /^[a-zñáéíóúüA-ZÑÁÉÍÓÚÜ0-9#*©®™ ,.;:¿?¡!()'"/-]$/u;
-/** §6: "otro alfabeto en un título": alfabetos que una fuente latina no trae. */
+/** §6: "otro alfabeto en un título": alphabets that a Latin font does not carry. */
 const OTHER_ALPHABET = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Devanagari}\p{Script=Thai}]$/u;
-/** Lo que compone un emoji sin ser uno (§4.1): marca de emoji, ZWJ, keycap y etiquetas de subdivisión. */
+/** What composes an emoji without being one (§4.1): emoji mark, ZWJ, keycap and subdivision tags. */
 const COMPOSITION = /[️‍⃣\u{E0020}-\u{E007F}]/gu;
 
 /**
- * La fila de la tabla para un grafema. Sin marca, lo que Atkinson tiene va primero (cifras y `©` también
- * existen como emoji). Noto tiene todo emoji asignado (también `❤`, sin marca, que Atkinson no tiene); un
- * pictograma todavía sin asignar es de una versión de Unicode más nueva y Noto no lo tiene.
+ * The table row for a grapheme. Without a mark, what Atkinson has goes first (digits and `©` also
+ * exist as emoji). Noto has every assigned emoji (also `❤`, without a mark, which Atkinson lacks); a
+ * pictogram not yet assigned is from a newer Unicode version and Noto does not have it.
  */
 function graphemeFont(grapheme: string): string | undefined {
 	if (THAT_HAS_ATKINSON.test(grapheme)) return ATKINSON;
@@ -1312,7 +1312,7 @@ function graphemeFont(grapheme: string): string | undefined {
 	return parts.every((part) => /^\p{Extended_Pictographic}$/u.test(part)) ? DEVICE : undefined;
 }
 
-/** Las fuentes distintas de un texto, en orden de aparición; undefined si algún grafema es indeciso o no hay ninguno. */
+/** The distinct fonts of a text, in order of appearance; undefined if some grapheme is undecided or there are none. */
 function fontsOf(text: string): string[] | undefined {
 	const graphemes = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text)].map(({ segment }) => segment);
 	const fonts = graphemes.map(graphemeFont);
@@ -1322,7 +1322,7 @@ function fontsOf(text: string): string[] | undefined {
 
 export const isScenarioOfFont = (texts: string[]) => texts.some((text) => /^el texto se dibuja con /.test(text));
 
-/** Lo que observa y lo que afirma "el texto se dibuja con": undefined si el oráculo no reconoce el escenario. */
+/** What "el texto se dibuja con" observes and asserts: undefined if the oracle does not recognize the scenario. */
 export function observeFont(entries: StepOracle[], thens: StepOracle[], row: RowOracle): { observed: string[]; asserted: string[] } | undefined {
 	if (entries.length !== 1 || thens.length !== 1) return undefined;
 	const text = /^el texto (.*)$/su.exec(resolve(entries[0].text, row) ?? '')?.[1];

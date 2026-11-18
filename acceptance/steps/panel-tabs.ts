@@ -1,6 +1,6 @@
-// Panel en pestañas (spec §6.2): la presentación según el ancho, las secciones
-// según el modo, las pestañas marcadas por error, el destino al fallar Guardar
-// y la barra de Guardar con el teclado en pantalla.
+// Panel in tabs (spec §6.2): the presentation by width, the sections
+// by mode, the tabs marked with an error, the destination when Guardar fails
+// and the Guardar bar with the on-screen keyboard.
 import { expect } from 'vitest';
 import {
 	TAB_ON_OPEN,
@@ -17,7 +17,7 @@ import {
 import { P, numeric } from './values';
 import type { StepDefinition, World } from './world';
 
-/** Lo que el escenario declaró del panel; vive lo que vive su World. */
+/** What the scenario declared about the panel; it lives as long as its World. */
 interface PanelDeclared {
 	widthRem?: number;
 	mode?: PanelMode;
@@ -35,14 +35,14 @@ function declaredOf(world: World): PanelDeclared {
 }
 
 function requireDeclared<T>(value: T | undefined, that: string): T {
-	if (value === undefined) throw new Error(`El escenario no declaró ${that}`);
+	if (value === undefined) throw new Error(`The scenario did not declare ${that}`);
 	return value;
 }
 
-/** Un valor malformado falla el escenario: nada se interpreta por parecido. */
+/** A malformed value fails the scenario: nothing is interpreted by resemblance. */
 function oneOf<T extends string>(allowedValues: readonly T[], value: string, that: string): T {
 	const allowedValue = allowedValues.find((p) => p === value);
-	if (allowedValue === undefined) throw new Error(`${that} inválido: "${value}"`);
+	if (allowedValue === undefined) throw new Error(`Invalid ${that}: "${value}"`);
 	return allowedValue;
 }
 
@@ -71,7 +71,7 @@ function sectionsOf(value: string): PanelSection[] {
 
 function widthOf(value: string): number {
 	const width = numeric(value);
-	if (width <= 0) throw new Error(`Ancho de pantalla inválido: "${value}"`);
+	if (width <= 0) throw new Error(`Invalid screen width: "${value}"`);
 	return width;
 }
 
@@ -154,7 +154,7 @@ export const panelTabsSteps: StepDefinition[] = [
 		}
 	},
 	{
-		// §6.2: la barra depende del teclado y no del foco; por eso el foco solo se valida.
+		// §6.2: the bar depends on the keyboard and not on focus; so focus is only validated.
 		pattern: new RegExp(`^el foco está ${P}$`),
 		run: (_world, focus) => {
 			oneOf(FOCUSES, focus, 'Foco');

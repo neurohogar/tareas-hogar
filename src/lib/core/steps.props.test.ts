@@ -1,4 +1,4 @@
-// Spec §4.1 (Pasos): la lista se normaliza sin perder pasos con texto, y el avance nunca sale de la lista.
+// Spec §4.1 (Steps): the list is normalized without losing steps with text, and progress never leaves the list.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { complete } from './completions';
@@ -22,15 +22,15 @@ const taskWith = (firstStep: string, steps: string[], currentStep: number): OneO
 	currentStep
 });
 
-/** Aplica el cambio parcial a la tarea: null quita pasoActual, ausente lo deja. */
+/** Applies the partial change to the task: null removes currentStep, absent leaves it. */
 const apply = (task: OneOffTask, change: TaskChange): OneOffTask => {
 	if (!('currentStep' in change)) return task;
 	const { currentStep: _before, ...rest } = task;
 	return change.currentStep == null ? rest : { ...rest, currentStep: change.currentStep };
 };
 
-describe('pasos (propiedades)', () => {
-	it('normalizar conserva en orden los pasos con texto, recortados, y es idempotente', () => {
+describe('steps (properties)', () => {
+	it('normalizing keeps the steps with text in order, trimmed, and is idempotent', () => {
 		fc.assert(
 			fc.property(text, list, (firstStep, steps) => {
 				const normalizedValues = normalizeSteps(firstStep, steps);
@@ -42,7 +42,7 @@ describe('pasos (propiedades)', () => {
 		);
 	});
 
-	it('el paso en que va, «Hecho» y «Paso anterior» nunca salen del primero ni del último', () => {
+	it('the current step, «Hecho» and «Paso anterior» never leave the first or the last', () => {
 		fc.assert(
 			fc.property(text, list, fc.integer({ min: -3, max: 10 }), (firstStep, steps, currentStep) => {
 				const task = taskWith(firstStep, steps, currentStep);
@@ -57,7 +57,7 @@ describe('pasos (propiedades)', () => {
 		);
 	});
 
-	it('pasoConTope siempre cae entre 1 y la cantidad de pasos (1 si no hay)', () => {
+	it('stepWithLimit always falls between 1 and the number of steps (1 if there are none)', () => {
 		fc.assert(
 			fc.property(text, list, fc.integer({ min: -50, max: 50 }), (firstStep, steps, step) => {
 				const task = taskWith(firstStep, steps, 1);
@@ -69,7 +69,7 @@ describe('pasos (propiedades)', () => {
 		);
 	});
 
-	it('completar y luego deshacer devuelve el mismo paso en que iba', () => {
+	it('completing and then undoing returns the same step it was on', () => {
 		fc.assert(
 			fc.property(text, list, fc.integer({ min: 1, max: 10 }), (firstStep, steps, currentStep) => {
 				const task = taskWith(firstStep, steps, currentStep);
@@ -83,12 +83,12 @@ describe('pasos (propiedades)', () => {
 		);
 	});
 
-	it('editar solo escribe pasos si cambiaron y nunca pasoActual', () => {
+	it('editing only writes steps if they changed and never currentStep', () => {
 		fc.assert(
 			fc.property(text, list, text, list, fc.integer({ min: 1, max: 10 }), (firstBefore, before, firstAfter, after, currentStep) => {
 				const task: Task = taskWith(firstBefore, before, currentStep);
 				const result = edit(task, { ...taskData(task), firstStep: firstAfter, steps: after });
-				if (!result.ok) throw new Error('debía editarse');
+				if (!result.ok) throw new Error('it should have been edited');
 				const newItems = normalizeSteps(firstAfter, after);
 				const haveChanged = JSON.stringify(newItems.steps) !== JSON.stringify(task.steps);
 				expect('steps' in result.change).toBe(haveChanged);

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { PendingStatus } from './status';
 import { compareCompleted, compareByUrgency, type CompletedRow, type RowToOrder } from './pending-order';
 
-/** Pocos valores por campo, para que los desempates se ejerciten. */
+/** Few values per field, so the tie-breakers are exercised. */
 const moment = fc.option(fc.integer({ min: 0, max: 3 }).map((n) => new Date(n * 86_400_000)), { nil: undefined });
 const status = fc.constantFrom<PendingStatus>({ kind: 'atrasada' }, { kind: 'pendiente' }, { kind: 'en espera', progress: 0.5 });
 const row = fc
@@ -17,8 +17,8 @@ const row = fc
 	.map(({ id, title, createdAt, status, instant }): RowToOrder => ({ task: { id, title, createdAt, kind: 'puntual' }, status, instant }));
 const sign = (a: RowToOrder, b: RowToOrder) => Math.sign(compareByUrgency(a, b));
 
-describe('compararPorUrgencia (propiedades)', () => {
-	it('es un orden total: antisimétrica, transitiva y solo empata una tarea consigo misma', () => {
+describe('compareByUrgency (properties)', () => {
+	it('is a total order: antisymmetric, transitive and only ties a task with itself', () => {
 		fc.assert(
 			fc.property(row, row, row, (a, b, c) => {
 				expect(compareByUrgency(a, a)).toBe(0);
@@ -29,7 +29,7 @@ describe('compararPorUrgencia (propiedades)', () => {
 		);
 	});
 
-	it('el grupo manda: atrasada antes que pendiente antes que en espera', () => {
+	it('the group rules: overdue before pending before waiting', () => {
 		const range = { atrasada: 0, pendiente: 1, 'en espera': 2 };
 		fc.assert(
 			fc.property(row, row, (a, b) => {
@@ -39,7 +39,7 @@ describe('compararPorUrgencia (propiedades)', () => {
 		);
 	});
 
-	it('dentro del grupo, el instante más antiguo primero y sin instante al final', () => {
+	it('within the group, the oldest instant first and without an instant last', () => {
 		fc.assert(
 			fc.property(row, row, (a, b) => {
 				fc.pre(a.status.kind === b.status.kind && a.instant?.getTime() !== b.instant?.getTime());
@@ -64,8 +64,8 @@ const completed = fc
 	}));
 const signCompleted = (a: CompletedRow, b: CompletedRow) => Math.sign(compareCompleted(a, b));
 
-describe('compararCompletadas (propiedades)', () => {
-	it('es un orden total: antisimétrica, transitiva y solo empata una tarea consigo misma', () => {
+describe('compareCompleted (properties)', () => {
+	it('is a total order: antisymmetric, transitive and only ties a task with itself', () => {
 		fc.assert(
 			fc.property(completed, completed, completed, (a, b, c) => {
 				expect(compareCompleted(a, a)).toBe(0);
@@ -76,7 +76,7 @@ describe('compararCompletadas (propiedades)', () => {
 		);
 	});
 
-	it('el completado más reciente primero', () => {
+	it('the most recent completion first', () => {
 		fc.assert(
 			fc.property(completed, completed, (a, b) => {
 				fc.pre(a.lastCompletedAt !== b.lastCompletedAt);
@@ -85,7 +85,7 @@ describe('compararCompletadas (propiedades)', () => {
 		);
 	});
 
-	it('si empatan, desempata igual que compararPorUrgencia', () => {
+	it('if they tie, it breaks the tie like compareByUrgency', () => {
 		const asUrgent = (f: CompletedRow): RowToOrder => ({ task: f.task, status: { kind: 'pendiente' }, instant: undefined });
 		fc.assert(
 			fc.property(completed, completed, (a, b) => {

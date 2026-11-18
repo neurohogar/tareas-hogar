@@ -1,12 +1,12 @@
-// Spec §4.1: emoji y nota opcionales.
+// Spec §4.1: optional emoji and note.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { textFields } from './text-fields';
 
 const optional = fc.option(fc.string(), { nil: undefined });
 
-describe('camposDeTexto (propiedades)', () => {
-	it('conserva los campos con valor y omite la clave de los vacíos o ausentes', () => {
+describe('textFields (properties)', () => {
+	it('keeps the fields with a value and omits the key of the empty or absent ones', () => {
 		fc.assert(
 			fc.property(optional, optional, (emoji, note) => {
 				const fields = textFields({ emoji, note });
@@ -17,7 +17,7 @@ describe('camposDeTexto (propiedades)', () => {
 		);
 	});
 
-	it('es idempotente', () => {
+	it('is idempotent', () => {
 		fc.assert(
 			fc.property(optional, optional, (emoji, note) => {
 				const one = textFields({ emoji, note });

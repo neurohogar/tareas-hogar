@@ -1,4 +1,4 @@
-// Spec §6.2 (Aviso de acción): qué ofrece el aviso y cuándo una acción pide confirmación.
+// Spec §6.2 (Action notice): what the notice offers and when an action asks for confirmation.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { changeOfAction, whatTheActionDoes, type PanelAction } from './panel-action';
@@ -12,7 +12,7 @@ const now = fc.date({ min: new Date(2000, 0, 1), max: new Date(2100, 0, 1), noIn
 const title = fc.stringMatching(/^[a-z]{1,8}$/);
 const RELATIVE: RecurringTask = { id: 't', title: 'Regar', kind: 'periodica', recurrence: { mode: 'relativo', every: 2, unit: 'dias' }, createdAt: new Date(2026, 0, 1) };
 
-/** Pausar una periódica activa con lo escrito en el formulario. */
+/** Pause an active recurring task with what is written in the form. */
 const pausing = (data: TaskData, moment: Date): NoticeAction => ({
 	action: 'pausar',
 	taskOnOpen: RELATIVE,
@@ -24,22 +24,22 @@ const pausing = (data: TaskData, moment: Date): NoticeAction => ({
 const staysRelative = (t: string): TaskData => ({ shape: 'relativa', title: t, every: 2, unit: 'dias' });
 const becomesOneOff = (t: string): TaskData => ({ shape: 'puntual', title: t });
 
-describe('queHaceLaAccion: propiedades (spec §6.2)', () => {
-	it('con cambios abre su aviso y sin cambios actúa', () => {
+describe('whatTheActionDoes: properties (spec §6.2)', () => {
+	it('with changes it opens its notice and without changes it acts', () => {
 		fc.assert(fc.property(fc.constantFrom(...ACTIONS), fc.boolean(), (action, changes) => {
 			expect(whatTheActionDoes(action, changes)).toBe(changes ? 'abre el aviso de acción' : 'actúa');
 		}));
 	});
 
-	it('Borrar tarea solo pide su confirmación, con o sin cambios', () => {
+	it('Borrar tarea only asks for its confirmation, with or without changes', () => {
 		fc.assert(fc.property(fc.boolean(), (changes) => {
 			expect(whatTheActionDoes('borrar tarea', changes)).toBe('pide confirmar el borrado');
 		}));
 	});
 });
 
-describe('cambioDeAccion: propiedades (spec §5.8, §5.9)', () => {
-	it('es una función del ahora: el mismo momento da el mismo cambio, y reanudar lo guarda', () => {
+describe('changeOfAction: properties (spec §5.8, §5.9)', () => {
+	it('is a function of now: the same moment gives the same change, and resume saves it', () => {
 		fc.assert(
 			fc.property(fc.constantFrom(...ACTIONS), now, (action, moment) => {
 				expect(changeOfAction(action, moment)).toStrictEqual(changeOfAction(action, new Date(moment.getTime())));
@@ -51,8 +51,8 @@ describe('cambioDeAccion: propiedades (spec §5.8, §5.9)', () => {
 	});
 });
 
-describe('avisoDeAccion: propiedades (spec §6.2)', () => {
-	it('siempre ofrece Seguir editando primero y Descartar y <acción> después', () => {
+describe('actionNotice: properties (spec §6.2)', () => {
+	it('always offers Seguir editando first and Descartar y <action> after', () => {
 		fc.assert(
 			fc.property(title, fc.boolean(), now, (t, stays, moment) => {
 				const notice = actionNotice(pausing(stays ? staysRelative(t) : becomesOneOff(t), moment));
@@ -61,7 +61,7 @@ describe('avisoDeAccion: propiedades (spec §6.2)', () => {
 		);
 	});
 
-	it('ofrece Guardar y <acción> exactamente cuando lo guardado deja la acción con sentido', () => {
+	it('offers Guardar y <action> exactly when what is saved leaves the action meaningful', () => {
 		fc.assert(
 			fc.property(title, fc.boolean(), now, (t, stays, moment) => {
 				const notice = actionNotice(pausing(stays ? staysRelative(t) : becomesOneOff(t), moment));
@@ -71,7 +71,7 @@ describe('avisoDeAccion: propiedades (spec §6.2)', () => {
 		);
 	});
 
-	it('si la acción ya no corresponde, no hay aviso y ningún botón actúa', () => {
+	it('if the action no longer applies, there is no notice and no button acts', () => {
 		fc.assert(
 			fc.property(title, now, (t, moment) => {
 				const context = { ...pausing(staysRelative(t), moment), action: 'reanudar' as const };
@@ -82,13 +82,13 @@ describe('avisoDeAccion: propiedades (spec §6.2)', () => {
 		);
 	});
 
-	it('Descartar y actuar escribe solo la acción, sin lo escrito en el formulario', () => {
+	it('Descartar y actuar writes only the action, without what is written in the form', () => {
 		fc.assert(fc.property(title, now, (t, moment) => {
 			expect(discardAndAct(pausing(staysRelative(t), moment))).toEqual(changeOfAction('pausar', moment));
 		}));
 	});
 
-	it('Guardar y actuar guarda lo escrito y la acción en un solo cambio', () => {
+	it('Guardar y actuar saves what is written and the action in a single change', () => {
 		fc.assert(
 			fc.property(title, now, (t, moment) => {
 				const result = saveAndAct(pausing(staysRelative(t), moment));
@@ -98,7 +98,7 @@ describe('avisoDeAccion: propiedades (spec §6.2)', () => {
 		);
 	});
 
-	it('si lo guardado deja la acción sin sentido, Guardar y actuar no guarda nada', () => {
+	it('if what is saved leaves the action meaningless, Guardar y actuar saves nothing', () => {
 		fc.assert(
 			fc.property(title, now, (t, moment) => {
 				const result = saveAndAct(pausing(becomesOneOff(t), moment));

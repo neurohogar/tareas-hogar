@@ -8,7 +8,7 @@ import {
 
 const PROJECT = "demo-tareas-hogar";
 
-/** Datos limpios: vacía Auth y Firestore del emulador. */
+/** Clean data: empties the emulator's Auth and Firestore. */
 export async function cleanEmulators(): Promise<void> {
   await fetch(
     `http://127.0.0.1:9099/emulator/v1/projects/${PROJECT}/accounts`,
@@ -22,13 +22,13 @@ export async function cleanEmulators(): Promise<void> {
   );
 }
 
-/** Flujo 1 pasos 1-4: abre la app sin reloj y entra con qa@example.com. */
+/** Flow 1 steps 1-4: opens the app without a clock and signs in with qa@example.com. */
 export async function enter(page: Page): Promise<void> {
   await page.goto("/");
   await completeEntry(page);
 }
 
-/** Flujo 1 pasos 2-4: con la pantalla de entrada a la vista, entra con qa@example.com. */
+/** Flow 1 steps 2-4: with the sign-in screen in view, signs in with qa@example.com. */
 export async function completeEntry(page: Page): Promise<void> {
   const popup = page.waitForEvent("popup");
   await page.getByRole("button", { name: "Entrar con Google" }).click();
@@ -44,7 +44,7 @@ export async function completeEntry(page: Page): Promise<void> {
   await expect(page.getByRole("heading", { name: "Pendientes" })).toBeVisible();
 }
 
-/** Instala el reloj simulado después del login (el popup del emulador no tolera el reloj) y recarga. */
+/** Installs the simulated clock after login (the emulator popup does not tolerate the clock) and reloads. */
 export async function setClock(page: Page, hour: string): Promise<void> {
   await page.clock.install({ time: new Date(hour) });
   await page.reload();
@@ -52,7 +52,7 @@ export async function setClock(page: Page, hour: string): Promise<void> {
 }
 
 export async function advance(page: Page, hour: string): Promise<void> {
-  // fastForward no admite saltos de más de ~24 días: se avanza por tramos de una semana.
+  // fastForward does not support jumps of more than ~24 days: it advances in one-week chunks.
   const target = new Date(hour).getTime();
   const WEEK_MS = 7 * 24 * 3600 * 1000;
   for (;;) {
@@ -87,7 +87,7 @@ async function opacity(l: Locator): Promise<number> {
   return Number(await l.evaluate((e) => getComputedStyle(e).opacity));
 }
 
-/** Producto de las opacidades computadas del elemento y de sus ancestros. */
+/** Product of the computed opacities of the element and its ancestors. */
 export async function opacityEffective(l: Locator): Promise<number> {
   return l.evaluate((e) => {
     let o = 1;
@@ -112,7 +112,7 @@ export async function dimmed(f: Locator): Promise<boolean> {
   });
 }
 
-/** Contraste (qa/mostrar-completadas.md): negrita sin tachar, o tachado, peso normal y atenuado. */
+/** Contrast (qa/mostrar-completadas.md): bold without strikethrough, or struck through, normal weight and dimmed. */
 async function verifyContrast(f: Locator, completed: boolean) {
   const t = rowTitle(f);
   const weight = Number(await t.evaluate((e) => getComputedStyle(e).fontWeight));
@@ -128,8 +128,8 @@ async function verifyContrast(f: Locator, completed: boolean) {
 }
 
 /**
- * Estado de la fila. `completada` (por defecto, la de `en espera`: una periódica en espera con
- * completados está completada) fija checkbox marcado y contraste.
+ * Row state. `completada` (by default, that of `en espera`: a recurring task that is waiting with
+ * completions is completed) sets the checkbox checked and the contrast.
  */
 export async function waitStatus(
   page: Page,
@@ -171,7 +171,7 @@ export async function waitStatus(
 export const showCompleted = (page: Page) =>
   page.getByRole("checkbox", { name: "Completadas" });
 
-/** Toca el check Mostrar completadas y verifica que quedó en `encendido`. */
+/** Taps the Mostrar completadas checkbox and verifies it ended up `encendido`. */
 export async function toggleShowCompleted(
   page: Page,
   on: boolean,
@@ -181,13 +181,13 @@ export async function toggleShowCompleted(
   else await expect(showCompleted(page)).not.toBeChecked();
 }
 
-/** Enciende Mostrar completadas (apagado por defecto) y verifica que quedó marcado. */
+/** Turns on Mostrar completadas (off by default) and verifies it is checked. */
 export const turnOnCompleted = (page: Page) =>
   toggleShowCompleted(page, true);
 
-/** La lista (filas de Pendientes) es exactamente `titulos`, de arriba hacia abajo. */
+/** The list (rows of Pendientes) is exactly `titulos`, from top to bottom. */
 export async function listIs(page: Page, titles: string[]): Promise<void> {
-  // Solo las filas de tarea (con checkbox).
+  // Only task rows (with a checkbox).
   const items = page
     .getByRole("listitem")
     .filter({ has: page.getByRole("checkbox") });
@@ -195,13 +195,13 @@ export async function listIs(page: Page, titles: string[]): Promise<void> {
   await expect(items).toHaveText(titles.map((t) => new RegExp(t)));
 }
 
-/** Retrocede el reloj simulado a `hora` y deja correr un segundo para que la pantalla se refresque sola. */
+/** Moves the simulated clock back to `hora` and lets one second run so the screen refreshes by itself. */
 export async function goBack(page: Page, hour: string): Promise<void> {
   await page.clock.setSystemTime(new Date(hour));
   await page.clock.runFor(1000);
 }
 
-/** Como `entrar`, pero para un segundo dispositivo: elige la cuenta que ya existe en el emulador. */
+/** Like `entrar`, but for a second device: picks the account that already exists in the emulator. */
 export async function enterAsSecondDevice(page: Page): Promise<void> {
   await page.goto("/");
   const popup = page.waitForEvent("popup");
@@ -233,19 +233,19 @@ export interface Definition {
   days?: string[];
   emoji?: string;
   note?: string;
-  /** Primer paso: el campo Primer paso del panel (`""` lo vacía). */
+  /** First step: the panel's Primer paso field (`""` empties it). */
   firstStep?: string;
-  /** Pasos más: por cada uno, Agregar paso y escribir en el campo Paso N que sigue. */
+  /** More steps: for each one, Agregar paso and type into the next Paso N field. */
   steps?: string[];
-  /** Versión mínima: el campo Versión mínima del panel (`""` lo vacía). */
+  /** Minimal version: the panel's Versión mínima field (`""` empties it). */
   minimalVersion?: string;
-  /** Horario: `null` apaga "Solo en un horario"; un objeto lo enciende y escribe Desde/Hasta (`""` vacía el campo). */
+  /** Schedule: `null` turns off "Solo en un horario"; an object turns it on and types Desde/Hasta (`""` empties the field). */
   schedule?: { from?: string; to?: string } | null;
-  /** Varias ventanas: enciende "Solo en un horario" y, por cada una, usa Agregar horario si hace falta y escribe Desde/Hasta. */
+  /** Several windows: turns on "Solo en un horario" and, for each one, uses Agregar horario if needed and types Desde/Hasta. */
   schedules?: { from: string; to: string }[];
 }
 
-/** Campos Desde/Hasta de la fila `i` del panel (la primera conserva los ids field-from/field-to). */
+/** Desde/Hasta fields of the panel's row `i` (the first keeps the ids field-from/field-to). */
 export const fieldFrom = (page: Page, i = 0) =>
   page.getByLabel("Desde", { exact: true }).nth(i);
 export const fieldTo = (page: Page, i = 0) =>
@@ -272,7 +272,7 @@ export async function setDays(page: Page, days: string[]) {
   }
 }
 
-/** Términos en español con los que se encuentra cada emoji en el buscador del selector. */
+/** Spanish terms with which each emoji is found in the picker's search. */
 const SEARCH: Record<string, string> = {
   "🌱": "planta",
   "🔥": "fuego",
@@ -294,18 +294,18 @@ export const searchBoxEmoji = (page: Page) =>
 export const selectorEmojis = (page: Page) =>
   selectorEmoji(page).locator(".tabpanel button.emoji");
 
-/** El botón de la grilla cuyo texto es exactamente `emoji` (🔥 no es ❤️‍🔥). */
+/** The grid button whose text is exactly `emoji` (🔥 is not ❤️‍🔥). */
 export const emojiExact = (page: Page, emoji: string) =>
   selectorEmojis(page).filter({ hasText: new RegExp(`^${emoji}$`) });
 
-/** Abre el selector desde el panel y espera a que la librería diferida cargue su grilla. */
+/** Opens the picker from the panel and waits for the lazy-loaded library to load its grid. */
 export async function openSelector(page: Page) {
   await selectorButton(page).click();
   await expect(selectorEmoji(page)).toBeVisible();
   await expect(selectorEmojis(page).first()).toBeVisible();
 }
 
-/** Abre el selector, busca por texto en español y elige el emoji; el selector se cierra. */
+/** Opens the picker, searches by Spanish text and picks the emoji; the picker closes. */
 export async function chooseEmoji(
   page: Page,
   emoji: string,
@@ -325,7 +325,7 @@ export async function chooseEmoji(
   await expect(selectorEmoji(page)).toHaveCount(0);
 }
 
-/** En el celular el panel tiene pestañas: abre la de la sección; en pantallas anchas no hace nada. */
+/** On a phone the panel has tabs: opens the section's; on wide screens it does nothing. */
 export async function openTab(page: Page, name: "Tarea" | "Cuándo") {
   const tab = page.getByRole("tab", { name: new RegExp(`^${name}`) });
   if ((await tab.count()) > 0) await tab.click();
@@ -414,7 +414,7 @@ export async function close(page: Page) {
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
-/** Cerrar un panel con cambios: abre el aviso (spec §6.2) y se elige Descartar. */
+/** Closing a panel with changes: opens the notice (spec §6.2) and Descartar is chosen. */
 export async function discard(page: Page) {
   await page.getByRole("button", { name: "Cerrar" }).click();
   await page
@@ -452,10 +452,10 @@ export async function verifyDays(
     ).toHaveAttribute("aria-pressed", String(marked.includes(d)));
 }
 
-/** Deja que lo que A escribió llegue al servidor antes de que B vuelva a tener conexión (la UI no muestra el acuse). */
+/** Lets what A wrote reach the server before B gets its connection back (the UI does not show the acknowledgement). */
 export const arrivesOnServer = (page: Page) => page.waitForTimeout(2000);
 
-// Dos dispositivos: dos contextos de navegador con la misma cuenta y el mismo reloj.
+// Two devices: two browser contexts with the same account and the same clock.
 export async function device(
   browser: Browser,
   hour: string,
@@ -490,7 +490,7 @@ export async function twoDevices(
   };
 }
 
-/** Crear y esperar a ver la fila: así la escritura ya llegó a la pantalla antes de detener el reloj. */
+/** Create and wait to see the row: this way the write has already reached the screen before the clock is stopped. */
 export async function createAndView(
   page: Page,
   d: Definition & { title: string },
@@ -501,7 +501,7 @@ export async function createAndView(
 
 export type Tab = "Pendientes" | "Historial" | "Anotaciones";
 
-/** Toca una pestaña; el router de SvelteKit necesita que corra el reloj simulado (100 ms). */
+/** Taps a tab; the SvelteKit router needs the simulated clock to run (100 ms). */
 export async function goA(page: Page, tab: Tab) {
   await page
     .getByRole("navigation")
@@ -513,16 +513,16 @@ export async function goA(page: Page, tab: Tab) {
   ).toBeVisible();
 }
 
-/** Con el reloj detenido (después de crear las tareas): lo para exactamente en `hora`. */
+/** With the clock stopped (after creating the tasks): stops it exactly at `hora`. */
 export async function stop(page: Page, hour: string) {
-  // Los últimos 200 ms corren detenidos para que lleguen los snapshots y quede exactamente en `hora`.
+  // The last 200 ms run stopped so that the snapshots arrive and it ends up exactly at `hora`.
   await page.clock.pauseAt(new Date(new Date(hour).getTime() - 200));
   await page.clock.runFor(200);
 }
 
 /**
- * Con el reloj detenido, deja correr un poco el tiempo simulado mientras la aserción espera
- * (para que lleguen los snapshots, cuyos temporizadores el reloj detenido no dispara).
+ * With the clock stopped, lets some simulated time run while the assertion waits
+ * (so that the snapshots arrive, whose timers the stopped clock does not fire).
  */
 export async function withClock(
   page: Page,
@@ -544,10 +544,10 @@ export async function withClock(
   }
 }
 
-/** Después de Deshacer (reloj detenido), el borrado tarda unos segundos simulados en volver como snapshot. */
+/** After Deshacer (stopped clock), the deletion takes a few simulated seconds to come back as a snapshot. */
 export const settle = (page: Page) => page.clock.runFor(3000);
 
-/** Espera al service worker activo y recarga (con conexión) hasta que la página queda controlada. */
+/** Waits for the active service worker and reloads (online) until the page is controlled. */
 export async function controlled(page: Page) {
   await page.evaluate(() =>
     navigator.serviceWorker.ready.then(() => undefined),
@@ -568,7 +568,7 @@ export type Groups = [
   entradas: [titulo: string, hora: string][],
 ][];
 
-/** Verifica los grupos del Historial, en orden: encabezados de nivel 2 y entradas de cada lista. */
+/** Checks the Historial groups, in order: level-2 headings and the entries of each list. */
 export async function viewHistory(page: Page, groups: Groups) {
   await expect(
     page.getByRole("heading", { name: "Historial", level: 1 }),

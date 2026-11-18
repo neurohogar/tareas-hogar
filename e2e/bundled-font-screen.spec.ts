@@ -32,8 +32,8 @@ import {
 } from "./screen-support";
 import { ORIGIN_VERSIONS, serve, versionWithOtherSet } from "./versions-support";
 
-// Flujo 9 de qa/fuente-empaquetada.md. Lo que necesita el service worker o una versión instalada
-// (pasos 5, 15, 16 y 24) está en fuente-empaquetada-sin-conexion.spec.ts.
+// Flow 9 of qa/fuente-empaquetada.md. What needs the service worker or an installed version
+// (steps 5, 15, 16 and 24) is in bundled-font-offline.spec.ts.
 
 const HOUR = "2026-07-15T08:00:00";
 const PENDING = { name: "Pendientes", level: 1 } as const;
@@ -46,7 +46,7 @@ const title = (page: Page) => row(page, "Regar").getByRole("button").first();
 const enterWithGoogle = (page: Page) =>
   page.getByRole("button", { name: "Entrar con Google" });
 
-/** Con sesión, la tarea «Regar» con 🌱, y la fuente y el juego ya guardados. */
+/** With a session, the task «Regar» with 🌱, and the font and the emoji set already stored. */
 async function sessionWithTask(page: Page) {
   await sessionWithClock(page, HOUR);
   await createAndView(page, {
@@ -62,7 +62,7 @@ async function sessionWithTask(page: Page) {
 const inAtkinsonAndNoto = (page: Page) =>
   distributionIs(page, title(page), ([a, n, o]) => a >= 5 && n === 1 && o === 0);
 
-/** Con el emoji del dispositivo, no en blanco. */
+/** With the device emoji, not blank. */
 async function withEmojiOfDevice(page: Page) {
   await expect
     .poll(async () => {
@@ -74,7 +74,7 @@ async function withEmojiOfDevice(page: Page) {
 }
 
 // ---------------------------------------------------------------------------
-// Qué se ve
+// What is shown
 // ---------------------------------------------------------------------------
 
 test("Flujo 9 pasos 1 y 2: desde lo primero que dibuja, el ícono con pulso y sin texto; tocarla no hace nada", async ({
@@ -83,13 +83,13 @@ test("Flujo 9 pasos 1 y 2: desde lo primero que dibuja, el ícono con pulso y si
   const code = await retain(page, /\/_app\//);
   await page.clock.install({ time: new Date(HOUR) });
   await page.clock.pauseAt(new Date("2026-07-15T08:00:01"));
-  // Paso 1: el código de la app no llegó y la pantalla ya se ve.
+  // Step 1: the app code has not arrived and the screen is already shown.
   await page.goto("/", { waitUntil: "commit" });
   await expect(screenName(page)).toBeVisible();
   expect(code.requests()).toBeGreaterThan(0);
   expect(await textVisible(page)).toBe("");
 
-  // Paso 2: pulso, sin giro ni indicador de progreso.
+  // Step 2: pulse, no spinner or progress indicator.
   const animations = await screenName(page).evaluate((e) =>
     e.getAnimations().map((a) => ({
       status: a.playState,
@@ -109,7 +109,7 @@ test("Flujo 9 pasos 1 y 2: desde lo primero que dibuja, el ícono con pulso y si
   await a.toMount(page.getByText("Entrar con Google"));
   await a.staysA(0.4);
 
-  // Tocar donde quedará el botón de entrada, detrás de la pantalla: no hace nada.
+  // Tapping where the sign-in button will be, behind the screen: does nothing.
   let popups = 0;
   page.on("popup", () => popups++);
   const where = await page.getByText("Entrar con Google").boundingBox();
@@ -165,7 +165,7 @@ for (const c of COMBINATIONS) {
     await a.staysA(0.4);
     await a.goesA(0.5);
     await expect(enterWithGoogle(page)).toBeVisible();
-    // Lo que queda atrás al irse es el mismo color: no hay destello.
+    // What is left behind when it goes away is the same color: no flash.
     expect(await background("html")).toBe(c.background);
     expect(await background("body")).toBe(c.background);
     await ctx.close();
@@ -173,7 +173,7 @@ for (const c of COMBINATIONS) {
 }
 
 // ---------------------------------------------------------------------------
-// Cuándo aparece
+// When it appears
 // ---------------------------------------------------------------------------
 
 test("Flujo 9 paso 5: al abrir y al recargar, en las tres pantallas de destino", async ({ page }) => {
@@ -225,7 +225,7 @@ test("Flujo 9 paso 7: tocar Entrar con Google y completar la entrada no la muest
 });
 
 // ---------------------------------------------------------------------------
-// Qué espera con sesión
+// What it waits for with a session
 // ---------------------------------------------------------------------------
 
 test("Flujo 9 paso 8: con todo disponible, a los 0,4 s sigue y a los 0,5 s se va, con la lista completa", async ({
@@ -261,8 +261,8 @@ test("Flujo 9 paso 10: con los datos demorados 3 s, sigue hasta los 3 s y se va 
 }) => {
   await sessionWithTask(page);
   const b = await otherDeviceWithSession(browser, page);
-  // Las colecciones van en un solo pedido, que es lo que se puede demorar por la red: la espera
-  // de cada una por separado la decide features/pantalla-de-carga.feature.
+  // The collections go in a single request, which is what the network can delay: the wait
+  // for each one separately is decided by features/pantalla-de-carga.feature.
   const data = await retain(b.page, DATA);
   const a = await openStopped(b.page, HOUR);
   await a.staysA(2.9);
@@ -293,7 +293,7 @@ for (const { name, pattern } of [
     await expect(screenName(b.page)).toBeVisible();
     font.release();
     await a.goesRightAway();
-    // Apenas se va, ya está todo con la fuente y el juego.
+    // As soon as it goes away, everything already has the font and the emoji set.
     await withClock(b.page, () => expect(row(b.page, "Regar")).toBeVisible());
     const [atkinson, noto, other] = await distribution(b.page, title(b.page));
     expect(atkinson).toBeGreaterThanOrEqual(5);
@@ -322,7 +322,7 @@ test("Flujo 9 paso 12: con los datos demorados más de 10 s, se va a los 10 s, s
 });
 
 // ---------------------------------------------------------------------------
-// Sin sesión
+// Without a session
 // ---------------------------------------------------------------------------
 
 test("Flujo 9 paso 13: sin sesión, con Atkinson demorada, sigue hasta que llega y da paso a la entrada", async ({
@@ -360,7 +360,7 @@ test("Flujo 9 paso 14: si se entra antes de que llegue Noto, emoji del dispositi
     unit: "días",
     emoji: "🌱",
   });
-  // La pantalla de entrada ya pidió Noto; entrar no recarga, así que la descarga es la misma.
+  // The sign-in screen already requested Noto; signing in does not reload, so the download is the same.
   await withEmojiOfDevice(page);
   await withoutNotices(page);
   noto.release();
@@ -369,7 +369,7 @@ test("Flujo 9 paso 14: si se entra antes de que llegue Noto, emoji del dispositi
 });
 
 // ---------------------------------------------------------------------------
-// Lo que no va a llegar
+// What will never arrive
 // ---------------------------------------------------------------------------
 
 test("Flujo 9 paso 17: con Noto demorado, perder la conexión a los 2 s la cierra en ese momento", async ({
@@ -420,7 +420,7 @@ test("Flujo 9 paso 19: con falla de Noto y todo lo demás listo, el mínimo vale
 });
 
 // ---------------------------------------------------------------------------
-// Tope de Noto recordado por dispositivo
+// Noto cap remembered per device
 // ---------------------------------------------------------------------------
 
 test("Flujo 9 pasos 20 a 22: el tope con Noto sin bajar lo recuerda solo ese dispositivo, hasta que Noto queda guardado o cambia el juego", async ({
@@ -446,7 +446,7 @@ test("Flujo 9 pasos 20 a 22: el tope con Noto sin bajar lo recuerda solo ese dis
     await sessionWithTask(page);
     await forgetFonts(page);
 
-    // Paso 20: llega al tope con Noto demorado y entra con el emoji del dispositivo.
+    // Step 20: it reaches the cap with Noto delayed and enters with the device emoji.
     const noto = await retain(page, NOTO_FILE);
     let a = await reloadStopped(page);
     await a.staysA(9.9);
@@ -454,7 +454,7 @@ test("Flujo 9 pasos 20 a 22: el tope con Noto sin bajar lo recuerda solo ese dis
     await withEmojiOfDevice(page);
     await withoutNotices(page);
 
-    // Sin que Noto haya llegado, recargar: se va a los 0,5 s, y Noto se sigue pidiendo detrás.
+    // Without Noto having arrived, reload: it goes away at 0.5 s, and Noto keeps being requested behind it.
     const before = noto.requests();
     a = await reloadStopped(page);
     await a.toMount(page.getByText("Regar"));
@@ -463,7 +463,7 @@ test("Flujo 9 pasos 20 a 22: el tope con Noto sin bajar lo recuerda solo ese dis
     await withEmojiOfDevice(page);
     await expect.poll(noto.requests).toBeGreaterThan(before);
 
-    // Paso 21: un dispositivo B con la misma cuenta sí lo espera, y Firestore no ganó nada.
+    // Step 21: a device B with the same account does wait for it, and Firestore gained nothing.
     const uid = await accountUid();
     const inFirestore = await userAll(uid);
     const b = await otherDeviceWithSession(browser, page);
@@ -475,12 +475,12 @@ test("Flujo 9 pasos 20 a 22: el tope con Noto sin bajar lo recuerda solo ese dis
     expect(await userAll(uid)).toBe(inFirestore);
     expect(inFirestore).not.toMatch(/tope/i);
 
-    // Paso 22: se libera Noto hasta que queda guardado.
+    // Step 22: Noto is released until it is stored.
     noto.release();
     await withClock(page, () => inAtkinsonAndNoto(page));
     await page.waitForTimeout(500);
 
-    // Versión que cambia el juego, demorado: la próxima apertura vuelve a esperarlo, hasta el tope.
+    // A version that changes the emoji set, delayed: the next opening waits for it again, up to the cap.
     status.dir = v2;
     await page.unrouteAll({ behavior: "ignoreErrors" });
     await retain(page, NOTO_FILE);
@@ -488,7 +488,7 @@ test("Flujo 9 pasos 20 a 22: el tope con Noto sin bajar lo recuerda solo ese dis
     await a.staysA(9.9);
     await a.goesA(10);
     await withEmojiOfDevice(page);
-    // Llegó al tope: la siguiente ya no lo espera.
+    // It reached the cap: the next one no longer waits for it.
     a = await reloadStopped(page);
     await a.toMount(page.getByText("Regar"));
     await a.staysA(0.4);
@@ -504,7 +504,7 @@ test("Flujo 9 paso 23: el tiempo sin sesión no cuenta como tope con Noto", asyn
   await retain(page, NOTO_FILE);
   await page.goto("/");
   await expect(enterWithGoogle(page)).toBeVisible();
-  // Sin reloj simulado, porque el popup de la entrada no lo tolera: pasan de verdad los 10 s.
+  // No simulated clock, because the sign-in popup does not tolerate it: the 10 s really pass.
   await page.waitForTimeout(10_500);
   await completeEntry(page);
   await page.clock.install({ time: new Date(HOUR) });

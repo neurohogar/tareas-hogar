@@ -9,8 +9,8 @@ import {
 export const HOUR_PILOT = '2026-07-15T09:00:00';
 
 /**
- * Escena 1: Lista vacía.
- * Usuario con sesión iniciada, sin ninguna tarea cargada.
+ * Scene 1: Empty list.
+ * Signed-in user, with no task loaded.
  */
 export async function seedSceneEmpty(page: Page): Promise<void> {
   await cleanEmulators();
@@ -19,18 +19,18 @@ export async function seedSceneEmpty(page: Page): Promise<void> {
 }
 
 /**
- * Escena 2: Carga normal para hoy.
- * 3 tareas activas:
- * - Una periódica por intervalo (verde/al día).
- * - Una periódica con horario acotado que vence en breve.
- * - Una tarea puntual para hoy.
+ * Scene 2: Normal load for today.
+ * 3 active tasks:
+ * - A recurring task by interval (green/up to date).
+ * - A recurring task with a narrow schedule that expires soon.
+ * - A one-off task for today.
  */
 export async function seedSceneNormal(page: Page): Promise<void> {
   await cleanEmulators();
   await enter(page);
   await setClock(page, HOUR_PILOT);
 
-  // 1. Tarea periódica sin horario estricto
+  // 1. Recurring task without a strict schedule
   await create(page, {
     title: 'Regar las plantas',
     kind: 'Intervalo',
@@ -39,7 +39,7 @@ export async function seedSceneNormal(page: Page): Promise<void> {
     emoji: '🌱',
   });
 
-  // 2. Tarea con horario para hoy por la mañana
+  // 2. Task with a schedule for this morning
   await create(page, {
     title: 'Tomar infusión',
     kind: 'Intervalo',
@@ -49,7 +49,7 @@ export async function seedSceneNormal(page: Page): Promise<void> {
     emoji: '🌿',
   });
 
-  // 3. Tarea puntual para hoy
+  // 3. One-off task for today
   await create(page, {
     title: 'Pasear a Simón',
     kind: 'No se repite',
@@ -59,16 +59,16 @@ export async function seedSceneNormal(page: Page): Promise<void> {
 }
 
 /**
- * Escena 3: Sobrecarga / Muchas tareas atrasadas.
- * Múltiples tareas pendientes, varias de ellas vencidas y con aviso de atraso.
- * Prueba el estrés visual y la jerarquía de alertas para personas con TDAH.
+ * Scene 3: Overload / Many overdue tasks.
+ * Multiple pending tasks, several of them expired and with an overdue notice.
+ * Tests visual stress and the hierarchy of alerts for people with ADHD.
  */
 export async function seedSceneOverdue(page: Page): Promise<void> {
   await cleanEmulators();
   await enter(page);
   await setClock(page, HOUR_PILOT);
 
-  // Tarea atrasada hace 2 días
+  // Task overdue by 2 days
   await create(page, {
     title: 'Hacer fuego para el asado',
     kind: 'No se repite',
@@ -76,7 +76,7 @@ export async function seedSceneOverdue(page: Page): Promise<void> {
     emoji: '🔥',
   });
 
-  // Tarea periódica vencida
+  // Recurring task expired
   await create(page, {
     title: 'Barrer la vereda',
     kind: 'Intervalo',
@@ -86,7 +86,7 @@ export async function seedSceneOverdue(page: Page): Promise<void> {
     emoji: '🧹',
   });
 
-  // Tarea atrasada puntual
+  // One-off task overdue
   await create(page, {
     title: 'Llamar a la abuela',
     kind: 'No se repite',
@@ -94,7 +94,7 @@ export async function seedSceneOverdue(page: Page): Promise<void> {
     emoji: '❤️',
   });
 
-  // Tareas normales en el mismo estado para ver el contraste
+  // Normal tasks in the same state to compare the contrast
   await create(page, {
     title: 'Cuidar el huerto',
     kind: 'Intervalo',

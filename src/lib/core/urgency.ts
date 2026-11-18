@@ -9,7 +9,7 @@ import { asJustCreated } from './pause';
 import { deadlinesWithSchedule } from './deadlines-with-schedule';
 import type { Completion, Task } from './task';
 
-/** Un día límite (fecha límite o N) cuenta desde sus 00:00; atrasado, desde las 00:00 del día siguiente. */
+/** A due day (due date or N) counts from its 00:00; overdue, from 00:00 of the next day. */
 const fromDay = (day: Date, overdue: boolean) => (overdue ? addDays(day, 1) : day);
 
 function instantWithoutSchedule(task: Task, ofTheTask: readonly Completion[], status: PendingStatus): Date | undefined {
@@ -21,12 +21,12 @@ function instantWithoutSchedule(task: Task, ofTheTask: readonly Completion[], st
 }
 
 /**
- * Spec §6.1: el instante que ordena la tarea dentro de su grupo. Atrasada:
- * desde cuándo está atrasada; pendiente: desde cuándo está pendiente; en
- * espera: cuándo vuelve a pendiente. Una puntual pendiente sin fecha límite
- * no tiene instante (va al final de su grupo). Con horario, los de §5.5–§5.7.
- * De una reanudada, como recién creada en reanudadaEn (§5.8). En espera por una
- * posposición, vuelve en hasta (§5.9).
+ * Spec §6.1: the instant that orders the task within its group. Overdue:
+ * since when it is overdue; pending: since when it is pending; waiting:
+ * when it returns to pending. A pending one-off without a due date
+ * has no instant (it goes at the end of its group). With a schedule, those of §5.5–§5.7.
+ * Of a resumed task, as just created at resumedAt (§5.8). Waiting because of a
+ * postponement, it returns at to (§5.9).
  */
 export function urgencyInstant(
 	saved: Task,

@@ -1,26 +1,26 @@
-// Emojis recientes del selector (spec §6.2): la lista que el dispositivo recuerda.
-// "los emojis recientes son ..." y "hay N emojis recientes" son a la vez Given y
-// Then (el despacho no ve la palabra clave). Se distinguen por si ya hubo una
-// acción en el escenario (world.huboAccionSobreRecientes): antes declaran la
-// lista; después la verifican. Las acciones que dependen de una lista declarada
-// fallan si falta.
+// Recent emojis of the picker (spec §6.2): the list the device remembers.
+// "los emojis recientes son ..." and "hay N emojis recientes" are both Given and
+// Then (the dispatcher does not see the keyword). They are told apart by whether there was already an
+// action in the scenario (world.wasActionOnRecent): before it they declare the
+// list; afterwards they verify it. The actions that depend on a declared list
+// fail if it is missing.
 import { expect } from 'vitest';
 import { addRecent } from '../../src/lib/core/recent-emojis';
 import { P, list, numeric } from './values';
 import type { StepDefinition, World } from './world';
 
-/** Elegir un emoji en el selector lo suma a los recientes de este dispositivo. */
+/** Choosing an emoji in the picker adds it to this device's recents. */
 export function recordChoice(world: World, emoji: string): void {
 	world.recent = addRecent(world.recent ?? [], emoji);
 	world.wasActionOnRecent = true;
 }
 
 function recentDeclared(world: World): string[] {
-	if (world.recent === undefined) throw new Error('Falta declarar los emojis recientes antes de actuar sobre ellos.');
+	if (world.recent === undefined) throw new Error('The recent emojis must be declared before acting on them.');
 	return world.recent;
 }
 
-/** Emojis distintos entre sí, para llenar la lista sin nombrarlos. */
+/** Emojis distinct from each other, to fill the list without naming them. */
 const emojisDistinct = (count: number) => Array.from({ length: count }, (_, i) => String.fromCodePoint(0x1f600 + i));
 
 const NEW = '🧪';
@@ -52,7 +52,7 @@ export const recentEmojisSteps: StepDefinition[] = [
 			world.emojiMoreOld = recentDeclared(world).at(-1);
 			world.emojiChosen = NEW;
 			recordChoice(world, NEW);
-			// Con el panel abierto, el emoji elegido queda en el formulario (§6.2).
+			// With the panel open, the chosen emoji stays in the form (§6.2).
 			const changes = world.panel?.changes;
 			if (changes) changes.form = { ...changes.form, data: { ...changes.form.data, emoji: NEW } };
 		}

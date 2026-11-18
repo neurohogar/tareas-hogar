@@ -1,4 +1,4 @@
-// Forma del JSON IR que produce `gherkin-parser` de APS (parser-spec.md).
+// Shape of the IR JSON produced by APS `gherkin-parser` (parser-spec.md).
 
 export interface Step {
 	keyword: string;

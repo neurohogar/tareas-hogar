@@ -1,6 +1,6 @@
-// Spec §6.2 (Aviso de cierre): qué hace cerrar el panel y qué ofrece su aviso.
+// Spec §6.2 (Close notice): what closing the panel does and what its notice offers.
 
-/** Spec §6.2: el nombre del aviso, de cierre o de acción. */
+/** Spec §6.2: the name of the notice, close or action. */
 export const CHANGES_MESSAGE = 'Tenés cambios sin guardar';
 
 export interface NoticeButton {
@@ -13,10 +13,10 @@ export interface ChangesNotice {
 	buttons: readonly NoticeButton[];
 }
 
-/** Spec §6.2: el botón que cierra el aviso y deja el panel como estaba. */
+/** Spec §6.2: the button that closes the notice and leaves the panel as it was. */
 export const KEEP_EDITING: NoticeButton = { text: 'Seguir editando', effect: 'seguir editando' };
 
-/** Spec §6.2: el aviso de cierre, con sus tres botones en orden. */
+/** Spec §6.2: the close notice, with its three buttons in order. */
 export const CLOSE_NOTICE: ChangesNotice = {
 	message: CHANGES_MESSAGE,
 	buttons: [KEEP_EDITING, { text: 'Descartar', effect: 'descartar' }, { text: 'Guardar', effect: 'guardar' }]
@@ -24,7 +24,7 @@ export const CLOSE_NOTICE: ChangesNotice = {
 
 export type CloseEffect = 'cierra el panel' | 'abre el aviso de cierre';
 
-/** Spec §6.2: cerrar con cambios pide confirmación; sin cambios cierra directo. */
+/** Spec §6.2: closing with changes asks for confirmation; without changes it closes directly. */
 export function onClosePanel(hasChanges: boolean): CloseEffect {
 	return hasChanges ? 'abre el aviso de cierre' : 'cierra el panel';
 }

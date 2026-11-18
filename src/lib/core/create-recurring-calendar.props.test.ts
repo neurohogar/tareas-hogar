@@ -8,12 +8,12 @@ const create = (weekdays: readonly Weekday[], monthDays: readonly number[]) =>
 	createRecurringCalendar({ title: 'Tarea', weekdays, monthDays }, 'id', NOW);
 
 const weekdays = fc.array(fc.constantFrom(...WEEKDAYS), { maxLength: 10 });
-/** Incluye valores fuera de 1..31 para ejercitar el rechazo. */
+/** Includes values outside 1..31 to exercise the rejection. */
 const monthDays = fc.array(fc.integer({ min: -3, max: 35 }), { maxLength: 10 });
 const permutation = <T>(xs: readonly T[]) => fc.shuffledSubarray([...xs], { minLength: xs.length });
 
-describe('crearPeriodicaCalendario (propiedades)', () => {
-	it('es válida si y solo si hay días de un solo tipo y los del mes están entre 1 y 31', () => {
+describe('createRecurringCalendar (properties)', () => {
+	it('is valid if and only if there are days of a single kind and the month ones are between 1 and 31', () => {
 		fc.assert(
 			fc.property(weekdays, monthDays, (week, month) => {
 				const onlyOneKind = (week.length > 0) !== (month.length > 0);
@@ -23,7 +23,7 @@ describe('crearPeriodicaCalendario (propiedades)', () => {
 		);
 	});
 
-	it('guarda los días semanales como conjunto: sin repetir, en el orden de la semana', () => {
+	it('saves the weekdays as a set: without repeats, in week order', () => {
 		const weekWithPermutation = weekdays
 			.filter((d) => d.length > 0)
 			.chain((d) => permutation(d).map((other) => [d, other] as const));
@@ -39,7 +39,7 @@ describe('crearPeriodicaCalendario (propiedades)', () => {
 		);
 	});
 
-	it('guarda los días del mes como conjunto: sin repetir, de menor a mayor', () => {
+	it('saves the month days as a set: without repeats, from lowest to highest', () => {
 		const monthWithPermutation = fc
 			.array(fc.integer({ min: 1, max: 31 }), { minLength: 1, maxLength: 10 })
 			.chain((d) => permutation(d).map((other) => [d, other] as const));

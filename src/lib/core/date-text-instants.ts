@@ -1,5 +1,5 @@
-// Spec §6.1 (Fecha y distancia): los instantes que nombran «Tocaba …» (desde
-// cuándo toca una atrasada) y «Vuelve …» (cuándo vuelve a pendiente una en espera).
+// Spec §6.1 (Fecha y distancia): the instants named by «Tocaba …» (since
+// when an overdue task is due) and «Vuelve …» (when a waiting one returns to pending).
 import { completionsOfTask } from './completions';
 import type { Status } from './status';
 import { nextOccurrence } from './recurring-calendar-status';
@@ -12,7 +12,7 @@ import { urgencyInstant } from './urgency';
 
 export type WaitingStatus = Extract<Status, { kind: 'en espera' }>;
 
-/** Sin horario: la fecha límite, V (o creadaEn, nunca completada) o las 00:00 de N. */
+/** Without a schedule: the due date, V (or createdAt, never completed) or 00:00 of N. */
 function wasDueWithoutSchedule(task: Task, ofTheTask: readonly Completion[]): Date | undefined {
 	if (task.kind === 'puntual') return task.dueDate;
 	const { recurrence } = task;
@@ -21,11 +21,11 @@ function wasDueWithoutSchedule(task: Task, ofTheTask: readonly Completion[]): Da
 }
 
 /**
- * Spec §6.1: desde cuándo toca la tarea. Puntual: el día de la fecha límite,
- * tenga o no horario (sin fecha límite, ninguno). Relativa: V. Calendario: el
- * día de N. Una periódica con horario, A, salvo que A todavía no haya llegado:
- * ahí, el instante sin horario (nunca es un instante futuro). De una reanudada,
- * como recién creada (§5.8).
+ * Spec §6.1: since when the task is due. One-off: the day of the due date,
+ * with or without a schedule (without a due date, none). Relative: V. Calendar: the
+ * day of N. A recurring task with a schedule, A, unless A has not arrived yet:
+ * then, the instant without schedule (never a future instant). For a resumed one,
+ * as just created (§5.8).
  */
 export function dueInstant(saved: Task, completions: readonly Completion[], now: Date): Date | undefined {
 	const { task, owns } = asJustCreated(saved, completionsOfTask(completions, saved.id));
@@ -36,12 +36,12 @@ export function dueInstant(saved: Task, completions: readonly Completion[], now:
 }
 
 /**
- * Spec §6.1: cuándo vuelve a pendiente una tarea en espera, el mismo instante que
- * la ordena (relativa, V; calendario, 00:00 de N; con horario, A; pospuesta,
- * hasta). Si una posposición y su propia regla la tienen en espera, el más tarde.
+ * Spec §6.1: when a waiting task returns to pending, the same instant that
+ * orders it (relative, V; calendar, 00:00 of N; with a schedule, A; postponed,
+ * to). If a postponement and its own rule both have it waiting, the later one.
  */
 export function returnInstant(task: Task, completions: readonly Completion[], status: WaitingStatus, now: Date): Date {
-	// En espera siempre hay un instante: el de su regla o, si solo la posposición la tiene en espera, su hasta.
+	// A waiting task always has an instant: that of its rule or, if only the postponement has it waiting, its to.
 	const byItsRule = urgencyInstant(task, completions, status, now) as Date;
 	const to = activePostponement(task, now)?.to;
 	return to ? new Date(Math.max(to.getTime(), byItsRule.getTime())) : byItsRule;

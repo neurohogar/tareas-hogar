@@ -11,7 +11,7 @@ let home: string;
 let tmp: string;
 let log: string;
 
-/** Corre el seguimiento hasta que su salida cumple `listo` (o pasa el plazo), y lo termina como lo termina un Monitor. */
+/** Runs the tracking until its output satisfies `ready` (or the deadline passes), and ends it the way a Monitor ends it. */
 function follow(args: string[], ready: (output: string) => boolean): Promise<string> {
 	return new Promise((resolve) => {
 		const child = spawn(process.execPath, [PROGRESS, ...args], { env: { ...process.env, HOME: home } });
@@ -29,7 +29,7 @@ function follow(args: string[], ready: (output: string) => boolean): Promise<str
 	});
 }
 
-/** Arranca un seguimiento nuevo, hasta que dejó anotado desde dónde sigue. */
+/** Starts a new tracking, until it has noted where it continues from. */
 function start(): Promise<void> {
 	const status = join(tmp, 'seguimiento-qa.json');
 	rmSync(status, { force: true });
@@ -54,8 +54,8 @@ beforeEach(() => {
 	writeFileSync(log, '10:00 qa: viejo\n');
 });
 
-describe('rearmar el seguimiento con --continuar', () => {
-	it('muestra lo que se anotó mientras no había seguimiento, y no lo anterior', async () => {
+describe('rebuilding the tracking with --continuar', () => {
+	it('shows what was noted while there was no tracking, and not what came before', async () => {
 		await start();
 		appendFileSync(log, '10:30 qa: en el medio\n');
 		const output = await follow(['qa', '27', '--continuar'], (s) => s.includes('en el medio'));
@@ -63,7 +63,7 @@ describe('rearmar el seguimiento con --continuar', () => {
 		expect(output).not.toContain('viejo');
 	});
 
-	it('conserva cuánto lleva el rol y cuándo hubo la última novedad', async () => {
+	it('keeps how long the role has been running and when the last update was', async () => {
 		await start();
 		const status = annotated();
 		const now = Date.now();
@@ -72,7 +72,7 @@ describe('rearmar el seguimiento con --continuar', () => {
 		expect(output).toContain('qa: lleva 50 min (estimado 27); última novedad hace 20 min');
 	});
 
-	it('si el log se truncó lo lee desde el principio, sin fragmentos', async () => {
+	it('if the log was truncated it reads it from the start, without fragments', async () => {
 		appendFileSync(log, `10:01 qa: ${'relleno '.repeat(20)}\n`);
 		await start();
 		writeFileSync(log, '11:00 qa: log nuevo\n');
@@ -81,22 +81,22 @@ describe('rearmar el seguimiento con --continuar', () => {
 		expect(output.split('\n')[0]).toBe('11:00 qa: log nuevo');
 	});
 
-	it('con lo anotado dañado arranca de cero en vez de cortarse', async () => {
+	it('with damaged notes it starts from zero instead of breaking', async () => {
 		await start();
 		writeFileSync(join(tmp, 'seguimiento-qa.json'), '{"inicio":17');
 		const output = await follow(['qa', '27', '--continuar'], (s) => s.includes('lleva'));
 		expect(output).toContain('qa: lleva 0 min (estimado 27)');
 	});
 
-	it('sin un seguimiento anterior arranca de cero', async () => {
+	it('without a previous tracking it starts from zero', async () => {
 		const output = await follow(['qa', '27', '--continuar'], (s) => s.includes('lleva'));
 		expect(output).toContain('qa: lleva 0 min (estimado 27); última novedad hace 0 min');
 		expect(output).not.toContain('viejo');
 	});
 });
 
-describe('un seguimiento nuevo', () => {
-	it('no hereda el tiempo del rol anterior', async () => {
+describe('a new tracking', () => {
+	it('does not inherit the time of the previous role', async () => {
 		await start();
 		writeFileSync(join(tmp, 'seguimiento-qa.json'), JSON.stringify({ ...annotated(), inicio: Date.now() - 50 * MINUTE_MS }));
 		await start();
@@ -104,7 +104,7 @@ describe('un seguimiento nuevo', () => {
 		expect(output).toContain('qa: lleva 0 min');
 	});
 
-	it('borra el temporal de un seguimiento muerto y respeta el de uno vivo', async () => {
+	it('deletes the temp file of a dead tracking and respects that of a live one', async () => {
 		const dead = join(tmp, `seguimiento-qa.json.${spawnSync('true').pid}`);
 		const live = join(tmp, `seguimiento-qa.json.${process.pid}`);
 		const ofOtherRole = join(tmp, `seguimiento-hardener.json.${spawnSync('true').pid}`);
@@ -115,7 +115,7 @@ describe('un seguimiento nuevo', () => {
 		expect(existsSync(ofOtherRole)).toBe(true);
 	});
 
-	it('funciona sin que el log exista todavía', async () => {
+	it('works without the log existing yet', async () => {
 		rmSync(log);
 		await start();
 		const output = await follow(['qa', '--continuar'], (s) => s.includes('lleva'));

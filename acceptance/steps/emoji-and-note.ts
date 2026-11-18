@@ -1,5 +1,5 @@
-// Emoji y nota de la tarea (spec §4.1), su edición (§6.2), el nombre de la
-// tarea y los conflictos entre dispositivos (§7).
+// Emoji and note of the task (spec §4.1), their editing (§6.2), the name of the
+// task and conflicts between devices (§7).
 import { expect } from 'vitest';
 import { createOneOff, type OneOffData } from '../../src/lib/core/create-one-off';
 import { taskData, type TaskData } from '../../src/lib/core/task-data';
@@ -13,29 +13,29 @@ import { OTHER, theDoc, theTask, type StepDefinition, type World } from './world
 
 const ONLY_SPACES = '   ';
 
-/** Lo que el panel escribe en los campos que cambian; el resto queda como estaba. */
+/** What the panel writes in the fields that change; the rest stays as it was. */
 type Fields = Partial<Pick<TaskData, 'title' | 'emoji' | 'note'>>;
 const withFields = (fields: Fields) => (task: Task) => ({ ...taskData(task), ...fields });
 
-/** Una nota escrita con espacios y saltos de línea de más al inicio y al final. */
+/** A note written with extra spaces and line breaks at the start and end. */
 const withMargins = (note: string) => `  \n ${note} \n  `;
 
 const create = (world: World, data: OneOffData, now = SCENARIO_BEFORE) =>
 	recordCreation(world, (id) => createOneOff(data, id, now));
 
-/** Quién edita la nota: yo, o el otro dispositivo sin ver mi último cambio. */
+/** Who edits the note: me, or the other device without seeing my last change. */
 const EDITORS = [
 	{ subject: 'edito', edit: editMe },
 	{ subject: `${OTHER} edita`, edit: editsOther }
 ];
 
-/** Elegir un emoji en el selector: se asigna a la tarea que se edita, si hay una, y pasa a los recientes. */
+/** Choosing an emoji in the picker: it is assigned to the task being edited, if there is one, and goes to the recents. */
 function choose(world: World, emoji: string, fields: Fields = {}): void {
 	recordChoice(world, emoji);
 	if (world.docs.length > 0) editMe(world, withFields({ emoji, ...fields }));
 }
 
-/** Cada forma de cambio de la nota: "<sujeto> la nota a ...". */
+/** Each form of note change: "<subject> la nota a ...". */
 const CHANGES: { text: string; fields: (...values: string[]) => Fields }[] = [
 	{ text: `la nota a ${P}`, fields: (note) => ({ note }) },
 	{ text: `la nota a ${P} con espacios al inicio y al final`, fields: (note) => ({ note: withMargins(note) }) },
@@ -66,7 +66,7 @@ export const emojiAndNoteSteps: StepDefinition[] = [
 		run: (world, emoji) => editsOther(world, withFields({ emoji }))
 	},
 	{
-		// Quitar es dejar la tarea sin emoji; no pasa por los recientes.
+		// Removing means leaving the task without an emoji; it does not go through the recents.
 		pattern: /^quito el emoji$/,
 		run: (world) => editMe(world, withFields({ emoji: '' }))
 	},

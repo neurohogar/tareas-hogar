@@ -1,6 +1,6 @@
-// Versión mínima de la tarea (spec §4.1, §4.4, §5.4, §6.1, §6.2, §6.3, §7): un campo opcional de una línea que
-// la fila muestra en pendiente y atrasada con el botón «Hice la mínima», que completa como el checkbox y deja
-// `fueMinima` en el completado. Nunca inválida: vacío o solo espacios es sin versión mínima.
+// Minimal version of the task (spec §4.1, §4.4, §5.4, §6.1, §6.2, §6.3, §7): an optional one-line field that
+// the row shows when pending and overdue with the «Hice la mínima» button, which completes like the checkbox and leaves
+// `wasMinimal` in the completion. Never invalid: empty or only spaces means no minimal version.
 import { expect } from 'vitest';
 import { noticeText } from '../../src/lib/core/notice';
 import { latestCompletion, completionsOfTask } from '../../src/lib/core/completions';
@@ -20,13 +20,13 @@ import { OTHER, theDoc, theTask, theTaskTitled, thatSawOther, newId, type StepDe
 
 const ONLY_SPACES = '   ';
 
-/** Una versión mínima escrita con espacios de más al inicio y al final. */
+/** A minimal version written with extra spaces at the start and end. */
 const withMargins = (text: string) => `  ${text}  `;
 
-/** Los datos de la tarea con la versión mínima escrita; el resto como estaba. */
+/** The task data with the minimal version written; the rest as it was. */
 const withMinimalVersion = (minimalVersion: string) => (task: Task) => ({ ...taskData(task), minimalVersion });
 
-/** Un guardado con versión mínima es aceptado: nunca rechaza (§4.1). */
+/** A save with a minimal version is accepted: it never rejects (§4.1). */
 function withoutRejection(world: World): void {
 	expect(world.errors).toBeUndefined();
 }
@@ -36,13 +36,13 @@ function createOneOffWithMinimal(world: World, data: OneOffData): void {
 	withoutRejection(world);
 }
 
-/** Deja la tarea ya guardada con esa versión mínima, sin pasar por editar (no es un cambio "de mi lado"). */
+/** Leaves the task already saved with that minimal version, without going through editing (it is not a change "de mi lado"). */
 function savedWithMinimal(world: World, task: Task, minimalVersion: string): void {
 	expect(minimalVersion.trim()).not.toBe('');
 	world.docs = world.docs.map((doc) => (doc.id === task.id ? { ...doc, minimalVersion } : doc));
 }
 
-/** Cada forma de cambio de la versión mínima: "<sujeto> la versión mínima a ...". */
+/** Each form of minimal-version change: "<subject> la versión mínima a ...". */
 const CHANGES: { text: string; value: (...values: string[]) => string }[] = [
 	{ text: P, value: (minimal) => minimal },
 	{ text: `${P} con espacios al inicio y al final`, value: (minimal) => withMargins(minimal) },
@@ -65,7 +65,7 @@ const editSteps: StepDefinition[] = EDITORS.flatMap(({ subject, edit }) =>
 	}))
 );
 
-/** Un completado ya guardado con `fueMinima`, sin aviso y sin tocar el paso en que va la tarea. */
+/** A completion already saved with `wasMinimal`, without a notice and without touching the step the task is on. */
 function completedWithMinimal(world: World, task: Task, moment: string, step?: string): void {
 	const { id } = recordCompletion(world, dateHour(moment), task, true);
 	if (step === undefined) return;
@@ -74,15 +74,15 @@ function completedWithMinimal(world: World, task: Task, moment: string, step?: s
 	world.completions = world.completions.map((completion) => (completion.id === id ? { ...completion, stepAtCompletion: stepOnComplete } : completion));
 }
 
-/** «Hice la mínima» desde este dispositivo: lo que decide el core, con el aviso y el paso 1 como el checkbox. */
+/** «Hice la mínima» from this device: what the core decides, with the notice and step 1 like the checkbox. */
 function tapMinimal(world: World, task: Task, moment: Date): void {
 	world.checkboxTouched = true;
-	// Sin una consulta antes, lo que se afirma después es del momento en que se tocó.
+	// Without a prior query, what is asserted afterwards belongs to the moment of the tap.
 	if (world.statusMoments.length === 0) world.statusMoments = [moment];
 	completeMe(world, moment, task, doTheMinimal);
 }
 
-/** El otro dispositivo decide con lo que veía; su completado llega a lo guardado. */
+/** The other device decides with what it saw; its completion reaches what is stored. */
 function dueMinimalOther(world: World, moment: Date): void {
 	const seen = thatSawOther(world);
 	const task = theTask(seen);
@@ -98,7 +98,7 @@ const theLastCompletion = (world: World) => {
 	return latestCompletion(completions);
 };
 
-/** En cada momento consultado, la lista tiene una sola fila y esa es su línea de mínima. */
+/** At each queried moment, the list has a single row and that is its minimal line. */
 function theRowShowsMinimal(world: World, line: string | undefined): void {
 	expect(world.pendingQueries.length).toBeGreaterThan(0);
 	for (const rows of world.pendingQueries) expect(rows.map(({ minimal }) => minimal?.text)).toEqual([line]);
@@ -140,7 +140,7 @@ export const minimalVersionSteps: StepDefinition[] = [
 		run: (world, title, minimalVersion) => savedWithMinimal(world, theTaskTitled(world, title), minimalVersion)
 	},
 	{
-		// Quitar es vaciar el campo: la tarea queda sin versión mínima.
+		// Removing means emptying the field: the task is left without a minimal version.
 		pattern: /^quito la versión mínima$/,
 		run: (world) => {
 			editMe(world, withMinimalVersion(''));

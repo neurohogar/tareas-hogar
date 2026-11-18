@@ -5,8 +5,8 @@ import type { Completion, Task } from '../../src/lib/core/task';
 
 const completion = (id: string, completedAt: Date): Completion => ({ id, taskId: 't', completedAt });
 
-describe('completadoMasReciente: empate', () => {
-	it('con el mismo completadoEn devuelve el primero', () => {
+describe('latestCompletion: tie', () => {
+	it('with the same completedAt it returns the first', () => {
 		const moment = new Date(2026, 6, 15, 10, 0);
 		const a = completion('a', moment);
 		const b = completion('b', new Date(moment.getTime()));
@@ -15,8 +15,8 @@ describe('completadoMasReciente: empate', () => {
 	});
 });
 
-describe('filasDePendientes: Mostrar completadas apagado por defecto', () => {
-	it('sin el cuarto argumento no incluye las completadas', () => {
+describe('pendingRows: Mostrar completadas off by default', () => {
+	it('without the fourth argument it does not include the completed ones', () => {
 		const task: Task = { id: 't', title: 't', kind: 'puntual', createdAt: new Date(2026, 0, 1) };
 		const now = new Date(2026, 6, 15, 12, 0);
 		const rows = pendingRows([task], [completion('c', new Date(2026, 6, 15, 10, 0))], now);

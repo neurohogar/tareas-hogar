@@ -1,4 +1,4 @@
-// Spec §4.1 (Versión mínima), §5.4, §6.1, §6.3: propiedades de la mínima.
+// Spec §4.1 (Minimal version), §5.4, §6.1, §6.3: properties of the minimal version.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { noticeOnComplete, noticeText } from './notice';
@@ -37,8 +37,8 @@ const completions = fc
 	.array(fc.tuple(fc.constantFrom('t', 'otra'), instant), { maxLength: 4 })
 	.map((list) => list.map(([taskId, completedAt], i): Completion => ({ id: `c${i}`, taskId, completedAt })));
 
-describe('versión mínima (propiedades)', () => {
-	it('mirar la mínima no cambia la tarea, los completados ni su estado', () => {
+describe('minimal version (properties)', () => {
+	it('looking at the minimal version changes neither the task, the completions nor its status', () => {
 		fc.assert(
 			fc.property(taskWithMinimal, completions, instant, (t, doneOnes, now) => {
 				const before = structuredClone({ t, doneOnes, status: taskStatus(t, doneOnes, now) });
@@ -50,7 +50,7 @@ describe('versión mínima (propiedades)', () => {
 		);
 	});
 
-	it('hacerLaMinima ofrece algo solo con versión mínima, fila pendiente o atrasada y checkbox habilitado', () => {
+	it('doTheMinimal offers something only with a minimal version, a pending or overdue row and an enabled checkbox', () => {
 		fc.assert(
 			fc.property(taskWithMinimal, completions, instant, (t, doneOnes, now) => {
 				const status = taskStatus(t, doneOnes, now);
@@ -61,7 +61,7 @@ describe('versión mínima (propiedades)', () => {
 		);
 	});
 
-	it('la línea de la mínima es «Mínima: » más el texto completo, y solo con versión mínima', () => {
+	it('the minimal line is «Mínima: » plus the full text, and only with a minimal version', () => {
 		fc.assert(
 			fc.property(taskWithMinimal, completions, instant, (t, doneOnes, now) => {
 				const { status } = classifyInPending(t, doneOnes, now);
@@ -72,7 +72,7 @@ describe('versión mínima (propiedades)', () => {
 		);
 	});
 
-	it('completar con la mínima deja el mismo estado que el checkbox, y solo se distingue por fueMinima', () => {
+	it('completing with the minimal version leaves the same status as the checkbox, and is told apart only by wasMinimal', () => {
 		fc.assert(
 			fc.property(taskWithMinimal, completions, instant, (t, doneOnes, now) => {
 				const minimal = doTheMinimal(t, doneOnes, 'n', now);
@@ -84,7 +84,7 @@ describe('versión mínima (propiedades)', () => {
 		);
 	});
 
-	it('un completado entero nunca lleva fueMinima', () => {
+	it('a full completion never carries wasMinimal', () => {
 		fc.assert(
 			fc.property(taskWithMinimal, completions, instant, (t, doneOnes, now) => {
 				expect('wasMinimal' in complete(t, doneOnes, 'n', now)).toBe(false);
@@ -94,7 +94,7 @@ describe('versión mínima (propiedades)', () => {
 		);
 	});
 
-	it('completar con la mínima y deshacer devuelve el mismo paso actual', () => {
+	it('completing with the minimal version and undoing returns the same current step', () => {
 		fc.assert(
 			fc.property(taskWithMinimal, instant, (t, now) => {
 				const minimal = doTheMinimal(t, [], 'n', now);
@@ -107,7 +107,7 @@ describe('versión mínima (propiedades)', () => {
 		);
 	});
 
-	it('el texto del aviso y del Historial termina en «mínima»/«Mínima» solo si fue la mínima', () => {
+	it('the notice and History text ends in «mínima»/«Mínima» only if it was the minimal version', () => {
 		fc.assert(
 			fc.property(taskWithMinimal, instant, fc.boolean(), (t, now, wasMinimal) => {
 				const completion = complete(t, [], 'n', now, wasMinimal);
@@ -119,7 +119,7 @@ describe('versión mínima (propiedades)', () => {
 		);
 	});
 
-	it('editar solo escribe versionMinima si cambió', () => {
+	it('editing writes minimalVersion only if it changed', () => {
 		fc.assert(
 			fc.property(taskWithMinimal, fc.option(textWithLetters, { nil: undefined }), (t, newLabel) => {
 				const data = taskData(t);

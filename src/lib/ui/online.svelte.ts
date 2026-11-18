@@ -1,7 +1,7 @@
 import { onMount } from 'svelte';
 import { observeConnection } from '#lib/adapters/connection.ts';
 
-/** Estado reactivo "hay red": llamar durante la inicialización de un componente. */
+/** Reactive "there is a network" state: call during component initialization. */
 export function onlineState(): { readonly value: boolean } {
 	let value = $state(true);
 	onMount(() => observeConnection((current) => (value = current)));

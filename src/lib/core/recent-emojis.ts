@@ -1,9 +1,9 @@
-// Spec §6.2 (Emoji, Recientes): los últimos emojis elegidos, del más reciente al más viejo.
+// Spec §6.2 (Emoji, Recents): the last emojis chosen, from the most recent to the oldest.
 
 export const MAX_RECENT = 16;
 
-/** La lista de recientes después de elegir `emoji`: primero, sin repetirse, con el tope. */
+/** The recents list after choosing `emoji`: first, without repeating, with the cap. */
 export function addRecent(recents: readonly string[], emoji: string): string[] {
-	// El Set también limpia repetidos que traiga una lista guardada dañada.
+	// The Set also cleans up repeats that a damaged stored list may carry.
 	return [...new Set([emoji, ...recents])].slice(0, MAX_RECENT);
 }

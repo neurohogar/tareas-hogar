@@ -14,41 +14,41 @@ const RELATIVE: RecurringTask = {
 const ONE_OFF: OneOffTask = { id: 'p', title: 'Pagar', kind: 'puntual', createdAt: CREATED };
 const completion = (id: string, completedAt: Date): Completion => ({ id, taskId: 'r', completedAt });
 
-describe('pausar y reanudar (spec §5.8, §7)', () => {
-	it('pausar escribe pausada', () => {
+describe('pause and resume (spec §5.8, §7)', () => {
+	it('pausing writes paused', () => {
 		expect(pause()).toStrictEqual({ paused: true });
 	});
 
-	it('reanudar quita pausada y guarda reanudadaEn = ahora, en el mismo cambio', () => {
+	it('resuming removes paused and stores resumedAt = now, in the same change', () => {
 		expect(resume(RESUMED)).toStrictEqual({ paused: null, resumedAt: RESUMED });
 	});
 });
 
-describe('estaPausada (spec §4.1, §5.8)', () => {
-	it('una periódica con pausada está pausada; sin el campo, no', () => {
+describe('isPaused (spec §4.1, §5.8)', () => {
+	it('a recurring task with paused is paused; without the field, it is not', () => {
 		expect(isPaused({ ...RELATIVE, paused: true })).toBe(true);
 		expect(isPaused(RELATIVE)).toBe(false);
 		expect(isPaused({ ...RELATIVE, paused: false })).toBe(false);
 	});
 
-	it('una puntual nunca está pausada', () => {
+	it('a one-off is never paused', () => {
 		expect(isPaused(ONE_OFF)).toBe(false);
 	});
 });
 
-describe('accionDePausa (spec §6.2)', () => {
-	it('al editar una periódica ofrece pausar; si está pausada, reanudar', () => {
+describe('pauseAction (spec §6.2)', () => {
+	it('when editing a recurring task it offers pause; if it is paused, resume', () => {
 		expect(pauseAction(RELATIVE)).toBe('pausar');
 		expect(pauseAction({ ...RELATIVE, paused: true })).toBe('reanudar');
 	});
 
-	it('una puntual no se puede pausar', () => {
+	it('a one-off cannot be paused', () => {
 		expect(pauseAction(ONE_OFF)).toBeUndefined();
 	});
 });
 
-describe('comoRecienCreada (spec §5.8)', () => {
-	it('una reanudada se evalúa con creadaEn = reanudadaEn y sin los completados anteriores a reanudadaEn', () => {
+describe('asJustCreated (spec §5.8)', () => {
+	it('a resumed task is evaluated with createdAt = resumedAt and without the completions before resumedAt', () => {
 		const task = { ...RELATIVE, resumedAt: RESUMED };
 		const before = completion('c1', new Date(2026, 6, 15, 9, 59, 59));
 		const atTheInstant = completion('c2', RESUMED);
@@ -60,7 +60,7 @@ describe('comoRecienCreada (spec §5.8)', () => {
 		});
 	});
 
-	it('una que nunca se reanudó se evalúa tal cual', () => {
+	it('one that was never resumed is evaluated as is', () => {
 		const owns = [completion('c1', new Date(2026, 6, 2))];
 
 		expect(asJustCreated(RELATIVE, owns)).toStrictEqual({ task: RELATIVE, owns });

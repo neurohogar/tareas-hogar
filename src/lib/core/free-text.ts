@@ -1,6 +1,6 @@
-// Spec §4.1: la nota, el primer paso, los pasos y la versión mínima son texto libre, sin largo máximo y nunca inválido.
+// Spec §4.1: the note, the first step, the steps and the minimal version are free text, with no maximum length and never invalid.
 
-/** Recorta el inicio y el final; vacía o solo espacios es sin texto (undefined). */
+/** Trims the start and the end; empty or only spaces is no text (undefined). */
 export function trimText(text: string): string | undefined {
 	return text.trim() || undefined;
 }

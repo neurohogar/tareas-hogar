@@ -1,5 +1,5 @@
-// El checkbox de la fila de Pendientes (spec §6.1): completa la tarea o borra
-// su completado más reciente, según lo que decida el core.
+// The checkbox of a Pendientes row (spec §6.1): completes the task or deletes
+// its most recent completion, as the core decides.
 import { expect } from 'vitest';
 import { checkboxAction, checkboxEnabled } from '../../src/lib/core/checkbox';
 import { isCompleted } from '../../src/lib/core/completed';
@@ -13,7 +13,7 @@ import { theTask, rememberBeforeOfMyChange, type StepDefinition, type World } fr
 function tapCheckbox(world: World, moment: Date): void {
 	const task = theTask(world);
 	world.checkboxTouched = true;
-	// Sin una consulta antes, lo que se afirma después es del momento en que se tocó.
+	// Without a prior query, what is asserted afterwards belongs to the moment of the tap.
 	if (world.statusMoments.length === 0) world.statusMoments = [moment];
 	const action = checkboxAction(task, world.completions, moment);
 	if (action.kind === 'ninguna') return;
@@ -22,7 +22,7 @@ function tapCheckbox(world: World, moment: Date): void {
 	deleteCompletion(world, action.completion);
 }
 
-/** Cada momento en que se consultó el estado o Pendientes, con lo guardado ahora. */
+/** Each moment the status or Pendientes was queried, with what is stored now. */
 function inEveryMomentQueried(world: World, verify: (now: Date) => void): void {
 	expect(world.statusMoments.length).toBeGreaterThan(0);
 	for (const now of world.statusMoments) verify(now);
@@ -57,7 +57,7 @@ export const checkboxSteps: StepDefinition[] = [
 			)
 	},
 	{
-		// §5.8: una pausada no es pendiente, atrasada ni en espera.
+		// §5.8: a paused task is not pending, overdue or waiting.
 		pattern: /^la tarea no tiene estado$/,
 		run: (world) =>
 			inEveryMomentQueried(world, (now) =>

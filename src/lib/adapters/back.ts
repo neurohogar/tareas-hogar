@@ -1,18 +1,18 @@
 /**
- * Atrás del navegador mientras el panel está abierto (spec §6.2): el panel toma una entrada del
- * historial al abrir, así Atrás no sale de la pantalla. Cerrar el panel por otro camino
- * (la X, Guardar, una acción) la consume, sin dejar un Atrás de más.
+ * Browser Back while the panel is open (spec §6.2): the panel takes a history entry on
+ * opening, so Back does not leave the screen. Closing the panel another way
+ * (the X, Guardar, an action) consumes it, leaving no extra Back behind.
  */
 export interface BackLayer {
-	/** El panel se cerró: suelta la entrada si Atrás no la consumió. */
+	/** The panel closed: releases the entry if Back did not consume it. */
 	release(): void;
 }
 
 const ENTRY = { panelOpened: true };
 
 /**
- * `alTocarAtras` decide qué hace Atrás y dice si el panel sigue abierto: si sigue, se vuelve a tomar
- * la entrada para el próximo Atrás; si se cierra, la entrada ya está consumida.
+ * `onBackTap` decides what Back does and says whether the panel is still open: if it is, the entry
+ * is taken again for the next Back; if it closes, the entry is already consumed.
  */
 export function takeBack(onBackTap: () => boolean): BackLayer {
 	let consumed = false;

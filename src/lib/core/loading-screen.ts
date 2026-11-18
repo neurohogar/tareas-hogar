@@ -1,24 +1,24 @@
-// Spec §6.6: cuándo se va la pantalla de carga y qué recuerda el dispositivo de
-// un tope con Noto sin bajar. El core recibe el estado de cada cosa en un instante;
-// no usa temporizadores ni lee el dispositivo.
+// Spec §6.6: when the loading screen leaves and what the device remembers of
+// a limit reached with Noto not downloaded. The core receives the status of each thing at an instant;
+// it uses no timers and does not read the device.
 
-/** Spec §6.6: la pantalla dura al menos esto, aunque esté todo listo enseguida. */
+/** Spec §6.6: the screen lasts at least this long, even if everything is ready right away. */
 export const SCREEN_MINIMUM_IN_SECONDS = 0.5;
 
-/** Spec §6.6: pasado esto se entra con lo que haya; la espera de Auth no entra en el tope. */
+/** Spec §6.6: after this, one enters with what there is; the wait for Auth does not count toward the limit. */
 export const SCREEN_LIMIT_IN_SECONDS = 10;
 
-/** La respuesta de Auth: hasta que llega no se sabe si la apertura tiene sesión. */
+/** The Auth response: until it arrives it is not known whether the opening has a session. */
 export type AuthResponse = 'esperando' | 'con-sesion' | 'sin-sesion';
 
 /**
- * Cada fuente (Atkinson o Noto): `lista` para dibujar; `guardada` en el dispositivo y
- * todavía cargando; `sin-guardar`, solo puede venir por red; `fallida` falló o, en
- * Noto, el navegador no puede dibujarla.
+ * Each font (Atkinson or Noto): `lista` to draw; `guardada` on the device and
+ * still loading; `sin-guardar`, it can only come over the network; `fallida` failed or, for
+ * Noto, the browser cannot draw it.
  */
 export type FontStatus = 'lista' | 'guardada' | 'sin-guardar' | 'fallida';
 
-/** Lo que importa para la pantalla de carga en un instante. */
+/** What matters for the loading screen at an instant. */
 export interface WaitStatus {
 	secondsSinceStart: number;
 	auth: AuthResponse;
@@ -30,7 +30,7 @@ export interface WaitStatus {
 	remembersNotoLimit: boolean;
 }
 
-/** Spec §6.6, "No espera lo que no va a llegar": una fuente falla o solo llega por red. */
+/** Spec §6.6, "No espera lo que no va a llegar": a font fails or only arrives over the network. */
 function fontMayStillArrive(font: FontStatus, online: boolean): boolean {
 	return font === 'guardada' || (font === 'sin-guardar' && online);
 }
@@ -52,8 +52,8 @@ function respondedEverythingExpected(status: WaitStatus): boolean {
 }
 
 /**
- * Spec §6.6: la pantalla se va con Auth respondido y, pasado el mínimo de 0,5 s, cuando
- * está lo que espera esa apertura o al llegar al tope de 10 s.
+ * Spec §6.6: the screen leaves with Auth answered and, after the minimum of 0.5 s, when
+ * what that opening waits for is ready or on reaching the limit of 10 s.
  */
 export function loadingScreenLeaves(status: WaitStatus): boolean {
 	if (status.auth === 'esperando') return false;
@@ -73,27 +73,27 @@ function limitWithNotoExpected(status: WaitStatus): boolean {
 }
 
 /**
- * Spec §6.6: lo que el dispositivo recuerda de un tope con Noto sin bajar. Se pregunta
- * en el instante en que la pantalla se va y cada vez que Noto queda listo después.
+ * Spec §6.6: what the device remembers of a limit reached with Noto not downloaded. It is asked
+ * at the instant the screen leaves and every time Noto becomes ready afterwards.
  */
 export function notoLimitMemory(status: WaitStatus): boolean {
 	if (status.noto === 'lista') return false;
 	return status.remembersNotoLimit || limitWithNotoExpected(status);
 }
 
-/** Spec §6.6: una versión nueva que cambia el juego lo trata como no guardado y lo espera una vez. */
+/** Spec §6.6: a new version that changes the font set treats it as not stored and waits for it once. */
 export function rememberedOnStart(remembered: boolean, gameChangingVersion: boolean): boolean {
 	return remembered && !gameChangingVersion;
 }
 
-/** Spec §6.6: el próximo instante (mínimo o tope) en que la espera cambia sola, o `undefined` si ya pasaron los dos. */
+/** Spec §6.6: the next instant (minimum or limit) at which the wait changes by itself, or `undefined` if both have passed. */
 export function nextScreenLimit(secondsSinceStart: number): number | undefined {
 	return [SCREEN_MINIMUM_IN_SECONDS, SCREEN_LIMIT_IN_SECONDS].find(
 		(limit) => secondsSinceStart < limit
 	);
 }
 
-/** El estado del juego entero según el de cada uno de sus archivos: el peor manda. */
+/** The status of the whole font set according to that of each of its files: the worst one rules. */
 export function fontsSummary(statuses: FontStatus[]): FontStatus {
 	if (statuses.includes('fallida')) return 'fallida';
 	return statuses.includes('sin-guardar') ? 'sin-guardar' : 'guardada';

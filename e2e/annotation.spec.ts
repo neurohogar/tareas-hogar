@@ -27,7 +27,7 @@ test.beforeEach(async () => {
 
 type Direction = 'Me sirvió' | 'Me molestó';
 
-/** Fija la hora que ve la app (los temporizadores siguen corriendo) y deja que su reloj interno la lea. */
+/** Sets the time the app sees (timers keep running) and lets its internal clock read it. */
 async function at(page: Page, hour: string) {
 	await page.clock.setFixedTime(new Date(hour));
 	await page.waitForTimeout(1200);
@@ -38,7 +38,7 @@ const box = (page: Page) => page.getByRole('dialog', { name: 'Anotar', exact: tr
 const confirmation = (page: Page) => page.getByRole('status').filter({ hasText: 'Anotación guardada' });
 const copiedNotice = (page: Page) => page.getByRole('status').filter({ hasText: 'Anotaciones copiadas' });
 
-/** Los dos toques: Anotar, el texto si lo hay y el sentido. */
+/** The two taps: Anotar, the text if any, and the sentiment. */
 async function annotate(page: Page, text?: string, direction: Direction = 'Me sirvió') {
 	await buttonAnnotate(page).click();
 	await expect(box(page)).toBeVisible();
@@ -57,7 +57,7 @@ async function go(page: Page, screenName: ScreenName) {
 
 const entries = (page: Page) => page.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'Editar texto' }) });
 
-/** El texto completo de una anotación en la lista: hora, sentido, pantalla, tarea y texto, y sus dos botones. */
+/** The full text of an annotation in the list: time, sentiment, screen, task and text, and its two buttons. */
 function textOf(hour: string, direction: Direction, screenName: string, task?: string, text?: string) {
 	const parts = [hour, direction, screenName, task, text, 'Editar texto', 'Borrar'].filter((p) => p !== undefined);
 	const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -78,12 +78,12 @@ const position = async (page: Page) => {
 };
 
 test('Flujo 1: dónde está el botón', async ({ page }) => {
-	// Paso 1: sin sesión no hay botón.
+	// Step 1: without a session there is no button.
 	await page.goto('/');
 	await expect(page.getByRole('button', { name: 'Entrar con Google' })).toBeVisible();
 	await expect(buttonAnnotate(page)).toHaveCount(0);
 
-	// Paso 2: con la respuesta de Auth demorada se ve la pantalla de carga, sin botón.
+	// Step 2: with the Auth response delayed the loading screen is shown, without the button.
 	const auth = await retain(page, AUTH);
 	await page.reload({ waitUntil: 'commit' });
 	await expect(screenName(page)).toBeVisible();
@@ -92,7 +92,7 @@ test('Flujo 1: dónde está el botón', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Entrar con Google' })).toBeVisible();
 	await expect(buttonAnnotate(page)).toHaveCount(0);
 
-	// Paso 3: celular, las cuatro pantallas, mismas coordenadas.
+	// Step 3: phone, the four screens, same coordinates.
 	await page.setViewportSize({ width: 390, height: 844 });
 	await completeEntry(page);
 	const walk = async () => {
@@ -109,13 +109,13 @@ test('Flujo 1: dónde está el botón', async ({ page }) => {
 	};
 	const phone = await walk();
 
-	// Paso 4: pantalla ancha.
+	// Step 4: wide screen.
 	await page.setViewportSize({ width: 1280, height: 800 });
 	await go(page, 'Pendientes');
 	const wide = await walk();
 	expect(wide.y).toBe(phone.y);
 
-	// Paso 5: con el panel de creación y con el de edición abierto.
+	// Step 5: with the creation panel and with the edit panel open.
 	await go(page, 'Pendientes');
 	await page.getByRole('button', { name: '+' }).click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
@@ -133,7 +133,7 @@ test('Flujo 1: dónde está el botón', async ({ page }) => {
 	await page.keyboard.press('Escape');
 	await close(page);
 
-	// Paso 6: no hay opción para ocultarlo.
+	// Step 6: there is no option to hide it.
 	for (const p of ['Pendientes', 'Historial', 'Anotaciones'] as const) {
 		await go(page, p);
 		await expect(page.getByText(/ocultar/i)).toHaveCount(0);
@@ -146,7 +146,7 @@ test('Flujo 2: los dos toques', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T08:04:00');
 	await at(page, '2026-07-15T08:05:00');
 
-	// Paso 1: el recuadro, solo con el campo y los dos botones.
+	// Step 1: the box, with only the field and the two buttons.
 	await buttonAnnotate(page).click();
 	await expect(box(page)).toBeVisible();
 	await expect(box(page).getByRole('textbox', { name: 'Texto' })).toHaveValue('');
@@ -157,24 +157,24 @@ test('Flujo 2: los dos toques', async ({ page }) => {
 	await expect(box(page).getByRole('checkbox')).toHaveCount(0);
 	await page.keyboard.press('Escape');
 
-	// Paso 2: guardar con texto; la confirmación se va sola.
+	// Step 2: save with text; the confirmation goes away by itself.
 	await annotate(page, 'quedó lindo');
 	await expect(confirmation(page).getByRole('button')).toHaveCount(0);
 	await expect(confirmation(page)).toHaveCount(0, { timeout: 15_000 });
 
-	// Paso 3: aparece en Hoy.
+	// Step 3: it appears in Hoy.
 	await go(page, 'Anotaciones');
 	await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Hoy']);
 	await expect(entries(page)).toHaveText([textOf('08:05', 'Me sirvió', 'Pendientes', undefined, 'quedó lindo')]);
 
-	// Paso 4: sin texto es válido.
+	// Step 4: without text is valid.
 	await at(page, '2026-07-15T08:06:00');
 	await go(page, 'Pendientes');
 	await annotate(page, undefined, 'Me molestó');
 	await go(page, 'Anotaciones');
 	await expect(entry(page, '08:06')).toHaveText(textOf('08:06', 'Me molestó', 'Pendientes'));
 
-	// Paso 5: los espacios a los lados se recortan; solo espacios queda sin texto.
+	// Step 5: surrounding spaces are trimmed; only spaces leaves it without text.
 	await at(page, '2026-07-15T08:07:00');
 	await go(page, 'Pendientes');
 	await annotate(page, '   espacios   ', 'Me molestó');
@@ -184,7 +184,7 @@ test('Flujo 2: los dos toques', async ({ page }) => {
 	await expect(entry(page, '08:07')).toHaveText(textOf('08:07', 'Me molestó', 'Pendientes', undefined, 'espacios'));
 	await expect(entry(page, '08:08')).toHaveText(textOf('08:08', 'Me molestó', 'Pendientes'));
 
-	// Paso 6: 300 caracteres, completos y sin error.
+	// Step 6: 300 characters, complete and without error.
 	const length = 'abcdefghij'.repeat(30);
 	await at(page, '2026-07-15T08:09:00');
 	await go(page, 'Pendientes');
@@ -193,7 +193,7 @@ test('Flujo 2: los dos toques', async ({ page }) => {
 	await expect(entry(page, '08:09')).toContainText(length);
 	await expect(page.getByRole('alert')).toHaveCount(0);
 
-	// Paso 7: cada pantalla queda registrada.
+	// Step 7: each screen is recorded.
 	let minute = 10;
 	for (const p of ['Historial', 'Anotaciones'] as const) {
 		const hour = `08:${minute}`;
@@ -213,13 +213,13 @@ test('Flujo 3: contexto con el panel y con el aviso', async ({ page }) => {
 	await createAndView(page, { title: 'Regar', kind: 'No se repite' });
 	await createAndView(page, { title: 'Pagar', kind: 'No se repite' });
 
-	// Paso 1: con el panel de Regar abierto.
+	// Step 1: with the Regar panel open.
 	await at(page, '2026-07-15T08:01:00');
 	await openTask(page, 'Regar');
 	await annotate(page);
 	await close(page);
 
-	// Paso 2: panel de creación.
+	// Step 2: creation panel.
 	await at(page, '2026-07-15T08:02:00');
 	await page.getByRole('button', { name: '+' }).click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
@@ -237,7 +237,7 @@ test('Flujo 3 paso 3: el panel abierto sobre Historial dice Panel de edición', 
 	await complete(page, 'Regar');
 	await at(page, '2026-07-15T08:03:00');
 	await go(page, 'Historial');
-	// Desde el Historial el título de la entrada abre el panel de esa tarea; el panel cubre la barra.
+	// From Historial the entry title opens that task's panel; the panel covers the bar.
 	await page.getByRole('listitem').filter({ hasText: 'Regar' }).getByRole('button', { name: 'Regar' }).click();
 	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();
 	await annotate(page);
@@ -253,7 +253,7 @@ test('Flujo 3 pasos 4 a 6: el aviso de deshacer y el contexto', async ({ page })
 	await createAndView(page, { title: 'Pagar', kind: 'No se repite' });
 	const notice = page.getByRole('status').filter({ hasText: 'Completaste' });
 
-	// Paso 4: a las 08:00:04 todavía cuenta el aviso; a las 08:00:05 ya no.
+	// Step 4: at 08:00:04 the notice still counts; at 08:00:05 it no longer does.
 	await at(page, '2026-07-15T08:00:00');
 	await complete(page, 'Regar');
 	await expect(notice).toContainText('Completaste «Regar»');
@@ -264,7 +264,7 @@ test('Flujo 3 pasos 4 a 6: el aviso de deshacer y el contexto', async ({ page })
 	await expect(notice).toHaveCount(0, { timeout: 15_000 });
 	await annotate(page);
 
-	// Paso 5: el panel manda sobre el aviso; el panel de creación no tiene tarea.
+	// Step 5: the panel takes precedence over the notice; the creation panel has no task.
 	await at(page, '2026-07-15T08:10:00');
 	await turnOnCompleted(page);
 	await complete(page, 'Pagar');
@@ -278,7 +278,7 @@ test('Flujo 3 pasos 4 a 6: el aviso de deshacer y el contexto', async ({ page })
 	await annotate(page);
 	await close(page);
 
-	// Paso 6: la confirmación y el aviso se ven a la vez.
+	// Step 6: the confirmation and the notice are shown at the same time.
 	await at(page, '2026-07-15T08:20:00');
 	await createAndView(page, { title: 'Barrer', kind: 'No se repite' });
 	await complete(page, 'Barrer');
@@ -300,7 +300,7 @@ test('Flujo 4: anotar no toca la tarea ni el panel', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
 	await createAndView(page, { title: 'Regar', kind: 'No se repite' });
 
-	// Pasos 1 y 2: el panel sigue igual y se cierra sin avisar.
+	// Steps 1 and 2: the panel stays the same and closes without warning.
 	await openTask(page, 'Regar');
 	await expect(page.getByLabel('Título')).toHaveValue('Regar');
 	await annotate(page, 'algo');
@@ -310,7 +310,7 @@ test('Flujo 4: anotar no toca la tarea ni el panel', async ({ page }) => {
 	await close(page);
 	await expect(page.getByRole('alertdialog')).toHaveCount(0);
 
-	// Paso 3: un cambio sin guardar sigue siendo el único cambio.
+	// Step 3: an unsaved change remains the only change.
 	await openTask(page, 'Regar');
 	await page.getByLabel('Título').fill('Regar mucho');
 	await annotate(page);
@@ -321,7 +321,7 @@ test('Flujo 4: anotar no toca la tarea ni el panel', async ({ page }) => {
 	await notice.getByRole('button', { name: 'Descartar', exact: true }).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 
-	// Paso 4: no cambia de pantalla ni de pestaña.
+	// Step 4: it changes neither screen nor tab.
 	await go(page, 'Historial');
 	await annotate(page);
 	await expect(page.getByRole('heading', { name: 'Historial', level: 1 })).toBeVisible();
@@ -345,7 +345,7 @@ test('Flujo 5: Atrás y cerrar sin anotar', async ({ page }) => {
 	await create(page, { title: 'Pagar', kind: 'No se repite' });
 	await complete(page, 'Pagar');
 
-	// Paso 1: Atrás cierra el recuadro sin anotar.
+	// Step 1: Atrás closes the box without annotating.
 	await buttonAnnotate(page).click();
 	await box(page).getByRole('textbox', { name: 'Texto' }).fill('a medias');
 	await page.goBack();
@@ -355,7 +355,7 @@ test('Flujo 5: Atrás y cerrar sin anotar', async ({ page }) => {
 	await buttonAnnotate(page).click();
 	await expect(box(page).getByRole('textbox', { name: 'Texto' })).toHaveValue('');
 
-	// Paso 2: Escape.
+	// Step 2: Escape.
 	await box(page).getByRole('textbox', { name: 'Texto' }).fill('con escape');
 	await page.keyboard.press('Escape');
 	await expect(box(page)).toHaveCount(0);
@@ -365,7 +365,7 @@ test('Flujo 5: Atrás y cerrar sin anotar', async ({ page }) => {
 	await expect(page.getByText('Todavía no hay anotaciones')).toBeVisible();
 	await go(page, 'Pendientes');
 
-	// Paso 3: con el panel abierto, el primer Atrás cierra el recuadro y el segundo hace lo de siempre.
+	// Step 3: with the panel open, the first Atrás closes the box and the second does what it always does.
 	await openTask(page, 'Regar');
 	await buttonAnnotate(page).click();
 	await expect(box(page)).toBeVisible();
@@ -387,7 +387,7 @@ test('Flujo 5: Atrás y cerrar sin anotar', async ({ page }) => {
 	await page.getByRole('alertdialog').getByRole('button', { name: 'Descartar', exact: true }).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 
-	// Paso 4: con el panel cerrado, en cada pantalla la app se queda en ella.
+	// Step 4: with the panel closed, on each screen the app stays on it.
 	for (const p of ['Historial', 'Anotaciones'] as const) {
 		await go(page, p);
 		await buttonAnnotate(page).click();
@@ -397,7 +397,7 @@ test('Flujo 5: Atrás y cerrar sin anotar', async ({ page }) => {
 		await expect(page.getByRole('heading', { name: p, level: 1 })).toBeVisible();
 	}
 
-	// Paso 5: ningún Atrás de más, y Adelante no reabre nada.
+	// Step 5: no extra Atrás, and Adelante reopens nothing.
 	await go(page, 'Historial');
 	for (let i = 0; i < 3; i++) {
 		await buttonAnnotate(page).click();
@@ -426,7 +426,7 @@ test('Flujo 5 paso 6: el diálogo de Historial se comporta como antes', async ({
 	await expect(page).toHaveURL(/\/$/);
 });
 
-/** Las tres anotaciones del Flujo 6, con el reloj puesto en cada una. */
+/** The three annotations of Flow 6, with the clock set at each one. */
 async function createAnnotationsOfFlow6(page: Page) {
 	await sessionWithClock(page, '2026-07-14T21:29:00');
 	await annotationsOfFlow6(page);
@@ -451,14 +451,14 @@ async function annotationsOfFlow6(page: Page) {
 
 test('Flujo 6: la pantalla Anotaciones', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
-	// Paso 1: sin anotaciones.
+	// Step 1: no annotations.
 	await go(page, 'Anotaciones');
 	await expect(page.getByText('Todavía no hay anotaciones')).toBeVisible();
 	await expect(page.getByRole('list')).toHaveCount(0);
 	await expect(page.getByRole('button', { name: 'Copiar' })).toHaveCount(1);
 	const before = await page.getByRole('navigation').innerText();
 
-	// Pasos 2 y 3.
+	// Steps 2 and 3.
 	await annotationsOfFlow6(page);
 	await go(page, 'Anotaciones');
 	await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Hoy', 'Ayer']);
@@ -468,7 +468,7 @@ test('Flujo 6: la pantalla Anotaciones', async ({ page }) => {
 		textOf('21:30', 'Me sirvió', 'Historial', undefined, 'muy lento')
 	]);
 
-	// Paso 4: el reloj avanza y los grupos se renombran.
+	// Step 4: the clock advances and the groups are renamed.
 	await at(page, '2026-07-16T00:00:00');
 	await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Ayer', 'martes 14 de julio']);
 	await at(page, '2027-01-02T10:00:00');
@@ -476,13 +476,13 @@ test('Flujo 6: la pantalla Anotaciones', async ({ page }) => {
 	await at(page, '2026-07-15T10:00:00');
 	await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Hoy', 'Ayer']);
 
-	// Paso 5: el nombre actual de la tarea.
+	// Step 5: the task's current name.
 	await go(page, 'Pendientes');
 	await edit(page, 'Regar', { title: 'Plantas' });
 	await go(page, 'Anotaciones');
 	await expect(entry(page, '08:05')).toHaveText(textOf('08:05', 'Me sirvió', 'Panel de edición', '🌱 Plantas', 'quedó lindo'));
 
-	// Paso 6: nada cambia en la barra por haber anotado.
+	// Step 6: nothing changes in the bar because of annotating.
 	expect(await page.getByRole('navigation').innerText()).toBe(before);
 	await expect(page.getByRole('navigation').getByRole('link')).toHaveText(['Pendientes', 'Historial', 'Anotaciones']);
 });
@@ -498,7 +498,7 @@ test('Flujo 7: editar el texto', async ({ page }) => {
 		await expect(dialog).toHaveCount(0);
 	};
 
-	// Paso 1.
+	// Step 1.
 	await entry(page, '08:05').getByRole('button', { name: 'Editar texto' }).click();
 	await expect(dialog.getByRole('textbox')).toHaveValue('quedó lindo');
 	await dialog.getByRole('textbox').fill('quedó mal');
@@ -510,14 +510,14 @@ test('Flujo 7: editar el texto', async ({ page }) => {
 	]);
 	await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Hoy', 'Ayer']);
 
-	// Paso 2.
+	// Step 2.
 	await entry(page, '09:10').getByRole('button', { name: 'Editar texto' }).click();
 	await expect(dialog.getByRole('textbox')).toHaveValue('');
 	await dialog.getByRole('textbox').fill('  ayer lo vi  ');
 	await dialog.getByRole('button', { name: 'Guardar' }).click();
 	await expect(entry(page, '09:10')).toHaveText(textOf('09:10', 'Me molestó', 'Historial', undefined, 'ayer lo vi'));
 
-	// Paso 3.
+	// Step 3.
 	await editText('08:05', '');
 	await expect(entry(page, '08:05')).toHaveText(textOf('08:05', 'Me sirvió', 'Panel de edición', '🌱 Regar'));
 	await editText('09:10', '   ');
@@ -525,7 +525,7 @@ test('Flujo 7: editar el texto', async ({ page }) => {
 	await expect(page.getByRole('alert')).toHaveCount(0);
 	await editText('08:05', 'quedó bien');
 
-	// Paso 4: persisten al recargar.
+	// Step 4: they persist on reload.
 	await arrivesOnServer(page);
 	await page.reload();
 	await expect(entries(page)).toHaveText([
@@ -540,7 +540,7 @@ test('Flujo 8: borrar una anotación', async ({ page }) => {
 	await go(page, 'Anotaciones');
 	const confirm = page.getByRole('alertdialog');
 
-	// Pasos 1 y 2.
+	// Steps 1 and 2.
 	await entry(page, '08:05').getByRole('button', { name: 'Borrar' }).click();
 	await expect(confirm.getByRole('button', { name: 'Borrar' })).toBeVisible();
 	await confirm.getByRole('button', { name: 'Cancelar' }).click();
@@ -548,7 +548,7 @@ test('Flujo 8: borrar una anotación', async ({ page }) => {
 	await expect(entries(page)).toHaveCount(3);
 	await expect(entry(page, '08:05')).toHaveText(textOf('08:05', 'Me sirvió', 'Panel de edición', '🌱 Regar', 'quedó lindo'));
 
-	// Paso 3.
+	// Step 3.
 	await entry(page, '08:05').getByRole('button', { name: 'Borrar' }).click();
 	await confirm.getByRole('button', { name: 'Borrar' }).click();
 	await expect(confirm).toHaveCount(0);
@@ -560,7 +560,7 @@ test('Flujo 8: borrar una anotación', async ({ page }) => {
 	await expect(row(page, 'Regar')).toBeVisible();
 	await go(page, 'Anotaciones');
 
-	// Paso 4.
+	// Step 4.
 	for (const hour of ['09:10', '21:30']) {
 		await entry(page, hour).getByRole('button', { name: 'Borrar' }).click();
 		await confirm.getByRole('button', { name: 'Borrar' }).click();
@@ -584,7 +584,7 @@ test('Flujo 9: copiar', async ({ page }) => {
 	await go(page, 'Anotaciones');
 	await expect(entries(page)).toHaveCount(2);
 
-	// Pasos 1 y 2.
+	// Steps 1 and 2.
 	await page.getByRole('button', { name: 'Copiar' }).click();
 	await expect(copiedNotice(page)).toBeVisible();
 	await expect(copiedNotice(page).getByRole('button')).toHaveCount(0);
@@ -594,7 +594,7 @@ test('Flujo 9: copiar', async ({ page }) => {
 	]);
 	await expect(copiedNotice(page)).toHaveCount(0, { timeout: 15_000 });
 
-	// Paso 3.
+	// Step 3.
 	await go(page, 'Pendientes');
 	await edit(page, 'Regar', { title: 'Plantas' });
 	await go(page, 'Anotaciones');
@@ -603,14 +603,14 @@ test('Flujo 9: copiar', async ({ page }) => {
 	expect((await clipboard(page)).split('\n')[0]).toContain('🌱 Plantas');
 	await expect(copiedNotice(page)).toHaveCount(0, { timeout: 15_000 });
 
-	// Paso 4: sin conexión.
+	// Step 4: offline.
 	await page.context().setOffline(true);
 	await page.getByRole('button', { name: 'Copiar' }).click();
 	await expect(copiedNotice(page)).toBeVisible();
 	await page.context().setOffline(false);
 	await expect(copiedNotice(page)).toHaveCount(0, { timeout: 15_000 });
 
-	// Paso 5: sin anotaciones no copia nada.
+	// Step 5: with no annotations nothing is copied.
 	for (const hour of ['09:10', '08:05']) {
 		await entry(page, hour).getByRole('button', { name: 'Borrar' }).click();
 		await page.getByRole('alertdialog').getByRole('button', { name: 'Borrar' }).click();
@@ -646,12 +646,12 @@ test('Flujo 10: borrar una tarea borra sus anotaciones', async ({ page }) => {
 	await go(page, 'Anotaciones');
 	await expect(entries(page)).toHaveCount(4);
 
-	// Paso 1: pasado el aviso de deshacer.
+	// Step 1: after the undo notice.
 	await at(page, '2026-07-15T08:10:00');
 	await go(page, 'Pendientes');
 	await remove(page, 'Regar');
 
-	// Paso 2.
+	// Step 2.
 	await go(page, 'Anotaciones');
 	await expect(entries(page)).toHaveText([
 		textOf('08:04', 'Me sirvió', 'Pendientes', undefined, 'suelta'),
@@ -664,7 +664,7 @@ test('Flujo 10: borrar una tarea borra sus anotaciones', async ({ page }) => {
 		'2026-07-15 08:04 · Me sirvió · Pendientes · suelta'
 	]);
 
-	// Paso 3.
+	// Step 3.
 	await go(page, 'Historial');
 	await expect(page.getByText('Todavía no completaste nada')).toBeVisible();
 });
@@ -672,7 +672,7 @@ test('Flujo 10: borrar una tarea borra sus anotaciones', async ({ page }) => {
 test('Flujo 11: dos dispositivos, anotar sin conexión', async ({ browser }) => {
 	const d = await twoDevices(browser, '2026-07-15T08:04:00');
 	try {
-		// Sin service worker, B tiene que haber cargado sus pantallas antes de quedarse sin conexión.
+		// Without a service worker, B must have loaded its screens before going offline.
 		await go(d.b, 'Anotaciones');
 		await go(d.b, 'Historial');
 		await d.ctxB.setOffline(true);
@@ -712,7 +712,7 @@ test('Flujo 12: dos dispositivos, edición contra borrado y tarea borrada', asyn
 		};
 		const text = (p: Page, t: string) => expect(entries(p)).toHaveText([new RegExp(`${t}\\s*Editar texto\\s*Borrar$`)]);
 
-		// Paso 2: gana el último cambio.
+		// Step 2: the last change wins.
 		await d.ctxB.setOffline(true);
 		await editText(d.a, 'uno');
 		await arrivesOnServer(d.a);
@@ -721,7 +721,7 @@ test('Flujo 12: dos dispositivos, edición contra borrado y tarea borrada', asyn
 		await text(d.a, 'dos');
 		await text(d.b, 'dos');
 
-		// Paso 3: borrar gana.
+		// Step 3: deleting wins.
 		await arrivesOnServer(d.a);
 		await d.ctxB.setOffline(true);
 		await entries(d.a).first().getByRole('button', { name: 'Borrar' }).click();
@@ -735,7 +735,7 @@ test('Flujo 12: dos dispositivos, edición contra borrado y tarea borrada', asyn
 		await arrivesOnServer(d.a);
 		await expect(entries(d.b)).toHaveCount(0);
 
-		// Paso 4: anotación sobre una tarea ya borrada.
+		// Step 4: annotation on an already deleted task.
 		await go(d.a, 'Pendientes');
 		await go(d.b, 'Pendientes');
 		await annotate(d.a, 'queda');
@@ -772,7 +772,7 @@ test('Flujo 13: la app nunca pide una anotación', async ({ page }) => {
 	await createAndView(page, { title: 'Regar', kind: 'No se repite' });
 	await createAndView(page, { title: 'Pagar', kind: 'No se repite' });
 
-	// Paso 1: una semana sin anotar.
+	// Step 1: a week without annotating.
 	const withoutNotices = async () => {
 		await expect(page.getByRole('alert')).toHaveCount(0);
 		await expect(page.getByRole('alertdialog')).toHaveCount(0);
@@ -791,7 +791,7 @@ test('Flujo 13: la app nunca pide una anotación', async ({ page }) => {
 		await withoutNotices();
 	}
 
-	// Paso 2: el botón se ve idéntico con 20 anotaciones.
+	// Step 2: the button looks identical with 20 annotations.
 	const look = async () => ({
 		image: (await buttonAnnotate(page).screenshot()).toString('base64'),
 		style: await buttonAnnotate(page).evaluate((e) => {
@@ -809,7 +809,7 @@ test('Flujo 13: la app nunca pide una anotación', async ({ page }) => {
 	const lookResult = await look();
 	expect(lookResult).toEqual(without);
 	await withoutNotices();
-	// Quedó sin conexión de red a Auth: nada más que ver.
+	// Network access to Auth is down: nothing more to see.
 	void discard;
 });
 
@@ -823,7 +823,7 @@ test('Flujo 14: la ruta /etiquetas ya no existe', async ({ page, context }) => {
 		await expect(p.getByText(/no existe|not found|404/i)).toHaveCount(0);
 	};
 
-	// Paso 1: ir directo a /etiquetas desde Historial abre Pendientes.
+	// Step 1: going straight to /etiquetas from Historial opens Pendientes.
 	await go(page, 'Historial');
 	await expect(page).toHaveURL(/\/historial$/);
 	await page.goto('/etiquetas');
@@ -832,12 +832,12 @@ test('Flujo 14: la ruta /etiquetas ya no existe', async ({ page, context }) => {
 	await expect(nav.getByRole('link', { name: 'Pendientes', exact: true })).toHaveAttribute('aria-current', 'page');
 	await withoutNotice(page);
 
-	// Paso 2: Atrás vuelve a Historial, sin pantalla vacía.
+	// Step 2: Atrás returns to Historial, with no empty screen.
 	await page.goBack();
 	await expect(page).toHaveURL(/\/historial$/);
 	await expect(page.getByRole('heading', { name: 'Historial', level: 1 })).toBeVisible();
 
-	// Paso 3: como primera dirección de una pestaña nueva.
+	// Step 3: as the first address of a new tab.
 	const other = await context.newPage();
 	await other.goto('/etiquetas');
 	await expect(other.getByRole('heading', { name: 'Pendientes', level: 1 })).toBeVisible();
@@ -845,7 +845,7 @@ test('Flujo 14: la ruta /etiquetas ya no existe', async ({ page, context }) => {
 	await withoutNotice(other);
 	await other.close();
 
-	// Paso 4: la barra tiene solo tres enlaces.
+	// Step 4: the bar has only three links.
 	await expect(nav.getByRole('link')).toHaveText(['Pendientes', 'Historial', 'Anotaciones']);
 	await expect(nav.getByRole('link', { name: 'Etiquetas' })).toHaveCount(0);
 });

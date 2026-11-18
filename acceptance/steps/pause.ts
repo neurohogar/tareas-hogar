@@ -1,5 +1,5 @@
-// Pausar y reanudar una periódica (spec §5.8, §6.2, §7): el botón del panel de
-// edición actúa en el momento, sin Guardar.
+// Pause and resume a recurring task (spec §5.8, §6.2, §7): the button of the edit
+// panel acts immediately, without Guardar.
 import { expect } from 'vitest';
 import { applyChange, type TaskChange } from '../../src/lib/core/task-document';
 import { pauseAction, pause, resume } from '../../src/lib/core/pause';
@@ -13,7 +13,7 @@ export function saveChange(world: World, task: Task, change: TaskChange): void {
 	world.docs = applyChange(world.docs, task.id, change);
 }
 
-/** Toco el botón de pausa del panel: tiene que ofrecer esa acción (§6.2). */
+/** I tap the pause button of the panel: it has to offer that action (§6.2). */
 function tapButton(world: World, action: 'pausar' | 'reanudar', change: TaskChange, title?: string): void {
 	const task = theChosen(world, title);
 	expect(pauseAction(task)).toBe(action);
@@ -25,12 +25,12 @@ const BUTTONS: Record<string, 'pausar' | 'reanudar'> = { Pausar: 'pausar', Reanu
 
 function button(text: string): 'pausar' | 'reanudar' {
 	const action = BUTTONS[text];
-	if (!action) throw new Error(`Botón de pausa inválido: "${text}"`);
+	if (!action) throw new Error(`Invalid pause button: "${text}"`);
 	return action;
 }
 
 export function thePanel(world: World): NonNullable<World['panel']> {
-	if (!world.panel) throw new Error('El panel de edición no está abierto');
+	if (!world.panel) throw new Error('The edit panel is not open');
 	return world.panel;
 }
 
@@ -64,7 +64,7 @@ export const pauseSteps: StepDefinition[] = [
 		run: (world, title, moment) => tapButton(world, 'reanudar', resume(dateHour(moment)), title)
 	},
 	{
-		// §4.1: sin el campo, no está pausada.
+		// §4.1: without the field, it is not paused.
 		pattern: /^la tarea está pausada$/,
 		run: (world) => expect(theDoc(world).paused).toBe(true)
 	},

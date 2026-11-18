@@ -1,11 +1,11 @@
-// Spec §6.6: lo que la pantalla de carga necesita del navegador. Se dibuja en src/app.html,
-// antes de que corra el JavaScript. Lo recordado vive solo en el dispositivo (§7).
+// Spec §6.6: what the loading screen needs from the browser. It is drawn in src/app.html,
+// before JavaScript runs. What is remembered lives only on the device (§7).
 import { rememberedOnStart } from '#lib/core/loading-screen.ts';
 import { notoFingerprint } from './fonts';
 
 const KEY = 'tareas-hogar:tope-de-noto';
 
-/** Los segundos desde que la app arrancó, marcados en src/app.html. */
+/** The seconds since the app started, marked in src/app.html. */
 export function secondsSinceStart(): number {
 	const { appStartTime = 0 } = window as unknown as { appStartTime?: number };
 	return (performance.now() - appStartTime) / 1000;
@@ -15,7 +15,7 @@ export function removeLoadingScreen(): void {
 	document.getElementById('loading-screen')?.remove();
 }
 
-/** Lo recordado vale para la versión del juego con que se alcanzó el tope. Sin almacenamiento, no se recuerda nada. */
+/** What is remembered applies to the font set version at which the cap was reached. Without storage, nothing is remembered. */
 export function readNotoLimitMemory(): boolean {
 	try {
 		const fingerprint = localStorage.getItem(KEY);
@@ -30,6 +30,6 @@ export function saveNotoLimitMemory(remembers: boolean): void {
 		if (remembers) localStorage.setItem(KEY, notoFingerprint());
 		else localStorage.removeItem(KEY);
 	} catch {
-		// Sin almacenamiento, la próxima apertura vuelve a esperar a Noto.
+		// Without storage, the next launch waits for Noto again.
 	}
 }

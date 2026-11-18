@@ -10,10 +10,10 @@ import { theTask, theTaskOfKind, theTaskTitled, newId, type StepDefinition, type
 
 export type Shape = 'semanal' | 'mensual';
 
-/** Cómo se nombran los días de cada forma: "los martes" o "los días 10". */
+/** How the days of each form are named: "los martes" or "los días 10". */
 const CONNECTOR: Record<Shape, string> = { semanal: 'los', mensual: 'los días' };
 export const SHAPE_AND_DAYS = `(semanal los|mensual los días) ${P}`;
-/** "semanal Basura los martes": el título va entre la forma y el conector. */
+/** "semanal Basura los martes": the title goes between the shape and the connector. */
 const SHAPE_TITLE_AND_DAYS = `(semanal|mensual) ${TITLE} (los|los días) ${P}`;
 
 export const DAYS_VALID: Record<Shape, Pick<RecurringCalendarData, 'weekdays' | 'monthDays'>> = {
@@ -26,10 +26,10 @@ export function daysOf(shape: Shape, days: string): Pick<RecurringCalendarData, 
 	return shape === 'semanal' ? { weekdays: weekdays(days), monthDays: [] } : { weekdays: [], monthDays: monthDays(days) };
 }
 
-/** "semanal los" o "mensual los días": la forma, validando que el conector le corresponda. */
+/** "semanal los" or "mensual los días": the shape, validating that the connector corresponds to it. */
 export function shapeOf(shapeAndConnector: string): Shape {
 	const [shape] = shapeAndConnector.split(' ') as [Shape];
-	if (`${shape} ${CONNECTOR[shape]}` !== shapeAndConnector) throw new Error(`Forma inválida: "${shapeAndConnector}"`);
+	if (`${shape} ${CONNECTOR[shape]}` !== shapeAndConnector) throw new Error(`Invalid shape: "${shapeAndConnector}"`);
 	return shape;
 }
 
@@ -37,7 +37,7 @@ function create(world: World, data: RecurringCalendarData, now = NOW): void {
 	recordCreation(world, (id) => createRecurringCalendar(data, id, now));
 }
 
-/** Completado ya guardado (por ejemplo, sincronizado), con su ocurrenciaCubierta tal cual. */
+/** Completion already saved (for example, synced), with its coveredOccurrence as is. */
 function addCompletion(world: World, completedAt: Date, occurrenceCovered: CoveredOccurrence, task: Task = theTask(world)): void {
 	const completion: Completion = {
 		id: newId(world, 'completado'),
@@ -52,7 +52,7 @@ const DAY_MS = 86_400_000;
 
 function theLastCompletion(world: World): Completion {
 	const last = world.completions.at(-1);
-	if (!last) throw new Error('La tarea no tiene completados');
+	if (!last) throw new Error('The task has no completions');
 	return last;
 }
 
@@ -133,7 +133,7 @@ export const recurringCalendarSteps: StepDefinition[] = [
 		run: (world, completed, covered) => addCompletion(world, dateHour(completed), occurrence(covered))
 	},
 	{
-		// El momento no influye en el resultado: se usa el inicio del día cubierto.
+		// The moment does not influence the result: the start of the covered day is used.
 		pattern: new RegExp(`^la tarea tiene un completado que cubre el ${P}$`),
 		run: (world, covered) => addCompletion(world, date(covered), date(covered))
 	},
@@ -141,7 +141,7 @@ export const recurringCalendarSteps: StepDefinition[] = [
 		pattern: /^la tarea tiene otro completado más antiguo que cubre la misma ocurrencia$/,
 		run: (world) => {
 			const last = theLastCompletion(world);
-			if (!last.coveredOccurrence) throw new Error('El último completado no cubre ninguna ocurrencia');
+			if (!last.coveredOccurrence) throw new Error('The last completion does not cover any occurrence');
 			addCompletion(world, new Date(last.completedAt.getTime() - DAY_MS), last.coveredOccurrence);
 		}
 	},
@@ -155,7 +155,7 @@ export const recurringCalendarSteps: StepDefinition[] = [
 				completedAt: world.momentOfNewCompletion,
 				coveredOccurrence: occurrence(covered)
 			});
-			// Que fue la mínima (§4.4) lo afirman los pasos de la mínima; solo se escribe en true.
+			// That it was the minimal one (§4.4) is asserted by the minimal-version steps; it is only ever written as true.
 			if (wasMinimal !== undefined) expect(wasMinimal).toBe(true);
 		}
 	}

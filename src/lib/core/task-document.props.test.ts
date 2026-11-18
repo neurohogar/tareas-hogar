@@ -1,4 +1,4 @@
-// Spec §7 (Datos que ya no se usan): los campos viejos `etiquetas` y `esfuerzo` de un documento ni se leen ni se tocan.
+// Spec §7 (Data no longer used): the old fields `etiquetas` and `esfuerzo` of a document are neither read nor touched.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { applyChange, taskFromDocument, type TaskChange, type TaskDocument } from './task-document';
@@ -26,8 +26,8 @@ const change: fc.Arbitrary<TaskChange> = fc.constantFrom<TaskChange>(
 	{ kind: 'puntual', recurrence: null }
 );
 
-describe('campos viejos del documento (propiedades, spec §7)', () => {
-	it('la tarea que se lee es la misma con o sin ellos', () => {
+describe('old document fields (properties, spec §7)', () => {
+	it('the task that is read is the same with or without them', () => {
 		fc.assert(
 			fc.property(document, oldFields, (doc, old) => {
 				expect(taskFromDocument(withOldFields(doc, old))).toStrictEqual(taskFromDocument(doc));
@@ -35,7 +35,7 @@ describe('campos viejos del documento (propiedades, spec §7)', () => {
 		);
 	});
 
-	it('ningún cambio, ni de campos ni de tipo, los quita ni los modifica', () => {
+	it('no change, of fields or of kind, removes or modifies them', () => {
 		fc.assert(
 			fc.property(document, oldFields, change, (doc, old, aChange) => {
 				const [edited] = applyChange([withOldFields(doc, old)], 't', aChange);
@@ -45,7 +45,7 @@ describe('campos viejos del documento (propiedades, spec §7)', () => {
 		);
 	});
 
-	it('el resto del documento queda igual que sin los campos viejos', () => {
+	it('the rest of the document stays the same as without the old fields', () => {
 		fc.assert(
 			fc.property(document, oldFields, change, (doc, old, aChange) => {
 				const [edited] = applyChange([withOldFields(doc, old)], 't', aChange);

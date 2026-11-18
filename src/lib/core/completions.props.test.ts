@@ -11,8 +11,8 @@ const completion = fc.record({
 }) as fc.Arbitrary<Completion>;
 const list = fc.array(completion, { maxLength: 20 });
 
-describe('completar (propiedades)', () => {
-	it('registra la tarea, el id y el momento dados, sin ocurrencia cubierta', () => {
+describe('complete (properties)', () => {
+	it('records the given task, id and moment, without a covered occurrence', () => {
 		fc.assert(
 			fc.property(fc.uuid(), fc.uuid(), fc.date({ noInvalidDate: true }), (taskIdValue, id, now) => {
 				const task: RecurringTask = {
@@ -28,8 +28,8 @@ describe('completar (propiedades)', () => {
 	});
 });
 
-describe('completadosDeTarea (propiedades)', () => {
-	it('devuelve exactamente los de la tarea, en el orden original', () => {
+describe('completionsOfTask (properties)', () => {
+	it('returns exactly those of the task, in the original order', () => {
 		fc.assert(
 			fc.property(list, taskId, (cs, id) => {
 				const ofTask = completionsOfTask(cs, id);
@@ -39,7 +39,7 @@ describe('completadosDeTarea (propiedades)', () => {
 		);
 	});
 
-	it('es idempotente', () => {
+	it('is idempotent', () => {
 		fc.assert(
 			fc.property(list, taskId, (cs, id) => {
 				expect(completionsOfTask(completionsOfTask(cs, id), id)).toEqual(completionsOfTask(cs, id));
@@ -47,7 +47,7 @@ describe('completadosDeTarea (propiedades)', () => {
 		);
 	});
 
-	it('particiona: cada completado pertenece a exactamente una tarea', () => {
+	it('partitions: each completion belongs to exactly one task', () => {
 		fc.assert(
 			fc.property(list, (cs) => {
 				const total = ['t1', 't2', 't3'].reduce((sum, id) => sum + completionsOfTask(cs, id).length, 0);
@@ -57,10 +57,10 @@ describe('completadosDeTarea (propiedades)', () => {
 	});
 });
 
-describe('completadoMasReciente (propiedades)', () => {
+describe('latestCompletion (properties)', () => {
 	const notEmpty = fc.array(completion, { minLength: 1, maxLength: 20 });
 
-	it('es uno de los completados, ninguno es posterior y da ultimoCompletadoEn', () => {
+	it('is one of the completions, none is later and it gives lastCompletedAt', () => {
 		fc.assert(
 			fc.property(notEmpty, (cs) => {
 				const mostRecent = latestCompletion(cs);
@@ -71,7 +71,7 @@ describe('completadoMasReciente (propiedades)', () => {
 		);
 	});
 
-	it('el instante no depende del orden de los completados', () => {
+	it('the instant does not depend on the order of the completions', () => {
 		const permuted = notEmpty.chain((cs) => fc.tuple(fc.constant(cs), fc.shuffledSubarray(cs, { minLength: cs.length })));
 		fc.assert(
 			fc.property(permuted, ([cs, permutedOnes]) => {

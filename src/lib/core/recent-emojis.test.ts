@@ -1,25 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_RECENT, addRecent } from './recent-emojis';
 
-describe('agregarReciente', () => {
-	it('sin recientes previos, el elegido queda como único reciente', () => {
+describe('addRecent', () => {
+	it('without previous recents, the chosen one becomes the only recent', () => {
 		expect(addRecent([], '🌱')).toEqual(['🌱']);
 	});
 
-	it('el elegido pasa al primer lugar y los anteriores bajan', () => {
+	it('the chosen one moves to the first place and the previous ones go down', () => {
 		expect(addRecent(['🔥', '🌱'], '🧹')).toEqual(['🧹', '🔥', '🌱']);
 	});
 
-	it('uno que ya estaba se mueve al primer lugar sin repetirse', () => {
+	it('one that was already there moves to the first place without repeating', () => {
 		expect(addRecent(['🔥', '🌱', '🧹'], '🧹')).toEqual(['🧹', '🔥', '🌱']);
 		expect(addRecent(['🔥', '🌱', '🧹'], '🌱')).toEqual(['🌱', '🔥', '🧹']);
 	});
 
-	it('el que ya era el primero queda igual', () => {
+	it('the one that was already first stays the same', () => {
 		expect(addRecent(['🔥', '🌱'], '🔥')).toEqual(['🔥', '🌱']);
 	});
 
-	it('conserva hasta 16 y, con la lista llena, descarta el más viejo', () => {
+	it('keeps up to 16 and, with a full list, discards the oldest', () => {
 		const fifteen = Array.from({ length: 15 }, (_, i) => `a${i}`);
 		expect(addRecent(fifteen, 'nuevo')).toHaveLength(16);
 		const sixteen = Array.from({ length: 16 }, (_, i) => `a${i}`);
@@ -28,12 +28,12 @@ describe('agregarReciente', () => {
 		expect(result).toEqual(['nuevo', ...sixteen.slice(0, 15)]);
 	});
 
-	it('con la lista llena, elegir uno que ya estaba no descarta ninguno', () => {
+	it('with a full list, choosing one that was already there discards none', () => {
 		const sixteen = Array.from({ length: 16 }, (_, i) => `a${i}`);
 		expect(addRecent(sixteen, 'a15')).toEqual(['a15', ...sixteen.slice(0, 15)]);
 	});
 
-	it('no modifica la lista recibida', () => {
+	it('does not modify the received list', () => {
 		const recents = ['🔥'];
 		addRecent(recents, '🌱');
 		expect(recents).toEqual(['🔥']);

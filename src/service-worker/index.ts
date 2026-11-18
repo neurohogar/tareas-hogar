@@ -1,11 +1,11 @@
-// Spec §8: precachea el build estático para abrir sin conexión en cualquier
-// ruta. La versión nueva se instala en segundo plano y espera: activa (y borra
-// la caché vieja) cuando no queda ninguna página de la versión anterior, o sea
-// la próxima vez que se abre la app. Sin avisar.
+// Spec §8: precaches the static build to open offline on any
+// route. The new version installs in the background and waits: it activates (and deletes
+// the old cache) when no page of the previous version is left, that is,
+// the next time the app is opened. Without notice.
 //
-// Las fuentes no entran en la precarga: si un archivo falla, `addAll` cancela la
-// instalación entera (§8). Las baja y las guarda la página (adapters/fonts.ts)
-// en su propia caché, que sobrevive a las versiones que no las cambian (§6.6).
+// The fonts are not precached: if one file fails, `addAll` cancels the
+// whole install (§8). The page downloads and stores them (adapters/fonts.ts)
+// in its own cache, which survives the versions that do not change them (§6.6).
 import { version } from '$app/env';
 import { immutable, assets } from '$app/manifest';
 import { asset } from '$app/paths';
@@ -13,11 +13,11 @@ import { FONT_CACHE, isFontFile } from '#lib/core/bundled-fonts.ts';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 const CACHE = `tareas-hogar-${version}`;
-/** El fallback de adapter-static: la app que atiende cualquier ruta. */
+/** The adapter-static fallback: the app that serves any route. */
 const APP = '/';
-/** Los archivos de Vite: el manifest los da relativos a la base, que en esta app es la raíz. */
+/** The Vite files: the manifest gives them relative to the base, which in this app is the root. */
 const build = immutable.map(({ path }) => `/${path}`);
-/** Los archivos de `static/`. */
+/** The files of `static/`. */
 const files = assets.map(({ path }) => asset(path));
 
 sw.addEventListener('install', (evento) => {
@@ -37,7 +37,7 @@ sw.addEventListener('activate', (evento) => {
 sw.addEventListener('fetch', (evento) => {
 	const { request } = evento;
 	const url = new URL(request.url);
-	// HEAD también: el selector de emoji consulta el ETag de su catálogo, que está en la caché.
+	// HEAD too: the emoji picker queries the ETag of its catalog, which is in the cache.
 	if (!['GET', 'HEAD'].includes(request.method) || url.origin !== sw.location.origin) return;
 	if (isFontFile(url.pathname)) return;
 	evento.respondWith(responder(request, url));
@@ -50,7 +50,7 @@ async function responder(request: Request, url: URL): Promise<Response> {
 	return request.method === 'HEAD' ? sinCuerpo(guardado) : guardado;
 }
 
-/** La respuesta a un HEAD: los mismos encabezados que la guardada, sin cuerpo. */
+/** The response to a HEAD: the same headers as the stored one, without a body. */
 function sinCuerpo(respuesta: Response): Response {
 	return new Response(null, { status: respuesta.status, statusText: respuesta.statusText, headers: respuesta.headers });
 }

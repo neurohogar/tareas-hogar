@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	// El catálogo en español viaja con el build (nada se pide a un CDN) y el service worker lo precachea.
+	// The Spanish catalog ships with the build (nothing is requested from a CDN) and the service worker precaches it.
 	import spanishData from 'emoji-picker-element-data/es/cldr/data.json?url';
 
-	/** La librería busca desde dos caracteres. */
+	/** The library searches from two characters. */
 	const MIN_SEARCH_LENGTH = 2;
 
 	let {
@@ -11,7 +11,7 @@
 		onChoose,
 		onClose
 	}: {
-		/** Los últimos emojis elegidos en este dispositivo, del más reciente al más viejo. */
+		/** The last emojis chosen on this device, most recent first. */
 		recents: string[];
 		onChoose: (emoji: string) => void;
 		onClose: () => void;
@@ -22,7 +22,7 @@
 	let loading = $state(true);
 	let noResults = $state(false);
 
-	/** La librería no avisa cuando una búsqueda no encuentra nada: se deduce de su grilla. */
+	/** The library does not report when a search finds nothing: it is deduced from its grid. */
 	function watchSearch(pickerElement: HTMLElement) {
 		const root = pickerElement.shadowRoot;
 		if (!root) return;
@@ -31,7 +31,7 @@
 		new MutationObserver(() => (noResults = hasSearch() && !hasResults())).observe(root, { subtree: true, childList: true });
 	}
 
-	// La librería se carga de forma diferida: solo pesa cuando se abre el selector.
+	// The library is loaded lazily: it only weighs when the picker is opened.
 	onMount(async () => {
 		const [{ Picker }, { default: i18n }] = await Promise.all([
 			import('emoji-picker-element'),
@@ -169,7 +169,7 @@
 		--input-placeholder-color: var(--text-muted);
 		--category-font-color: var(--text-muted);
 		--outline-color: var(--accent);
-		/* Spec §6: el selector dibuja con Noto; el del dispositivo solo si Noto no lo tiene. */
+		/* Spec §6: the picker draws with Noto; the device's only if Noto does not have it. */
 		--emoji-font-family: 'Noto Color Emoji', system-ui, sans-serif;
 		font-family: 'Atkinson Hyperlegible Next', 'Noto Color Emoji', system-ui, sans-serif;
 	}

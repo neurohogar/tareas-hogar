@@ -1,4 +1,4 @@
-/** Avisa si el navegador tiene red ahora y cada vez que cambia. Devuelve cómo dejar de avisar. */
+/** Reports whether the browser has a network now and every time it changes. Returns how to stop reporting. */
 export function observeConnection(onChange: (online: boolean) => void): () => void {
 	const notify = () => onChange(navigator.onLine);
 	notify();

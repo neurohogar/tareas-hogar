@@ -23,7 +23,7 @@ test.beforeEach(async () => {
 
 const notice = (page: Page) => page.getByRole('status').filter({ hasText: 'Completaste' });
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
-/** Las opciones de Posponer, a la vista en el panel (sin botón intermedio). */
+/** The Posponer options, in view in the panel (no intermediate button). */
 const buttonPostpone = (page: Page) => page.getByRole('group', { name: 'Posponer' });
 const buttonRemove = (page: Page) => button(page, 'Quitar posponer');
 const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
@@ -31,7 +31,7 @@ const panel = (page: Page) => page.getByRole('dialog');
 
 type Option = '1 hora' | '3 horas' | 'Hasta mañana';
 
-/** Abre la tarea, toca Posponer y elige la opción: el panel se cierra solo, sin Guardar. */
+/** Opens the task, taps Posponer and picks the option: the panel closes by itself, without Guardar. */
 async function postpone(page: Page, title: string, option: Option) {
 	await openTask(page, title);
 	await expect(button(page, '1 hora')).toBeVisible();
@@ -41,14 +41,14 @@ async function postpone(page: Page, title: string, option: Option) {
 	await expect(panel(page)).toHaveCount(0);
 }
 
-/** Abre la tarea pospuesta y toca Quitar posponer: el panel se cierra solo, sin Guardar. */
+/** Opens the postponed task and taps Quitar posponer: the panel closes by itself, without Guardar. */
 async function remove(page: Page, title: string) {
 	await openTask(page, title);
 	await buttonRemove(page).click();
 	await expect(panel(page)).toHaveCount(0);
 }
 
-/** Panel de una tarea sin posponer: Posponer sí, Quitar posponer y "Pospuesta" no. */
+/** Panel of a task that is not postponed: Posponer yes, Quitar posponer and "Pospuesta" no. */
 async function panelWithoutPostpone(page: Page, title: string) {
 	await openTask(page, title);
 	await expect(buttonPostpone(page)).toBeVisible();
@@ -57,7 +57,7 @@ async function panelWithoutPostpone(page: Page, title: string) {
 	await close(page);
 }
 
-/** Panel de una pospuesta: dice el texto, ofrece Quitar posponer y no Posponer. */
+/** Panel of a postponed task: shows the text, offers Quitar posponer and not Posponer. */
 async function panelPostponed(page: Page, title: string, text: string) {
 	await openTask(page, title);
 	await expect(panel(page).getByText(text, { exact: true })).toBeVisible();
@@ -66,7 +66,7 @@ async function panelPostponed(page: Page, title: string, text: string) {
 	await close(page);
 }
 
-/** Fila pospuesta: en espera, no completada, sin "Tocaba", con la barra en `barra`. */
+/** Postponed row: waiting, not completed, without "Tocaba", with the bar at `barra`. */
 const viewPostponed = (page: Page, title: string, bar: number, enabled = true) =>
 	waitStatus(page, title, 'en espera', bar, false, enabled);
 

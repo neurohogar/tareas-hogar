@@ -1,4 +1,4 @@
-// Spec §6.1 (Fecha y distancia): invariantes del texto «Tocaba …» / «Vuelve …».
+// Spec §6.1 (Fecha y distancia): invariants of the text «Tocaba …» / «Vuelve …».
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { taskStatus } from './task-status';
@@ -9,12 +9,12 @@ import { dueInstant, returnInstant } from './date-text-instants';
 
 const MINUTE = 60_000;
 const DAY = 86_400_000;
-/** Un momento local entre 2020 y ~2030, a minuto entero. */
+/** A local moment between 2020 and ~2030, at a whole minute. */
 const moment = fc.integer({ min: 0, max: 5_000_000 }).map((n) => new Date(2020, 0, 1, 0, n * 2));
 const verb = fc.constantFrom('Tocaba' as const, 'Vuelve' as const);
 
-describe('fraseDeFecha (propiedades)', () => {
-	it('empieza con el verbo, nunca dice «en 0 …» y es función pura de sus entradas', () => {
+describe('dateText (properties)', () => {
+	it('starts with the verb, never says «en 0 …» and is a pure function of its inputs', () => {
 		fc.assert(
 			fc.property(verb, moment, moment, (v, instant, now) => {
 				const phrase = datePhrase(v, instant, now);
@@ -25,7 +25,7 @@ describe('fraseDeFecha (propiedades)', () => {
 		);
 	});
 
-	it('lo pasado nunca dice «en N» y lo futuro nunca dice «hace N»', () => {
+	it('the past never says «en N» and the future never says «hace N»', () => {
 		fc.assert(
 			fc.property(verb, moment, fc.integer({ min: -400 * 24 * 60, max: 400 * 24 * 60 }), (v, now, minutes) => {
 				const instant = new Date(now.getTime() + minutes * MINUTE);
@@ -36,7 +36,7 @@ describe('fraseDeFecha (propiedades)', () => {
 		);
 	});
 
-	it('S16: lo pasado a menos de un minuto con hora termina en « · ahora»', () => {
+	it('S16: the past under a minute with a time ends in « · ahora»', () => {
 		fc.assert(
 			fc.property(verb, moment, fc.integer({ min: 0, max: MINUTE - 1 }), (v, now, ms) => {
 				const instant = new Date(now.getTime() - ms);
@@ -48,7 +48,7 @@ describe('fraseDeFecha (propiedades)', () => {
 		);
 	});
 
-	it('S16: lo futuro a menos de un minuto nunca dice «en 0» y redondea a «en 1 minuto»', () => {
+	it('S16: the future under a minute never says «en 0» and rounds to «en 1 minuto»', () => {
 		fc.assert(
 			fc.property(verb, moment, fc.integer({ min: 1, max: MINUTE }), (v, now, ms) => {
 				const instant = new Date(now.getTime() + ms);
@@ -60,7 +60,7 @@ describe('fraseDeFecha (propiedades)', () => {
 		);
 	});
 
-	it('«el» va solo delante de la fecha con día de la semana', () => {
+	it('«el» goes only before the date with a weekday', () => {
 		fc.assert(
 			fc.property(verb, moment, moment, (v, instant, now) => {
 				const phrase = datePhrase(v, instant, now);
@@ -70,7 +70,7 @@ describe('fraseDeFecha (propiedades)', () => {
 		);
 	});
 
-	it('con hoy, ayer o mañana y sin hora no hay distancia', () => {
+	it('with hoy, ayer or mañana and without a time there is no distance', () => {
 		fc.assert(
 			fc.property(verb, moment, fc.integer({ min: -1, max: 1 }), (v, now, days) => {
 				const instant = new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
@@ -117,8 +117,8 @@ function assemble(e: Scenario) {
 	return { task, completions, now, status: taskStatus(task, completions, now) };
 }
 
-describe('texto de fecha de una tarea (propiedades)', () => {
-	it('«Tocaba» nunca nombra un instante futuro: el instante es <= ahora y el texto no dice «en N»', () => {
+describe('task date text (properties)', () => {
+	it('«Tocaba» never names a future instant: the instant is <= now and the text does not say «en N»', () => {
 		fc.assert(
 			fc.property(scenario, (e) => {
 				const { task, completions, now, status } = assemble(e);
@@ -131,7 +131,7 @@ describe('texto de fecha de una tarea (propiedades)', () => {
 		);
 	});
 
-	it('«Vuelve» nombra un instante posterior a ahora y el texto no dice «hace N»', () => {
+	it('«Vuelve» names an instant after now and the text does not say «hace N»', () => {
 		fc.assert(
 			fc.property(scenario, (e) => {
 				const { task, completions, now, status } = assemble(e);
@@ -144,7 +144,7 @@ describe('texto de fecha de una tarea (propiedades)', () => {
 		);
 	});
 
-	it('una pendiente no lleva texto y el texto es función pura de ahora', () => {
+	it('a pending one carries no text and the text is a pure function of now', () => {
 		fc.assert(
 			fc.property(scenario, (e) => {
 				const { task, completions, now, status } = assemble(e);

@@ -1,13 +1,13 @@
-// Spec §5.6 y §5.7: con horario, una ocurrencia es un par (día, ventana),
-// identificado por su inicio. P, N y la ocurrencia que cubre un completado se
-// calculan sobre ocurrencias en lugar de días.
+// Spec §5.6 and §5.7: with a schedule, an occurrence is a (day, window) pair,
+// identified by its start. P, N and the occurrence a completion covers are
+// computed over occurrences instead of days.
 import { startOfDay, addDays } from './days';
 import { occurrencesOfDay, type Occurrence } from './schedule';
 import { lastCovered } from './covered-occurrence';
 import { isOccurrence, firstLaterOccurrence } from './occurrences';
 import type { Completion, Schedule, CalendarRecurrence, RelativeRecurrence } from './task';
 
-/** La primera ocurrencia que cumple, recorriendo los días desde `dia` con `siguiente`. */
+/** The first occurrence that meets the condition, walking the days from `day` with `following`. */
 function first(schedule: Schedule, day: Date, following: (day: Date) => Date, meets: (occurrence: Occurrence) => boolean): Occurrence {
 	for (; ; day = following(day)) {
 		const found = occurrencesOfDay(schedule, day).find(meets);
@@ -15,16 +15,16 @@ function first(schedule: Schedule, day: Date, following: (day: Date) => Date, me
 	}
 }
 
-/** El primer día de ocurrencia de la recurrencia desde el día de `desde` inclusive. */
+/** The first occurrence day of the recurrence from the day of `from` inclusive. */
 function firstDayOfOccurrence(recurrence: CalendarRecurrence, from: Date): Date {
 	const day = startOfDay(from);
 	return isOccurrence(recurrence, day) ? day : firstLaterOccurrence(recurrence, day);
 }
 
 /**
- * La ocurrencia que cubre un completado nuevo hecho `ahora`, dada N: antes de
- * su cierre, N; si no, la ocurrencia con el inicio más reciente ≤ ahora entre
- * los días que cuentan (desde el de N).
+ * The occurrence a new completion made `now` covers, given N: before
+ * its close, N; otherwise the occurrence with the most recent start ≤ now among
+ * the days that count (from that of N).
  */
 function whatCovers(schedule: Schedule, n: Occurrence, counts: (day: Date) => boolean, now: Date): Date {
 	const moment = now.getTime();
@@ -37,8 +37,8 @@ function whatCovers(schedule: Schedule, n: Occurrence, counts: (day: Date) => bo
 }
 
 /**
- * Spec §5.6: N, la primera ocurrencia con inicio posterior a P. Spec §5.8: de
- * una reanudada, una ocurrencia cuya ventana cerró hasta reanudadaEn no cuenta.
+ * Spec §5.6: N, the first occurrence with a start later than P. Spec §5.8: of
+ * a resumed task, an occurrence whose window closed up to resumedAt does not count.
  */
 export function nextCalendarOccurrence(
 	recurrence: CalendarRecurrence,
@@ -54,8 +54,8 @@ export function nextCalendarOccurrence(
 }
 
 /**
- * Spec §5.6: el inicio de la ocurrencia que cubre un completado nuevo: la más
- * reciente sin cubrir con inicio en (P, ahora] o, si no hay, N.
+ * Spec §5.6: the start of the occurrence a new completion covers: the most
+ * recent uncovered one with a start in (P, now] or, if there is none, N.
  */
 export function calendarOccurrenceThatCovers(
 	recurrence: CalendarRecurrence,
@@ -69,15 +69,15 @@ export function calendarOccurrenceThatCovers(
 	return whatCovers(schedule, n, (day) => isOccurrence(recurrence, day), now);
 }
 
-/** Spec §5.7: una relativa con más de una ventana (y el intervalo en días) se completa una vez por ventana. */
+/** Spec §5.7: a relative task with more than one window (and the interval in days) is completed once per window. */
 export function completesByWindow(recurrence: RelativeRecurrence, schedule: Schedule): boolean {
 	return recurrence.unit === 'dias' && schedule.length > 1;
 }
 
 /**
- * Spec §5.7, N de una relativa por ventana: nunca completada, la primera
- * ventana cuyo hasta es posterior a creadaEn; con P, la primera ventana
- * posterior a P del día de P o de uno cada `cada` días desde ahí.
+ * Spec §5.7, N of a relative task per window: never completed, the first
+ * window whose to is later than createdAt; with P, the first window
+ * later than P on the day of P or on one every `every` days from there.
  */
 export function nextWindowOccurrence(
 	recurrence: RelativeRecurrence,
@@ -91,9 +91,9 @@ export function nextWindowOccurrence(
 }
 
 /**
- * Spec §5.7: el inicio de la ocurrencia que cubre un completado nuevo de una
- * relativa por ventana: N, o, si está atrasada, la ventana con el inicio más
- * reciente ≤ ahora, de cualquier día.
+ * Spec §5.7: the start of the occurrence a new completion covers of a
+ * relative task per window: N, or, if overdue, the window with the most
+ * recent start ≤ now, of any day.
  */
 export function windowOccurrenceThatCovers(
 	recurrence: RelativeRecurrence,

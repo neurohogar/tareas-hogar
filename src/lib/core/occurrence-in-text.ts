@@ -1,6 +1,6 @@
-// Spec §4.4: ocurrenciaCubierta guardada como texto. Una fecha (2026-07-14) y
-// una fecha y hora (2026-07-14T07:00) tienen formatos distintos, así una
-// ventana que empieza a las 00:00 no se confunde con una fecha.
+// Spec §4.4: coveredOccurrence stored as text. A date (2026-07-14) and
+// a date and time (2026-07-14T07:00) have different formats, so a
+// window that starts at 00:00 is not mistaken for a date.
 import { dayFromIso, isoDay, twoDigits, atTheMinute, hourAndMinute } from './days';
 import type { CoveredOccurrence } from './task';
 
@@ -12,7 +12,7 @@ export function occurrenceInText(occurrence: CoveredOccurrence): string {
 	return `${isoDay(occurrence.start)}T${twoDigits(hour)}:${twoDigits(minute)}`;
 }
 
-/** Para valores ya guardados: uno inválido es un error. */
+/** For already stored values: an invalid one is an error. */
 export function occurrenceFromText(text: string): CoveredOccurrence {
 	const parts = DATE_AND_TIME.exec(text);
 	if (!parts) return dayFromIso(text);

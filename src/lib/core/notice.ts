@@ -1,5 +1,5 @@
-// Spec §5.4: el aviso con Deshacer que aparece al completar. Hay uno solo: el
-// del último completado de este dispositivo (completar otra vez lo reemplaza).
+// Spec §5.4: the notice with Undo that appears on completing. There is only one:
+// that of the last completion on this device (completing again replaces it).
 import { taskStatus } from './task-status';
 import { taskName } from './task-name';
 import type { Completion, Task } from './task';
@@ -7,20 +7,20 @@ import { datePhrase } from './date-text';
 import { returnInstant } from './date-text-instants';
 
 export interface Notice {
-	/** El nombre de la tarea al completarla (§4.1): el aviso la nombra aunque después se borre. */
+	/** The task name when it was completed (§4.1): the notice names it even if it is deleted later. */
 	name: string;
-	/** El completado que ofrece deshacer. */
+	/** The completion the notice offers to undo. */
 	completion: Completion;
-	/** Cuándo vuelve la tarea (§5.4, §6.1); sin el campo, no vuelve (una puntual). */
+	/** When the task returns (§5.4, §6.1); without the field, it does not return (a one-off). */
 	returns?: Date;
 }
 
 export const NOTICE_DURATION_MS = 5_000;
 
 /**
- * Spec §5.4: el aviso del completado. Si la tarea vuelve (periódica), el instante
- * de «Vuelve …» de §6.1 calculado después del completado, con los completados
- * que ya tenía el usuario.
+ * Spec §5.4: the completion notice. If the task returns (recurring), the instant
+ * of «Vuelve …» from §6.1 computed after the completion, with the completions
+ * the user already had.
  */
 export function noticeOnComplete(task: Task, completion: Completion, completionsBefore: readonly Completion[] = []): Notice {
 	const { completedAt } = completion;
@@ -30,17 +30,17 @@ export function noticeOnComplete(task: Task, completion: Completion, completions
 	return { name: taskName(task), completion, ...(returns && { returns }) };
 }
 
-/** Spec §5.4: «Completaste «nombre»», con « · mínima» si el completado fue la mínima. */
+/** Spec §5.4: «Completaste «nombre»», with « · mínima» if the completion was the minimal version. */
 export function noticeText({ name, completion }: Notice): string {
 	return `Completaste «${name}»${completion.wasMinimal ? ' · mínima' : ''}`;
 }
 
-/** Spec §5.4: la línea debajo de «Completaste …», «Vuelve …» (§6.1) contado desde ahora; ninguna si la tarea no vuelve. */
+/** Spec §5.4: the line below «Completaste …», «Vuelve …» (§6.1) counted from now; none if the task does not return. */
 export function noticeReturn(notice: Notice, now: Date): string | undefined {
 	return notice.returns && datePhrase('Vuelve', notice.returns, now);
 }
 
-/** El aviso, si se ve ahora: mientras completadoEn <= ahora < completadoEn + 5 s. */
+/** The notice, if visible now: while completedAt <= now < completedAt + 5 s. */
 export function visibleNotice(notice: Notice | undefined, now: Date): Notice | undefined {
 	if (!notice) return undefined;
 	const from = notice.completion.completedAt.getTime();
@@ -48,16 +48,16 @@ export function visibleNotice(notice: Notice | undefined, now: Date): Notice | u
 	return visible ? notice : undefined;
 }
 
-/** Los ms que le quedan al aviso hasta desaparecer solo. */
+/** The ms left until the notice disappears on its own. */
 export function msUntilDue(notice: Notice, now: Date): number {
 	return notice.completion.completedAt.getTime() + NOTICE_DURATION_MS - now.getTime();
 }
 
 /**
- * Deshacer en el aviso: el completado que hay que borrar (solo el que nombra
- * el aviso), o undefined si el aviso ya no se ve. En los dos casos el aviso se
- * cierra. Si ese completado ya no existe (otro dispositivo lo borró, o borró
- * su tarea), borrarlo no hace nada: no hace falta esperar a que llegue.
+ * Undo on the notice: the completion to delete (only the one the notice
+ * names), or undefined if the notice is no longer visible. In both cases the notice
+ * closes. If that completion no longer exists (another device deleted it, or deleted
+ * its task), deleting it does nothing: there is no need to wait for it to arrive.
  */
 export function completionToUndo(notice: Notice | undefined, now: Date): Completion | undefined {
 	return visibleNotice(notice, now)?.completion;

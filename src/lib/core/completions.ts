@@ -5,9 +5,9 @@ import { asJustCreated } from './pause';
 import type { Completion, CoveredOccurrence, Task, RecurringTask } from './task';
 
 /**
- * La ocurrencia que cubre un completado de una periódica, o undefined si no
- * cubre ninguna: de calendario, un día (§5.3) o, con horario, el inicio de una
- * ocurrencia (§5.6); relativa, solo si se completa por ventana (§5.7).
+ * The occurrence that a completion of a recurring task covers, or undefined if it
+ * covers none: for calendar, a day (§5.3) or, with a schedule, the start of an
+ * occurrence (§5.6); for relative, only if completed by window (§5.7).
  */
 function occurrenceOf({ recurrence, createdAt, schedule, resumedAt }: RecurringTask, owns: Completion[], now: Date): CoveredOccurrence | undefined {
 	if (recurrence.mode === 'relativo') {
@@ -19,12 +19,12 @@ function occurrenceOf({ recurrence, createdAt, schedule, resumedAt }: RecurringT
 }
 
 /**
- * Spec §4.4: completar agrega un registro nuevo; nunca modifica los anteriores.
- * Guarda la ocurrencia que cubre, si cubre una, según lo que ya cubrieron los
- * completados de la tarea (de entre todos los del usuario); de una reanudada,
- * como recién creada en reanudadaEn (§5.8). De una tarea de dos pasos o más,
- * guarda el paso en que iba (§4.1, Pasos: Completar). Con «Hice la mínima»
- * (`fueMinima`), el completado lo recuerda; uno entero no lleva el campo.
+ * Spec §4.4: completing adds a new record; it never modifies the earlier ones.
+ * It saves the occurrence it covers, if it covers one, according to what the
+ * completions of the task already covered (among all those of the user); for a resumed one,
+ * as just created at resumedAt (§5.8). For a task with two steps or more,
+ * it saves the step it was on (§4.1, Pasos: Completar). With «Hice la mínima»
+ * (`wasMinimal`), the completion remembers it; a full one does not carry the field.
  */
 export function complete(saved: Task, completions: readonly Completion[], id: string, now: Date, wasMinimal = false): Completion {
 	const completion: Completion = { id, taskId: saved.id, completedAt: now, ...stepAtCompletion(saved), ...(wasMinimal && { wasMinimal }) };
@@ -34,24 +34,24 @@ export function complete(saved: Task, completions: readonly Completion[], id: st
 	return coveredOccurrence ? { ...completion, coveredOccurrence } : completion;
 }
 
-/** Spec §4.4: pasoAlCompletar, solo en tareas de dos pasos o más. */
+/** Spec §4.4: stepAtCompletion, only on tasks with two steps or more. */
 function stepAtCompletion(task: Task) {
 	return hasSeveralSteps(task) ? { stepAtCompletion: stepItIsOn(task) } : {};
 }
 
-/** El de completadoEn mayor (si empatan, el primero); los completados no pueden estar vacíos. */
+/** The one with the greatest completedAt (on a tie, the first); completions cannot be empty. */
 export function latestCompletion(completions: readonly Completion[]): Completion {
 	return completions.reduce((mostRecent, completion) =>
 		completion.completedAt.getTime() > mostRecent.completedAt.getTime() ? completion : mostRecent
 	);
 }
 
-/** El inicio de espera de una periódica (§5.3, §5.5): el completadoEn más reciente o, sin completados, creadaEn; en ms. */
+/** The start of waiting of a recurring task (§5.3, §5.5): the most recent completedAt or, without completions, createdAt; in ms. */
 export function waitStart(createdAt: Date, completions: readonly Completion[]): number {
 	return completions.length === 0 ? createdAt.getTime() : lastCompletedAt(completions);
 }
 
-/** El completadoEn más reciente, en ms; los completados no pueden estar vacíos. */
+/** The most recent completedAt, in ms; completions cannot be empty. */
 export function lastCompletedAt(completions: readonly Completion[]): number {
 	return latestCompletion(completions).completedAt.getTime();
 }

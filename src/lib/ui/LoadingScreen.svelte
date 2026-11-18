@@ -6,8 +6,8 @@
 </script>
 
 <script lang="ts">
-	// Spec §6.6: la pantalla se dibuja en src/app.html, antes de que corra el JavaScript. Este
-	// componente le cuenta al core cómo va la espera y la quita cuando el core dice que se va.
+	// Spec §6.6: the screen is drawn in src/app.html, before JavaScript runs. This
+	// component tells the core how the wait is going and removes it when the core says it leaves.
 	import { onMount } from 'svelte';
 	import { observeConnection } from '#lib/adapters/connection.ts';
 	import { loadFonts, type FontsStatus } from '#lib/adapters/fonts.ts';
@@ -27,11 +27,11 @@
 
 	let { auth, data, onLeave }: { auth: AuthResponse; data: CollectionsResponded; onLeave: () => void } = $props();
 
-	/** Hasta saber si están en el dispositivo, se esperan como si estuvieran. */
+	/** Until it is known whether they are on the device, they are awaited as if they were. */
 	let fonts = $state<FontsStatus>({ atkinson: 'guardada', noto: 'guardada' });
 	let online = $state(true);
 	let hasLeft = $state(false);
-	/** Spec §6.6: vale para toda la apertura, aunque Noto quede guardado mientras tanto. */
+	/** Spec §6.6: holds for the whole launch, even if Noto ends up stored meanwhile. */
 	const remembersNotoLimit = readNotoLimitMemory();
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -56,7 +56,7 @@
 		onLeave();
 	}
 
-	/** Cada cambio de la espera se pregunta en el efecto; el paso del tiempo, al llegar el mínimo y el tope. */
+	/** Each change of the wait is asked about in the effect; the passing of time, on reaching the minimum and the cap. */
 	function scheduleNextLimit(): ReturnType<typeof setTimeout> | undefined {
 		const seconds = secondsSinceStart();
 		const limit = nextScreenLimit(seconds);
@@ -82,7 +82,7 @@
 
 	$effect(leaveIfDue);
 
-	// Spec §6.6: lo recordado se olvida cuando Noto queda guardado, también después de irse la pantalla.
+	// Spec §6.6: what is remembered is forgotten when Noto ends up stored, also after the screen has gone.
 	$effect(() => {
 		if (hasLeft && fonts.noto === 'lista') saveNotoLimitMemory(notoLimitMemory(waitStatus()));
 	});

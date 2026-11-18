@@ -7,12 +7,12 @@ export default defineConfig({
 	timeout: 60_000,
 	expect: { timeout: 20_000 },
 	reporter: [['list']],
-	// El build sirve el service worker (spec §8). Las suites que no hablan de la PWA lo bloquean, así
-	// el servidor responde directo y el reloj simulado no espera a la caché; la suite de la PWA lo
-	// permite con test.use({ serviceWorkers: 'allow' }).
+	// The build serves the service worker (spec §8). The suites that do not deal with the PWA block it, so
+	// the server responds directly and the simulated clock does not wait for the cache; the PWA suite
+	// allows it with test.use({ serviceWorkers: 'allow' }).
 	use: { serviceWorkers: 'block', baseURL: 'http://127.0.0.1:4173', locale: 'es-AR', timezoneId: 'America/Argentina/Buenos_Aires' },
-	// La Flujo 10 de la PWA reconstruye build/ y deja caído el preview de 4173: va en su propio proyecto,
-	// que corre después de todos los demás.
+	// Flujo 10 of the PWA rebuilds build/ and leaves the 4173 preview down: it goes in its own project,
+	// which runs after all the others.
 	projects: [
 		{ name: 'ui', testIgnore: /pwa-offline|panel-mobile-offline|bundled-font-offline|portrait-orientation/ },
 		{ name: 'pwa', testMatch: /panel-mobile-offline|pwa-offline|bundled-font-offline|portrait-orientation/, dependencies: ['ui'] }

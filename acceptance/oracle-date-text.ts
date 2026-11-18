@@ -1,7 +1,7 @@
-// Oráculo del texto de fecha de la fila de Pendientes («Tocaba …», «Vuelve …») y del regreso del aviso de
-// completar (spec §6.1 «Fecha y distancia», §5.4), escrito desde el spec. NO importa el core ni los step
-// handlers: es una segunda implementación, así que la implementación no juzga a sus propios tests. Lo que el
-// spec no decide devuelve undefined: no se filtra.
+// Oracle for the date text of the Pending row («Tocaba …», «Vuelve …») and for the return of the
+// complete notice (spec §6.1 «Fecha y distancia», §5.4), written from the spec. It does NOT import the core or the step
+// handlers: it is a second implementation, so the implementation does not judge its own tests. What the
+// spec does not decide returns undefined: not filtered.
 import {
 	build,
 	classifySituation,
@@ -34,23 +34,23 @@ const HOUR_MS = 3_600_000;
 const MINUTES_BY_HOUR = 60;
 const DAY_MS = 86_400_000;
 
-/** Lo que se observa cuando la fila (o el aviso) no lleva texto. */
+/** What is observed when the row (or the notice) carries no text. */
 export const WITHOUT_TEXT = 'sin texto';
 
 const twoDigits = (n: number) => String(n).padStart(2, '0');
 const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
 
-/** Días locales de `instante` respecto de `ahora` (negativo: pasado). */
+/** Local days of `instante` relative to `ahora` (negative: past). */
 const daysLocalFrom = (instant: number, now: number) =>
 	Math.round((dayStart(instant).getTime() - dayStart(now).getTime()) / DAY_MS);
 
-/** §6.1 Fecha: «hoy»/«ayer»/«mañana» o «el martes 10 [de <mes>][ de <año>]», con la hora si no son las 00:00. */
+/** §6.1 Date: «hoy»/«ayer»/«mañana» or «el martes 10 [de <mes>][ de <año>]», with the time if it is not 00:00. */
 function dateOf(instant: number, now: number): string | undefined {
 	const d = new Date(instant);
 	const n = new Date(now);
 	const days = daysLocalFrom(instant, now);
 	const word = { [-1]: 'ayer', 0: 'hoy', 1: 'mañana' }[days];
-	// El spec no dice qué pasa con otro año y el mismo mes: no se decide.
+	// The spec does not say what happens with another year and the same month: not decided.
 	if (word === undefined && d.getFullYear() !== n.getFullYear() && d.getMonth() === n.getMonth()) return undefined;
 	const month = d.getMonth() === n.getMonth() ? '' : ` de ${MONTHS[d.getMonth()]}`;
 	const year = d.getFullYear() === n.getFullYear() ? '' : ` de ${d.getFullYear()}`;
@@ -59,21 +59,21 @@ function dateOf(instant: number, now: number): string | undefined {
 	return withHour ? `${day} ${twoDigits(d.getHours())}:${twoDigits(d.getMinutes())}` : day;
 }
 
-/** §6.1 Distancia en horas o minutos (fecha de hoy, ayer o mañana con hora): pasado hacia abajo, futuro hacia arriba. */
+/** §6.1 Distance in hours or minutes (date of today, yesterday or tomorrow with a time): past rounds down, future rounds up. */
 function distanceShort(instant: number, now: number): string | undefined {
 	const difference = instant - now;
 	if (difference >= 0) {
-		// Lo futuro se redondea hacia arriba a minutos enteros primero: 60 minutos ya no son «menos de una hora».
+		// The future is first rounded up to whole minutes: 60 minutes is no longer «menos de una hora».
 		const minutes = Math.ceil(difference / MINUTE_MS);
 		return minutes < MINUTES_BY_HOUR ? `en ${plural(minutes, 'minuto')}` : `en ${plural(Math.ceil(difference / HOUR_MS), 'hora')}`;
 	}
 	const past = -difference;
 	if (past >= HOUR_MS) return `hace ${plural(Math.floor(past / HOUR_MS), 'hora')}`;
-	// §6.1: a menos de un minuto en el pasado la distancia es «ahora», no «hace 0 minutos».
+	// §6.1: less than a minute in the past the distance is «ahora», not «hace 0 minutos».
 	return past >= MINUTE_MS ? `hace ${plural(Math.floor(past / MINUTE_MS), 'minuto')}` : 'ahora';
 }
 
-/** §6.1 Frase: «<Tocaba|Vuelve> <fecha>[ · <distancia>]». */
+/** §6.1 Phrase: «<Tocaba|Vuelve> <fecha>[ · <distancia>]». */
 export function datePhrase(word: 'Tocaba' | 'Vuelve', instant: number, now: number): string | undefined {
 	const dateWritten = dateOf(instant, now);
 	if (dateWritten === undefined) return undefined;
@@ -85,25 +85,25 @@ export function datePhrase(word: 'Tocaba' | 'Vuelve', instant: number, now: numb
 	return distance && `${word} ${dateWritten} · ${distance}`;
 }
 
-/** V: cuándo vuelve una relativa sin horario, el último completado más su intervalo. */
+/** V: when a relative task without a schedule comes back, the last completion plus its interval. */
 function dueRelative(s: Situation): number | undefined {
 	const interval = intervalMs(s.every, s.unit);
 	return interval === undefined || s.completions.length === 0 ? undefined : Math.max(...s.completions) + interval;
 }
 
-/** El 00:00 de N, la ocurrencia de calendario sin horario (§5.3). */
+/** 00:00 of N, the calendar occurrence without a schedule (§5.3). */
 function nStart(s: Situation): number | undefined {
 	const p = lastCovered(s);
 	return p && s.calendar && firstLater(s.calendar, p)?.getTime();
 }
 
-/** §6.1 Instante de «Vuelve» por la regla propia de la tarea (§5.2, §5.3, §5.5). */
+/** §6.1 «Vuelve» instant by the task's own rule (§5.2, §5.3, §5.5). */
 function returnsOfItsRule(s: Situation, now: number): number | undefined {
 	if (s.schedule) return withScheduleOf(s, s.schedule, now)?.wait?.returns;
 	return s.calendar ? nStart(s) : dueRelative(s);
 }
 
-/** §6.1 Instante de «Vuelve»: el de su regla y, con posposición vigente, el más tarde de las dos causas (§5.9). */
+/** §6.1 «Vuelve» instant: that of its rule and, with an active postponement, the later of the two causes (§5.9). */
 function returns(s: Situation, now: number): number | undefined {
 	const to = postponementActive(s)?.to;
 	const own = statusPerItsRule(s, WITHOUT_PROGRESS) === 'en espera' ? returnsOfItsRule(s, now) : undefined;
@@ -112,7 +112,7 @@ function returns(s: Situation, now: number): number | undefined {
 	return own;
 }
 
-/** §6.1 Instante de «Tocaba» de una periódica con horario (§5.5, §5.6, §5.7): A, el inicio de N, o V si A no llegó. */
+/** §6.1 «Tocaba» instant of a recurring task with a schedule (§5.5, §5.6, §5.7): A, the start of N, or V if A did not arrive. */
 function wasDueWithSchedule(s: Situation, now: number): number | undefined {
 	const vs = s.schedule;
 	if (!vs) return undefined;
@@ -123,14 +123,14 @@ function wasDueWithSchedule(s: Situation, now: number): number | undefined {
 	return now >= a ? a : t;
 }
 
-/** §6.1 Instante de «Tocaba», por tipo; nunca es un instante futuro. */
+/** §6.1 «Tocaba» instant, by kind; never a future instant. */
 function wasDue(s: Situation, now: number): number | undefined {
 	if (s.oneOff) return s.oneOff.limit?.getTime();
 	if (s.schedule) return wasDueWithSchedule(s, now);
 	return s.calendar ? nStart(s) : dueRelative(s);
 }
 
-/** El texto de fecha de la fila (§6.1) de la tarea armada a `ahora`; SIN_TEXTO si no lleva; undefined si no se decide. */
+/** The row's date text (§6.1) of the task built at `ahora`; SIN_TEXTO if it carries none; undefined if not decided. */
 export function rowText(s: Situation): string | undefined {
 	const now = s.now;
 	if (now === undefined || s.oneOff?.any) return undefined;
@@ -148,7 +148,7 @@ export function rowText(s: Situation): string | undefined {
 	return status === 'pendiente' || status === 'no aparece en Pendientes' ? WITHOUT_TEXT : undefined;
 }
 
-/** §5.4 y §6.1: el regreso del aviso consultado a `ahora`: el «Vuelve …» de una periódica, nada en una puntual. */
+/** §5.4 and §6.1: the return of the notice queried at `ahora`: the «Vuelve …» of a recurring task, nothing for a one-off. */
 export function returnOfNoticeOf(s: Situation, now: number): string | undefined {
 	if (s.oneOff) return s.oneOff.any ? undefined : WITHOUT_TEXT;
 	const instant = returns({ ...s, now }, now);
@@ -160,7 +160,7 @@ const THEN_OF_ROW_OF_TITLE = /^la fila de ([A-ZÁÉÍÓÚÑ]\w*) muestra el text
 const THEN_OF_FIRST_STEP = /^la fila de la tarea (?:muestra el primer paso (.*)|no muestra primer paso)$/su;
 const FIRST_STEP_SAVED = /^el primer paso de la tarea es (.*)$/su;
 const CHECKBOX_THEN = /^el checkbox de la tarea está (habilitado|deshabilitado)$/;
-/** Pasos que el oráculo de edición modela mejor (el checkbox tocado, el completado borrado): lo decide ese oráculo. */
+/** Steps that the editing oracle models better (the tapped checkbox, the deleted completion): that oracle decides. */
 const EDITING_STEP = /^(?:toco el checkbox de la tarea |borro el completado del )/;
 const ORDER_THEN = /^Pendientes muestra en orden (.*)$/su;
 const NOTICE_THEN = /^el aviso del completado (?:muestra el regreso (.*)|no muestra regreso)$/su;
@@ -169,10 +169,10 @@ const DECLARES_TASK = /^una tarea /;
 const TITLE_IN_STEP = /\b(tarea(?: puntual| periódica (?:relativa|semanal|mensual))?) ([A-ZÁÉÍÓÚÑ]\w*)\b/u;
 const stepTitle = (text: string) => TITLE_IN_STEP.exec(text)?.[2];
 
-/** Los pasos de la tarea (§4.1, Pasos) los modela el oráculo de edición, que sigue el avance y los completados. */
+/** The task's steps (§4.1, Pasos) are modeled by the editing oracle, which tracks progress and completions. */
 const STEPS_STEP = /^(?:los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|vacío el paso |la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está )/;
 
-/** La versión mínima (§4.1, §6.1) y su botón los modela el oráculo de edición, que sigue los completados y el aviso. */
+/** The minimal version (§4.1, §6.1) and its button are modeled by the editing oracle, which tracks completions and the notice. */
 const MINIMAL_STEP = /^(?:la versión mínima de la tarea |toco Hice la mínima |la fila de la tarea (?:muestra la mínima |no muestra mínima$)|el botón Hice la mínima )/;
 
 export const isScenarioOfTextOfDate = (texts: string[]) =>
@@ -181,8 +181,8 @@ export const isScenarioOfTextOfDate = (texts: string[]) =>
 	texts.some((text) => ROW_THEN.test(text) || THEN_OF_FIRST_STEP.test(text) || THEN_OF_ROW_OF_TITLE.test(text) || NOTICE_THEN.test(text));
 
 /**
- * Los pasos de la tarea `titulo`: los que la nombran y los que no nombran a ninguna (la consulta, los checks). Con una
- * sola tarea el título no decide nada y se lo quita; con más de una hace falta saber de cuál se habla.
+ * The steps of task `titulo`: those that name it and those that name none (the query, the checks). With a
+ * single task the title decides nothing and is removed; with more than one it is needed to know which one is meant.
  */
 function taskSteps(texts: string[], title: string | undefined): StepOracle[] | undefined {
 	const titles = new Set(texts.filter((text) => DECLARES_TASK.test(text)).map(stepTitle));
@@ -192,7 +192,7 @@ function taskSteps(texts: string[], title: string | undefined): StepOracle[] | u
 		.map((text) => ({ text: text.replace(TITLE_IN_STEP, '$1') }));
 }
 
-/** La tarea `titulo` armada con los pasos de entrada, y el momento en que se consulta el aviso, si lo hay. */
+/** Task `titulo` built with the input steps, and the moment the notice is queried, if any. */
 function situationOf(entries: StepOracle[], row: RowOracle, title?: string): { s: Situation; noticeNow?: number } | undefined {
 	const resolved = entries.map(({ text }) => resolve(text, row));
 	if (resolved.includes(undefined)) return undefined;
@@ -207,8 +207,8 @@ function situationOf(entries: StepOracle[], row: RowOracle, title?: string): { s
 }
 
 /**
- * §6.1: la fila muestra «Primer paso: » y el texto, recortado, solo si la tarea tiene primer paso y está pendiente o
- * atrasada; en espera (también pospuesta o completada) o pausada no lo muestra. Se decide con el estado de ese momento.
+ * §6.1: the row shows «Primer paso: » and the trimmed text only if the task has a first step and is pending or
+ * overdue; waiting (also postponed or completed) or paused does not show it. It is decided with the state at that moment.
  */
 function firstStepOfRow(s: Situation, saved: string | undefined): string | undefined {
 	const now = s.now;
@@ -220,19 +220,19 @@ function firstStepOfRow(s: Situation, saved: string | undefined): string | undef
 	return status === 'en espera' || status === 'no aparece en Pendientes' ? WITHOUT_TEXT : undefined;
 }
 
-/** El primer paso que deja guardado el escenario; el último paso que lo declara. */
+/** The first step the scenario leaves stored; the last step that declares it. */
 function firstStepDeclared(entries: StepOracle[], row: RowOracle): string | undefined {
 	const texts = entries.map(({ text }) => resolve(text, row) ?? '');
 	return texts.map((text) => FIRST_STEP_SAVED.exec(text)?.[1]).filter((value) => value !== undefined).at(-1);
 }
 
-/** El aviso se ve entre el completado y 5 s después (§5.4); fuera, no hay aviso que consultar. */
+/** The notice is visible between the completion and 5 s later (§5.4); outside that, there is no notice to query. */
 function returnVisible(s: Situation, now: number | undefined): string | undefined {
 	if (now === undefined || s.completions.length === 0) return undefined;
 	return noticeSees(Math.max(...s.completions), now) ? returnOfNoticeOf(s, now) : 'sin aviso';
 }
 
-/** §6.1: lo que el oráculo observa en un Then de la lista o del aviso, con lo que el Then afirma; undefined si no se decide. */
+/** §6.1: what the oracle observes in a Then of the list or the notice, with what the Then asserts; undefined if not decided. */
 function observeThen(entries: StepOracle[], text: string, row: RowOracle): { seen: string | undefined; written: string } {
 	const order = ORDER_THEN.exec(text);
 	const ofCheckbox = CHECKBOX_THEN.exec(text);
@@ -254,7 +254,7 @@ function observeThen(entries: StepOracle[], text: string, row: RowOracle): { see
 	return { seen, written };
 }
 
-/** Lo que el oráculo observa y lo que cada Then afirma; undefined si algo no se reconoce o no se decide. */
+/** What the oracle observes and what each Then asserts; undefined if something is not recognized or not decided. */
 export function observeTextOfDate(entries: StepOracle[], thens: StepOracle[], row: RowOracle): { observed: string[]; asserted: string[] } | undefined {
 	if (thens.length === 0) return undefined;
 	const observed: string[] = [];

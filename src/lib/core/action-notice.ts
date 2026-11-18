@@ -1,7 +1,7 @@
-// Spec §6.2 (Aviso de acción): qué ofrece el aviso de Pausar, Reanudar, Posponer
-// y Quitar posponer con cambios sin guardar, y qué ejecuta cada botón.
-// El aviso se evalúa con la tarea y el ahora del momento: el core no lee el reloj.
-// Las acciones mismas viven en accion-del-panel.ts.
+// Spec §6.2 (Action notice): what the notice for Pausar, Reanudar, Posponer
+// and Quitar posponer offers with unsaved changes, and what each button runs.
+// The notice is evaluated with the task and the now of the moment: the core does not read the clock.
+// The actions themselves live in panel-action.ts.
 import { changeOfAction, type PanelAction } from './panel-action';
 import type { PanelForm } from './unsaved-changes';
 import { CHANGES_MESSAGE, KEEP_EDITING, type ChangesNotice, type NoticeButton } from './unsaved-changes-notice';
@@ -13,12 +13,12 @@ import { pauseAction } from './pause';
 import { postponeAction } from './postponement-in-panel';
 import type { Completion, Task } from './task';
 
-/** Lo que hace falta para evaluar el aviso de una acción. */
+/** What is needed to evaluate the notice of an action. */
 export interface NoticeAction {
 	action: PanelAction;
-	/** La tarea con que se abrió el panel: contra ella se mide lo escrito (§7). */
+	/** The task the panel was opened with: what is written is measured against it (§7). */
 	taskOnOpen: Task;
-	/** La tarea de ahora, con lo que escribió otro dispositivo. */
+	/** The task as of now, with what another device wrote. */
 	task: Task;
 	completions: readonly Completion[];
 	now: Date;
@@ -27,18 +27,18 @@ export interface NoticeAction {
 
 type ActionConditions = Pick<NoticeAction, 'action' | 'completions' | 'now'>;
 
-/** Spec §5.8, §5.9 y §6.2: la tarea cumple las condiciones con que el panel muestra la acción. */
+/** Spec §5.8, §5.9 and §6.2: the task meets the conditions under which the panel shows the action. */
 function isShown({ action, completions, now }: ActionConditions, task: Task): boolean {
 	if (action === 'pausar' || action === 'reanudar') return pauseAction(task) === action;
 	return postponeAction(task, completions, now) === (action === 'quitar posponer' ? 'quitar' : 'posponer');
 }
 
-/** Lo que haría Guardar con lo escrito, medido contra la tarea al abrir. */
+/** What Guardar would do with what is written, measured against the task as opened. */
 function saveTyped({ taskOnOpen, form, now }: NoticeAction): EditingResult {
 	return editFromPanel(taskOnOpen, form, now);
 }
 
-/** La tarea de ahora con el cambio, como la aplicaría el servidor (§7). */
+/** The task as of now with the change, as the server would apply it (§7). */
 function savedTask(task: Task, change: TaskChange): Task {
 	return taskFromDocument(applyChange([task], task.id, change)[0]);
 }
@@ -46,10 +46,10 @@ function savedTask(task: Task, change: TaskChange): Task {
 const discard = (action: PanelAction): NoticeButton => ({ text: `Descartar y ${action}`, effect: 'descartar' });
 
 /**
- * Spec §6.2: el aviso con la tarea y el ahora de este momento. Si la acción ya
- * no corresponde, ninguno: se cierra y queda el panel con lo escrito. Si lo
- * guardado la deja sin sentido, lo dice y no ofrece Guardar; si lo escrito es
- * inválido no hay cómo evaluarlo, y lo ofrece.
+ * Spec §6.2: the notice with the task and the now of this moment. If the action no
+ * longer applies, none: it closes and the panel stays with what is written. If what
+ * is saved leaves it meaningless, it says so and does not offer Guardar; if what is
+ * written is invalid there is no way to evaluate it, and it offers it.
  */
 export function actionNotice(context: NoticeAction): ChangesNotice | undefined {
 	const { action, task } = context;
@@ -60,7 +60,7 @@ export function actionNotice(context: NoticeAction): ChangesNotice | undefined {
 	return { message: CHANGES_MESSAGE, buttons: [KEEP_EDITING, discard(action), { text: `Guardar y ${action}`, effect: 'guardar' }] };
 }
 
-/** Spec §6.2: Descartar y <acción> actúa sobre la tarea como está guardada; si la acción ya no corresponde, no actúa. */
+/** Spec §6.2: Descartar y <action> acts on the task as it is saved; if the action no longer applies, it does not act. */
 export function discardAndAct(context: NoticeAction): TaskChange | undefined {
 	return isShown(context, context.task) ? changeOfAction(context.action, context.now) : undefined;
 }
@@ -72,9 +72,9 @@ export type SaveAndActResult =
 	| { result: 'aviso cerrado' };
 
 /**
- * Spec §6.2: Guardar y <acción> se vuelve a evaluar al tocarlo: si ya no
- * corresponde, no se guarda ni se actúa. Si Guardar falla, no se ejecuta nada.
- * Si no, guarda y actúa en un solo cambio.
+ * Spec §6.2: Guardar y <action> is evaluated again when tapped: if it no
+ * longer applies, nothing is saved and nothing acts. If Guardar fails, nothing runs.
+ * Otherwise, it saves and acts in a single change.
  */
 export function saveAndAct(context: NoticeAction): SaveAndActResult {
 	const notice = actionNotice(context);

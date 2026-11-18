@@ -5,7 +5,7 @@
 	const online = onlineState();
 	const text = $derived(connectionStrip(online.value));
 
-	// Mientras se ve, el panel a pantalla completa empieza debajo de ella.
+	// While it is shown, the full-screen panel starts below it.
 	$effect(() => {
 		if (!text) return;
 		document.documentElement.style.setProperty('--strip-height', '1.5rem');

@@ -1,4 +1,4 @@
-// Última vez del panel de edición (spec §6.2).
+// Last time of the edit panel (spec §6.2).
 import { expect } from 'vitest';
 import { lastTime } from '../../src/lib/core/last-time';
 import { P, dateHour } from './values';
@@ -14,7 +14,7 @@ export const lastTimeSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^la última vez muestra ${P}$`),
 		run: (world, expected) => {
-			if (world.lastTime === undefined) throw new Error('No se consultó la última vez');
+			if (world.lastTime === undefined) throw new Error('The last time was not queried');
 			expect(world.lastTime).toBe(expected);
 		}
 	}

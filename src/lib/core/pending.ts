@@ -15,20 +15,20 @@ import { urgencyInstant } from './urgency';
 import { minimalLine, type MinimalLine } from './minimal-version';
 
 /**
- * Una fila de Pendientes; si está completada, se ve tachada y con el checkbox
- * marcado. textoDeFecha: «Tocaba …» o «Vuelve …», si la fila lo lleva (§6.1).
- * textoDePrimerPaso: la línea del paso en que va la tarea, «Primer paso: …» o
- * «Paso: …», y botonesDePaso, los de una tarea de dos pasos o más; los dos,
- * solo en las filas pendiente o atrasada (§6.1). minima: la línea «Mínima: …»
- * y si «Hice la mínima» está habilitado, en esas mismas filas.
+ * A Pending row; if it is completed, it is shown struck through and with the checkbox
+ * checked. dateText: «Tocaba …» or «Vuelve …», if the row carries it (§6.1).
+ * firstStepText: the line of the step the task is on, «Primer paso: …» or
+ * «Paso: …», and stepButtons, those of a task with two steps or more; both,
+ * only on pending or overdue rows (§6.1). minimal: the line «Mínima: …»
+ * and whether «Hice la mínima» is enabled, on those same rows.
  */
 export type PendingRow = { task: Task; dateText?: string; firstStepText?: string; stepButtons?: StepButtons; minimal?: MinimalLine } & InPending;
 
 /**
- * Spec §6.1: las filas de la lista Pendientes. Primero las no completadas,
- * ordenadas por urgencia; con Mostrar completadas encendido, después las
- * completadas, de la de completadoEn más reciente a la más antigua; con
- * Mostrar pausadas encendido, al final las pausadas (§5.8), por título.
+ * Spec §6.1: the rows of the Pending list. First the non-completed ones,
+ * ordered by urgency; with Mostrar completadas on, then the
+ * completed ones, from the one with the most recent completedAt to the oldest; with
+ * Mostrar pausadas on, at the end the paused ones (§5.8), by title.
  */
 export function pendingRows(
 	tasks: readonly Task[],

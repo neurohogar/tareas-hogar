@@ -6,10 +6,10 @@ export interface RecurringRelativeData extends CommonData {
 	unit: Unit;
 }
 
-/** Spec §4.1: con más de una ventana, el intervalo tiene que ser en días. */
+/** Spec §4.1: with more than one window, the interval has to be in days. */
 const severalWindowsInHours = ({ unit, schedule = [] }: RecurringRelativeData) => unit === 'horas' && schedule.length > 1;
 
-/** Spec §4.1 y §4.2: título no vacío (sin contar espacios), cada entero ≥ 1 y, en horas, una sola ventana. */
+/** Spec §4.1 and §4.2: non-empty title (not counting spaces), each integer ≥ 1 and, in hours, a single window. */
 export function createRecurringRelative(data: RecurringRelativeData, id: string, now: Date): CreationResult<RecurringTask> {
 	const { every, unit, ...commons } = data;
 	const errors: RecurrenceErrors = {

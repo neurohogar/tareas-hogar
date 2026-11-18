@@ -13,30 +13,30 @@ const covers = (id: string, completedAt: Date, coveredOccurrence: Date): Complet
 	coveredOccurrence
 });
 
-describe('estadoPeriodicaCalendario, nunca completada (P = el día anterior a creadaEn)', () => {
+describe('recurringCalendarStatus, never completed (P = the day before createdAt)', () => {
 	const createdOnMonday = moment(7, 13, 8);
 
-	it('está en espera antes de la primera ocurrencia, con progreso desde creadaEn', () => {
+	it('is waiting before the first occurrence, with progress since createdAt', () => {
 		expect(recurringCalendarStatus(TUESDAY_AND_THURSDAY, createdOnMonday, [], moment(7, 13, 16))).toEqual({
 			kind: 'en espera',
 			progress: 0.5
 		});
 	});
 
-	it('está pendiente el día de la primera ocurrencia, de 00:00:00 a 23:59:59', () => {
+	it('is pending on the day of the first occurrence, from 00:00:00 to 23:59:59', () => {
 		expect(recurringCalendarStatus(TUESDAY_AND_THURSDAY, createdOnMonday, [], moment(7, 14))).toEqual({ kind: 'pendiente' });
 		expect(recurringCalendarStatus(TUESDAY_AND_THURSDAY, createdOnMonday, [], moment(7, 14, 23, 59, 59))).toEqual({
 			kind: 'pendiente'
 		});
 	});
 
-	it('creada en un día de ocurrencia, ya está pendiente ese día', () => {
+	it('created on an occurrence day, it is already pending that day', () => {
 		expect(recurringCalendarStatus(TUESDAY_AND_THURSDAY, moment(7, 14, 8), [], moment(7, 14, 8))).toEqual({
 			kind: 'pendiente'
 		});
 	});
 
-	it('está atrasada una sola vez pasado el día de la primera ocurrencia', () => {
+	it('is overdue only once after the day of the first occurrence has passed', () => {
 		expect(recurringCalendarStatus(TUESDAY_AND_THURSDAY, createdOnMonday, [], moment(7, 15))).toEqual({ kind: 'atrasada' });
 		expect(recurringCalendarStatus(TUESDAY_AND_THURSDAY, createdOnMonday, [], moment(8, 20, 10))).toEqual({
 			kind: 'atrasada'
@@ -44,11 +44,11 @@ describe('estadoPeriodicaCalendario, nunca completada (P = el día anterior a cr
 	});
 });
 
-describe('estadoPeriodicaCalendario, completada (P = la mayor ocurrencia cubierta)', () => {
+describe('recurringCalendarStatus, completed (P = the greatest covered occurrence)', () => {
 	const createdAt = moment(1, 1);
 
-	it('usa la ocurrencia cubierta, no el día del completado', () => {
-		// Completada el lunes cubriendo el martes: el martes ya no está pendiente.
+	it('uses the covered occurrence, not the day of the completion', () => {
+		// Completed on Monday covering Tuesday: Tuesday is no longer pending.
 		const completions = [covers('c1', moment(7, 13, 12), moment(7, 14))];
 
 		expect(recurringCalendarStatus(TUESDAY_AND_THURSDAY, createdAt, completions, moment(7, 14, 18))).toEqual({
@@ -57,13 +57,13 @@ describe('estadoPeriodicaCalendario, completada (P = la mayor ocurrencia cubiert
 		});
 	});
 
-	it('toma la mayor ocurrencia cubierta aunque se haya registrado antes', () => {
+	it('takes the greatest covered occurrence even if it was registered earlier', () => {
 		const completions = [covers('c1', moment(7, 16, 10), moment(7, 16)), covers('c2', moment(7, 14, 10), moment(7, 14))];
 
 		expect(recurringCalendarStatus(TUESDAY_AND_THURSDAY, createdAt, completions, moment(7, 17, 10)).kind).toBe('en espera');
 	});
 
-	it('mide la espera desde el completadoEn más reciente, aunque se haya registrado antes', () => {
+	it('measures the wait from the most recent completedAt, even if it was registered earlier', () => {
 		const completions = [covers('c1', moment(7, 14, 12), moment(7, 14)), covers('c2', moment(7, 13, 12), moment(7, 14))];
 
 		expect(recurringCalendarStatus(TUESDAY_AND_THURSDAY, createdAt, completions, moment(7, 14, 21))).toEqual({
@@ -72,7 +72,7 @@ describe('estadoPeriodicaCalendario, completada (P = la mayor ocurrencia cubiert
 		});
 	});
 
-	it('pendiente el día de N y atrasada al día siguiente, con el 31 en el último día del mes', () => {
+	it('pending on the day of N and overdue the next day, with the 31st on the last day of the month', () => {
 		const completions = [covers('c1', moment(5, 31), moment(5, 31))];
 
 		expect(recurringCalendarStatus(THE_31ST, createdAt, completions, moment(6, 29, 23, 59, 59)).kind).toBe('en espera');
@@ -80,7 +80,7 @@ describe('estadoPeriodicaCalendario, completada (P = la mayor ocurrencia cubiert
 		expect(recurringCalendarStatus(THE_31ST, createdAt, completions, moment(7, 1))).toEqual({ kind: 'atrasada' });
 	});
 
-	it('ignora los completados sin ocurrencia cubierta para P, pero no para el inicio de espera', () => {
+	it('ignores the completions without a covered occurrence for P, but not for the wait start', () => {
 		const completions = [
 			covers('c1', moment(7, 14, 0), moment(7, 14)),
 			{ id: 'c2', taskId: 't1', completedAt: moment(7, 15, 0) }
@@ -92,7 +92,7 @@ describe('estadoPeriodicaCalendario, completada (P = la mayor ocurrencia cubiert
 		});
 	});
 
-	it('con P posterior a hoy, la tarea está en espera con progreso entre 0 y 1', () => {
+	it('with P later than today, the task is waiting with progress between 0 and 1', () => {
 		const completions = [covers('c1', moment(7, 20, 12), moment(7, 21))];
 
 		expect(recurringCalendarStatus(TUESDAY_AND_THURSDAY, createdAt, completions, moment(7, 18, 0))).toEqual({

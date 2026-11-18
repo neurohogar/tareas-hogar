@@ -23,8 +23,8 @@ const RELATIVE: RecurringTask = {
 	firstStep: STEP
 };
 
-describe('crear con primer paso (spec §4.1)', () => {
-	it('las tres formas guardan el primer paso recortado', () => {
+describe('create with first step (spec §4.1)', () => {
+	it('the three shapes save the trimmed first step', () => {
 		const commons = { title: 'Ropa', firstStep: `  ${STEP} ` };
 
 		expect(createOneOff(commons, 'p', CREATED)).toMatchObject({ ok: true, task: { firstStep: STEP } });
@@ -35,49 +35,49 @@ describe('crear con primer paso (spec §4.1)', () => {
 		});
 	});
 
-	it.each(['', '   ', ' \t '])('vacío o solo espacios (%j) es sin primer paso: el campo no se guarda', (firstStep) => {
+	it.each(['', '   ', ' \t '])('empty or only spaces (%j) is no first step: the field is not saved', (firstStep) => {
 		const result = createOneOff({ title: 'Ropa', firstStep }, 't1', CREATED);
 
 		expect(result).toStrictEqual({ ok: true, task: { id: 't1', title: 'Ropa', kind: 'puntual', createdAt: CREATED } });
 	});
 
-	it('nunca es inválido ni tiene largo máximo: no rechaza la creación', () => {
+	it('it is never invalid nor has a maximum length: it does not reject the creation', () => {
 		const tooLong = 'x'.repeat(5000);
 
 		expect(createOneOff({ title: 'Ropa', firstStep: tooLong }, 't1', CREATED)).toMatchObject({ ok: true, task: { firstStep: tooLong } });
 	});
 
-	it('no reemplaza la nota: son campos distintos', () => {
+	it('it does not replace the note: they are different fields', () => {
 		const result = createOneOff({ title: 'Ropa', note: 'Usar guantes', firstStep: STEP }, 't1', CREATED);
 
 		expect(result).toMatchObject({ ok: true, task: { note: 'Usar guantes', firstStep: STEP } });
 	});
 });
 
-describe('datosDeTarea con primer paso (spec §6.2)', () => {
-	it('al editar, el panel carga el primer paso actual, y crearSegunDatos lo devuelve igual', () => {
+describe('taskData with first step (spec §6.2)', () => {
+	it('when editing, the panel loads the current first step, and createFromData returns it the same', () => {
 		const data = taskData(RELATIVE);
 
 		expect(data).toMatchObject({ shape: 'relativa', firstStep: STEP });
 		expect(createFromData(data, RELATIVE.id, CREATED)).toStrictEqual({ ok: true, task: RELATIVE });
 	});
 
-	it('una tarea sin primer paso carga los datos sin el campo', () => {
+	it('a task without a first step loads the data without the field', () => {
 		const { firstStep: _, ...withoutStep } = ONE_OFF;
 
 		expect(taskData(withoutStep)).toStrictEqual({ shape: 'puntual', title: 'Ropa' });
 	});
 });
 
-describe('tareaDesdeDocumento y aplicarCambio con primer paso (spec §7)', () => {
+describe('taskFromDocument and applyChange with first step (spec §7)', () => {
 	const DOC: TaskDocument = { id: 't1', title: 'Ropa', kind: 'puntual', createdAt: CREATED };
 
-	it('la tarea conserva el primer paso del documento; sin el campo, no tiene', () => {
+	it('the task keeps the first step of the document; without the field, it has none', () => {
 		expect(taskFromDocument({ ...DOC, firstStep: STEP })).toStrictEqual({ ...DOC, firstStep: STEP });
 		expect(taskFromDocument(DOC)).toStrictEqual(DOC);
 	});
 
-	it('un cambio escribe el primer paso, null lo quita, y no toca la nota', () => {
+	it('a change writes the first step, null removes it, and does not touch the note', () => {
 		const withNote = { ...DOC, note: 'Usar guantes' };
 		const [withStep] = applyChange([withNote], 't1', { firstStep: STEP });
 
@@ -86,22 +86,22 @@ describe('tareaDesdeDocumento y aplicarCambio con primer paso (spec §7)', () =>
 	});
 });
 
-describe('editar el primer paso (spec §4.1, §7)', () => {
+describe('edit the first step (spec §4.1, §7)', () => {
 	const data = (changes: Partial<TaskData>) => ({ ...taskData(ONE_OFF), ...changes }) as TaskData;
 
-	it('otro primer paso entra en el cambio, recortado', () => {
+	it('another first step enters the change, trimmed', () => {
 		expect(edit(ONE_OFF, data({ firstStep: ' Lavar ' }))).toStrictEqual({ ok: true, change: { firstStep: 'Lavar' } });
 	});
 
-	it('el mismo, aunque con espacios alrededor, no cambia nada', () => {
+	it('the same one, even with spaces around, changes nothing', () => {
 		expect(edit(ONE_OFF, data({ firstStep: `  ${STEP}  ` }))).toStrictEqual({ ok: true, change: {} });
 	});
 
-	it('vacío o solo espacios lo quita (null)', () => {
+	it('empty or only spaces removes it (null)', () => {
 		expect(edit(ONE_OFF, data({ firstStep: '   ' }))).toStrictEqual({ ok: true, change: { firstStep: null } });
 	});
 
-	it('cambiar el tipo no lo toca', () => {
+	it('changing the kind does not touch it', () => {
 		const toRelative: TaskData = { shape: 'relativa', title: 'Ropa', firstStep: STEP, every: 1, unit: 'dias' };
 		const result = edit(ONE_OFF, toRelative);
 
@@ -109,62 +109,62 @@ describe('editar el primer paso (spec §4.1, §7)', () => {
 	});
 });
 
-describe('hayCambios con primer paso (spec §6.2)', () => {
+describe('hasChanges with first step (spec §6.2)', () => {
 	const OPEN: TaskData = { shape: 'puntual', title: 'Ropa', firstStep: STEP };
 	const doesChange = (current: TaskData, onOpen: TaskData = OPEN) =>
 		hasChanges({ data: onOpen }, { data: current });
 
-	it('otro primer paso es un cambio; el mismo con espacios alrededor, no', () => {
+	it('another first step is a change; the same with spaces around is not', () => {
 		expect(doesChange({ ...OPEN, firstStep: 'Lavar' })).toBe(true);
 		expect(doesChange({ ...OPEN, firstStep: `  ${STEP} ` })).toBe(false);
 	});
 
-	it('vaciar un primer paso existente es un cambio', () => {
+	it('emptying an existing first step is a change', () => {
 		expect(doesChange({ ...OPEN, firstStep: '' })).toBe(true);
 	});
 
-	it('sin el campo, vacío y solo espacios son lo mismo', () => {
+	it('without the field, empty and only spaces are the same', () => {
 		const withoutStep: TaskData = { shape: 'puntual', title: 'Ropa' };
 
 		expect(doesChange({ ...withoutStep, firstStep: '   ' }, withoutStep)).toBe(false);
 		expect(doesChange({ ...withoutStep, firstStep: '' }, { ...withoutStep, firstStep: '  ' })).toBe(false);
 	});
 
-	it('con una repetición inválida, los espacios del primer paso tampoco cuentan', () => {
+	it('with an invalid repetition, the spaces of the first step do not count either', () => {
 		const invalid: TaskData = { shape: 'relativa', title: 'Ropa', every: 0, unit: 'dias' };
 
 		expect(doesChange({ ...invalid, firstStep: '  ' }, invalid)).toBe(false);
 	});
 });
 
-describe('textoDelPaso con un solo paso (spec §6.1)', () => {
-	it.each(['pendiente', 'atrasada'] as const)('una fila %s lo muestra con el prefijo y el texto completo', (kind) => {
+describe('stepText with a single step (spec §6.1)', () => {
+	it.each(['pendiente', 'atrasada'] as const)('a %s row shows it with the prefix and the full text', (kind) => {
 		expect(stepText(ONE_OFF, { kind })).toBe(`Primer paso: ${STEP}`);
 	});
 
-	it.each(['en espera', 'completada', 'pausada'] as const)('una fila %s no lo muestra', (kind) => {
+	it.each(['en espera', 'completada', 'pausada'] as const)('a %s row does not show it', (kind) => {
 		expect(stepText(ONE_OFF, { kind })).toBeUndefined();
 	});
 
-	it('una tarea sin primer paso no lo muestra', () => {
+	it('a task without a first step does not show it', () => {
 		const { firstStep: _, ...withoutStep } = ONE_OFF;
 
 		expect(stepText(withoutStep, { kind: 'pendiente' })).toBeUndefined();
 	});
 
-	it('no lo corta, aunque sea largo', () => {
+	it('it does not cut it, even if it is long', () => {
 		const tooLong = 'x'.repeat(500);
 
 		expect(stepText({ ...ONE_OFF, firstStep: tooLong }, { kind: 'pendiente' })).toBe(`Primer paso: ${tooLong}`);
 	});
 });
 
-describe('filasDePendientes con primer paso (spec §6.1)', () => {
+describe('pendingRows with first step (spec §6.1)', () => {
 	const completion: Completion = { id: 'c', taskId: RELATIVE.id, completedAt: new Date(2026, 6, 15, 7, 0, 0) };
 	const texts = (completions: Completion[], tasks = [ONE_OFF, RELATIVE]) =>
 		pendingRows(tasks, completions, NOW, true, true).map(({ task, firstStepText }) => [task.id, firstStepText]);
 
-	it('las filas pendiente y atrasada lo llevan; una completada en espera, no', () => {
+	it('the pending and overdue rows carry it; a completed waiting one does not', () => {
 		expect(texts([])).toStrictEqual([
 			['t2', `Primer paso: ${STEP}`],
 			['t1', `Primer paso: ${STEP}`]
@@ -175,17 +175,17 @@ describe('filasDePendientes con primer paso (spec §6.1)', () => {
 		]);
 	});
 
-	it('una pausada no lo lleva', () => {
+	it('a paused one does not carry it', () => {
 		expect(texts([], [{ ...RELATIVE, paused: true }])).toStrictEqual([['t2', undefined]]);
 	});
 
-	it('completar la tarea no lo borra: vuelve cuando la periódica vuelve a estar pendiente', () => {
+	it('completing the task does not delete it: it returns when the recurring task is pending again', () => {
 		const onNextDay = new Date(2026, 6, 16, 7, 30, 0);
 
 		expect(pendingRows([RELATIVE], [completion], onNextDay)[0]).toMatchObject({ firstStepText: `Primer paso: ${STEP}` });
 	});
 
-	it('no cambia el orden de la lista', () => {
+	it('it does not reorder the list', () => {
 		const { firstStep: _p, ...oneOffWithoutStep } = ONE_OFF;
 		const { firstStep: _r, ...relativeWithoutStep } = RELATIVE;
 		const order = (tasks: (OneOffTask | RecurringTask)[]) => pendingRows(tasks, [], NOW).map(({ task }) => task.id);

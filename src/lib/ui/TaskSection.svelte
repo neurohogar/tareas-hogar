@@ -21,16 +21,16 @@
 	}: {
 		presentation: PanelPresentation;
 		openSection: PanelSection;
-		/** Los valores con que abrió el panel; sin ellos, arranca vacío. */
+		/** The values the panel opened with; without them, it starts empty. */
 		values?: TaskData;
 		pause?: 'pausar' | 'reanudar';
 		postponedText?: string;
 		lastTime?: string;
 		errors: CreationErrors;
-		/** El error de un campo dura lo que dura su mensaje: al corregirlo se va. */
+		/** A field's error lasts as long as its message: correcting it makes it go away. */
 		clearError: (field: keyof CreationErrors) => void;
 		emoji: string;
-		/** Los pasos más (2, 3…), uno por campo (§6.2). */
+		/** The extra steps (2, 3…), one per field (§6.2). */
 		steps: string[];
 		onOpenPicker: () => void;
 	} = $props();

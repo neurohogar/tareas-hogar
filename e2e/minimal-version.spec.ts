@@ -17,8 +17,8 @@ import {
 	type Definition
 } from './support';
 
-// qa/version-minima.md: el campo del panel, la línea y el botón «Hice la mínima» de la fila, completar con la mínima,
-// con pasos, Historial y Borrar, lo que no cambia y lo que no lo muestra, Cambios sin guardar y dos dispositivos.
+// qa/version-minima.md: the panel field, the line and the «Hice la mínima» button of the row, completing with the minimal version,
+// with steps, Historial and Borrar, what does not change and what does not show it, Cambios sin guardar and two devices.
 
 test.beforeEach(async () => {
 	await cleanEmulators();
@@ -32,7 +32,7 @@ const P3 = 'Tender la ropa';
 const LENGTH =
 	'Abrir el cajón de abajo y sacar toda la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla con nada de color oscuro ni delicado';
 
-/** La fila de la tarea de título exacto `t` (las demás filas pueden contener ese texto). */
+/** The row of the task with exact title `t` (other rows may contain that text). */
 const f = (page: Page, t: string): Locator =>
 	page.getByRole('listitem').filter({ has: page.getByRole('button', { name: t, exact: true }) });
 const line = (page: Page, t: string) => f(page, t).getByText(/^Mínima: /);
@@ -54,14 +54,14 @@ const titles = (page: Page) =>
 		.getByRole('checkbox')
 		.evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')!.replace('Completar ', '')));
 
-/** La fila dice exactamente `Mínima: m`, una sola vez, y tiene Hice la mínima. */
+/** The row says exactly `Mínima: m`, only once, and has Hice la mínima. */
 async function says(page: Page, t: string, m: string) {
 	await expect(line(page, t)).toHaveCount(1);
 	await expect(line(page, t)).toHaveText(`Mínima: ${m}`);
 	await expect(did(page, t)).toHaveCount(1);
 }
 
-/** La fila está a la vista y no tiene la línea ni el botón. */
+/** The row is visible and has neither the line nor the button. */
 async function withoutMinimal(page: Page, t: string) {
 	await expect(f(page, t)).toBeVisible();
 	await expect(f(page, t)).not.toContainText('Mínima');
@@ -79,14 +79,14 @@ async function save(page: Page) {
 	await expect(panel(page)).toHaveCount(0);
 }
 
-/** Abre la fila, escribe la versión mínima `m` (o la deja vacía) y guarda. */
+/** Opens the row, types the minimal version `m` (or leaves it empty) and saves. */
 async function writeMinimal(page: Page, t: string, m: string) {
 	await openRow(page, t);
 	await minimal(page).fill(m);
 	await save(page);
 }
 
-/** Abre la fila y verifica el valor de Versión mínima; cierra sin cambios. */
+/** Opens the row and checks the Versión mínima value; closes without changes. */
 async function panelHas(page: Page, t: string, m: string) {
 	await openRow(page, t);
 	await expect(minimal(page)).toHaveValue(m);
@@ -134,13 +134,13 @@ async function postpone(page: Page, t: string, option: '3 horas' | 'Hasta mañan
 	await expect(panel(page)).toHaveCount(0);
 }
 
-/** Sesión con el reloj corriendo en `hora`; con `completadas`, Mostrar completadas encendido. */
+/** Session with the clock running at `hora`; with `completadas`, Mostrar completadas on. */
 async function session(page: Page, hour: string, completedList = false) {
 	await sessionWithClock(page, hour);
 	if (completedList) await turnOnCompleted(page);
 }
 
-/** Avanza el reloj hasta `hora` y deja correr un segundo para que la pantalla se actualice sola. */
+/** Advances the clock to `hora` and lets one second run so the screen updates by itself. */
 async function go(page: Page, hour: string) {
 	const missing = new Date(hour).getTime() - (await page.evaluate(() => Date.now()));
 	if (missing <= 10_000) await page.clock.runFor(missing);
@@ -148,10 +148,10 @@ async function go(page: Page, hour: string) {
 	await page.clock.runFor(1000);
 }
 
-/** Fija la hora justo antes del gesto que cuenta (el reloj de la prueba avanza unos ms por cada espera). */
+/** Sets the time right before the gesture that counts (the test clock advances a few ms on each wait). */
 const setTime = (page: Page, hour: string) => page.clock.setSystemTime(new Date(hour));
 
-/** Deja pasar los 5 segundos del aviso. */
+/** Lets the notice's 5 seconds pass. */
 async function passesNotice(page: Page) {
 	await page.clock.runFor(6000);
 	await expect(notice(page)).toHaveCount(0);
@@ -799,7 +799,7 @@ test('Flujo 6: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await did(page, '🧺 Lavar').click();
 	await expect(notice(page)).toContainText('Completaste «🧺 Lavar» · mínima');
 	await expect(notice(page)).not.toContainText('Solo el inodoro');
-	// Con el aviso a la vista, Anotar toma esa tarea (§5.10).
+	// With the notice in view, Anotar takes that task (§5.10).
 	await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 	await button(page, 'Anotar').click();
 	const box = page.getByRole('dialog', { name: 'Anotar', exact: true });
@@ -914,7 +914,7 @@ test('Flujo 8: dos dispositivos', async ({ browser }) => {
 	const sync = async () => {
 		await arrivesOnServer(a);
 		await ctxB.setOffline(false);
-		await a.waitForTimeout(10_000); // B reconecta y sus escrituras pendientes llegan; las dos pantallas se actualizan solas
+		await a.waitForTimeout(10_000); // B reconnects and its pending writes arrive; both screens update by themselves
 	};
 	const say = async (t: string, m: string) => {
 		for (const p of both) {

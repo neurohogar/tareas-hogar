@@ -6,7 +6,7 @@
 	const session = useSession();
 	const groups = $derived(history(session.tasks, session.completions, session.now));
 
-	/** La entrada cuyo Borrar espera confirmación, con el encabezado de su día al tocarlo. */
+	/** The entry whose Borrar awaits confirmation, with its day's header, when tapped. */
 	let toDelete = $state.raw<{ entry: HistoryEntry; header: string } | undefined>(undefined);
 
 	function deleteCompletion(entry: HistoryEntry) {
@@ -22,7 +22,7 @@
 		<ul class="list">
 			{#each entries as entry (entry.completion.id)}
 				<li class="entry">
-					<!-- El botón cubre la entrada fuera de Borrar: tocarla abre la edición de la tarea. -->
+					<!-- The button covers the entry outside Borrar: tapping it opens the task edit. -->
 					<button type="button" class="title" onclick={() => session.openTask(entry.task)}>{taskName(entry.task)}</button>
 					<span class="hour">{entry.timeText}</span>
 					<button type="button" class="delete" onclick={() => (toDelete = { entry, header })}>Borrar</button>

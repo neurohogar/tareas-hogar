@@ -3,13 +3,13 @@ import { readIsoDay } from './days';
 import type { OneOffTask } from './task';
 
 export interface OneOffData extends CommonData {
-	/** AAAA-MM-DD; sin el campo, la tarea no tiene fecha límite. */
+	/** YYYY-MM-DD; without the field, the task has no due date. */
 	dueDate?: string;
 }
 
 /**
- * Spec §4.1: título no vacío y, si hay fecha límite, una fecha que existe en el
- * calendario. Se acepta una fecha límite pasada: la tarea queda atrasada.
+ * Spec §4.1: non-empty title and, if there is a due date, a date that exists in the
+ * calendar. A past due date is accepted: the task ends up overdue.
  */
 export function createOneOff({ dueDate, ...commons }: OneOffData, id: string, now: Date): CreationResult<OneOffTask> {
 	const day = dueDate === undefined ? undefined : readIsoDay(dueDate);

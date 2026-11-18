@@ -3,45 +3,45 @@ import { createOneOff } from './create-one-off';
 
 const NOW = new Date(2026, 6, 15, 8, 0, 0);
 
-describe('crearPuntual', () => {
-	it('crea una tarea puntual con id, creadaEn y la fecha límite como el inicio de ese día local', () => {
+describe('createOneOff', () => {
+	it('creates a one-off task with id, createdAt and the due date as the start of that local day', () => {
 		expect(createOneOff({ title: 'Pagar la luz', dueDate: '2026-07-20' }, 't1', NOW)).toStrictEqual({
 			ok: true,
 			task: { id: 't1', title: 'Pagar la luz', kind: 'puntual', dueDate: new Date(2026, 6, 20), createdAt: NOW }
 		});
 	});
 
-	it('sin fecha límite, la tarea no tiene el campo', () => {
+	it('without a due date, the task does not have the field', () => {
 		expect(createOneOff({ title: 'Cambiar foco' }, 't1', NOW)).toStrictEqual({
 			ok: true,
 			task: { id: 't1', title: 'Cambiar foco', kind: 'puntual', createdAt: NOW }
 		});
 	});
 
-	it('acepta una fecha límite anterior al día de creación', () => {
+	it('accepts a due date earlier than the creation day', () => {
 		const result = createOneOff({ title: 'Renovar DNI', dueDate: '2026-07-10' }, 't1', NOW);
 
 		expect(result.ok && result.task).toMatchObject({ dueDate: new Date(2026, 6, 10) });
 	});
 
-	it('guarda el título sin los espacios de los extremos', () => {
+	it('saves the title without the spaces at the ends', () => {
 		const result = createOneOff({ title: '  Pagar la luz ' }, 't1', NOW);
 
 		expect(result.ok && result.task.title).toBe('Pagar la luz');
 	});
 
-	it.each(['', '   '])('rechaza el título vacío o de solo espacios (%j)', (title) => {
+	it.each(['', '   '])('rejects an empty title or one of only spaces (%j)', (title) => {
 		expect(createOneOff({ title }, 't1', NOW)).toEqual({ ok: false, errors: { title: 'vacio' } });
 	});
 
-	it.each(['2026-02-29', '2026-04-31', '2026-13-01', ''])('rechaza una fecha límite que no existe (%j)', (dueDate) => {
+	it.each(['2026-02-29', '2026-04-31', '2026-13-01', ''])('rejects a due date that does not exist (%j)', (dueDate) => {
 		expect(createOneOff({ title: 'Pagar la luz', dueDate }, 't1', NOW)).toEqual({
 			ok: false,
 			errors: { dueDate: 'invalida' }
 		});
 	});
 
-	it('junta los dos motivos de rechazo', () => {
+	it('combines the two reasons for rejection', () => {
 		expect(createOneOff({ title: ' ', dueDate: '2026-02-30' }, 't1', NOW)).toEqual({
 			ok: false,
 			errors: { title: 'vacio', dueDate: 'invalida' }
@@ -49,8 +49,8 @@ describe('crearPuntual', () => {
 	});
 });
 
-describe('crearPuntual con emoji y nota', () => {
-	it('guarda el emoji y la nota recortada', () => {
+describe('createOneOff with emoji and note', () => {
+	it('saves the emoji and the trimmed note', () => {
 		const result = createOneOff({ title: 'Regar', emoji: ' 🌱 ', note: '  Usar guantes\n\nVentilar \n' }, 't1', NOW);
 
 		expect(result).toStrictEqual({
@@ -59,13 +59,13 @@ describe('crearPuntual con emoji y nota', () => {
 		});
 	});
 
-	it('un emoji o una nota vacíos o de solo espacios no se guardan', () => {
+	it('an empty emoji or note, or one of only spaces, is not saved', () => {
 		const result = createOneOff({ title: 'Regar', emoji: '  ', note: ' \n ' }, 't1', NOW);
 
 		expect(result).toStrictEqual({ ok: true, task: { id: 't1', title: 'Regar', kind: 'puntual', createdAt: NOW } });
 	});
 
-	it('un emoji inválido rechaza la creación entera, junto con los otros errores', () => {
+	it('an invalid emoji rejects the whole creation, together with the other errors', () => {
 		expect(createOneOff({ title: 'Regar', emoji: '🌱🔥' }, 't1', NOW)).toStrictEqual({ ok: false, errors: { emoji: 'invalido' } });
 		expect(createOneOff({ title: ' ', emoji: 'a', dueDate: '2026-02-30' }, 't1', NOW)).toStrictEqual({
 			ok: false,

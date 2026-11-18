@@ -1,5 +1,5 @@
-// Posponer y quitar posponer (spec §5.9, §6.2, §7): el botón del panel de
-// edición actúa en el momento, sin Guardar.
+// Postpone and remove postponement (spec §5.9, §6.2, §7): the button of the edit
+// panel acts immediately, without Guardar.
 import { expect } from 'vitest';
 import { pauseAction } from '../../src/lib/core/pause';
 import { postponeAction, postponementText } from '../../src/lib/core/postponement-in-panel';
@@ -11,18 +11,18 @@ import { OTHER, changesOnEdit, theDoc, theTask, theTaskTitled, thatSawOther, rem
 
 function option(text: string): PostponeOption {
 	const chosen = POSTPONE_OPTIONS.find(({ option }) => option === text);
-	if (!chosen) throw new Error(`Opción de posponer inválida: "${text}"`);
+	if (!chosen) throw new Error(`Invalid postpone option: "${text}"`);
 	return chosen.option;
 }
 
 const BUTTONS: Record<string, 'posponer' | 'quitar' | undefined> = { Posponer: 'posponer', 'Quitar posponer': 'quitar', ninguno: undefined };
 
 function button(text: string): 'posponer' | 'quitar' | undefined {
-	if (!(text in BUTTONS)) throw new Error(`Botón de posponer inválido: "${text}"`);
+	if (!(text in BUTTONS)) throw new Error(`Invalid postpone button: "${text}"`);
 	return BUTTONS[text];
 }
 
-/** Toco Posponer en el panel y elijo la opción: el panel, con lo que ve quien pospone, tiene que ofrecerlo (§6.2). */
+/** I tap Posponer in the panel and pick the option: the panel, with what the person postponing sees, has to offer it (§6.2). */
 function postponeViewing(world: World, view: Saved, task: Task, chosen: string, moment: string): void {
 	const now = dateHour(moment);
 	expect(postponeAction(task, view.completions, now)).toBe('posponer');
@@ -56,7 +56,7 @@ export const postponeSteps: StepDefinition[] = [
 		}
 	},
 	{
-		// El paso no da el momento: Quitar posponer actúa sobre la posposición guardada (§6.2).
+		// The step does not give the moment: Quitar posponer acts on the saved postponement (§6.2).
 		pattern: /^quito la posposición$/,
 		run: (world) => {
 			expect(theDoc(world).postponed).toBeDefined();
@@ -69,7 +69,7 @@ export const postponeSteps: StepDefinition[] = [
 		run: (world, from, to) => expect(theDoc(world).postponed).toEqual({ from: dateHour(from), to: dateHour(to) })
 	},
 	{
-		// §4.1: sin el campo, no está pospuesta.
+		// §4.1: without the field, it is not postponed.
 		pattern: /^la tarea no está pospuesta$/,
 		run: (world) => expect(theDoc(world)).not.toHaveProperty('postponed')
 	},
@@ -78,8 +78,8 @@ export const postponeSteps: StepDefinition[] = [
 		run: (world, moment) => {
 			const task = theTask(world);
 			const now = dateHour(moment);
-			// Una tarea no se abre antes de haber sido pospuesta: el escenario sería imposible.
-			if (task.postponed && now < task.postponed.from) throw new Error(`El panel se abre el ${moment}, antes de que la tarea fuera pospuesta`);
+			// A task is not opened before having been postponed: the scenario would be impossible.
+			if (task.postponed && now < task.postponed.from) throw new Error(`The panel opens on ${moment}, before the task was postponed`);
 			world.panel = {
 				pause: pauseAction(task),
 				postponement: { button: postponeAction(task, world.completions, now), text: postponementText(task, now) },
@@ -101,9 +101,9 @@ export const postponeSteps: StepDefinition[] = [
 	}
 ];
 
-/** Lo que el panel dice de la posposición: se abrió en un momento dado. */
+/** What the panel says about the postponement: it was opened at a given moment. */
 function thePostponement(world: World) {
 	const { postponement } = thePanel(world);
-	if (!postponement) throw new Error('El panel de edición se abrió sin un momento');
+	if (!postponement) throw new Error('The edit panel was opened without a moment');
 	return postponement;
 }

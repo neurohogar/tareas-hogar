@@ -1,17 +1,17 @@
-// Spec §5.3 y §5.6: qué ocurrencias cubren los completados de una periódica de
-// calendario (o relativa por ventana). Este módulo es el único que interpreta
-// ocurrenciaCubierta.
+// Spec §5.3 and §5.6: which occurrences the completions of a calendar recurring
+// task (or relative by window) cover. This module is the only one that interprets
+// coveredOccurrence.
 import { startOfDay, addDays } from './days';
 import { firstLaterOccurrence, lastOccurrenceBetween } from './occurrences';
 import type { Completion, CalendarRecurrence } from './task';
 
-/** El último instante del día: cualquier ocurrencia de ese día empieza antes o en él. */
+/** The last instant of the day: any occurrence of that day starts before or at it. */
 const dayEnd = (day: Date) => addDays(day, 1).getTime() - 1;
 
 /**
- * Hasta dónde cubre un completado: una ocurrencia con hora, su inicio; una
- * fecha sola, el día entero; sin ocurrenciaCubierta (se hizo cuando la tarea
- * era relativa o puntual), el día entero de su completadoEn.
+ * How far a completion covers: an occurrence with a time, its start; a
+ * date alone, the whole day; without coveredOccurrence (it was made when the task
+ * was relative or one-off), the whole day of its completedAt.
  */
 function coveredUntil({ coveredOccurrence, completedAt }: Completion): number {
 	if (coveredOccurrence === undefined) return dayEnd(completedAt);
@@ -20,23 +20,23 @@ function coveredUntil({ coveredOccurrence, completedAt }: Completion): number {
 }
 
 /**
- * Spec §5.6, P en ms: la mayor ocurrencia cubierta. Los valores sin hora
- * (fecha sola, completado sin ocurrenciaCubierta y, sin completados, el día
- * anterior a creadaEn) cubren el día entero.
+ * Spec §5.6, P in ms: the greatest covered occurrence. Values without a time
+ * (date alone, completion without coveredOccurrence and, without completions, the day
+ * before createdAt) cover the whole day.
  */
 export function lastCovered(createdAt: Date, completions: readonly Completion[]): number {
 	if (completions.length === 0) return dayEnd(addDays(createdAt, -1));
 	return Math.max(...completions.map(coveredUntil));
 }
 
-/** Spec §5.3, P sin horario: el día de la última ocurrencia cubierta. */
+/** Spec §5.3, P without schedule: the day of the last covered occurrence. */
 export function lastCoveredOccurrence(createdAt: Date, completions: readonly Completion[]): Date {
 	return startOfDay(new Date(lastCovered(createdAt, completions)));
 }
 
 /**
- * La ocurrencia que cubre un completado nuevo hecho `ahora`, dado P: la más
- * reciente sin cubrir en (P, hoy] o, si no hay, N (la primera posterior a P).
+ * The occurrence that a new completion made `now` covers, given P: the most
+ * recent uncovered one in (P, today] or, if there is none, N (the first after P).
  */
 export function occurrenceThatCovers(recurrence: CalendarRecurrence, p: Date, now: Date): Date {
 	const recent = lastOccurrenceBetween(recurrence, p, now);

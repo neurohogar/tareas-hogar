@@ -17,15 +17,15 @@ const recurrence: fc.Arbitrary<CalendarRecurrence> = fc.oneof(
 	monthDays.map((d) => ({ mode: 'calendario' as const, monthDays: d }))
 );
 
-/** Los inicios de día en (desde, hasta]. */
+/** The day starts in (from, to]. */
 function daysBetween(from: Date, to: Date): Date[] {
 	const days: Date[] = [];
 	for (let d = addDays(from, 1); d <= to; d = addDays(d, 1)) days.push(d);
 	return days;
 }
 
-describe('ocurrencias (propiedades)', () => {
-	it('la primera ocurrencia posterior es un inicio de día, ocurre, y no hay otra antes (a lo sumo 31 días)', () => {
+describe('occurrences (properties)', () => {
+	it('the first later occurrence is a day start, occurs, and there is no earlier one (at most 31 days)', () => {
 		fc.assert(
 			fc.property(recurrence, moment, (r, m) => {
 				const n = firstLaterOccurrence(r, m);
@@ -39,7 +39,7 @@ describe('ocurrencias (propiedades)', () => {
 		);
 	});
 
-	it('la última ocurrencia entre (desde, hasta] es la más reciente, o no hay ninguna', () => {
+	it('the last occurrence between (from, to] is the most recent, or there is none', () => {
 		fc.assert(
 			fc.property(recurrence, day, fc.integer({ min: -3, max: 70 }), fc.integer({ min: 0, max: 23 }), (r, from, n, hour) => {
 				const to = new Date(addDays(from, n).getTime() + hour * 3_600_000);
@@ -49,7 +49,7 @@ describe('ocurrencias (propiedades)', () => {
 		);
 	});
 
-	it('en cada mes, cada día elegido ocurre exactamente una vez; uno que no existe cae en el último día', () => {
+	it('in each month, each chosen day occurs exactly once; one that does not exist falls on the last day', () => {
 		fc.assert(
 			fc.property(day, fc.integer({ min: 1, max: 31 }), (d, chosenOne) => {
 				const last = lastDayOfMonth(d);
@@ -60,7 +60,7 @@ describe('ocurrencias (propiedades)', () => {
 		);
 	});
 
-	it('en cualquier semana corrida hay tantas ocurrencias como días de la semana elegidos', () => {
+	it('in any running week there are as many occurrences as chosen weekdays', () => {
 		fc.assert(
 			fc.property(weekdays, day, (chosenOnes, d) => {
 				const week = daysBetween(addDays(d, -1), addDays(d, 6));
@@ -70,7 +70,7 @@ describe('ocurrencias (propiedades)', () => {
 		);
 	});
 
-	it('el orden y las repeticiones de los días no cambian qué días ocurren', () => {
+	it('the order and repetitions of the days do not change which days occur', () => {
 		const withOtherOrder = recurrence.chain((r) => {
 			const days: readonly (string | number)[] = 'weekdays' in r ? r.weekdays : r.monthDays;
 			const repeatedItems = [...days, ...days];

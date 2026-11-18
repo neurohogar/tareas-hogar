@@ -70,7 +70,7 @@
 		font-weight: 600;
 	}
 
-	/* La marca de error es un punto, distinto del icono de la pestaña. */
+	/* The error mark is a dot, distinct from the tab icon. */
 	.mark {
 		width: 0.6rem;
 		height: 0.6rem;

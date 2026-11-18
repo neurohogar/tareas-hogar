@@ -11,60 +11,60 @@ import {
 	markedSections
 } from './panel-tabs';
 
-describe('presentacionDelPanel (spec §6.2, Presentación del panel)', () => {
-	it.each([22.5, 39.9, 40])('%s rem es celular: en pestañas', (width) => {
+describe('panelPresentation (spec §6.2, Panel presentation)', () => {
+	it.each([22.5, 39.9, 40])('%s rem is a phone: in tabs', (width) => {
 		expect(panelPresentation(width)).toBe('pestanas');
 	});
 
-	it.each([40.1, 80])('%s rem es pantalla ancha: en secciones seguidas', (width) => {
+	it.each([40.1, 80])('%s rem is a wide screen: in consecutive sections', (width) => {
 		expect(panelPresentation(width)).toBe('secciones');
 	});
 });
 
-describe('seccionesDelPanel (spec §6.2, Pestañas)', () => {
-	it('al crear no aparece Acciones', () => {
+describe('panelSections (spec §6.2, Tabs)', () => {
+	it('when creating, Acciones does not appear', () => {
 		expect(panelSections('crear')).toEqual(['Tarea', 'Cuándo']);
 	});
 
-	it('al editar aparece siempre, al final', () => {
+	it('when editing it always appears, at the end', () => {
 		expect(panelSections('editar')).toEqual(['Tarea', 'Cuándo', 'Acciones']);
 	});
 });
 
-describe('PESTANA_AL_ABRIR (spec §6.2, Pestañas)', () => {
-	it('siempre abre en Tarea', () => {
+describe('TAB_ON_OPEN (spec §6.2, Tabs)', () => {
+	it('always opens on Tarea', () => {
 		expect(TAB_ON_OPEN).toBe('Tarea');
 	});
 });
 
-describe('seccionesMarcadas (spec §6.2, Errores)', () => {
-	it('sin errores no marca ninguna', () => {
+describe('markedSections (spec §6.2, Errors)', () => {
+	it('without errors it marks none', () => {
 		expect(markedSections([])).toEqual([]);
 	});
 
-	it('un error en Título marca Tarea', () => {
+	it('an error in Título marks Tarea', () => {
 		expect(markedSections(['Título'])).toEqual(['Tarea']);
 	});
 
-	it.each(['fecha límite', 'Cada', 'días', 'horario'] as const)('un error en %s marca Cuándo', (field) => {
+	it.each(['fecha límite', 'Cada', 'días', 'horario'] as const)('an error in %s marks Cuándo', (field) => {
 		expect(markedSections([field])).toEqual(['Cuándo']);
 	});
 
-	it('dos errores de la misma sección la marcan una sola vez', () => {
+	it('two errors in the same section mark it only once', () => {
 		expect(markedSections(['horario', 'días'])).toEqual(['Cuándo']);
 	});
 
-	it('las marcadas van en el orden de las pestañas, no en el de los errores', () => {
+	it('the marked ones go in tab order, not in error order', () => {
 		expect(markedSections(['horario', 'Título'])).toEqual(['Tarea', 'Cuándo']);
 	});
 });
 
-describe('destinoAlFallarGuardar (spec §6.2, Errores)', () => {
-	it('en pestañas salta a la pestaña del único error', () => {
+describe('destinationOnSaveFailure (spec §6.2, Errors)', () => {
+	it('in tabs it jumps to the tab of the only error', () => {
 		expect(destinationOnSaveFailure(['horario'], 'pestanas')).toEqual({ tab: 'Cuándo', field: 'horario' });
 	});
 
-	it('Tarea va antes que Cuándo, aunque el error de Cuándo llegue primero', () => {
+	it('Tarea goes before Cuándo, even if the Cuándo error arrives first', () => {
 		expect(destinationOnSaveFailure(['horario', 'Título'], 'pestanas')).toEqual({ tab: 'Tarea', field: 'Título' });
 	});
 
@@ -73,35 +73,35 @@ describe('destinoAlFallarGuardar (spec §6.2, Errores)', () => {
 		[['días', 'fecha límite'], 'fecha límite'],
 		[['horario', 'Cada'], 'Cada'],
 		[['horario', 'días'], 'días']
-	] as const)('de %j el primero es %s: el orden en que se ven los campos', (fields, field) => {
+	] as const)('of %j the first is %s: the order in which the fields are seen', (fields, field) => {
 		expect(destinationOnSaveFailure(fields, 'pestanas')?.field).toBe(field);
 	});
 
-	it('en secciones seguidas no hay pestaña: solo el campo', () => {
+	it('in consecutive sections there is no tab: only the field', () => {
 		expect(destinationOnSaveFailure(['horario', 'Título'], 'secciones')).toEqual({ tab: undefined, field: 'Título' });
 	});
 
-	it('sin errores no hay a dónde ir', () => {
+	it('without errors there is nowhere to go', () => {
 		expect(destinationOnSaveFailure([], 'pestanas')).toBeUndefined();
 	});
 });
 
-describe('barraDeGuardarVisible (spec §6.2, Teclado en pantalla)', () => {
-	it('se oculta con el teclado en pantalla abierto', () => {
+describe('saveBarVisible (spec §6.2, On-screen keyboard)', () => {
+	it('it is hidden with the on-screen keyboard open', () => {
 		expect(saveBarVisible(true)).toBe(false);
 	});
 
-	it('se ve con el teclado en pantalla cerrado', () => {
+	it('it is visible with the on-screen keyboard closed', () => {
 		expect(saveBarVisible(false)).toBe(true);
 	});
 });
 
-describe('camposConError (spec §6.2, Errores)', () => {
-	it('sin errores no hay campos', () => {
+describe('fieldsWithError (spec §6.2, Errors)', () => {
+	it('without errors there are no fields', () => {
 		expect(fieldsWithError({}, 'puntual')).toEqual([]);
 	});
 
-	it('lista los campos con error en el orden de lectura', () => {
+	it('lists the fields with an error in reading order', () => {
 		expect(fieldsWithError({ schedule: 'incompleto', title: 'vacio' }, 'puntual')).toEqual(['Título', 'horario']);
 	});
 
@@ -110,15 +110,15 @@ describe('camposConError (spec §6.2, Errores)', () => {
 		['Cada', { every: 'invalido' as const }, 'relativo'],
 		['días', { days: 'faltan' as const }, 'semanal'],
 		['días', { days: 'faltan' as const }, 'mensual']
-	] as const)('el error de %s solo cuenta con su opción de Se repite', (field, errors, repetition) => {
+	] as const)('the error of %s only counts with its Se repite option', (field, errors, repetition) => {
 		expect(fieldsWithError(errors, repetition)).toEqual([field]);
 		const other = repetition === 'puntual' ? 'relativo' : 'puntual';
 		expect(fieldsWithError(errors, other)).toEqual([]);
 	});
 });
 
-describe('repeticionAlAbrir (spec §6.2): la opción de Se repite que viene elegida', () => {
-	it('al crear, sin datos de una tarea, viene No se repite', () => {
+describe('repetitionOnOpen (spec §6.2): the Se repite option that comes selected', () => {
+	it('when creating, without task data, it comes as No se repite', () => {
 		expect(repetitionOnOpen()).toBe('puntual');
 	});
 
@@ -127,7 +127,7 @@ describe('repeticionAlAbrir (spec §6.2): la opción de Se repite que viene eleg
 		[{ shape: 'relativa', title: 'Regar', every: 3, unit: 'dias' }, 'relativo'],
 		[{ shape: 'calendario', title: 'Sacar', weekdays: ['lunes'], monthDays: [] }, 'semanal'],
 		[{ shape: 'calendario', title: 'Pagar', weekdays: [], monthDays: [15] }, 'mensual']
-	])('al editar, viene la opción de la tarea: %j', (data, option) => {
+	])('when editing, the task option comes selected: %j', (data, option) => {
 		expect(repetitionOnOpen(data)).toBe(option);
 	});
 });

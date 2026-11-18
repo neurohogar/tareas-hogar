@@ -9,7 +9,7 @@ const GATE = resolve('scripts/gate.ts');
 let root: string;
 let repo: string;
 
-/** npm falso: anota cada llamada, falla si existe `falla` y escribe `salida`. */
+/** Fake npm: notes each call, fails if `falla` exists and writes `salida`. */
 function npmFake(bin: string): void {
 	const path = join(bin, 'npm');
 	writeFileSync(path, `#!/bin/bash\necho "npm $*" >> "${root}/llamadas"\ncat "${root}/salida" 2>/dev/null\n[ ! -f "${root}/falla" ]\n`);
@@ -17,9 +17,9 @@ function npmFake(bin: string): void {
 }
 
 /**
- * npx falso: como emulators:exec, ejecuta de verdad el comando que recibe. Como Playwright,
- * `--list` falla con «No tests found» en un proyecto anotado en `sin-specs`, o con lo que diga `error-de-carga`
- * más «No tests found», igual que Playwright con un spec que no carga.
+ * Fake npx: like emulators:exec, it actually runs the command it receives. Like Playwright,
+ * `--list` fails with «No tests found» in a project noted in `sin-specs`, or with whatever `error-de-carga` says
+ * plus «No tests found», like Playwright with a spec that does not load.
  */
 function npxFake(bin: string): void {
 	const path = join(bin, 'npx');
@@ -47,7 +47,7 @@ cat "${root}/salida" 2>/dev/null
 	chmodSync(path, 0o755);
 }
 
-/** Las corridas reales de Playwright, sin los --list. */
+/** The real Playwright runs, without the --list ones. */
 function playwrightRuns(): string[] {
 	return calls().filter((l) => l.startsWith('npx playwright') && !l.includes('--list'));
 }
@@ -82,8 +82,8 @@ beforeEach(() => {
 	qaCommit();
 });
 
-describe('el gate no repite lo que ya pasó', () => {
-	it('en el mismo commit da OK sin correr ningún paso', () => {
+describe('the gate does not repeat what already passed', () => {
+	it('on the same commit it gives OK without running any step', () => {
 		expect(runGate().code).toBe(0);
 		const before = calls().length;
 		expect(before).toBeGreaterThan(0);
@@ -93,7 +93,7 @@ describe('el gate no repite lo que ya pasó', () => {
 		expect(calls()).toHaveLength(before);
 	});
 
-	it('con un commit nuevo vuelve a correr los pasos', () => {
+	it('with a new commit it runs the steps again', () => {
 		runGate();
 		qaCommit();
 		const before = calls().length;
@@ -102,7 +102,7 @@ describe('el gate no repite lo que ya pasó', () => {
 		expect(calls().length).toBeGreaterThan(before);
 	});
 
-	it.each(['paquete-actual', 'base-de-feature'])('si cambia tmp/%s vuelve a correr los pasos', (annotated) => {
+	it.each(['paquete-actual', 'base-de-feature'])('if tmp/%s changes it runs the steps again', (annotated) => {
 		runGate();
 		writeFileSync(join(repo, 'tmp', annotated), 'otro\n');
 		const before = calls().length;
@@ -110,17 +110,17 @@ describe('el gate no repite lo que ya pasó', () => {
 		expect(calls().length).toBeGreaterThan(before);
 	});
 
-	it('si cambia el propio gate vuelve a correr los pasos', () => {
+	it('if the gate itself changes it runs the steps again', () => {
 		runGate();
 		const copy = join(root, 'gate-copia.ts');
 		copyFileSync(GATE, copy);
-		writeFileSync(copy, `${readFileSync(copy, 'utf8')}\n// otra versión\n`);
+		writeFileSync(copy, `${readFileSync(copy, 'utf8')}\n// another version\n`);
 		const before = calls().length;
 		expect(runGate(copy).output).not.toContain('ya pasó');
 		expect(calls().length).toBeGreaterThan(before);
 	});
 
-	it('sin base anotada, si cambia lo que se compara contra v2 vuelve a correr los pasos', () => {
+	it('without a noted base, if what is compared against v2 changes it runs the steps again', () => {
 		runGate();
 		git(repo, 'branch', '-f', 'v2', 'HEAD');
 		const before = calls().length;
@@ -128,7 +128,7 @@ describe('el gate no repite lo que ya pasó', () => {
 		expect(calls().length).toBeGreaterThan(before);
 	});
 
-	it('borrar la marca fuerza una corrida nueva', () => {
+	it('deleting the mark forces a new run', () => {
 		runGate();
 		rmSync(join(repo, 'tmp/gate-verde-qa'));
 		const before = calls().length;
@@ -136,7 +136,7 @@ describe('el gate no repite lo que ya pasó', () => {
 		expect(calls().length).toBeGreaterThan(before);
 	});
 
-	it('una falla no queda guardada como verde', () => {
+	it('a failure is not stored as green', () => {
 		writeFileSync(join(root, 'falla'), '');
 		const failed = runGate();
 		expect(failed.code).toBe(1);
@@ -147,7 +147,7 @@ describe('el gate no repite lo que ya pasó', () => {
 		expect(next.output).not.toContain('ya pasó');
 	});
 
-	it('con el árbol sucio falla aunque ya hubiera pasado', () => {
+	it('with a dirty tree it fails even if it had already passed', () => {
 		runGate();
 		writeFileSync(join(repo, 'cambio.txt'), 'sin commitear\n');
 		const r = runGate();
@@ -156,10 +156,10 @@ describe('el gate no repite lo que ya pasó', () => {
 	});
 });
 
-describe('la suite de los specs cambiados', () => {
+describe('the suite of the changed specs', () => {
 	const SPEC = 'e2e/nuevo.spec.ts';
 
-	it('corre ui y después pwa sin arrastrar dependencias', () => {
+	it('runs ui and then pwa without dragging in dependencies', () => {
 		qaCommit(SPEC);
 		writeFileSync(join(root, 'salida'), `  ✓  1 [ui] › ${SPEC}:3:1 › un flujo (1.0s)\n`);
 		expect(runGate().code).toBe(0);
@@ -169,7 +169,7 @@ describe('la suite de los specs cambiados', () => {
 		expect(runs[1]).toContain('--project=pwa --no-deps');
 	});
 
-	it('no levanta un proyecto que no tiene ninguno de los specs', () => {
+	it('does not start a project that has none of the specs', () => {
 		qaCommit(SPEC);
 		writeFileSync(join(root, 'sin-specs'), '--project=pwa\n');
 		writeFileSync(join(root, 'salida'), `  ✓  1 [ui] › ${SPEC}:3:1 › un flujo (1.0s)\n`);
@@ -179,7 +179,7 @@ describe('la suite de los specs cambiados', () => {
 		expect(runs[0]).toContain('--project=ui');
 	});
 
-	it('un test cuyo título menciona «No tests found» no hace saltear su proyecto', () => {
+	it('a test whose title mentions «No tests found» does not make its project be skipped', () => {
 		qaCommit(SPEC);
 		writeFileSync(join(root, 'listado'), `  [ui] › ${SPEC}:3:1 › avisa No tests found\nTotal: 1 test in 1 file\n`);
 		writeFileSync(join(root, 'salida'), `  ✓  1 [ui] › ${SPEC}:3:1 › avisa No tests found (1.0s)\n`);
@@ -187,7 +187,7 @@ describe('la suite de los specs cambiados', () => {
 		expect(playwrightRuns()[0]).toContain('--project=ui');
 	});
 
-	it('si falla un test, el gate falla aunque el otro proyecto no tenga specs', () => {
+	it('if a test fails, the gate fails even if the other project has no specs', () => {
 		qaCommit(SPEC);
 		writeFileSync(join(root, 'sin-specs'), '--project=pwa\n');
 		writeFileSync(join(root, 'salida'), `  ✓  1 [ui] › ${SPEC}:3:1 › un flujo (1.0s)\n`);
@@ -207,7 +207,7 @@ describe('la suite de los specs cambiados', () => {
 		expect(existsSync(join(repo, 'tmp/gate-verde-qa'))).toBe(false);
 	});
 
-	it('falla si un spec cambiado no corrió ningún test, y no lo guarda como verde', () => {
+	it('fails if a changed spec ran no test, and does not store it as green', () => {
 		qaCommit(SPEC);
 		const r = runGate();
 		expect(r.code).toBe(1);
@@ -215,7 +215,7 @@ describe('la suite de los specs cambiados', () => {
 		expect(existsSync(join(repo, 'tmp/gate-verde-qa'))).toBe(false);
 	});
 
-	it('un spec con todos sus tests salteados tampoco cuenta como corrido', () => {
+	it('a spec with all its tests skipped does not count as run either', () => {
 		qaCommit(SPEC);
 		writeFileSync(join(root, 'salida'), `  -  1 [ui] › ${SPEC}:3:1 › un flujo\n`);
 		expect(runGate().code).toBe(1);

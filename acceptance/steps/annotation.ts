@@ -1,6 +1,6 @@
-// Anotar (spec §4.5, §5.10), la pantalla Anotaciones, Copiar, Editar texto y Borrar (§6.7), y las
-// anotaciones de una tarea borrada (§6.2, §7). Una anotación se nombra en los pasos por el
-// instante en que se anotó.
+// Annotate (spec §4.5, §5.10), the Annotations screen, Copy, Edit text and Delete (§6.7), and the
+// annotations of a deleted task (§6.2, §7). Steps name an annotation by the
+// moment it was made.
 import { expect } from 'vitest';
 import { annotate, editText, type Annotation, type AnnotateContext, type CurrentScreen, type Sense } from '../../src/lib/core/annotation';
 import { annotationsOnScreen, type AnnotationsGroup } from '../../src/lib/core/annotations';
@@ -14,26 +14,26 @@ import { P, TITLE, dateHour, numeric } from './values';
 
 const DIRECTIONS = ['Me sirvió', 'Me molestó'];
 const SCREENS_CURRENT = ['Pendientes', 'Historial', 'Anotaciones'];
-/** Las pantallas que puede tener una anotación guardada: «Etiquetas» solo existe como valor guardado (§4.5, D20), ya no se anota ahí. */
+/** The screens a saved annotation can have: «Etiquetas» only exists as a stored value (§4.5, D20), annotations are no longer made there. */
 const SCREENS = [...SCREENS_CURRENT, 'Etiquetas', 'Panel de edición'];
 
-/** Un sentido o una pantalla, escritos en el paso o como `<placeholder>`. */
+/** A direction or a screen, written in the step or as `<placeholder>`. */
 const DIRECTION = `(<[A-Za-z0-9_]+>|${DIRECTIONS.join('|')})`;
 const SCREEN = `(<[A-Za-z0-9_]+>|${SCREENS.join('|')})`;
 
 function direction(value: string): Sense {
-	if (!DIRECTIONS.includes(value)) throw new Error(`Sentido inválido: "${value}"`);
+	if (!DIRECTIONS.includes(value)) throw new Error(`Invalid direction: "${value}"`);
 	return value as Sense;
 }
 
 function screenCurrent(value: string): CurrentScreen {
-	if (!SCREENS_CURRENT.includes(value)) throw new Error(`Pantalla inválida: "${value}"`);
+	if (!SCREENS_CURRENT.includes(value)) throw new Error(`Invalid screen: "${value}"`);
 	return value as CurrentScreen;
 }
 
-/** Lo que se ve de la persona al anotar: dónde está, el panel abierto y el aviso de deshacer. */
+/** What the person sees when annotating: where they are, the open panel and the undo notice. */
 function contextOf(world: World): AnnotateContext {
-	if (!world.screenCurrent) throw new Error('No se dijo en qué pantalla está la persona');
+	if (!world.screenCurrent) throw new Error('The screen where the person is was not stated');
 	return {
 		screen: world.screenCurrent,
 		...(world.annotatePanel && { panel: world.annotatePanel.taskId === undefined ? {} : { taskId: world.annotatePanel.taskId } }),
@@ -41,7 +41,7 @@ function contextOf(world: World): AnnotateContext {
 	};
 }
 
-/** «Etiquetas» ya no es una pantalla actual: la anotación guardada la conserva como valor viejo (§4.5, D20); se arma en Pendientes y se le pone ese valor. */
+/** «Etiquetas» is no longer a current screen: the saved annotation keeps it as an old value (§4.5, D20); it is built in Pendientes and given that value. */
 const screenForBuild = (screenName: string): string => (screenName === 'Etiquetas' ? 'Pendientes' : screenName);
 
 const withScreenSaved = (annotation: Annotation, screenName: string): Annotation => (screenName === 'Etiquetas' ? { ...annotation, screen: 'Etiquetas' } : annotation);
@@ -53,11 +53,11 @@ function save(world: World, annotation: Annotation): void {
 
 function annotateMe(world: World, directionChosen: string, now: string, text = ''): void {
 	save(world, annotate(newId(world, 'anotacion'), direction(directionChosen), dateHour(now), contextOf(world), text));
-	// Un valor que el core no rechaza en silencio: la anotación se guardó con el texto que se escribió.
+	// A value the core does not silently reject: the annotation was saved with the text that was written.
 	expect(world.errors).toBeUndefined();
 }
 
-/** Otro dispositivo en la pantalla dada, sin panel; sobre una tarea solo por un aviso de deshacer a la vista. */
+/** Another device on the given screen, without a panel; over a task only through an undo notice in view. */
 function annotatesOther(world: World, directionChosen: string, screenName: string, now: string, title?: string): void {
 	const moment = dateHour(now);
 	const notice =
@@ -67,38 +67,38 @@ function annotatesOther(world: World, directionChosen: string, screenName: strin
 	save(world, withScreenSaved(annotate(newId(world, 'anotacion'), direction(directionChosen), moment, { screen: screenCurrent(screenForBuild(screenName)), notice }), screenName));
 }
 
-/** Declara una anotación guardada, con el contexto que dice el paso. */
+/** Declares a saved annotation, with the context the step gives. */
 function declare(world: World, directionChosen: string, screenName: string, annotated: string): void {
 	const onOpenPanel = screenName === 'Panel de edición';
-	if (!SCREENS.includes(screenName)) throw new Error(`Pantalla inválida: "${screenName}"`);
+	if (!SCREENS.includes(screenName)) throw new Error(`Invalid screen: "${screenName}"`);
 	const context: AnnotateContext = { screen: onOpenPanel ? 'Pendientes' : screenCurrent(screenForBuild(screenName)), ...(onOpenPanel && { panel: {} }) };
 	save(world, withScreenSaved(annotate(newId(world, 'anotacion'), direction(directionChosen), dateHour(annotated), context), screenName));
 }
 
 const all = (world: World): Annotation[] => [...world.annotations, ...world.annotationsDeleted];
 
-/** La única anotación de ese instante, aunque ya se haya borrado. */
+/** The only annotation of that moment, even if it has been deleted. */
 function momentThe(world: World, annotated: string): Annotation {
 	const instant = dateHour(annotated).getTime();
 	const ofMoment = all(world).filter(({ annotatedAt }) => annotatedAt.getTime() === instant);
-	if (ofMoment.length !== 1) throw new Error(`Se esperaba una anotación del ${annotated}, hay ${ofMoment.length}`);
+	if (ofMoment.length !== 1) throw new Error(`Expected one annotation of ${annotated}, found ${ofMoment.length}`);
 	return ofMoment[0];
 }
 
 function theActive(world: World, annotated: string): Annotation {
 	const { id } = momentThe(world, annotated);
 	const active = world.annotations.find((annotation) => annotation.id === id);
-	if (!active) throw new Error(`La anotación del ${annotated} ya no existe`);
+	if (!active) throw new Error(`The annotation of ${annotated} no longer exists`);
 	return active;
 }
 
 function theLast(world: World): Annotation {
 	const last = world.annotations.find(({ id }) => id === world.lastAnnotationId);
-	if (!last) throw new Error('No se declaró ninguna anotación');
+	if (!last) throw new Error('No annotation was declared');
 	return last;
 }
 
-/** Cambia la última anotación declarada. */
+/** Changes the last declared annotation. */
 function changeLast(world: World, change: (annotation: Annotation) => Annotation): void {
 	const last = theLast(world);
 	world.annotations = world.annotations.map((annotation) => (annotation === last ? change(annotation) : annotation));
@@ -107,17 +107,17 @@ function changeLast(world: World, change: (annotation: Annotation) => Annotation
 
 const spaces = (count: string) => ' '.repeat(numeric(count));
 
-/** Como setDoc de un campo: editar el texto de una anotación ya borrada no la revive. */
+/** Like setDoc on a field: editing the text of an already deleted annotation does not revive it. */
 function editTheText(world: World, annotated: string, text: string): void {
 	world.annotations = editText(world.annotations, momentThe(world, annotated).id, text);
 }
 
-/** Como deleteDoc: borrar una anotación que ya no existe no hace nada. */
+/** Like deleteDoc: deleting an annotation that no longer exists does nothing. */
 function deleteAnnotation(world: World, annotated: string): void {
 	deleteSaved(world, [], [], [momentThe(world, annotated).id]);
 }
 
-/** "Hoy: 09:10 · Me molestó · Historial, 08:05 · ...; Ayer: ...": grupos con "; ", anotaciones con ", ", partes con " · ". */
+/** "Hoy: 09:10 · Me molestó · Historial, 08:05 · ...; Ayer: ...": groups joined with "; ", annotations with ", ", parts with " · ". */
 function inText(groups: AnnotationsGroup[]): string {
 	const entry = ({ hour, annotation, taskName }: AnnotationsGroup['entries'][number]) =>
 		[hour, annotation.sense, annotation.screen, taskName, annotation.text].filter((part) => part !== undefined).join(' · ');
@@ -125,12 +125,12 @@ function inText(groups: AnnotationsGroup[]): string {
 }
 
 function theQueried(world: World): AnnotationsGroup[] {
-	if (!world.annotationsQueried) throw new Error('No se consultó Anotaciones');
+	if (!world.annotationsQueried) throw new Error('Annotations was not queried');
 	return world.annotationsQueried;
 }
 
 function thePanelOpen(world: World) {
-	if (!world.annotatePanel) throw new Error('El panel de edición no está abierto');
+	if (!world.annotatePanel) throw new Error('The edit panel is not open');
 	return world.annotatePanel;
 }
 
@@ -248,7 +248,7 @@ export const annotationSteps: StepDefinition[] = [
 		run: (world, annotated) => expect(theActive(world, annotated)).not.toHaveProperty('text')
 	},
 	{
-		// §5.10: anotar no toca la tarea ni el panel; no cierra el panel ni abre un aviso de acción.
+		// §5.10: annotating does not touch the task or the panel; it does not close the panel or open an action notice.
 		pattern: /^el panel sigue abierto sin cambios sin guardar$/,
 		run: (world) => {
 			const { changes, docsOnOpen } = thePanelOpen(world);
@@ -281,14 +281,14 @@ export const annotationSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^el texto copiado tiene las líneas ${P}$`),
 		run: (world, lines) => {
-			if (!world.copied) throw new Error('No se copió');
+			if (!world.copied) throw new Error('Nothing was copied');
 			expect(world.copied.text?.split('\n')).toEqual(lines.split('; '));
 		}
 	},
 	{
 		pattern: /^no hay nada para copiar$/,
 		run: (world) => {
-			if (!world.copied) throw new Error('No se copió');
+			if (!world.copied) throw new Error('Nothing was copied');
 			expect(world.copied.text).toBeUndefined();
 		}
 	},

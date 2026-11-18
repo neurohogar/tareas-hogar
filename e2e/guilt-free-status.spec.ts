@@ -25,13 +25,13 @@ const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas'
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 const textOf = (page: Page, title: string) => row(page, title).getByText(/^(Tocaba|Vuelve) /);
 
-/** Sesión con el reloj corriendo 10 minutos antes de `hora` (las tareas se crean así) y Mostrar completadas si se pide. */
+/** Session with the clock running 10 minutes before `hora` (tasks are created that way) and Mostrar completadas if requested. */
 async function session(page: Page, hour: string, completedList = false) {
 	await sessionWithClock(page, new Date(new Date(hour).getTime() - 600_000).toISOString());
 	if (completedList) await turnOnCompleted(page);
 }
 
-/** Avanza el reloj detenido hasta `hora` y deja correr un segundo para que la pantalla se actualice sola. */
+/** Advances the stopped clock to `hora` and lets one second run so the screen updates by itself. */
 async function go(page: Page, hour: string) {
 	const missing = new Date(hour).getTime() - (await page.evaluate(() => Date.now()));
 	if (missing <= 10_000) await page.clock.runFor(missing);
@@ -39,16 +39,16 @@ async function go(page: Page, hour: string) {
 	await page.clock.runFor(1000);
 }
 
-/** Con el reloj detenido, lo deja exactamente en `hora` (sin disparar temporizadores) antes de una acción que se fecha. */
+/** With the clock stopped, sets it exactly at `hora` (without firing timers) before an action that gets dated. */
 const setTime = (page: Page, hour: string) => page.clock.setSystemTime(new Date(hour));
 
-/** La fila de `titulo` dice exactamente `texto` (una sola vez). */
+/** The row of `titulo` says exactly `texto` (once). */
 async function says(page: Page, title: string, text: string) {
 	await expect(textOf(page, title)).toHaveCount(1);
 	await expect(textOf(page, title)).toHaveText(text);
 }
 
-/** La fila no contiene texto de fecha ni de distancia. */
+/** The row contains no date or distance text. */
 async function withoutText(page: Page, title: string) {
 	const f = row(page, title);
 	await expect(f).toBeVisible();
@@ -64,7 +64,7 @@ const style = (l: Locator) =>
 		return { color: s.color, size: s.fontSize, weight: Number(s.fontWeight), line: s.textDecorationLine, background: s.backgroundColor };
 	});
 
-/** El texto de atraso comparte color y tamaño con `referencia`, no es rojizo, ni negrita, ni subrayado. */
+/** The overdue text shares color and size with `referencia`, and is not reddish, bold or underlined. */
 async function latenessStyle(text: Locator, reference: Locator) {
 	const a = await style(text);
 	const r = await style(reference);
@@ -159,7 +159,7 @@ test('Flujo 2: «Vuelve …» en las filas en espera', async ({ page }) => {
 	await createAndView(page, { title: 'Pagar la luz', kind: 'No se repite', date: '2026-11-10' });
 	await stop(page, '2026-11-13T10:00:00');
 
-	// 1 y 3: completar con el reloj exacto
+	// 1 and 3: complete with the exact clock
 	await complete(page, 'Regar');
 	await complete(page, 'Dormir');
 	await withClock(page, async () => {

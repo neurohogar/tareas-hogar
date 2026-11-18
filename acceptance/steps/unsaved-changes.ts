@@ -1,6 +1,6 @@
-// Cambios sin guardar y Atrás (spec §6.2, §7): lo que hay escrito en el panel, los avisos que abre
-// cerrarlo o usar una acción, y qué cierra Atrás. El panel es el de world.panel; lo que escribe y lo
-// que tiene encima, world.panel.cambios. Con el panel cerrado, world.panel no existe.
+// Unsaved changes and Atrás (spec §6.2, §7): what is written in the panel, the notices that closing
+// it or using an action opens, and what Atrás closes. The panel is world.panel; what it writes and what
+// it has on top, world.panel.changes. With the panel closed, world.panel does not exist.
 import { expect } from 'vitest';
 import { whatBackDoes, type OnTop } from '../../src/lib/core/panel-back';
 import { optionAction, changeOfAction, whatTheActionDoes, type PanelAction } from '../../src/lib/core/panel-action';
@@ -31,9 +31,9 @@ import {
 
 const theMoment = ({ now }: PanelChanges) => now ?? NOW;
 
-/** Un valor malformado falla el escenario: nada se interpreta por parecido. */
+/** A malformed value fails the scenario: nothing is interpreted by resemblance. */
 function ofTable<T>(table: Record<string, T>, value: string, that: string): T {
-	if (!Object.hasOwn(table, value)) throw new Error(`${that} inválido: "${value}"`);
+	if (!Object.hasOwn(table, value)) throw new Error(`Invalid ${that}: "${value}"`);
 	return table[value];
 }
 
@@ -44,20 +44,20 @@ function openForEdit(world: World, data: CommonData): void {
 	world.panel = { pause: undefined, changes: changesOnEdit(task) };
 }
 
-/** La ventana "HH:MM-HH:MM" de un paso. */
+/** The "HH:MM-HH:MM" window of a step. */
 function timeWindow(value: string): TypedSchedule[number] {
 	const parts = /^(\d{2}:\d{2})-(\d{2}:\d{2})$/.exec(value);
-	if (!parts) throw new Error(`Ventana inválida: "${value}"`);
+	if (!parts) throw new Error(`Invalid window: "${value}"`);
 	return { from: parts[1], to: parts[2] };
 }
 
 function actionContext(world: World, changes: PanelChanges, taskOnOpen: Task, action: PanelAction): NoticeAction {
 	const task = tasksOf(world).find(({ id }) => id === taskOnOpen.id);
-	if (!task) throw new Error('La tarea del panel ya no existe');
+	if (!task) throw new Error('The task of the panel no longer exists');
 	return { action, taskOnOpen, task, completions: world.completions, now: theMoment(changes), form: changes.form };
 }
 
-/** Lo que hizo otro dispositivo o el paso del tiempo mientras el panel estaba abierto (§6.2, §7). */
+/** What another device or the passage of time did while the panel was open (§6.2, §7). */
 function panelOnDay(world: World): PanelChanges | undefined {
 	const changes = world.panel?.changes;
 	if (!changes) return undefined;
@@ -72,7 +72,7 @@ function panelOnDay(world: World): PanelChanges | undefined {
 
 function thePanelOpen(world: World): PanelChanges {
 	const changes = panelOnDay(world);
-	if (!changes) throw new Error('El panel no está abierto');
+	if (!changes) throw new Error('The panel is not open');
 	return changes;
 }
 
@@ -98,7 +98,7 @@ const OPEN: Partial<Record<OnTop, string>> = {
 	'selector de emoji': 'el panel con el selector de emoji'
 };
 
-// ---- Lo que se escribe ----
+// ---- What is written ----
 
 const FIELDS: Record<string, { reads: (f: PanelForm) => string | undefined; writes: (f: PanelForm, value: string) => PanelForm }> = {
 	Título: { reads: (f) => f.data.title, writes: (f, title) => ({ ...f, data: { ...f.data, title } }) },
@@ -107,12 +107,12 @@ const FIELDS: Record<string, { reads: (f: PanelForm) => string | undefined; writ
 	'Versión mínima': { reads: (f) => f.data.minimalVersion, writes: (f, minimalVersion) => ({ ...f, data: { ...f.data, minimalVersion } }) }
 };
 
-/** Los pasos más del panel: el campo «Paso N» (N ≥ 2) es el lugar N - 2 de `pasos` (§6.2). */
+/** The extra steps of the panel: the «Paso N» field (N ≥ 2) is place N - 2 of `steps` (§6.2). */
 const STEP_PLACE = /^Paso (\d+)$/;
 
 function stepPlace(form: PanelForm, field: string): number {
 	const place = Number(STEP_PLACE.exec(field)?.[1]) - 2;
-	if (!(place >= 0 && place < (form.data.steps ?? []).length)) throw new Error(`Campo inválido: "${field}"`);
+	if (!(place >= 0 && place < (form.data.steps ?? []).length)) throw new Error(`Invalid field: "${field}"`);
 	return place;
 }
 
@@ -130,7 +130,7 @@ function write(world: World, field: string, value: string): void {
 	changes.form = fieldOf(field).writes(changes.form, value);
 }
 
-/** «Agregar paso» suma un campo vacío al final; «Quitar» saca el del campo (§6.2). */
+/** «Agregar paso» adds an empty field at the end; «Quitar» removes the field's own (§6.2). */
 function changeSteps(world: World, change: (steps: readonly string[], form: PanelForm) => string[]): void {
 	const changes = thePanelOpen(world);
 	const { form } = changes;
@@ -139,7 +139,7 @@ function changeSteps(world: World, change: (steps: readonly string[], form: Pane
 
 const commonOf = ({ title, emoji, note, firstStep, steps, minimalVersion, schedule }: TaskData): CommonData => ({ title, emoji, note, firstStep, steps, minimalVersion, schedule });
 
-/** Los campos de cada opción de "Se repite": los de la tarea si es de esa forma; si no, como al crear (§6.2). */
+/** The fields of each "Se repite" option: those of the task if it has that shape; otherwise, as when creating (§6.2). */
 const REPEATS: Record<string, { shape: TaskData['shape']; empty: Partial<TaskData> }> = {
 	'No se repite': { shape: 'puntual', empty: {} },
 	Intervalo: { shape: 'relativa', empty: { every: Number.NaN, unit: 'horas' } }
@@ -158,7 +158,7 @@ function changeSchedule(world: World, schedule: TypedSchedule): void {
 	changes.form = { ...changes.form, data: { ...changes.form.data, schedule } };
 }
 
-// ---- Los avisos ----
+// ---- The notices ----
 
 const ACTIONS_FIXED: Record<string, PanelAction | 'borrar tarea'> = { Pausar: 'pausar', Reanudar: 'reanudar', 'Quitar posponer': 'quitar posponer', 'Borrar tarea': 'borrar tarea' };
 
@@ -171,7 +171,7 @@ function theNotice(world: World, changes: PanelChanges): ChangesNotice {
 	if (changes.top === 'aviso de cierre') return CLOSE_NOTICE;
 	const { taskOnOpen, action } = changes;
 	const notice = changes.top === 'aviso de acción' && taskOnOpen && action && actionNotice(actionContext(world, changes, taskOnOpen, action));
-	if (!notice) throw new Error('No hay un aviso abierto');
+	if (!notice) throw new Error('There is no open notice');
 	return notice;
 }
 
@@ -185,13 +185,13 @@ function act(world: World, task: Task, change: TaskChange): void {
 	closePanel(world);
 }
 
-/** Elegir la acción: el panel, con la tarea de ahora, tiene que ofrecerla (§6.2). */
+/** Choosing the action: the panel, with the current task, has to offer it (§6.2). */
 function chooseAction(world: World, text: string, moment: string): void {
 	const changes = thePanelOpen(world);
 	changes.now = dateHour(moment);
 	const action = actionOf(text);
 	const task = changes.taskOnOpen;
-	if (!task) throw new Error('Las acciones son solo al editar');
+	if (!task) throw new Error('Actions only exist when editing');
 	const effect = whatTheActionDoes(action, withChanges(changes));
 	if (action === 'borrar tarea' || effect === 'pide confirmar el borrado') {
 		changes.top = 'confirmación de Borrar tarea';
@@ -208,7 +208,7 @@ function chooseAction(world: World, text: string, moment: string): void {
 	}
 }
 
-/** Si Guardar falla (§6.2): no se ejecuta nada, el aviso se cierra y el panel sigue con lo escrito. */
+/** If Guardar fails (§6.2): nothing is executed, the notice closes and the panel keeps what was written. */
 function failureSave(world: World, changes: PanelChanges, errors: World['errors']): void {
 	world.errors = errors;
 	topClose(changes);
@@ -257,7 +257,7 @@ function tapInNotice(world: World, text: string, moment?: string): void {
 	const changes = thePanelOpen(world);
 	if (moment !== undefined) changes.now = dateHour(moment);
 	const button = theNotice(world, changes).buttons.find((candidate) => candidate.text === text);
-	if (!button) throw new Error(`El aviso no ofrece "${text}"`);
+	if (!button) throw new Error(`The notice does not offer "${text}"`);
 	tapButton(world, changes, button);
 }
 
@@ -277,7 +277,7 @@ function tapBack(world: World): void {
 	else topClose(changes);
 }
 
-/** El título que se escribe en cada estado del paso "el panel está abierto". */
+/** The title written in each state of the step "el panel está abierto". */
 const TITLE_ON_OPEN = 'Pagar';
 const PANEL_STATUSES: Record<string, string | undefined> = { 'con cambios sin guardar': 'Pagar luz', 'sin cambios': undefined };
 
@@ -337,7 +337,7 @@ export const unsavedChangesSteps: StepDefinition[] = [
 		run: (world, onTop) => {
 			const changes = thePanelOpen(world);
 			changes.top = ofTable(ON_TOP_NAMES, onTop, 'Lo de arriba');
-			// Una tarea puntual sin posponer ofrece Posponer: su aviso de acción puede estar abierto (§5.9).
+			// A one-off task without postponement offers Posponer: its action notice may be open (§5.9).
 			if (changes.top === 'aviso de acción') changes.action = optionAction('1 hora');
 		}
 	},
@@ -444,7 +444,7 @@ export const unsavedChangesSteps: StepDefinition[] = [
 		}
 	},
 	{
-		// §6.2: la confirmación del navegador es de recargar o cerrar la app; Atrás con el panel abierto no sale de la pantalla.
+		// §6.2: the browser confirmation is for reloading or closing the app; Atrás with the panel open does not leave the screen.
 		pattern: new RegExp(`^el navegador ${P}$`),
 		run: (world, response) => {
 			expect(world.tapBack).toBe(true);

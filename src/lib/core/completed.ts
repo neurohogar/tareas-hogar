@@ -1,22 +1,22 @@
-// Spec §6.1 (Mostrar completadas): qué tareas cuentan como completadas.
+// Spec §6.1 (Mostrar completadas): which tasks count as completed.
 import type { Status, PendingStatus, PausedStatus } from './status';
 import { completionsOfTask } from './completions';
 import { waitForPostponement, taskStatus } from './task-status';
 import { asJustCreated } from './pause';
 import type { Completion, Task } from './task';
 
-/** Una completada, una no completada con el estado que la ordena por urgencia, o una pausada (§5.8: no está completada). */
+/** A completed one, a non-completed one with the status that orders it by urgency, or a paused one (§5.8: it is not completed). */
 export type InPending =
 	| { completed: true; status: Status }
 	| { completed: false; status: PendingStatus }
 	| { completed: false; status: PausedStatus };
 
 /**
- * Completada: puntual con al menos un completado (§5.1), o periódica en espera
- * con al menos un completado (§5.2, §5.3). Una periódica en espera sin
- * completados (antes de su primera ocurrencia) no lo está, ni una pausada (§5.8),
- * ni una en espera por una posposición (§5.9). La tarea es dueña de todas sus
- * entradas: estado, completados propios y posposición se derivan acá.
+ * Completed: one-off with at least one completion (§5.1), or recurring waiting
+ * with at least one completion (§5.2, §5.3). A recurring task waiting without
+ * completions (before its first occurrence) is not, nor is a paused one (§5.8),
+ * nor one waiting because of a postponement (§5.9). The task owns all its
+ * inputs: status, own completions and postponement are derived here.
  */
 export function classifyInPending(task: Task, completions: readonly Completion[], now: Date): InPending {
 	const status = taskStatus(task, completions, now);

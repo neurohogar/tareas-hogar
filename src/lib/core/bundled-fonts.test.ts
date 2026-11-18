@@ -10,23 +10,23 @@ import {
 	nextWait
 } from './bundled-fonts';
 
-describe('archivos de fuente', () => {
-	it('la caché de fuentes se llama tareas-hogar-fuentes', () => {
+describe('font files', () => {
+	it('the font cache is called tareas-hogar-fuentes', () => {
 		expect(FONT_CACHE).toBe('tareas-hogar-fuentes');
 	});
 
-	it('son los .woff2 de /fuentes/', () => {
+	it('they are the .woff2 files of /fuentes/', () => {
 		expect(isFontFile('/fuentes/a.woff2')).toBe(true);
 		expect(isFontFile('/fuentes/a.css')).toBe(false);
 		expect(isFontFile('/otra/a.woff2')).toBe(false);
 	});
 
-	it('la clave guardada lleva la huella del contenido', () => {
+	it('the stored key carries the fingerprint of the content', () => {
 		expect(fontPath('a.woff2')).toBe('/fuentes/a.woff2');
 		expect(keyInCache('a.woff2', 'abc')).toBe('/fuentes/a.woff2?huella=abc');
 	});
 
-	it('reemplaza solo las otras huellas del mismo archivo', () => {
+	it('replaces only the other fingerprints of the same file', () => {
 		const savedItems = [
 			'https://x.test/fuentes/a.woff2?huella=vieja',
 			'https://x.test/fuentes/a.woff2?huella=nueva',
@@ -36,8 +36,8 @@ describe('archivos de fuente', () => {
 	});
 });
 
-describe('reintentos', () => {
-	it('arrancan en 2 s, se duplican y paran en 60 s', () => {
+describe('retries', () => {
+	it('start at 2 s, double and stop at 60 s', () => {
 		expect(FIRST_RETRY_IN_MS).toBe(2000);
 		expect(LAST_RETRY_IN_MS).toBe(60000);
 		expect(nextWait(2000)).toBe(4000);

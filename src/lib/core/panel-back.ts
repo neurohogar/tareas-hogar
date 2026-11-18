@@ -1,8 +1,8 @@
-// Spec §6.2 (Atrás): qué hace Atrás con el panel abierto.
+// Spec §6.2 (Back): what Back does with the panel open.
 import { onClosePanel, type CloseEffect } from './unsaved-changes-notice';
 
 /**
- * Lo que puede estar abierto sobre el panel; el aviso de deshacer no cuenta. El recuadro de Anotar (§5.10) se cierra sin anotar.
+ * What can be open on top of the panel; the undo notice does not count. The Annotate box (§5.10) closes without annotating.
  */
 export type OnTop = 'nada' | 'aviso de cierre' | 'aviso de acción' | 'confirmación de Borrar tarea' | 'selector de emoji' | 'recuadro de Anotar' | 'aviso de deshacer';
 
@@ -17,8 +17,8 @@ export interface PanelOnBack {
 }
 
 /**
- * Spec §6.2: con el teclado abierto lo cierra el sistema y lo demás sigue igual;
- * si no, cierra solo lo de arriba; con el panel solo, es como cerrarlo.
+ * Spec §6.2: with the keyboard open the system closes it and everything else stays the same;
+ * otherwise it closes only what is on top; with the panel alone, it is like closing it.
  */
 export function whatBackDoes({ top, hasChanges, keyboardOpen }: PanelOnBack): BackEffect {
 	if (keyboardOpen) return 'cierra el teclado';

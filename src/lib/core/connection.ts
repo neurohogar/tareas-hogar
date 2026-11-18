@@ -1,17 +1,17 @@
-// Spec §6.5 y §7: qué se ve según haya o no red.
+// Spec §6.5 and §7: what is shown depending on whether there is a network.
 
-/** El texto de la franja de aviso; sin red es "Sin conexión", con red no hay franja. */
+/** The text of the notice strip; without a network it is "Sin conexión", with a network there is no strip. */
 export function connectionStrip(online: boolean): string | undefined {
 	return online ? undefined : 'Sin conexión';
 }
 
 export interface EntryScreen {
-	/** Lo que explica por qué no se puede entrar; sin él, no hay nada que explicar. */
+	/** What explains why one cannot sign in; without it, there is nothing to explain. */
 	message: string | undefined;
 	buttonEnabled: boolean;
 }
 
-/** La pantalla de entrada (sin sesión previa): sin red no se puede entrar. */
+/** The entry screen (without a previous session): without a network one cannot sign in. */
 export function entryScreen(online: boolean): EntryScreen {
 	return {
 		message: online ? undefined : 'Necesitás conexión para entrar la primera vez',

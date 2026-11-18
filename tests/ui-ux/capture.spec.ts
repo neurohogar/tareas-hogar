@@ -33,20 +33,20 @@ const SCENES = [
   { id: '3-atrasadas', seed: seedSceneOverdue },
 ];
 
-test.describe.serial('Capturas del Piloto UI/UX', () => {
+test.describe.serial('UI/UX Pilot captures', () => {
   for (const scene of SCENES) {
     for (const variant of VARIANTS) {
-      test(`${scene.id} en ${variant.name}`, async ({ page }) => {
+      test(`${scene.id} in ${variant.name}`, async ({ page }) => {
         await page.setViewportSize(variant.viewport);
         await page.emulateMedia({ colorScheme: variant.theme });
 
-        // Sembrar el estado específico (deja la app en / con login y reloj simulado)
+        // Seed the specific state (leaves the app at / with login and a simulated clock)
         await scene.seed(page);
 
-        // Esperar a que la tipografía y el renderizado estén listos
+        // Wait for the typography and rendering to be ready
         await expect(page.getByRole('heading', { name: 'Pendientes' })).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
-        // Breve pausa para asentar animaciones/transiciones
+        // Brief pause to settle animations/transitions
         await page.waitForTimeout(300);
 
         const captureId = `${scene.id}_${variant.name}`;
@@ -54,16 +54,16 @@ test.describe.serial('Capturas del Piloto UI/UX', () => {
         const axePath = join(OUT_DIR, `${captureId}.axe.json`);
         const ariaPath = join(OUT_DIR, `${captureId}.aria.yml`);
 
-        // 1. Captura visual
+        // 1. Visual capture
         await page.screenshot({ path: pngPath, fullPage: false });
 
-        // 2. Reporte de accesibilidad WCAG 2.2 AA (axe-core)
+        // 2. WCAG 2.2 AA accessibility report (axe-core)
         const axeResults = await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
           .analyze();
         writeFileSync(axePath, JSON.stringify(axeResults.violations, null, 2));
 
-        // 3. Aria snapshot para asegurar estabilidad semántica
+        // 3. Aria snapshot to ensure semantic stability
         const aria = await page.locator('body').ariaSnapshot();
         writeFileSync(ariaPath, aria);
 

@@ -11,8 +11,8 @@ import {
 const name = fc.stringMatching(/^[a-z0-9-]{1,12}$/).map((n) => `${n}.woff2`);
 const fingerprint = fc.stringMatching(/^[a-f0-9]{1,8}$/);
 
-describe('reintentos', () => {
-	it('la espera nunca baja, nunca pasa el máximo y llega a él', () => {
+describe('retries', () => {
+	it('the wait never decreases, never exceeds the maximum and reaches it', () => {
 		fc.assert(
 			fc.property(fc.integer({ min: FIRST_RETRY_IN_MS, max: LAST_RETRY_IN_MS }), (wait) => {
 				const following = nextWait(wait);
@@ -26,8 +26,8 @@ describe('reintentos', () => {
 	});
 });
 
-describe('entradas reemplazadas', () => {
-	it('nunca incluyen la clave vigente y son todas del mismo archivo', () => {
+describe('replaced entries', () => {
+	it('never include the current key and are all of the same file', () => {
 		fc.assert(
 			fc.property(name, name, fc.array(fingerprint, { maxLength: 6 }), fingerprint, (a, another, olds, active) => {
 				const urls = [...olds.map((h) => `https://x.test${keyInCache(a, h)}`), `https://x.test${keyInCache(another, 'z')}`];
@@ -40,7 +40,7 @@ describe('entradas reemplazadas', () => {
 		);
 	});
 
-	it('es idempotente: lo que queda después de borrarlas no reemplaza nada más', () => {
+	it('is idempotent: what is left after deleting them replaces nothing else', () => {
 		fc.assert(
 			fc.property(name, fc.array(fingerprint, { maxLength: 6 }), fingerprint, (a, olds, active) => {
 				const key = keyInCache(a, active);

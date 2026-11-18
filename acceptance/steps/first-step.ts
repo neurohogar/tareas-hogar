@@ -1,5 +1,5 @@
-// Primer paso de la tarea (spec §4.1, §6.1, §6.2): se escribe en el panel y la fila lo muestra
-// solo en pendiente y atrasada. Una sola línea, recortada; vacío es sin campo; nunca inválido.
+// First step of the task (spec §4.1, §6.1, §6.2): written in the panel and the row shows it
+// only when pending and overdue. A single trimmed line; empty means no field; never invalid.
 import { expect } from 'vitest';
 import { createOneOff, type OneOffData } from '../../src/lib/core/create-one-off';
 import { createRecurringCalendar } from '../../src/lib/core/create-recurring-calendar';
@@ -14,13 +14,13 @@ import { OTHER, theDoc, theTask, theTaskTitled, type StepDefinition, type World 
 const STATUSES = ['pendiente', 'en espera', 'atrasada'];
 const ONLY_SPACES = '   ';
 
-/** Un primer paso escrito con espacios de más al inicio y al final. */
+/** A first step written with extra spaces at the start and end. */
 const withMargins = (text: string) => `  ${text}  `;
 
-/** Los datos de la tarea con el primer paso escrito; el resto como estaba. */
+/** The task data with the first step written; the rest as it was. */
 const withFirstStep = (firstStep: string) => (task: Task) => ({ ...taskData(task), firstStep });
 
-/** Un guardado con primer paso es aceptado: nunca rechaza (§4.1). */
+/** A save with a first step is accepted: it never rejects (§4.1). */
 function withoutRejection(world: World): void {
 	expect(world.errors).toBeUndefined();
 }
@@ -30,12 +30,12 @@ function createOneOffWithFirstStep(world: World, data: OneOffData): void {
 	withoutRejection(world);
 }
 
-/** Deja la tarea ya guardada con ese primer paso, sin pasar por editar (no es un cambio "de mi lado"). */
+/** Leaves the task already saved with that first step, without going through editing (it is not a change "de mi lado"). */
 function savedWithFirstStep(world: World, task: Task, firstStep: string): void {
 	world.docs = world.docs.map((doc) => (doc.id === task.id ? { ...doc, firstStep } : doc));
 }
 
-/** Cada forma de cambio del primer paso: "<sujeto> el primer paso a ...". */
+/** Each form of first-step change: "<subject> el primer paso a ...". */
 const CHANGES: { text: string; value: (...values: string[]) => string }[] = [
 	{ text: P, value: (firstStep) => firstStep },
 	{ text: `${P} con espacios al inicio y al final`, value: (firstStep) => withMargins(firstStep) },
@@ -58,7 +58,7 @@ const editSteps: StepDefinition[] = EDITORS.flatMap(({ subject, edit }) =>
 	}))
 );
 
-/** En cada momento consultado, la lista tiene una sola fila y muestra ese texto de primer paso. */
+/** At each queried moment, the list has a single row and it shows that first-step text. */
 function theRowShowsFirstStep(world: World, text: string | undefined): void {
 	expect(world.pendingQueries.length).toBeGreaterThan(0);
 	for (const rows of world.pendingQueries) expect(rows.map(({ firstStepText: textOfFirstStep }) => textOfFirstStep)).toEqual([text]);
@@ -98,7 +98,7 @@ export const firstStepSteps: StepDefinition[] = [
 		run: (world, title, firstStep) => savedWithFirstStep(world, theTaskTitled(world, title), firstStep)
 	},
 	{
-		// Quitar es vaciar el campo: la tarea queda sin primer paso.
+		// Removing means emptying the field: the task is left without a first step.
 		pattern: /^quito el primer paso$/,
 		run: (world) => {
 			editMe(world, withFirstStep(''));
@@ -125,7 +125,7 @@ export const firstStepSteps: StepDefinition[] = [
 		run: (world, length) => expect(theTask(world).firstStep).toHaveLength(numeric(length))
 	},
 	{
-		// El estado esperado llega como valor de la tabla; el del primer paso es el de siempre (§5).
+		// The expected status arrives as a table value; the first step's is the usual one (§5).
 		pattern: new RegExp(`^el estado es ${P}$`),
 		run: (world, kind) => {
 			expect(STATUSES).toContain(kind);

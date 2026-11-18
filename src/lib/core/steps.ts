@@ -1,9 +1,9 @@
-// Spec §4.1 (Pasos): la lista de pasos de una tarea. El primer paso es el
-// paso 1 y `pasos` guarda los pasos 2, 3… en el orden escrito.
+// Spec §4.1 (Steps): the list of steps of a task. The first step is
+// step 1 and `steps` stores steps 2, 3… in the written order.
 import { trimText } from './free-text';
 import type { Task } from './task';
 
-/** Los campos de la lista de pasos, como se guardan: sin el campo, no hay. */
+/** The fields of the steps list, as stored: without the field, there are none. */
 export interface StepsFields {
 	firstStep?: string;
 	steps?: string[];
@@ -14,31 +14,31 @@ type WithSteps = Pick<Task, 'firstStep' | 'steps'>;
 const withText = (step: string | undefined): step is string => step !== undefined;
 
 /**
- * Spec §4.1 (Pasos: Texto): cada paso se recorta; los vacíos o de solo
- * espacios se descartan y los de abajo suben, también al lugar del primer
- * paso. Sin pasos más allá del primero, no hay campo pasos. Nunca inválido.
+ * Spec §4.1 (Steps: Text): each step is trimmed; empty or whitespace-only ones
+ * are discarded and the ones below move up, also into the place of the first
+ * step. Without steps beyond the first, there is no steps field. Never invalid.
  */
 export function normalizeSteps(firstStep = '', steps: readonly string[] = []): StepsFields {
 	const [firstOne, ...rest] = [firstStep, ...steps].map(trimText).filter(withText);
 	return { ...(firstOne && { firstStep: firstOne }), ...(rest.length > 0 && { steps: rest }) };
 }
 
-/** Spec §4.1: los pasos de la tarea, el primer paso como paso 1; sin primer paso, ninguno. */
+/** Spec §4.1: the steps of the task, the first step as step 1; without a first step, none. */
 export function taskSteps({ firstStep, steps = [] }: WithSteps): string[] {
 	return firstStep ? [firstStep, ...steps] : [];
 }
 
-/** Spec §4.1: la tarea tiene dos pasos o más (primer paso y al menos un paso en pasos). */
+/** Spec §4.1: the task has two steps or more (first step and at least one in steps). */
 export function hasSeveralSteps(task: WithSteps): boolean {
 	return taskSteps(task).length > 1;
 }
 
-/** Spec §4.1 (Pasos: Avance): un número de paso con el tope del último paso, y nunca menos que el paso 1. */
+/** Spec §4.1 (Steps: Progress): a step number capped at the last step, and never less than step 1. */
 export function stepWithLimit(task: WithSteps, step: number): number {
 	return Math.max(1, Math.min(step, taskSteps(task).length));
 }
 
-/** Spec §4.1 (Pasos: Avance): el paso en que va la tarea; sin pasoActual, el 1; si quedan menos pasos, el último. */
+/** Spec §4.1 (Steps: Progress): the step the task is on; without currentStep, 1; if fewer steps remain, the last one. */
 export function stepItIsOn(task: WithSteps & Pick<Task, 'currentStep'>): number {
 	return task.currentStep === undefined ? 1 : stepWithLimit(task, task.currentStep);
 }

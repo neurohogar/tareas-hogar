@@ -17,12 +17,12 @@ const recurrence = fc.oneof(
 	})
 );
 const hour = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-/** Un horario válido (§4.1), o ninguno. */
+/** A valid schedule (§4.1), or none. */
 const schedule = fc.option(
 	fc.uniqueArray(fc.integer({ min: 0, max: 1439 }), { minLength: 2, maxLength: 2 }).map(([a, b]) => [{ from: hour(Math.min(a, b)), to: hour(Math.max(a, b)) }]),
 	{ nil: undefined }
 );
-/** Una tarea puntual (con o sin fecha límite) o periódica, con o sin horario, con id t<i>. */
+/** A one-off task (with or without a due date) or recurring, with or without a schedule, with id t<i>. */
 const taskNumber = (i: number) =>
 	fc.tuple(fc.option(day, { nil: undefined }), fc.option(recurrence, { nil: undefined }), day, schedule).map(
 		([dueDate, recurrence, createdAt, schedule]): Task => {
@@ -39,8 +39,8 @@ const completions = fc
 	.array(fc.tuple(fc.integer({ min: 0, max: 7 }), instant), { maxLength: 8 })
 	.map((list) => list.map(([t, completedAt], i): Completion => ({ id: `c${i}`, taskId: `t${t}`, completedAt })));
 
-describe('filasDePendientes (propiedades)', () => {
-	it('con Mostrar completadas apagado, son exactamente las tareas no completadas, con su estado (el orden es de §6.1)', () => {
+describe('pendingRows (properties)', () => {
+	it('with Mostrar completadas off, they are exactly the non-completed tasks, with their status (the order is from §6.1)', () => {
 		fc.assert(
 			fc.property(tasks, completions, instant, (list, doneOnes, now) => {
 				const expectedValues = list
@@ -53,7 +53,7 @@ describe('filasDePendientes (propiedades)', () => {
 		);
 	});
 
-	it('el texto de fecha es «Tocaba …» en una atrasada, «Vuelve …» en una en espera y ninguno en las demás (§6.1)', () => {
+	it('the date text is «Tocaba …» on an overdue one, «Vuelve …» on a waiting one and none on the others (§6.1)', () => {
 		fc.assert(
 			fc.property(tasks, completions, instant, (list, doneOnes, now) => {
 				for (const { status, dateText } of pendingRows(list, doneOnes, now, true, true)) {
@@ -65,7 +65,7 @@ describe('filasDePendientes (propiedades)', () => {
 		);
 	});
 
-	it('una puntual con algún completado nunca es una fila', () => {
+	it('a one-off with any completion is never a row', () => {
 		fc.assert(
 			fc.property(tasks, completions, instant, (list, doneOnes, now) => {
 				const doneItems = new Set(doneOnes.map(({ taskId }) => taskId));
@@ -75,7 +75,7 @@ describe('filasDePendientes (propiedades)', () => {
 		);
 	});
 
-	it('el orden no depende del orden en que llegan las tareas', () => {
+	it('the order does not depend on the order in which the tasks arrive', () => {
 		fc.assert(
 			fc.property(permutedTasks, completions, instant, ([list, permutedItems], doneOnes, now) => {
 				expect(pendingRows(permutedItems, doneOnes, now)).toEqual(pendingRows(list, doneOnes, now));
@@ -83,7 +83,7 @@ describe('filasDePendientes (propiedades)', () => {
 		);
 	});
 
-	it('los grupos quedan contiguos: atrasada, pendiente, en espera', () => {
+	it('the groups stay contiguous: overdue, pending, waiting', () => {
 		const range = { atrasada: 0, pendiente: 1, 'en espera': 2, completada: 3, pausada: 4 };
 		fc.assert(
 			fc.property(tasks, completions, instant, (list, doneOnes, now) => {
@@ -93,7 +93,7 @@ describe('filasDePendientes (propiedades)', () => {
 		);
 	});
 
-	it('dentro de cada grupo, del instante de urgencia más antiguo al más reciente, y sin instante al final', () => {
+	it('within each group, from the oldest urgency instant to the most recent, and without an instant last', () => {
 		fc.assert(
 			fc.property(tasks, completions, instant, (list, doneOnes, now) => {
 				const rows = pendingRows(list, doneOnes, now).flatMap(({ task, completed, status }) => (completed || status.kind === 'pausada' ? [] : [{ task, status }]));
@@ -104,7 +104,7 @@ describe('filasDePendientes (propiedades)', () => {
 		);
 	});
 
-	it('con Mostrar completadas encendido, cada tarea es una fila exactamente una vez', () => {
+	it('with Mostrar completadas on, each task is a row exactly once', () => {
 		fc.assert(
 			fc.property(tasks, completions, instant, (list, doneOnes, now) => {
 				const ids = pendingRows(list, doneOnes, now, true).map(({ task }) => task.id);
@@ -113,7 +113,7 @@ describe('filasDePendientes (propiedades)', () => {
 		);
 	});
 
-	it('encender Mostrar completadas solo agrega las completadas al final, sin tocar las demás', () => {
+	it('turning on Mostrar completadas only adds the completed ones at the end, without touching the others', () => {
 		fc.assert(
 			fc.property(tasks, completions, instant, (list, doneOnes, now) => {
 				const without = pendingRows(list, doneOnes, now);
@@ -124,7 +124,7 @@ describe('filasDePendientes (propiedades)', () => {
 		);
 	});
 
-	it('las completadas van de la de completadoEn más reciente a la más antigua', () => {
+	it('the completed ones go from the one with the most recent completedAt to the oldest', () => {
 		fc.assert(
 			fc.property(tasks, completions, instant, (list, doneOnes, now) => {
 				const lastOnes = pendingRows(list, doneOnes, now, true)
@@ -135,7 +135,7 @@ describe('filasDePendientes (propiedades)', () => {
 		);
 	});
 
-	it('con Mostrar completadas encendido, el orden tampoco depende del orden en que llegan las tareas', () => {
+	it('with Mostrar completadas on, the order does not depend on the order in which the tasks arrive either', () => {
 		fc.assert(
 			fc.property(permutedTasks, completions, instant, ([list, permutedItems], doneOnes, now) => {
 				expect(pendingRows(permutedItems, doneOnes, now, true)).toEqual(pendingRows(list, doneOnes, now, true));

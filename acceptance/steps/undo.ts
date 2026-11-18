@@ -1,5 +1,5 @@
-// Deshacer un completado (spec §5.4): desde el Historial, desde el aviso y
-// desde otro dispositivo.
+// Undo a completion (spec §5.4): from the History, from the notice and
+// from another device.
 import { expect } from 'vitest';
 import { visibleNotice, completionToUndo } from '../../src/lib/core/notice';
 import { applyChange } from '../../src/lib/core/task-document';
@@ -17,17 +17,17 @@ import {
 	type World
 } from './world';
 
-/** El completado con ese completadoEn, aunque ya se haya borrado. */
+/** The completion with that completedAt, even if it has been deleted. */
 function theCompletionOf(world: World, moment: string): Completion {
 	const instant = dateHour(moment).getTime();
 	const ofMoment = thatWasSaved(world).completions.filter(({ completedAt }) => completedAt.getTime() === instant);
-	if (ofMoment.length !== 1) throw new Error(`Se esperaba un completado del ${moment}, hay ${ofMoment.length}`);
+	if (ofMoment.length !== 1) throw new Error(`Expected one completion of ${moment}, found ${ofMoment.length}`);
 	return ofMoment[0];
 }
 
 /**
- * Como deleteDoc: borrar un completado que ya no existe no hace nada. Si era el más reciente de una
- * tarea de dos pasos o más, la tarea vuelve al paso en que iba al completarla (§4.1, Pasos: Deshacer).
+ * Like deleteDoc: deleting a completion that no longer exists does nothing. If it was the most recent of a
+ * task with two or more steps, the task returns to the step it was on when completed (§4.1, Pasos: Deshacer).
  */
 export function deleteCompletion(world: World, completion: Completion | undefined): void {
 	if (!completion) return;
@@ -37,7 +37,7 @@ export function deleteCompletion(world: World, completion: Completion | undefine
 }
 
 function theNoticeQueried(world: World) {
-	if (!world.noticeQueried) throw new Error('No se consultó el aviso');
+	if (!world.noticeQueried) throw new Error('The notice was not queried');
 	return world.noticeQueried.notice;
 }
 
@@ -74,11 +74,11 @@ export const undoSteps: StepDefinition[] = [
 			const task = theTaskTitled(world, title);
 			const notice = theNoticeQueried(world);
 			expect(notice?.name).toBe(title);
-			// El paso en que iba la tarea (§4.4) lo afirman los pasos de los pasos; acá, ningún otro campo.
+			// The step the task was on (§4.4) is asserted by the steps steps; here, no other field.
 			const { stepAtCompletion: stepOnComplete, wasMinimal, ...rest } = notice?.completion ?? {};
 			expect(rest).toStrictEqual({ id: expect.any(String), taskId: task.id, completedAt: dateHour(moment) });
 			if (stepOnComplete !== undefined) expect(stepOnComplete).toBeGreaterThanOrEqual(1);
-			// Que fue la mínima (§4.4) lo afirman los pasos de la mínima; solo se escribe en true.
+			// That it was the minimal one (§4.4) is asserted by the minimal-version steps; it is only ever written as true.
 			if (wasMinimal !== undefined) expect(wasMinimal).toBe(true);
 			expect(world.completions).toContainEqual(notice?.completion);
 		}

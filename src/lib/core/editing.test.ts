@@ -21,8 +21,8 @@ const WEEKLY: RecurringTask = {
 };
 const MONTHLY: RecurringTask = { ...WEEKLY, recurrence: { mode: 'calendario', monthDays: [10, 31] } };
 
-describe('datosDeTarea', () => {
-	it('da los valores actuales de cada forma, como los carga el panel', () => {
+describe('taskData', () => {
+	it('gives the current values of each shape, as the panel loads them', () => {
 		expect(taskData(ONE_OFF)).toStrictEqual({ shape: 'puntual', title: 'Pagar', dueDate: '2026-07-14' });
 		expect(taskData({ ...ONE_OFF, dueDate: undefined })).toStrictEqual({ shape: 'puntual', title: 'Pagar' });
 		expect(taskData(RELATIVE)).toStrictEqual({ shape: 'relativa', title: 'Regar', every: 2, unit: 'dias' });
@@ -36,8 +36,8 @@ describe('datosDeTarea', () => {
 	});
 });
 
-describe('datosDeTarea con emoji y nota', () => {
-	it('los incluye cuando la tarea los tiene', () => {
+describe('taskData with emoji and note', () => {
+	it('includes them when the task has them', () => {
 		expect(taskData({ ...ONE_OFF, emoji: '🌱', note: 'Usar guantes' })).toStrictEqual({
 			shape: 'puntual',
 			title: 'Pagar',
@@ -51,28 +51,28 @@ describe('datosDeTarea con emoji y nota', () => {
 	});
 });
 
-describe('editar emoji y nota', () => {
-	it('escribe solo el campo que cambió', () => {
+describe('edit emoji and note', () => {
+	it('writes only the field that changed', () => {
 		const withEmoji = { ...ONE_OFF, emoji: '🌱', note: 'Usar guantes' };
 
 		expect(edit(withEmoji, { ...taskData(withEmoji), emoji: '🔥' })).toStrictEqual({ ok: true, change: { emoji: '🔥' } });
 		expect(edit(withEmoji, { ...taskData(withEmoji), note: '  Ventilar ' })).toStrictEqual({ ok: true, change: { note: 'Ventilar' } });
 	});
 
-	it('guardar el mismo emoji o la misma nota, aunque con espacios alrededor, no cambia nada', () => {
+	it('saving the same emoji or note, even with spaces around, changes nothing', () => {
 		const withEmoji = { ...ONE_OFF, emoji: '🌱', note: 'Usar guantes' };
 
 		expect(edit(withEmoji, { ...taskData(withEmoji), emoji: ' 🌱 ', note: ' Usar guantes ' })).toStrictEqual({ ok: true, change: {} });
 	});
 
-	it('poner emoji y nota a una tarea que no los tenía los escribe', () => {
+	it('setting emoji and note on a task that did not have them writes them', () => {
 		expect(edit(ONE_OFF, { ...taskData(ONE_OFF), emoji: '👍🏽', note: 'Hola' })).toStrictEqual({
 			ok: true,
 			change: { emoji: '👍🏽', note: 'Hola' }
 		});
 	});
 
-	it('vaciarlos o dejarlos en espacios los quita (null)', () => {
+	it('emptying them or leaving them as spaces removes them (null)', () => {
 		const withEmoji = { ...ONE_OFF, emoji: '🌱', note: 'Usar guantes' };
 
 		expect(edit(withEmoji, { ...taskData(withEmoji), emoji: '   ', note: '' })).toStrictEqual({
@@ -81,7 +81,7 @@ describe('editar emoji y nota', () => {
 		});
 	});
 
-	it('un emoji inválido rechaza la edición entera, también el título válido', () => {
+	it('an invalid emoji rejects the whole edit, the valid title too', () => {
 		expect(edit(ONE_OFF, { ...taskData(ONE_OFF), title: 'Pagar la luz', emoji: '🌱🔥' })).toStrictEqual({
 			ok: false,
 			errors: { emoji: 'invalido' }
@@ -89,20 +89,20 @@ describe('editar emoji y nota', () => {
 	});
 });
 
-describe('editar', () => {
-	it('guardar sin cambios no cambia ningún campo', () => {
+describe('edit', () => {
+	it('saving without changes changes no field', () => {
 		for (const task of [ONE_OFF, RELATIVE, WEEKLY, MONTHLY])
 			expect(edit(task, taskData(task))).toStrictEqual({ ok: true, change: {} });
 	});
 
-	it('cambiar el título cambia solo el título, sin los espacios de los extremos', () => {
+	it('changing the title changes only the title, without the spaces at the ends', () => {
 		expect(edit(RELATIVE, { ...taskData(RELATIVE), title: '  Regar plantas ' })).toStrictEqual({
 			ok: true,
 			change: { title: 'Regar plantas' }
 		});
 	});
 
-	it('cambiar la fecha límite, quitarla o agregarla', () => {
+	it('changing the due date, removing it or adding it', () => {
 		expect(edit(ONE_OFF, { shape: 'puntual', title: 'Pagar', dueDate: '2026-07-20' })).toStrictEqual({
 			ok: true,
 			change: { dueDate: new Date(2026, 6, 20) }
@@ -116,7 +116,7 @@ describe('editar', () => {
 		});
 	});
 
-	it('la recurrencia se cambia entera, aunque cambie un solo subcampo', () => {
+	it('the recurrence is changed whole, even if a single subfield changes', () => {
 		expect(edit(RELATIVE, { shape: 'relativa', title: 'Regar', every: 2, unit: 'horas' })).toStrictEqual({
 			ok: true,
 			change: { recurrence: { mode: 'relativo', every: 2, unit: 'horas' } }
@@ -127,7 +127,7 @@ describe('editar', () => {
 		});
 	});
 
-	it('los días se comparan como conjunto: el orden en que se eligen no es un cambio', () => {
+	it('the days are compared as a set: the order in which they are chosen is not a change', () => {
 		const data = { shape: 'calendario', title: 'Basura', weekdays: ['jueves', 'martes'], monthDays: [] } as const;
 
 		expect(edit(WEEKLY, { ...data, weekdays: [...data.weekdays] })).toStrictEqual({ ok: true, change: {} });
@@ -137,7 +137,7 @@ describe('editar', () => {
 		});
 	});
 
-	it('cambiar de semanal a mensual con los mismos números no es lo mismo', () => {
+	it('changing from weekly to monthly with the same numbers is not the same', () => {
 		expect(edit(WEEKLY, { shape: 'calendario', title: 'Basura', weekdays: [], monthDays: [2, 4] })).toStrictEqual({
 			ok: true,
 			change: { recurrence: { mode: 'calendario', monthDays: [2, 4] } }
@@ -148,7 +148,7 @@ describe('editar', () => {
 		});
 	});
 
-	it('pasar a puntual quita la recurrencia y escribe la fecha límite, aunque no tenga', () => {
+	it('turning into one-off removes the recurrence and writes the due date, even if it has none', () => {
 		expect(edit(WEEKLY, { shape: 'puntual', title: 'Basura', dueDate: '2026-07-20' })).toStrictEqual({
 			ok: true,
 			change: { kind: 'puntual', dueDate: new Date(2026, 6, 20), recurrence: null }
@@ -159,7 +159,7 @@ describe('editar', () => {
 		});
 	});
 
-	it('pasar a periódica quita la fecha límite, la tuviera o no', () => {
+	it('turning into recurring removes the due date, whether it had one or not', () => {
 		const relative = { mode: 'relativo', every: 2, unit: 'dias' } as const;
 
 		expect(edit(ONE_OFF, { shape: 'relativa', title: 'Pagar', every: 2, unit: 'dias' })).toStrictEqual({
@@ -173,7 +173,7 @@ describe('editar', () => {
 		});
 	});
 
-	it('con algún campo inválido la edición se rechaza entera, con los mismos errores que al crear', () => {
+	it('with some invalid field the edit is rejected whole, with the same errors as when creating', () => {
 		expect(edit(ONE_OFF, { shape: 'puntual', title: 'Pagar la luz', dueDate: '2026-04-31' })).toStrictEqual({
 			ok: false,
 			errors: { dueDate: 'invalida' }
@@ -189,11 +189,11 @@ describe('editar', () => {
 	});
 });
 
-describe('editar una pausada (spec §5.8)', () => {
+describe('edit a paused task (spec §5.8)', () => {
 	const PAUSED: RecurringTask = { ...RELATIVE, paused: true };
 	const NOW = new Date(2026, 6, 15, 10, 0, 0);
 
-	it('pasarla a puntual la reanuda: quita pausada y guarda reanudadaEn = ahora', () => {
+	it('turning it into one-off resumes it: removes paused and saves resumedAt = now', () => {
 		const result = edit(PAUSED, { shape: 'puntual', title: 'Regar' }, NOW);
 
 		expect(result).toStrictEqual({
@@ -202,14 +202,14 @@ describe('editar una pausada (spec §5.8)', () => {
 		});
 	});
 
-	it('editar otros campos, o el modo, la deja pausada', () => {
+	it('editing other fields, or the mode, leaves it paused', () => {
 		expect(edit(PAUSED, { shape: 'calendario', title: 'Regar plantas', weekdays: ['jueves'], monthDays: [] }, NOW)).toStrictEqual({
 			ok: true,
 			change: { title: 'Regar plantas', recurrence: { mode: 'calendario', weekdays: ['jueves'] } }
 		});
 	});
 
-	it('pasar a puntual una que no está pausada no la reanuda', () => {
+	it('turning into one-off a task that is not paused does not resume it', () => {
 		expect(edit(RELATIVE, { shape: 'puntual', title: 'Regar' }, NOW)).toStrictEqual({
 			ok: true,
 			change: { kind: 'puntual', dueDate: null, recurrence: null }

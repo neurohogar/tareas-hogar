@@ -1,5 +1,5 @@
-// Pasos de la tarea (spec §4.1 Pasos, §4.4, §6.1, §6.2, §7): el primer paso es el paso 1 y `pasos` guarda los
-// demás; `pasoActual` es el paso en que va la tarea. Nunca inválidos; «Hecho» y «Paso anterior» mueven el avance.
+// Steps of the task (spec §4.1 Pasos, §4.4, §6.1, §6.2, §7): the first step is step 1 and `steps` stores the
+// rest; `currentStep` is the step the task is on. Never invalid; «Hecho» and «Paso anterior» move the progress.
 import { expect } from 'vitest';
 import { latestCompletion, completionsOfTask, complete } from '../../src/lib/core/completions';
 import { createOneOff, type OneOffData } from '../../src/lib/core/create-one-off';
@@ -16,23 +16,23 @@ import { completeMe, recordCompletion } from './recurring-relative';
 import { P, TITLE, dateHour, list, numeric } from './values';
 import { OTHER, theDoc, theTask, theTaskTitled, thatSawOther, newId, rememberBeforeOfMyChange, type StepDefinition, type World } from './world';
 
-/** Un número de paso: escrito en el paso o como `<placeholder>`. */
+/** A step number: written in the step or as `<placeholder>`. */
 const N = '(\\d+|<[A-Za-z0-9_]+>)';
 
 const ONLY_SPACES = '   ';
 
-/** Un número de paso es un entero desde 1 (§4.1): un valor malformado falla el escenario. */
+/** A step number is an integer from 1 (§4.1): a malformed value fails the scenario. */
 function stepNumber(value: string): number {
-	if (!/^[1-9]\d*$/.test(value)) throw new Error(`Paso inválido: "${value}"`);
+	if (!/^[1-9]\d*$/.test(value)) throw new Error(`Invalid step: "${value}"`);
 	return Number(value);
 }
 
-/** Un guardado con pasos es aceptado: nunca rechaza (§4.1). */
+/** A save with steps is accepted: it never rejects (§4.1). */
 function withoutRejection(world: World): void {
 	expect(world.errors).toBeUndefined();
 }
 
-/** La lista completa ("A, B, C") como el primer paso y los pasos más. */
+/** The full list ("A, B, C") as the first step plus the other steps. */
 function listData(text: string, extra: string[] = []) {
 	const [firstStep, ...steps] = list(text);
 	return { firstStep, steps: [...steps, ...extra] };
@@ -43,7 +43,7 @@ function createOneOffWithSteps(world: World, data: OneOffData): void {
 	withoutRejection(world);
 }
 
-/** Deja la tarea ya guardada con esos pasos, sin pasar por editar (no es un cambio "de mi lado"). */
+/** Leaves the task already saved with those steps, without going through editing (it is not a change "de mi lado"). */
 function savedWithSteps(world: World, task: Task, text: string): void {
 	const { firstStep, steps } = listData(text);
 	world.docs = world.docs.map((doc) => {
@@ -53,7 +53,7 @@ function savedWithSteps(world: World, task: Task, text: string): void {
 	});
 }
 
-/** Deja la tarea ya guardada en ese paso; el paso 1 es el que no tiene campo (§4.1). */
+/** Leaves the task already saved on that step; step 1 is the one without a field (§4.1). */
 function savedInStep(world: World, task: Task, step: number): void {
 	world.docs = world.docs.map((doc) => {
 		if (doc.id !== task.id) return doc;
@@ -62,20 +62,20 @@ function savedInStep(world: World, task: Task, step: number): void {
 	});
 }
 
-/** La lista de pasos de la tarea con el paso `numero` cambiado; uno más que la cantidad lo agrega al final. */
+/** The task's list of steps with step `number` changed; one more than the count appends it at the end. */
 function withStep(task: Task, numeric: number, text: string): string[] {
 	const steps = taskSteps(task);
-	if (numeric < 1 || numeric > steps.length + 1) throw new Error(`No hay un paso ${numeric}`);
+	if (numeric < 1 || numeric > steps.length + 1) throw new Error(`There is no step ${numeric}`);
 	return numeric === steps.length + 1 ? [...steps, text] : steps.map((step, place) => (place === numeric - 1 ? text : step));
 }
 
-/** Los datos de la tarea con esa lista de pasos escrita; el resto como estaba. */
+/** The task data with that list of steps written; the rest as it was. */
 const withSteps = (steps: readonly string[]) => (task: Task) => {
 	const [firstStep = '', ...more] = steps;
 	return { ...taskData(task), firstStep, steps: more };
 };
 
-/** Cada forma de cambio de un paso: "<sujeto> el paso N a ...". */
+/** Each form of step change: "<subject> el paso N a ...". */
 const CHANGES: { text: string; value: (...values: string[]) => string }[] = [
 	{ text: P, value: (step) => step },
 	{ text: `${P} con espacios al inicio y al final`, value: (step) => `  ${step}  ` },
@@ -98,10 +98,10 @@ const editSteps: StepDefinition[] = EDITORS.flatMap(({ subject, edit }) =>
 	}))
 );
 
-/** Pasar a un paso o completar desde la fila: lo que decide el core, escrito como lo haría ese dispositivo. */
+/** Moving to a step or completing from the row: what the core decides, written as that device would. */
 function tapDone(world: World, task: Task, moment: Date): void {
 	world.checkboxTouched = true;
-	// Sin una consulta antes, lo que se afirma después es del momento en que se tocó.
+	// Without a prior query, what is asserted afterwards belongs to the moment of the tap.
 	if (world.statusMoments.length === 0) world.statusMoments = [moment];
 	const action = doneAction(task, world.completions, moment);
 	if (action.kind === 'completar') return completeMe(world, moment, task);
@@ -115,7 +115,7 @@ function writeChange(world: World, task: Task, change: TaskChange): void {
 	world.docs = applyChange(world.docs, task.id, change);
 }
 
-/** El otro dispositivo decide con lo que veía; su cambio llega a lo guardado. */
+/** The other device decides with what it saw; its change reaches what is stored. */
 function dueDoneOther(world: World, moment: Date): void {
 	const seen = thatSawOther(world);
 	const task = theTask(seen);
@@ -129,7 +129,7 @@ function dueDoneOther(world: World, moment: Date): void {
 
 const buttonsText = ({ previousStep: stepPrevious }: StepButtons) => (stepPrevious ? 'Paso anterior y Hecho' : 'Hecho');
 
-/** En cada momento consultado, la lista tiene una sola fila y sus botones de paso son esos. */
+/** At each queried moment, the list has a single row and its step buttons are those. */
 function theRowShowsButtons(world: World, expected: string | undefined): void {
 	expect(world.pendingQueries.length).toBeGreaterThan(0);
 	for (const rows of world.pendingQueries) expect(rows.map(({ stepButtons }) => stepButtons && buttonsText(stepButtons))).toEqual([expected]);
@@ -175,7 +175,7 @@ export const taskStepsSteps: StepDefinition[] = [
 		run: (world, current) => savedInStep(world, theTask(world), stepNumber(current))
 	},
 	{
-		// Un completado con pasoAlCompletar (§4.4) sin tocar el paso en que va la tarea.
+		// A completion with stepAtCompletion (§4.4) without touching the step the task is on.
 		pattern: new RegExp(`^la tarea fue completada el ${P} en el paso ${P}$`),
 		run: (world, moment, step) => {
 			const { id } = recordCompletion(world, dateHour(moment));

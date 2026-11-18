@@ -9,8 +9,8 @@ const now = new Date(2026, 6, 15, 12, 0, 0);
 const permutations = <T>(xs: T[]): T[][] =>
 	xs.length <= 1 ? [xs] : xs.flatMap((x, i) => permutations([...xs.slice(0, i), ...xs.slice(i + 1)]).map((rest) => [x, ...rest]));
 
-describe('historial: orden y agrupación estables', () => {
-	it('con el mismo completadoEn el orden es por id, sea cual sea el orden de entrada', () => {
+describe('history: stable order and grouping', () => {
+	it('with the same completedAt the order is by id, whatever the input order', () => {
 		const moment = new Date(2026, 6, 15, 10, 0);
 		const cs = ['c1', 'c2', 'c3'].map((id) => completion(id, moment));
 		for (const entry of permutations(cs)) {
@@ -19,7 +19,7 @@ describe('historial: orden y agrupación estables', () => {
 		}
 	});
 
-	it('todas las entradas de un día quedan en un solo grupo aunque haya días anteriores', () => {
+	it('all the entries of a day end up in a single group even if there are earlier days', () => {
 		const cs = [
 			completion('a', new Date(2026, 6, 15, 10, 0)),
 			completion('b', new Date(2026, 6, 14, 10, 0)),

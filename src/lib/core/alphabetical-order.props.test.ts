@@ -2,13 +2,13 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { compareTitles } from './alphabetical-order';
 
-/** Letras con y sin acento, ñ (compuesta y descompuesta), mayúsculas y espacios. */
+/** Letters with and without accent, ñ (composed and decomposed), uppercase and spaces. */
 const letter = fc.constantFrom(...'aábcdeéinñoóuúüzAÁNÑOZ '.split(''), 'ñ', 'Ñ');
 const title = fc.array(letter, { maxLength: 6 }).map((letters) => letters.join(''));
 const sign = (a: string, b: string) => Math.sign(compareTitles(a, b));
 
-describe('compararTitulos (propiedades)', () => {
-	it('es un orden total: reflexiva, antisimétrica y transitiva', () => {
+describe('compareTitles (properties)', () => {
+	it('is a total order: reflexive, antisymmetric and transitive', () => {
 		fc.assert(
 			fc.property(title, title, title, (a, b, c) => {
 				expect(compareTitles(a, a)).toBe(0);
@@ -19,7 +19,7 @@ describe('compararTitulos (propiedades)', () => {
 		);
 	});
 
-	it('no distingue mayúsculas ni acentos (salvo la ñ)', () => {
+	it('does not distinguish case or accents (except ñ)', () => {
 		const withoutMarks = (t: string) => t.normalize('NFD').replace(/[̀-̂̄-ͯ]/g, '').toLowerCase();
 		fc.assert(
 			fc.property(title, (t) => {
@@ -29,7 +29,7 @@ describe('compararTitulos (propiedades)', () => {
 		);
 	});
 
-	it('la ñ va después de la n (con lo que siga) y antes de la o', () => {
+	it('ñ goes after n (with what follows) and before o', () => {
 		fc.assert(
 			fc.property(title, title, title, (prefix, x, y) => {
 				expect(sign(`${prefix}n${x}`, `${prefix}ñ${y}`)).toBe(-1);
@@ -38,7 +38,7 @@ describe('compararTitulos (propiedades)', () => {
 		);
 	});
 
-	it('un prefijo va antes que el título que lo extiende con letras', () => {
+	it('a prefix goes before the title that extends it with letters', () => {
 		fc.assert(
 			fc.property(title, fc.array(letter.filter((l) => l !== ' '), { minLength: 1, maxLength: 3 }), (t, extra) => {
 				expect(sign(t, t + extra.join(''))).toBe(-1);

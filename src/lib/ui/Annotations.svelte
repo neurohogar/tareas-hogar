@@ -6,13 +6,13 @@
 	import AnnotateConfirmation from './AnnotateConfirmation.svelte';
 	import { useSession } from './session';
 
-	// Spec §6.7: releer las anotaciones, corregir su texto, borrarlas y copiarlas.
+	// Spec §6.7: reread the annotations, correct their text, delete them and copy them.
 	const session = useSession();
 	const groups = $derived(annotationsOnScreen(session.tasks, session.annotations, session.now));
 
 	let editing = $state<{ annotation: Annotation; text: string } | undefined>(undefined);
 	let toDelete = $state.raw<Annotation | undefined>(undefined);
-	/** El aviso de la última copia (un solo texto a la vez); cada copia reinicia su cuenta de 5 s. */
+	/** The notice of the last copy (a single text at a time); each copy restarts its 5 s count. */
 	let notice = $state<{ text: string; count: number } | undefined>(undefined);
 	let copies = 0;
 

@@ -7,13 +7,13 @@ import {
   type Route,
 } from "@playwright/test";
 
-// Ayudantes del procedimiento qa/fuente-empaquetada.md (pantalla de carga, Flujos 5, 8 y 9).
+// Helpers for the qa/fuente-empaquetada.md procedure (loading screen, Flows 5, 8 and 9).
 
 export const ATKINSON_FILES = /\/fuentes\/atkinson-.*\.woff2/;
 export const ATKINSON_FILE =
   /\/fuentes\/atkinson-hyperlegible-next-latin-400-normal\.woff2/;
 export const NOTO_FILE = /\/fuentes\/noto-color-emoji.*\.woff2/;
-/** Tareas y completados viajan juntos: el SDK manda las consultas en un solo pedido. */
+/** Tasks and completions travel together: the SDK sends the queries in a single request. */
 export const DATA = /\/google\.firestore\.v1\.Firestore\/Listen\/channel/;
 export const AUTH = /127\.0\.0\.1:9099\//;
 
@@ -22,7 +22,7 @@ export const screenName = (page: Page) =>
 
 export const textVisible = (page: Page) => page.locator("body").innerText();
 
-/** Sin aviso de ningún tipo a la vista. La franja "Sin conexión" (§7) no es un aviso de la fuente. */
+/** No notice of any kind in view. The "Sin conexión" strip (§7) is not a font notice. */
 export async function withoutNotices(page: Page) {
   await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
@@ -32,19 +32,19 @@ export async function withoutNotices(page: Page) {
 }
 
 // ---------------------------------------------------------------------------
-// Pedidos
+// Requests
 // ---------------------------------------------------------------------------
 
 export interface Retained {
-  /** Cuántos pedidos pasaron por acá. */
+  /** How many requests went through here. */
   requests: () => number;
-  /** Deja seguir los retenidos y los que vengan. */
+  /** Lets the held requests and any future ones continue. */
   release: () => void;
-  /** Corta los retenidos con un error de red; los que vengan siguen. */
+  /** Cuts the held requests with a network error; future ones continue. */
   cut: () => void;
 }
 
-/** **Pedido demorado**: los pedidos quedan retenidos, sin respuesta, hasta que se los libera. */
+/** **Delayed request**: requests are held, without a response, until they are released. */
 export async function retain(
   target: Page | BrowserContext,
   pattern: RegExp,
@@ -55,7 +55,7 @@ export async function retain(
   await target.route(pattern, async (route: Route) => {
     n++;
     const d = await decision;
-    // La página pudo haberse ido mientras tanto.
+    // The page may have gone away in the meantime.
     await (d === "seguir" ? route.continue() : route.abort("connectionfailed")).catch(
       () => {},
     );
@@ -67,7 +67,7 @@ export async function retain(
   };
 }
 
-/** **Falla de red**: los pedidos se cortan con un error de red hasta `quitar`. Cuenta los pedidos. */
+/** **Network failure**: requests are cut with a network error until `quitar`. Counts the requests. */
 export async function networkFailure(target: Page | BrowserContext, pattern: RegExp) {
   let n = 0;
   let active = true;
@@ -86,16 +86,16 @@ export async function networkFailure(target: Page | BrowserContext, pattern: Reg
 }
 
 // ---------------------------------------------------------------------------
-// Aperturas con el reloj detenido
+// Openings with the stopped clock
 // ---------------------------------------------------------------------------
 
 const STEP_MS = 50;
 const PAUSE_REAL_MS = 15;
 
 /**
- * Una apertura con el reloj simulado detenido: el tiempo de la pantalla es el que deja pasar el script.
- * Avanza por tramos cortos y da tiempo real entre ellos, para que lleguen las respuestas de red y
- * corran los temporizadores que las procesan.
+ * An opening with the simulated clock stopped: the screen's time is whatever the script lets pass.
+ * It advances in short steps and gives real time in between, so that network responses arrive and
+ * the timers that process them run.
  */
 export class Opening {
   private ms = 0;
@@ -111,29 +111,29 @@ export class Opening {
     }
   }
 
-  /** De a 1 ms hasta que `detras` está montado detrás de la pantalla: lo que espera ya respondió. */
+  /** 1 ms at a time until `detras` is mounted behind the screen: what it waits for has already responded. */
   async toMount(behind: Locator) {
     for (let i = 0; i < 350; i++) {
       if ((await behind.count()) > 0) return;
       await this.to(this.ms / 1000 + 0.001, 1);
     }
-    throw new Error("no se montó detrás de la pantalla de carga antes de los 0,35 s");
+    throw new Error("it was not mounted behind the loading screen before 0.35 s");
   }
 
-  /** A los `segundos`, sigue abierta y sin ningún texto a la vista. */
+  /** At `segundos`, it is still open and with no text in view. */
   async staysA(seconds: number) {
     await this.to(seconds);
     await expect(screenName(this.page)).toBeVisible();
     expect(await textVisible(this.page)).toBe("");
   }
 
-  /** Al llegar a los `segundos`, se va. */
+  /** On reaching `segundos`, it goes away. */
   async goesA(seconds: number) {
     await this.to(seconds);
     await expect(screenName(this.page)).toHaveCount(0, { timeout: 5_000 });
   }
 
-  /** Se va sin que el script tenga que dejar pasar más que unas décimas: lo que esperaba ya llegó. */
+  /** It goes away without the script having to let more than a few tenths pass: what it was waiting for has already arrived. */
   async goesRightAway() {
     const cap = this.ms / 1000 + 0.3;
     await expect(async () => {
@@ -143,7 +143,7 @@ export class Opening {
   }
 }
 
-/** Para el reloj (ya instalado) un segundo después de ahora. */
+/** Stops the (already installed) clock one second after now. */
 export async function stopClock(page: Page) {
   const now = await page.evaluate(() => Date.now());
   await page.clock.pauseAt(new Date(now + 1000));
@@ -155,7 +155,7 @@ export async function reloadStopped(page: Page): Promise<Opening> {
   return new Opening(page);
 }
 
-/** Instala el reloj detenido antes de abrir y abre la app sin esperar a que cargue. */
+/** Installs the stopped clock before opening and opens the app without waiting for it to load. */
 export async function openStopped(
   page: Page,
   hour: string,
@@ -168,18 +168,18 @@ export async function openStopped(
 }
 
 // ---------------------------------------------------------------------------
-// Dispositivos y datos guardados
+// Devices and stored data
 // ---------------------------------------------------------------------------
 
-/** Vacía las fuentes guardadas: lo guardado sirve aunque se bloquee la red. Es preparación, no un paso del usuario. */
+/** Empties the stored fonts: what is stored works even if the network is blocked. It is setup, not a user step. */
 export const forgetFonts = (page: Page) =>
   page.evaluate(() => caches.delete("tareas-hogar-fuentes"));
 
 const AUTH_BASE = "firebaseLocalStorageDb";
 
 /**
- * Otro dispositivo con la misma cuenta: la sesión ya iniciada y nada más guardado, ni datos, ni
- * fuentes, ni lo que recuerda el dispositivo. El popup del emulador no tolera el reloj detenido.
+ * Another device with the same account: the session already started and nothing else stored, no data, no
+ * fonts, nothing the device remembers. The emulator popup does not tolerate the stopped clock.
  */
 export async function otherDeviceWithSession(
   browser: Browser,
@@ -205,7 +205,7 @@ export async function otherDeviceWithSession(
   return { ctx, page: await ctx.newPage() };
 }
 
-/** Registra cada vez que la pantalla de carga aparece en una página ya abierta. */
+/** Records every time the loading screen appears on an already open page. */
 export async function watchScreen(page: Page): Promise<() => Promise<number>> {
   await page.evaluate(() => {
     const w = window as unknown as { qaScreenView: number };
@@ -224,14 +224,14 @@ export async function watchScreen(page: Page): Promise<() => Promise<number>> {
 }
 
 // ---------------------------------------------------------------------------
-// Firestore Emulator: lo que no se puede producir ni leer por la interfaz
+// Firestore Emulator: what cannot be produced or read through the interface
 // ---------------------------------------------------------------------------
 
 const PROJECT = "demo-tareas-hogar";
 const DOCS = `http://127.0.0.1:8080/v1/projects/${PROJECT}/databases/(default)/documents`;
 const AS_ADMIN = { Authorization: "Bearer owner", "Content-Type": "application/json" };
 
-/** El uid de la única cuenta del Auth Emulator. */
+/** The uid of the only account in the Auth Emulator. */
 export async function accountUid(): Promise<string> {
   const r = await fetch(
     `http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/${PROJECT}/accounts:query`,
@@ -239,7 +239,7 @@ export async function accountUid(): Promise<string> {
   );
   const response = await r.text();
   const { userInfo } = JSON.parse(response) as { userInfo?: { localId: string }[] };
-  if (userInfo === undefined) throw new Error(`sin cuentas: ${response}`);
+  if (userInfo === undefined) throw new Error(`no accounts: ${response}`);
   return userInfo[0].localId;
 }
 
@@ -267,7 +267,7 @@ export async function saveDoc(
   expect(r.ok).toBe(true);
 }
 
-/** Todo lo que hay en Firestore bajo el usuario, para comparar que no apareció nada. */
+/** Everything in Firestore under the user, to check that nothing appeared. */
 export async function userAll(uid: string): Promise<string> {
   const r = await fetch(`${DOCS}/users/${uid}:listCollectionIds`, {
     method: "POST",

@@ -10,14 +10,14 @@ function intervalInMs(recurrence: RelativeRecurrence): number {
 	return recurrence.every * HOURS_PER_UNIT[recurrence.unit] * MS_PER_HOUR;
 }
 
-/** Spec §5.2, en ms: U, V = U + intervalo y V + intervalo (desde ahí, atrasada). */
+/** Spec §5.2, in ms: U, V = U + interval and V + interval (from there, overdue). */
 interface Deadlines {
 	last: number;
 	returnsToPending: number;
 	overdueFrom: number;
 }
 
-/** Solo para una relativa con al menos un completado. */
+/** Only for a relative task with at least one completion. */
 function deadlines(recurrence: RelativeRecurrence, completions: readonly Completion[]): Deadlines {
 	const last = lastCompletedAt(completions);
 	const interval = intervalInMs(recurrence);
@@ -25,9 +25,9 @@ function deadlines(recurrence: RelativeRecurrence, completions: readonly Complet
 }
 
 /**
- * Spec §5.2. U = completadoEn más reciente, V = U + intervalo.
- * Nunca completada → pendiente; ahora < V → en espera; V ≤ ahora < V + intervalo
- * → pendiente; ahora ≥ V + intervalo → atrasada.
+ * Spec §5.2. U = most recent completedAt, V = U + interval.
+ * Never completed → pending; now < V → waiting; V ≤ now < V + interval
+ * → pending; now ≥ V + interval → overdue.
  */
 export function recurringRelativeStatus(
 	recurrence: RelativeRecurrence,
@@ -46,8 +46,8 @@ export function recurringRelativeStatus(
 }
 
 /**
- * Spec §6.1 para una relativa: nunca completada, pendiente desde creadaEn; si
- * no, atrasada desde V + intervalo, y pendiente desde V o en espera hasta V.
+ * Spec §6.1 for a relative task: never completed, pending since createdAt; otherwise,
+ * overdue since V + interval, and pending since V or waiting until V.
  */
 export function relativeUrgencyInstant(
 	recurrence: RelativeRecurrence,
@@ -61,8 +61,8 @@ export function relativeUrgencyInstant(
 }
 
 /**
- * Spec §5.5 para una relativa: pasaría a pendiente en V (nunca completada,
- * creadaEn), espera desde U (o creadaEn) y, sin horario, se atrasa en V + intervalo.
+ * Spec §5.5 for a relative task: it would become pending at V (never completed,
+ * createdAt), waits since U (or createdAt) and, without a schedule, becomes overdue at V + interval.
  */
 export function relativeMoments(
 	recurrence: RelativeRecurrence,

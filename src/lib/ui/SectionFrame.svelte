@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import type { PanelPresentation, PanelSection } from '#lib/core/panel-tabs.ts';
 
-	/** El contenedor de una sección del panel: tabpanel en pestañas, bloque con título en secciones seguidas. */
+	/** The container of a panel section: tabpanel in tabs, a block with a title in consecutive sections. */
 	let {
 		name,
 		presentation,

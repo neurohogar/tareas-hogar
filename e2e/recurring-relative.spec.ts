@@ -93,7 +93,7 @@ test('Flujo 3 pasos 3-13: ciclo de estados de Regar plantas cada 2 días (contex
 	await advance(page, '2026-07-19T08:00:00');
 	await waitStatus(page, T, 'atrasada');
 
-	// Paso 10: recargar conserva el estado (el reloj instalado persiste en la página al recargar).
+	// Step 10: reloading keeps the state (the installed clock persists in the page on reload).
 	await page.reload();
 	await waitStatus(page, T, 'atrasada');
 
@@ -139,7 +139,7 @@ test('Flujo 5: persistencia entre sesiones', async ({ browser }) => {
 	await advance(page, '2026-07-16T08:00:00');
 	await waitStatus(page, T, 'en espera', 50);
 
-	// Cerrar la pestaña y abrir la app de nuevo con el mismo reloj, en el mismo perfil.
+	// Close the tab and open the app again with the same clock, in the same profile.
 	await page.close();
 	const fresh = await context.newPage();
 	await fresh.clock.install({ time: new Date('2026-07-16T08:00:00') });

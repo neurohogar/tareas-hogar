@@ -30,14 +30,14 @@ test.beforeEach(async () => {
 	await cleanEmulators();
 });
 
-/** Avanza el reloj simulado hasta `hora`, disparando los temporizadores intermedios (reloj detenido). */
+/** Advances the simulated clock to `hora`, firing the intermediate timers (clock stopped). */
 async function go(page: Page, hour: string) {
 	const missing = new Date(hour).getTime() - (await page.evaluate(() => Date.now()));
 	if (missing <= 10_000) await page.clock.runFor(missing);
 	else await advance(page, hour);
 }
 
-/** Sesión que termina con el reloj corriendo 10 minutos antes de `hora`, con Mostrar completadas encendido. */
+/** Session that ends with the clock running 10 minutes before `hora`, with Mostrar completadas on. */
 async function sessionStopped(page: Page, hour: string) {
 	await sessionWithClock(page, new Date(new Date(hour).getTime() - 600_000).toISOString());
 	await turnOnCompleted(page);

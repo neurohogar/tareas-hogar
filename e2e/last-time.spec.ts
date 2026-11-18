@@ -41,7 +41,7 @@ async function two(browser: Browser, hourA: string, hourB: string) {
 
 const textLastTime = (page: Page) => page.getByText(/^Última vez/);
 
-/** El panel dice `Última vez: T`, inmediatamente debajo del encabezado Editar tarea. */
+/** The panel says `Última vez: T`, immediately below the Editar tarea heading. */
 async function says(page: Page, t: string) {
 	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();
 	await expect(textLastTime(page)).toHaveCount(1);

@@ -1,4 +1,4 @@
-// Qué fuente dibuja cada carácter (spec §6, "Qué se dibuja con qué").
+// Which font draws each character (spec §6, "Qué se dibuja con qué").
 import { expect } from 'vitest';
 import { textFonts } from '../../src/lib/core/character-font';
 import { P } from './values';

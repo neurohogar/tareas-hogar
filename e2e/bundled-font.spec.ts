@@ -60,19 +60,19 @@ test.beforeEach(async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Pedidos de red
+// Network requests
 // ---------------------------------------------------------------------------
 
 const ORIGIN = "http://127.0.0.1:4173";
 
-/** Registra todo pedido a un origen que no es la app ni Firebase Auth / Firestore (emuladores o servicios de Firebase). */
+/** Records every request to an origin that is neither the app nor Firebase Auth / Firestore (emulators or Firebase services). */
 function requestsExternal(page: Page): string[] {
   const external: string[] = [];
   page.on("request", (r) => {
     const u = new URL(r.url());
     if (["data:", "blob:", "about:"].includes(u.protocol)) return;
     if (["127.0.0.1", "localhost", "apis.google.com"].includes(u.hostname))
-      return; // apis.google.com: el SDK de Firebase Auth
+      return; // apis.google.com: the Firebase Auth SDK
     if (/(^|\.)(googleapis|firebaseio|firebaseapp)\.com$/.test(u.hostname))
       return;
     external.push(r.url());
@@ -86,7 +86,7 @@ const blockEmoji = (ctx: BrowserContext | Page) =>
   ctx.route(NOTO_FILE, (r) => r.abort());
 
 // ---------------------------------------------------------------------------
-// Flujo 1
+// Flow 1
 // ---------------------------------------------------------------------------
 
 const bar = (page: Page) => page.getByRole("navigation");
@@ -137,7 +137,7 @@ for (const c of combinations) {
     });
     const page = await ctx.newPage();
 
-    // Paso 8: la app no tiene un control para cerrar sesión; la pantalla de entrada se ve antes de entrar.
+    // Step 8: the app has no control to sign out; the login screen is seen before signing in.
     await page.goto("/");
     const enter = page.getByRole("button", { name: "Entrar con Google" });
     await expect(enter).toBeVisible();
@@ -149,7 +149,7 @@ for (const c of combinations) {
 
     await sessionWithClock(page, HOUR);
 
-    // Paso 1.
+    // Step 1.
     await createAndView(page, {
       title: "Regar",
       kind: "Intervalo",
@@ -159,7 +159,7 @@ for (const c of combinations) {
       note: "Año 2026 ✈",
     });
 
-    // Paso 2: Pendientes.
+    // Step 2: Pendientes (Pending).
     const f = row(page, "Regar");
     await distributionIs(
       page,
@@ -175,7 +175,7 @@ for (const c of combinations) {
       page.getByRole("heading", { name: "Pendientes", level: 1 }),
     );
 
-    // Paso 3: Historial y Anotaciones.
+    // Step 3: Historial and Anotaciones (History and Annotations).
     await goA(page, "Historial");
     await withAtkinson(
       page,
@@ -189,7 +189,7 @@ for (const c of combinations) {
     );
     await goA(page, "Pendientes");
 
-    // Paso 4: el panel.
+    // Step 4: the panel.
     await openTask(page, "Regar");
     const dialog = page.getByRole("dialog");
     await withAtkinson(
@@ -223,10 +223,10 @@ for (const c of combinations) {
       ([a, n, o]) => a === 0 && n === 1 && o === 0,
     );
 
-    // Paso 5: el selector de emoji.
+    // Step 5: the emoji picker.
     await openSelector(page);
     const sel = selectorEmoji(page);
-    // Recientes y la categoría siguiente, emoji por emoji; todas las categorías las recorre el Flujo 6.
+    // Recents and the next category, emoji by emoji; Flow 6 walks every category.
     for (const i of [0, 1]) {
       await sel.getByRole("tab").nth(i).click();
       await expect(sel.getByRole("tab").nth(i)).toHaveAttribute("aria-selected", "true");
@@ -241,7 +241,7 @@ for (const c of combinations) {
     await sel.getByRole("button", { name: "Cerrar" }).click();
     await expect(sel).toHaveCount(0);
 
-    // Paso 7: el aviso de cambios sin guardar.
+    // Step 7: the unsaved changes notice.
     await page.getByLabel("Título").fill("Regar mucho");
     await page.getByRole("button", { name: "Cerrar" }).click();
     const notice = page.getByRole("alertdialog", {
@@ -256,11 +256,11 @@ for (const c of combinations) {
     await notice.getByRole("button", { name: "Descartar", exact: true }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
 
-    // Paso 6: el aviso de deshacer.
+    // Step 6: the undo notice.
     await complete(page, "Regar");
     const undo = page.getByRole("status");
     await expect(undo).toContainText("Completaste «🌱 Regar»");
-    // El texto del aviso vive en su propio nodo (junto a la línea «Vuelve …»).
+    // The notice text lives in its own node (next to the «Vuelve …» line).
     await distributionIs(
       page,
       undo.getByText("Completaste «🌱 Regar»"),
@@ -273,7 +273,7 @@ for (const c of combinations) {
 }
 
 // ---------------------------------------------------------------------------
-// Flujo 2
+// Flow 2
 // ---------------------------------------------------------------------------
 
 test("Flujo 2: qué fuente dibuja cada carácter", async ({ page }) => {
@@ -287,7 +287,7 @@ test("Flujo 2: qué fuente dibuja cada carácter", async ({ page }) => {
   });
 
   const title = row(page, "Ñandú").getByRole("button").first();
-  // Atkinson: «Ñandú: camión» (12 letras y signos); Noto: ❤ y 🌱; sistema: 日本語.
+  // Atkinson: «Ñandú: camión» (12 letters and signs); Noto: ❤ and 🌱; system: 日本語.
   await distributionIs(page, title, ([a, n, o]) => a >= 12 && n === 2 && o >= 1);
   const [, , other] = await distribution(page, title);
   expect(other).toBeGreaterThanOrEqual(1);
@@ -298,10 +298,10 @@ test("Flujo 2: qué fuente dibuja cada carácter", async ({ page }) => {
   const field = page.getByLabel("Título");
   await distributionIs(page, field, ([a, n, o]) => a >= 12 && n === 2 && o >= 1);
   const note = page.getByLabel("Nota");
-  // ☀ ☎ con Noto; © ™ # con Atkinson.
+  // ☀ ☎ with Noto; © ™ # with Atkinson.
   await distributionIs(page, note, ([a, n, o]) => n === 2 && a >= 3 && o === 0);
 
-  // Paso 4: emoji con ZWJ, con tono y bandera, cada uno un solo dibujo.
+  // Step 4: emoji with ZWJ, with skin tone and flag, each one a single drawing.
   for (const e of ["👨‍👩‍👧", "👍🏽", "🇦🇷"]) {
     await field.fill(e);
     await distributionIs(page, field, ([a, n, o]) => a === 0 && n === 1 && o === 0);
@@ -315,7 +315,7 @@ test("Flujo 2: qué fuente dibuja cada carácter", async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 3
+// Flow 3
 // ---------------------------------------------------------------------------
 
 interface Measure {
@@ -335,7 +335,7 @@ async function measure(page: Page, l: Locator): Promise<Measure> {
   return { box: [box!.width, box!.height], size: est[0], weight: est[1] };
 }
 
-/** Lo que el paso 2 compara: tamaño, peso y resaltado, con el panel abierto para ver la nota. */
+/** What step 2 compares: size, weight and highlight, with the panel open to see the note. */
 async function hierarchy(page: Page) {
   const style = (l: Locator) =>
     l.first().evaluate((e) => {
@@ -367,7 +367,7 @@ async function hierarchy(page: Page) {
   return { titleRow, note, heading, chosen, other };
 }
 
-/** Paso 2: al crear y al editar, en Celular y en Ancho, el campo Título mide 20px y la Nota 16px. */
+/** Step 2: when creating and editing, in Celular and Ancho, the Título field is 20px and the Nota 16px. */
 async function panelMeasures(page: Page) {
   const size = (l: Locator) =>
     l.evaluate((e) => getComputedStyle(e).fontSize);
@@ -390,11 +390,11 @@ async function panelMeasures(page: Page) {
 }
 
 function hierarchyKeeps(j: Awaited<ReturnType<typeof hierarchy>>) {
-  // El título de la fila se distingue de la nota por el peso (el tamaño es el mismo).
+  // The row title is told apart from the note by weight (the size is the same).
   expect(j.titleRow.size).toBe(j.note.size);
   expect(j.titleRow.weight).toBeGreaterThan(j.note.weight);
   expect(j.heading.size).toBeGreaterThan(j.note.size);
-  // La pestaña elegida se resalta con peso, color y una marca que las demás no tienen.
+  // The selected tab is highlighted with weight, color and a mark the others do not have.
   expect(j.chosen.weight).toBeGreaterThan(j.other.weight);
   expect(j.chosen.color).not.toBe(j.other.color);
   expect(j.chosen.mark).not.toBe("none");
@@ -418,7 +418,7 @@ test("Flujo 3: sin cambios de diseño y horas de ancho fijo", async ({
     button: p.getByRole("button", { name: "+" }),
     tabName: bar(p).getByRole("link", { name: "Pendientes" }),
   });
-  // Con la fuente bloqueada: sistema.
+  // With the font blocked: system.
   const before: Record<string, Measure> = {};
   for (const [k, l] of Object.entries(probes(page)))
     before[k] = await measure(page, l);
@@ -438,13 +438,13 @@ test("Flujo 3: sin cambios de diseño y horas de ancho fijo", async ({
     expect(d.size, k).toBe(before[k].size);
     expect(d.weight, k).toBe(before[k].weight);
   }
-  // Paso 2: la jerarquía se mantiene, igual a la de antes.
+  // Step 2: the hierarchy is kept, the same as before.
   const hierarchyAfter = await hierarchy(page);
   hierarchyKeeps(hierarchyAfter);
   expect(hierarchyAfter).toEqual(hierarchyBefore);
   await panelMeasures(page);
 
-  // Horas de ancho fijo en el Historial.
+  // Fixed-width times in the Historial.
   await create(page, {
     title: "Uno",
     kind: "Intervalo",
@@ -487,8 +487,8 @@ test("Flujo 3: sin cambios de diseño y horas de ancho fijo", async ({
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 4 (parte con conexión; la parte sin conexión vive en
-// fuente-empaquetada-sin-conexion.spec.ts, que necesita el service worker)
+// Flow 4 (online part; the offline part lives in
+// bundled-font-offline.spec.ts, which needs the service worker)
 // ---------------------------------------------------------------------------
 
 test("Flujo 4: ningún pedido a un servicio externo", async ({ page }) => {
@@ -511,7 +511,7 @@ test("Flujo 4: ningún pedido a un servicio externo", async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 5
+// Flow 5
 // ---------------------------------------------------------------------------
 
 async function taskWithEmoji(page: Page) {
@@ -539,7 +539,7 @@ const inAtkinsonAndNoto = (page: Page) =>
     ([a, n, o]) => a >= 5 && n === 1 && o === 0,
   );
 
-/** Los emoji con los del dispositivo: Noto no dibuja nada, y el emoji no queda en blanco. */
+/** Emoji with the device's own: Noto draws nothing, and the emoji is not left blank. */
 async function withEmojiOfDevice(page: Page) {
   await expect
     .poll(async () => {
@@ -550,7 +550,7 @@ async function withEmojiOfDevice(page: Page) {
   expect((await titleRow(page).boundingBox())!.width).toBeGreaterThan(30);
 }
 
-/** Lo guardado sirve aunque se bloquee la red: para que falte, cada paso empieza olvidándolo. */
+/** What was saved works even if the network is blocked: for it to be missing, each step starts by forgetting it. */
 test("Flujo 5 pasos 1 y 2: sin la fuente, la pantalla no la espera, todo con la del sistema y sin aviso", async ({
   page,
 }) => {
@@ -565,7 +565,7 @@ test("Flujo 5 pasos 1 y 2: sin la fuente, la pantalla no la espera, todo con la 
   await forgetFonts(page);
   await blockFont(page);
 
-  // Paso 1: la pantalla se muestra sin texto de respaldo y se va a los 0,5 s, sin esperar lo que falló.
+  // Step 1: the screen is shown without fallback text and goes away after 0.5 s, without waiting for what failed.
   const opening = await reloadStopped(page);
   await expect(screenName(page)).toBeVisible();
   expect(await textVisible(page)).toBe("");
@@ -579,7 +579,7 @@ test("Flujo 5 pasos 1 y 2: sin la fuente, la pantalla no la espera, todo con la 
       return a === 0 && o > 0;
     })
     .toBe(true);
-  // Todo el texto, también cifras, signos y espacios, aunque el juego de emoji ya esté: Noto también los tiene.
+  // All the text, including digits, signs and spaces, even if the emoji set is already there: Noto has them too.
   await distributionIs(
     page,
     row(page, "Año").getByRole("button").first(),
@@ -587,7 +587,7 @@ test("Flujo 5 pasos 1 y 2: sin la fuente, la pantalla no la espera, todo con la 
   );
   await withoutNotices(page);
 
-  // Paso 2: quitar el bloqueo y recargar.
+  // Step 2: remove the block and reload.
   await page.unroute(ATKINSON_FILES);
   await (await reloadStopped(page)).goesA(0.5);
   await inAtkinsonAndNoto(page);
@@ -601,7 +601,7 @@ test("Flujo 5 pasos 3 y 4: sin el juego, la pantalla no lo espera y los emoji so
   await forgetFonts(page);
   await blockEmoji(page);
 
-  // Paso 3.
+  // Step 3.
   const opening = await reloadStopped(page);
   await opening.toMount(page.getByText("Regar"));
   await opening.staysA(0.4);
@@ -609,7 +609,7 @@ test("Flujo 5 pasos 3 y 4: sin el juego, la pantalla no lo espera y los emoji so
   await withEmojiOfDevice(page);
   await withoutNotices(page);
 
-  // Paso 4.
+  // Step 4.
   await page.unroute(NOTO_FILE);
   await (await reloadStopped(page)).goesA(0.5);
   await inAtkinsonAndNoto(page);
@@ -650,7 +650,7 @@ test("Flujo 5 paso 6: con la descarga abortada no llega al tope; al volver la re
   await withEmojiOfDevice(page);
   await withoutNotices(page);
 
-  // Sin conexión, quitar la falla y volver a tener conexión: hay un pedido nuevo.
+  // Offline, remove the failure and come back online: there is a new request.
   const context = page.context();
   await context.setOffline(true);
   await expect(page.getByText("Sin conexión")).toBeVisible();
@@ -663,7 +663,7 @@ test("Flujo 5 paso 6: con la descarga abortada no llega al tope; al volver la re
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 6
+// Flow 6
 // ---------------------------------------------------------------------------
 
 test("Flujo 6: un emoji que el juego no tiene se guarda y se muestra igual", async ({
@@ -701,7 +701,7 @@ test("Flujo 6: un emoji que el juego no tiene se guarda y se muestra igual", asy
   }
 });
 
-// El catálogo que viaja con la app: la fuente independiente del selector y de la fuente que lo dibuja.
+// The catalog that ships with the app: the source independent of the picker and of the font that draws it.
 const CATALOG = JSON.parse(
   readFileSync("node_modules/emoji-picker-element-data/es/cldr/data.json", "utf8"),
 ) as {
@@ -709,17 +709,17 @@ const CATALOG = JSON.parse(
   group: number;
   skins?: { tone: number | number[]; emoji: string }[];
 }[];
-/** El grupo 2 son los componentes (tonos y pelo sueltos): no se eligen como emoji, y nunca se ofrecieron. */
+/** Group 2 holds the components (loose skin tones and hair): they are not chosen as emoji, and were never offered. */
 const ELIGIBLE = CATALOG.filter((e) => e.group !== 2);
 const TONES = [1, 2, 3, 4, 5];
 
-/** Para un tono, cada emoji con esa variante (las de dos tonos no se ofrecen) o el emoji sin variantes. */
+/** For a skin tone, each emoji with that variant (two-tone ones are not offered) or the emoji without variants. */
 const catalogWithTone = (tone: number) =>
   ELIGIBLE.map(
     (e) => e.skins?.find((s) => s.tone === tone)?.emoji ?? e.emoji,
   );
 
-/** Todo lo que el selector ofrece, recorriendo sus pestañas de categoría como un usuario. */
+/** Everything the picker offers, walking its category tabs like a user. */
 async function thatOffers(page: Page): Promise<string[]> {
   const tabs = selectorEmoji(page).getByRole("tab");
   const offered: string[] = [];
@@ -772,7 +772,7 @@ test("Flujo 6 paso 5: el selector ofrece los mismos emoji, ni falta ni sobra", a
     unit: "días",
   });
 
-  // Sin el juego de emoji: lo que se ofrecía antes de empaquetarlo.
+  // Without the emoji set: what was offered before bundling it.
   await forgetFonts(page);
   await blockEmoji(page);
   await page.reload();
@@ -783,13 +783,13 @@ test("Flujo 6 paso 5: el selector ofrece los mismos emoji, ni falta ni sobra", a
       glyphs(await platform(page, selectorEmojis(page).first()), isNoto),
     )
     .toBe(0);
-  // La fuente del catálogo es independiente del selector: 1914 base y 9 componentes que no se ofrecen.
+  // The catalog source is independent of the picker: 1914 base and 9 components that are not offered.
   expect(ELIGIBLE).toHaveLength(1914);
   expect(CATALOG.length - ELIGIBLE.length).toBe(9);
   const withoutNoto = await thatOffers(page);
   isSameCatalog(withoutNoto, catalogWithTone(0));
 
-  // Con Noto: los mismos, contra el catálogo y contra lo de recién.
+  // With Noto: the same ones, against the catalog and against what was just seen.
   await page.unroute(NOTO_FILE);
   await page.reload();
   await openTask(page, "Prueba");
@@ -799,7 +799,7 @@ test("Flujo 6 paso 5: el selector ofrece los mismos emoji, ni falta ni sobra", a
   isSameCatalog(withSet, catalogWithTone(0));
   expect(withSet).toEqual(withoutNoto);
 
-  // Y cada variante de tono, eligiendo el tono en el selector.
+  // And each skin-tone variant, choosing the tone in the picker.
   for (const tone of TONES) {
     await selectorEmoji(page).locator("#skintone-button").click();
     await selectorEmoji(page)

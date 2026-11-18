@@ -1,15 +1,15 @@
-// Filtro de mutaciones equivalentes del proyecto (mutator-spec.md,
-// "Equivalent Mutation Filters"). Determinista.
+// Project filter for equivalent mutations (mutator-spec.md,
+// "Equivalent Mutation Filters"). Deterministic.
 //
-// El oráculo (oracle.ts) clasifica con las reglas del spec, nunca con el core.
+// The oracle (oracle.ts) classifies with the spec rules, never with the core.
 //
-// Criterio: una mutación de una celda es equivalente cuando el escenario solo
-// verifica de qué lado de la regla cae la fila (clasificación: tipo de estado,
-// o rechazo/creación) y el valor mutado cae del mismo lado que el original
-// según el oráculo.
-// En ese caso los tests no pueden distinguirla: pasarían igual.
-// Si algún paso Then verifica otra cosa (valores, progreso, el completado
-// registrado), la mutación nunca se filtra.
+// Criterion: a cell mutation is equivalent when the scenario only
+// verifies which side of the rule the row falls on (classification: state kind,
+// or rejection/creation) and the mutated value falls on the same side as the original
+// according to the oracle.
+// In that case the tests cannot tell them apart: they would pass either way.
+// If any Then step verifies something else (values, progress, the recorded
+// completion), the mutation is never filtered.
 import type { Feature, Scenario } from './ir';
 import { classifyRow, elements, isChronologyImpossible, isScenarioOfFont, observeFont, pendingOrder, type RowOracle, type StepOracle, type PendingView } from './oracle';
 import { isScenarioOfChanges, isScenarioOfPanel, observeChanges, observePanel } from './oracle-panel';
@@ -18,7 +18,7 @@ import { isScenarioOfEditing, observeEditing } from './oracle-editing';
 import { isScenarioOfTextOfDate, observeTextOfDate } from './oracle-date-text';
 import { isScenarioOfScreenOfLoading, observeScreenOfLoading } from './oracle-loading-screen';
 
-/** Pasos Then que solo observan la clasificación de la regla. */
+/** Then steps that only observe the rule's classification. */
 const CLASSIFICATION_THEN = [
 	/^el estado es (pendiente|en espera|atrasada)$/,
 	/^el estado es <[A-Za-z0-9_]+>$/,
@@ -29,12 +29,12 @@ const CLASSIFICATION_THEN = [
 	/^la tarea no aparece en Pendientes$/,
 	/^la tarea aparece en Pendientes$/,
 	/^la tarea (no )?está completada$/,
-	// §5.8 y §6.2: la pausa y el botón de pausa del panel.
+	// §5.8 and §6.2: the pause and the panel's pause button.
 	/^la tarea (no )?está pausada$/,
 	/^la tarea no tiene estado$/,
 	/^el panel de edición ofrece <[A-Za-z0-9_]+>$/,
 	/^el panel de edición no ofrece pausar$/,
-	// §5.9 y §6.2: la posposición guardada, y el botón y el texto de posponer del panel.
+	// §5.9 and §6.2: the stored postponement, and the panel's postpone button and text.
 	/^la tarea está pospuesta desde <[A-Za-z0-9_]+> hasta <[A-Za-z0-9_]+>$/,
 	/^la tarea no está pospuesta$/,
 	/^el botón de posponer del panel es <[A-Za-z0-9_]+>$/,
@@ -42,8 +42,8 @@ const CLASSIFICATION_THEN = [
 	/^el panel de edición no dice que está pospuesta$/,
 	/^el checkbox de la tarea está (habilitado|deshabilitado)$/,
 	/^se registró un completado que cubre el <[A-Za-z0-9_]+>$/,
-	// Invariantes de estructura que no dependen de los momentos: el completado nuevo se agrega
-	// al final con id propio, y sin ocurrencia cubierta en las relativas.
+	// Structural invariants that do not depend on the moments: the new completion is appended
+	// at the end with its own id, and with no covered occurrence in the relative ones.
 	/^el nuevo completado se agrega sin modificar los anteriores$/,
 	/^se registró un completado sin ocurrencia cubierta$/,
 	/^el progreso es <[A-Za-z0-9_]+>$/
@@ -73,12 +73,12 @@ export interface Candidate {
 	mutated: string;
 }
 
-/** Una columna que un Then nombra es un valor esperado: mutarla cambia lo que se afirma. */
+/** A column that a Then names is an expected value: mutating it changes what is asserted. */
 function namesThen(feature: Feature, scenario: Scenario, column: string): boolean {
 	return stepsOf(feature, scenario).some(({ step, inThen }) => inThen && step.text.includes(`<${column}>`));
 }
 
-/** Los Then de Pendientes (§6.1) y la parte de la vista que cada uno afirma. */
+/** The Pending Thens (§6.1) and the part of the view each one asserts. */
 const PENDING_THENS: [RegExp, keyof PendingView][] = [
 	[/^Pendientes no muestra ninguna tarea$/, 'order'],
 	[/^Pendientes muestra en orden <([A-Za-z0-9_]+)>$/, 'order'],
@@ -94,12 +94,12 @@ function pendingThen(text: string): { column?: string; part: keyof PendingView }
 	return undefined;
 }
 
-/** La lista de títulos de la celda, como la arma el oráculo; undefined si la celda no es una lista. */
+/** The cell's title list, as the oracle builds it; undefined if the cell is not a list. */
 const asList = (value: string | undefined) => (value === undefined ? undefined : elements(value)?.join(', '));
 
 /**
- * Escenario cuyos Then son solo lo que muestra Pendientes (§6.1): una mutación es equivalente cuando la vista
- * que el oráculo deduce del spec es la misma con el valor mutado, y coincide con lo que afirma la fila.
+ * Scenario whose Thens are only what Pending shows (§6.1): a mutation is equivalent when the view
+ * the oracle deduces from the spec is the same with the mutated value, and matches what the row asserts.
  */
 function isEquivalentOfOrder(feature: Feature, scenario: Scenario, candidate: Candidate): boolean | undefined {
 	const steps = stepsOf(feature, scenario);
@@ -113,12 +113,12 @@ function isEquivalentOfOrder(feature: Feature, scenario: Scenario, candidate: Ca
 	return JSON.stringify(pendingOrder(entries, { ...original, [candidate.key]: candidate.mutated })) === JSON.stringify(expected);
 }
 
-/** Thens que el oráculo de edición verifica contra el valor que nombran: si ese valor cambia, lo observado cambia. */
+/** Thens that the editing oracle verifies against the value they name: if that value changes, what is observed changes. */
 const THEN_THAT_VERIFIES_THAT_NAMES = /^la tarea (?:\S+ )?conserva un solo completado, del <[A-Za-z0-9_]+>$/;
 
 /**
- * Una columna que solo nombran Thens verificados y que también da un paso de entrada llega mutada a los dos lados:
- * el oráculo compara el valor del Then con el de la entrada, así que si siguen coincidiendo, nada cambia.
+ * A column that is only named by verified Thens and that an input step also gives arrives mutated on both sides:
+ * the oracle compares the Then's value with the input's, so if they still match, nothing changes.
  */
 function nameOnlyThenVerifiedAndEntry(steps: ReturnType<typeof stepsOf>, column: string): boolean {
 	const name = steps.filter(({ step }) => step.text.includes(`<${column}>`));
@@ -126,9 +126,9 @@ function nameOnlyThenVerifiedAndEntry(steps: ReturnType<typeof stepsOf>, column:
 }
 
 /**
- * Escenario que edita, borra o modifica concurrentemente una tarea (§6.2, §7): una mutación es equivalente
- * cuando ningún Then nombra la columna y el oráculo de edición deduce, con el valor mutado, lo mismo que
- * observa cada Then con el valor original.
+ * Scenario that edits, deletes or concurrently modifies a task (§6.2, §7): a mutation is equivalent
+ * when no Then names the column and the editing oracle deduces, with the mutated value, the same as
+ * each Then observes with the original value.
  */
 function isEquivalentOfEditing(feature: Feature, scenario: Scenario, candidate: Candidate): boolean {
 	const steps = stepsOf(feature, scenario);
@@ -144,9 +144,9 @@ function isEquivalentOfEditing(feature: Feature, scenario: Scenario, candidate: 
 type Observer = (entries: StepOracle[], thens: StepOracle[], row: RowOracle) => { observed: string[]; asserted: string[] } | undefined;
 
 /**
- * Escenario de anotaciones (§4.5, §5.10, §6.7), del panel en pestañas (§6.2), de qué fuente dibuja cada carácter (§6) o de la pantalla de carga (§6.6): una mutación
- * es equivalente cuando ningún Then nombra la columna, el oráculo reproduce lo que el escenario afirma con la
- * fila original (auditoría en línea) y, con el valor mutado, deduce lo mismo que observa cada Then.
+ * Scenario for annotations (§4.5, §5.10, §6.7), the tabbed panel (§6.2), which font draws each character (§6) or the loading screen (§6.6): a mutation
+ * is equivalent when no Then names the column, the oracle reproduces what the scenario asserts with the
+ * original row (online audit) and, with the mutated value, deduces the same as each Then observes.
  */
 function isEquivalentPer(observe: Observer, feature: Feature, scenario: Scenario, candidate: Candidate): boolean {
 	if (namesThen(feature, scenario, candidate.key)) return false;
@@ -161,12 +161,12 @@ function isEquivalentPer(observe: Observer, feature: Feature, scenario: Scenario
 }
 
 /**
- * Escenario de anotaciones (§4.5, §5.10, §6.7) o de cambios sin guardar, sus avisos o Atrás (§6.2, §7): una mutación es equivalente cuando el oráculo
- * reproduce lo que el escenario afirma con la fila original y también con el valor mutado. Una columna que un Then
- * nombra y un paso de entrada también da llega mutada a los dos lados: lo que se escribe y un Then repite, o el nombre
- * de una tarea que otro dispositivo borró (§7, gana el borrado), no deciden nada. Si solo la nombra el Then, lo que
- * afirma deja de coincidir con lo observado y no se filtra. Los ids de limpieza (§7) son identificadores opacos:
- * renombrar uno de forma consistente en el dado y en el Then que lo repite no cambia lo observado.
+ * Scenario for annotations (§4.5, §5.10, §6.7) or unsaved changes, their notices or Back (§6.2, §7): a mutation is equivalent when the oracle
+ * reproduces what the scenario asserts with the original row and also with the mutated value. A column that a Then
+ * names and an input step also gives arrives mutated on both sides: what is typed and a Then repeats, or the name
+ * of a task that another device deleted (§7, deletion wins), decide nothing. If only the Then names it, what it
+ * asserts stops matching what is observed and it is not filtered. The cleanup ids (§7) are opaque identifiers:
+ * renaming one consistently in the given and in the Then that repeats it does not change what is observed.
  */
 function isEquivalentWhetherStaysFulfilling(observe: Observer, feature: Feature, scenario: Scenario, candidate: Candidate): boolean {
 	const steps = stepsOf(feature, scenario);
@@ -214,7 +214,7 @@ export function esEquivalente(feature: Feature, candidate: Candidate): boolean {
 	const entries = stepsOf(feature, scenario)
 		.filter(({ inThen }) => !inThen)
 		.map(({ step }) => step);
-	// §5.8: una fila donde se completa después de reanudar con un momento anterior no es un escenario posible.
+	// §5.8: a row that completes after resuming with an earlier moment is not a possible scenario.
 	if (!isChronologyImpossible(entries, original) && isChronologyImpossible(entries, mutated)) return true;
 	const observesInThen = (pattern: RegExp) => stepsOf(feature, scenario).some(({ step, inThen }) => inThen && pattern.test(step.text));
 	const progress = observesInThen(/^el progreso es /);

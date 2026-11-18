@@ -4,16 +4,16 @@ import type { Task } from './task';
 
 const WATER: Task = { id: 't1', title: 'Regar', kind: 'puntual', createdAt: new Date(2026, 0, 1) };
 
-describe('nombreDeTarea', () => {
-	it('con emoji es «emoji título», con un solo espacio', () => {
+describe('taskName', () => {
+	it('with an emoji it is «emoji title», with a single space', () => {
 		expect(taskName({ ...WATER, emoji: '🌱' })).toBe('🌱 Regar');
 	});
 
-	it('sin emoji es solo el título, sin espacio inicial', () => {
+	it('without an emoji it is just the title, without a leading space', () => {
 		expect(taskName(WATER)).toBe('Regar');
 	});
 
-	it('no incluye la nota', () => {
+	it('it does not include the note', () => {
 		expect(taskName({ ...WATER, ...{ note: 'Usar guantes' } })).toBe('Regar');
 	});
 });

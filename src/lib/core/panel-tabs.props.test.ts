@@ -1,4 +1,4 @@
-// Spec §6.2: panel en pestañas.
+// Spec §6.2: panel in tabs.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
@@ -18,8 +18,8 @@ const fields = fc.subarray(FIELDS).chain((subset) => fc.shuffledSubarray(subset)
 const presentation = fc.constantFrom('pestanas' as const, 'secciones' as const);
 const repetition = fc.constantFrom<RepetitionOption>('puntual', 'relativo', 'semanal', 'mensual');
 
-describe('presentacionDelPanel (propiedades)', () => {
-	it('es en pestañas exactamente hasta 40rem inclusive y es monótona', () => {
+describe('panelPresentation (properties)', () => {
+	it('is in tabs exactly up to 40rem inclusive and is monotonic', () => {
 		fc.assert(
 			fc.property(fc.double({ min: 0, max: 200, noNaN: true }), fc.double({ min: 0, max: 200, noNaN: true }), (a, b) => {
 				expect(panelPresentation(a) === 'pestanas').toBe(a <= 40);
@@ -29,14 +29,14 @@ describe('presentacionDelPanel (propiedades)', () => {
 	});
 });
 
-describe('seccionesDelPanel (propiedades)', () => {
-	it('al editar son las de crear más Acciones, sin repetir', () => {
+describe('panelSections (properties)', () => {
+	it('when editing they are those of creating plus Acciones, without repeating', () => {
 		expect(panelSections('editar')).toEqual([...panelSections('crear'), 'Acciones']);
 	});
 });
 
-describe('seccionesMarcadas (propiedades)', () => {
-	it('no depende del orden ni de repeticiones, y sigue el orden de las pestañas', () => {
+describe('markedSections (properties)', () => {
+	it('does not depend on order or repetitions, and follows the tab order', () => {
 		fc.assert(
 			fc.property(fields, (c) => {
 				const marked = markedSections(c);
@@ -48,15 +48,15 @@ describe('seccionesMarcadas (propiedades)', () => {
 		);
 	});
 
-	it('nunca marca Acciones', () => {
+	it('never marks Acciones', () => {
 		fc.assert(fc.property(fields, (c) => {
 			expect(markedSections(c)).not.toContain('Acciones');
 		}));
 	});
 });
 
-describe('destinoAlFallarGuardar (propiedades)', () => {
-	it('apunta al primer campo en orden de lectura, sin importar el orden recibido', () => {
+describe('destinationOnSaveFailure (properties)', () => {
+	it('points to the first field in reading order, regardless of the order received', () => {
 		fc.assert(
 			fc.property(fields, presentation, (c, p) => {
 				const destination = destinationOnSaveFailure(c, p);
@@ -70,7 +70,7 @@ describe('destinoAlFallarGuardar (propiedades)', () => {
 		);
 	});
 
-	it('la pestaña existe solo en pestañas y es la primera marcada (Tarea antes que Cuándo)', () => {
+	it('the tab exists only in tabs and is the first marked one (Tarea before Cuándo)', () => {
 		fc.assert(
 			fc.property(fields, (c) => {
 				expect(destinationOnSaveFailure(c, 'secciones')?.tab).toBeUndefined();
@@ -80,7 +80,7 @@ describe('destinoAlFallarGuardar (propiedades)', () => {
 	});
 });
 
-describe('camposConError (propiedades)', () => {
+describe('fieldsWithError (properties)', () => {
 	const errors = fc.record(
 		{
 			title: fc.constant('vacio' as const),
@@ -92,7 +92,7 @@ describe('camposConError (propiedades)', () => {
 		{ requiredKeys: [] }
 	);
 
-	it('es un subconjunto sin repetidos de los campos, en orden de lectura', () => {
+	it('is a subset without repeats of the fields, in reading order', () => {
 		fc.assert(
 			fc.property(errors, repetition, (e, r) => {
 				const result = fieldsWithError(e, r);
@@ -101,7 +101,7 @@ describe('camposConError (propiedades)', () => {
 		);
 	});
 
-	it('los campos de las otras opciones de Se repite nunca cuentan', () => {
+	it('the fields of the other Se repite options never count', () => {
 		fc.assert(
 			fc.property(errors, repetition, (e, r) => {
 				const result = fieldsWithError(e, r);
@@ -113,16 +113,16 @@ describe('camposConError (propiedades)', () => {
 	});
 });
 
-describe('barraDeGuardarVisible (propiedades)', () => {
-	it('es la negación del teclado abierto', () => {
+describe('saveBarVisible (properties)', () => {
+	it('is the negation of the open keyboard', () => {
 		fc.assert(fc.property(fc.boolean(), (t) => {
 			expect(saveBarVisible(t)).toBe(!t);
 		}));
 	});
 });
 
-describe('repeticionAlAbrir: propiedades (spec §6.2, S23)', () => {
-	it('al crear abre en No se repite, y es la opción que corresponde a los datos de la tarea al editar', () => {
+describe('repetitionOnOpen: properties (spec §6.2, S23)', () => {
+	it('when creating it opens on No se repite, and is the option matching the task data when editing', () => {
 		expect(repetitionOnOpen()).toBe('puntual');
 		fc.assert(
 			fc.property(fc.constantFrom('puntual' as const, 'relativa' as const), (shape) => {

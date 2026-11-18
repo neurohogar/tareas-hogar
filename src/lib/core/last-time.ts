@@ -1,11 +1,11 @@
-// Spec §6.2 (Última vez): cuándo se completó la tarea por última vez, según
-// su completadoEn más reciente y el día local.
+// Spec §6.2 (Última vez): when the task was last completed, according to
+// its most recent completedAt and the local day.
 import { latestCompletion, completionsOfTask } from './completions';
 import { daysBetween } from './days';
 import { dayHeader, timeInText } from './dates-in-text';
 import type { Completion } from './task';
 
-/** "hoy 08:05", "ayer 19:30", "hace N días", la fecha y la hora de un día posterior a hoy, o "nunca". */
+/** "hoy 08:05", "ayer 19:30", "hace N días", the date and time of a day after today, or "nunca". */
 export function lastTime(taskId: string, completions: readonly Completion[], now: Date): string {
 	const owns = completionsOfTask(completions, taskId);
 	if (owns.length === 0) return 'nunca';

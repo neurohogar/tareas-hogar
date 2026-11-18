@@ -13,41 +13,41 @@ const annotation = (id: string, taskId?: string): Annotation => ({
 	...(taskId === undefined ? {} : { taskId })
 });
 
-describe('borrado', () => {
-	it('borra la tarea y todos sus completados, y solo los suyos', () => {
+describe('deletion', () => {
+	it('deletes the task and all its completions, and only its own', () => {
 		const completions = [completion('c1', 'regar'), completion('c2', 'pagar'), completion('c3', 'regar')];
 
 		expect(deletion('regar', completions, [])).toStrictEqual({ taskId: 'regar', completionIds: ['c1', 'c3'], annotationIds: [] });
 	});
 
-	it('borra también todas sus anotaciones, y solo las suyas: no las de otra tarea ni las sin tarea', () => {
+	it('also deletes all its annotations, and only its own: not those of another task nor those without a task', () => {
 		const annotations = [annotation('a1', 'regar'), annotation('a2', 'pagar'), annotation('a3'), annotation('a4', 'regar')];
 
 		expect(deletion('regar', [], annotations).annotationIds).toStrictEqual(['a1', 'a4']);
 	});
 
-	it('una tarea nunca completada se borra sola', () => {
+	it('a task that was never completed is deleted alone', () => {
 		expect(deletion('regar', [completion('c2', 'pagar')], [])).toStrictEqual({ taskId: 'regar', completionIds: [], annotationIds: [] });
 	});
 });
 
-describe('completadosHuerfanos', () => {
-	it('son los completados cuya tarea ya no existe', () => {
+describe('orphanCompletions', () => {
+	it('are the completions whose task no longer exists', () => {
 		const orphanOne = completion('c2', 'borrada');
 		const completions = [completion('c1', 'regar'), orphanOne, completion('c3', 'pagar')];
 
 		expect(orphanCompletions([task('regar'), task('pagar')], completions)).toStrictEqual([orphanOne]);
 	});
 
-	it('sin tareas, todos los completados son huérfanos', () => {
+	it('without tasks, all the completions are orphans', () => {
 		const completions = [completion('c1', 'regar')];
 
 		expect(orphanCompletions([], completions)).toStrictEqual(completions);
 	});
 });
 
-describe('anotacionesHuerfanas', () => {
-	it('son las anotaciones cuya tarea ya no existe; las sin tarea no lo son', () => {
+describe('orphanAnnotations', () => {
+	it('are the annotations whose task no longer exists; those without a task are not', () => {
 		const orphan = annotation('a2', 'borrada');
 		const annotations = [annotation('a1', 'regar'), orphan, annotation('a3')];
 
@@ -55,12 +55,12 @@ describe('anotacionesHuerfanas', () => {
 	});
 });
 
-describe('existeTarea', () => {
-	it('existe si alguna tarea tiene ese id', () => {
+describe('taskExists', () => {
+	it('exists if some task has that id', () => {
 		expect(taskExists([task('pagar'), task('regar')], 'regar')).toBe(true);
 	});
 
-	it('no existe si ninguna lo tiene', () => {
+	it('no longer exists if none has it', () => {
 		expect(taskExists([task('pagar')], 'regar')).toBe(false);
 	});
 });

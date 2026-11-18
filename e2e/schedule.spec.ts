@@ -55,7 +55,7 @@ async function viewNotice(page: Page, title: string) {
   ).toBeVisible();
 }
 
-/** Avanza el reloj simulado hasta `hora`, disparando los temporizadores intermedios (reloj detenido). */
+/** Advances the simulated clock to `hora`, firing the intermediate timers (clock stopped). */
 async function go(page: Page, hour: string) {
   const missing =
     new Date(hour).getTime() - (await page.evaluate(() => Date.now()));
@@ -63,14 +63,14 @@ async function go(page: Page, hour: string) {
   else await advance(page, hour);
 }
 
-/** Sesión que termina con el reloj corriendo 10 minutos antes de `hora`. */
+/** Session that ends with the clock running 10 minutes before `hora`. */
 const sessionBefore = (page: Page, hour: string) =>
   sessionWithClock(
     page,
     new Date(new Date(hour).getTime() - 600_000).toISOString(),
   );
 
-/** Tocar un checkbox deshabilitado no cambia nada: no hay aviso. */
+/** Tapping a disabled checkbox changes nothing: there is no notice. */
 async function tapDisabled(page: Page, title: string) {
   await row(page, title).getByRole("checkbox").click({ force: true });
   await expect(notice(page)).toHaveCount(0);
@@ -203,7 +203,7 @@ test("Flujo 3: puntual con horario, checkbox y Deshacer", async ({ page }) => {
     kind: "No se repite",
     schedule: TIME_WINDOW,
   });
-  // La barra se mide desde la creación (06:00): se detiene el reloj enseguida.
+  // The bar is measured from creation (06:00): the clock is stopped right away.
   await stop(page, "2026-07-15T06:00:30");
 
   await withClock(page, () =>
@@ -622,7 +622,7 @@ const ONLY_DAYS = "Con varios horarios, el intervalo tiene que ser en días";
 const savePanel = (page: Page) =>
   page.getByRole("button", { name: "Guardar" }).click();
 
-/** Verifica estado y checkbox con el reloj detenido en `hora`. */
+/** Checks status and checkbox with the clock stopped at `hora`. */
 async function inHour(
   page: Page,
   hour: string,
@@ -800,7 +800,7 @@ test("Flujo 12: errores de varios horarios", async ({ page }) => {
 });
 
 test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
-  // La barra cuenta desde la creación: se crea segundos antes de las 06:00 para que 06:30 marque 50.
+  // The bar counts from creation: it is created seconds before 06:00 so that 06:30 reads 50.
   await sessionWithClock(page, "2026-07-15T05:59:40");
   await createAndView(page, {
     title: "Perros",

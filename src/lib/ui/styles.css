@@ -1,4 +1,4 @@
-/* Fuente y emoji empaquetados (spec §6, OFL 1.1; licencias en static/fuentes). Los registra adapters/fonts.ts. */
+/* Bundled font and emoji (spec §6, OFL 1.1; licenses in static/fuentes). Registered by adapters/fonts.ts. */
 :root {
 	color-scheme: light dark;
 	--page-background: #f7f5f0;
@@ -42,7 +42,7 @@ button {
 	font: inherit;
 }
 
-/* Controles compartidos por las secciones del panel de edición (ven al panel como ancestro `.hoja`). */
+/* Controls shared by the edit panel sections (they see the panel as the `.sheet` ancestor). */
 .sheet .form-field {
 	display: grid;
 	gap: 0.35rem;

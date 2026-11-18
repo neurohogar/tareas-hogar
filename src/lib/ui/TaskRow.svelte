@@ -23,17 +23,17 @@
 	}: {
 		task: Task;
 		status: Status;
-		/** Spec §6.1 (Contraste): tachada, en peso normal y atenuada, con el checkbox marcado. */
+		/** Spec §6.1 (Contraste): struck through, normal weight and dimmed, with the checkbox checked. */
 		completed: boolean;
-		/** «Tocaba …» o «Vuelve …» (§6.1), ya armado por el core; sin él, la fila no lleva texto de fecha. */
+		/** «Tocaba …» or «Vuelve …» (§6.1), already built by the core; without it, the row has no date text. */
 		dateText?: string;
-		/** «Primer paso: …» (§6.1), ya armado por el core; sin él, la fila no lleva esa línea. */
+		/** «Primer paso: …» (§6.1), already built by the core; without it, the row has no such line. */
 		firstStepText?: string;
-		/** «Paso anterior» y «Hecho» (§6.1), según el core; sin ellos, la línea no lleva botones. */
+		/** «Paso anterior» and «Hecho» (§6.1), per the core; without them, the line has no buttons. */
 		stepButtons?: StepButtons;
-		/** «Mínima: …» y si «Hice la mínima» está habilitado (§6.1), según el core; sin ella, la fila no lleva esa línea. */
+		/** «Mínima: …» and whether «Hice la mínima» is enabled (§6.1), per the core; without it, the row has no such line. */
 		minimal?: MinimalLine;
-		/** Spec §6.1 y §5.5: deshabilitado si tocarlo completaría fuera de la ventana del horario. */
+		/** Spec §6.1 and §5.5: disabled if tapping it would complete outside the schedule window. */
 		enabled: boolean;
 		onCheckboxTap: () => void;
 		onMinimal: () => void;
@@ -45,7 +45,7 @@
 	const name = $derived(taskName(task));
 
 	function tap(event: Event) {
-		// Marcado se deriva de los completados: el checkbox vuelve a su valor hasta que llegan.
+		// Checked is derived from the completions: the checkbox goes back to its value until they arrive.
 		(event.currentTarget as HTMLInputElement).checked = completed;
 		onCheckboxTap();
 	}
@@ -56,7 +56,7 @@
 		<input type="checkbox" checked={completed} disabled={!enabled} aria-label={`Completar ${name}`} onchange={tap} />
 	</label>
 	<div class="content">
-		<!-- El botón cubre toda la fila fuera del checkbox: tocarla abre la edición. -->
+		<!-- The button covers the whole row outside the checkbox: tapping it opens the edit. -->
 		<button type="button" class="title" onclick={onOpen}>{name}</button>
 		{#if firstStepText}
 			<div class="step-line">
@@ -112,7 +112,7 @@
 
 
 
-	/* Línea propia, entera y en varias líneas si hace falta; no intercepta el toque de la fila. */
+	/* Its own line, whole and on several lines if needed; it does not intercept the row's tap. */
 	.step-line {
 		flex-basis: 100%;
 		display: flex;
@@ -130,7 +130,7 @@
 		overflow-wrap: anywhere;
 	}
 
-	/* Por encima del ::after del título, que cubre la fila: los botones no abren el panel. */
+	/* Above the title's ::after, which covers the row: the buttons do not open the panel. */
 	.step-button {
 		position: relative;
 		z-index: 1;
@@ -232,7 +232,7 @@
 		font-variant-numeric: tabular-nums;
 	}
 
-	/* Fuera del flujo, en el padding inferior de la fila: no corre el título respecto del checkbox. */
+	/* Out of flow, in the row's bottom padding: it does not move the title relative to the checkbox. */
 	.bar {
 		position: absolute;
 		left: 0;

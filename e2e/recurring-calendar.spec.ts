@@ -27,7 +27,7 @@ async function createCalendar(page: Page, title: string, mode: 'Días de la sema
 }
 
 const createJunk = (page: Page) => createCalendar(page, JUNK, 'Días de la semana', ['martes', 'jueves']);
-/** Sesión con reloj y Mostrar completadas encendido: una calendario en espera con completados solo tiene fila así. */
+/** Session with a clock and Mostrar completadas on: a calendar task that is waiting with completions only has a row this way. */
 async function session(page: Page, hour: string) {
 	await sessionWithClock(page, hour);
 	await turnOnCompleted(page);

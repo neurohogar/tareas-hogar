@@ -1,4 +1,4 @@
-// Spec §5.3: qué ocurrencia cubre cada completado, ejercitado a través de `completar`.
+// Spec §5.3: which occurrence each completion covers, exercised through `complete`.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { complete } from './completions';
@@ -26,19 +26,19 @@ const task = fc
 			createdAt: new Date(1990, 0, 1 + day, hour)
 		})
 	);
-/** Momentos relativos a creadaEn, en horas: hasta ~4 meses después (y alguno antes, otro reloj). */
+/** Moments relative to createdAt, in hours: up to ~4 months later (and some earlier, another clock). */
 const shifts = fc.array(fc.integer({ min: -48, max: 3_000 }), { maxLength: 12 });
 const inHours = (t: RecurringTask, hours: number) => new Date(t.createdAt.getTime() + hours * HOUR_MS);
 
-/** Completa la tarea en cada momento, en ese orden, como lo haría la app. */
+/** Completes the task at each moment, in that order, as the app would. */
 function completeAt(t: RecurringTask, moments: readonly Date[]): Completion[] {
 	return moments.reduce<Completion[]>((cs, m) => [...cs, complete(t, cs, `c${cs.length}`, m)], []);
 }
 const lastCoveredOf = (t: RecurringTask, cs: readonly Completion[]) => lastCoveredOccurrence(t.createdAt, cs);
 const r = (t: RecurringTask) => t.recurrence as CalendarRecurrence;
 
-describe('ocurrencia cubierta (propiedades)', () => {
-	it('cubre siempre una ocurrencia real del patrón, a las 00:00 locales', () => {
+describe('covered occurrence (properties)', () => {
+	it('always covers a real occurrence of the pattern, at 00:00 local', () => {
 		fc.assert(
 			fc.property(task, shifts, (t, hours) => {
 				for (const c of completeAt(t, hours.map((h) => inHours(t, h)))) {
@@ -50,7 +50,7 @@ describe('ocurrencia cubierta (propiedades)', () => {
 		);
 	});
 
-	it('P solo crece: cada completado nuevo cubre una ocurrencia posterior a P', () => {
+	it('P only grows: each new completion covers an occurrence after P', () => {
 		fc.assert(
 			fc.property(task, shifts, (t, hours) => {
 				const cs = completeAt(t, hours.map((h) => inHours(t, h)));
@@ -61,7 +61,7 @@ describe('ocurrencia cubierta (propiedades)', () => {
 		);
 	});
 
-	it('completar k veces sin atrasos (cada vez el día N) cubre k ocurrencias consecutivas', () => {
+	it('completing k times without lateness (each time on day N) covers k consecutive occurrences', () => {
 		fc.assert(
 			fc.property(task, fc.array(fc.integer({ min: 0, max: 23 }), { minLength: 1, maxLength: 10 }), (t, hoursOfDay) => {
 				let expectedValue = addDays(startOfDay(t.createdAt), -1);
@@ -77,7 +77,7 @@ describe('ocurrencia cubierta (propiedades)', () => {
 		);
 	});
 
-	it('cada completado extra en el mismo momento avanza exactamente una ocurrencia', () => {
+	it('each extra completion at the same moment advances exactly one occurrence', () => {
 		fc.assert(
 			fc.property(task, shifts, fc.integer({ min: 0, max: 3_000 }), fc.integer({ min: 2, max: 6 }), (t, hours, h, extras) => {
 				const now = inHours(t, h);
@@ -89,7 +89,7 @@ describe('ocurrencia cubierta (propiedades)', () => {
 		);
 	});
 
-	it('el orden de los completados guardados no cambia la ocurrencia que cubre el siguiente', () => {
+	it('the order of the stored completions does not change the occurrence the next one covers', () => {
 		const withPermutation = fc
 			.tuple(task, shifts)
 			.map(([t, hours]) => [t, completeAt(t, hours.map((h) => inHours(t, h)))] as const)
@@ -102,7 +102,7 @@ describe('ocurrencia cubierta (propiedades)', () => {
 		);
 	});
 
-	it('después de completar, en ese mismo momento la tarea queda en espera', () => {
+	it('after completing, at that same moment the task is waiting', () => {
 		fc.assert(
 			fc.property(task, shifts, fc.integer({ min: 0, max: 3_000 }), (t, hours, h) => {
 				const now = inHours(t, Math.max(h, ...hours));
@@ -113,8 +113,8 @@ describe('ocurrencia cubierta (propiedades)', () => {
 	});
 });
 
-describe('P con completados de antes de ser de calendario (propiedades)', () => {
-	/** Completados mezclados: de calendario (con ocurrenciaCubierta) y de cuando era relativa o puntual (sin ella). */
+describe('P with completions from before being a calendar task (properties)', () => {
+	/** Mixed completions: calendar ones (with coveredOccurrence) and ones from when it was relative or one-off (without it). */
 	const completions = fc.array(
 		fc.record(
 			{
@@ -129,11 +129,11 @@ describe('P con completados de antes de ser de calendario (propiedades)', () => 
 		),
 		{ minLength: 1, maxLength: 8 }
 	);
-	/** Los completados de estas propiedades cubren fechas (sin hora). */
+	/** The completions of these properties cover dates (without a time). */
 	const dayOf = (c: Completion) => (c.coveredOccurrence as Date | undefined) ?? startOfDay(c.completedAt);
 	const created = new Date(1990, 0, 1);
 
-	it('P es el día cubierto por alguno de ellos y ninguno cubre uno posterior', () => {
+	it('P is the day covered by one of them and none covers a later one', () => {
 		fc.assert(
 			fc.property(completions, (cs) => {
 				const p = lastCoveredOccurrence(created, cs);
@@ -144,7 +144,7 @@ describe('P con completados de antes de ser de calendario (propiedades)', () => 
 		);
 	});
 
-	it('P no depende del orden de los completados', () => {
+	it('P does not depend on the order of the completions', () => {
 		fc.assert(
 			fc.property(completions, (cs) => {
 				expect(lastCoveredOccurrence(created, [...cs].reverse())).toEqual(lastCoveredOccurrence(created, cs));
@@ -152,7 +152,7 @@ describe('P con completados de antes de ser de calendario (propiedades)', () => 
 		);
 	});
 
-	it('un completado más nunca baja P', () => {
+	it('one more completion never lowers P', () => {
 		fc.assert(
 			fc.property(completions, completions, (cs, more) => {
 				const before = lastCoveredOccurrence(created, cs);

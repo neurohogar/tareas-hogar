@@ -1,15 +1,15 @@
-/** Lo que se sabe del teclado en pantalla: si está abierto y cuánto tapa del borde inferior de la ventana. */
+/** What is known about the on-screen keyboard: whether it is open and how much of the bottom edge of the window it covers. */
 export interface KeyboardState {
 	open: boolean;
-	/** Píxeles que el teclado tapa debajo del viewport visual (0 si el navegador ya achicó la ventana). */
+	/** Pixels the keyboard covers below the visual viewport (0 if the browser already shrank the window). */
 	overlap: number;
 }
 
-/** El teclado achica el viewport visual por lo menos a esta fracción de su alto normal. */
+/** The keyboard shrinks the visual viewport to at least this fraction of its normal height. */
 const KEYBOARD_FRACTION = 0.75;
 const NON_KEYBOARD_TYPES = new Set(['checkbox', 'radio', 'button', 'submit', 'reset', 'range', 'color', 'file', 'image', 'date', 'time', 'datetime-local', 'month', 'week']);
 
-/** Un campo donde se escribe con el teclado en pantalla (no los selectores de fecha y hora ni los botones). */
+/** A field typed into with the on-screen keyboard (not the date and time pickers or the buttons). */
 function isTextField(element: Element | null): boolean {
 	if (element instanceof HTMLTextAreaElement) return true;
 	if (element instanceof HTMLInputElement) return !NON_KEYBOARD_TYPES.has(element.type);
@@ -17,9 +17,9 @@ function isTextField(element: Element | null): boolean {
 }
 
 /**
- * Avisa si el teclado en pantalla está abierto y cada vez que cambia. Se deduce de que hay un campo de texto
- * enfocado y el viewport visual se achicó respecto de su mayor alto con el ancho actual.
- * Devuelve cómo dejar de avisar.
+ * Reports whether the on-screen keyboard is open and every time it changes. It is inferred from a text field
+ * being focused and the visual viewport having shrunk relative to its largest height at the current width.
+ * Returns how to stop reporting.
  */
 export function observeKeyboard(onChange: (status: KeyboardState) => void): () => void {
 	const visual = window.visualViewport;

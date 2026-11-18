@@ -1,4 +1,4 @@
-// Spec §6.3: encabezados de día y horas del Historial.
+// Spec §6.3: day headers and hours of the Historial.
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { dayHeader, timeInText } from "./dates-in-text";
@@ -13,7 +13,7 @@ const DATE_RE = new RegExp(
   `^${DAYS} ([1-9]|[12]\\d|3[01]) de ${MONTHS}( de -?\\d+)?$`,
 );
 
-/** Un momento a `diasAntes` días del día local de `ahora`, a la hora y minuto dados. */
+/** A moment `daysBefore` days from the local day of `now`, at the given hour and minute. */
 function momentOfDay(
   now: Date,
   daysBefore: number,
@@ -29,8 +29,8 @@ function momentOfDay(
   );
 }
 
-describe("horaEnTexto (propiedades)", () => {
-  it("da HH:MM de 24 h con la hora y el minuto locales, para cualquier instante", () => {
+describe("timeInText (properties)", () => {
+  it("gives 24 h HH:MM with the local hour and minute, for any instant", () => {
     fc.assert(
       fc.property(instant, (moment) => {
         const text = timeInText(moment);
@@ -45,7 +45,7 @@ describe("horaEnTexto (propiedades)", () => {
   });
 });
 
-describe("encabezadoDelDia (propiedades)", () => {
+describe("dayHeader (properties)", () => {
   const now = fc
     .integer({ min: 0, max: 4_000_000_000_000 })
     .map((ms) => new Date(ms));
@@ -53,7 +53,7 @@ describe("encabezadoDelDia (propiedades)", () => {
   const hour = fc.integer({ min: 0, max: 23 });
   const minute = fc.integer({ min: 0, max: 59 });
 
-  it('"Hoy" exactamente para el día de ahora y "Ayer" exactamente para el anterior', () => {
+  it('"Hoy" exactly for the day of now and "Ayer" exactly for the previous one', () => {
     fc.assert(
       fc.property(now, daysBefore, hour, minute, (a, d, h, m) => {
         const text = dayHeader(momentOfDay(a, d, h, m), a);
@@ -63,7 +63,7 @@ describe("encabezadoDelDia (propiedades)", () => {
     );
   });
 
-  it('cualquier otro día lleva la fecha, con el año solo si no es el de ahora; nunca "Mañana"', () => {
+  it('any other day carries the date, with the year only if it is not the one of now; never "Mañana"', () => {
     fc.assert(
       fc.property(now, daysBefore, hour, minute, (a, d, h, m) => {
         fc.pre(d !== 0 && d !== 1);
@@ -82,7 +82,7 @@ describe("encabezadoDelDia (propiedades)", () => {
     );
   });
 
-  it("todos los momentos del mismo día local tienen el mismo encabezado", () => {
+  it("all the moments of the same local day have the same header", () => {
     fc.assert(
       fc.property(
         now,

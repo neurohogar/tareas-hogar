@@ -55,25 +55,25 @@
 	let completions = $state<Completion[]>([]);
 	let annotations = $state<Annotation[]>([]);
 	let annotationsLoaded = $state(false);
-	/** El recuadro de Anotar (§5.10) y el panel de edición abierto, si lo hay (con su tarea al editar). */
+	/** The Anotar box (§5.10) and the open edit panel, if any (with its task when editing). */
 	let annotating = $state(false);
 	let panel = $state.raw<{ taskId?: string } | undefined>(undefined);
 	const annotationsBeingCleaned = new Set<string>();
-	/** Hasta que las colecciones respondieron, faltar una tarea no significa que se borró. */
+	/** Until the collections have answered, a missing task does not mean it was deleted. */
 	let tasksLoaded = $state(false);
 	let completionsLoaded = $state(false);
 	let now = $state(currentTime());
-	/** El aviso del último completado de este dispositivo; sigue al cambiar de pantalla. */
+	/** The notice of this device's last completion; it follows the change of screen. */
 	let notice = $state.raw<Notice | undefined>(undefined);
 	const displayedNotice = $derived(visibleNotice(notice, now));
 	/**
-	 * La tarea abierta en el panel de edición, como estaba al abrirlo: la edición
-	 * se compara con ella, así solo se escriben los campos que cambié.
+	 * The task open in the edit panel, as it was when opened: the edit
+	 * is compared with it, so only the fields I changed are written.
 	 */
 	let edited = $state.raw<Task | undefined>(undefined);
-	/** Si la tarea se borra (por ejemplo, en otro dispositivo) el panel se cierra solo. */
+	/** If the task is deleted (for example, on another device) the panel closes by itself. */
 	const editedExists = $derived(edited !== undefined && taskExists(tasks, edited.id));
-	/** Huérfanos que ya se mandaron a limpiar, para no repetirlos en cada snapshot. */
+	/** Orphans already sent to clean up, so they are not repeated on every snapshot. */
 	const orphansBeingCleaned = new Set<string>();
 
 	onMount(() => {
@@ -95,24 +95,24 @@
 		return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
 	});
 
-	// Spec §6.6: la pantalla de carga espera la primera respuesta de cada colección.
+	// Spec §6.6: the loading screen waits for the first response of each collection.
 	$effect(() => {
 		onCollectionsResponded({ tasks: tasksLoaded, completions: completionsLoaded });
 	});
 
-	/** Cambia al volver la conexión: los efectos de limpieza la leen para reintentar. */
+	/** Changes when the connection returns: the cleanup effects read it to retry. */
 	const connection = onlineState();
 
-	/** Sube cuando un intento termina habiendo cambiado los datos (o la conexión) durante él: los efectos de limpieza la leen y se reevalúan. */
+	/** Goes up when an attempt ends having changed the data (or the connection) during it: the cleanup effects read it and re-evaluate. */
 	let reevaluate = $state(0);
-	/** Conjuntos `…EnLimpieza` cuyo efecto corrió mientras había un intento en curso, saltando elementos. */
+	/** Sets `...BeingCleaned` whose effect ran while an attempt was in progress, skipping elements. */
 	const skipped = new WeakSet<Set<string>>();
 
 	/**
-	 * §7: intenta los elementos sin intento en curso; al terminar (falle o no) los saca
-	 * del conjunto, así el efecto los reintenta al cambiar los datos o volver la conexión.
-	 * Si el efecto corrió durante el intento (cambiaron los datos) y saltó elementos, al terminar
-	 * se reevalúa una vez; un fallo sin cambio de datos ni de conexión no reintenta (sin bucle).
+	 * §7: attempts the elements with no attempt in progress; when finished (whether it fails or not) it removes them
+	 * from the set, so the effect retries them when the data changes or the connection returns.
+	 * If the effect ran during the attempt (the data changed) and skipped elements, when it finishes
+	 * it re-evaluates once; a failure with no change of data or connection does not retry (no loop).
 	 */
 	function cleanUp<T>(elements: T[], key: (element: T) => string, inProgress: Set<string>, attempt: (batch: T[]) => Promise<readonly string[]>) {
 		const ids = new Set(itemsToAttempt(elements.map(key), inProgress));
@@ -136,14 +136,14 @@
 		cleanUp(orphanCompletions(tasks, completions), ({ id }) => id, orphansBeingCleaned, (batch) => cleanOrphanCompletions(uid, batch));
 	});
 
-	// Spec §7: las anotaciones huérfanas se ignoran y se limpian.
+	// Spec §7: orphan annotations are ignored and cleaned up.
 	$effect(() => {
 		if (!tasksLoaded || !annotationsLoaded) return;
 		void [connection.value, reevaluate];
 		cleanUp(orphanAnnotations(tasks, annotations), ({ id }) => id, annotationsBeingCleaned, (batch) => cleanOrphanAnnotations(uid, batch));
 	});
 
-	// El aviso desaparece justo a los 5 segundos, sin esperar al próximo tic del reloj.
+	// The notice disappears exactly at 5 seconds, without waiting for the next clock tick.
 	$effect(() => {
 		if (!displayedNotice) return;
 		const expiry = setTimeout(() => (now = currentTime()), msUntilDue(displayedNotice, now));
@@ -158,31 +158,31 @@
 		void saveChange(uid, task.id, changeOnComplete(task));
 	}
 
-	/** «Hice la mínima» (§6.1): lo que dice el core, con el mismo aviso y el mismo reinicio de paso que el checkbox. */
+	/** «Hice la mínima» (§6.1): what the core says, with the same notice and the same step reset as the checkbox. */
 	function doTheMinimal(task: Task) {
 		now = currentTime();
 		const completion = doTheMinimalFromCore(task, completions, newId(), now);
 		if (completion) completeTask(task, completion);
 	}
 
-	/** Borra el completado y devuelve el paso de la tarea que dice el core (§5.4, Pasos: Deshacer). */
+	/** Deletes the completion and gives back the task step the core says (§5.4, Pasos: Deshacer). */
 	function deleteAndRestoreStep(completion: Completion) {
 		const task = tasks.find(({ id }) => id === completion.taskId);
 		void deleteCompletion(uid, completion.id);
-		// La tarea que se ve puede no reflejar todavía el reinicio al paso 1 de completarla (esa escritura
-		// sigue en camino): se la toma sin paso guardado conocido (0 no es ningún paso), así el core
-		// siempre da el paso a escribir en lugar de creer que la tarea ya está en él.
+		// The visible task may not yet reflect the reset to step 1 from completing it (that write
+		// is still on its way): it is taken with no known saved step (0 is no step), so the core
+		// always gives the step to write instead of believing the task is already on it.
 		if (task) void saveChange(uid, task.id, changeOnDeleteCompletion({ ...task, currentStep: 0 }, completions, completion));
 	}
 
-	/** «Hecho» de la fila (§6.1): pasa al paso siguiente o, en el último, completa como el checkbox. */
+	/** «Hecho» of the row (§6.1): moves to the next step or, on the last one, completes like the checkbox. */
 	function tapDone(task: Task) {
 		const action = doneAction(task, completions, currentTime());
 		if (action.kind === 'avanzar') void saveChange(uid, task.id, action.change);
 		else if (action.kind === 'completar') completeTask(task);
 	}
 
-	/** Sin aviso al borrar: el checkbox ya deshace (§6.1). */
+	/** No notice on deleting: the checkbox already undoes (§6.1). */
 	function tapCheckbox(task: Task) {
 		const action = checkboxAction(task, completions, currentTime());
 		if (action.kind === 'completar') completeTask(task);
@@ -208,7 +208,7 @@
 		void saveChange(uid, task.id, result.change);
 	}
 
-	/** Spec §6.2: pausar, reanudar, posponer y quitar posponer actúan y cierran el panel. */
+	/** Spec §6.2: pausar, reanudar, posponer and quitar posponer act and close the panel. */
 	function act(task: Task, change: TaskChange) {
 		edited = undefined;
 		void saveChange(uid, task.id, change);
@@ -221,7 +221,7 @@
 
 	const SCREENS: Record<string, CurrentScreen> = { '/historial': 'Historial', '/anotaciones': 'Anotaciones' };
 
-	/** Segundo toque (§5.10): el core toma el contexto de la pantalla, el panel y el aviso. */
+	/** Second tap (§5.10): the core takes the context of the screen, the panel and the notice. */
 	function annotateNow(sense: Sense, text: string) {
 		now = currentTime();
 		const screen = SCREENS[page.url.pathname] ?? 'Pendientes';
@@ -230,7 +230,7 @@
 		void saveAnnotation(uid, annotation);
 	}
 
-	/** Editar texto (§6.7): el core decide cómo queda el texto; la anotación que ya no está no se revive. */
+	/** Edit text (§6.7): the core decides how the text ends up; an annotation that is gone is not revived. */
 	function editAnnotationText(annotation: Annotation, text: string) {
 		const edited = editText(annotations, annotation.id, text).find(({ id }) => id === annotation.id);
 		if (edited) void changeAnnotationText(uid, edited.id, edited.text);
@@ -291,7 +291,7 @@
 
 {#if edited && editedExists}
 	{@const openedTask = edited}
-	<!-- Las acciones se deciden con la tarea de ahora: si otro dispositivo la cambia, el panel las actualiza (§6.2). -->
+	<!-- Actions are decided with the task as of now: if another device changes it, the panel updates them (§6.2). -->
 	{@const active = tasks.find(({ id }) => id === openedTask.id) ?? openedTask}
 	{#key openedTask}
 		<TaskPanel

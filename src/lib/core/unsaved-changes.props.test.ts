@@ -1,10 +1,10 @@
-// Spec §6.2 (Cambios sin guardar): hay cambios es una sola definición, medida contra los valores al abrir.
+// Spec §6.2 (Unsaved changes): has changes is a single definition, measured against the values on opening.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { hasChanges, type PanelForm } from './unsaved-changes';
 import type { TaskData } from './task-data';
 
-/** Lo que carga el panel, válido o no: la definición no depende de que Guardar tenga éxito. */
+/** What the panel loads, valid or not: the definition does not depend on Save succeeding. */
 const data: fc.Arbitrary<TaskData> = fc.oneof(
 	fc.record({ shape: fc.constant('puntual' as const), title: fc.string({ maxLength: 6 }), note: fc.option(fc.string({ maxLength: 6 }), { nil: undefined }) }),
 	fc.record({ shape: fc.constant('relativa' as const), title: fc.string({ maxLength: 6 }), every: fc.integer({ min: 0, max: 50 }), unit: fc.constantFrom('horas' as const, 'dias' as const) }),
@@ -12,34 +12,34 @@ const data: fc.Arbitrary<TaskData> = fc.oneof(
 );
 const values: fc.Arbitrary<PanelForm> = fc.record({ data });
 
-describe('hayCambios: propiedades (spec §6.2)', () => {
-	it('un panel que sigue como se abrió no tiene cambios', () => {
+describe('hasChanges: properties (spec §6.2)', () => {
+	it('a panel that stays as it was opened has no changes', () => {
 		fc.assert(fc.property(values, (v) => {
 			expect(hasChanges(v, { ...v })).toBe(false);
 		}));
 	});
 
-	it('medir al revés da lo mismo: la diferencia es simétrica', () => {
+	it('measuring backwards gives the same: the difference is symmetric', () => {
 		fc.assert(fc.property(values, values, (a, b) => {
 			expect(hasChanges(a, b)).toBe(hasChanges(b, a));
 		}));
 	});
 
-	it('un título que Guardar guardaría distinto siempre es un cambio, sin excepciones', () => {
+	it('a title that Save would store differently is always a change, without exceptions', () => {
 		fc.assert(fc.property(values, fc.stringMatching(/^[a-z]{1,6}$/), (v, extra) => {
 			expect(hasChanges(v, { data: { ...v.data, title: `${v.data.title.trim()}${extra}` } })).toBe(true);
 		}));
 	});
 
-	it('los espacios alrededor del título, que Guardar recorta, no cuentan', () => {
+	it('the spaces around the title, which Save trims, do not count', () => {
 		fc.assert(fc.property(values, (v) => {
 			expect(hasChanges(v, { data: { ...v.data, title: `  ${v.data.title}\t` } })).toBe(false);
 		}));
 	});
 });
 
-describe('hayCambios sin etiquetas ni esfuerzo (propiedades, spec §6.2)', () => {
-	it('un valor de etiquetas o de esfuerzo en los datos no cambia la respuesta', () => {
+describe('hasChanges without labels or effort (properties, spec §6.2)', () => {
+	it('a value of labels or of effort in the data does not change the answer', () => {
 		const legacy = fc.record({ etiquetas: fc.array(fc.string({ maxLength: 3 }), { maxLength: 3 }), esfuerzo: fc.constantFrom('rapida', 'media', 'larga') });
 		fc.assert(fc.property(values, values, legacy, (a, b, extra) => {
 			const withExtra = { data: { ...b.data, ...extra } as TaskData };

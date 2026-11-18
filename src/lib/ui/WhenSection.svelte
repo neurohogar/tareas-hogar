@@ -1,5 +1,5 @@
 <script module lang="ts">
-	/** Una fila Desde/Hasta de "Solo en un horario". */
+	/** A Desde/Hasta row of "Solo en un horario". */
 	export interface WindowRow {
 		from: string;
 		to: string;
@@ -29,14 +29,14 @@
 		presentation: PanelPresentation;
 		openSection: PanelSection;
 		errors: CreationErrors;
-		/** El error de un campo dura lo que dura su mensaje: al corregirlo se va. */
+		/** A field's error lasts as long as its message: correcting it makes it go away. */
 		clearError: (field: keyof CreationErrors) => void;
 		repetition: RepetitionOption;
 		weekdays: Weekday[];
 		monthDays: number[];
-		/** "Solo en un horario": apagado, la tarea no tiene horario (§6.2). */
+		/** "Solo en un horario": off, the task has no schedule (§6.2). */
 		withSchedule: boolean;
-		/** Las filas Desde/Hasta: al menos una; Agregar horario suma una vacía (§6.2). */
+		/** The Desde/Hasta rows: at least one; Agregar horario adds an empty one (§6.2). */
 		windowRows: WindowRow[];
 		initialDueDate: string;
 		initialEvery: string;
@@ -71,7 +71,7 @@
 		clearError('schedule');
 	}
 
-	/** La primera fila conserva los ids de siempre; las demás llevan su número. */
+	/** The first row keeps the usual ids; the others carry their number. */
 	const fieldId = (field: 'from' | 'to', index: number) => (index === 0 ? `field-${field}` : `field-${field}-${index + 1}`);
 
 	function toggle<T>(selectedItems: T[], value: T): T[] {

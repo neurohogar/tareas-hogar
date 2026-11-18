@@ -1,11 +1,11 @@
-// Spec §5.9 (Posponer): los comandos de posponer y quitar posponer, y sus opciones.
-// Qué queda vigente y cómo cambia el estado lo decide posposicion-vigente.ts.
+// Spec §5.9 (Postpone): the postpone and remove-postponement commands, and their options.
+// What stays active and how the status changes is decided by active-postponement.ts.
 import { atTheMinute, addDays } from './days';
 import type { TaskChange } from './task-document';
 
 export type PostponeOption = '1 hora' | '3 horas' | 'hasta mañana';
 
-/** Spec §5.9: las opciones de Posponer, con su texto en el panel. */
+/** Spec §5.9: the Postpone options, with their text in the panel. */
 export const POSTPONE_OPTIONS: readonly { option: PostponeOption; label: string }[] = [
 	{ option: '1 hora', label: '1 hora' },
 	{ option: '3 horas', label: '3 horas' },
@@ -23,12 +23,12 @@ function toByOption(option: PostponeOption, now: Date): Date {
 	return atTheMinute(addDays(now, 1), SEVEN_O_CLOCK);
 }
 
-/** Spec §5.9 y §7: guarda pospuesta = { desde: ahora, hasta }, como un solo campo. */
+/** Spec §5.9 and §7: stores postponed = { from: now, to }, as a single field. */
 export function postpone(option: PostponeOption, now: Date): TaskChange {
 	return { postponed: { from: now, to: toByOption(option, now) } };
 }
 
-/** Spec §5.9: Quitar posponer borra pospuesta. */
+/** Spec §5.9: Quitar posponer deletes postponed. */
 export function removePostpone(): TaskChange {
 	return { postponed: null };
 }

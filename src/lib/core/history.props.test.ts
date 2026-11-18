@@ -16,7 +16,7 @@ const tasks = fc
       createdAt: new Date(0),
     })),
   );
-/** Pocos instantes posibles, para que haya empates de completadoEn y varios en el mismo día. */
+/** Few possible instants, so that there are ties of completedAt and several on the same day. */
 const DAY_MS = 86_400_000;
 const moment = fc.oneof(
   fc
@@ -56,8 +56,8 @@ const entries = (
 const exists = (ts: readonly Task[], c: Completion) =>
   ts.some(({ id }) => id === c.taskId);
 
-describe("historial (propiedades)", () => {
-  it("muestra cada completado de una tarea que existe exactamente una vez, con su tarea, y ningún otro", () => {
+describe("history (properties)", () => {
+  it("shows each completion of a task that exists exactly once, with its task, and no other", () => {
     fc.assert(
       fc.property(tasks, completions, now, (ts, cs, a) => {
         const shown = entries(history(ts, cs, a));
@@ -71,7 +71,7 @@ describe("historial (propiedades)", () => {
     );
   });
 
-  it("va estrictamente del más reciente al más antiguo; si empatan, primero el id menor", () => {
+  it("goes strictly from most recent to oldest; on a tie, the lower id first", () => {
     fc.assert(
       fc.property(tasks, completions, now, (ts, cs, a) => {
         const shown = entries(history(ts, cs, a)).map(
@@ -89,7 +89,7 @@ describe("historial (propiedades)", () => {
     );
   });
 
-  it("no depende del orden en que llegan las tareas ni los completados", () => {
+  it("does not depend on the order in which the tasks or the completions arrive", () => {
     fc.assert(
       fc.property(
         tasks,
@@ -109,7 +109,7 @@ describe("historial (propiedades)", () => {
     );
   });
 
-  it("cada entrada cae bajo el encabezado de su día, con su hora; no hay grupos vacíos ni encabezados repetidos", () => {
+  it("each entry falls under the header of its day, with its time; there are no empty groups or repeated headers", () => {
     fc.assert(
       fc.property(tasks, completions, now, (ts, cs, a) => {
         const groups = history(ts, cs, a);

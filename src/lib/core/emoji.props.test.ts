@@ -1,4 +1,4 @@
-// Spec §4.1 (Emoji): un único grafema emoji; todo lo demás es inválido.
+// Spec §4.1 (Emoji): a single emoji grapheme; everything else is invalid.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { readEmoji } from './emoji';
@@ -22,8 +22,8 @@ const keycap = fc.tuple(fc.constantFrom(...'0123456789#*'), fc.boolean()).map(([
 const anEmoji = fc.oneof(withToneOrSelector, zwjSequence, flag, subdivisionFlag, keycap);
 const spaces = fc.stringMatching(/^[ \t\n]{0,3}$/);
 
-describe('leerEmoji (propiedades)', () => {
-	it('acepta cualquier grafema emoji y lo guarda sin los espacios de los extremos', () => {
+describe('readEmoji (properties)', () => {
+	it('accepts any emoji grapheme and saves it without the spaces at the ends', () => {
 		fc.assert(
 			fc.property(spaces, anEmoji, spaces, (before, emoji, after) => {
 				expect(readEmoji(before + emoji + after)).toStrictEqual({ ok: true, emoji });
@@ -31,7 +31,7 @@ describe('leerEmoji (propiedades)', () => {
 		);
 	});
 
-	it('rechaza dos o más grafemas emoji juntos o separados por un espacio', () => {
+	it('rejects two or more emoji graphemes together or separated by a space', () => {
 		fc.assert(
 			fc.property(anEmoji, fc.constantFrom('', ' ', '\n'), anEmoji, (a, separator, b) => {
 				expect(readEmoji(a + separator + b)).toStrictEqual({ ok: false });
@@ -39,7 +39,7 @@ describe('leerEmoji (propiedades)', () => {
 		);
 	});
 
-	it('rechaza un emoji con texto alrededor', () => {
+	it('rejects an emoji with text around it', () => {
 		const text = fc.string({ minLength: 1, maxLength: 5 }).filter((s) => /^[\p{L}\p{N}]+$/u.test(s));
 		fc.assert(
 			fc.property(anEmoji, text, fc.boolean(), (emoji, letters, before) => {
@@ -48,7 +48,7 @@ describe('leerEmoji (propiedades)', () => {
 		);
 	});
 
-	it('rechaza texto sin emoji', () => {
+	it('rejects text without an emoji', () => {
 		fc.assert(
 			fc.property(fc.string({ minLength: 1, maxLength: 8 }).filter((s) => s.trim() !== '' && !/\p{Extended_Pictographic}|\p{Regional_Indicator}|⃣/u.test(s)), (text) => {
 				expect(readEmoji(text)).toStrictEqual({ ok: false });
@@ -56,7 +56,7 @@ describe('leerEmoji (propiedades)', () => {
 		);
 	});
 
-	it('vacío o solo espacios es sin emoji', () => {
+	it('empty or only spaces is no emoji', () => {
 		fc.assert(
 			fc.property(fc.stringMatching(/^\s{0,6}$/), (text) => {
 				expect(readEmoji(text)).toStrictEqual({ ok: true });
@@ -64,7 +64,7 @@ describe('leerEmoji (propiedades)', () => {
 		);
 	});
 
-	it('es idempotente: releer lo guardado da lo mismo', () => {
+	it('is idempotent: rereading what was saved gives the same', () => {
 		fc.assert(
 			fc.property(anEmoji, (emoji) => {
 				const first = readEmoji(emoji);
@@ -73,7 +73,7 @@ describe('leerEmoji (propiedades)', () => {
 		);
 	});
 
-	it('rechaza etiquetas de bandera que no siguen a la bandera negra, o sin cancelar', () => {
+	it('rejects flag tags that do not follow the black flag, or without cancel', () => {
 		fc.assert(
 			fc.property(tagLetters, fc.constantFrom('🌱', '🇦🇷', '👍'), (letters, base) => {
 				expect(readEmoji(`${base}${letters}${cp(0xe007f)}`)).toStrictEqual({ ok: false });
@@ -82,7 +82,7 @@ describe('leerEmoji (propiedades)', () => {
 		);
 	});
 
-	it('rechaza un ZWJ colgado, un tag suelto y más de dos indicadores regionales', () => {
+	it('rejects a dangling ZWJ, a loose tag and more than two regional indicators', () => {
 		fc.assert(
 			fc.property(anEmoji, indicator, (emoji, regionalIndicator) => {
 				expect(readEmoji(`${emoji}‍`)).toStrictEqual({ ok: false });

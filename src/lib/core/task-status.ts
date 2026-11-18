@@ -17,26 +17,26 @@ function statusWithoutSchedule(task: Task, ofTheTask: readonly Completion[], now
 }
 
 /**
- * Estado derivado de una tarea (spec §3) a partir de todos los completados
- * del usuario: elige los de la tarea y aplica la regla de su tipo y su
- * recurrencia; con horario, la de §5.5–§5.7. Una pausada no tiene estado y una
- * reanudada se evalúa como recién creada en reanudadaEn (§5.8). Sobre ese estado
- * se aplica la posposición (§5.9). Es el único punto de entrada del estado.
+ * Derived status of a task (spec §3) from all the completions
+ * of the user: it picks those of the task and applies the rule of its kind and its
+ * recurrence; with a schedule, that of §5.5–§5.7. A paused one has no status and a
+ * resumed one is evaluated as just created at resumedAt (§5.8). On that status
+ * the postponement is applied (§5.9). It is the only entry point of the status.
  */
 export function taskStatus(saved: Task, completions: readonly Completion[], now: Date): Status {
 	return withPostponement(statusByItsRule(saved, completions, now), saved, now);
 }
 
 /**
- * Spec §5.9: la posposición que tiene a la tarea en espera; ninguna si no está
- * pospuesta o si está en espera por su propia regla (ahí no cambia nada).
+ * Spec §5.9: the postponement that has the task waiting; none if it is not
+ * postponed or if it is waiting by its own rule (nothing changes there).
  */
 export function waitForPostponement(saved: Task, completions: readonly Completion[], now: Date): Postponement | undefined {
 	const active = activePostponement(saved, now);
 	return active && pendingOrOverdue(statusByItsRule(saved, completions, now)) ? active : undefined;
 }
 
-/** El estado de §5.1–§5.8, sin la posposición. */
+/** The status of §5.1–§5.8, without the postponement. */
 function statusByItsRule(saved: Task, completions: readonly Completion[], now: Date): Status {
 	if (isPaused(saved)) return { kind: 'pausada' };
 	const { task, owns: ofTheTask } = asJustCreated(saved, completionsOfTask(completions, saved.id));

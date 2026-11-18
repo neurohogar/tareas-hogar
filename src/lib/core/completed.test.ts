@@ -9,56 +9,56 @@ const oneOff: Task = { id: 't', title: 'T', kind: 'puntual', createdAt: new Date
 const recurring: Task = { id: 't', title: 'T', kind: 'periodica', recurrence: { mode: 'relativo', every: 1, unit: 'dias' }, createdAt: new Date(2026, 6, 1) };
 const postponed = (task: Task): Task => ({ ...task, postponed: { from: new Date(2026, 6, 15, 11, 0, 0), to: new Date(2026, 6, 15, 14, 0, 0) } });
 
-describe('estaCompletada (spec §6.1)', () => {
-	it('una puntual con completados está completada', () => {
+describe('isCompleted (spec §6.1)', () => {
+	it('a one-off with completions is completed', () => {
 		expect(isCompleted(oneOff, ONE_COMPLETION, NOW)).toBe(true);
 	});
 
-	it('una periódica en espera con completados está completada', () => {
+	it('a waiting recurring task with completions is completed', () => {
 		expect(isCompleted(recurring, ONE_COMPLETION, NOW)).toBe(true);
 	});
 
-	it('una periódica en espera sin completados (antes de su primera ocurrencia) no está completada', () => {
+	it('a waiting recurring task without completions (before its first occurrence) is not completed', () => {
 		const future = { ...recurring, createdAt: new Date(2026, 6, 20) };
 
 		expect(isCompleted(future, [], NOW)).toBe(false);
 	});
 
-	it('una tarea pendiente o atrasada no está completada aunque tenga completados', () => {
+	it('a pending or overdue task is not completed even if it has completions', () => {
 		const old = { ...recurring, createdAt: new Date(2026, 5, 1) };
 
 		expect(isCompleted(oneOff, [], NOW)).toBe(false);
 		expect(isCompleted(old, [{ ...ONE_COMPLETION[0], completedAt: new Date(2026, 5, 2) }], NOW)).toBe(false);
 	});
 
-	it('una pausada no está completada (spec §5.8)', () => {
+	it('a paused one is not completed (spec §5.8)', () => {
 		expect(isCompleted({ ...recurring, paused: true }, ONE_COMPLETION, NOW)).toBe(false);
 	});
 });
 
-describe('clasificarEnPendientes', () => {
-	it('conserva el estado de una no completada para ordenarla por urgencia', () => {
+describe('classifyInPending', () => {
+	it('keeps the status of a non-completed one to order it by urgency', () => {
 		expect(classifyInPending(oneOff, [], NOW)).toEqual({ completed: false, status: { kind: 'pendiente' } });
 	});
 
-	it('marca la completada con su estado', () => {
+	it('marks the completed one with its status', () => {
 		expect(classifyInPending(oneOff, ONE_COMPLETION, NOW)).toEqual({ completed: true, status: { kind: 'completada' } });
 	});
 });
 
-describe('una pospuesta no está completada (spec §5.9)', () => {
-	it('una puntual completada sigue completada aunque esté pospuesta', () => {
+describe('a postponed one is not completed (spec §5.9)', () => {
+	it('a completed one-off stays completed even if postponed', () => {
 		expect(isCompleted(postponed(oneOff), ONE_COMPLETION, NOW)).toBe(true);
 	});
 
-	it('en espera por la posposición, con completados, no está completada', () => {
+	it('waiting because of the postponement, with completions, is not completed', () => {
 		const classified = classifyInPending(postponed({ ...recurring, createdAt: new Date(2026, 5, 1) }), [{ ...ONE_COMPLETION[0], completedAt: new Date(2026, 5, 2) }], NOW);
 
 		expect(classified.completed).toBe(false);
 		expect(classified.status.kind).toBe('en espera');
 	});
 
-	it('una periódica en espera por su propia regla, con completados, sigue completada aunque la posposición ya venciera', () => {
+	it('a recurring task waiting by its own rule, with completions, stays completed even if the postponement already expired', () => {
 		const expired = { ...recurring, postponed: { from: new Date(2026, 6, 15, 6, 0, 0), to: new Date(2026, 6, 15, 7, 0, 0) } };
 
 		expect(isCompleted(expired, ONE_COMPLETION, NOW)).toBe(true);

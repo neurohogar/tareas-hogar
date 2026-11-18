@@ -22,8 +22,8 @@ import {
 	type Definition
 } from './support';
 
-// qa/pasos-de-a-uno.md: los campos de pasos del panel, la línea y los botones de la fila, Hecho en el último paso,
-// cuándo se ve, lo que no cambia, Cambios sin guardar y dos dispositivos.
+// qa/pasos-de-a-uno.md: the panel's step fields, the row's line and buttons, Hecho on the last step,
+// when it is shown, what does not change, Cambios sin guardar and two devices.
 
 test.beforeEach(async () => {
 	await cleanEmulators();
@@ -37,7 +37,7 @@ const LENGTH =
 	'Abrir el cajón de abajo y sacar toda la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla con nada de color oscuro ni delicado';
 const DOES_NOT_REPEAT = 'No se repite' as const;
 
-/** La fila de la tarea de título exacto `t` (las demás filas pueden contener ese texto). */
+/** The row of the task whose title is exactly `t` (other rows may contain that text). */
 const f = (page: Page, t: string): Locator =>
 	page.getByRole('listitem').filter({ has: page.getByRole('button', { name: t, exact: true }) });
 const line = (page: Page, t: string) => f(page, t).getByText(/^(Primer paso|Paso): /);
@@ -59,13 +59,13 @@ const titles = (page: Page) =>
 		.getByRole('checkbox')
 		.evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')!.replace('Completar ', '')));
 
-/** La fila dice exactamente `Primer paso: texto` (o `Paso: texto`), una sola vez. */
+/** The row says exactly `Primer paso: texto` (or `Paso: texto`), once. */
 async function says(page: Page, t: string, text: string, isFirst = false) {
 	await expect(line(page, t)).toHaveCount(1);
 	await expect(line(page, t)).toHaveText(`${isFirst ? 'Primer paso' : 'Paso'}: ${text}`);
 }
 
-/** Con dos pasos o más: Paso anterior (si va en otro que el primero) y Hecho, en ese orden. */
+/** With two steps or more: Paso anterior (if on a step other than the first) and Hecho, in that order. */
 async function withButtons(page: Page, t: string, withPrevious: boolean) {
 	await expect(done(page, t)).toHaveCount(1);
 	await expect(previous(page, t)).toHaveCount(withPrevious ? 1 : 0);
@@ -76,7 +76,7 @@ async function withButtons(page: Page, t: string, withPrevious: boolean) {
 	}
 }
 
-/** La fila está a la vista y no tiene línea ni botones. */
+/** The row is in view and has no line or buttons. */
 async function withoutLine(page: Page, t: string) {
 	await expect(f(page, t)).toBeVisible();
 	await expect(f(page, t)).not.toContainText(/Primer paso|Paso/);
@@ -102,7 +102,7 @@ async function addStep(page: Page, n: number, text?: string) {
 
 const stepsValues = (page: Page) => fieldsStep(page).evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
 
-/** Abre la fila y verifica Primer paso y los pasos más; cierra sin cambios. */
+/** Opens the row and checks Primer paso and the extra steps; closes without changes. */
 async function panelHas(page: Page, t: string, isFirst: string, steps: string[]) {
 	await openRow(page, t);
 	await expect(first(page)).toHaveValue(isFirst);
@@ -158,13 +158,13 @@ async function postpone(page: Page, t: string, option: '3 horas' | 'Hasta mañan
 	await expect(panel(page)).toHaveCount(0);
 }
 
-/** Sesión con el reloj corriendo 10 minutos antes de `hora` (las tareas se crean así). */
+/** Session with the clock running 10 minutes before `hora` (tasks are created that way). */
 async function session(page: Page, hour: string, completedList = false) {
 	await sessionWithClock(page, new Date(new Date(hour).getTime() - 600_000).toISOString());
 	if (completedList) await turnOnCompleted(page);
 }
 
-/** Avanza el reloj hasta `hora` y deja correr un segundo para que la pantalla se actualice sola. */
+/** Advances the clock to `hora` and lets one second run so the screen updates by itself. */
 async function go(page: Page, hour: string) {
 	const missing = new Date(hour).getTime() - (await page.evaluate(() => Date.now()));
 	if (missing <= 10_000) await page.clock.runFor(missing);
@@ -172,7 +172,7 @@ async function go(page: Page, hour: string) {
 	await page.clock.runFor(1000);
 }
 
-/** Completa con el checkbox justo a `hora` (el reloj de la prueba avanza unos ms por cada espera, y la vuelta se cuenta desde acá). */
+/** Completes with the checkbox right at `hora` (the test clock advances a few ms on every wait, and the round is counted from here). */
 async function completeA(page: Page, hour: string, t: string) {
 	await page.clock.setSystemTime(new Date(hour));
 	await f(page, t).getByRole('checkbox').click();
@@ -282,7 +282,7 @@ test('Flujo 1: los campos de pasos en el panel y crear', async ({ page }) => {
 		firstStep: 'Atar la bolsa llena',
 		steps: ['Bajar la basura']
 	});
-	await withoutLine(page, 'Basura'); // en espera hasta el martes
+	await withoutLine(page, 'Basura'); // waiting until Tuesday
 
 	// 7
 	await create(page, { title: 'Planchar', kind: DOES_NOT_REPEAT, date: '' });
@@ -633,7 +633,7 @@ test('Flujo 5: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => 
 	});
 	expect(await titles(page)).toEqual(order);
 
-	// 9 (primero, con el reloj en el viernes): el checkbox completa en el paso 1 y deshacer lo devuelve.
+	// 9 (first, with the clock on Friday): the checkbox completes at step 1 and undo reverts it.
 	await f(page, 'Cambiar foco').getByRole('checkbox').click();
 	await withClock(page, async () => {
 		await expect(notice(page)).toContainText('Completaste «Cambiar foco»');
@@ -647,7 +647,7 @@ test('Flujo 5: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => 
 		await withButtons(page, 'Cambiar foco', false);
 	});
 
-	// 3 y 4: se pospone y se completa con el reloj en el viernes; luego se avanza.
+	// 3 and 4: it is postponed and completed with the clock on Friday; then it advances.
 	await postpone(page, 'Cambiar foco', '3 horas');
 	await postpone(page, 'Pagar', 'Hasta mañana');
 	await f(page, 'Regar').getByRole('checkbox').click();
@@ -698,7 +698,7 @@ test('Flujo 5: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => 
 		await withButtons(page, 'Regar', false);
 	});
 
-	// 6: con el reloj en el viernes.
+	// 6: with the clock on Friday.
 	await goBack(page, FRIDAY);
 	await withClock(page, () =>
 		createAndView(page, {
@@ -736,7 +736,7 @@ test('Flujo 5: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => 
 		await withButtons(page, 'Llamar', false);
 	});
 
-	// 8: checkbox deshabilitado.
+	// 8: disabled checkbox.
 	await goBack(page, '2026-11-13T07:00:00');
 	await withClock(page, () =>
 		createAndView(page, {
@@ -900,11 +900,11 @@ test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', as
 	await addStep(page, 2, P2);
 	await addStep(page, 3, P3);
 	await save(page);
-	await says(page, 'Lavar', P2); // editar no cambia el paso en que va
+	await says(page, 'Lavar', P2); // editing does not change the step it is on
 	await previous(page, 'Lavar').click();
 	await says(page, 'Lavar', P1, true);
 
-	// Barrer y Lavar muestran sus pasos; vaciar los de Barrer no toca a Planchar.
+	// Barrer and Lavar show their steps; emptying Barrer's does not touch Planchar.
 	await says(page, 'Barrer', 'Barrer abajo', true);
 	await says(page, 'Lavar', P1, true);
 	await openRow(page, 'Barrer');
@@ -924,7 +924,7 @@ test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', as
 	expect((await line(page, '🧺 Lavar').boundingBox())!.y).toBeGreaterThanOrEqual(b.y + b.height - 2);
 	await expect(f(page, '🧺 Lavar').getByRole('button', { name: '🧺 Lavar', exact: true })).not.toContainText(P1);
 
-	// 4: Lavar en el paso 1 de 3.
+	// 4: Lavar on step 1 of 3.
 	await done(page, '🧺 Lavar').click();
 	await says(page, '🧺 Lavar', P2);
 	await done(page, '🧺 Lavar').click();
@@ -965,7 +965,7 @@ test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', as
 	for (const p of [P1, P2, P3]) expect(copied).not.toContain(p);
 	await goA(page, 'Pendientes');
 
-	// 6 en adelante: Lavar con Primer paso y Paso 2 (se le quita el Paso 3).
+	// 6 onward: Lavar with Primer paso and Paso 2 (Paso 3 is removed).
 	const L = '🧺 Lavar';
 	await openRow(page, L);
 	await remove(page, 3).click();
@@ -1041,7 +1041,7 @@ test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', as
 	await addStep(page, 2, P2);
 	await asksNoticeAndDiscards();
 
-	// 12: se desmarca Lavar para tener sus botones; Hecho y Paso anterior no abren nada.
+	// 12: Lavar is unchecked to get its buttons; Hecho and Paso anterior open nothing.
 	await f(page, L).getByRole('checkbox').click();
 	await expect(done(page, L)).toBeVisible();
 	if ((await previous(page, L).count()) > 0) await previous(page, L).click();
@@ -1072,9 +1072,9 @@ test('Flujo 8: dos dispositivos', async ({ browser }) => {
 	const sync = async () => {
 		await arrivesOnServer(a);
 		await ctxB.setOffline(false);
-		await a.waitForTimeout(10_000); // B reconecta y sus escrituras pendientes llegan; las dos pantallas se actualizan solas
+		await a.waitForTimeout(10_000); // B reconnects and its pending writes arrive; both screens update by themselves
 	};
-	/** El panel muestra esos valores en `p` (con reintentos mientras llega la sincronización). */
+	/** The panel shows those values in `p` (with retries while the sync arrives). */
 	const panelIs = (p: Page, isFirst: string, steps: string[]) =>
 		expect(async () => {
 			await openRow(p, 'Lavar');

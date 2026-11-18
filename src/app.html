@@ -9,11 +9,11 @@
 		<link rel="icon" href="%sveltekit.assets%/icon.svg" type="image/svg+xml" />
 		<title>Tareas Hogar</title>
 		<script>
-			// Spec §6.6: el tope de la pantalla de carga cuenta desde acá, no desde que llega el JavaScript.
+			// Spec §6.6: the loading screen cap counts from here, not from when the JavaScript arrives.
 			window.appStartTime = performance.now();
 		</script>
 		<style>
-			/* Spec §6.6: se ve antes de que llegue el CSS de la app; los colores son --page-background de styles.css. */
+			/* Spec §6.6: visible before the app's CSS arrives; the colors are --page-background of styles.css. */
 			html,
 			#loading-screen {
 				background: #f7f5f0;

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { openTask, create, device, row, cleanEmulators } from './support';
 
-// qa/panel-mobile.md Flujo 7 paso 4: los iconos viajan con la app (con service worker).
+// qa/panel-mobile.md Flow 7 step 4: the icons ship with the app (with service worker).
 test.use({ serviceWorkers: 'allow' });
 
 test.beforeEach(async () => {

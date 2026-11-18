@@ -1,4 +1,4 @@
-/** Copia texto al portapapeles del navegador; funciona sin conexión. */
+/** Copies text to the browser clipboard; works offline. */
 export async function copyToClipboard(text: string): Promise<boolean> {
 	try {
 		await navigator.clipboard.writeText(text);

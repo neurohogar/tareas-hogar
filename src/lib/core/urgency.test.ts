@@ -7,7 +7,7 @@ const CREATED = new Date(2026, 6, 1, 9, 30, 0);
 const PENDING: PendingStatus = { kind: 'pendiente' };
 const OVERDUE: PendingStatus = { kind: 'atrasada' };
 const WAITING: PendingStatus = { kind: 'en espera', progress: 0.5 };
-/** Sin horario, el instante no depende de ahora. */
+/** Without a schedule, the instant does not depend on now. */
 const NO_SCHEDULE_NOW_DOES_NOT_MATTER = new Date(2026, 6, 15, 12, 0, 0);
 
 const oneOff = (dueDate?: Date): Task => ({ id: 'p', title: 'P', kind: 'puntual', createdAt: CREATED, ...(dueDate && { dueDate }) });
@@ -20,71 +20,71 @@ const completion = (taskId: string, completedAt: Date, coveredOccurrence?: Date)
 	...(coveredOccurrence && { coveredOccurrence })
 });
 
-describe('instanteDeUrgencia (spec §6.1)', () => {
-	describe('puntual', () => {
-		it('pendiente: las 00:00 de la fecha límite', () => {
+describe('urgencyInstant (spec §6.1)', () => {
+	describe('one-off', () => {
+		it('pending: 00:00 of the due date', () => {
 			expect(urgencyInstant(oneOff(new Date(2026, 6, 15)), [], PENDING, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(new Date(2026, 6, 15));
 		});
 
-		it('atrasada: las 00:00 del día siguiente a la fecha límite', () => {
+		it('overdue: 00:00 of the day after the due date', () => {
 			expect(urgencyInstant(oneOff(new Date(2026, 6, 31)), [], OVERDUE, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(new Date(2026, 7, 1));
 		});
 
-		it('sin fecha límite no tiene instante', () => {
+		it('without a due date it has no instant', () => {
 			expect(urgencyInstant(oneOff(), [], PENDING, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toBeUndefined();
 		});
 	});
 
-	describe('relativa', () => {
+	describe('relative', () => {
 		const completions = [
 			completion('r', new Date(2026, 6, 14, 8, 0, 0)),
 			completion('r', new Date(2026, 6, 15, 7, 0, 0)),
 			completion('otra', new Date(2026, 6, 15, 11, 0, 0))
 		];
 
-		it('nunca completada: creadaEn', () => {
+		it('never completed: createdAt', () => {
 			expect(urgencyInstant(relative, [completion('otra', new Date(2026, 6, 15))], PENDING, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(CREATED);
 		});
 
-		it('pendiente y en espera: V, desde el completado más reciente de la tarea', () => {
+		it('pending and waiting: V, from the most recent completion of the task', () => {
 			expect(urgencyInstant(relative, completions, PENDING, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(new Date(2026, 6, 15, 13, 0, 0));
 			expect(urgencyInstant(relative, completions, WAITING, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(new Date(2026, 6, 15, 13, 0, 0));
 		});
 
-		it('atrasada: V + intervalo', () => {
+		it('overdue: V + interval', () => {
 			expect(urgencyInstant(relative, completions, OVERDUE, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(new Date(2026, 6, 15, 19, 0, 0));
 		});
 
-		it('en días cuenta 24 horas por día', () => {
+		it('in days it counts 24 hours per day', () => {
 			const ofDays: Task = { ...relative, recurrence: { mode: 'relativo', every: 2, unit: 'dias' } };
 			expect(urgencyInstant(ofDays, completions, OVERDUE, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(new Date(2026, 6, 19, 7, 0, 0));
 		});
 	});
 
-	describe('calendario', () => {
-		// P = martes 14, N = jueves 16.
+	describe('calendar', () => {
+		// P = Tuesday 14, N = Thursday 16.
 		const completions = [completion('s', new Date(2026, 6, 14, 9, 0, 0), new Date(2026, 6, 14)), completion('otra', new Date(2026, 6, 15), new Date(2026, 6, 21))];
 
-		it('pendiente y en espera: las 00:00 de N', () => {
+		it('pending and waiting: 00:00 of N', () => {
 			expect(urgencyInstant(weekly, completions, PENDING, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(new Date(2026, 6, 16));
 			expect(urgencyInstant(weekly, completions, WAITING, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(new Date(2026, 6, 16));
 		});
 
-		it('atrasada: las 00:00 del día siguiente a N', () => {
+		it('overdue: 00:00 of the day after N', () => {
 			expect(urgencyInstant(weekly, completions, OVERDUE, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(new Date(2026, 6, 17));
 		});
 
-		it('sin completados, N es la primera ocurrencia desde creadaEn', () => {
-			// Creada el miércoles 1: N = jueves 2.
+		it('without completions, N is the first occurrence since createdAt', () => {
+			// Created on Wednesday 1: N = Thursday 2.
 			expect(urgencyInstant(weekly, [], PENDING, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(new Date(2026, 6, 2));
 		});
 	});
 });
 
-describe('instanteDeUrgencia de una reanudada (spec §5.8, §6.1)', () => {
+describe('urgencyInstant of a resumed task (spec §5.8, §6.1)', () => {
 	const RESUMED = new Date(2026, 6, 15, 10, 0, 0);
 
-	it('de calendario en espera: la próxima ocurrencia desde reanudadaEn, sin contar lo cubierto antes', () => {
+	it('calendar waiting: the next occurrence since resumedAt, without counting what was covered before', () => {
 		const coveredOnThursday = completion('s', new Date(2026, 6, 14, 9, 0, 0), new Date(2026, 6, 16));
 
 		expect(urgencyInstant({ ...weekly, resumedAt: RESUMED }, [coveredOnThursday], WAITING, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(
@@ -92,22 +92,22 @@ describe('instanteDeUrgencia de una reanudada (spec §5.8, §6.1)', () => {
 		);
 	});
 
-	it('relativa nunca completada desde la reanudación: pendiente desde reanudadaEn', () => {
+	it('relative never completed since the resumption: pending since resumedAt', () => {
 		const ofBefore = completion('r', new Date(2026, 6, 14, 9, 0, 0));
 
 		expect(urgencyInstant({ ...relative, resumedAt: RESUMED }, [ofBefore], PENDING, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toEqual(RESUMED);
 	});
 });
 
-describe('instanteDeUrgencia de una pospuesta (spec §5.9)', () => {
-	it('en espera por la posposición, vuelve en hasta', () => {
+describe('urgencyInstant of a postponed task (spec §5.9)', () => {
+	it('waiting because of the postponement, it returns at to', () => {
 		const to = new Date(2026, 6, 15, 13, 0, 0);
 		const task = { ...oneOff(new Date(2026, 6, 20)), postponed: { from: new Date(2026, 6, 15, 10, 0, 0), to } };
 
 		expect(urgencyInstant(task, [], WAITING, NO_SCHEDULE_NOW_DOES_NOT_MATTER)).toBe(to);
 	});
 
-	it('al vencer, vuelve a su clave de siempre', () => {
+	it('on expiring, it goes back to its usual key', () => {
 		const limit = new Date(2026, 6, 20);
 		const postponed = { from: new Date(2026, 6, 15, 9, 0, 0), to: new Date(2026, 6, 15, 11, 0, 0) };
 

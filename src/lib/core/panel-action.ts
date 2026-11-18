@@ -1,20 +1,20 @@
-// Spec §5.8, §5.9 y §6.2: las acciones que el panel ofrece sobre una tarea
-// (Pausar, Reanudar, Posponer, Quitar posponer), qué hace tocarlas y qué escriben.
+// Spec §5.8, §5.9 and §6.2: the actions the panel offers on a task
+// (Pausar, Reanudar, Posponer, Quitar posponer), what tapping them does and what they write.
 import { pause, resume } from './pause';
 import { postpone, removePostpone, type PostponeOption } from './postponement';
 import type { TaskChange } from './task-document';
 
-/** Spec §6.2: las acciones con aviso, con la opción tocada al posponer; así se nombran en sus botones. */
+/** Spec §6.2: the actions with a notice, with the option tapped when postponing; this is how they are named on their buttons. */
 export type PanelAction = 'pausar' | 'reanudar' | `posponer ${PostponeOption}` | 'quitar posponer';
 
-/** Spec §6.2: la acción de posponer con la opción tocada. */
+/** Spec §6.2: the postpone action with the option tapped. */
 export function optionAction(option: PostponeOption): PanelAction {
 	return `posponer ${option}`;
 }
 
 export type ActionEffect = 'actúa' | 'abre el aviso de acción' | 'pide confirmar el borrado';
 
-/** Spec §6.2: con cambios la acción abre su aviso y sin cambios actúa; Borrar tarea solo pide su confirmación. */
+/** Spec §6.2: with changes the action opens its notice and without changes it acts; Delete task only asks for its confirmation. */
 export function whatTheActionDoes(action: PanelAction | 'borrar tarea', hasChanges: boolean): ActionEffect {
 	if (action === 'borrar tarea') return 'pide confirmar el borrado';
 	return hasChanges ? 'abre el aviso de acción' : 'actúa';
@@ -29,7 +29,7 @@ const COMMANDS: Readonly<Record<PanelAction, (now: Date) => TaskChange>> = {
 	'quitar posponer': () => removePostpone()
 };
 
-/** Spec §5.8, §5.9 y §6.2: lo que escribe la acción; `ahora` es el momento de tocar el botón. */
+/** Spec §5.8, §5.9 and §6.2: what the action writes; `now` is the moment of tapping the button. */
 export function changeOfAction(action: PanelAction, now: Date): TaskChange {
 	return COMMANDS[action](now);
 }

@@ -1,4 +1,4 @@
-// Qué declara el manifest publicado de la app (spec §6 y §8).
+// What the published manifest of the app declares (spec §6 and §8).
 import { readFileSync } from 'node:fs';
 import { expect } from 'vitest';
 import { P } from './values';
@@ -10,7 +10,7 @@ const manifests = new WeakMap<World, Record<string, unknown>>();
 
 function manifestOf(world: World): Record<string, unknown> {
 	const manifest = manifests.get(world);
-	if (!manifest) throw new Error('El escenario no declaró "el manifest que publica la app"');
+	if (!manifest) throw new Error('The scenario did not declare "el manifest que publica la app"');
 	return manifest;
 }
 

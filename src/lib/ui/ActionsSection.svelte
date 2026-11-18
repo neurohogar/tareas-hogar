@@ -19,9 +19,9 @@
 		openSection: PanelSection;
 		postpone?: 'posponer' | 'quitar';
 		pause?: 'pausar' | 'reanudar';
-		/** Elige una acción; el panel decide si actúa o pide confirmación (§6.2). */
+		/** Chooses an action; the panel decides whether to act or ask for confirmation (§6.2). */
 		onChoose: (action: PanelAction) => void;
-		/** Abre la confirmación de Borrar tarea. */
+		/** Opens the Borrar tarea confirmation. */
 		onRequestDelete: () => void;
 	} = $props();
 </script>

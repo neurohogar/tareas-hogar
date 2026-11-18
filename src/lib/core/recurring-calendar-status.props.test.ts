@@ -19,7 +19,7 @@ const createdAt = fc
 	.tuple(fc.integer({ min: 0, max: 30_000 }), fc.integer({ min: 0, max: 23 }))
 	.map(([day, hour]) => new Date(1990, 0, 1 + day, hour));
 
-/** Una tarea con un historial armado con `completar` en momentos al azar (horas desde creadaEn). */
+/** A task with a history built with `complete` at random moments (hours since createdAt). */
 const withHistory = fc
 	.tuple(recurrence, createdAt, fc.array(fc.integer({ min: -48, max: 3_000 }), { maxLength: 10 }))
 	.map(([r, created, hours]) => {
@@ -30,13 +30,13 @@ const withHistory = fc
 		);
 		return { r, created, cs };
 	});
-/** Horas después de creadaEn: hasta ~5 meses. */
+/** Hours after createdAt: up to ~5 months. */
 const hours = fc.integer({ min: 0, max: 3_600 });
 const status = ({ r, created, cs }: { r: CalendarRecurrence; created: Date; cs: Completion[] }, h: number) =>
 	recurringCalendarStatus(r, created, cs, new Date(created.getTime() + h * HOUR_MS));
 
-describe('estadoPeriodicaCalendario (propiedades)', () => {
-	it('con el tiempo el estado solo avanza: en espera → pendiente → atrasada', () => {
+describe('recurringCalendarStatus (properties)', () => {
+	it('over time the status only moves forward: waiting → pending → overdue', () => {
 		fc.assert(
 			fc.property(withHistory, hours, hours, (task, a, b) => {
 				const [before, after] = [Math.min(a, b), Math.max(a, b)];
@@ -45,7 +45,7 @@ describe('estadoPeriodicaCalendario (propiedades)', () => {
 		);
 	});
 
-	it('el progreso de en espera está en [0, 1)', () => {
+	it('the waiting progress is in [0, 1)', () => {
 		fc.assert(
 			fc.property(withHistory, hours, (task, h) => {
 				const e = status(task, h);
@@ -56,7 +56,7 @@ describe('estadoPeriodicaCalendario (propiedades)', () => {
 		);
 	});
 
-	it('solo está pendiente en un día de ocurrencia', () => {
+	it('it is pending only on an occurrence day', () => {
 		fc.assert(
 			fc.property(withHistory, hours, (task, h) => {
 				const now = new Date(task.created.getTime() + h * HOUR_MS);
@@ -65,7 +65,7 @@ describe('estadoPeriodicaCalendario (propiedades)', () => {
 		);
 	});
 
-	it('recién creada: pendiente si se crea en un día de ocurrencia; si no, en espera desde 0', () => {
+	it('just created: pending if created on an occurrence day; otherwise, waiting from 0', () => {
 		fc.assert(
 			fc.property(recurrence, createdAt, (r, created) => {
 				const expected = isOccurrence(r, startOfDay(created)) ? { kind: 'pendiente' } : { kind: 'en espera', progress: 0 };
@@ -74,7 +74,7 @@ describe('estadoPeriodicaCalendario (propiedades)', () => {
 		);
 	});
 
-	it('el orden de los completados no cambia el estado', () => {
+	it('the order of the completions does not change the status', () => {
 		const withPermutation = withHistory.chain((task) =>
 			fc.shuffledSubarray(task.cs, { minLength: task.cs.length }).map((another) => [task, { ...task, cs: another }] as const)
 		);

@@ -1,4 +1,4 @@
-// Spec §6, "Qué se dibuja con qué": invariantes de la clasificación de fuente por carácter.
+// Spec §6, "Qué se dibuja con qué": invariants of the per-character font classification.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { readEmoji } from './emoji';
@@ -14,8 +14,8 @@ const atkinsonText = fc.array(atkinsonLetter, { maxLength: 20 }).map((letters) =
 const otherAlphabet = fc.array(range(0x4e00, 0x4e50), { minLength: 1, maxLength: 5 }).map((p) => cp(...p));
 const freeText = fc.array(fc.oneof(atkinsonLetter, validEmoji, otherAlphabet), { maxLength: 8 }).map((parts) => parts.join(''));
 
-describe('fuentesDelTexto (propiedades)', () => {
-	it('nunca repite una fuente', () => {
+describe('textFonts (properties)', () => {
+	it('never repeats a font', () => {
 		fc.assert(
 			fc.property(freeText, (text) => {
 				const fonts = textFonts(text);
@@ -24,7 +24,7 @@ describe('fuentesDelTexto (propiedades)', () => {
 		);
 	});
 
-	it('es idempotente sobre el texto repetido: repetirlo no suma fuentes', () => {
+	it('is idempotent over repeated text: repeating it adds no fonts', () => {
 		fc.assert(
 			fc.property(freeText, (text) => {
 				expect(new Set(textFonts(text + text))).toEqual(new Set(textFonts(text)));
@@ -32,10 +32,10 @@ describe('fuentesDelTexto (propiedades)', () => {
 		);
 	});
 
-	it('el texto concatenado se dibuja con la unión de las fuentes de sus partes', () => {
+	it('the concatenated text is drawn with the union of the fonts of its parts', () => {
 		fc.assert(
 			fc.property(atkinsonText, atkinsonText, validEmoji, (a, b, emoji) => {
-				// Se separan con espacios para que ninguna parte se pegue a la otra en un mismo grafema.
+				// They are separated with spaces so that no part sticks to another in a single grapheme.
 				const joined = new Set(textFonts(`${a} ${emoji} ${b}`));
 				const parts = new Set([...textFonts(`${a} `), ...textFonts(` ${emoji} `), ...textFonts(` ${b}`)]);
 				expect(joined).toEqual(parts);
@@ -43,7 +43,7 @@ describe('fuentesDelTexto (propiedades)', () => {
 		);
 	});
 
-	it('el texto que Atkinson tiene entero se dibuja solo con Atkinson', () => {
+	it('the text that Atkinson has entirely is drawn only with Atkinson', () => {
 		fc.assert(
 			fc.property(atkinsonText, (text) => {
 				expect(textFonts(text)).toEqual(text === '' ? [] : ['Atkinson Hyperlegible Next']);
@@ -51,13 +51,13 @@ describe('fuentesDelTexto (propiedades)', () => {
 		);
 	});
 
-	it('un texto vacío no pide ninguna fuente', () => {
+	it('an empty text asks for no font', () => {
 		expect(textFonts('')).toEqual([]);
 	});
 });
 
-describe('fuenteDeCaracter (propiedades)', () => {
-	it('un emoji válido se dibuja con Noto o con el emoji del dispositivo, nunca con una fuente de texto', () => {
+describe('characterFont (properties)', () => {
+	it('a valid emoji is drawn with Noto or with the device emoji, never with a text font', () => {
 		fc.assert(
 			fc.property(validEmoji, (emoji) => {
 				expect(['Noto Color Emoji', 'el emoji del dispositivo']).toContain(characterFont(emoji));
@@ -65,7 +65,7 @@ describe('fuenteDeCaracter (propiedades)', () => {
 		);
 	});
 
-	it('la fuente de un emoji no cambia lo que leerEmoji acepta', () => {
+	it('the font of an emoji does not change what readEmoji accepts', () => {
 		fc.assert(
 			fc.property(validEmoji, (emoji) => {
 				characterFont(emoji);
@@ -74,7 +74,7 @@ describe('fuenteDeCaracter (propiedades)', () => {
 		);
 	});
 
-	it('cualquier carácter de texto que Atkinson tiene se dibuja con Atkinson', () => {
+	it('any text character that Atkinson has is drawn with Atkinson', () => {
 		const ofText = [...ATKINSON_COVERAGE].filter((point) => !/\p{Mark}|\p{Control}/u.test(cp(point)) && !/\p{Emoji_Presentation}/u.test(cp(point)));
 		fc.assert(
 			fc.property(fc.constantFrom(...ofText), (point) => {
@@ -83,7 +83,7 @@ describe('fuenteDeCaracter (propiedades)', () => {
 		);
 	});
 
-	it('un carácter de otro alfabeto se dibuja con la fuente del sistema', () => {
+	it('a character of another alphabet is drawn with the system font', () => {
 		fc.assert(
 			fc.property(range(0x4e00, 0x4e50), (point) => {
 				expect(characterFont(cp(point))).toBe('la fuente del sistema');

@@ -6,10 +6,10 @@ import { recordCompletion } from './recurring-relative';
 import { P, TITLE, date, dateHour } from './values';
 import { theDoc, theTask, theTaskOfKind, theTaskTitled, type StepDefinition, type World } from './world';
 
-/** Una fecha límite cualquiera: el escenario dice que no influye en el resultado. */
+/** Any due date: the scenario says it does not influence the result. */
 const DUE_DATE = '2026-07-20';
 
-/** Momentos de completados ya registrados: el escenario dice que no influyen en el resultado. */
+/** Moments of already recorded completions: the scenario says they do not influence the result. */
 const COMPLETIONS_MOMENTS = [new Date(2026, 6, 10, 9, 0, 0), new Date(2026, 6, 25, 18, 30, 0)];
 const COMPLETIONS_COUNT = { 'un completado': 1, 'dos completados': 2 };
 const COUNT = `(${Object.keys(COMPLETIONS_COUNT).join('|')})`;
@@ -19,7 +19,7 @@ function recordCompletions(world: World, task: Task, count: string): void {
 	for (const moment of COMPLETIONS_MOMENTS.slice(0, howMany)) recordCompletion(world, moment, task);
 }
 
-/** La fecha límite llega como texto crudo: validarla es del dominio. */
+/** The due date arrives as raw text: validating it belongs to the domain. */
 function create(world: World, data: OneOffData, now = NOW): void {
 	recordCreation(world, (id) => createOneOff(data, id, now));
 }
@@ -96,7 +96,7 @@ export const oneOffSteps: StepDefinition[] = [
 		run: (world) => expect(theDoc(world)).not.toHaveProperty('dueDate')
 	},
 	{
-		// Antes de tocar el checkbox declara los completados; después, afirma cuántos quedaron.
+		// Before tapping the checkbox it declares the completions; afterwards, it asserts how many remain.
 		pattern: new RegExp(`^la tarea tiene ${COUNT}$`),
 		run: (world, count) => {
 			if (!world.checkboxTouched) return recordCompletions(world, theTask(world), count);

@@ -9,11 +9,11 @@
 
 	let { children } = $props();
 
-	/** undefined mientras Auth todavía no respondió. */
+	/** undefined while Auth has not answered yet. */
 	let user = $state<User | null | undefined>(undefined);
 	const auth = $derived<AuthResponse>(user === undefined ? 'esperando' : user ? 'con-sesion' : 'sin-sesion');
 	let data = $state.raw<CollectionsResponded>({ tasks: false, completions: false });
-	/** Spec §6.6: una sola vez por arranque; entrar con Google no la vuelve a mostrar. */
+	/** Spec §6.6: once per launch; signing in with Google does not show it again. */
 	let loading = $state(true);
 
 	onMount(() => observeUser((current) => (user = current)));
@@ -21,12 +21,12 @@
 
 <LoadingScreen {auth} {data} onLeave={() => (loading = false)} />
 
-<!-- Lo que se monta detrás de la pantalla de carga no se ve ni se puede tocar hasta que se va. -->
+<!-- What is mounted behind the loading screen cannot be seen or touched until it leaves. -->
 <main style:visibility={loading ? 'hidden' : undefined}>
 	{#if user === null}
 		<Login />
 	{:else if user}
-		<!-- La sesión vive en el layout: los datos y el aviso siguen al cambiar de pantalla. -->
+		<!-- The session lives in the layout: the data and the notice follow the change of screen. -->
 		{#key user.uid}
 			<Session uid={user.uid} onCollectionsResponded={(responded) => (data = responded)}>{@render children()}</Session>
 		{/key}

@@ -16,7 +16,7 @@ import {
 	type World
 } from './world';
 
-/** Momentos arbitrarios, lejanos entre sí, para "en cualquier momento". */
+/** Arbitrary moments, far from each other, for "en cualquier momento". */
 export const ANY_MOMENT = [
 	new Date(2000, 0, 1, 0, 0, 0),
 	new Date(2026, 6, 15, 8, 0, 0),
@@ -29,12 +29,12 @@ export function recordCompletion(world: World, moment: Date, task: Task = theTas
 	return completion;
 }
 
-/** Cómo se arma el completado nuevo: entero por el checkbox; «Hice la mínima» lo decide el core y puede no completar. */
+/** How the new completion is built: whole through the checkbox; «Hice la mínima» is decided by the core and may not complete. */
 export type Completes = (task: Task, completions: readonly Completion[], id: string, now: Date) => Completion | undefined;
 
 const completesWhole: Completes = (task, completions, id, now) => complete(task, completions, id, now);
 
-/** Completo desde este dispositivo: es mi cambio y abre el aviso (§5.4). Si `completa` no completa, no cambia nada. */
+/** I complete from this device: it is my change and opens the notice (§5.4). If `completes` does not complete, nothing changes. */
 export function completeMe(world: World, moment: Date, task: Task, completes: Completes = completesWhole): void {
 	const completion = completes(task, world.completions, newId(world, 'completado'), moment);
 	if (!completion) return;
@@ -44,7 +44,7 @@ export function completeMe(world: World, moment: Date, task: Task, completes: Co
 	world.completions = [...world.completions, completion];
 	world.newCompletion = completion;
 	world.notice = noticeOnComplete(task, world.newCompletion);
-	// Completar, por el checkbox o por «Hecho», vuelve la tarea al paso 1 (§4.1, Pasos).
+	// Completing, through the checkbox or «Hecho», returns the task to step 1 (§4.1, Pasos).
 	world.docs = applyChange(world.docs, task.id, changeOnComplete(task));
 }
 
@@ -129,7 +129,7 @@ export const recurringRelativeSteps: StepDefinition[] = [
 		pattern: new RegExp(`^el progreso es ${P}$`),
 		run: (world, progress) => {
 			const status = onlyStatus(world);
-			if (status.kind !== 'en espera') throw new Error(`Sin progreso: el estado es ${status.kind}`);
+			if (status.kind !== 'en espera') throw new Error(`No progress: the status is ${status.kind}`);
 			expect(status.progress).toBeCloseTo(numeric(progress), 9);
 		}
 	},

@@ -1,10 +1,10 @@
-// El check "Mostrar completadas" de Pendientes (spec §6.1): preferencia local
-// del dispositivo, en el almacenamiento local del navegador (no se sincroniza).
-// Si no está disponible, vale lo que dure la sesión, desde el valor inicial.
+// The "Mostrar completadas" check of Pendientes (spec §6.1): a local
+// device preference, kept in the browser's local storage (not synced).
+// If it is not available, it holds for the session, from the initial value.
 
 const KEY = 'tareas-hogar:mostrar-completadas';
 
-/** El valor guardado; apagado (el valor inicial) si no hay uno o no se puede leer. */
+/** The saved value; off (the initial value) if there is none or it cannot be read. */
 export function readShowCompleted(): boolean {
 	try {
 		return localStorage.getItem(KEY) === 'true';
@@ -17,6 +17,6 @@ export function saveShowCompleted(show: boolean): void {
 	try {
 		localStorage.setItem(KEY, String(show));
 	} catch {
-		// Sin almacenamiento, el valor dura lo que dure la sesión.
+		// Without storage, the value holds for the session.
 	}
 }

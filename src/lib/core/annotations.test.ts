@@ -20,12 +20,12 @@ function inText(groups: AnnotationsGroup[]): string {
 		.join('; ');
 }
 
-describe('anotacionesEnPantalla (spec §6.7)', () => {
-	it('sin anotaciones no tiene grupos', () => {
+describe('annotationsOnScreen (spec §6.7)', () => {
+	it('without annotations it has no groups', () => {
 		expect(annotationsOnScreen([task('regar')], [], now)).toEqual([]);
 	});
 
-	it('va de la más reciente a la más antigua y agrupa por día local, aunque se hayan anotado en otro orden', () => {
+	it('goes from most recent to oldest and groups by local day, even if annotated in another order', () => {
 		const annotations = [
 			annotation('a1', new Date(2026, 6, 15, 8, 5)),
 			annotation('a2', new Date(2026, 6, 15, 9, 10)),
@@ -36,20 +36,20 @@ describe('anotacionesEnPantalla (spec §6.7)', () => {
 		expect(inText(annotationsOnScreen([], annotations, now))).toBe('Hoy: a2 09:10, a1 08:05; Ayer: a3 21:30; lunes 13 de julio: a4 07:00');
 	});
 
-	it('si dos tienen el mismo instante va primero la de id menor', () => {
+	it('if two have the same instant, the one with the lower id goes first', () => {
 		const moment = new Date(2026, 6, 15, 10, 0);
 
 		expect(inText(annotationsOnScreen([], [annotation('a2', moment), annotation('a1', moment)], now))).toBe('Hoy: a1 10:00, a2 10:00');
 		expect(inText(annotationsOnScreen([], [annotation('a1', moment), annotation('a2', moment)], now))).toBe('Hoy: a1 10:00, a2 10:00');
 	});
 
-	it('muestra el nombre actual de la tarea, con su emoji si lo tiene', () => {
+	it('shows the current name of the task, with its emoji if it has one', () => {
 		const annotations = [annotation('a1', new Date(2026, 6, 15, 8, 0), { taskId: 'regar' }), annotation('a2', new Date(2026, 6, 15, 9, 0), { taskId: 'pagar' })];
 
 		expect(inText(annotationsOnScreen([task('regar', '🌱'), task('pagar')], annotations, now))).toBe('Hoy: a2 09:00 pagar, a1 08:00 🌱 regar');
 	});
 
-	it('no muestra las anotaciones de una tarea que ya no existe, y sí las sin tarea', () => {
+	it('does not show the annotations of a task that no longer exists, but does show those without a task', () => {
 		const annotations = [annotation('a1', new Date(2026, 6, 15, 8, 0), { taskId: 'borrada' }), annotation('a2', new Date(2026, 6, 15, 9, 0))];
 
 		expect(inText(annotationsOnScreen([task('regar')], annotations, now))).toBe('Hoy: a2 09:00');

@@ -19,7 +19,7 @@ import {
 	onlyInSchedule
 } from './support';
 
-// qa/panel-mobile.md: el panel de edición en pestañas. Celular: 360x640 con emulación táctil.
+// qa/panel-mobile.md: the edit panel in tabs. Phone: 360x640 with touch emulation.
 test.use({ viewport: { width: 360, height: 640 }, hasTouch: true });
 
 test.beforeEach(async () => {
@@ -37,7 +37,7 @@ const heading = (page: Page) => panel(page).locator('header');
 const title = (page: Page) => page.getByLabel('Título');
 const newTask = (page: Page) => page.getByRole('button', { name: '+' }).click();
 
-/** La caja de `l` está entera dentro del viewport actual. */
+/** The box of `l` is entirely inside the current viewport. */
 async function inside(page: Page, l: Locator) {
 	const c = (await l.boundingBox())!;
 	const v = page.viewportSize()!;
@@ -48,7 +48,7 @@ async function inside(page: Page, l: Locator) {
 	expect(c.y + c.height).toBeLessThanOrEqual(v.height + 0.5);
 }
 
-/** Visible: dentro del viewport y no tapado por otro elemento (el punto central es de `l` o de un descendiente). */
+/** Visible: inside the viewport and not covered by another element (the center point belongs to `l` or a descendant). */
 async function visibleWithoutCover(page: Page, l: Locator) {
 	await expect(l).toBeVisible();
 	await inside(page, l);
@@ -63,7 +63,7 @@ async function visibleWithoutCover(page: Page, l: Locator) {
 const box = async (l: Locator) => (await l.boundingBox())!;
 const scroll = (l: Locator) => l.evaluate((e) => e.scrollTop);
 
-/** Sin desplazamiento horizontal en el formulario y en el contenido. */
+/** No horizontal scroll in the form and in the content. */
 async function withoutOverflow(page: Page) {
 	const measures = await page.evaluate(() => {
 		const f = document.querySelector('form')!;
@@ -75,7 +75,7 @@ async function withoutOverflow(page: Page) {
 	expect(measures.d[0]).toBeLessThanOrEqual(measures.d[1]);
 }
 
-/** Emula el teclado en pantalla abierto: enfoca `campo` y achica el viewport visual. */
+/** Emulates the on-screen keyboard being open: focuses `campo` and shrinks the visual viewport. */
 async function openKeyboard(page: Page, field: Locator) {
 	await field.click();
 	await page.setViewportSize({ width: 360, height: 300 });
@@ -95,7 +95,7 @@ test('Flujo 1: crear en el celular', async ({ page }) => {
 	await sessionWithClock(page, HOUR);
 	await newTask(page);
 
-	// 1: pantalla completa, sin foco, sin teclado.
+	// 1: full screen, no focus, no keyboard.
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
 	const p = await box(panel(page));
 	expect(p).toMatchObject({ x: 0, width: 360 });
@@ -104,7 +104,7 @@ test('Flujo 1: crear en el celular', async ({ page }) => {
 	await expect(title(page)).not.toBeFocused();
 	await expect(save(page)).toBeVisible();
 
-	// 2: pestañas Tarea y Cuándo, sin Acciones.
+	// 2: tabs Tarea and Cuándo, without Acciones.
 	await expect(page.getByRole('tab')).toHaveText([/^\s*Tarea/, /^\s*Cuándo/]);
 	await expect(tab(page, 'Acciones')).toHaveCount(0);
 	await expect(tab(page, 'Tarea')).toHaveAttribute('aria-selected', 'true');
@@ -131,7 +131,7 @@ test('Flujo 1: crear en el celular', async ({ page }) => {
 	await tab(page, 'Tarea').click();
 	await expect(title(page)).toBeVisible();
 
-	// 4: deslizar no cambia de pestaña.
+	// 4: swiping does not change tabs.
 	const c = await box(content(page));
 	const y = c.y + c.height / 2;
 	await page.mouse.move(c.x + c.width - 20, y);
@@ -141,7 +141,7 @@ test('Flujo 1: crear en el celular', async ({ page }) => {
 	await expect(tab(page, 'Tarea')).toHaveAttribute('aria-selected', 'true');
 	await expect(tab(page, 'Cuándo')).toHaveAttribute('aria-selected', 'false');
 
-	// 5: crear Regar.
+	// 5: create Regar.
 	await title(page).fill('Regar');
 	await tab(page, 'Cuándo').click();
 	await page.getByRole('radio', { name: 'Intervalo' }).check();
@@ -151,7 +151,7 @@ test('Flujo 1: crear en el celular', async ({ page }) => {
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 	await expect(row(page, 'Regar')).toBeVisible();
 
-	// 6: Cerrar descarta.
+	// 6: Cerrar discards.
 	await newTask(page);
 	await close(page);
 	await expect(page.getByRole('listitem').filter({ has: page.getByRole('checkbox') })).toHaveCount(1);
@@ -174,7 +174,7 @@ test('Flujo 2: editar y las tres pestañas', async ({ page }) => {
 	await openTask(page, 'Regar');
 	await expect(tab(page, 'Tarea')).toHaveAttribute('aria-selected', 'true');
 
-	// 2: orden en Tarea.
+	// 2: order in Tarea.
 	await expect(page.getByText('Última vez: hoy 08:00')).toBeVisible();
 	await expect(panel(page).getByText('Pausada', { exact: true })).toHaveCount(0);
 	await expect(panel(page).getByText(/Pospuesta/)).toHaveCount(0);
@@ -284,7 +284,7 @@ test('Flujo 3: pantalla completa y barras fijas', async ({ page }) => {
 		t: await box(page.getByRole('tablist')),
 		g: await box(save(page))
 	});
-	// 2: con lo mucho que se escribe y un viewport bajo, el contenido no entra.
+	// 2: with how much is typed and a short viewport, the content does not fit.
 	await page.getByLabel('Nota').fill(Array.from({ length: 30 }, (_, i) => `línea ${i + 1}`).join('\n'));
 	await page.getByRole('heading', { name: 'Editar tarea' }).click();
 	await page.setViewportSize({ width: 360, height: 440 });
@@ -469,7 +469,7 @@ test('Flujo 5: errores', async ({ page }) => {
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 	await expect(row(page, 'Regar')).toBeVisible();
 
-	// 4: ancho.
+	// 4: wide.
 	await page.setViewportSize({ width: 1024, height: 768 });
 	await newTask(page);
 	await onlyInSchedule(page).check();
@@ -517,7 +517,7 @@ test('Flujo 6: teclado en pantalla', async ({ page }) => {
 	expect(await box(page.getByRole('tablist'))).toEqual(before.t);
 
 	// 2
-	// Tocar la pestaña quita el foco del campo (y con él el teclado); se toca un campo de Cuándo con el viewport achicado.
+	// Tapping the tab removes focus from the field (and with it the keyboard); a Cuándo field is tapped with the viewport shrunk.
 	await tab(page, 'Cuándo').click();
 	await page.getByRole('radio', { name: 'Intervalo' }).check();
 	await page.getByRole('spinbutton', { name: 'Cada' }).click();
@@ -526,12 +526,12 @@ test('Flujo 6: teclado en pantalla', async ({ page }) => {
 	await expect(page.getByRole('spinbutton', { name: 'Cada' })).toBeFocused();
 	await expect(save(page)).toBeVisible();
 
-	// 3: selector de hora, sin teclado.
+	// 3: time picker, no keyboard.
 	await onlyInSchedule(page).check();
 	await fieldFrom(page).click();
 	await expect(save(page)).toBeVisible();
 
-	// 4: compu.
+	// 4: desktop.
 	await page.setViewportSize({ width: 1024, height: 768 });
 	await title(page).click();
 	await expect(title(page)).toBeFocused();
@@ -539,7 +539,7 @@ test('Flujo 6: teclado en pantalla', async ({ page }) => {
 	await page.setViewportSize({ width: 360, height: 640 });
 	await discard(page);
 
-	// 5: Enter guarda con la barra oculta.
+	// 5: Enter saves with the bar hidden.
 	await newTask(page);
 	await tab(page, 'Cuándo').click();
 	await page.getByRole('radio', { name: 'Intervalo' }).check();
@@ -713,7 +713,7 @@ test('Flujo 9 (aviso): el aviso de deshacer sobre la barra de Guardar y sobre el
 	await createWater(a);
 	await create(a, { title: 'Otra', kind: 'No se repite' });
 	const notice = (p: Page) => p.getByRole('status').filter({ hasText: 'Completaste' });
-	// El aviso se muestra en el dispositivo que completa: A completa Otra y abre Regar con el aviso a la vista.
+	// The notice is shown on the device that completes: A completes Otra and opens Regar with the notice in view.
 	await complete(a, 'Otra');
 	await expect(notice(a)).toBeVisible();
 	await openTask(a, 'Regar');
@@ -724,13 +724,13 @@ test('Flujo 9 (aviso): el aviso de deshacer sobre la barra de Guardar y sobre el
 	await visibleWithoutCover(a, a.getByRole('tablist'));
 	await visibleWithoutCover(a, a.getByRole('button', { name: 'Cerrar' }));
 	await visibleWithoutCover(a, save(a));
-	// Con el teclado abierto: sin barra, el aviso sobre el teclado.
+	// With the keyboard open: no bar, the notice above the keyboard.
 	await openKeyboard(a, title(a));
 	await expect(save(a)).toBeHidden();
 	await expect(notice(a)).toBeVisible();
 	const av2 = await box(notice(a));
 	expect(av2.y + av2.height).toBeLessThanOrEqual(300 + 1);
-	// 5: a los 5 segundos desaparece.
+	// 5: disappears after 5 seconds.
 	await expect(notice(a)).toHaveCount(0, { timeout: 15_000 });
 	await closeTwo();
 });

@@ -1,11 +1,11 @@
-// Los emojis recientes del selector (spec §6.2, §7): preferencia local del
-// dispositivo, en el almacenamiento local del navegador. Si no está disponible
-// (modo privado, datos bloqueados, valor dañado), la app sigue sin recientes.
+// The picker's recent emojis (spec §6.2, §7): a local device preference, kept in the
+// browser's local storage. If it is not available (private mode, blocked data, a corrupt
+// value), the app simply runs without recents.
 import { addRecent, MAX_RECENT } from '#lib/core/recent-emojis.ts';
 
 const KEY = 'tareas-hogar:emojis-recientes';
 
-/** Los recientes guardados, del más reciente al más viejo; vacío si no se pueden leer. */
+/** The saved recents, most recent first; empty if they cannot be read. */
 export function readRecents(): string[] {
 	try {
 		const stored: unknown = JSON.parse(localStorage.getItem(KEY) ?? '[]');
@@ -16,13 +16,13 @@ export function readRecents(): string[] {
 	}
 }
 
-/** Suma el emoji elegido a los recientes, los guarda y devuelve la lista nueva (se guarde o no). */
+/** Adds the chosen emoji to the recents, saves them and returns the new list (whether or not it was saved). */
 export function rememberRecent(emoji: string): string[] {
 	const recents = addRecent(readRecents(), emoji);
 	try {
 		localStorage.setItem(KEY, JSON.stringify(recents));
 	} catch {
-		// Sin almacenamiento, los recientes duran lo que dure la sesión del panel.
+		// Without storage, the recents last only as long as the panel session.
 	}
 	return recents;
 }

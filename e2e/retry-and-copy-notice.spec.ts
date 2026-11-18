@@ -64,7 +64,7 @@ async function annotate(
   await expect(confirmation(page)).toBeVisible();
 }
 
-/** Script de inicio: `writeText` rechaza con NotAllowedError mientras la bandera de la pestaña lo pida; si no, funciona. */
+/** Init script: `writeText` rejects with NotAllowedError while the tab's flag asks for it; otherwise it works. */
 async function clipboardControlled(page: Page) {
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.addInitScript(() => {
@@ -80,12 +80,12 @@ async function clipboardControlled(page: Page) {
 const rejects = (page: Page, whether: boolean) =>
   page.evaluate((v) => sessionStorage.setItem("qa-rechaza", v ? "1" : "0"), whether);
 
-/** Pausa el reloj de la app en una hora fija y deja que los datos ya estén en pantalla. */
+/** Pauses the app clock at a fixed time and lets the data already be on screen. */
 const stopIn = (page: Page, hour: string) =>
   page.clock.pauseAt(new Date(hour));
 
 // ---------------------------------------------------------------------------
-// Lectura auxiliar del emulador (REST de Firestore): la interfaz no muestra las huérfanas.
+// Auxiliary emulator read (Firestore REST): the interface does not show the orphans.
 // ---------------------------------------------------------------------------
 
 const ROOT = `http://127.0.0.1:8080/v1/projects/${PROJECT}/databases/(default)/documents`;
@@ -104,7 +104,7 @@ async function emulatorUid(): Promise<string> {
     userInfo?: { localId: string }[];
   };
   const uid = body.userInfo?.[0]?.localId;
-  if (!uid) throw new Error("el emulador de Auth no tiene ningún usuario");
+  if (!uid) throw new Error("the Auth emulator has no user");
   return uid;
 }
 
@@ -133,10 +133,10 @@ const annotationsTexts = async () =>
   (await docs("anotaciones")).map((d) => text(d.fields, "texto")).sort();
 
 // ---------------------------------------------------------------------------
-// Flujos 1 a 3: el aviso de copia rechazada
+// Flows 1 to 3: the rejected-copy notice
 // ---------------------------------------------------------------------------
 
-/** Regar y una anotación de hoy 08:05 con el texto `quedó lindo`, en Anotaciones con el portapapeles rechazando. */
+/** Regar and an annotation from today 08:05 with the text `quedó lindo`, in Anotaciones with the clipboard rejecting. */
 async function withAnnotation(page: Page) {
   await clipboardControlled(page);
   await sessionWithClock(page, "2026-07-15T08:04:30");
@@ -158,7 +158,7 @@ test("Flujo 1: el portapapeles rechaza la copia", async ({ page }) => {
   await withAnnotation(page);
   const list = await entries(page).allInnerTexts();
 
-  // Paso 2 (con el reloj detenido para medir el paso 4).
+  // Step 2 (with the clock stopped to measure step 4).
   await stopIn(page, "2026-07-15T08:30:00");
   await copy(page).click();
   await expect(doNotCopy(page)).toBeVisible();
@@ -166,7 +166,7 @@ test("Flujo 1: el portapapeles rechaza la copia", async ({ page }) => {
   await expect(doNotCopy(page).getByRole("button")).toHaveCount(0);
   await expect(copiedNotice(page)).toHaveCount(0);
 
-  // Paso 3.
+  // Step 3.
   expect(await entries(page).allInnerTexts()).toEqual(list);
   await expect(
     page.getByRole("heading", { name: "Anotaciones", level: 1 }),
@@ -181,7 +181,7 @@ test("Flujo 1: el portapapeles rechaza la copia", async ({ page }) => {
   ).toHaveCount(0);
   expect(await clipboard(page)).toBe("previo");
 
-  // Paso 4: con el reloj detenido, a los 4 s sigue; a los 5 s se va solo.
+  // Step 4: with the clock stopped, at 4 s it is still there; at 5 s it goes away by itself.
   await page.clock.runFor(4000);
   await expect(doNotCopy(page)).toBeVisible();
   await page.clock.runFor(1000);
@@ -192,7 +192,7 @@ test("Flujo 1: el portapapeles rechaza la copia", async ({ page }) => {
 test("Flujo 2: volver a tocar Copiar", async ({ page }) => {
   await withAnnotation(page);
 
-  // Pasos 1 y 2.
+  // Steps 1 and 2.
   await stopIn(page, "2026-07-15T08:30:00");
   await copy(page).click();
   await expect(doNotCopy(page)).toHaveCount(1);
@@ -204,12 +204,12 @@ test("Flujo 2: volver a tocar Copiar", async ({ page }) => {
   await page.clock.runFor(1000);
   await expect(doNotCopy(page)).toHaveCount(0);
 
-  // Paso 4: la app no copia sola, aunque pasen minutos.
+  // Step 4: the app does not copy by itself, even if minutes pass.
   await page.clock.runFor(10 * 60_000);
   expect(await clipboard(page)).toBe("previo");
   await expect(doNotCopy(page)).toHaveCount(0);
 
-  // Paso 3: recargar con el portapapeles funcionando.
+  // Step 3: reload with the clipboard working.
   await page.clock.resume();
   await rejects(page, false);
   await page.reload();
@@ -222,12 +222,12 @@ test("Flujo 2: volver a tocar Copiar", async ({ page }) => {
   expect(await clipboard(page)).toBe(
     "2026-07-15 08:05 · Me sirvió · Panel de edición · Regar · quedó lindo",
   );
-  // Con el rechazo de nuevo, mientras se ve "Anotaciones copiadas": solo el nuevo texto.
+  // With the rejection again, while "Anotaciones copiadas" is shown: only the new text.
   await rejects(page, true);
   await copy(page).click();
   await expect(doNotCopy(page)).toHaveCount(1);
   await expect(copiedNotice(page)).toHaveCount(0);
-  // Y al revés: con "No se pudo copiar" visible, un Copiar que funciona deja solo "Anotaciones copiadas".
+  // And the other way round: with "No se pudo copiar" visible, a Copiar that works leaves only "Anotaciones copiadas".
   await rejects(page, false);
   await copy(page).click();
   await expect(copiedNotice(page)).toHaveCount(1);
@@ -237,7 +237,7 @@ test("Flujo 2: volver a tocar Copiar", async ({ page }) => {
   ).toHaveCount(1);
 });
 
-/** Completa Pagar a las 08:00 y a las 08:00:02 abre Anotaciones con el aviso de deshacer a la vista. */
+/** Completes Pagar at 08:00 and at 08:00:02 opens Anotaciones with the undo notice in view. */
 async function withNoticeOfUndo(page: Page) {
   await clipboardControlled(page);
   await sessionWithClock(page, "2026-07-15T07:59:00");
@@ -265,7 +265,7 @@ async function withoutOverlap(page: Page) {
     notice!.x + notice!.width <= text!.x ||
     text!.x + text!.width <= notice!.x;
   expect(separate).toBe(true);
-  // El botón Deshacer se puede tocar: es lo que está en su centro.
+  // The Deshacer button can be tapped: it is what is at its center.
   const button = (await undoNotice(page)
     .getByRole("button", { name: "Deshacer" })
     .boundingBox())!;
@@ -279,13 +279,13 @@ async function withoutOverlap(page: Page) {
 test("Flujo 3: no tapa el aviso de deshacer", async ({ page }) => {
   await withNoticeOfUndo(page);
 
-  // Paso 2.
+  // Step 2.
   await copy(page).click();
   await expect(doNotCopy(page)).toBeVisible();
   await expect(undoNotice(page)).toBeVisible();
   await withoutOverlap(page);
 
-  // Paso 3: Deshacer mientras se ve el texto.
+  // Step 3: Deshacer while the text is shown.
   await undoNotice(page).getByRole("button", { name: "Deshacer" }).click();
   await expect(undoNotice(page)).toHaveCount(0);
   await go(page, "Pendientes");
@@ -308,14 +308,14 @@ test("Flujo 3 (celular): no tapa el aviso de deshacer", async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// Flujos 4 a 7: las limpiezas se reintentan
+// Flows 4 to 7: the cleanups are retried
 // ---------------------------------------------------------------------------
 
 const TODAY = "2026-07-15T08:00:00";
 
 type Two = Awaited<ReturnType<typeof twoDevices>>;
 
-/** Con B cargando todas las pantallas (sin service worker no podría abrirlas sin conexión), termina en Pendientes. */
+/** With B loading all the screens (without a service worker it could not open them offline), it ends on Pendientes. */
 async function loadScreens(page: Page) {
   for (const screenName of [
     "Historial",
@@ -325,7 +325,7 @@ async function loadScreens(page: Page) {
     await go(page, screenName);
 }
 
-/** Ningún texto, contador ni indicador de pendientes: solo la franja "Sin conexión" y el aviso de deshacer de siempre. */
+/** No text, counter or pending indicator: only the "Sin conexión" strip and the usual undo notice. */
 async function silence(page: Page) {
   await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
@@ -338,8 +338,8 @@ async function silence(page: Page) {
 }
 
 /**
- * B vuelve a tener conexión con la red demorada (CDP, latencia de 3 s); cuando `llego` dice que el dato huérfano
- * ya está donde B lo ve, B vuelve a quedarse sin conexión, antes de que termine el intento de limpiarlo.
+ * B gets its connection back with a delayed network (CDP, 3 s latency); when `llego` says the orphan data
+ * is already where B sees it, B goes offline again, before the attempt to clean it finishes.
  */
 async function reconnectAndCut(d: Two, arrive: () => Promise<boolean>) {
   await d.ctxB.setOffline(false);
@@ -360,10 +360,10 @@ async function waitA(condition: () => Promise<boolean>, ms = 40_000) {
     if (await condition().catch(() => false)) return;
     await new Promise((r) => setTimeout(r, 100));
   }
-  throw new Error("la condición no se cumplió a tiempo");
+  throw new Error("the condition was not met in time");
 }
 
-/** Sigue verdadero durante `ms` (el estado del emulador no cambia solo). */
+/** Stays true for `ms` (the emulator state does not change by itself). */
 async function staysDuring(ms: number, condition: () => Promise<boolean>) {
   const limit = Date.now() + ms;
   do {
@@ -382,8 +382,8 @@ const linesCopied = async (page: Page) => {
 };
 
 /**
- * Deja una anotación huérfana: B (con `queda`, una anotación suelta) se queda sin conexión, A borra `Regar` con su
- * anotación `sana` y se va, y B, que todavía ve `Regar`, anota `huérfana` sobre ella. B termina en Anotaciones, sin conexión.
+ * Leaves an orphan annotation: B (with `queda`, a loose annotation) goes offline, A deletes `Regar` with its
+ * annotation `sana` and leaves, and B, which still sees `Regar`, annotates `huérfana` on it. B ends on Anotaciones, offline.
  */
 async function withOrphanByClean(browser: Browser): Promise<Two> {
   const d = await twoDevices(browser, TODAY);
@@ -410,7 +410,7 @@ async function withOrphanByClean(browser: Browser): Promise<Two> {
   return d;
 }
 
-/** El intento de B se corta: la huérfana está en el servidor, B no la ve y no limpió nada. */
+/** B's attempt is cut off: the orphan is on the server, B does not see it and cleaned nothing. */
 async function cutAttempt(d: Two) {
   await reconnectAndCut(
     d,
@@ -428,12 +428,12 @@ test("Flujo 4: una huérfana se limpia al volver la conexión", async ({
   test.setTimeout(240_000);
   const d = await withOrphanByClean(browser);
   try {
-    // Pasos 2 y 3.
+    // Steps 2 and 3.
     await cutAttempt(d);
     await expect(d.b.getByText("huérfana")).toHaveCount(0);
     await silence(d.b);
 
-    // Paso 4: B vuelve a tener conexión y no toca nada.
+    // Step 4: B gets its connection back and touches nothing.
     await d.ctxB.setOffline(false);
     await waitA(async () => !(await orphanInServer()));
     expect(await annotationsTexts()).toEqual(["queda"]);
@@ -468,7 +468,7 @@ test("Flujo 4 (paso 5): un cambio de datos sin conexión no limpia; al volver la
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 5: una falla no impide limpiar las demás
+// Flow 5: one failure does not prevent cleaning the others
 // ---------------------------------------------------------------------------
 
 const TASKS = ["Regar", "Pagar", "Limpiar"];
@@ -476,7 +476,7 @@ const TASKS = ["Regar", "Pagar", "Limpiar"];
 const orphanedInServer = async () =>
   (await annotationsTexts()).filter((t) => t?.startsWith("h"));
 
-/** Tres tareas borradas por A mientras B, sin conexión, anota `h1`, `h2` y `h3` sobre ellas (y `queda`, suelta). */
+/** Three tasks deleted by A while B, offline, annotates `h1`, `h2` and `h3` on them (and `queda`, loose). */
 async function withThreeOrphaned(browser: Browser): Promise<Two> {
   const d = await twoDevices(browser, TODAY);
   for (const title of TASKS) {
@@ -565,7 +565,7 @@ test("Flujo 5: un completado huérfano se limpia y el Historial nunca lo muestra
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 6: sin temporizadores
+// Flow 6: no timers
 // ---------------------------------------------------------------------------
 
 test("Flujo 6: sin temporizadores, solo al cambiar los datos", async ({
@@ -576,14 +576,14 @@ test("Flujo 6: sin temporizadores, solo al cambiar los datos", async ({
   try {
     await cutAttempt(d);
 
-    // Paso 1: B con conexión, pero con el servidor inalcanzable el intento de la vuelta de la conexión también falla.
+    // Step 1: B online, but with the server unreachable the attempt when the connection comes back also fails.
     await d.b
       .context()
       .route(/127\.0\.0\.1:8080/, (path) => path.abort("connectionfailed"));
     await d.ctxB.setOffline(false);
     await d.b.waitForTimeout(15_000);
     expect(await orphanInServer()).toBe(true);
-    // El servidor vuelve a estar a mano; la persona no cambia nada y pasa 1 hora simulada.
+    // The server is reachable again; the person changes nothing and 1 simulated hour passes.
     await d.b.context().unroute(/127\.0\.0\.1:8080/);
     await d.b.clock.pauseAt(new Date("2026-07-15T08:30:00"));
     await d.b.clock.runFor(60 * 60_000);
@@ -593,7 +593,7 @@ test("Flujo 6: sin temporizadores, solo al cambiar los datos", async ({
     await expect(entries(d.b)).toHaveCount(1);
     await silence(d.b);
 
-    // Paso 2: cambian los datos.
+    // Step 2: the data changes.
     await go(d.b, "Pendientes");
     await annotate(d.b, "cambio");
     await waitA(async () => !(await orphanInServer()));
@@ -605,7 +605,7 @@ test("Flujo 6: sin temporizadores, solo al cambiar los datos", async ({
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 7: datos que ya no se usan (campos `etiquetas` y `esfuerzo`, colección `etiquetas`)
+// Flow 7: data that is no longer used (`etiquetas` and `esfuerzo` fields, `etiquetas` collection)
 // ---------------------------------------------------------------------------
 
 async function writeInEmulator(
@@ -639,7 +639,7 @@ test("Flujo 7: los campos viejos etiquetas y esfuerzo quedan intactos al editar"
   await sessionWithClock(page, TODAY);
   const uid = await emulatorUid();
 
-  // Paso 1: dos tareas, los campos viejos escritos por el REST del emulador y la colección vieja.
+  // Step 1: two tasks, the old fields written through the emulator REST and the old collection.
   await createAndView(page, {
     title: "Regar",
     kind: "Intervalo",
@@ -664,7 +664,7 @@ test("Flujo 7: los campos viejos etiquetas y esfuerzo quedan intactos al editar"
   await page.reload();
   await expect(row(page, "Regar")).toBeVisible();
 
-  // Paso 2: la app se ve igual que sin esos datos.
+  // Step 2: the app looks the same as without that data.
   await expect(row(page, "Regar").getByRole("listitem")).toHaveCount(0);
   await expect(row(page, "Regar")).not.toContainText(/Rápida|Media|Larga|Sin estimar/);
   await expect(page.getByRole("group", { name: "Filtrar por etiqueta" })).toHaveCount(0);
@@ -676,7 +676,7 @@ test("Flujo 7: los campos viejos etiquetas y esfuerzo quedan intactos al editar"
   ]);
   await silence(page);
 
-  // Paso 3: el panel no tiene los campos; guardar el título no toca los campos viejos.
+  // Step 3: the panel does not have the fields; saving the title does not touch the old fields.
   await openTask(page, "Regar");
   await expect(page.getByRole("combobox", { name: "Etiquetas" })).toHaveCount(0);
   await expect(page.getByRole("combobox", { name: "Esfuerzo" })).toHaveCount(0);
@@ -687,7 +687,7 @@ test("Flujo 7: los campos viejos etiquetas y esfuerzo quedan intactos al editar"
   expect(labelsViejas(doc.fields)).toEqual(["x"]);
   expect(text(doc.fields, "esfuerzo")).toBe("media");
 
-  // Paso 4: cambiar la recurrencia quita sus campos y deja los viejos.
+  // Step 4: changing the recurrence removes its fields and leaves the old ones.
   await edit(page, "Regar plantas", { kind: "No se repite" });
   await waitA(async () => (await taskInServer("Regar plantas"))!.fields.recurrencia === undefined);
   doc = (await taskInServer("Regar plantas"))!;
@@ -695,7 +695,7 @@ test("Flujo 7: los campos viejos etiquetas y esfuerzo quedan intactos al editar"
   expect(labelsViejas(doc.fields)).toEqual(["x"]);
   expect(text(doc.fields, "esfuerzo")).toBe("media");
 
-  // Paso 5: la colección vieja y las anotaciones no cambian; borrar la tarea no toca la colección vieja.
+  // Step 5: the old collection and the annotations do not change; deleting the task does not touch the old collection.
   expect((await docs("etiquetas")).map((d) => d.fields)).toEqual([casa]);
   expect(await docs("anotaciones")).toEqual(annotationsBefore);
   await remove(page, "Regar plantas");

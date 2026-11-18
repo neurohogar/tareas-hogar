@@ -13,83 +13,83 @@ import type { HistoryGroup } from '../../src/lib/core/history';
 import { taskData } from '../../src/lib/core/task-data';
 import type { Completion, Task } from '../../src/lib/core/task';
 
-/** Lo que hay guardado: los documentos de las tareas, y los completados. */
+/** What is stored: the task documents, and the completions. */
 export interface Saved {
 	docs: TaskDocument[];
 	completions: Completion[];
 }
 
-/** Estado de una ejecución de escenario: un repositorio en memoria. */
+/** State of a scenario run: an in-memory repository. */
 export interface World extends Saved {
 	nextId: number;
-	/** El texto del que se pregunta con qué fuente se dibuja (§6). */
+	/** The text whose drawing font is being asked about (§6). */
 	text?: string;
-	/** Rechazo de la última creación o edición. */
+	/** Rejection of the last creation or edit. */
 	errors?: CreationErrors;
-	/** Lo guardado justo antes de mi último cambio: lo que ve otro dispositivo "sin ver ese cambio". */
+	/** What was stored just before my last change: what another device "sin ver ese cambio" sees. */
 	beforeMyChange?: Saved;
 	completionsPrevious?: Completion[];
 	newCompletion?: Completion;
 	momentOfNewCompletion?: Date;
 	statuses: Status[];
-	/** Los momentos en que se consultó el estado (en el orden de `estados`) o Pendientes. */
+	/** The moments at which the status was queried (in the order of `statuses`) or Pendientes. */
 	statusMoments: Date[];
-	/** Las filas de Pendientes, de arriba hacia abajo, en cada momento consultado. */
+	/** The rows of Pendientes, from top to bottom, at each queried moment. */
 	pendingQueries: RowQueried[][];
-	/** El check "Mostrar completadas" de este dispositivo; sin él, en su valor inicial. */
+	/** The "Mostrar completadas" check of this device; without it, at its initial value. */
 	showCompleted?: boolean;
-	/** El check "Mostrar pausadas" de este dispositivo (§6.1); sin él, en su valor inicial. */
+	/** The "Mostrar pausadas" check of this device (§6.1); without it, at its initial value. */
 	showPaused?: boolean;
-	/** El panel de edición abierto (§6.2): el botón de pausa que ofrece y, si se abrió en un momento dado, lo que dice de la posposición. */
+	/** The open edit panel (§6.2): the pause button it offers and, if it was opened at a given moment, what it says about the postponement. */
 	panel?: { pause: 'pausar' | 'reanudar' | undefined; postponement?: { button: 'posponer' | 'quitar' | undefined; text: string | undefined }; changes: PanelChanges };
-	/** El aviso de deshacer (§5.4) está a la vista: no depende del panel, sigue abierto aunque el panel se cierre. */
+	/** The undo notice (§5.4) is in view: it does not depend on the panel, it stays open even if the panel closes. */
 	noticeOfUndoOpen?: boolean;
-	/** Ya se tocó Atrás con el panel abierto (§6.2). */
+	/** Back was already tapped with the panel open (§6.2). */
 	tapBack?: boolean;
-	/** Ya se tocó el checkbox: "la tarea tiene N completados" verifica en vez de declarar. */
+	/** The checkbox was already tapped: "la tarea tiene N completados" verifies instead of declaring. */
 	checkboxTouched?: boolean;
-	/** Lo que se borró (tareas y completados), para nombrarlo después de borrado. */
+	/** What was deleted (tasks and completions), to name it after deletion. */
 	deleted: Saved;
-	/** El aviso del último completado de este dispositivo. */
+	/** The notice of this device's last completion. */
 	notice?: Notice;
-	/** El aviso que se veía en el último momento consultado (aviso: undefined si no había). */
+	/** The notice that was in view at the last queried moment (notice: undefined if there was none). */
 	noticeQueried?: { notice?: Notice; now: Date };
-	/** El Historial en el último momento consultado. */
+	/** The History at the last queried moment. */
 	history?: HistoryGroup[];
-	/** El texto de "Última vez" en el último momento consultado. */
+	/** The text of "Última vez" at the last queried moment. */
 	lastTime?: string;
-	/** Los emojis recientes del selector en este dispositivo; sin ellos, todavía no se declararon. */
+	/** The recent emojis of the picker on this device; without them, they have not been declared yet. */
 	recent?: string[];
-	/** Ya hubo una acción sobre los recientes: los pasos "los emojis recientes son" y "hay N" verifican en vez de declarar. */
+	/** There was already an action on the recents: the steps "los emojis recientes son" and "hay N" verify instead of declaring. */
 	wasActionOnRecent?: boolean;
-	/** El emoji que se eligió sin nombrarlo en el paso, y el más viejo de los recientes de antes. */
+	/** The emoji that was chosen without naming it in the step, and the oldest of the previous recents. */
 	emojiChosen?: string;
 	emojiMoreOld?: string;
-	/** Cuándo llega cada cosa en esta apertura de la app (§6.6). */
+	/** When each thing arrives in this opening of the app (§6.6). */
 	opening?: AppOpening;
-	/** Las anotaciones guardadas (§4.5, §7) y las que se borraron, para nombrarlas después. */
+	/** The saved annotations (§4.5, §7) and those that were deleted, to name them afterwards. */
 	annotations: Annotation[];
 	annotationsDeleted: Annotation[];
-	/** La pantalla donde está la persona (§5.10). */
+	/** The screen where the person is (§5.10). */
 	screenCurrent?: CurrentScreen;
-	/** El panel de edición abierto desde la mirada de Anotar (§5.10): su tarea, si la hay, y lo que tenía al abrirse. */
+	/** The edit panel opened from the Annotate view (§5.10): its task, if any, and what it had when opened. */
 	annotatePanel?: { taskId?: string; changes: PanelChanges; docsOnOpen: TaskDocument[] };
-	/** La última anotación declarada: los pasos "la anotación ..." la describen. */
+	/** The last declared annotation: the steps "la anotación ..." describe it. */
 	lastAnnotationId?: string;
-	/** La pantalla Anotaciones en el último momento consultado. */
+	/** The Annotations screen at the last queried moment. */
 	annotationsQueried?: AnnotationsGroup[];
-	/** Ya se copió: el texto (o nada para copiar). */
+	/** Copy was already done: the text (or nothing to copy). */
 	copied?: { text: string | undefined };
 }
 
-/** Una fuente en la apertura: en qué segundo queda lista o falla, y si podría venir del dispositivo sin conexión. */
+/** A font at opening: at which second it becomes ready or fails, and whether it could come from the device offline. */
 export interface OpeningFont {
 	arrives: number;
 	failure: number;
 	saved: boolean;
 }
 
-/** Lo que los pasos de la pantalla de carga declaran, en segundos desde el arranque (§6.6). */
+/** What the loading-screen steps declare, in seconds since startup (§6.6). */
 export interface AppOpening {
 	session: boolean;
 	withoutConnection: boolean;
@@ -103,53 +103,53 @@ export interface AppOpening {
 	versionChangeSet: boolean;
 }
 
-/** Lo que se escribió en el panel y lo que tiene encima (§6.2, Cambios sin guardar y Atrás). */
+/** What was written in the panel and what it has on top (§6.2, Cambios sin guardar y Atrás). */
 export interface PanelChanges {
-	/** La tarea con que se abrió; sin ella, el panel se abrió para crear. */
+	/** The task it was opened with; without it, the panel was opened to create. */
 	taskOnOpen?: Task;
 	onOpen: PanelForm;
 	form: PanelForm;
 	top: OnTop;
-	/** La acción del aviso de acción abierto. */
+	/** The action of the open action notice. */
 	action?: PanelAction;
-	/** El último momento conocido, si un paso lo dio. */
+	/** The last known moment, if a step gave it. */
 	now?: Date;
 	keyboardOpen: boolean;
 }
 
-/** Lo que se ve de una fila de Pendientes: el título, si se ve completada o pausada, y el texto de fecha. */
+/** What is seen of a Pendientes row: the title, whether it looks completed or paused, and the date text. */
 export interface RowQueried {
 	title: string;
 	completed: boolean;
 	paused: boolean;
-	/** El texto de fecha y distancia («Tocaba …», «Vuelve …», §6.1); sin él, la fila no lo muestra. */
+	/** The date and distance text («Tocaba …», «Vuelve …», §6.1); without it, the row does not show it. */
 	dateText: string | undefined;
-	/** La línea del paso de la fila, «Primer paso: …» o «Paso: …» (§6.1); sin ella, la fila no la muestra. */
+	/** The step line of the row, «Primer paso: …» or «Paso: …» (§6.1); without it, the row does not show it. */
 	firstStepText: string | undefined;
-	/** Los botones «Paso anterior» y «Hecho» de la línea del paso (§6.1); sin ellos, la fila no los muestra. */
+	/** The «Paso anterior» and «Hecho» buttons of the step line (§6.1); without them, the row does not show them. */
 	stepButtons: StepButtons | undefined;
-	/** La línea «Mínima: …» de la fila y si «Hice la mínima» está habilitado (§6.1); sin ella, la fila no la muestra. */
+	/** The «Mínima: …» line of the row and whether «Hice la mínima» is enabled (§6.1); without it, the row does not show it. */
 	minimal: MinimalLine | undefined;
 }
 
-/** El sujeto de los pasos del otro dispositivo: actúa sobre lo guardado antes de mi último cambio. */
+/** The subject of the other-device steps: it acts on what was stored before my last change. */
 export const OTHER = 'otro dispositivo, sin ver ese cambio,';
 
 function changesOnOpen(onOpen: PanelForm, taskOnOpen?: Task, now?: Date): PanelChanges {
 	return { taskOnOpen, onOpen, form: onOpen, top: 'nada', now, keyboardOpen: false };
 }
 
-/** Spec §6.2: al editar, el panel se abre con los valores actuales de la tarea. */
+/** Spec §6.2: when editing, the panel opens with the current values of the task. */
 export function changesOnEdit(task: Task, now?: Date): PanelChanges {
 	return changesOnOpen({ data: taskData(task) }, task, now);
 }
 
-/** Spec §6.2: al crear, el panel se abre con los valores de `datos`. */
+/** Spec §6.2: when creating, the panel opens with the values of `data`. */
 export function changesOnCreate(data: PanelForm['data']): PanelChanges {
 	return changesOnOpen({ data });
 }
 
-/** Un paso soportado: el runtime lo despacha con las capturas ya resueltas. */
+/** A supported step: the runtime dispatches it with the captures already resolved. */
 export interface StepDefinition {
 	pattern: RegExp;
 	run: (world: World, ...values: string[]) => void;
@@ -173,42 +173,42 @@ export function newId(world: World, prefix: string): string {
 	return `${prefix}-${world.nextId++}`;
 }
 
-/** Solo lo guardado, sin el resto del estado del escenario. */
+/** Only what is stored, without the rest of the scenario state. */
 export const copyOf = ({ docs, completions }: Saved): Saved => ({ docs, completions });
 
-/** Las tareas que describen los documentos guardados. */
+/** The tasks described by the stored documents. */
 export function tasksOf(saved: Saved): Task[] {
 	return saved.docs.map(taskFromDocument);
 }
 
-/** La única tarea guardada. */
+/** The only stored task. */
 export function theTask(saved: Saved): Task {
 	const tasks = tasksOf(saved);
-	if (tasks.length !== 1) throw new Error(`Se esperaba una tarea, hay ${tasks.length}`);
+	if (tasks.length !== 1) throw new Error(`Expected one task, found ${tasks.length}`);
 	return tasks[0];
 }
 
-/** El documento de la única tarea, con los campos que tenga aunque no correspondan a su tipo. */
+/** The document of the only task, with whatever fields it has even if they do not match its kind. */
 export function theDoc(world: World): TaskDocument {
 	return world.docs.find(({ id }) => id === theTask(world).id) as TaskDocument;
 }
 
 export function theTaskOfKind<T extends Task['kind']>(world: World, kind: T): Extract<Task, { kind: T }> {
 	const task = theTask(world);
-	if (task.kind !== kind) throw new Error(`Se esperaba una tarea ${kind}, es ${task.kind}`);
+	if (task.kind !== kind) throw new Error(`Expected one ${kind} task, it is ${task.kind}`);
 	return task as Extract<Task, { kind: T }>;
 }
 
-/** La única tarea guardada con ese título. */
+/** The only stored task with that title. */
 export function theTaskTitled(saved: Saved, title: string): Task {
 	const withThatTitle = tasksOf(saved).filter((task) => task.title === title);
-	if (withThatTitle.length !== 1) throw new Error(`Se esperaba una tarea "${title}", hay ${withThatTitle.length}`);
+	if (withThatTitle.length !== 1) throw new Error(`Expected one task "${title}", found ${withThatTitle.length}`);
 	return withThatTitle[0];
 }
 
 /**
- * Lo que vio otro dispositivo: lo guardado antes de mi último cambio. Si
- * todavía no hice ningún cambio, vio todo lo guardado.
+ * What another device saw: what was stored before my last change. If
+ * I have not made any change yet, it saw everything stored.
  */
 export function thatSawOther(world: World): Saved {
 	return world.beforeMyChange ?? copyOf(world);
@@ -219,15 +219,15 @@ export function rememberBeforeOfMyChange(world: World): void {
 }
 
 /**
- * Un cambio del otro dispositivo llega a lo guardado y también a lo que ve
- * él: sus cambios siguientes los tienen en cuenta.
+ * A change from the other device reaches what is stored and also what
+ * it sees: its following changes take it into account.
  */
 export function otherRecord(world: World, apply: (saved: Saved) => Saved): void {
 	Object.assign(world, apply(copyOf(world)));
 	if (world.beforeMyChange) world.beforeMyChange = apply(world.beforeMyChange);
 }
 
-/** Saca de lo guardado los documentos, completados y anotaciones con esos ids, y recuerda lo que se borró. */
+/** Removes from storage the documents, completions and annotations with those ids, and remembers what was deleted. */
 export function deleteSaved(world: World, docIds: readonly string[], completionIds: readonly string[], annotationIds: readonly string[] = []): void {
 	world.annotationsDeleted = [...world.annotationsDeleted, ...world.annotations.filter(({ id }) => annotationIds.includes(id))];
 	world.annotations = world.annotations.filter(({ id }) => !annotationIds.includes(id));
@@ -240,7 +240,7 @@ export function deleteSaved(world: World, docIds: readonly string[], completionI
 	world.completions = world.completions.filter((c) => !deletes(c, completionIds));
 }
 
-/** Todo lo que estuvo guardado en algún momento: lo que hay y lo que se borró. */
+/** Everything that was stored at some point: what exists and what was deleted. */
 export function thatWasSaved(world: World): Saved {
 	return {
 		docs: [...world.docs, ...world.deleted.docs],

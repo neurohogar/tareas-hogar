@@ -1,4 +1,4 @@
-// Spec §6.2 (Borrar tarea) y §7 (Borrado de tareas y completados huérfanos).
+// Spec §6.2 (Borrar tarea) and §7 (deletion of tasks and orphan completions).
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { deletion, orphanCompletions, taskExists } from './deletion';
@@ -17,8 +17,8 @@ const completions = fc
 	.map((cs) => cs as Completion[]);
 const ids = (cs: readonly Completion[]) => cs.map(({ id }) => id);
 
-describe('borrado (propiedades)', () => {
-	it('borra todos los completados de la tarea y solo esos', () => {
+describe('deletion (properties)', () => {
+	it('deletes all the completions of the task and only those', () => {
 		fc.assert(
 			fc.property(taskId, completions, (id, cs) => {
 				const { taskId: deleted, completionIds } = deletion(id, cs, []);
@@ -28,7 +28,7 @@ describe('borrado (propiedades)', () => {
 		);
 	});
 
-	it('tras borrar una tarea, sus completados y los huérfanos de antes particionan los huérfanos de después', () => {
+	it('after deleting a task, its completions and the earlier orphans partition the later orphans', () => {
 		fc.assert(
 			fc.property(tasks, completions, (ts, cs) => {
 				fc.pre(ts.length > 0);
@@ -42,7 +42,7 @@ describe('borrado (propiedades)', () => {
 		);
 	});
 
-	it('si el batch se aplica, no queda ningún huérfano de la tarea borrada', () => {
+	it('if the batch is applied, no orphan of the deleted task is left', () => {
 		fc.assert(
 			fc.property(tasks, completions, (ts, cs) => {
 				fc.pre(ts.length > 0);
@@ -55,8 +55,8 @@ describe('borrado (propiedades)', () => {
 	});
 });
 
-describe('completadosHuerfanos (propiedades)', () => {
-	it('particiona los completados: huérfano si y solo si su tarea no existe', () => {
+describe('orphanCompletions (properties)', () => {
+	it('partitions the completions: orphan if and only if its task does not exist', () => {
 		fc.assert(
 			fc.property(tasks, completions, (ts, cs) => {
 				const orphanItems = orphanCompletions(ts, cs);
@@ -65,7 +65,7 @@ describe('completadosHuerfanos (propiedades)', () => {
 		);
 	});
 
-	it('es idempotente y conserva el orden', () => {
+	it('is idempotent and keeps the order', () => {
 		fc.assert(
 			fc.property(tasks, completions, (ts, cs) => {
 				const orphanItems = orphanCompletions(ts, cs);
@@ -75,7 +75,7 @@ describe('completadosHuerfanos (propiedades)', () => {
 		);
 	});
 
-	it('limpiarlos deja sin huérfanos', () => {
+	it('cleaning them leaves no orphans', () => {
 		fc.assert(
 			fc.property(tasks, completions, (ts, cs) => {
 				const orphanItems = orphanCompletions(ts, cs);

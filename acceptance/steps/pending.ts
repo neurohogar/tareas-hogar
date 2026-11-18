@@ -4,7 +4,7 @@ import { ANY_MOMENT } from './recurring-relative';
 import { P, dateHour, list } from './values';
 import { tasksOf, type RowQueried, type StepDefinition, type World } from './world';
 
-/** Las filas de la lista, con los checks Mostrar completadas y Mostrar pausadas (§6.1). */
+/** The rows of the list, with the Mostrar completadas and Mostrar pausadas checks (§6.1). */
 function rowsIn(world: World, now: Date): RowQueried[] {
 	const rows = pendingRows(tasksOf(world), world.completions, now, world.showCompleted, world.showPaused);
 	return rows.map(({ task, completed, status, dateText, firstStepText: textOfFirstStep, stepButtons, minimal }) => ({
@@ -18,7 +18,7 @@ function rowsIn(world: World, now: Date): RowQueried[] {
 	}));
 }
 
-/** En cada momento consultado, los títulos de las filas que cumplen `incluida`, de arriba hacia abajo. */
+/** At each queried moment, the titles of the rows that satisfy `included`, from top to bottom. */
 function everyQueryShows(world: World, titles: string[], included = (_: RowQueried) => true): void {
 	expect(world.pendingQueries.length).toBeGreaterThan(0);
 	for (const rows of world.pendingQueries) expect(rows.filter(included).map(({ title }) => title)).toEqual(titles);

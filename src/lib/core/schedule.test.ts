@@ -18,8 +18,8 @@ const MORNING_AND_AFTERNOON: Schedule = [
 ];
 const ms = (...parts: [number, number, number, number?, number?, number?]) => new Date(...parts).getTime();
 
-describe('leerHorario (spec §4.1)', () => {
-	it('sin horario escrito, la tarea no tiene horario', () => {
+describe('readSchedule (spec §4.1)', () => {
+	it('without a schedule written, the task has no schedule', () => {
 		expect(readSchedule(undefined)).toStrictEqual({ ok: true });
 		expect(readSchedule([])).toStrictEqual({ ok: true });
 	});
@@ -28,7 +28,7 @@ describe('leerHorario (spec §4.1)', () => {
 		['08:00', '11:00'],
 		['00:00', '23:59'],
 		['09:00', '09:01']
-	])('con desde < hasta (%s a %s) es válido y se guarda tal cual', (from, to) => {
+	])('with from < to (%s to %s) it is valid and stored as is', (from, to) => {
 		expect(readSchedule([{ from, to }])).toStrictEqual({ ok: true, schedule: [{ from, to }] });
 	});
 
@@ -36,22 +36,22 @@ describe('leerHorario (spec §4.1)', () => {
 		['11:00', '08:00'],
 		['09:00', '09:00'],
 		['22:00', '02:00']
-	])('con desde ≥ hasta (%s a %s) la hora de fin no es posterior', (from, to) => {
+	])('with from ≥ to (%s to %s) the end time is not later', (from, to) => {
 		expect(readSchedule([{ from, to }])).toStrictEqual({ ok: false, error: 'finNoPosterior' });
 	});
 
 	it.each([{ from: '08:00' }, { to: '11:00' }, { from: '08:00', to: '' }, { from: '', to: '' }, { from: '8:00', to: '11:00' }, { from: '24:00', to: '11:00' }])(
-		'con una hora que falta o no es HH:MM está incompleto (%o)',
+		'with a time that is missing or is not HH:MM it is incomplete (%o)',
 		(typedOne) => {
 			expect(readSchedule([typedOne])).toStrictEqual({ ok: false, error: 'incompleto' });
 		}
 	);
 
-	it('varias ventanas se guardan ordenadas por desde', () => {
+	it('several windows are stored ordered by from', () => {
 		expect(readSchedule([MORNING_AND_AFTERNOON[1], MORNING_AND_AFTERNOON[0]])).toStrictEqual({ ok: true, schedule: MORNING_AND_AFTERNOON });
 	});
 
-	it('una ventana que empieza justo cuando termina otra es válida', () => {
+	it('a window that starts right when another ends is valid', () => {
 		const contiguous = [
 			{ from: '10:00', to: '12:00' },
 			{ from: '08:00', to: '10:00' }
@@ -64,35 +64,35 @@ describe('leerHorario (spec §4.1)', () => {
 		[{ from: '08:00', to: '11:00' }, { from: '08:00', to: '11:00' }],
 		[{ from: '08:00', to: '12:00' }, { from: '09:00', to: '10:00' }],
 		[{ from: '10:00', to: '12:00' }, { from: '08:00', to: '10:01' }]
-	])('ventanas superpuestas se rechazan (%o y %o)', (one, other) => {
+	])('overlapping windows are rejected (%o and %o)', (one, other) => {
 		expect(readSchedule([one, other])).toStrictEqual({ ok: false, error: 'superpuestos' });
 	});
 
-	it('una segunda ventana incompleta o con desde ≥ hasta rechaza el horario entero', () => {
+	it('a second window that is incomplete or has from ≥ to rejects the whole schedule', () => {
 		expect(readSchedule([MORNING_AND_AFTERNOON[0], { from: '18:00' }])).toStrictEqual({ ok: false, error: 'incompleto' });
 		expect(readSchedule([MORNING_AND_AFTERNOON[0], { from: '21:00', to: '18:00' }])).toStrictEqual({ ok: false, error: 'finNoPosterior' });
 	});
 });
 
-describe('horarioGuardado (spec §4.1)', () => {
-	it('un documento con una sola ventana (formato anterior) se lee como una lista de una', () => {
+describe('savedSchedule (spec §4.1)', () => {
+	it('a document with a single window (previous format) is read as a list of one', () => {
 		expect(savedSchedule({ from: '08:00', to: '11:00' })).toStrictEqual(MORNING);
 	});
 
-	it('una lista se lee tal cual', () => {
+	it('a list is read as is', () => {
 		expect(savedSchedule(MORNING_AND_AFTERNOON)).toStrictEqual(MORNING_AND_AFTERNOON);
 	});
 });
 
-describe('ventanas del horario (spec §5.5)', () => {
-	it('antes de la ventana de su día, disponible desde el desde de ese día y cierra en su hasta', () => {
+describe('schedule windows (spec §5.5)', () => {
+	it('before the window of its day, available from the from of that day and closing at its to', () => {
 		expect(availableWindow(MORNING, new Date(2026, 6, 15, 6, 0, 0))).toStrictEqual({
 			available: ms(2026, 6, 15, 8),
 			closing: ms(2026, 6, 15, 11)
 		});
 	});
 
-	it('dentro de la ventana, disponible en ese mismo instante (desde inclusive)', () => {
+	it('inside the window, available at that same instant (from inclusive)', () => {
 		expect(availableWindow(MORNING, new Date(2026, 6, 15, 8, 0, 0))).toStrictEqual({
 			available: ms(2026, 6, 15, 8),
 			closing: ms(2026, 6, 15, 11)
@@ -100,14 +100,14 @@ describe('ventanas del horario (spec §5.5)', () => {
 		expect(availableWindow(MORNING, new Date(2026, 6, 15, 10, 59, 59)).available).toBe(ms(2026, 6, 15, 10, 59, 59));
 	});
 
-	it('desde el hasta (exclusive), disponible en la ventana del día siguiente', () => {
+	it('from the to (exclusive), available in the window of the next day', () => {
 		expect(availableWindow(MORNING, new Date(2026, 6, 15, 11, 0, 0))).toStrictEqual({
 			available: ms(2026, 6, 16, 8),
 			closing: ms(2026, 6, 16, 11)
 		});
 	});
 
-	it('con varias ventanas, entre ventanas está disponible desde el desde de la próxima', () => {
+	it('with several windows, between windows it is available from the from of the next one', () => {
 		expect(availableWindow(MORNING_AND_AFTERNOON, new Date(2026, 6, 15, 10, 0, 0))).toStrictEqual({
 			available: ms(2026, 6, 15, 18),
 			closing: ms(2026, 6, 15, 21)
@@ -118,7 +118,7 @@ describe('ventanas del horario (spec §5.5)', () => {
 		});
 	});
 
-	it('dentro del horario es [desde, hasta) de alguna ventana', () => {
+	it('inside the schedule is [from, to) of some window', () => {
 		expect(withinSchedule(MORNING, new Date(2026, 6, 15, 7, 59, 59))).toBe(false);
 		expect(withinSchedule(MORNING, new Date(2026, 6, 15, 8, 0, 0))).toBe(true);
 		expect(withinSchedule(MORNING, new Date(2026, 6, 15, 10, 59, 59))).toBe(true);
@@ -127,12 +127,12 @@ describe('ventanas del horario (spec §5.5)', () => {
 		expect(withinSchedule(MORNING_AND_AFTERNOON, new Date(2026, 6, 15, 18, 0, 0))).toBe(true);
 	});
 
-	it('el cierre de un día es el hasta de su última ventana', () => {
+	it('the close of a day is the to of its last window', () => {
 		expect(endOfDay(MORNING, new Date(2026, 6, 16))).toBe(ms(2026, 6, 16, 11));
 		expect(endOfDay(MORNING_AND_AFTERNOON, new Date(2026, 6, 16))).toBe(ms(2026, 6, 16, 21));
 	});
 
-	it('el último cierre es el hasta más reciente que ya pasó, de hoy o de ayer', () => {
+	it('the last close is the most recent to that has already passed, from today or yesterday', () => {
 		expect(lastClosing(MORNING, new Date(2026, 6, 15, 11, 0, 0))).toBe(ms(2026, 6, 15, 11));
 		expect(lastClosing(MORNING, new Date(2026, 6, 15, 21, 30, 0))).toBe(ms(2026, 6, 15, 11));
 		expect(lastClosing(MORNING, new Date(2026, 6, 16, 2, 0, 0))).toBe(ms(2026, 6, 15, 11));
@@ -140,7 +140,7 @@ describe('ventanas del horario (spec §5.5)', () => {
 		expect(lastClosing(MORNING_AND_AFTERNOON, new Date(2026, 6, 16, 2, 0, 0))).toBe(ms(2026, 6, 15, 21));
 	});
 
-	it('las ocurrencias de un día son sus ventanas en orden, con inicio y cierre', () => {
+	it('the occurrences of a day are its windows in order, with start and close', () => {
 		expect(occurrencesOfDay(MORNING_AND_AFTERNOON, new Date(2026, 6, 15))).toStrictEqual([
 			{ start: ms(2026, 6, 15, 7), closing: ms(2026, 6, 15, 10) },
 			{ start: ms(2026, 6, 15, 18), closing: ms(2026, 6, 15, 21) }
@@ -148,12 +148,12 @@ describe('ventanas del horario (spec §5.5)', () => {
 	});
 });
 
-describe('textoDelHorario (spec §6.1)', () => {
-	it('muestra desde y hasta separados por una raya', () => {
+describe('scheduleText (spec §6.1)', () => {
+	it('shows from and to separated by a dash', () => {
 		expect(scheduleText(MORNING)).toBe('08:00–11:00');
 	});
 
-	it('con varias ventanas, en orden y separadas por " · "', () => {
+	it('with several windows, in order and separated by " · "', () => {
 		expect(scheduleText(MORNING_AND_AFTERNOON)).toBe('07:00–10:00 · 18:00–21:00');
 	});
 });

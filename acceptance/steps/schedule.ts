@@ -1,5 +1,5 @@
-// Horario de la tarea (spec §4.1, §6.1, §6.2) y sus conflictos entre dispositivos (§7).
-// "la tarea se puede completar de D a H [y de D2 a H2]" es un horario ya guardado.
+// Schedule of the task (spec §4.1, §6.1, §6.2) and its conflicts between devices (§7).
+// "la tarea se puede completar de D a H [y de D2 a H2]" is an already saved schedule.
 import { expect } from 'vitest';
 import { createFromData, taskData, type TaskData } from '../../src/lib/core/task-data';
 import { scheduleText, type TypedSchedule } from '../../src/lib/core/schedule';
@@ -10,15 +10,15 @@ import { daysOf } from './recurring-calendar';
 import { P, TITLE, numeric, unit } from './values';
 import { OTHER, theTask, theTaskTitled, type StepDefinition, type World } from './world';
 
-/** Una o dos ventanas: "de D a H" o "de D a H y de D2 a H2". */
+/** One or two windows: "de D a H" or "de D a H y de D2 a H2". */
 const SCHEDULE = `de ${P} a ${P}(?: y de ${P} a ${P})?`;
 
-/** Las ventanas del paso; la segunda, si el paso la nombra. */
+/** The windows of the step; the second, if the step names it. */
 function scheduleOf(from: string, to: string, from2?: string, to2?: string): TypedSchedule {
 	return from2 === undefined ? [{ from, to }] : [{ from, to }, { from: from2, to: to2 }];
 }
 
-/** Lo que carga el panel: los valores de la tarea con otro horario, o sin horario. */
+/** What the panel loads: the task values with another schedule, or without a schedule. */
 function withSchedule(schedule: TypedSchedule | undefined, fields: Partial<TaskData> = {}) {
 	return (task: Task): TaskData => {
 		const { schedule: _, ...withoutSchedule } = taskData(task);
@@ -28,7 +28,7 @@ function withSchedule(schedule: TypedSchedule | undefined, fields: Partial<TaskD
 
 const create = (world: World, data: TaskData) => recordCreation(world, (id) => createFromData(data, id, NOW));
 
-/** Quién cambia el horario: yo, o el otro dispositivo sin ver mi último cambio. */
+/** Who changes the schedule: me, or the other device without seeing my last change. */
 const EDITORS = [
 	{ puts: 'pongo', removes: 'quito', edit: editMe },
 	{ puts: `${OTHER} pone`, removes: `${OTHER} quita`, edit: editsOther }
@@ -46,7 +46,7 @@ const editSteps: StepDefinition[] = EDITORS.flatMap(({ puts, removes, edit }) =>
 	}
 ]);
 
-/** Un horario ya guardado: no es un cambio de este dispositivo. */
+/** An already saved schedule: it is not a change from this device. */
 function saveSchedule(world: World, task: Task, schedule: TypedSchedule): void {
 	editAndSave(world, task, withSchedule(schedule));
 	expect(world.errors, 'el horario ya guardado debe ser válido').toBeUndefined();
@@ -64,7 +64,7 @@ export const scheduleSteps: StepDefinition[] = [
 			saveSchedule(world, theTaskTitled(world, title), scheduleOf(from, to, from2, to2))
 	},
 	{
-		// El documento tal como lo dejaba la versión con una sola ventana: el horario es un objeto.
+		// The document as the single-window version left it: the schedule is an object.
 		pattern: new RegExp(`^una tarea puntual sin fecha límite guardada en el formato anterior con horario de ${P} a ${P}$`),
 		run: (world, from, to) => {
 			create(world, { shape: 'puntual', title: 'Tarea' });

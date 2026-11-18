@@ -51,30 +51,30 @@
 		postponedText
 	}: {
 		header: string;
-		/** Los valores actuales de la tarea que se edita; sin ellos, el panel arranca vacío (crear). */
+		/** The current values of the task being edited; without them, the panel starts empty (create). */
 		initial?: TaskData;
-		/** Solo al editar: la tarea como estaba al abrir el panel. */
+		/** Only when editing: the task as it was when the panel opened. */
 		task?: Task;
-		/** Solo al editar: el texto de "Última vez" que calcula el core (§6.2). */
+		/** Only when editing: the "Última vez" text the core computes (§6.2). */
 		lastTime?: string;
-		/** Guarda el formulario; si algo es inválido devuelve los errores y el panel sigue abierto. */
+		/** Saves the form; if something is invalid it returns the errors and the panel stays open. */
 		onSave: (form: PanelForm) => CreationErrors | undefined;
 		onClose: () => void;
-		/** Solo al editar: borra la tarea, ya confirmado. */
+		/** Only when editing: deletes the task, already confirmed. */
 		onDelete?: () => void;
-		/** Solo al editar: ejecuta una acción (con lo guardado, si pasó por el aviso) y cierra el panel. */
+		/** Only when editing: runs an action (with what was saved, if it went through the notice) and closes the panel. */
 		onAct?: (change: TaskChange) => void;
-		/** Solo al editar una periódica (§6.2): el botón que ofrece el core. */
+		/** Only when editing a recurring task (§6.2): the button the core offers. */
 		pause?: 'pausar' | 'reanudar';
-		/** Solo al editar (§6.2): el botón que ofrece el core. */
+		/** Only when editing (§6.2): the button the core offers. */
 		postpone?: 'posponer' | 'quitar';
-		/** "Pospuesta hasta HH:MM" que arma el core, si la tarea está pospuesta. */
+		/** "Pospuesta hasta HH:MM" built by the core, if the task is postponed. */
 		postponedText?: string;
 	} = $props();
 
-	// Los valores con que abre el panel: se toman una vez, aunque la tarea cambie mientras está abierto.
-	// Cada control arranca con el valor de la tarea solo si es de su forma: los de las otras opciones
-	// de "Se repite" empiezan como al crear.
+	// The values the panel opens with: taken once, even if the task changes while it is open.
+	// Each control starts with the task's value only if it is of its shape: those of the other options
+	// of "Se repite" start as when creating.
 	const values = untrack(() => initial);
 	const name = values && taskName(values);
 	const initialDueDate = values?.shape === 'puntual' ? (values.dueDate ?? '') : '';
@@ -87,14 +87,14 @@
 	let errors = $state<CreationErrors>({});
 	let confirmingDelete = $state(false);
 	let emoji = $state(untrack(() => initial?.emoji ?? ''));
-	/** "Solo en un horario": apagado, la tarea no tiene horario (§6.2). */
+	/** "Solo en un horario": off, the task has no schedule (§6.2). */
 	let withSchedule = $state(values?.schedule !== undefined);
-	/** Los pasos más (2, 3…), uno por campo; Agregar paso suma uno vacío (§6.2). */
+	/** The extra steps (2, 3…), one per field; Agregar paso adds an empty one (§6.2). */
 	let steps = $state<string[]>(untrack(() => [...(initial?.steps ?? [])]));
-	/** Las filas Desde/Hasta: al menos una; Agregar horario suma una vacía (§6.2). */
+	/** The Desde/Hasta rows: at least one; Agregar horario adds an empty one (§6.2). */
 	let windowRows = $state<WindowRow[]>(values?.schedule?.map(({ from = '', to = '' }) => ({ from, to })) ?? [{ from: '', to: '' }]);
 
-	/** Los recientes del selector mientras está abierto; sin selector abierto, undefined. */
+	/** The picker's recents while it is open; with no picker open, undefined. */
 	let recents = $state<string[] | undefined>(undefined);
 
 	function openPicker() {
@@ -108,17 +108,17 @@
 	}
 
 	/**
-	 * Un campo de fecha vacío es "sin fecha límite"; uno incompleto (badInput)
-	 * también tiene valor vacío, pero se le pasa al core para que lo rechace.
+	 * An empty date field is "no due date"; an incomplete one (badInput)
+	 * also has an empty value, but it is passed to the core so it rejects it.
 	 */
 	function dueDateOf(field: HTMLInputElement): string | undefined {
 		return field.value === '' && !field.validity.badInput ? undefined : field.value;
 	}
 
-	/** Solo cuentan los campos de la opción elegida en "Se repite". */
+	/** Only the fields of the option chosen in "Se repite" count. */
 	function taskDataFromForm(form: HTMLFormElement): TaskData {
 		const fields = new FormData(form);
-		// La nota se lee del control, no de FormData, que cambia los saltos de línea por CRLF.
+		// The note is read from the control, not from FormData, which turns line breaks into CRLF.
 		const note = (form.elements.namedItem('note') as HTMLTextAreaElement).value;
 		const firstStep = String(fields.get('firstStep') ?? '');
 		const minimalVersion = String(fields.get('minimalVersion') ?? '');
@@ -150,7 +150,7 @@
 	const barVisible = $derived(saveBarVisible(keyboard.open));
 	onMount(() => observeKeyboard((status) => (keyboard = status)));
 
-	// El aviso de deshacer se ve sobre la barra de Guardar o, sin barra, sobre el teclado.
+	// The undo notice shows over the Guardar bar or, with no bar, over the keyboard.
 	$effect(() => {
 		const root = document.documentElement.style;
 		root.setProperty('--notice-base', keyboard.open ? `calc(${keyboard.overlap}px + 1rem)` : '5.5rem');
@@ -169,7 +169,7 @@
 		content.querySelector(`[data-field="${field}"]`)?.scrollIntoView({ block: 'center' });
 	}
 
-	/** El error de un campo dura lo que dura su mensaje: al corregirlo se va. */
+	/** A field's error lasts as long as its message: correcting it makes it go away. */
 	function clearError(field: keyof CreationErrors) {
 		const { [field]: _removed, ...rest } = errors;
 		errors = rest;
@@ -177,10 +177,10 @@
 
 	const session = useSession();
 	let form: HTMLFormElement;
-	/** Los valores con que se abrió el panel; al crear, el formulario como se abre (§6.2). */
+	/** The values the panel was opened with; when creating, the form as it opens (§6.2). */
 	const onOpen: PanelForm = { data: values ?? DATA_ON_CREATE };
 	let closeNoticeOpen = $state(false);
-	/** La acción cuyo aviso está abierto, con lo escrito al elegirla. */
+	/** The action whose notice is open, with what was typed when it was chosen. */
 	let openAction = $state.raw<{ action: PanelAction; form: PanelForm } | undefined>(undefined);
 
 	function currentForm(): PanelForm {
@@ -188,7 +188,7 @@
 	}
 	const hasChangesNow = () => hasChanges(onOpen, currentForm());
 
-	/** Lo que el core necesita para evaluar el aviso de una acción con la tarea y el ahora de este momento. */
+	/** What the core needs to evaluate an action's notice with the task and the now of this moment. */
 	function noticeContext({ action, form }: NonNullable<typeof openAction>, now: Date): NoticeAction {
 		const taskWhenOpened = untrack(() => task!);
 		return {
@@ -201,7 +201,7 @@
 		};
 	}
 	const shownActionNotice = $derived(openAction ? actionNotice(noticeContext(openAction, session.now)) : undefined);
-	// Si la acción ya no corresponde (otro dispositivo, o pasó el tiempo), el aviso se cierra y queda el panel con lo escrito.
+	// If the action no longer applies (another device, or time passed), the notice closes and the panel stays with what was typed.
 	$effect(() => {
 		if (openAction && !shownActionNotice) openAction = undefined;
 	});
@@ -263,7 +263,7 @@
 		return recents ? 'selector de emoji' : 'nada';
 	}
 
-	/** Atrás con el panel abierto (§6.2); devuelve si el panel sigue abierto. */
+	/** Back with the panel open (§6.2); returns whether the panel is still open. */
 	function onBackTap(): boolean {
 		const effect = whatBackDoes({ top: whatIsOnTop(), hasChanges: hasChangesNow(), keyboardOpen: keyboard.open });
 		if (effect === 'cierra el teclado') (document.activeElement as HTMLElement | null)?.blur();

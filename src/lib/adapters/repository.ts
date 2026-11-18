@@ -1,8 +1,8 @@
-// Traduce entre el modelo del core y Firestore (spec §7):
-// users/{uid}/tareas/{tareaId} y users/{uid}/completados/{completadoId} (las anotaciones,
-// en annotations.ts). Los campos viejos `etiquetas` y `esfuerzo` de una tarea y la colección
-// `etiquetas` ya no se leen, escriben ni borran (S36): quedan como estén.
-// Los documentos tienen su propia forma: ningún tipo de Firestore sale de acá.
+// Translates between the core model and Firestore (spec §7):
+// users/{uid}/tareas/{tareaId} and users/{uid}/completados/{completadoId} (annotations are
+// in annotations.ts). The old `etiquetas` and `esfuerzo` fields of a task and the `etiquetas`
+// collection are no longer read, written or deleted (S36): they stay as they are.
+// The documents have their own shape: no Firestore type leaves this file.
 import {
 	collection,
 	deleteDoc,
@@ -34,38 +34,38 @@ type RecurrenceDoc =
 	| { modo: 'calendario'; diasMes: number[] };
 
 /**
- * Tras dos ediciones concurrentes puede quedar un campo que no corresponde al
- * tipo; el core lo ignora (tareaDesdeDocumento).
+ * After two concurrent edits a field that does not match the type may remain;
+ * the core ignores it (taskFromSnapshot).
  */
 interface TaskDoc {
 	titulo: string;
-	/** Sin el campo, la tarea no tiene emoji. */
+	/** Without the field, the task has no emoji. */
 	emoji?: string;
-	/** Sin el campo, la tarea no tiene nota. */
+	/** Without the field, the task has no note. */
 	nota?: string;
-	/** Sin el campo, la tarea no tiene primer paso. */
+	/** Without the field, the task has no first step. */
 	primerPaso?: string;
-	/** Campo independiente (§7); sin él, la tarea no tiene versión mínima. */
+	/** Independent field (§7); without it, the task has no minimal version. */
 	versionMinima?: string;
-	/** Un solo campo (§7), los pasos 2 en adelante; sin él, no hay más pasos. */
+	/** A single field (§7), steps 2 onward; without it, there are no more steps. */
 	pasos?: string[];
-	/** Otro campo, independiente de pasos (§7); sin él, la tarea va en el paso 1. */
+	/** Another field, independent of pasos (§7); without it, the task is on step 1. */
 	pasoActual?: number;
 	tipo: Task['kind'];
-	/** Fecha AAAA-MM-DD; sin el campo, la puntual no tiene fecha límite. */
+	/** Date YYYY-MM-DD; without the field, the one-off task has no due date. */
 	fechaLimite?: string;
 	recurrencia?: RecurrenceDoc;
 	/**
-	 * Un solo campo (§7): la lista de ventanas { desde, hasta } en "HH:MM" o, en
-	 * el formato anterior, una sola ventana; sin el campo, la tarea no tiene horario.
+	 * A single field (§7): the list of windows { desde, hasta } as "HH:MM" or, in
+	 * the old format, a single window; without the field, the task has no schedule.
 	 */
 	horario?: TimeWindowDoc[] | TimeWindowDoc;
 	creadaEn: Timestamp;
-	/** Sin el campo, no está pausada (§5.8). */
+	/** Without the field, it is not paused (§5.8). */
 	pausada?: boolean;
-	/** Última vez que se reanudó (§5.8). */
+	/** Last time it was resumed (§5.8). */
 	reanudadaEn?: Timestamp;
-	/** Un solo campo (§7); sin él, no está pospuesta (§5.9). */
+	/** A single field (§7); without it, it is not postponed (§5.9). */
 	pospuesta?: { desde: Timestamp; hasta: Timestamp };
 }
 
@@ -74,12 +74,12 @@ interface TimeWindowDoc {
 	hasta: string;
 }
 
-/** Traduce campo por campo: el documento guarda desde y hasta, el core from y to. */
+/** Translates field by field: the document stores desde and hasta, the core from and to. */
 const timeWindowToDoc = ({ from, to }: TimeWindow): TimeWindowDoc => ({ desde: from, hasta: to });
 
 const timeWindowFromDoc = ({ desde: from, hasta: to }: TimeWindowDoc): TimeWindow => ({ from, to });
 
-/** Se escribe siempre como lista; el core lee también el formato anterior (§4.1). */
+/** Always written as a list; the core also reads the old format (§4.1). */
 const copySchedule = (schedule: Schedule): TimeWindowDoc[] => schedule.map(timeWindowToDoc);
 
 const readScheduleDoc = (schedule: TimeWindowDoc[] | TimeWindowDoc) => (Array.isArray(schedule) ? schedule.map(timeWindowFromDoc) : timeWindowFromDoc(schedule));
@@ -87,18 +87,18 @@ const readScheduleDoc = (schedule: TimeWindowDoc[] | TimeWindowDoc) => (Array.is
 interface CompletionDoc {
 	tareaId: string;
 	completadoEn: Timestamp;
-	/** Fecha AAAA-MM-DD, o fecha y hora AAAA-MM-DDTHH:MM con horario (§4.4). */
+	/** Date YYYY-MM-DD, or date and time YYYY-MM-DDTHH:MM with a schedule (§4.4). */
 	ocurrenciaCubierta?: string;
-	/** Paso en que iba la tarea al completarla; solo en tareas de dos pasos o más (§4.4). */
+	/** Step the task was on when it was completed; only on tasks of two or more steps (§4.4). */
 	pasoAlCompletar?: number;
-	/** Solo se escribe en true: sin el campo, el completado fue entero (§4.4). */
+	/** Only written as true: without the field, the completion was whole (§4.4). */
 	fueMinima?: true;
 }
 
 const taskRef = (uid: string, taskId: string) => doc(db, 'users', uid, 'tareas', taskId);
 const completionRef = (uid: string, completionId: string) => doc(db, 'users', uid, 'completados', completionId);
 
-/** Traduce campo por campo: el documento guarda modo, cada, unidad, diasSemana y diasMes. */
+/** Translates field by field: the document stores modo, cada, unidad, diasSemana and diasMes. */
 function recurrenceToDoc(recurrence: Recurrence): RecurrenceDoc {
 	if (recurrence.mode === 'relativo') return { modo: 'relativo', cada: recurrence.every, unidad: recurrence.unit };
 	if ('weekdays' in recurrence) return { modo: 'calendario', diasSemana: [...recurrence.weekdays] };
@@ -149,7 +149,7 @@ function taskFromSnapshot(snapshot: QueryDocumentSnapshot<DocumentData>): Task {
 	});
 }
 
-/** Los campos del cambio como los escribe updateDoc: null quita el campo. */
+/** The fields of the change as updateDoc writes them: null removes the field. */
 function changeFields({ title, emoji, note, firstStep, minimalVersion, steps, currentStep, kind, dueDate, recurrence, schedule, paused, resumedAt, postponed }: TaskChange): DocumentData {
 	const fields: DocumentData = {};
 	if (title !== undefined) fields.titulo = title;
@@ -157,18 +157,18 @@ function changeFields({ title, emoji, note, firstStep, minimalVersion, steps, cu
 	if (note !== undefined) fields.nota = note === null ? deleteField() : note;
 	if (firstStep !== undefined) fields.primerPaso = firstStep === null ? deleteField() : firstStep;
 	if (minimalVersion !== undefined) fields.versionMinima = minimalVersion === null ? deleteField() : minimalVersion;
-	// pasos se reemplaza entero y pasoActual es otro campo (§7); null quita el campo.
+	// pasos is replaced whole and pasoActual is another field (§7); null removes the field.
 	if (steps !== undefined) fields.pasos = steps === null ? deleteField() : [...steps];
 	if (currentStep !== undefined) fields.pasoActual = currentStep === null ? deleteField() : currentStep;
 	if (kind !== undefined) fields.tipo = kind;
 	if (dueDate !== undefined) fields.fechaLimite = dueDate === null ? deleteField() : isoDay(dueDate);
 	if (recurrence !== undefined) fields.recurrencia = recurrence === null ? deleteField() : recurrenceToDoc(recurrence);
-	// update reemplaza el campo entero: las ventanas se escriben juntas (§7).
+	// update replaces the whole field: the windows are written together (§7).
 	if (schedule !== undefined) fields.horario = schedule === null ? deleteField() : copySchedule(schedule);
-	// pausada y reanudadaEn viajan juntos en el mismo update (§7).
+	// pausada and reanudadaEn travel together in the same update (§7).
 	if (paused !== undefined) fields.pausada = paused === null ? deleteField() : paused;
 	if (resumedAt !== undefined) fields.reanudadaEn = Timestamp.fromDate(resumedAt);
-	// pospuesta se escribe entera: desde y hasta juntos (§7).
+	// pospuesta is written whole: desde and hasta together (§7).
 	if (postponed !== undefined) {
 		fields.pospuesta = postponed === null ? deleteField() : { desde: Timestamp.fromDate(postponed.from), hasta: Timestamp.fromDate(postponed.to) };
 	}
@@ -207,12 +207,12 @@ export function observeCompletions(uid: string, onChange: (completions: Completi
 	);
 }
 
-/** Spec §7: la tarea nueva. */
+/** Spec §7: the new task. */
 export async function saveTask(uid: string, task: Task): Promise<void> {
 	await setDoc(taskRef(uid, task.id), taskToDoc(task), { merge: true });
 }
 
-/** Ignora el rechazo de una escritura sobre un documento que ya no existe: gana el borrado (§7). */
+/** Ignores the rejection of a write to a document that no longer exists: the deletion wins (§7). */
 async function exceptDeleted(write: Promise<void>): Promise<void> {
 	try {
 		await write;
@@ -226,10 +226,10 @@ export async function saveCompletion(uid: string, completion: Completion): Promi
 }
 
 /**
- * Spec §7: escribe solo los campos que cambiaron. update reemplaza cada campo
- * entero (la recurrencia no se mezcla, como haría set con merge), deja intactos
- * los campos viejos `etiquetas` y `esfuerzo` (S36) y falla si la tarea ya no
- * existe: gana el borrado y la edición se descarta.
+ * Spec §7: writes only the fields that changed. update replaces each whole field
+ * (the recurrence is not merged, as set with merge would do), leaves the old `etiquetas`
+ * and `esfuerzo` fields untouched (S36) and fails if the task no longer exists: the
+ * deletion wins and the edit is discarded.
  */
 export async function saveChange(uid: string, taskId: string, change: TaskChange): Promise<void> {
 	const fields = changeFields(change);
@@ -237,7 +237,7 @@ export async function saveChange(uid: string, taskId: string, change: TaskChange
 	await exceptDeleted(updateDoc(taskRef(uid, taskId), fields));
 }
 
-/** Spec §7: la tarea, sus completados y sus anotaciones se borran en un solo writeBatch. */
+/** Spec §7: the task, its completions and its annotations are deleted in a single writeBatch. */
 export async function deleteTask(uid: string, { taskId, completionIds, annotationIds }: Deletion): Promise<void> {
 	const batch = writeBatch(db);
 	batch.delete(taskRef(uid, taskId));
@@ -247,9 +247,9 @@ export async function deleteTask(uid: string, { taskId, completionIds, annotatio
 }
 
 /**
- * Spec §7: borra los completados huérfanos. Antes de borrar uno confirma con
- * el servidor que su tarea no existe (las dos colecciones se sincronizan por
- * separado); sin conexión no limpia nada.
+ * Spec §7: deletes orphan completions. Before deleting one it confirms with the
+ * server that its task does not exist (the two collections sync separately);
+ * offline it cleans nothing.
  */
 export async function cleanOrphanCompletions(uid: string, orphans: readonly Completion[]): Promise<string[]> {
 	const failed: string[] = [];
@@ -265,8 +265,8 @@ export async function cleanOrphanCompletions(uid: string, orphans: readonly Comp
 }
 
 /**
- * Spec §5.4: borra un completado (deshacer). Si ya no existe (otro dispositivo
- * lo borró, o borró su tarea), no hace nada: deleteDoc no falla ni crea nada.
+ * Spec §5.4: deletes a completion (undo). If it no longer exists (another device
+ * deleted it, or deleted its task), it does nothing: deleteDoc neither fails nor creates anything.
  */
 export async function deleteCompletion(uid: string, completionId: string): Promise<void> {
 	await deleteDoc(completionRef(uid, completionId));

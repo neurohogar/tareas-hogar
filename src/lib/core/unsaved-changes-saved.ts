@@ -1,16 +1,16 @@
-// Spec §6.2: Guardar desde el panel o desde un aviso, con lo que tiene escrito el panel.
+// Spec §6.2: Save from the panel or from a notice, with what the panel has written.
 import type { PanelForm } from './unsaved-changes';
 import type { CreationResult } from './creation';
 import { createFromData } from './task-data';
 import { edit, type EditingResult } from './editing';
 import type { Task } from './task';
 
-/** Spec §6.2: Guardar al editar, desde el panel o un aviso; `now` es el momento de guardar. */
+/** Spec §6.2: Save when editing, from the panel or a notice; `now` is the moment of saving. */
 export function editFromPanel(task: Task, { data }: PanelForm, now: Date): EditingResult {
 	return edit(task, data, now);
 }
 
-/** Spec §6.2: Guardar al crear, desde el panel o el aviso de cierre. */
+/** Spec §6.2: Save when creating, from the panel or the close notice. */
 export function createFromPanel({ data }: PanelForm, id: string, now: Date): CreationResult {
 	return createFromData(data, id, now);
 }

@@ -1,9 +1,9 @@
-// Oráculo de las anotaciones (spec §4.5, §5.10, §6.7, §6.2, §7), escrito desde el spec. NO importa el
-// core ni los step handlers: es una segunda implementación, así que la implementación no juzga a sus
-// propios tests. Simula el escenario (lo guardado, dónde está la persona, el panel y el aviso de
-// deshacer) y devuelve lo que cada paso Then observa. Todo lo que no reconoce o no puede decidir
-// (por ejemplo dos anotaciones del mismo instante sin ids) lanza `Indeciso`: el resultado es
-// undefined y la mutación no se filtra.
+// Oracle for annotations (spec §4.5, §5.10, §6.7, §6.2, §7), written from the spec. It does NOT import the
+// core or the step handlers: it is a second implementation, so the implementation does not judge its
+// own tests. It simulates the scenario (what is stored, where the person is, the panel and the undo
+// notice) and returns what each Then step observes. Anything it does not recognize or cannot decide
+// (for example two annotations at the same instant without ids) throws `Indeciso`: the result is
+// undefined and the mutation is not filtered.
 import { date, type RowOracle, type StepOracle } from './oracle';
 import { noticeSees, dayHeading } from './oracle-history';
 
@@ -13,7 +13,7 @@ const undecided = (reason: string): never => {
 };
 
 interface Task {
-	/** Como se llamó al declararla: así la nombran los pasos. */
+	/** As it was named when declared: that is how the steps refer to it. */
 	name: string;
 	title: string;
 	emoji?: string;
@@ -35,20 +35,20 @@ interface OracleWorld {
 	completions: { task: Task; at: number }[];
 	annotations: Annotation[];
 	screenName?: string;
-	/** El panel de edición abierto: la tarea, si se abrió para editar. */
+	/** The open edit panel: the task, if it was opened for editing. */
 	panel?: { task?: Task };
-	/** El aviso del último completado de este dispositivo (§5.4). */
+	/** The notice for this device's last completion (§5.4). */
 	notice?: { task: Task; at: number };
 	next: number;
 	last?: Annotation;
-	/** Las anotaciones que mostró la última consulta de Anotaciones y el texto de la última copia. */
+	/** The annotations the last Annotations query showed and the text of the last copy. */
 	view?: string;
 	copy?: string[];
 }
 
 const DIRECTIONS = ['Me sirvió', 'Me molestó'];
 const SCREENS_CURRENT = ['Pendientes', 'Historial', 'Anotaciones'];
-/** §4.5: «Etiquetas» ya no es una pantalla donde anotar; las anotaciones guardadas con ella la conservan como valor opaco. */
+/** §4.5: «Etiquetas» is no longer a screen to annotate on; annotations stored with it keep it as an opaque value. */
 const SCREENS = [...SCREENS_CURRENT, 'Etiquetas', 'Panel de edición'];
 
 const withValues = (text: string, row: RowOracle) => text.replace(/<([A-Za-z0-9_]+)>/g, (_, column: string) => row[column] ?? '<?>');
@@ -63,7 +63,7 @@ function spaces(value: string): string {
 	return ' '.repeat(n);
 }
 
-/** §4.5: se recortan los espacios del inicio y del final; vacío es sin texto. */
+/** §4.5: leading and trailing whitespace is trimmed; empty means no text. */
 const trimmed = (text: string): string | undefined => text.trim() || undefined;
 
 const twoDigits = (n: number) => String(n).padStart(2, '0');
@@ -90,7 +90,7 @@ function fresh(world: OracleWorld, direction: string, screenName: string, at: nu
 	return annotation;
 }
 
-/** §5.10: el panel manda sobre el aviso de deshacer; con el panel cerrado, el aviso solo si se ve. */
+/** §5.10: the panel takes precedence over the undo notice; with the panel closed, the notice only if it is visible. */
 function annotateMe(world: OracleWorld, direction: string, now: string, text = ''): void {
 	const at = moment(now);
 	if (world.screenName === undefined) undecided('sin pantalla');
@@ -98,13 +98,13 @@ function annotateMe(world: OracleWorld, direction: string, now: string, text = '
 	fresh(world, directionOf(direction), world.panel ? 'Panel de edición' : (world.screenName as string), at, task, trimmed(text));
 }
 
-/** Otro dispositivo, sin panel; sobre una tarea solo con su aviso de deshacer a la vista. */
+/** Another device, no panel; on a task only with its undo notice in view. */
 function annotatesOther(world: OracleWorld, direction: string, screenName: string, now: string, title?: string): void {
 	if (![...SCREENS_CURRENT, 'Etiquetas'].includes(screenName)) undecided(`pantalla ${screenName}`);
 	fresh(world, directionOf(direction), screenName, moment(now), title === undefined ? undefined : theTask(world, title));
 }
 
-/** §7: borrar gana sobre editar; una edición de una anotación borrada no la revive. */
+/** §7: deletion wins over editing; an edit of a deleted annotation does not revive it. */
 function doEditText(world: OracleWorld, annotated: string, text: string): void {
 	const annotation = theAnnotation(world, annotated);
 	if (!annotation.deleted) annotation.text = trimmed(text);
@@ -114,7 +114,7 @@ function deleteAnnotation(world: OracleWorld, annotated: string): void {
 	theAnnotation(world, annotated).deleted = true;
 }
 
-/** §6.2, §7: se borran la tarea, sus completados y sus anotaciones, y solo las suyas. */
+/** §6.2, §7: the task, its completions and its annotations are deleted, and only its own. */
 function deleteTask(world: OracleWorld, name: string): void {
 	const task = theTask(world, name);
 	task.deleted = true;
@@ -124,10 +124,10 @@ function deleteTask(world: OracleWorld, name: string): void {
 
 const nameOf = ({ title, emoji }: Task) => (emoji ? `${emoji} ${title}` : title);
 
-/** §6.7: las de tarea existente o sin tarea; las huérfanas y las de tareas borradas no se muestran. */
+/** §6.7: those of an existing task or without a task; orphaned ones and those of deleted tasks are not shown. */
 const visible = (world: OracleWorld) => world.annotations.filter((annotation) => !annotation.deleted && !annotation.task?.deleted);
 
-/** §6.7: con el mismo instante, primero la de id menor; sin ids que desempaten no se decide. */
+/** §6.7: with the same instant, the lower id first; without ids to break the tie nothing is decided. */
 function sorted(world: OracleWorld, moreRecentFirst: boolean): Annotation[] {
 	const list = visible(world);
 	const withoutTiebreak = list.some((a, i) => list.some((b, j) => i < j && a.at === b.at && (a.id.startsWith('~') || b.id.startsWith('~') || a.id === b.id)));
@@ -138,7 +138,7 @@ function sorted(world: OracleWorld, moreRecentFirst: boolean): Annotation[] {
 const parts = (annotation: Annotation, front: string) =>
 	[front, annotation.direction, annotation.screenName, annotation.task && nameOf(annotation.task), annotation.text].filter((part) => part !== undefined).join(' · ');
 
-/** §6.7: grupos "<encabezado>: <anotaciones>" con "; ", anotaciones con ", ". */
+/** §6.7: groups "<heading>: <annotations>" joined with "; ", annotations with ", ". */
 function annotationsScreen(world: OracleWorld, now: number): string {
 	const groups: { heading: string; texts: string[] }[] = [];
 	for (const annotation of sorted(world, true)) {
@@ -151,7 +151,7 @@ function annotationsScreen(world: OracleWorld, now: number): string {
 	return groups.map(({ heading, texts }) => `${heading}: ${texts.join(', ')}`).join('; ');
 }
 
-/** §6.7: una línea por anotación que la pantalla muestra, de la más antigua a la más reciente. */
+/** §6.7: one line per annotation the screen shows, from oldest to most recent. */
 const linesCopied = (world: OracleWorld) => sorted(world, false).map((annotation) => parts(annotation, dateAndHourOf(annotation.at)));
 
 type Reader = [RegExp, (world: OracleWorld, ...captures: string[]) => void];
@@ -228,7 +228,7 @@ const READERS: Reader[] = [
 const saved = (world: OracleWorld) => world.annotations.filter(({ deleted }) => !deleted);
 const withoutDefine = (text: string | undefined) => text ?? '<sin texto>';
 
-/** Cada Then: lo que el oráculo observa y lo que el paso afirma. */
+/** Each Then: what the oracle observes and what the step asserts. */
 type Observer = [RegExp, (world: OracleWorld, ...captures: string[]) => [observado: string, afirmado: string]];
 
 const OBSERVERS: Observer[] = [
@@ -256,7 +256,7 @@ const OBSERVERS: Observer[] = [
 	[
 		/^las anotaciones huérfanas a limpiar son solo la del (\S+)$/,
 		(world, annotated) => [
-			// §7: una anotación de una tarea que ya no existe, que nadie borró con ella.
+			// §7: an annotation of a task that no longer exists, which nobody deleted along with it.
 			world.annotations
 				.filter((annotation) => !annotation.deleted && annotation.task?.deleted)
 				.map(({ at }) => at)
@@ -284,7 +284,7 @@ const SCENARIO_PATTERNS = [
 
 export const isScenarioOfAnnotations = (texts: string[]) => texts.some((text) => SCENARIO_PATTERNS.some((pattern) => pattern.test(text)));
 
-/** Lo que observa y lo que afirma cada Then: undefined si el oráculo no reconoce o no decide el escenario. */
+/** What each Then observes and what it asserts: undefined if the oracle does not recognize or cannot decide the scenario. */
 export function observeAnnotations(entries: StepOracle[], thens: StepOracle[], row: RowOracle): { observed: string[]; asserted: string[] } | undefined {
 	const world: OracleWorld = { tasks: [], completions: [], annotations: [], next: 1 };
 	try {
@@ -311,9 +311,9 @@ export function observeAnnotations(entries: StepOracle[], thens: StepOracle[], r
 	}
 }
 
-// Limpiezas y reintentos (spec §7), escrito desde el spec. Las cuatro limpiezas se intentan elemento por
-// elemento: se limpia todo elemento cuyo intento no falla y quedan por limpiar solo los que fallaron. Se
-// reintenta al volver la conexión y cuando cambian los datos; el tiempo no cuenta (sin temporizadores).
+// Cleanups and retries (spec §7), written from the spec. The four cleanups are attempted element by
+// element: every element whose attempt does not fail is cleaned and only those that failed remain to be cleaned. They are
+// retried when the connection returns and when the data changes; time does not count (no timers).
 
 const CLEANUPS = ['completados huérfanos', 'anotaciones huérfanas'];
 const EVENTS_THAT_RETRY = ['vuelve la conexión', 'cambian los datos'];
@@ -327,7 +327,7 @@ interface CleanupWorld {
 
 export const isScenarioOfCleanups = (texts: string[]) => texts.some((text) => /^(?:hay por limpiar |la app intent(?:a|ó) las limpiezas$)/.test(text));
 
-/** Lista de ids separada por ", "; "ninguno" es la lista vacía. */
+/** List of ids separated by ", "; "ninguno" is the empty list. */
 function idsOf(value: string): string[] {
 	if (value === 'ninguno') return [];
 	const parts = value.split(', ');

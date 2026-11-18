@@ -1,11 +1,11 @@
-// Días de ocurrencia de una recurrencia de calendario (spec §4.2).
+// Occurrence days of a calendar recurrence (spec §4.2).
 import { weekday, dayOfMonth, startOfDay, addDays, lastDayOfMonth } from './days';
 import type { CalendarRecurrence } from './task';
 
-/** Una recurrencia válida ocurre al menos una vez por mes: nunca hay más de 31 días entre dos ocurrencias. */
+/** A valid recurrence occurs at least once a month: there are never more than 31 days between two occurrences. */
 const MAX_DAYS_BETWEEN_OCCURRENCES = 31;
 
-/** Un día del mes que no existe en ese mes cae en su último día. */
+/** A day of the month that does not exist in that month falls on its last day. */
 export function isOccurrence(recurrence: CalendarRecurrence, day: Date): boolean {
 	if ('weekdays' in recurrence) return recurrence.weekdays.includes(weekday(day));
 	const last = lastDayOfMonth(day);
@@ -13,8 +13,8 @@ export function isOccurrence(recurrence: CalendarRecurrence, day: Date): boolean
 }
 
 /**
- * La primera ocurrencia estrictamente posterior al día de `despuesDe`. Solo
- * lanza si la recurrencia viola §4.2 (por ejemplo, si no tiene días).
+ * The first occurrence strictly later than the day of `afterOf`. Only
+ * throws if the recurrence violates §4.2 (for example, if it has no days).
  */
 export function firstLaterOccurrence(recurrence: CalendarRecurrence, afterOf: Date): Date {
 	const from = startOfDay(afterOf);
@@ -22,10 +22,10 @@ export function firstLaterOccurrence(recurrence: CalendarRecurrence, afterOf: Da
 		const day = addDays(from, steps);
 		if (isOccurrence(recurrence, day)) return day;
 	}
-	throw new Error('La recurrencia no tiene días de ocurrencia');
+	throw new Error('The recurrence has no occurrence days');
 }
 
-/** La ocurrencia más reciente en (desde, hasta], o undefined si no hay ninguna. */
+/** The most recent occurrence in (from, to], or undefined if there is none. */
 export function lastOccurrenceBetween(
 	recurrence: CalendarRecurrence,
 	from: Date,

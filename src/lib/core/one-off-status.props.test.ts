@@ -4,16 +4,16 @@ import { addDays } from './days';
 import { oneOffStatus } from './one-off-status';
 import type { Completion } from './task';
 
-/** Un día local entre 1970 y ~2100 (a las 00:00), como una fecha límite guardada. */
+/** A local day between 1970 and ~2100 (at 00:00), like a stored due date. */
 const day = fc.integer({ min: 0, max: 47_000 }).map((n) => new Date(1970, 0, 1 + n));
-/** Un instante cualquiera en el mismo rango, al milisegundo. */
+/** Any instant in the same range, to the millisecond. */
 const instant = fc.integer({ min: 0, max: 4_102_444_800_000 }).map((ms) => new Date(ms));
 const completions = fc
 	.array(instant, { minLength: 1, maxLength: 5 })
 	.map((moments) => moments.map((completedAt, i): Completion => ({ id: `c${i}`, taskId: 't', completedAt })));
 
-describe('estadoPuntual (propiedades, spec §5.1)', () => {
-	it('sin completados ni fecha límite, siempre está pendiente', () => {
+describe('oneOffStatus (properties, spec §5.1)', () => {
+	it('without completions or due date, it is always pending', () => {
 		fc.assert(
 			fc.property(instant, (now) => {
 				expect(oneOffStatus(undefined, [], now)).toEqual({ kind: 'pendiente' });
@@ -21,7 +21,7 @@ describe('estadoPuntual (propiedades, spec §5.1)', () => {
 		);
 	});
 
-	it('sin completados, pasa de pendiente a atrasada exactamente al empezar el día siguiente a la fecha límite', () => {
+	it('without completions, it goes from pending to overdue exactly when the day after the due date starts', () => {
 		fc.assert(
 			fc.property(day, instant, (dueDate, now) => {
 				const overdueFrom = addDays(dueDate, 1).getTime();
@@ -31,7 +31,7 @@ describe('estadoPuntual (propiedades, spec §5.1)', () => {
 		);
 	});
 
-	it('el borde es exacto: el último milisegundo del día límite está pendiente y el primero del siguiente, atrasada', () => {
+	it('the edge is exact: the last millisecond of the due day is pending and the first of the next, overdue', () => {
 		fc.assert(
 			fc.property(day, (dueDate) => {
 				const following = addDays(dueDate, 1).getTime();
@@ -41,7 +41,7 @@ describe('estadoPuntual (propiedades, spec §5.1)', () => {
 		);
 	});
 
-	it('con cualquier completado está completada, con o sin fecha límite y en cualquier momento', () => {
+	it('with any completion it is completed, with or without a due date and at any moment', () => {
 		fc.assert(
 			fc.property(fc.option(day, { nil: undefined }), completions, instant, (dueDate, doneOnes, now) => {
 				expect(oneOffStatus(dueDate, doneOnes, now)).toEqual({ kind: 'completada' });

@@ -11,12 +11,12 @@ import { theTask, theTaskOfKind, newId, type StepDefinition, type World } from '
 export const TITLE_VALID = 'Regar plantas';
 const EVERY_VALID = 2;
 
-/** Momento de creación cuando el escenario no lo da. */
+/** Creation moment when the scenario does not give one. */
 export const NOW = new Date(2026, 6, 15, 8, 0, 0);
 
 /**
- * Momento de creación de las tareas con título cuando el escenario no lo da:
- * el mismo para todas y anterior a cualquier otra fecha del escenario.
+ * Creation moment of the tasks with a title when the scenario does not give one:
+ * the same for all of them and earlier than any other date in the scenario.
  */
 export const SCENARIO_BEFORE = new Date(2000, 0, 1, 0, 0, 0);
 

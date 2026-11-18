@@ -1,4 +1,4 @@
-// Traduce entre la anotación del core y Firestore (spec §7):
+// Translates between the core annotation and Firestore (spec §7):
 // users/{uid}/anotaciones/{anotacionId}.
 import { collection, deleteDoc, deleteField, doc, FirestoreError, getDocFromServer, onSnapshot, setDoc, Timestamp, updateDoc, type DocumentData, type QueryDocumentSnapshot } from 'firebase/firestore';
 import type { Annotation, AnnotationScreen, Sense } from '#lib/core/annotation.ts';
@@ -8,9 +8,9 @@ interface AnnotationDoc {
 	sentido: Sense;
 	anotadaEn: Timestamp;
 	pantalla: AnnotationScreen;
-	/** Sin el campo, la anotación no tiene tarea. */
+	/** Without the field, the annotation has no task. */
 	tareaId?: string;
-	/** Sin el campo, la anotación no tiene texto. */
+	/** Without the field, the annotation has no text. */
 	texto?: string;
 }
 
@@ -48,9 +48,9 @@ export async function saveAnnotation(uid: string, annotation: Annotation): Promi
 }
 
 /**
- * Spec §6.7 y §7: cambia solo el texto, ya normalizado por el core (sin texto
- * lo quita). update falla si la anotación ya no existe: gana el borrado, la
- * edición se descarta.
+ * Spec §6.7 and §7: changes only the text, already normalized by the core (no text
+ * removes it). update fails if the annotation no longer exists: the deletion wins and
+ * the edit is discarded.
  */
 export async function changeAnnotationText(uid: string, annotationId: string, text: string | undefined): Promise<void> {
 	try {
@@ -65,9 +65,9 @@ export async function deleteAnnotation(uid: string, annotationId: string): Promi
 }
 
 /**
- * Spec §7: borra las anotaciones huérfanas, cada una por separado. Antes de
- * borrar una confirma con el servidor que su tarea no existe; sin conexión
- * falla. Devuelve los ids de las que fallaron.
+ * Spec §7: deletes orphan annotations, each one separately. Before deleting one it
+ * confirms with the server that its task does not exist; offline it fails. Returns the
+ * ids of the ones that failed.
  */
 export async function cleanOrphanAnnotations(uid: string, orphans: readonly Annotation[]): Promise<string[]> {
 	const failed: string[] = [];

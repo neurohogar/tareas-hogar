@@ -22,7 +22,7 @@ import {
 	type Definition
 } from './support';
 
-// qa/primer-paso.md: el campo Primer paso del panel, su línea en la fila, cuándo se ve y cambios sin guardar.
+// qa/primer-paso.md: the panel's Primer paso field, its line in the row, when it is shown and unsaved changes.
 
 test.beforeEach(async () => {
 	await cleanEmulators();
@@ -33,7 +33,7 @@ const WASH = 'Separar la ropa blanca';
 const LENGTH =
 	'Abrir el cajón de abajo, sacar toda la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla con nada de color oscuro ni delicado';
 
-/** La fila de la tarea de título exacto `titulo` (las demás filas pueden contener ese texto). */
+/** The row of the task whose title is exactly `titulo` (other rows may contain that text). */
 const f = (page: Page, title: string): Locator =>
 	page.getByRole('listitem').filter({ has: page.getByRole('button', { name: title, exact: true }) });
 const line = (page: Page, title: string) => f(page, title).getByText(/^Primer paso: /);
@@ -44,13 +44,13 @@ const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas'
 const panel = (page: Page) => page.getByRole('dialog');
 const unsavedChangesNotice = (page: Page) => page.getByRole('alertdialog', { name: 'Tenés cambios sin guardar' });
 
-/** La fila dice exactamente `Primer paso: texto`, una sola vez. */
+/** The row says exactly `Primer paso: texto`, once. */
 async function says(page: Page, title: string, text: string) {
 	await expect(line(page, title)).toHaveCount(1);
 	await expect(line(page, title)).toHaveText(`Primer paso: ${text}`);
 }
 
-/** La fila está a la vista y no contiene `Primer paso`. */
+/** The row is in view and does not contain `Primer paso`. */
 async function withoutLine(page: Page, title: string) {
 	await expect(f(page, title)).toBeVisible();
 	await expect(f(page, title)).not.toContainText('Primer paso');
@@ -67,14 +67,14 @@ async function save(page: Page) {
 	await expect(panel(page)).toHaveCount(0);
 }
 
-/** Abre la fila, escribe el primer paso (Enter o Guardar) y deja el panel cerrado. */
+/** Opens the row, types the first step (Enter or Guardar) and leaves the panel closed. */
 async function write(page: Page, title: string, text: string) {
 	await openRow(page, title);
 	await field(page).fill(text);
 	await save(page);
 }
 
-/** Abre la fila, verifica el valor del campo y cierra sin cambios. */
+/** Opens the row, checks the field value and closes without changes. */
 async function holdsInPanel(page: Page, title: string, value: string) {
 	await openRow(page, title);
 	await expect(field(page)).toHaveValue(value);
@@ -116,13 +116,13 @@ async function postpone(page: Page, title: string, option: '3 horas' | 'Hasta ma
 	await expect(panel(page)).toHaveCount(0);
 }
 
-/** Sesión con el reloj corriendo 10 minutos antes de `hora` (las tareas se crean así). */
+/** Session with the clock running 10 minutes before `hora` (tasks are created that way). */
 async function session(page: Page, hour: string, completedList = false) {
 	await sessionWithClock(page, new Date(new Date(hour).getTime() - 600_000).toISOString());
 	if (completedList) await turnOnCompleted(page);
 }
 
-/** Avanza el reloj detenido hasta `hora` y deja correr un segundo para que la pantalla se actualice sola. */
+/** Advances the stopped clock to `hora` and lets one second run so the screen updates by itself. */
 async function go(page: Page, hour: string) {
 	const missing = new Date(hour).getTime() - (await page.evaluate(() => Date.now()));
 	if (missing <= 10_000) await page.clock.runFor(missing);
@@ -183,7 +183,7 @@ test('Flujo 1: el campo en el panel y crear con primer paso', async ({ page }) =
 		days: ['martes'],
 		firstStep: 'Atar la bolsa llena'
 	});
-	await withoutLine(page, 'Basura'); // en espera hasta el martes
+	await withoutLine(page, 'Basura'); // waiting until Tuesday
 
 	// 5
 	await holdsInPanel(page, 'Lavar', WASH);
@@ -309,7 +309,7 @@ test('Flujo 3: la línea en la fila (posición, estilo, toque)', async ({ page }
 		await expect(f(page, t).getByRole('progressbar')).toHaveCount(0);
 	}
 
-	// 4: tocar la línea es tocar la fila.
+	// 4: tapping the line is tapping the row.
 	const c = (await line(page, 'Cambiar foco').boundingBox())!;
 	await page.mouse.click(c.x + c.width / 2, c.y + c.height / 2);
 	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();
@@ -414,7 +414,7 @@ test('Flujo 4: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => 
 		await says(page, 'Regar', 'Llenar la regadera');
 	});
 
-	// 8: con el reloj en el viernes.
+	// 8: with the clock on Friday.
 	await goBack(page, FRIDAY);
 	await withClock(page, () =>
 		createAndView(page, { title: 'Basura', kind: 'Días de la semana', days: ['martes'], firstStep: 'Atar la bolsa llena' })
@@ -587,7 +587,7 @@ test('Flujo 7: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await expect(page.locator('body')).not.toContainText(WASH);
 	await goA(page, 'Pendientes');
 
-	// 5: Anotar con la tarea en la lista (completada: se ve con Mostrar completadas).
+	// 5: Anotar with the task in the list (completed: shown with Mostrar completadas).
 	await turnOnCompleted(page);
 	await expect(f(page, '🧺 Lavar')).toBeVisible();
 	await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);

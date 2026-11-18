@@ -34,7 +34,7 @@ async function togglePaused(page: Page, on: boolean) {
 	else await expect(showPaused(page)).not.toBeChecked();
 }
 
-/** Abre la tarea y toca Pausar: el panel se cierra solo, sin Guardar. */
+/** Opens the task and taps Pausar: the panel closes by itself, without Guardar. */
 async function pause(page: Page, title: string) {
 	await openTask(page, title);
 	await expect(buttonResume(page)).toHaveCount(0);
@@ -42,7 +42,7 @@ async function pause(page: Page, title: string) {
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
-/** Abre la tarea pausada y toca Reanudar: el panel se cierra solo, sin Guardar. */
+/** Opens the paused task and taps Reanudar: the panel closes by itself, without Guardar. */
 async function resume(page: Page, title: string) {
 	await openTask(page, title);
 	await expect(page.getByRole('dialog').getByText('Pausada')).toBeVisible();
@@ -51,7 +51,7 @@ async function resume(page: Page, title: string) {
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
-/** Fila pausada: atenuada, con "Pausada", sin "Tocaba", sin barra y con el checkbox deshabilitado. */
+/** Paused row: dimmed, with "Pausada", without "Tocaba", without bar and with the checkbox disabled. */
 async function viewPaused(page: Page, title: string) {
 	const f = row(page, title);
 	await expect(f).toBeVisible();

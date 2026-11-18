@@ -4,8 +4,8 @@ import { progressPercentage } from './status';
 
 const progress = fc.double({ min: 0, max: 1, noNaN: true });
 
-describe('porcentajeDeProgreso (propiedades)', () => {
-	it('da un entero entre 0 y 100 a menos de medio punto del progreso', () => {
+describe('progressPercentage (properties)', () => {
+	it('gives an integer between 0 and 100 within half a point of the progress', () => {
 		fc.assert(
 			fc.property(progress, (p) => {
 				const percentage = progressPercentage(p);
@@ -17,7 +17,7 @@ describe('porcentajeDeProgreso (propiedades)', () => {
 		);
 	});
 
-	it('es monótono', () => {
+	it('is monotonic', () => {
 		fc.assert(
 			fc.property(progress, progress, (a, b) => {
 				expect(progressPercentage(Math.min(a, b))).toBeLessThanOrEqual(progressPercentage(Math.max(a, b)));

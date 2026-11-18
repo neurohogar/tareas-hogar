@@ -23,13 +23,13 @@ const oneOff = fc
 const recurring = (recurrence: fc.Arbitrary<RelativeRecurrence | CalendarRecurrence>) =>
 	fc.tuple(recurrence, day).map(([recurrence, createdAt]): Task => ({ id: 't', title: 'T', kind: 'periodica', recurrence, createdAt }));
 const task = fc.oneof(oneOff, recurring(relative), recurring(calendar));
-/** Completados de la tarea t y de otra, para que el filtrado por tarea se ejercite. */
+/** Completions of task t and of another, so that filtering by task is exercised. */
 const completions = fc
 	.array(fc.tuple(fc.constantFrom('t', 'otra'), instant), { maxLength: 6 })
 	.map((list) => list.map(([taskId, completedAt], i): Completion => ({ id: `c${i}`, taskId, completedAt })));
 
-describe('accionDelCheckbox (propiedades)', () => {
-	it('una tarea no completada siempre se completa', () => {
+describe('checkboxAction (properties)', () => {
+	it('a task that is not completed is always completed', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, doneOnes, now) => {
 				fc.pre(!isCompleted(t, doneOnes, now));
@@ -38,7 +38,7 @@ describe('accionDelCheckbox (propiedades)', () => {
 		);
 	});
 
-	it('si borra, borra el completado más reciente de la propia tarea', () => {
+	it('if it deletes, it deletes the most recent completion of the task itself', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, doneOnes, now) => {
 				const action = checkboxAction(t, doneOnes, now);
@@ -50,7 +50,7 @@ describe('accionDelCheckbox (propiedades)', () => {
 		);
 	});
 
-	it('una puntual completada siempre borra', () => {
+	it('a completed one-off always deletes', () => {
 		fc.assert(
 			fc.property(oneOff, completions, instant, (t, doneOnes, now) => {
 				fc.pre(completionsOfTask(doneOnes, t.id).length > 0);
@@ -59,7 +59,7 @@ describe('accionDelCheckbox (propiedades)', () => {
 		);
 	});
 
-	it('una periódica cuyo último completado es de un día anterior se completa de nuevo', () => {
+	it('a recurring task whose last completion is from an earlier day is completed again', () => {
 		fc.assert(
 			fc.property(fc.oneof(recurring(relative), recurring(calendar)), completions, instant, (t, doneOnes, now) => {
 				const owns = completionsOfTask(doneOnes, t.id);
@@ -69,7 +69,7 @@ describe('accionDelCheckbox (propiedades)', () => {
 		);
 	});
 
-	it('ida y vuelta: tocar después de completar ahora borra justo ese completado', () => {
+	it('round trip: tapping after completing now deletes exactly that completion', () => {
 		fc.assert(
 			fc.property(fc.oneof(oneOff, recurring(relative)), completions, instant, (t, doneOnes, now) => {
 				const previousItems = doneOnes.filter(({ completedAt }) => completedAt.getTime() < now.getTime());

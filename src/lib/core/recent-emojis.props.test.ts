@@ -1,18 +1,18 @@
-// Spec §6.2 (Emoji, Recientes): invariantes de agregarReciente.
+// Spec §6.2 (Emoji, Recents): invariants of addRecent.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { MAX_RECENT, addRecent } from './recent-emojis';
 
 const emoji = fc.constantFrom('🌱', '🔥', '🧹', '😀', '👍', '☀', '✈', '🏳', '🍎', '🐱', '🎲', '🚲', '📚', '🔑', '🎵', '🌙', '🧊', '🪴', '🍞', '🛒');
-/** Una lista de recientes válida: sin repetidos y con a lo sumo el tope. */
+/** A valid recents list: without repeats and with at most the cap. */
 const recents = fc.uniqueArray(emoji, { maxLength: MAX_RECENT });
 
-describe('agregarReciente (propiedades)', () => {
-	it('el elegido queda primero', () => {
+describe('addRecent (properties)', () => {
+	it('the chosen one ends up first', () => {
 		fc.assert(fc.property(recents, emoji, (list, chosenOne) => addRecent(list, chosenOne)[0] === chosenOne));
 	});
 
-	it('nunca hay repetidos ni más del tope, incluso partiendo de una lista inflada', () => {
+	it('there are never repeats or more than the cap, even starting from an inflated list', () => {
 		fc.assert(
 			fc.property(fc.array(emoji, { maxLength: 40 }), emoji, (list, chosenOne) => {
 				const result = addRecent(list, chosenOne);
@@ -22,7 +22,7 @@ describe('agregarReciente (propiedades)', () => {
 		);
 	});
 
-	it('los demás conservan su orden relativo', () => {
+	it('the others keep their relative order', () => {
 		fc.assert(
 			fc.property(recents, emoji, (list, chosenOne) => {
 				const rest = addRecent(list, chosenOne).slice(1);
@@ -31,7 +31,7 @@ describe('agregarReciente (propiedades)', () => {
 		);
 	});
 
-	it('solo se pierde el último, y solo si el elegido es nuevo y la lista estaba llena', () => {
+	it('only the last one is lost, and only if the chosen one is new and the list was full', () => {
 		fc.assert(
 			fc.property(recents, emoji, (list, chosenOne) => {
 				const result = addRecent(list, chosenOne);
@@ -42,7 +42,7 @@ describe('agregarReciente (propiedades)', () => {
 		);
 	});
 
-	it('es idempotente: elegir dos veces seguidas el mismo emoji deja lo mismo', () => {
+	it('is idempotent: choosing the same emoji twice in a row leaves the same', () => {
 		fc.assert(
 			fc.property(recents, emoji, (list, chosenOne) => {
 				const one = addRecent(list, chosenOne);
@@ -51,7 +51,7 @@ describe('agregarReciente (propiedades)', () => {
 		);
 	});
 
-	it('no modifica la lista recibida', () => {
+	it('does not modify the received list', () => {
 		fc.assert(
 			fc.property(recents, emoji, (list, chosenOne) => {
 				const copy = [...list];

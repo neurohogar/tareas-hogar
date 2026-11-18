@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Iconos en línea (trazos de 24x24): viajan con el build, así funcionan sin conexión (§2, §7).
+	// Inline icons (24x24 strokes): they ship with the build, so they work offline (§2, §7).
 	const STROKES = {
 		task: ['M9 11l3 3L22 4', 'M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'],
 		when: ['M8 2v4M16 2v4M3 10h18', 'M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z'],

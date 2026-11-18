@@ -1,15 +1,15 @@
-// Oráculo de la pantalla de carga (spec §6.6), escrito desde el spec. NO importa el core
-// ni los step handlers. En vez de recorrer la línea de tiempo, despeja el momento: la
-// pantalla se va en el mayor entre el mínimo, Auth y lo esperado (con el tope encima de
-// lo esperado, porque "la espera de Auth no entra en el tope"). Si no reconoce un paso o
-// un valor, devuelve undefined (no se filtra).
+// Oracle for the loading screen (spec §6.6), written from the spec. It does NOT import the core
+// or the step handlers. Instead of walking the timeline, it solves for the moment: the
+// screen leaves at the max of the minimum, Auth and what is awaited (with the cap on top of
+// what is awaited, because "the Auth wait does not count toward the cap"). If it does not recognize a step or
+// a value, it returns undefined (not filtered).
 import type { RowOracle, StepOracle } from './oracle';
 
-/** §6.6: mínimo de 0,5 s en todos los casos. */
+/** §6.6: minimum of 0.5 s in all cases. */
 const MINIMUM = 0.5;
-/** §6.6: tope de 10 s para los datos y las fuentes, desde el arranque. */
+/** §6.6: cap of 10 s for the data and the fonts, from startup. */
 const CAP = 10;
-/** El feature escribe 30 segundos para algo que no llega. */
+/** The feature writes 30 seconds for something that never arrives. */
 const DOES_NOT_ARRIVE = 30;
 
 interface Font {
@@ -75,9 +75,9 @@ function readOpening(entries: StepOracle[], row: RowOracle): Opening | undefined
 const arrivesOf = (font: Font) => (font.arrives === undefined || font.arrives >= DOES_NOT_ARRIVE ? Infinity : font.arrives);
 
 /**
- * Hasta cuándo se espera una fuente. §6.6: una que falló se deja de esperar en ese momento; sin conexión
- * no se espera nada que solo pueda venir por red, y perder la conexión cuenta igual; una guardada llega
- * desde el dispositivo también sin conexión.
+ * Until when a font is awaited. §6.6: one that failed stops being awaited at that moment; offline
+ * nothing that can only come over the network is awaited, and losing the connection counts the same; a stored one arrives
+ * from the device even offline.
  */
 function waitEnd(font: Font, a: Opening): number {
 	const toFailure = Math.min(arrivesOf(font), font.failure ?? Infinity);
@@ -85,10 +85,10 @@ function waitEnd(font: Font, a: Opening): number {
 	return font.arrives === undefined || font.withoutSave ? 0 : toFailure;
 }
 
-/** §6.6: una versión nueva que cambia el juego lo trata como no guardado y vuelve a esperarlo una vez. */
+/** §6.6: a new version that changes the font set treats it as not stored and waits for it again once. */
 const rememberedOnOpen = (a: Opening) => Boolean(a.remembered) && !a.versionChange;
 
-/** §6.6: con sesión espera datos y las dos fuentes, salvo Noto tras un tope; sin sesión, solo Atkinson. */
+/** §6.6: with a session it awaits the data and both fonts, except Noto after a cap; without a session, only Atkinson. */
 function waits(a: Opening): number[] {
 	const atkinson = waitEnd(a.atkinson, a);
 	if (!a.session) return [atkinson];
@@ -96,12 +96,12 @@ function waits(a: Opening): number[] {
 	return [...(a.data.length > 0 ? a.data : [Infinity]), atkinson, ...noto];
 }
 
-/** §6.6: el mínimo vale siempre; el tope corta lo esperado pero no la espera de Auth. */
+/** §6.6: the minimum always applies; the cap cuts what is awaited but not the Auth wait. */
 const outputOf = (a: Opening) => Math.max(MINIMUM, a.auth ?? Infinity, Math.min(CAP, Math.max(...waits(a))));
 
 /**
- * §6.6: cuenta un tope con Noto sin bajar en una apertura que lo esperaba (con sesión, y sin haberlo dejado de
- * esperar antes del tope); lo recordado se olvida cuando Noto queda guardado.
+ * §6.6: counts a cap with Noto not downloaded on an opening that awaited it (with a session, and without having stopped
+ * awaiting it before the cap); what is remembered is forgotten once Noto is stored.
  */
 function remembers(a: Opening): boolean {
 	const capNew = Boolean(a.session) && waitEnd(a.noto, a) > CAP;
@@ -113,7 +113,7 @@ const MEMORY_THEN = /^el dispositivo (no )?recuerda un tope con Noto sin bajar$/
 
 export const isScenarioOfScreenOfLoading = (texts: string[]) => texts.some((text) => OUTPUT_THEN.test(text) || MEMORY_THEN.test(text));
 
-/** Lo que observa y lo que afirma cada Then: undefined si el oráculo no reconoce el escenario. */
+/** What each Then observes and what it asserts: undefined if the oracle does not recognize the scenario. */
 export function observeScreenOfLoading(entries: StepOracle[], thens: StepOracle[], row: RowOracle): { observed: string[]; asserted: string[] } | undefined {
 	const opening = readOpening(entries, row);
 	if (!opening) return undefined;

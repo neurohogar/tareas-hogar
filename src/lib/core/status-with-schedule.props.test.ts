@@ -8,7 +8,7 @@ import { WEEKDAYS, type Completion, type Schedule, type Task } from './task';
 import { urgencyInstant } from './urgency';
 
 const hour = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-/** Un horario válido (§4.1): de una a cuatro ventanas ordenadas y sin superponerse. */
+/** A valid schedule (§4.1): from one to four ordered, non-overlapping windows. */
 const schedule: fc.Arbitrary<Schedule> = fc
 	.integer({ min: 1, max: 4 })
 	.chain((n) => fc.uniqueArray(fc.integer({ min: 0, max: 1439 }), { minLength: 2 * n, maxLength: 2 * n }))
@@ -38,13 +38,13 @@ const recurrence = fc.oneof(
 		weekdays: fc.subarray([...WEEKDAYS], { minLength: 1 })
 	})
 );
-/** Una tarea con horario, de cualquier tipo y recurrencia. */
+/** A task with a schedule, of any kind and recurrence. */
 const task = fc.tuple(schedule, fc.option(day, { nil: undefined }), fc.option(recurrence, { nil: undefined }), instant).map(
 	([schedule, dueDate, recurrence, createdAt]): Task & {
 		schedule: Schedule;
 	} => {
 		const common = { id: 't', title: 'T', schedule, createdAt };
-		// §4.1: una relativa en horas tiene una sola ventana.
+		// §4.1: a relative task in hours has a single window.
 		if (recurrence?.mode === 'relativo' && recurrence.unit === 'horas') return { ...common, schedule: [schedule[0]], kind: 'periodica', recurrence };
 		if (recurrence) return { ...common, kind: 'periodica', recurrence };
 		return { ...common, kind: 'puntual', ...(dueDate && { dueDate }) };
@@ -60,8 +60,8 @@ const completions = fc.array(instant, { maxLength: 4 }).map((list) =>
 
 const withoutSchedule = ({ schedule: _, ...rest }: Task): Task => rest as Task;
 
-describe('estado con horario (propiedades, spec §5.5)', () => {
-	it('fuera de su ventana, una tarea con horario nunca está pendiente', () => {
+describe('status with a schedule (properties, spec §5.5)', () => {
+	it('outside its window, a task with a schedule is never pending', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				if (!withinSchedule(t.schedule, now)) expect(taskStatus(t, cs, now).kind).not.toBe('pendiente');
@@ -69,7 +69,7 @@ describe('estado con horario (propiedades, spec §5.5)', () => {
 		);
 	});
 
-	it('con horario o sin él, la tarea está completada en los mismos casos', () => {
+	it('with or without a schedule, the task is completed in the same cases', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				const withSchedule = taskStatus(t, cs, now);
@@ -79,7 +79,7 @@ describe('estado con horario (propiedades, spec §5.5)', () => {
 		);
 	});
 
-	it('una puntual con horario sin completar se atrasa justo al cierre de la última ventana de su fecha límite', () => {
+	it('a one-off with a schedule that is not completed becomes overdue right at the close of the last window of its due date', () => {
 		fc.assert(
 			fc.property(task, instant, (t, now) => {
 				fc.pre(t.kind === 'puntual');
@@ -89,8 +89,8 @@ describe('estado con horario (propiedades, spec §5.5)', () => {
 		);
 	});
 
-	// En espera, el instante es A (§5.5): ahí ya no espera, aunque el atraso pueda haber llegado antes.
-	it('el instante de urgencia es A para una en espera y desde cuándo está atrasada para una atrasada', () => {
+	// While waiting, the instant is A (§5.5): it no longer waits there, even though the lateness may have come earlier.
+	it('the urgency instant is A for a waiting one and since when it is overdue for an overdue one', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				const status = taskStatus(t, cs, now);
@@ -110,8 +110,8 @@ describe('estado con horario (propiedades, spec §5.5)', () => {
 	});
 });
 
-describe('checkbox con horario (propiedades, spec §5.5 y §6.1)', () => {
-	it('dentro de la ventana el checkbox siempre está habilitado', () => {
+describe('checkbox with a schedule (properties, spec §5.5 and §6.1)', () => {
+	it('inside the window the checkbox is always enabled', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				fc.pre(withinSchedule(t.schedule, now));
@@ -120,7 +120,7 @@ describe('checkbox con horario (propiedades, spec §5.5 y §6.1)', () => {
 		);
 	});
 
-	it('fuera de la ventana, solo está habilitado para borrar un completado', () => {
+	it('outside the window, it is only enabled to delete a completion', () => {
 		fc.assert(
 			fc.property(task, completions, instant, (t, cs, now) => {
 				fc.pre(!withinSchedule(t.schedule, now));

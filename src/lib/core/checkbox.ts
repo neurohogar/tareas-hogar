@@ -1,4 +1,4 @@
-// Spec §6.1: qué hace tocar el checkbox de una fila de Pendientes.
+// Spec §6.1: what tapping the checkbox of a Pendientes row does.
 import { latestCompletion, completionsOfTask } from './completions';
 import { isCompleted } from './completed';
 import { startOfDay } from './days';
@@ -6,22 +6,22 @@ import { withinSchedule } from './schedule';
 import { asJustCreated, isPaused } from './pause';
 import type { Completion, Task } from './task';
 
-/** "ninguna": el checkbox está deshabilitado (completaría fuera de la ventana, §5.5, o la tarea está pausada, §5.8). */
+/** "ninguna": the checkbox is disabled (it would complete outside the window, §5.5, or the task is paused, §5.8). */
 export type CheckboxAction = { kind: 'completar' } | { kind: 'borrar'; completion: Completion } | { kind: 'ninguna' };
 
-/** Spec §5.5: con horario, solo se completa dentro de alguna de sus ventanas. */
+/** Spec §5.5: with a schedule, it is completed only inside one of its windows. */
 function completeIfPossible({ schedule }: Task, now: Date): CheckboxAction {
 	return !schedule || withinSchedule(schedule, now) ? { kind: 'completar' } : { kind: 'ninguna' };
 }
 
 /**
- * Una tarea no completada se completa. De una completada se borra el
- * completado más reciente (como Deshacer, §5.4) si es puntual, o si es
- * periódica y ese completado es de hoy o posterior (día local de completadoEn);
- * una periódica completada un día anterior se completa de nuevo. Completar
- * fuera de la ventana de su horario no es posible; borrar, a cualquier hora.
- * De una pausada, nada; de una reanudada, solo cuentan los completados desde
- * reanudadaEn (§5.8).
+ * A task that is not completed is completed. From a completed one the most recent
+ * completion is deleted (like Deshacer, §5.4) if it is one-off, or if it is
+ * recurring and that completion is from today or later (local day of completedAt);
+ * a recurring task completed on an earlier day is completed again. Completing
+ * outside the window of its schedule is not possible; deleting, at any hour.
+ * From a paused one, nothing; from a resumed one, only the completions since
+ * resumedAt count (§5.8).
  */
 export function checkboxAction(task: Task, completions: readonly Completion[], now: Date): CheckboxAction {
 	if (isPaused(task)) return { kind: 'ninguna' };
@@ -33,7 +33,7 @@ export function checkboxAction(task: Task, completions: readonly Completion[], n
 	return completeIfPossible(task, now);
 }
 
-/** Spec §6.1 y §5.8: deshabilitado si tocarlo completaría fuera de la ventana, o si la tarea está pausada. */
+/** Spec §6.1 and §5.8: disabled if tapping it would complete outside the window, or if the task is paused. */
 export function checkboxEnabled(task: Task, completions: readonly Completion[], now: Date): boolean {
 	return checkboxAction(task, completions, now).kind !== 'ninguna';
 }

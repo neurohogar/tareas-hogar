@@ -1,5 +1,5 @@
-// Spec §6.2 (Editar) y §7 (Conflictos): editar valida como crear y produce
-// un cambio parcial, solo con los campos que cambiaron.
+// Spec §6.2 (Editar) and §7 (Conflictos): editing validates like creating and produces
+// a partial change, with only the fields that changed.
 import type { CreationErrors } from './creation';
 import { createFromData, type TaskData } from './task-data';
 import type { TaskChange } from './task-document';
@@ -8,7 +8,7 @@ import type { Schedule, Recurrence, Task } from './task';
 
 export type EditingResult = { ok: true; change: TaskChange } | { ok: false; errors: CreationErrors };
 
-/** Una clave que identifica la recurrencia: dos recurrencias son la misma si tienen la misma clave. */
+/** A key that identifies the recurrence: two recurrences are the same if they have the same key. */
 function recurrenceKey(recurrence: Recurrence): string {
 	if (recurrence.mode === 'relativo') return `relativo ${recurrence.every} ${recurrence.unit}`;
 	if ('weekdays' in recurrence) return `semanal ${recurrence.weekdays.join(' ')}`;
@@ -22,26 +22,26 @@ const stepsKey = (steps: readonly string[]) => JSON.stringify(steps);
 const recurrenceOf = (task: Task) => (task.kind === 'periodica' ? task.recurrence : undefined);
 const dueDateOf = (task: Task) => (task.kind === 'puntual' ? task.dueDate : undefined);
 
-/** Quitar el campo se escribe como null; undefined es "sin el campo". */
+/** Removing the field is written as null; undefined is "without the field". */
 const nullIfMissing = <T>(value: T | undefined): T | null => (value === undefined ? null : value);
 
-/** El campo cambió de valor: undefined es "sin el campo" y se escribe como null (quitarlo). */
+/** The field changed value: undefined is "without the field" and is written as null (removing it). */
 function fieldChange<T>(before: T | undefined, after: T | undefined, key: (value: T) => string | number) {
 	const same = before === undefined || after === undefined ? before === after : key(before) === key(after);
 	return same ? {} : { value: nullIfMissing(after) };
 }
 
 /**
- * Al cambiar de tipo se escriben los dos campos de tipo: el que deja de
- * corresponder se quita aunque el documento no lo tenga, y el nuevo se escribe
- * aunque quede vacío (una puntual sin fecha límite), así no reaparece un valor
- * que dejó una edición concurrente cuando ese campo no correspondía (§7).
+ * When the kind changes, both kind fields are written: the one that stops
+ * applying is removed even if the document does not have it, and the new one is written
+ * even if it ends up empty (a one-off without a due date), so a value left behind
+ * by a concurrent edit when that field did not apply does not reappear (§7).
  */
 function kindChange(after: Task): TaskChange {
 	return { kind: after.kind, dueDate: nullIfMissing(dueDateOf(after)), recurrence: nullIfMissing(recurrenceOf(after)) };
 }
 
-/** Del mismo tipo, los campos de tipo que cambiaron de valor. */
+/** Of the same kind, the kind fields that changed value. */
 function fieldsChange(before: Task, after: Task): TaskChange {
 	const change: TaskChange = {};
 	const dueDate = fieldChange(dueDateOf(before), dueDateOf(after), (day) => day.getTime());
@@ -51,18 +51,18 @@ function fieldsChange(before: Task, after: Task): TaskChange {
 	return change;
 }
 
-/** Emoji, nota, primer paso y versión mínima: si cambiaron, el valor nuevo, o null si la tarea quedó sin el campo. */
+/** Emoji, note, first step and minimal version: if they changed, the new value, or null if the task ended up without the field. */
 function valueChange(field: 'emoji' | 'note' | 'firstStep' | 'minimalVersion', before: string | undefined, after: string | undefined) {
 	return before === after ? {} : { [field]: nullIfMissing(after) };
 }
 
-/** Horario y pasos más son un solo campo cada uno: si cambió, se escribe entero, o null si la tarea quedó sin él (§7). */
+/** Schedule and further steps are a single field each: if it changed, it is written whole, or null if the task ended up without it (§7). */
 function wholeFieldChange<T>(field: 'schedule' | 'steps', before: T | undefined, after: T | undefined, key: (value: T) => string | number): TaskChange {
 	const change = fieldChange(before, after, key);
 	return 'value' in change ? { [field]: change.value } : {};
 }
 
-/** Los campos en que difieren las dos tareas; pasoActual no se edita en el panel (§6.2). */
+/** The fields in which the two tasks differ; currentStep is not edited in the panel (§6.2). */
 function changeBetween(before: Task, after: Task): TaskChange {
 	return {
 		...wholeFieldChange('schedule', before.schedule, after.schedule, scheduleKey),
@@ -77,16 +77,16 @@ function changeBetween(before: Task, after: Task): TaskChange {
 }
 
 /**
- * Spec §6.2: las mismas validaciones que al crear; si algún campo es
- * inválido, se rechaza entera. Nunca cambia id ni creadaEn.
+ * Spec §6.2: the same validations as when creating; if any field is
+ * invalid, it is rejected whole. It never changes id or createdAt.
  *
- * `tarea` es la tarea como estaba al abrir el panel (la que dio los datos
- * iniciales con datosDeTarea), no la que hay guardada al guardar: así un campo
- * que cambió otro dispositivo mientras el panel estaba abierto, y que yo no
- * toqué, no se pisa (§7, gana el último cambio por campo).
+ * `task` is the task as it was when the panel was opened (the one that gave the initial
+ * data through taskData), not the one that is saved when saving: that way a field
+ * that another device changed while the panel was open, and that I did not
+ * touch, is not overwritten (§7, the last change per field wins).
  *
- * Spec §5.8: pasar a puntual una periódica pausada la reanuda en `ahora` (el
- * momento de guardar); sin `ahora`, no la reanuda. Lo demás la deja pausada.
+ * Spec §5.8: turning a paused recurring task into a one-off resumes it at `now` (the
+ * moment of saving); without `now`, it does not resume it. Everything else leaves it paused.
  */
 export function edit(task: Task, data: TaskData, now?: Date): EditingResult {
 	const result = createFromData(data, task.id, task.createdAt);

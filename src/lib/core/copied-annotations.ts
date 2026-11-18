@@ -1,4 +1,4 @@
-// Spec §6.7 (Copiar): el texto que copia el botón Copiar de la pantalla Anotaciones.
+// Spec §6.7 (Copiar): the text that the Copiar button of the Anotaciones screen copies.
 import type { Annotation } from './annotation';
 import { visibleAnnotations, type VisibleAnnotation } from './annotations';
 import { dateAndTimeInText } from './dates-in-text';
@@ -8,16 +8,16 @@ const SEPARATOR = ' · ';
 
 const oldestFirst = (a: Date, b: Date) => a.getTime() - b.getTime();
 
-/** Fecha y hora, sentido, pantalla, y el nombre de la tarea y el texto solo si los hay. */
+/** Date and time, sense, screen, and the task name and the text only if present. */
 function annotationLine({ annotation, taskName }: VisibleAnnotation): string {
 	const { annotatedAt, sense, screen, text } = annotation;
 	return [dateAndTimeInText(annotatedAt), sense, screen, taskName, text].filter((part) => part !== undefined).join(SEPARATOR);
 }
 
 /**
- * Spec §6.7: una línea por anotación que la pantalla muestra, de la más antigua
- * a la más reciente (si empatan, primero la de id menor); undefined si no hay
- * nada para copiar.
+ * Spec §6.7: one line per annotation that the screen shows, from the oldest
+ * to the most recent (on a tie, the one with the lower id first); undefined if there is
+ * nothing to copy.
  */
 export function annotationsText(tasks: readonly Task[], annotations: readonly Annotation[]): string | undefined {
 	const lines = visibleAnnotations(tasks, annotations, oldestFirst).map(annotationLine);

@@ -24,7 +24,7 @@ import {
 
 const MONDAY = '2026-07-13T08:00:00';
 
-/** Al empezar cada flujo se enciende Mostrar completadas (en A y en B en los de dos dispositivos). */
+/** At the start of every flow Mostrar completadas is turned on (on A and on B in the two-device flows). */
 async function sessionWithClock(page: Parameters<typeof turnOnCompleted>[0], hour: string) {
 	await sesionSinCompletadas(page, hour);
 	await turnOnCompleted(page);
@@ -397,7 +397,7 @@ test('Flujo 14: cambiar de tipo no deja un valor residual de otro dispositivo', 
 		await waitStatus(p, DNI, 'pendiente');
 	}
 
-	// Espejo
+	// Mirror
 	await create(a, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await waitStatus(b, 'Regar', 'pendiente');
 	await ctxB.setOffline(true);

@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 
-// Los tests corren contra el core puro: no hace falta el plugin de SvelteKit.
+// Tests run against the pure core: the SvelteKit plugin is not needed.
 export default defineConfig({
 	test: {
 		projects: [

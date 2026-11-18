@@ -1,6 +1,6 @@
-// Lo que la sesión (Session.svelte) comparte con las pantallas: los datos que
-// observa y las acciones sobre ellos. Las pantallas le preguntan al core qué
-// mostrar con esos datos.
+// What the session (Session.svelte) shares with the screens: the data it
+// observes and the actions on it. The screens ask the core what to
+// show with that data.
 import { getContext, setContext } from 'svelte';
 import type { Annotation, Sense } from '#lib/core/annotation.ts';
 import type { CreationErrors } from '#lib/core/creation.ts';
@@ -11,35 +11,35 @@ export interface Session {
 	readonly tasks: Task[];
 	readonly completions: Completion[];
 	readonly annotations: Annotation[];
-	/** El recuadro de Anotar (§5.10) está abierto. */
+	/** The Anotar box (§5.10) is open. */
 	readonly annotating: boolean;
-	/** Hay un panel de edición abierto (al crear o al editar). */
+	/** An edit panel is open (when creating or editing). */
 	readonly hasPanel: boolean;
 	openAnnotate(): void;
 	closeAnnotate(): void;
-	/** Segundo toque de Anotar: guarda la anotación con el contexto que toma el core. */
+	/** Second tap of Anotar: saves the annotation with the context the core takes. */
 	annotate(sense: Sense, text: string): void;
-	/** Un panel de edición se abre (con la tarea, al editar); devuelve cómo avisar que se cerró. */
+	/** An edit panel opens (with the task, when editing); returns how to report that it closed. */
 	panelOpened(taskId: string | undefined): () => void;
-	/** Editar texto de una anotación (§6.7). */
+	/** Edit the text of an annotation (§6.7). */
 	editAnnotationText(annotation: Annotation, text: string): void;
-	/** Borra una anotación, ya confirmado. */
+	/** Deletes an annotation, already confirmed. */
 	deleteAnnotation(annotation: Annotation): void;
-	/** La hora actual; se actualiza sola. */
+	/** The current time; updates itself. */
 	readonly now: Date;
-	/** Tocar el checkbox de la fila (§6.1): completa la tarea (con el aviso) o borra su último completado. */
+	/** Tapping the row checkbox (§6.1): completes the task (with the notice) or deletes its last completion. */
 	tapCheckbox(task: Task): void;
-	/** «Hice la mínima» de la fila (§6.1): completa la tarea como el checkbox, recordando que fue la mínima. */
+	/** «Hice la mínima» of the row (§6.1): completes the task like the checkbox, remembering it was the minimal one. */
 	doTheMinimal(task: Task): void;
-	/** «Hecho» de la fila (§6.1): pasa al paso siguiente o, en el último, completa la tarea como el checkbox. */
+	/** «Hecho» of the row (§6.1): moves to the next step or, on the last one, completes the task like the checkbox. */
 	tapDone(task: Task): void;
-	/** «Paso anterior» de la fila (§6.1). */
+	/** «Paso anterior» of the row (§6.1). */
 	previousStep(task: Task): void;
-	/** Crea una tarea con el formulario del panel; si algo es inválido devuelve los errores. */
+	/** Creates a task with the panel form; if something is invalid it returns the errors. */
 	create(form: PanelForm): CreationErrors | undefined;
-	/** Abre el panel Editar tarea. */
+	/** Opens the Editar tarea panel. */
 	openTask(task: Task): void;
-	/** Borra un completado (deshacer desde el Historial), ya confirmado. */
+	/** Deletes a completion (undo from the Historial), already confirmed. */
 	deleteCompletion(completion: Completion): void;
 }
 

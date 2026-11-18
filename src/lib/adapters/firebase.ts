@@ -1,5 +1,5 @@
-// Inicialización de Firebase. En desarrollo y en modo QA se conecta a la
-// Firebase Emulator Suite (proyecto demo-tareas-hogar, sin proyecto real).
+// Firebase initialization. In development and in QA mode it connects to the
+// Firebase Emulator Suite (project demo-tareas-hogar, no real project).
 import { initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import {

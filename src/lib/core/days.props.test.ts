@@ -3,16 +3,16 @@ import { describe, expect, it } from 'vitest';
 import { weekday, dayOfMonth, dayFromIso, isoDay, daysBetween, startOfDay, readIsoDay, addDays, lastDayOfMonth } from './days';
 import { WEEKDAYS } from './task';
 
-/** Un día local entre 1970 y ~2100; Date normaliza los días que desbordan el mes. */
+/** A local day between 1970 and ~2100; Date normalizes the days that overflow the month. */
 const day = fc.integer({ min: 0, max: 47_000 }).map((n) => new Date(1970, 0, 1 + n));
-/** Un momento cualquiera de ese día (o del siguiente, si un cambio de hora lo empuja). */
+/** Any moment of that day (or of the next one, if a time change pushes it). */
 const moment = fc
 	.tuple(day, fc.integer({ min: 0, max: 23 }), fc.integer({ min: 0, max: 59 }))
 	.map(([d, hour, minute]) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, minute));
 const amount = fc.integer({ min: -1_000, max: 1_000 });
 
-describe('días locales (propiedades)', () => {
-	it('diasEntre deshace sumarDias, no mira la hora y es antisimétrico', () => {
+describe('local days (properties)', () => {
+	it('daysBetween undoes addDays, does not look at the time and is antisymmetric', () => {
 		fc.assert(
 			fc.property(moment, moment, amount, (a, b, n) => {
 				expect(daysBetween(a, addDays(a, n))).toBe(n);
@@ -22,7 +22,7 @@ describe('días locales (propiedades)', () => {
 		);
 	});
 
-	it('diasEntre es aditivo: de a a c pasando por b', () => {
+	it('daysBetween is additive: from a to c through b', () => {
 		fc.assert(
 			fc.property(moment, moment, moment, (a, b, c) => {
 				expect(daysBetween(a, c)).toBe(daysBetween(a, b) + daysBetween(b, c));
@@ -30,7 +30,7 @@ describe('días locales (propiedades)', () => {
 		);
 	});
 
-	it('inicioDelDia es idempotente, no es posterior al momento y conserva el día', () => {
+	it('startOfDay is idempotent, is not later than the moment and keeps the day', () => {
 		fc.assert(
 			fc.property(moment, (m) => {
 				const start = startOfDay(m);
@@ -41,7 +41,7 @@ describe('días locales (propiedades)', () => {
 		);
 	});
 
-	it('sumarDias compone: sumar a y después b es sumar a + b, y sumar 0 es el inicio del día', () => {
+	it('addDays composes: adding a and then b is adding a + b, and adding 0 is the start of the day', () => {
 		fc.assert(
 			fc.property(moment, amount, amount, (m, a, b) => {
 				expect(addDays(addDays(m, a), b)).toEqual(addDays(m, a + b));
@@ -50,7 +50,7 @@ describe('días locales (propiedades)', () => {
 		);
 	});
 
-	it('la semana avanza un día por día, de lunes a domingo, y se repite cada 7', () => {
+	it('the week advances one day per day, from Monday to Sunday, and repeats every 7', () => {
 		fc.assert(
 			fc.property(day, amount, (d, n) => {
 				const index = WEEKDAYS.indexOf(weekday(d));
@@ -60,7 +60,7 @@ describe('días locales (propiedades)', () => {
 		);
 	});
 
-	it('el último día del mes está entre 28 y 31 y el día siguiente es un 1', () => {
+	it('the last day of the month is between 28 and 31 and the next day is a 1', () => {
 		fc.assert(
 			fc.property(day, (d) => {
 				const last = lastDayOfMonth(d);
@@ -71,7 +71,7 @@ describe('días locales (propiedades)', () => {
 		);
 	});
 
-	it('AAAA-MM-DD ida y vuelta: el texto lee el inicio del mismo día y vuelve a escribirse igual', () => {
+	it('YYYY-MM-DD round trip: the text reads the start of the same day and is written back the same', () => {
 		fc.assert(
 			fc.property(moment, (m) => {
 				const text = isoDay(m);
@@ -86,14 +86,14 @@ const twoDigits = (n: number) => String(n).padStart(2, '0');
 const year = fc.integer({ min: 1, max: 9999 });
 const month = fc.integer({ min: 1, max: 12 });
 const text = (a: number, m: number, d: number) => `${String(a).padStart(4, '0')}-${twoDigits(m)}-${twoDigits(d)}`;
-/** El último día de un mes (1..12) de un año, sin pasar por Date. */
+/** The last day of a month (1..12) of a year, without going through Date. */
 const daysInMonth = (a: number, m: number) => {
 	const leap = (a % 4 === 0 && a % 100 !== 0) || a % 400 === 0;
 	return [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
 };
 
-describe('leerDiaIso (propiedades, spec §4.1)', () => {
-	it('toda fecha que existe, de 0001 a 9999, se lee y vuelve a escribirse igual', () => {
+describe('readIsoDay (properties, spec §4.1)', () => {
+	it('every date that exists, from 0001 to 9999, is read and written back the same', () => {
 		fc.assert(
 			fc.property(
 				year.chain((a) => month.chain((m) => fc.integer({ min: 1, max: daysInMonth(a, m) }).map((d) => text(a, m, d)))),
@@ -107,7 +107,7 @@ describe('leerDiaIso (propiedades, spec §4.1)', () => {
 		);
 	});
 
-	it('una fecha con forma AAAA-MM-DD pero inexistente siempre se rechaza', () => {
+	it('a date shaped YYYY-MM-DD but nonexistent is always rejected', () => {
 		const dayOutsideMonth = year.chain((a) =>
 			month.chain((m) => fc.integer({ min: daysInMonth(a, m) + 1, max: 99 }).map((d) => text(a, m, d)))
 		);
@@ -122,7 +122,7 @@ describe('leerDiaIso (propiedades, spec §4.1)', () => {
 		);
 	});
 
-	it('un texto que no tiene la forma AAAA-MM-DD siempre se rechaza', () => {
+	it('a text that does not have the YYYY-MM-DD shape is always rejected', () => {
 		fc.assert(
 			fc.property(
 				fc.string().filter((s) => !/^\d{4}-\d{2}-\d{2}$/.test(s)),

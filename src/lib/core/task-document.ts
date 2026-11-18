@@ -1,12 +1,12 @@
-// Spec §7 (Conflictos): una tarea tal como queda guardada. Las ediciones son
-// parciales y por campo, así que tras dos ediciones concurrentes el documento
-// puede tener un campo que no corresponde a su tipo. Spec §7 (Datos que ya no
-// se usan): un documento puede tener campos viejos que la app no lee ni escribe.
+// Spec §7 (Conflicts): a task as it is stored. Edits are
+// partial and per field, so after two concurrent edits the document
+// may have a field that does not match its kind. Spec §7 (Data no longer
+// used): a document can have old fields that the app neither reads nor writes.
 import { textFields } from './text-fields';
 import { savedSchedule } from './schedule';
 import type { Schedule, Postponement, Recurrence, Task, TimeWindow } from './task';
 
-/** Los campos de la §4.1 que tiene la rebanada actual, sin exigir que correspondan al tipo. */
+/** The §4.1 fields that the current slice has, without requiring that they match the kind. */
 export interface TaskDocument {
 	id: string;
 	title: string;
@@ -20,56 +20,56 @@ export interface TaskDocument {
 	createdAt: Date;
 	dueDate?: Date;
 	recurrence?: Recurrence;
-	/** Una lista de ventanas o, en el formato anterior, una sola (§4.1). */
+	/** A list of windows or, in the previous format, a single one (§4.1). */
 	schedule?: Schedule | TimeWindow;
-	/** Spec §5.8: solo vale para las periódicas. */
+	/** Spec §5.8: only valid for recurring tasks. */
 	paused?: boolean;
-	/** Spec §5.8: solo vale para las periódicas; una puntual lo ignora. */
+	/** Spec §5.8: only valid for recurring tasks; a one-off ignores it. */
 	resumedAt?: Date;
 	postponed?: Postponement;
 }
 
 /**
- * Un cambio parcial: solo los campos que cambiaron. Un campo en null se quita
- * del documento. La recurrencia es un campo: se reemplaza entera.
+ * A partial change: only the fields that changed. A field set to null is removed
+ * from the document. The recurrence is a field: it is replaced whole.
  */
 export interface TaskChange {
 	title?: string;
 	emoji?: string | null;
 	note?: string | null;
 	firstStep?: string | null;
-	/** Un solo campo: se reemplaza entero (§7). */
+	/** A single field: it is replaced whole (§7). */
 	steps?: string[] | null;
-	/** Otro campo, independiente de pasos (§7); null es el paso 1. */
+	/** Another field, independent of steps (§7); null is step 1. */
 	currentStep?: number | null;
 	minimalVersion?: string | null;
 	kind?: Task['kind'];
 	dueDate?: Date | null;
 	recurrence?: Recurrence | null;
-	/** Un solo campo: sus ventanas, con desde y hasta, se escriben juntas (§7). */
+	/** A single field: its windows, with from and to, are written together (§7). */
 	schedule?: Schedule | null;
-	/** Pausar y reanudar los escriben juntos (§7). */
+	/** Pausing and resuming write them together (§7). */
 	paused?: true | null;
 	resumedAt?: Date;
-	/** Un solo campo: desde y hasta se escriben juntos (§7). */
+	/** A single field: from and to are written together (§7). */
 	postponed?: Postponement | null;
 }
 
-/** La tarea que describe el documento: un campo que no corresponde al tipo, o que ya no se usa (§7), se ignora. */
+/** The task the document describes: a field that does not match the kind, or that is no longer used (§7), is ignored. */
 export function taskFromDocument(doc: TaskDocument): Task {
 	const { id, title, emoji, note, firstStep, minimalVersion, kind, createdAt, dueDate, recurrence, schedule, postponed } = doc;
 	const commons = { id, title, ...textFields({ emoji, note, firstStep, minimalVersion }), ...stepsFields(doc), ...(schedule && { schedule: savedSchedule(schedule) }), ...(postponed && { postponed }) };
 	if (kind === 'puntual') return { ...commons, kind, ...(dueDate && { dueDate }), createdAt };
-	if (!recurrence) throw new Error(`La tarea periódica ${id} no tiene recurrencia`);
+	if (!recurrence) throw new Error(`The recurring task ${id} has no recurrence`);
 	return { ...commons, kind, recurrence, createdAt, ...pauseFields(doc) };
 }
 
-/** Spec §4.1 (Pasos): pasos (si tiene alguno) y pasoActual, solo los que tiene el documento. */
+/** Spec §4.1 (Steps): steps (if it has any) and currentStep, only those the document has. */
 function stepsFields({ steps, currentStep }: TaskDocument) {
 	return { ...(steps && steps.length > 0 && { steps }), ...(currentStep !== undefined && { currentStep }) };
 }
 
-/** Spec §5.8: pausada y reanudadaEn, solo los que tiene el documento. */
+/** Spec §5.8: paused and resumedAt, only those the document has. */
 function pauseFields({ paused, resumedAt }: TaskDocument) {
 	return { ...(paused && { paused }), ...(resumedAt && { resumedAt }) };
 }
@@ -84,10 +84,10 @@ function applyToDocument(doc: TaskDocument, change: TaskChange): TaskDocument {
 }
 
 /**
- * Aplica un cambio al documento de esa tarea, como lo hace el servidor al
- * recibirlo: gana el último cambio por campo y, si la tarea ya no existe
- * (gana el borrado), el cambio se descarta. Los campos que el cambio no
- * nombra, también los que ya no se usan (§7), quedan como estaban.
+ * Applies a change to the document of that task, as the server does on
+ * receiving it: the last change per field wins and, if the task no longer exists
+ * (deletion wins), the change is discarded. The fields the change does not
+ * name, also the ones no longer used (§7), are left as they were.
  */
 export function applyChange(docs: readonly TaskDocument[], taskId: string, change: TaskChange): TaskDocument[] {
 	return docs.map((doc) => (doc.id === taskId ? applyToDocument(doc, change) : doc));

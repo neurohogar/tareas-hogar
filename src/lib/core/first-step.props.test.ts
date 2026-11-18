@@ -1,4 +1,4 @@
-// Spec §4.1 y §6.1: el primer paso se recorta, vacío es sin campo, y solo se ve en pendiente y atrasada.
+// Spec §4.1 and §6.1: the first step is trimmed, empty means no field, and it is shown only when pending and overdue.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { createOneOff } from './create-one-off';
@@ -12,12 +12,12 @@ const CREATED = new Date(2026, 6, 1, 8, 0, 0);
 const text = fc.string({ maxLength: 20 });
 const create = (firstStep: string): Task => {
 	const r = createOneOff({ title: 'Ropa', firstStep }, 't', CREATED);
-	if (!r.ok) throw new Error('debía crearse');
+	if (!r.ok) throw new Error('it should have been created');
 	return r.task;
 };
 
-describe('primer paso (propiedades)', () => {
-	it('crear lo recorta, es idempotente y vacío o solo espacios no deja el campo', () => {
+describe('first step (properties)', () => {
+	it('creating trims it, is idempotent and empty or only spaces leaves no field', () => {
 		fc.assert(
 			fc.property(text, (firstStep) => {
 				const task = create(firstStep);
@@ -28,7 +28,7 @@ describe('primer paso (propiedades)', () => {
 		);
 	});
 
-	it('textoDelPaso solo devuelve texto en pendiente y atrasada, y solo con primer paso', () => {
+	it('stepText returns text only when pending and overdue, and only with a first step', () => {
 		const statuses: Status[] = [{ kind: 'pendiente' }, { kind: 'atrasada' }, { kind: 'espera' }, { kind: 'completada' }, { kind: 'pausada' }] as Status[];
 		fc.assert(
 			fc.property(text, fc.constantFrom(...statuses), (firstStep, status) => {
@@ -40,12 +40,12 @@ describe('primer paso (propiedades)', () => {
 		);
 	});
 
-	it('editar solo escribe primerPaso si cambió', () => {
+	it('editing writes firstStep only if it changed', () => {
 		fc.assert(
 			fc.property(text, text, (before, after) => {
 				const task = create(before);
 				const result = edit(task, { ...taskData(task), firstStep: after });
-				if (!result.ok) throw new Error('debía editarse');
+				if (!result.ok) throw new Error('it should have been edited');
 				const newValue = after.trim() === '' ? undefined : after.trim();
 				if (newValue === task.firstStep) expect('firstStep' in result.change).toBe(false);
 				else expect(result.change.firstStep).toBe(newValue ?? null);

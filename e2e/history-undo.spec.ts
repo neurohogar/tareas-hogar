@@ -31,19 +31,19 @@ test.beforeEach(async () => {
 	await cleanEmulators();
 });
 
-/** Sesión con reloj y Mostrar completadas encendido (las completadas se ven tachadas al final). */
+/** Session with a clock and Mostrar completadas on (completed tasks show struck through at the end). */
 async function session(page: Page, hour: string) {
 	await sessionWithClock(page, hour);
 	await turnOnCompleted(page);
 }
 
-/** Abre la sesión con el reloj corriendo 10 minutos antes de `hora` y lo detiene exactamente en `hora`. */
+/** Opens the session with the clock running 10 minutes before `hora` and stops it exactly at `hora`. */
 async function sessionStopped(page: Page, hour: string) {
 	await session(page, new Date(new Date(hour).getTime() - 600_000).toISOString());
 	return hour;
 }
 
-/** Dos dispositivos con Mostrar completadas encendido en A y en B. */
+/** Two devices with Mostrar completadas on in A and in B. */
 async function twoWithCompleted(browser: Browser, hour: string) {
 	const d = await twoDevices(browser, hour);
 	await turnOnCompleted(d.a);
@@ -51,7 +51,7 @@ async function twoWithCompleted(browser: Browser, hour: string) {
 	return d;
 }
 
-/** Avanza el reloj simulado hasta `hora`, disparando los temporizadores intermedios (reloj detenido). */
+/** Advances the simulated clock to `hora`, firing the intermediate timers (clock stopped). */
 async function a(page: Page, hour: string) {
 	const missing = new Date(hour).getTime() - (await page.evaluate(() => Date.now()));
 	if (missing <= 10_000) await page.clock.runFor(missing);
@@ -68,7 +68,7 @@ async function viewNotice(page: Page, title: string) {
 
 const undo = (page: Page) => notice(page).getByRole('button', { name: 'Deshacer' }).click();
 
-/** La entrada con ese título y hora; con `encabezado`, solo la del grupo de ese día. */
+/** The entry with that title and time; with `encabezado`, only the one in that day's group. */
 const entry = (page: Page, title: string, hour: string, heading?: string) =>
 	(heading
 		? page.locator(`xpath=//h2[normalize-space()="${heading}"]/following-sibling::ul[1]`).getByRole('listitem')

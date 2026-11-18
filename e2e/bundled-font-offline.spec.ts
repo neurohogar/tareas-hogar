@@ -44,7 +44,7 @@ import {
   versionWithoutFonts,
 } from "./versions-support";
 
-// Esta suite habla del service worker: lo permite (las demás lo bloquean).
+// This suite exercises the service worker, so it allows it (the others block it).
 test.use({ serviceWorkers: "allow" });
 
 const HOUR = "2026-07-15T08:00:00";
@@ -81,7 +81,7 @@ test("Flujo 4 pasos 2 a 4: sin conexión, con Atkinson y Noto, también un emoji
   await expect(row(page, "Regar")).toBeVisible();
   await controlled(page);
 
-  // Paso 2: sin conexión y recargando, abre con Atkinson y Noto.
+  // Step 2: offline and reloading, it opens with Atkinson and Noto.
   await ctx.setOffline(true);
   await page.reload();
   await expect(pending(page)).toBeVisible();
@@ -89,7 +89,7 @@ test("Flujo 4 pasos 2 a 4: sin conexión, con Atkinson y Noto, también un emoji
   await distributionIs(page, title, ([a, n, o]) => a >= 5 && n === 1 && o === 0);
   await withAtkinson(page, pending(page));
 
-  // Paso 3: un emoji que no se usó en este dispositivo, desde el selector.
+  // Step 3: an emoji not used on this device, from the picker.
   await openTask(page, "Regar");
   await openSelector(page);
   await searchBoxEmoji(page).fill("medusa");
@@ -100,7 +100,7 @@ test("Flujo 4 pasos 2 a 4: sin conexión, con Atkinson y Noto, también un emoji
   await page.getByRole("button", { name: "Cerrar" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  // Paso 4: escrito en el título de una tarea nueva.
+  // Step 4: typed into the title of a new task.
   await page.getByRole("button", { name: "+" }).click();
   await page.getByLabel("Título").fill("Medusa 🪼");
   await distributionIs(
@@ -112,12 +112,12 @@ test("Flujo 4 pasos 2 a 4: sin conexión, con Atkinson y Noto, también un emoji
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 7: dos versiones servidas en el mismo origen (e2e/versiones-apoyo.ts)
+// Flow 7: two versions served from the same origin (e2e/versions-support.ts)
 // ---------------------------------------------------------------------------
 
 const NOTICE = /actualiz|nueva versi[oó]n|recarg|reinici/i;
 
-/** Registra toda pregunta o aviso que aparezca en cualquier página del contexto, en cualquier momento. */
+/** Records every prompt or notice that appears on any page of the context, at any time. */
 async function watchNotices(ctx: BrowserContext): Promise<string[]> {
   const seen: string[] = [];
   ctx.on("dialog", (d) => {
@@ -130,7 +130,7 @@ async function watchNotices(ctx: BrowserContext): Promise<string[]> {
   await ctx.addInitScript((pattern) => {
     const notice = new RegExp(pattern, "i");
     const notify = (n: Element) =>
-      // La franja "Sin conexión" (§7) es de la app, no un aviso de la versión ni de la fuente.
+      // The "Sin conexión" strip (§7) belongs to the app; it is not a version or font notice.
       n.textContent?.trim() !== "Sin conexión" &&
       (window as unknown as Record<string, (t: string) => void>).qaAvisoVisto(
         `${n.getAttribute("role") ?? n.tagName}: ${n.textContent}`,
@@ -153,7 +153,7 @@ async function watchNotices(ctx: BrowserContext): Promise<string[]> {
   return seen;
 }
 
-/** Una carpeta limpia con el build actual (`nueva`) y `derivar` aplicado sobre él (`otra`). */
+/** A clean folder with the current build (`fresh`) and `derive` applied on top of it (`other`). */
 function twoVersions(
   name: string,
   derive: (origin: string, target: string) => void,
@@ -175,7 +175,7 @@ const versionsContext = (browser: Browser) =>
     timezoneId: "America/Argentina/Buenos_Aires",
   });
 
-/** Publica `dir` con la app abierta: la versión nueva se instala sola y espera. */
+/** Publishes `dir` with the app open: the new version installs itself and waits. */
 async function publish(
   ctx: BrowserContext,
   status: { dir: string },
@@ -191,7 +191,7 @@ async function publish(
   await other.close();
 }
 
-/** Cierra `page` y abre la app hasta que se aplicó la versión de `dir`. */
+/** Closes `page` and opens the app until the version in `dir` has been applied. */
 async function reopenWithVersion(ctx: BrowserContext, page: Page, dir: string) {
   await page.close();
   await expect(async () => {
@@ -223,7 +223,7 @@ test("Flujo 7: la versión con la fuente llega sola a quien tenía la anterior, 
   const server = await serve(status);
   const ctx = await versionsContext(browser);
   try {
-    // Paso 1: la app abierta con la versión anterior, sin fuentes propias.
+    // Step 1: the app open with the previous version, without its own fonts.
     const page = await ctx.newPage();
     await enter(page);
     await create(page, { title: "Regar", kind: "No se repite", emoji: "🌱" });
@@ -239,11 +239,11 @@ test("Flujo 7: la versión con la fuente llega sola a quien tenía la anterior, 
     await page.reload();
     await expect(row(page, "Regar")).toBeVisible();
 
-    // Se publica la versión con la fuente y el juego: se instala sola y espera, con la app abierta.
+    // The version with the font and its set is published: it installs itself and waits, with the app open.
     await publish(ctx, status, fresh);
     await expect(row(page, "Regar")).toBeVisible();
 
-    // Paso 2: se cierra la app y se abre de nuevo.
+    // Step 2: the app is closed and opened again.
     const reopened = await reopenWithVersion(ctx, page, fresh);
     await distributionIs(
       reopened,
@@ -253,7 +253,7 @@ test("Flujo 7: la versión con la fuente llega sola a quien tenía la anterior, 
     await withAtkinson(reopened, pending(reopened));
     expect(seen).toEqual([]);
 
-    // Quedaron guardados: también sin conexión.
+    // They were saved: also offline.
     await ctx.setOffline(true);
     await reopened.reload();
     await distributionIs(
@@ -268,10 +268,10 @@ test("Flujo 7: la versión con la fuente llega sola a quien tenía la anterior, 
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 8: la instalación no depende de la fuente ni del juego
+// Flow 8: installation does not depend on the font or its set
 // ---------------------------------------------------------------------------
 
-/** Recarga y comprueba que la pantalla se va antes del tope de 10 s, en tiempo real. */
+/** Reloads and checks that the screen goes away before the 10 s cap, in real time. */
 async function reloadBeforeOfCap(page: Page) {
   await page.reload();
   await expect(screenName(page)).toHaveCount(0, BEFORE_CAP);
@@ -289,7 +289,7 @@ const WATER_ATKINSON_DEVICE = ([a, n, o]: [number, number, number]) =>
 const WATER_SYSTEM_NOTO = ([a, n, o]: [number, number, number]) =>
   a === 0 && n === 1 && o >= 5;
 
-/** Primera instalación: un contexto nuevo con la falla, entra, crea «Regar» y queda instalada. */
+/** First install: a new context with the failure, signs in, creates «Regar» and ends up installed. */
 async function installWithFailure(browser: Browser, pattern: RegExp) {
   const d = await browser.newContext({
     baseURL: "http://127.0.0.1:4173",
@@ -314,13 +314,13 @@ test("Flujo 8 pasos 1 a 3: se instala con falla en el juego y, al quitarla, Noto
 }) => {
   const { ctx, page, failure } = await installWithFailure(browser, NOTO_FILE);
 
-  // Paso 2.
+  // Step 2.
   await ctx.setOffline(true);
   await reloadBeforeOfCap(page);
   await distributionIs(page, titleOf(page, "Regar"), WATER_ATKINSON_DEVICE);
   await withoutNotices(page);
 
-  // Paso 3: sin cerrar la app alcanza, porque se vuelve a pedir al volver la red.
+  // Step 3: no need to close the app, because it is requested again when the network returns.
   failure.remove();
   await ctx.setOffline(false);
   await distributionIs(page, titleOf(page, "Regar"), WATER_ATKINSON_NOTO);
@@ -339,13 +339,13 @@ test("Flujo 8 pasos 4 a 6: se instala con falla en un archivo de fuente y, al qu
 }) => {
   const { ctx, page, failure } = await installWithFailure(browser, ATKINSON_FILE);
 
-  // Paso 5: el juego de Atkinson se registra entero o nada, así que todo el texto va con la del sistema.
+  // Step 5: the Atkinson set is registered whole or not at all, so all the text uses the system font.
   await ctx.setOffline(true);
   await reloadBeforeOfCap(page);
   await distributionIs(page, titleOf(page, "Regar"), WATER_SYSTEM_NOTO);
   await withoutNotices(page);
 
-  // Paso 6.
+  // Step 6.
   failure.remove();
   await ctx.setOffline(false);
   await distributionIs(page, titleOf(page, "Regar"), WATER_ATKINSON_NOTO);
@@ -413,7 +413,7 @@ for (const testCase of [
     const server = await serve(status);
     const ctx = await versionsContext(browser);
     try {
-      // Versión anterior instalada.
+      // Previous version installed.
       const page = await ctx.newPage();
       await enter(page);
       await createWater(page);
@@ -422,7 +422,7 @@ for (const testCase of [
       await expect(row(page, "Regar")).toBeVisible();
       const seen = await watchNotices(ctx);
 
-      // Paso 8: se publica con la falla; cerrar y abrir aplica la versión nueva.
+      // Step 8: it is published with the failure; closing and opening applies the new version.
       const failure = await networkFailure(ctx, testCase.pattern);
       await publish(ctx, status, fresh);
       const reopened = await reopenWithVersion(ctx, page, fresh);
@@ -430,12 +430,12 @@ for (const testCase of [
       await expect(screenName(reopened)).toHaveCount(0);
       expect(seen).toEqual([]);
 
-      // Paso 9: sin conexión abre igual.
+      // Step 9: it opens anyway while offline.
       await ctx.setOffline(true);
       await reloadBeforeOfCap(reopened);
       await distributionIs(reopened, titleOf(reopened, "Regar"), testCase.withFailure);
 
-      // Paso 10: al quitar la falla y volver la red, pasan solos y quedan también sin conexión.
+      // Step 10: when the failure is removed and the network returns, they arrive by themselves and are also available offline.
       failure.remove();
       await ctx.setOffline(false);
       await distributionIs(reopened, titleOf(reopened, "Regar"), WATER_ATKINSON_NOTO);
@@ -451,7 +451,7 @@ for (const testCase of [
 }
 
 // ---------------------------------------------------------------------------
-// Flujo 9: lo que necesita el service worker
+// Flow 9: what the service worker needs
 // ---------------------------------------------------------------------------
 
 test("Flujo 9 paso 15: sin conexión y sin Atkinson guardada, se va a los 0,5 s y da paso a la entrada con su mensaje", async ({
@@ -519,7 +519,7 @@ test("Flujo 9 pasos 5 y 24: al abrir una versión nueva que no cambia las fuente
     });
     await publish(ctx, status, next);
 
-    // Cerrar la app; cada apertura se mide con el reloj detenido hasta que abre la versión nueva.
+    // Close the app; each opening is measured with the clock stopped until the new version opens.
     await page.close();
     await ctx.clock.install({ time: new Date(HOUR) });
     await ctx.clock.pauseAt(new Date("2026-07-15T08:00:01"));

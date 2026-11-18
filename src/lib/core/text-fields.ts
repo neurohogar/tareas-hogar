@@ -1,4 +1,4 @@
-// Spec §4.1: emoji, nota, primer paso y versión mínima son opcionales; sin el campo, la tarea no los tiene.
+// Spec §4.1: emoji, note, first step and minimal version are optional; without the field, the task does not have them.
 
 export interface TextFields {
 	emoji?: string;
@@ -7,7 +7,7 @@ export interface TextFields {
 	minimalVersion?: string;
 }
 
-/** Solo los campos con valor: vacío o ausente es sin el campo (nunca una clave en undefined ni ''). */
+/** Only the fields with a value: empty or absent means without the field (never a key set to undefined or ''). */
 export function textFields({ emoji, note, firstStep, minimalVersion }: TextFields): TextFields {
 	return { ...(emoji && { emoji }), ...(note && { note }), ...(firstStep && { firstStep }), ...(minimalVersion && { minimalVersion }) };
 }

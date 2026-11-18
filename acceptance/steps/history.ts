@@ -1,11 +1,11 @@
-// Historial (spec §6.3).
+// History (spec §6.3).
 import { expect } from 'vitest';
 import { complete } from '../../src/lib/core/completions';
 import { history, type HistoryGroup } from '../../src/lib/core/history';
 import { P, TITLE, dateHour } from './values';
 import { theTaskTitled, tasksOf, type StepDefinition, type World } from './world';
 
-/** "Hoy: Pagar 10:00, Regar 08:05; Ayer: Basura 21:30": grupos con "; ", entradas con ", ". */
+/** "Hoy: Pagar 10:00, Regar 08:05; Ayer: Basura 21:30": groups joined with "; ", entries with ", ". */
 function inText(groups: HistoryGroup[]): string {
 	return groups
 		.map(({ header: heading, entries }) => `${heading}: ${entries.map(({ task, timeText: hourText }) => `${task.title} ${hourText}`).join(', ')}`)
@@ -13,7 +13,7 @@ function inText(groups: HistoryGroup[]): string {
 }
 
 function theHistoryQueried(world: World): HistoryGroup[] {
-	if (!world.history) throw new Error('No se consultó el Historial');
+	if (!world.history) throw new Error('The History was not queried');
 	return world.history;
 }
 

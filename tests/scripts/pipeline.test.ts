@@ -17,7 +17,7 @@ let home: string;
 let main: string;
 let worktree: string;
 
-/** Un commit del rol, `minutos` después del anterior. */
+/** A commit of the role, `minutes` after the previous one. */
 function historyView(durations: [string, number][]): void {
 	let moment = START;
 	for (const [role, minutes] of durations) {
@@ -53,7 +53,7 @@ const STRING: [string, number][] = [
 	['qa', 50]
 ];
 
-/** Sigue al rol con la línea SEGUIR, lo hace anotar con la línea Progreso de su prompt y devuelve lo que avisó el seguimiento. */
+/** Follows the role with the SEGUIR line, has it note progress with the Progreso line of its prompt and returns what the tracking announced. */
 function roleNotice(output: string, directory: string): Promise<string> {
 	const [role, ...rest] = /SEGUIR: node scripts\/progreso\.ts (.+)/.exec(output)![1].split(' ');
 	const annotate = /Progreso: .*`(.+)`/.exec(output)![1].replace('<paso>', 'probando el aviso');
@@ -79,33 +79,33 @@ function roleNotice(output: string, directory: string): Promise<string> {
 	});
 }
 
-describe('el circuito de avisos', () => {
-	it('lo que un rol de implementación anota según su prompt lo avisa el seguimiento de su línea SEGUIR', async () => {
+describe('the notice loop', () => {
+	it('what an implementation role notes according to its prompt is announced by the tracking of its SEGUIR line', async () => {
 		historyView(STRING);
 		const notices = await roleNotice(runPipeline(SPECIFIED), worktree);
 		expect(notices).toMatch(/^\d\d:\d\d core: probando el aviso$/m);
 	}, READING_MS + 10_000);
 });
 
-describe('la estimación de cada rol', () => {
-	it('un rol de implementación suma él y los que le siguen', () => {
+describe('the estimate of each role', () => {
+	it('an implementation role adds itself and those that follow it', () => {
 		historyView(STRING);
 		const output = runPipeline(SPECIFIED);
 		expect(output).toContain('ESTIMADO: core unos 10 min (hasta 10). Lo que falta de la cadena: unos 160 min');
 		expect(output).toContain('SEGUIR: node scripts/progreso.ts core 10');
 	});
 
-	it('spec-writer suma también gherkin-writer y toda la implementación', () => {
+	it('spec-writer also adds gherkin-writer and all the implementation', () => {
 		historyView([['spec-writer', 3], ['gherkin-writer', 7], ...STRING]);
 		expect(runPipeline(WITHOUT_SPECIFY)).toContain('ESTIMADO: spec-writer unos 3 min (hasta 3). Lo que falta de la cadena: unos 170 min');
 	});
 
-	it('gherkin-writer suma toda la implementación', () => {
+	it('gherkin-writer adds all the implementation', () => {
 		historyView([['spec-writer', 3], ['gherkin-writer', 7], ...STRING]);
 		expect(runPipeline(WITHOUT_GHERKIN)).toContain('ESTIMADO: gherkin-writer unos 7 min (hasta 7). Lo que falta de la cadena: unos 167 min');
 	});
 
-	it('un rol sin historia no inventa un número', () => {
+	it('a role without history does not invent a number', () => {
 		historyView([['qa', 50]]);
 		const output = runPipeline(SPECIFIED);
 		expect(output).toContain('ESTIMADO: core sin historial. Lo que falta de la cadena: al menos 50 min');
@@ -113,12 +113,12 @@ describe('la estimación de cada rol', () => {
 		expect(output).not.toContain('0 min (hasta');
 	});
 
-	it('sin historia de ningún rol tampoco da una hora de fin', () => {
+	it('without history for any role it gives no end time either', () => {
 		const output = runPipeline(SPECIFIED);
 		expect(output).toMatch(/^ESTIMADO: core sin historial\.$/m);
 	});
 
-	it('los mensajes de commit largos no rompen la estimación', () => {
+	it('long commit messages do not break the estimate', () => {
 		historyView(STRING);
 		const message = join(home, 'mensaje-largo');
 		writeFileSync(message, `largo\n\n${'x'.repeat(700_000)}\n`);
@@ -128,8 +128,8 @@ describe('la estimación de cada rol', () => {
 	});
 });
 
-describe('el prompt del rol', () => {
-	it('lleva la línea de progreso con ruta absoluta al directorio donde trabaja', () => {
+describe('the role prompt', () => {
+	it('carries the progress line with an absolute path to the directory where it works', () => {
 		historyView(STRING);
 		expect(runPipeline(SPECIFIED)).toContain(`>> ${worktree}/tmp/progreso.log`);
 		expect(runPipeline(WITHOUT_SPECIFY)).toContain(`>> ${main}/tmp/progreso.log`);

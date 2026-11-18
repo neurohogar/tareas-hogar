@@ -7,8 +7,8 @@ const row = (id: string): RowToOrder => ({
 	instant: new Date(0)
 });
 
-describe('compararPorUrgencia: último desempate por id', () => {
-	it('el id menor va primero, el mayor después y el mismo id empata', () => {
+describe('compareByUrgency: last tiebreak by id', () => {
+	it('the lower id goes first, the higher after, and the same id ties', () => {
 		expect(compareByUrgency(row('a'), row('b'))).toBe(-1);
 		expect(compareByUrgency(row('b'), row('a'))).toBe(1);
 		expect(compareByUrgency(row('a'), row('a'))).toBe(0);

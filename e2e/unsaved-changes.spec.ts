@@ -19,7 +19,7 @@ import {
 	sessionWithClock
 } from './support';
 
-// qa/cambios-sin-guardar.md: avisos de cierre y de acción, botón Atrás, recarga y dos dispositivos.
+// qa/cambios-sin-guardar.md: close and action notices, Back button, reload and two devices.
 test.use({ viewport: { width: 360, height: 640 }, hasTouch: true });
 
 test.beforeEach(async () => {
@@ -44,7 +44,7 @@ const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas'
 const every = (page: Page) => page.getByRole('spinbutton', { name: 'Cada' });
 const width = (page: Page) => page.setViewportSize({ width: 1024, height: 768 });
 
-/** En el celular abre la pestaña; en ancho no hace nada. */
+/** On the phone it opens the tab; on wide screens it does nothing. */
 async function goATab(page: Page, name: 'Tarea' | 'Cuándo' | 'Acciones') {
 	const tab = tabNamed(page, name);
 	if ((await tab.count()) > 0) await tab.click();
@@ -61,21 +61,21 @@ async function createWater(page: Page, extra = {}) {
 	await expect(row(page, 'Regar')).toBeVisible();
 }
 
-/** Cerrar con la X y ver el aviso de cierre con sus tres botones. */
+/** Close with the X and see the close notice with its three buttons. */
 async function closeAndViewNotice(page: Page) {
 	await tap(page, 'Cerrar');
 	await expect(notice(page)).toBeVisible();
 	await expect(noticeButtons(page)).toHaveText(['Seguir editando', 'Descartar', 'Guardar']);
 }
 
-/** Cerrar cierra directo, sin aviso. */
+/** Closing closes directly, without a notice. */
 async function closesDirect(page: Page) {
 	await tap(page, 'Cerrar');
 	await panelClosed(page);
 	await withoutNotice(page);
 }
 
-/** Cerrar pide confirmación; se descarta. */
+/** Closing asks for confirmation; it is discarded. */
 async function asksConfirmation(page: Page) {
 	await closeAndViewNotice(page);
 	await tapInNotice(page, 'Descartar');
@@ -257,7 +257,7 @@ test('Flujo 2: qué cuenta como cambio', async ({ page, browser }) => {
 	await expect(row(page, 'Pagar luz')).toBeVisible();
 });
 
-/** El dispositivo B (misma cuenta) cambia el título de una tarea por la UI. */
+/** Device B (same account) changes a task's title through the UI. */
 async function changeTitleInB(browser: Browser, setOf: string, a: string) {
 	const ctx = await browser.newContext({
 		baseURL: 'http://127.0.0.1:4173',
@@ -447,7 +447,7 @@ test('Flujo 4: acciones con cambios', async ({ page }) => {
 	await tap(page, 'Cerrar');
 	await panelClosed(page);
 
-	// 8 (segunda parte): otra tarea con Descartar y posponer 3 horas a las 08:03
+	// 8 (second part): another task with Descartar and postpone 3 hours at 08:03
 	await create(page, { title: 'Pagar', kind: 'No se repite' });
 	await openTask(page, 'Pagar');
 	await note(page).fill('algo');
@@ -523,7 +523,7 @@ test('Flujo 4: acciones con cambios', async ({ page }) => {
 	await expect(note(page)).toHaveValue('Cambio');
 });
 
-/** En el celular la pestaña `nombre` está abierta; en ancho no hay pestañas. */
+/** On the phone the `nombre` tab is open; on wide screens there are no tabs. */
 async function tabOpenWhetherHas(page: Page, name: string) {
 	if ((await tabNamed(page, name).count()) > 0) await tabOpen(page, name);
 }
@@ -802,7 +802,7 @@ test('Flujo 7: recargar o cerrar la app', async ({ page }) => {
 		expect(confirmations).toEqual([]);
 		await expect(page.getByRole('heading', { name: 'Pendientes', level: 1 })).toBeVisible();
 	};
-	/** Recarga aceptando la confirmación y comprueba que apareció. */
+	/** Reloads accepting the confirmation and checks that it appeared. */
 	const reloadWith = async () => {
 		confirmations.length = 0;
 		accept = true;
@@ -865,7 +865,7 @@ test('Flujo 7: recargar o cerrar la app', async ({ page }) => {
 	await tapInNotice(page, 'Descartar');
 	await panelClosed(page);
 
-	// 3 (cierra la página)
+	// 3 (closes the page)
 	await openTask(page, 'Regar');
 	await title(page).fill('Regar plantas');
 	await tap(page, 'Cerrar');
@@ -1006,7 +1006,7 @@ test('Flujo 8 paso 7: el aviso de quitar posponer se cierra solo', async ({ page
 	void browser;
 });
 
-/** B borra la tarea desde su panel. */
+/** B deletes the task from its panel. */
 async function deleteInB(b: Page, name: string) {
 	await openTask(b, name);
 	await goATab(b, 'Acciones');

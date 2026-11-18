@@ -24,8 +24,8 @@ const wait = fc.record<WaitStatus>({
 	remembersNotoLimit: fc.boolean()
 });
 
-describe('pantallaDeCargaSeVa', () => {
-	it('nunca se va sin Auth ni antes del mínimo', () => {
+describe('loadingScreenLeaves', () => {
+	it('never leaves without Auth or before the minimum', () => {
 		fc.assert(
 			fc.property(wait, (e) => {
 				if (e.auth === 'esperando' || e.secondsSinceStart < SCREEN_MINIMUM_IN_SECONDS) {
@@ -35,7 +35,7 @@ describe('pantallaDeCargaSeVa', () => {
 		);
 	});
 
-	it('con Auth respondido, se va siempre al llegar al tope', () => {
+	it('with Auth answered, it always leaves on reaching the limit', () => {
 		fc.assert(
 			fc.property(wait, fc.double({ min: SCREEN_LIMIT_IN_SECONDS, max: 1000, noNaN: true }), (e, t) => {
 				if (e.auth !== 'esperando') expect(loadingScreenLeaves({ ...e, secondsSinceStart: t })).toBe(true);
@@ -43,7 +43,7 @@ describe('pantallaDeCargaSeVa', () => {
 		);
 	});
 
-	it('es monótona en el tiempo: si se fue, sigue yéndose más tarde', () => {
+	it('is monotonic in time: if it left, it keeps leaving later', () => {
 		fc.assert(
 			fc.property(wait, fc.double({ min: 0, max: 30, noNaN: true }), (e, extra) => {
 				if (loadingScreenLeaves(e)) {
@@ -54,8 +54,8 @@ describe('pantallaDeCargaSeVa', () => {
 	});
 });
 
-describe('recuerdo de Noto', () => {
-	it('con Noto listo no se recuerda nada', () => {
+describe('Noto memory', () => {
+	it('with Noto ready nothing is remembered', () => {
 		fc.assert(
 			fc.property(wait, (e) => {
 				expect(notoLimitMemory({ ...e, noto: 'lista' })).toBe(false);
@@ -63,7 +63,7 @@ describe('recuerdo de Noto', () => {
 		);
 	});
 
-	it('una versión que cambia el juego borra lo recordado; sin cambio se conserva', () => {
+	it('a version that changes the font set erases what was remembered; without a change it is kept', () => {
 		fc.assert(
 			fc.property(fc.boolean(), (remembered) => {
 				expect(rememberedOnStart(remembered, true)).toBe(false);
@@ -73,8 +73,8 @@ describe('recuerdo de Noto', () => {
 	});
 });
 
-describe('proximoLimiteDeLaPantalla', () => {
-	it('es el primer límite todavía por venir', () => {
+describe('nextScreenLimit', () => {
+	it('is the first limit still to come', () => {
 		fc.assert(
 			fc.property(fc.double({ min: 0, max: 30, noNaN: true }), (s) => {
 				const limit = nextScreenLimit(s);
@@ -88,8 +88,8 @@ describe('proximoLimiteDeLaPantalla', () => {
 	});
 });
 
-describe('resumenDeFuentes', () => {
-	it('no depende del orden y el peor estado manda', () => {
+describe('fontsSummary', () => {
+	it('does not depend on the order and the worst status wins', () => {
 		fc.assert(
 			fc.property(fc.array(fc.constantFrom<FontStatus>('guardada', 'sin-guardar', 'fallida'), { minLength: 1 }), (statuses) => {
 				const summary = fontsSummary(statuses);

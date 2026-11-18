@@ -18,7 +18,7 @@ import {
 } from './support';
 import { cachesOf, hasVersionWaiting, ORIGIN_VERSIONS, serve, versionOf } from './versions-support';
 
-// Esta suite habla del service worker: lo permite (las demás lo bloquean).
+// This suite exercises the service worker, so it allows it (the others block it).
 test.use({ serviceWorkers: 'allow' });
 
 const HOUR = '2026-07-15T08:00:00';
@@ -32,7 +32,7 @@ test.beforeEach(async () => {
 const pending = (page: Page) => page.getByRole('heading', { name: 'Pendientes', level: 1 });
 const withoutConnection = (page: Page) => page.getByText('Sin conexión', { exact: true });
 
-/** Espera al service worker activo y recarga (con conexión) hasta que la página queda controlada. */
+/** Waits for the active service worker and reloads (online) until the page is controlled. */
 async function controlled(page: Page) {
 	await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
 	await expect(async () => {
@@ -44,7 +44,7 @@ async function controlled(page: Page) {
 const oneOff = (page: Page, title: string, date?: string) =>
 	create(page, { title, kind: 'No se repite', date });
 
-/** Una sesión (A) con el reloj en HORA y el service worker controlando la página. */
+/** A session (A) with the clock at HORA and the service worker controlling the page. */
 async function sessionPwa(browser: Browser, first = true) {
 	const d = await device(browser, HOUR, first);
 	await controlled(d.page);
@@ -93,7 +93,7 @@ test('Flujo 1: PWA instalable', async ({ page, context }) => {
 		expect(img.headers()['content-type']).toMatch(/^image\//);
 	}
 
-	// Service worker activo con alcance sobre la raíz.
+	// Active service worker scoped to the root.
 	const record = await page.evaluate(async () => {
 		const r = await navigator.serviceWorker.getRegistration();
 		return { status: r?.active?.state, scope: r?.scope };
@@ -101,11 +101,11 @@ test('Flujo 1: PWA instalable', async ({ page, context }) => {
 	expect(record.status).toBe('activated');
 	expect(new URL(page.url()).href.startsWith(record.scope!)).toBe(true);
 
-	// Recargar: la página queda controlada.
+	// Reload: the page is controlled.
 	await page.reload();
 	await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
 
-	// Instalable según el navegador.
+	// Installable according to the browser.
 	const cdp = await context.newCDPSession(page);
 	await cdp.send('Page.enable');
 	await expect(async () => {
@@ -254,7 +254,7 @@ test('Flujo 5: la escritura pendiente sobrevive a una recarga', async ({ browser
 	await arrivesOnServer(b.page);
 	await expect(row(b.page, 'Comprar pan')).toHaveCount(1);
 
-	// Variante con conexión.
+	// Online variant.
 	await goA(fresh, 'Pendientes');
 	await oneOff(fresh, 'Lavar');
 	await expect(row(fresh, 'Lavar')).toBeVisible();
@@ -379,7 +379,7 @@ test('Flujo 9: abrir sin conexión sin haber iniciado sesión nunca', async ({ b
 	await ctx.close();
 });
 
-// --- Flujo 10: dos builds servidos en el mismo origen (e2e/versiones-apoyo.ts) ---
+// --- Flow 10: two builds served from the same origin (e2e/versions-support.ts) ---
 
 test('Flujo 10: versión nueva del service worker', async ({ browser }) => {
 	test.setTimeout(240_000);
@@ -389,7 +389,7 @@ test('Flujo 10: versión nueva del service worker', async ({ browser }) => {
 	rmSync(root, { recursive: true, force: true });
 	mkdirSync(root, { recursive: true });
 	cpSync(join(process.cwd(), 'build'), v1, { recursive: true });
-	// El segundo build reemplaza build/ (versión nueva por marca de tiempo); el preview sirve ese mismo build.
+	// The second build replaces build/ (new version by timestamp); the preview serves that same build.
 	await new Promise((r) => setTimeout(r, 1100));
 	execSync('npm run build:qa', { stdio: 'ignore', cwd: process.cwd() });
 	cpSync(join(process.cwd(), 'build'), v2, { recursive: true });
@@ -406,7 +406,7 @@ test('Flujo 10: versión nueva del service worker', async ({ browser }) => {
 		await controlled(page);
 		expect(await cachesOf(page)).toEqual([`tareas-hogar-${versionOf(v1)}`]);
 
-		// Se publica el build nuevo; la app se vuelve a abrir (la página anterior sigue abierta).
+		// The new build is published; the app is opened again (the previous page stays open).
 		status.dir = v2;
 		const other = await ctx.newPage();
 		await other.goto('/');
@@ -420,7 +420,7 @@ test('Flujo 10: versión nueva del service worker', async ({ browser }) => {
 		}
 		await other.close();
 
-		// Con la anterior abierta y la nueva instalada: sin conexión se navega por las tres pestañas.
+		// With the previous one open and the new one installed: offline, the three tabs can be navigated.
 		await ctx.setOffline(true);
 		await page.reload();
 		await expect(pending(page)).toBeVisible();
@@ -432,7 +432,7 @@ test('Flujo 10: versión nueva del service worker', async ({ browser }) => {
 		await expect(page.getByText(/actualiz|nueva versión/i)).toHaveCount(0);
 		await ctx.setOffline(false);
 
-		// Se cierran todas las páginas y se abre de nuevo: manda el service worker nuevo.
+		// All pages are closed and it is opened again: the new service worker takes over.
 		await page.close();
 		await expect(async () => {
 			const fresh = await ctx.newPage();

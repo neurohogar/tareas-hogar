@@ -8,78 +8,78 @@ const RELATIVE: Task = { id: 'r', title: 'Regar', kind: 'periodica', recurrence:
 const completion = (taskId: string, completedAt: Date): Completion => ({ id: `c-${taskId}`, taskId, completedAt });
 const postponed = (task: Task, from: Date, to: Date): Task => ({ ...task, postponed: { from, to } });
 
-describe('accionDePosponer (spec §6.2)', () => {
+describe('postponeAction (spec §6.2)', () => {
 	const NOW = new Date(2026, 6, 15, 10, 0, 0);
 
-	it('una pendiente ofrece posponer', () => {
+	it('a pending one offers to postpone', () => {
 		expect(postponeAction(ONE_OFF, [], NOW)).toBe('posponer');
 	});
 
-	it('una atrasada ofrece posponer', () => {
+	it('an overdue one offers to postpone', () => {
 		expect(postponeAction({ ...ONE_OFF, dueDate: new Date(2026, 6, 14) }, [], NOW)).toBe('posponer');
 	});
 
-	it('una en espera por su propia regla no ofrece nada', () => {
+	it('one waiting by its own rule offers nothing', () => {
 		expect(postponeAction(RELATIVE, [completion('r', new Date(2026, 6, 15, 9, 0, 0))], NOW)).toBeUndefined();
 	});
 
-	it('una puntual completada no ofrece nada', () => {
+	it('a completed one-off offers nothing', () => {
 		expect(postponeAction(ONE_OFF, [completion('p', new Date(2026, 6, 15, 9, 0, 0))], NOW)).toBeUndefined();
 	});
 
-	it('una pausada no se puede posponer (spec §5.9)', () => {
+	it('a paused one cannot be postponed (spec §5.9)', () => {
 		expect(postponeAction({ ...RELATIVE, paused: true }, [], NOW)).toBeUndefined();
 	});
 
-	it('una pospuesta ofrece quitar posponer', () => {
+	it('a postponed one offers Quitar posponer', () => {
 		expect(postponeAction(postponed(ONE_OFF, NOW, new Date(2026, 6, 15, 11, 0, 0)), [], NOW)).toBe('quitar');
 	});
 
-	it('una pospuesta y después completada sigue ofreciendo quitar posponer', () => {
+	it('a postponed and later completed one still offers Quitar posponer', () => {
 		const task = postponed(RELATIVE, new Date(2026, 6, 15, 9, 0, 0), new Date(2026, 6, 15, 12, 0, 0));
 
 		expect(postponeAction(task, [completion('r', new Date(2026, 6, 15, 9, 30, 0))], NOW)).toBe('quitar');
 	});
 
-	it('una pospuesta y después pausada sigue ofreciendo quitar posponer', () => {
+	it('a postponed and later paused one still offers Quitar posponer', () => {
 		const task = postponed({ ...RELATIVE, paused: true }, new Date(2026, 6, 15, 9, 0, 0), new Date(2026, 6, 15, 12, 0, 0));
 
 		expect(postponeAction(task, [], NOW)).toBe('quitar');
 	});
 
-	it('desde hasta, vuelve a ofrecer posponer', () => {
+	it('from to onward, it offers to postpone again', () => {
 		expect(postponeAction(postponed(ONE_OFF, new Date(2026, 6, 15, 9, 0, 0), NOW), [], NOW)).toBe('posponer');
 	});
 });
 
-describe('textoDePosposicion (spec §6.2)', () => {
+describe('postponementText (spec §6.2)', () => {
 	const FROM = new Date(2026, 6, 15, 10, 15, 30);
 
-	it('si hasta es de hoy, la hora sin segundos', () => {
+	it('if to is today, the time without seconds', () => {
 		const task = postponed(ONE_OFF, FROM, new Date(2026, 6, 15, 11, 15, 30));
 
 		expect(postponementText(task, new Date(2026, 6, 15, 10, 30, 0))).toBe('Pospuesta hasta 11:15');
 	});
 
-	it('si hasta es de mañana, lo dice', () => {
+	it('if to is tomorrow, it says so', () => {
 		const task = postponed(ONE_OFF, FROM, new Date(2026, 6, 16, 1, 5, 0));
 
 		expect(postponementText(task, new Date(2026, 6, 15, 23, 59, 59))).toBe('Pospuesta hasta mañana 01:05');
 	});
 
-	it('pasada la medianoche, ese mismo hasta ya es de hoy', () => {
+	it('past midnight, that same to is already today', () => {
 		const task = postponed(ONE_OFF, FROM, new Date(2026, 6, 16, 1, 5, 0));
 
 		expect(postponementText(task, new Date(2026, 6, 16, 0, 0, 0))).toBe('Pospuesta hasta 01:05');
 	});
 
-	it('hasta mañana cruzando de mes', () => {
+	it('to tomorrow crossing a month', () => {
 		const task = postponed(ONE_OFF, FROM, new Date(2026, 7, 1, 7, 0, 0));
 
 		expect(postponementText(task, new Date(2026, 6, 31, 20, 0, 0))).toBe('Pospuesta hasta mañana 07:00');
 	});
 
-	it('sin posposición vigente, no hay texto', () => {
+	it('without an active postponement, there is no text', () => {
 		const to = new Date(2026, 6, 15, 11, 0, 0);
 
 		expect(postponementText(ONE_OFF, FROM)).toBeUndefined();

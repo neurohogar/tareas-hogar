@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	// Texto breve e informativo, sin botones, que se va solo (§5.10, §6.7).
+	// Brief informative text, without buttons, that goes away by itself (§5.10, §6.7).
 	let { text, onLeave }: { text: string; onLeave: () => void } = $props();
 
 	const DURATION_MS = 5_000;

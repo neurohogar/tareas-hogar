@@ -14,12 +14,12 @@ function inText(groups: HistoryGroup[]): string {
 		.join('; ');
 }
 
-describe('historial', () => {
-	it('sin completados no tiene grupos', () => {
+describe('history', () => {
+	it('without completions it has no groups', () => {
 		expect(history([task('regar')], [], now)).toEqual([]);
 	});
 
-	it('va del más reciente al más antiguo y agrupa por día local, aunque se hayan completado en otro orden', () => {
+	it('goes from most recent to oldest and groups by local day, even if completed in another order', () => {
 		const completions = [
 			completion('c1', 'regar', new Date(2026, 6, 15, 8, 5)),
 			completion('c2', 'pagar', new Date(2026, 6, 15, 10, 0)),
@@ -32,7 +32,7 @@ describe('historial', () => {
 		);
 	});
 
-	it('con el mismo completadoEn va primero el de id menor', () => {
+	it('with the same completedAt the lower id goes first', () => {
 		const moment = new Date(2026, 6, 15, 10, 0);
 		const tasks = [task('regar'), task('pagar')];
 
@@ -44,7 +44,7 @@ describe('historial', () => {
 		);
 	});
 
-	it('cada entrada lleva su completado y la tarea actual (con su título actual)', () => {
+	it('each entry carries its completion and the current task (with its current title)', () => {
 		const watered = completion('c1', 'regar', new Date(2026, 6, 15, 8, 0));
 		const renamed = task('regar', 'Plantas');
 
@@ -53,7 +53,7 @@ describe('historial', () => {
 		]);
 	});
 
-	it('no muestra los completados de tareas que no existen (borradas o huérfanos)', () => {
+	it('does not show the completions of tasks that do not exist (deleted or orphans)', () => {
 		const completions = [
 			completion('c1', 'borrada', new Date(2026, 6, 15, 9, 0)),
 			completion('c2', 'pagar', new Date(2026, 6, 15, 8, 0))
@@ -62,7 +62,7 @@ describe('historial', () => {
 		expect(inText(history([task('pagar')], completions, now))).toBe('Hoy: pagar 08:00');
 	});
 
-	it('los encabezados dependen de ahora: el mismo día pasa de "Hoy" a "Ayer" y después a la fecha', () => {
+	it('the headers depend on now: the same day goes from "Hoy" to "Ayer" and then to the date', () => {
 		const completions = [completion('c1', 'regar', new Date(2026, 6, 14, 23, 59, 59))];
 		const tasks = [task('regar')];
 

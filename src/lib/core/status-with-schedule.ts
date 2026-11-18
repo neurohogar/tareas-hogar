@@ -1,45 +1,45 @@
-// Spec §5.5: con horario, las reglas de §5.1–§5.3 valen igual y el horario
-// solo corre los momentos en que la tarea pasa a pendiente y a atrasada.
+// Spec §5.5: with a schedule, the rules of §5.1–§5.3 apply the same and the schedule
+// only shifts the moments at which the task becomes pending and overdue.
 import type { Status, PendingStatus } from './status';
 import { endOfDay, withinSchedule, lastClosing, availableWindow } from './schedule';
 import type { Completion, Schedule } from './task';
 
-/** Los momentos de §5.2/§5.3 de una periódica, en ms, que el horario corre. */
+/** The moments of §5.2/§5.3 of a recurring task, in ms, that the schedule shifts. */
 export interface WaitMoments {
-	/** T: cuándo pasaría a pendiente sin horario. */
+	/** T: when it would become pending without a schedule. */
 	becomesPending: number;
-	/** El inicio de espera, para el progreso. */
+	/** The wait start, for the progress. */
 	waitStart: number;
-	/** El atraso sin horario, si llegara antes que el cierre (relativa: V + intervalo). */
+	/** The lateness without a schedule, if it came before the close (relative: V + interval). */
 	overdueWithoutSchedule?: number;
 }
 
-/** Spec §5.5, en ms: A (disponible), desde cuándo está atrasada y el inicio de espera de una periódica. */
+/** Spec §5.5, in ms: A (available), since when it is overdue and the wait start of a recurring task. */
 export interface DeadlinesWithSchedule {
 	available: number;
 	lateness: number;
 	waitStart: number;
 }
 
-/** Una espera: del inicio hasta que vuelve, en ms. */
+/** A wait: from the start until it returns, in ms. */
 interface Wait {
 	start: number;
 	returns: number;
 }
 
-/** Progreso entre 0 y 1; con ahora en el inicio o antes (relojes desfasados), 0. */
+/** Progress between 0 and 1; with now at the start or before (skewed clocks), 0. */
 function waiting({ start, returns }: Wait, moment: number): PendingStatus {
 	return { kind: 'en espera', progress: Math.max(0, (moment - start) / (returns - start)) };
 }
 
-/** A y C a partir de T; el atraso es el primero entre C y el atraso sin horario. */
+/** A and C from T; the lateness is the first of C and the lateness without a schedule. */
 export function deadlinesFromMoments(schedule: Schedule, moments: WaitMoments): DeadlinesWithSchedule {
 	const { available, closing } = availableWindow(schedule, new Date(moments.becomesPending));
 	const lateness = Math.min(closing, moments.overdueWithoutSchedule ?? Number.POSITIVE_INFINITY);
 	return { available, lateness, waitStart: moments.waitStart };
 }
 
-/** Spec §5.5, periódica: atrasada desde el atraso; antes de A, en espera; si no, pendiente. */
+/** Spec §5.5, recurring: overdue since the lateness; before A, waiting; otherwise, pending. */
 export function recurringStatusWithSchedule({ available, lateness, waitStart }: DeadlinesWithSchedule, now: Date): PendingStatus {
 	const moment = now.getTime();
 	if (moment >= lateness) return { kind: 'atrasada' };
@@ -47,12 +47,12 @@ export function recurringStatusWithSchedule({ available, lateness, waitStart }: 
 	return { kind: 'pendiente' };
 }
 
-/** Spec §5.5 y §6.1, periódica: atrasada, desde el atraso; pendiente o en espera, A. */
+/** Spec §5.5 and §6.1, recurring: overdue, since the lateness; pending or waiting, A. */
 export function recurringInstantWithSchedule({ available, lateness }: DeadlinesWithSchedule, status: PendingStatus): Date {
 	return new Date(status.kind === 'atrasada' ? lateness : available);
 }
 
-/** Lo que usa el horario de una puntual. */
+/** What the schedule of a one-off uses. */
 export interface OneOffWithSchedule {
 	schedule: Schedule;
 	createdAt: Date;
@@ -60,9 +60,9 @@ export interface OneOffWithSchedule {
 }
 
 /**
- * Spec §5.5, puntual sin atraso: antes de A, espera desde creadaEn; después,
- * dentro de una ventana está pendiente (undefined) y fuera espera desde el
- * hasta anterior hasta el desde de la próxima.
+ * Spec §5.5, one-off without lateness: before A, waits since createdAt; after,
+ * inside a window it is pending (undefined) and outside it waits since the
+ * previous to until the from of the next one.
  */
 function oneOffWait({ schedule, createdAt }: OneOffWithSchedule, now: Date): Wait | undefined {
 	const { available } = availableWindow(schedule, createdAt);
@@ -71,10 +71,10 @@ function oneOffWait({ schedule, createdAt }: OneOffWithSchedule, now: Date): Wai
 	return { start: lastClosing(schedule, now), returns: availableWindow(schedule, now).available };
 }
 
-/** Con fecha límite, atrasada desde el hasta de la última ventana de ese día (§5.7). */
+/** With a due date, overdue since the to of the last window of that day (§5.7). */
 const oneOffLateness = ({ schedule, dueDate }: OneOffWithSchedule) => dueDate && endOfDay(schedule, dueDate);
 
-/** Spec §5.5 con §5.1: completada si tiene completados; atrasada desde el atraso; si no, según la ventana. */
+/** Spec §5.5 with §5.1: completed if it has completions; overdue since the lateness; otherwise, according to the window. */
 export function oneOffStatusWithSchedule(task: OneOffWithSchedule, completions: readonly Completion[], now: Date): Status {
 	if (completions.length > 0) return { kind: 'completada' };
 	const lateness = oneOffLateness(task);
@@ -84,8 +84,8 @@ export function oneOffStatusWithSchedule(task: OneOffWithSchedule, completions: 
 }
 
 /**
- * Spec §5.5 y §6.1, puntual: atrasada, desde el atraso; en espera, cuando
- * vuelve; pendiente, la clave de §6.1 (su fecha límite, o ninguna).
+ * Spec §5.5 and §6.1, one-off: overdue, since the lateness; waiting, when
+ * it returns; pending, the key of §6.1 (its due date, or none).
  */
 export function oneOffInstantWithSchedule(task: OneOffWithSchedule, status: PendingStatus, now: Date): Date | undefined {
 	if (status.kind === 'atrasada') return new Date(oneOffLateness(task) as number);

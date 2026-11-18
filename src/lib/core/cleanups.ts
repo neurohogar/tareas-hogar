@@ -1,15 +1,15 @@
-// Spec §7 (Limpiezas y reintentos): las dos limpiezas se intentan elemento por elemento y se reintentan.
+// Spec §7 (Cleanups and retries): the two cleanups are attempted item by item and retried.
 
-/** Qué quedó limpio y qué quedó por reintentar tras un intento; solo ids, nada para mostrar. */
+/** What ended up clean and what is left to retry after an attempt; only ids, nothing to show. */
 export interface AttemptResult {
 	cleaned: string[];
 	pendings: string[];
 }
 
-/** Lo que puede pasar mientras la app está abierta; solo los dos primeros reintentan. */
+/** What can happen while the app is open; only the first two retry. */
 export type AppEvent = 'vuelve la conexión' | 'cambian los datos' | 'pasa el tiempo';
 
-/** §7: cada elemento se intenta por separado; quedan por limpiar solo los que fallaron. */
+/** §7: each item is attempted separately; only those that failed are left to clean. */
 export function attemptResult(attempted: readonly string[], failed: readonly string[]): AttemptResult {
 	const failure = new Set(failed);
 	return {
@@ -18,12 +18,12 @@ export function attemptResult(attempted: readonly string[], failed: readonly str
 	};
 }
 
-/** §7: se intenta todo elemento por limpiar que no tenga ya un intento en curso (un intento terminado, aunque fallara, deja de contar). */
+/** §7: every item to clean that does not already have an attempt in progress is attempted (a finished attempt, even if it failed, stops counting). */
 export function itemsToAttempt(toClean: readonly string[], inProgress: ReadonlySet<string>): string[] {
 	return toClean.filter((id) => !inProgress.has(id));
 }
 
-/** §7: se reintenta al volver la conexión y cuando cambian los datos, sin temporizadores. */
+/** §7: it retries when the connection returns and when the data changes, without timers. */
 export function retriesWith(occurrenceEvent: AppEvent): boolean {
 	return occurrenceEvent !== 'pasa el tiempo';
 }

@@ -13,20 +13,20 @@ const covers = (d: number, completedAt = day(d)): Completion => ({
 });
 const uncovered = (completedAt: Date): Completion => ({ id: 'c-libre', taskId: 't', completedAt });
 
-describe('ultimaOcurrenciaCubierta (P)', () => {
-	it('sin completados es el día anterior a creadaEn', () => {
+describe('lastCoveredOccurrence (P)', () => {
+	it('without completions it is the day before createdAt', () => {
 		expect(lastCoveredOccurrence(CREATED, [])).toEqual(new Date(2026, 4, 31));
 	});
 
-	it('es la mayor ocurrenciaCubierta', () => {
+	it('it is the greatest coveredOccurrence', () => {
 		expect(lastCoveredOccurrence(CREATED, [covers(16, day(14)), covers(7)])).toEqual(day(16));
 	});
 
-	it('un completado sin ocurrenciaCubierta aporta el día de su completadoEn', () => {
+	it('a completion without coveredOccurrence contributes the day of its completedAt', () => {
 		expect(lastCoveredOccurrence(CREATED, [uncovered(new Date(2026, 6, 13, 10, 0, 0))])).toEqual(day(13));
 	});
 
-	it('toma la mayor entre las cubiertas y los días de los completados sin cubierta', () => {
+	it('takes the greatest between the covered ones and the days of the completions without coverage', () => {
 		const completions = [covers(7), uncovered(new Date(2026, 6, 13, 10, 0, 0))];
 
 		expect(lastCoveredOccurrence(CREATED, completions)).toEqual(day(13));
@@ -44,28 +44,28 @@ const completion = (completedAt: Date, coveredOccurrence?: Completion['coveredOc
 });
 const coversStart = (completedAt: Date, start: Date) => completion(completedAt, { start });
 
-describe('P con horario (spec §5.6)', () => {
-	it('una ocurrenciaCubierta con hora es el instante que cubrió', () => {
+describe('P with a schedule (spec §5.6)', () => {
+	it('a coveredOccurrence with a time is the instant it covered', () => {
 		expect(lastCovered(at(1), [coversStart(at(15, 8), at(15, 7))])).toBe(ms(15, 7));
 	});
 
-	it('una fecha sola, o un completado sin ocurrenciaCubierta, cubre el día entero', () => {
+	it('a date alone, or a completion without coveredOccurrence, covers the whole day', () => {
 		expect(lastCovered(at(1), [completion(at(15, 8), at(15))])).toBe(ms(16) - 1);
 		expect(lastCovered(at(1), [completion(at(15, 6))])).toBe(ms(16) - 1);
 	});
 
-	it('con hora y sin hora, es la mayor de los completados', () => {
+	it('with and without a time, it is the greatest of the completions', () => {
 		expect(lastCovered(at(1), [coversStart(at(15, 19), at(15, 18)), completion(at(15, 8), at(15))])).toBe(ms(16) - 1);
 		expect(lastCovered(at(1), [completion(at(14, 8), at(14)), coversStart(at(15, 8), at(15, 7))])).toBe(ms(15, 7));
 	});
 
-	it('sin completados, cubre el día anterior a creadaEn entero', () => {
+	it('without completions, it covers the whole day before createdAt', () => {
 		expect(lastCovered(at(15, 12), [])).toBe(ms(15) - 1);
 	});
 });
 
-describe('ultimaOcurrenciaCubierta con horario (spec §5.3, §5.6)', () => {
-	it('una ocurrenciaCubierta con hora cuenta por su día', () => {
+describe('lastCoveredOccurrence with a schedule (spec §5.3, §5.6)', () => {
+	it('a coveredOccurrence with a time counts by its day', () => {
 		expect(lastCoveredOccurrence(CREATED, [coversStart(at(15, 19), at(15, 18))])).toEqual(day(15));
 	});
 });

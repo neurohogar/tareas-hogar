@@ -29,8 +29,8 @@ const completionsOf = (taskId: string) =>
 		moments.map((ms, i): Completion => ({ id: `${taskId}-${i}`, taskId, completedAt: new Date(ms) }))
 	);
 
-describe('estadoDeTarea (propiedades)', () => {
-	it('los completados de otras tareas no cambian el estado', () => {
+describe('taskStatus (properties)', () => {
+	it('the completions of other tasks do not change the status', () => {
 		fc.assert(
 			fc.property(task, completionsOf('propia'), completionsOf('otra'), instant, (t, owns, foreigns, now) => {
 				const date = new Date(now);

@@ -12,7 +12,7 @@ const option = fc.constantFrom(...POSTPONE_OPTIONS.map(({ option }) => option));
 const postponement = fc
 	.tuple(instant, fc.integer({ min: 1, max: 100_000_000 }))
 	.map(([from, duration]) => ({ from, to: new Date(from.getTime() + duration) }));
-/** Puntual o periódica relativa, con o sin posposición; pausada solo la periódica. */
+/** One-off or relative recurring, with or without postponement; paused only the recurring one. */
 const task = fc
 	.tuple(fc.boolean(), instant, fc.option(instant, { nil: undefined }), fc.integer({ min: 1, max: 100 }), fc.option(postponement, { nil: undefined }), fc.boolean())
 	.map(([isOneOff, createdAt, dueDate, every, postponed, paused]): Task => {
@@ -22,8 +22,8 @@ const task = fc
 	});
 const withoutPostponement = ({ postponed: _, ...rest }: Task): Task => rest;
 
-describe('posponer (propiedades, spec §5.9)', () => {
-	it('desde es ahora y hasta es posterior, a lo sumo en un día y medio', () => {
+describe('postpone (properties, spec §5.9)', () => {
+	it('from is now and to is later, at most a day and a half', () => {
 		fc.assert(
 			fc.property(option, instant, (o, now) => {
 				const { from, to } = postpone(o, now).postponed!;
@@ -34,7 +34,7 @@ describe('posponer (propiedades, spec §5.9)', () => {
 		);
 	});
 
-	it('posponer escribe el campo entero y quitar posponer lo borra', () => {
+	it('postponing writes the whole field and removing the postponement deletes it', () => {
 		fc.assert(
 			fc.property(task, option, instant, (t, o, now) => {
 				const postponed = applyChange([t], 't', postpone(o, now));
@@ -45,8 +45,8 @@ describe('posponer (propiedades, spec §5.9)', () => {
 	});
 });
 
-describe('estado de una pospuesta (propiedades, spec §5.9)', () => {
-	it('vencida (ahora >= hasta), no cambia nada del estado', () => {
+describe('status of a postponed task (properties, spec §5.9)', () => {
+	it('expired (now >= to), it changes nothing about the status', () => {
 		fc.assert(
 			fc.property(task, instant, (t, now) => {
 				fc.pre(t.postponed !== undefined && now.getTime() >= t.postponed.to.getTime());
@@ -55,7 +55,7 @@ describe('estado de una pospuesta (propiedades, spec §5.9)', () => {
 		);
 	});
 
-	it('vigente, solo cambia pendiente o atrasada, que pasan a en espera con progreso en [0, 1)', () => {
+	it('active, it only changes pending or overdue, which become waiting with progress in [0, 1)', () => {
 		fc.assert(
 			fc.property(task, instant, (t, now) => {
 				fc.pre(activePostponement(t, now) !== undefined);
@@ -73,7 +73,7 @@ describe('estado de una pospuesta (propiedades, spec §5.9)', () => {
 		);
 	});
 
-	it('el progreso nunca baja al avanzar el reloj', () => {
+	it('the progress never goes down as the clock advances', () => {
 		fc.assert(
 			fc.property(postponement, instant, fc.integer({ min: 0, max: 100_000_000 }), (postponed, now, jump) => {
 				const t: Task = { id: 't', title: 'T', kind: 'puntual', createdAt: new Date(0), postponed };
@@ -86,8 +86,8 @@ describe('estado de una pospuesta (propiedades, spec §5.9)', () => {
 	});
 });
 
-describe('panel de una pospuesta (propiedades, spec §6.2)', () => {
-	it('con una posposición vigente ofrece Quitar posponer y muestra el texto; sin ella, no hay texto', () => {
+describe('panel of a postponed task (properties, spec §6.2)', () => {
+	it('with an active postponement it offers Quitar posponer and shows the text; without it, there is no text', () => {
 		fc.assert(
 			fc.property(task, instant, (t, now) => {
 				const active = activePostponement(t, now) !== undefined;
@@ -97,7 +97,7 @@ describe('panel de una pospuesta (propiedades, spec §6.2)', () => {
 		);
 	});
 
-	it('una pausada sin posposición vigente no ofrece Posponer', () => {
+	it('a paused one without an active postponement does not offer Posponer', () => {
 		fc.assert(
 			fc.property(task, instant, (t, now) => {
 				fc.pre(t.kind === 'periodica' && t.paused === true && activePostponement(t, now) === undefined);

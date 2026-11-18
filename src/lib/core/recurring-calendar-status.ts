@@ -5,14 +5,14 @@ import { lastCoveredOccurrence } from './covered-occurrence';
 import { firstLaterOccurrence } from './occurrences';
 import type { Completion, CalendarRecurrence } from './task';
 
-/** Spec §5.3: N, la primera ocurrencia posterior a P (la última ocurrencia cubierta). */
+/** Spec §5.3: N, the first occurrence later than P (the last covered occurrence). */
 export function nextOccurrence(recurrence: CalendarRecurrence, createdAt: Date, completions: readonly Completion[]): Date {
 	return firstLaterOccurrence(recurrence, lastCoveredOccurrence(createdAt, completions));
 }
 
 /**
- * Spec §5.3. P = última ocurrencia cubierta, N = la primera ocurrencia posterior a P.
- * hoy < N → en espera; hoy = N → pendiente; hoy > N → atrasada (una sola vez).
+ * Spec §5.3. P = last covered occurrence, N = the first occurrence later than P.
+ * today < N → waiting; today = N → pending; today > N → overdue (only once).
  */
 export function recurringCalendarStatus(
 	recurrence: CalendarRecurrence,
@@ -25,7 +25,7 @@ export function recurringCalendarStatus(
 
 	if (today > n) return { kind: 'atrasada' };
 	if (today === n) return { kind: 'pendiente' };
-	// Un inicio de espera posterior a ahora (otro reloj) cuenta como ahora: el progreso queda entre 0 y 1.
+	// A wait start later than now (another clock) counts as now: the progress stays between 0 and 1.
 	const start = Math.min(waitStart(createdAt, completions), now.getTime());
 	return { kind: 'en espera', progress: (now.getTime() - start) / (n - start) };
 }
