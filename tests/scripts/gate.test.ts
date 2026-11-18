@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { directorioTemporal, FIRMA, git, repoNuevo } from './apoyo';
+import { directorioTemporal, FIRMA, git, repoNuevo } from './support';
 
 const GATE = resolve('scripts/gate.ts');
 

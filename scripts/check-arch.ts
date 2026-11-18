@@ -46,7 +46,7 @@ function capaDe(archivo: string): Capa | null {
 	if (ruta.startsWith('src/lib/adapters/')) return 'adapters';
 	if (ruta === 'src/service-worker.ts') return 'service-worker';
 	if (ruta.startsWith('src/lib/ui/') || ruta.startsWith('src/routes/')) return 'ui';
-	if (['acceptance/oracle.ts', 'acceptance/oracle-edicion.ts', 'acceptance/oracle-historial.ts', 'acceptance/oracle-anotaciones.ts', 'acceptance/oracle-panel.ts', 'acceptance/oracle-pantalla-de-carga.ts', 'acceptance/oracle-texto-de-fecha.ts', 'acceptance/equivalence.ts'].includes(ruta)) return 'acceptance-oracle';
+	if (['acceptance/oracle.ts', 'acceptance/oracle-editing.ts', 'acceptance/oracle-history.ts', 'acceptance/oracle-annotations.ts', 'acceptance/oracle-panel.ts', 'acceptance/oracle-loading-screen.ts', 'acceptance/oracle-date-text.ts', 'acceptance/equivalence.ts'].includes(ruta)) return 'acceptance-oracle';
 	if (ruta === 'acceptance/ir.ts') return 'acceptance-ir';
 	if (ruta.startsWith('acceptance/') && !ruta.startsWith('acceptance/generated/')) return 'acceptance';
 	return null;

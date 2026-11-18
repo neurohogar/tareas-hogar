@@ -17,7 +17,7 @@ import {
 	selectorEmoji,
 	sesionConReloj,
 	soloEnUnHorario
-} from './apoyo';
+} from './support';
 
 // qa/panel-mobile.md: el panel de edición en pestañas. Celular: 360x640 con emulación táctil.
 test.use({ viewport: { width: 360, height: 640 }, hasTouch: true });

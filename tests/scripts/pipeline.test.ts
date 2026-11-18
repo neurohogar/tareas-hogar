@@ -2,7 +2,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { directorioTemporal, FIRMA, gitConFecha, repoNuevo } from './apoyo';
+import { directorioTemporal, FIRMA, gitConFecha, repoNuevo } from './support';
 
 const PIPELINE = resolve('scripts/pipeline.ts');
 const PROGRESO = resolve('scripts/progreso.ts');

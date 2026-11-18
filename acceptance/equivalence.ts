@@ -13,10 +13,10 @@
 import type { Feature, Scenario } from './ir';
 import { clasificarFila, elementos, esCronologiaImposible, esEscenarioDeFuente, observarFuente, ordenDePendientes, type FilaOraculo, type PasoOraculo, type VistaDePendientes } from './oracle';
 import { esEscenarioDeCambios, esEscenarioDelPanel, observarCambios, observarPanel } from './oracle-panel';
-import { esEscenarioDeAnotaciones, esEscenarioDeLimpiezas, observarAnotaciones, observarLimpiezas } from './oracle-anotaciones';
-import { esEscenarioDeEdicion, observarEdicion } from './oracle-edicion';
-import { esEscenarioDeTextoDeFecha, observarTextoDeFecha } from './oracle-texto-de-fecha';
-import { esEscenarioDePantallaDeCarga, observarPantallaDeCarga } from './oracle-pantalla-de-carga';
+import { esEscenarioDeAnotaciones, esEscenarioDeLimpiezas, observarAnotaciones, observarLimpiezas } from './oracle-annotations';
+import { esEscenarioDeEdicion, observarEdicion } from './oracle-editing';
+import { esEscenarioDeTextoDeFecha, observarTextoDeFecha } from './oracle-date-text';
+import { esEscenarioDePantallaDeCarga, observarPantallaDeCarga } from './oracle-loading-screen';
 
 /** Pasos Then que solo observan la clasificación de la regla. */
 const THEN_DE_CLASIFICACION = [

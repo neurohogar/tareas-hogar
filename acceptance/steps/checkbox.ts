@@ -5,9 +5,9 @@ import { checkboxAction, checkboxEnabled } from '../../src/lib/core/checkbox';
 import { isCompleted } from '../../src/lib/core/completed';
 import { taskStatus } from '../../src/lib/core/task-status';
 import { pendingRows } from '../../src/lib/core/pending';
-import { borrarCompletado } from './deshacer';
-import { completoYo } from './periodica-relativa';
-import { P, fechaHora } from './valores';
+import { borrarCompletado } from './undo';
+import { completoYo } from './recurring-relative';
+import { P, fechaHora } from './values';
 import { laTarea, recordarAntesDeMiCambio, type StepDefinition, type World } from './world';
 
 function tocarCheckbox(world: World, momento: Date): void {

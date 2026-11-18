@@ -14,8 +14,8 @@ export default defineConfig({
 	// La Flujo 10 de la PWA reconstruye build/ y deja caído el preview de 4173: va en su propio proyecto,
 	// que corre después de todos los demás.
 	projects: [
-		{ name: 'ui', testIgnore: /pwa-sin-conexion|panel-mobile-sin-conexion|fuente-empaquetada-sin-conexion|orientacion-vertical/ },
-		{ name: 'pwa', testMatch: /panel-mobile-sin-conexion|pwa-sin-conexion|fuente-empaquetada-sin-conexion|orientacion-vertical/, dependencies: ['ui'] }
+		{ name: 'ui', testIgnore: /pwa-offline|panel-mobile-offline|bundled-font-offline|portrait-orientation/ },
+		{ name: 'pwa', testMatch: /panel-mobile-offline|pwa-offline|bundled-font-offline|portrait-orientation/, dependencies: ['ui'] }
 	],
 	webServer: {
 		command: 'npm run build:qa && npx vite preview --mode qa --host 127.0.0.1 --port 4173 --strictPort',
