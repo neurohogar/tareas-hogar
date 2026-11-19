@@ -1,6 +1,6 @@
-# mutation-stamp: sha256=63bbc3e4572856e4a946839b5611bd0e034895299074e0de92d2c1f0c3869713
+# mutation-stamp: sha256=271188b4b948fd507e6d7a4c7f7e5f4604cb8d54f897ee1dea7098287f1947af
 # acceptance-mutation-manifest-begin
-# {"version":1,"tested_at":"2026-11-05T22:45:35.649018756Z","feature_name":"Orientación vertical","feature_path":"features/orientacion-vertical.feature","background_hash":"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b","implementation_hash":"sha256:b59665f37cf3966a4e1a7f5387636f87da05946c007c399670fb445e3b0e63b1","scenarios":[{"index":0,"name":"Orientación vertical 1","scenario_hash":"36fd1d9798d58177eb990a567732eb6035017b7592661ed28b2f7815ca349fe0","mutation_count":8,"result":{"Total":8,"Killed":8,"Survived":0,"Errors":0},"tested_at":"2026-11-05T22:45:17.203995897Z"}]}
+# {"version":1,"tested_at":"2026-11-19T12:44:57.402063006Z","feature_name":"Portrait orientation","feature_path":"features/orientacion-vertical.feature","background_hash":"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b","implementation_hash":"sha256:e7ec3965adf1fdfb7a513990a7585413c42879491ac71295f7f0dd06a842c49b","scenarios":[{"index":0,"name":"Portrait orientation 1","scenario_hash":"5e9d4b298a9088b720291dae0d5374924745219995ff37ff330d6331846fb3b4","mutation_count":8,"result":{"Total":8,"Killed":8,"Survived":0,"Errors":0},"tested_at":"2026-11-19T12:44:57.402063006Z"}]}
 # acceptance-mutation-manifest-end
 
 # Spec §6 (Orientation) and §8 (Manifest). The installed app is used in portrait
