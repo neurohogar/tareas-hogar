@@ -392,7 +392,7 @@ function changeOf(base: Doc, updated: Data): Record<string, unknown> {
 	if (base.minimalVersion !== updated.minimalVersion) change.minimalVersion = updated.minimalVersion ?? null;
 	if (scheduleKey(base.schedule) !== scheduleKey(updated.schedule)) change.schedule = updated.schedule ?? null;
 	if (base.kind !== updated.kind) {
-		return { ...change, tipo: updated.kind, limite: updated.limit ?? null, recurrencia: updated.recurrence ?? null };
+		return { ...change, kind: updated.kind, limit: updated.limit ?? null, recurrence: updated.recurrence ?? null };
 	}
 	if (base.limit?.getTime() !== updated.limit?.getTime()) change.limit = updated.limit ?? null;
 	if (recurrenceKey(base.recurrence) !== recurrenceKey(updated.recurrence)) {
