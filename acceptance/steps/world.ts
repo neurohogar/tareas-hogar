@@ -65,6 +65,7 @@ export interface World extends Saved {
 	/** The emoji that was chosen without naming it in the step, and the oldest of the previous recents. */
 	emojiChosen?: string;
 	emojiMoreOld?: string;
+	recentBefore?: string[];
 	/** When each thing arrives in this opening of the app (§6.6). */
 	opening?: AppOpening;
 	/** The saved annotations (§4.5, §7) and those that were deleted, to name them afterwards. */

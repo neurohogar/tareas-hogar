@@ -49,7 +49,8 @@ export const recentEmojisSteps: StepDefinition[] = [
 	{
 		pattern: /^I choose an emoji that was not among the recent ones$/,
 		run: (world) => {
-			world.emojiMoreOld = recentDeclared(world).at(-1);
+			world.recentBefore = [...recentDeclared(world)];
+			world.emojiMoreOld = world.recentBefore.at(-1);
 			world.emojiChosen = NEW;
 			recordChoice(world, NEW);
 			// With the panel open, the chosen emoji stays in the form (§6.2).
@@ -64,5 +65,10 @@ export const recentEmojisSteps: StepDefinition[] = [
 	{
 		pattern: /^the oldest emoji from before is gone$/,
 		run: (world) => expect(world.recent).not.toContain(world.emojiMoreOld)
+	},
+	{
+		pattern: new RegExp(`^the number of emojis from before that are gone is ${P}$`),
+		run: (world, gone) =>
+			expect((world.recentBefore ?? []).filter((emoji) => !world.recent?.includes(emoji))).toHaveLength(numeric(gone))
 	}
 ];
