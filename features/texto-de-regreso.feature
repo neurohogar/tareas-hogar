@@ -22,7 +22,7 @@
 # solo tiene fila con Mostrar completadas encendido. Cuando el paso no da
 # creadaEn, la tarea se creó antes de cualquier otra fecha del escenario.
 # Semana de referencia: viernes 2026-11-13 (jueves 19, sábado 14, domingo 15).
-Feature: Texto de regreso
+Feature: Return text
 
   # Texto de regreso 1
   # Relativa completada: V con hora. Fila 2: 7 horas y 59 minutos y medio es
@@ -30,15 +30,15 @@ Feature: Texto de regreso
   # minutos (también 39 minutos y medio es «en 40» y 30 segundos es «en 1
   # minuto»). Fila 6: exactamente una hora. Fila 8: cruza la medianoche. Filas
   # 10 y 11: otro mes y otro año.
-  Scenario Outline: Texto de regreso 1
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Return text 1
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | cada | unidad | completada          | ahora               | texto                                                      |
+      | every | unit   | completed           | now                 | text                                                       |
       | 8    | horas  | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve hoy 18:00 · en 8 horas                              |
       | 8    | horas  | 2026-11-13T10:00:00 | 2026-11-13T10:00:30 | Vuelve hoy 18:00 · en 8 horas                              |
       | 4    | horas  | 2026-11-13T06:40:00 | 2026-11-13T10:00:00 | Vuelve hoy 10:40 · en 40 minutos                           |
@@ -54,15 +54,15 @@ Feature: Texto de regreso
   # Texto de regreso 2
   # El texto avanza solo con el paso del tiempo: horas, minutos y, a las
   # 00:00, «mañana» pasa a «hoy».
-  Scenario Outline: Texto de regreso 2
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Return text 2
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | cada | unidad | completada          | ahora               | texto                                |
+      | every | unit   | completed           | now                 | text                                 |
       | 8    | horas  | 2026-11-13T22:00:00 | 2026-11-13T23:00:00 | Vuelve mañana 06:00 · en 7 horas     |
       | 8    | horas  | 2026-11-13T22:00:00 | 2026-11-14T00:00:00 | Vuelve hoy 06:00 · en 6 horas        |
       | 8    | horas  | 2026-11-13T22:00:00 | 2026-11-14T05:00:00 | Vuelve hoy 06:00 · en 1 hora         |
@@ -72,13 +72,13 @@ Feature: Texto de regreso
   # Calendario sin horario: 00:00 de N, sin hora. «Mañana» no lleva distancia
   # (fila 2: hasta un segundo antes de la medianoche); a 2 o más días,
   # «en N días» (filas 3 y 4); otro mes (fila 5) y otro año (fila 6).
-  Scenario Outline: Texto de regreso 3
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Return text 3
+    Given a weekly recurring task on <days> created on <created>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | dias    | creada              | ahora               | texto                                              |
+      | days    | created             | now                 | text                                               |
       | sábado  | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | Vuelve mañana                                      |
       | sábado  | 2026-11-13T08:00:00 | 2026-11-13T23:59:59 | Vuelve mañana                                      |
       | domingo | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | Vuelve el domingo 15 · en 2 días                   |
@@ -88,27 +88,27 @@ Feature: Texto de regreso
 
   # Texto de regreso 4
   # Calendario mensual: 00:00 de N, sin hora.
-  Scenario Outline: Texto de regreso 4
-    Given una tarea periódica mensual los días <dias> creada el <creada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Return text 4
+    Given a monthly recurring task on days <days> created on <created>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | dias | creada              | ahora               | texto                              |
+      | days | created             | now                 | text                               |
       | 14   | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | Vuelve mañana                      |
       | 20   | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | Vuelve el viernes 20 · en 7 días   |
 
   # Texto de regreso 5
   # Puntual con horario, fuera de la ventana: en espera hasta el desde de la
   # próxima; vuelve con hora. Fila 3: 22 horas y media es «en 23 horas».
-  Scenario Outline: Texto de regreso 5
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Return text 5
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | creada              | desde | hasta | ahora               | texto                             |
+      | created             | from  | to    | now                 | text                              |
       | 2026-11-13T12:00:00 | 08:00 | 11:00 | 2026-11-13T12:00:00 | Vuelve mañana 08:00 · en 20 horas |
       | 2026-11-13T06:00:00 | 08:00 | 11:00 | 2026-11-13T07:00:00 | Vuelve hoy 08:00 · en 1 hora      |
       | 2026-11-13T12:00:00 | 10:30 | 11:00 | 2026-11-13T12:00:00 | Vuelve mañana 10:30 · en 23 horas |
@@ -117,30 +117,30 @@ Feature: Texto de regreso
   # Relativa con horario completada: A, no V. Fila 1: V (el 14 a las 12:00)
   # cae fuera de la ventana y vuelve cuando abre (el 15 a las 08:00). Fila 3: V
   # cae dentro de la ventana y A = V.
-  Scenario Outline: Texto de regreso 6
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Return text 6
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | ahora               | texto                                  |
+      | every | unit   | completed           | from  | to    | now                 | text                                   |
       | 1    | dias   | 2026-11-13T12:00:00 | 08:00 | 11:00 | 2026-11-13T12:00:00 | Vuelve el domingo 15 08:00 · en 2 días |
       | 12   | horas  | 2026-11-13T10:00:00 | 08:00 | 10:30 | 2026-11-13T10:00:00 | Vuelve mañana 08:00 · en 22 horas      |
       | 1    | dias   | 2026-11-13T10:00:00 | 08:00 | 11:00 | 2026-11-13T10:00:00 | Vuelve mañana 10:00 · en 24 horas      |
 
   # Texto de regreso 7
   # Calendario con horario: A (el inicio de N), con hora.
-  Scenario Outline: Texto de regreso 7
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Return text 7
+    Given a weekly recurring task on <days> created on <created>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | dias   | creada              | desde | hasta | ahora               | texto                                 |
+      | days   | created             | from  | to    | now                 | text                                  |
       | sábado | 2026-11-13T08:00:00 | 09:00 | 12:00 | 2026-11-13T10:00:00 | Vuelve mañana 09:00 · en 23 horas     |
       | jueves | 2026-11-13T08:00:00 | 09:00 | 12:00 | 2026-11-13T10:00:00 | Vuelve el jueves 19 09:00 · en 6 días |
 
@@ -148,30 +148,30 @@ Feature: Texto de regreso
   # Calendario con varios horarios completado: A, el inicio de N. Fila 1:
   # cubrió la ocurrencia de la mañana y vuelve a las 18:00. Fila 2: cubrió la de
   # la tarde y vuelve el viernes siguiente a las 07:00.
-  Scenario Outline: Texto de regreso 8
-    Given Mostrar completadas está encendido
-    And una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Return text 8
+    Given Mostrar completadas is on
+    And a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | dias    | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               | texto                                  |
+      | days    | completed           | covered             | from  | to    | from2  | to2    | now                 | text                                   |
       | viernes | 2026-11-13T08:00:00 | 2026-11-13T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-11-13T10:00:00 | Vuelve hoy 18:00 · en 8 horas          |
       | viernes | 2026-11-13T19:00:00 | 2026-11-13T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-11-13T20:00:00 | Vuelve el viernes 20 07:00 · en 7 días |
 
   # Texto de regreso 9
   # Pospuesta: pospuesta.hasta, con hora, sin nombrar la posposición. «Hasta
   # mañana» es las 07:00 del día siguiente (fila 3).
-  Scenario Outline: Texto de regreso 9
-    Given una tarea puntual sin fecha límite
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Return text 9
+    Given a one-off task without a due date
+    And the task was postponed with option <option> on <postponed>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | opcion       | pospuesta           | ahora               | texto                              |
+      | option       | postponed           | now                 | text                               |
       | 1 hora       | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve hoy 11:00 · en 1 hora       |
       | 3 horas      | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve hoy 13:00 · en 3 horas      |
       | hasta mañana | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve mañana 07:00 · en 21 horas  |
@@ -179,14 +179,14 @@ Feature: Texto de regreso
 
   # Texto de regreso 10
   # Una atrasada pospuesta está en espera: dice «Vuelve», no «Tocaba».
-  Scenario Outline: Texto de regreso 10
-    Given una tarea puntual con fecha límite <limite>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Return text 10
+    Given a one-off task with due date <due_date>
+    And the task was postponed with option <option> on <postponed>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | limite     | opcion       | pospuesta           | ahora               | texto                             |
+      | due_date   | option       | postponed           | now                 | text                              |
       | 2026-11-10 | 3 horas      | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve hoy 13:00 · en 3 horas     |
       | 2026-11-10 | hasta mañana | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve mañana 07:00 · en 21 horas |
 
@@ -196,16 +196,16 @@ Feature: Texto de regreso
   # vuelve cuando deja de estarlo, el más tarde de los dos. Fila 1: gana la
   # posposición (V = 11:30). Fila 2: lo mismo, ya vencido el intervalo y en
   # espera solo por la posposición. Fila 3: gana el intervalo (V = 18:30).
-  Scenario Outline: Texto de regreso 11
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    And la tarea fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Return text 11
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was postponed with option <option> on <postponed>
+    And the task was completed on <completed>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | cada | unidad | opcion  | pospuesta           | completada          | ahora               | texto                         |
+      | every | unit   | option  | postponed           | completed           | now                 | text                          |
       | 1    | horas  | 3 horas | 2026-11-13T10:00:00 | 2026-11-13T10:30:00 | 2026-11-13T10:30:00 | Vuelve hoy 13:00 · en 3 horas |
       | 1    | horas  | 3 horas | 2026-11-13T10:00:00 | 2026-11-13T10:30:00 | 2026-11-13T12:00:00 | Vuelve hoy 13:00 · en 1 hora  |
       | 8    | horas  | 3 horas | 2026-11-13T10:00:00 | 2026-11-13T10:30:00 | 2026-11-13T10:30:00 | Vuelve hoy 18:30 · en 8 horas |

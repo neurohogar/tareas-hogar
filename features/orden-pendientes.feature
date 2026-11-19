@@ -32,7 +32,7 @@
 # tarea no esté en espera.
 # Las tareas se declaran en un orden distinto del esperado: el orden de carga
 # no decide nada.
-Feature: Orden de Pendientes
+Feature: Pendientes order
 
   # Orden de Pendientes 1
   # Los grupos van atrasada, pendiente, en espera, con cualquier tipo en
@@ -40,18 +40,18 @@ Feature: Orden de Pendientes
   # Pagar esté pendiente (el 20), y va después igual. Fila 3: la relativa
   # atrasada recién desde ahora va antes que la puntual pendiente desde las
   # 00:00 de hoy (manda el grupo, no el instante).
-  Scenario Outline: Orden de Pendientes 1
-    Given una tarea periódica semanal Sábanas los <dias_sabanas> creada el <creada_sabanas>
-    And una tarea puntual Pagar con fecha límite <limite>
-    And una tarea periódica semanal Basura los <dias>
-    And la tarea Basura tiene un completado que cubre el <cubierta>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Pendientes order 1
+    Given a weekly recurring task Sábanas on <days_sheets> created on <created_sheets>
+    And a one-off task Pagar with due date <due_date>
+    And a weekly recurring task Basura on <days>
+    And the task Basura has a completion that covers <covered>
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | limite     | dias      | cubierta   | cada | unidad | completada          | dias_sabanas | creada_sabanas      | ahora               | orden                         |
+      | due_date   | days      | covered    | every | unit   | completed           | days_sheets  | created_sheets      | now                 | order                         |
       | 2026-07-14 | miércoles | 2026-07-08 | 4    | horas  | 2026-07-15T07:00:00 | sábado       | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Pagar, Basura, Regar, Sábanas |
       | 2026-07-20 | lunes     | 2026-07-06 | 1    | dias   | 2026-07-14T08:00:00 | jueves       | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Basura, Regar, Pagar, Sábanas |
       | 2026-07-15 | lunes     | 2026-07-06 | 1    | horas  | 2026-07-15T10:00:00 | sábado       | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Basura, Regar, Pagar, Sábanas |
@@ -62,17 +62,17 @@ Feature: Orden de Pendientes
   # 14 a las 20:00, Pagar desde el 15. Fila 2: Regar con V el 14 a las 04:00
   # pero atrasada recién desde el 15 a las 04:00, después de Pagar (desde el
   # 9). Fila 3: relativa de horas atrasada desde el 8 a las 20:00.
-  Scenario Outline: Orden de Pendientes 2
-    Given una tarea puntual Pagar con fecha límite <limite>
-    And una tarea periódica semanal Basura los <dias>
-    And la tarea Basura tiene un completado que cubre el <cubierta>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Pendientes order 2
+    Given a one-off task Pagar with due date <due_date>
+    And a weekly recurring task Basura on <days>
+    And the task Basura has a completion that covers <covered>
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | limite     | dias           | cubierta   | cada | unidad | completada          | ahora               | orden                |
+      | due_date   | days           | covered    | every | unit   | completed           | now                 | order                |
       | 2026-07-14 | martes, jueves | 2026-07-07 | 1    | dias   | 2026-07-12T20:00:00 | 2026-07-17T12:00:00 | Basura, Regar, Pagar |
       | 2026-07-08 | jueves         | 2026-07-02 | 1    | dias   | 2026-07-13T04:00:00 | 2026-07-17T12:00:00 | Pagar, Basura, Regar |
       | 2026-07-14 | viernes        | 2026-07-03 | 12   | horas  | 2026-07-07T20:00:00 | 2026-07-17T12:00:00 | Regar, Basura, Pagar |
@@ -82,17 +82,17 @@ Feature: Orden de Pendientes
   # Fila 1: Regar desde el 15 a las 20:00, Basura desde las 00:00 de hoy,
   # Pagar con fecha límite futura. Fila 2: Regar pendiente desde hoy a las
   # 09:00, después de Basura.
-  Scenario Outline: Orden de Pendientes 3
-    Given una tarea puntual Pagar con fecha límite <limite>
-    And una tarea periódica semanal Basura los <dias>
-    And la tarea Basura tiene un completado que cubre el <cubierta>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Pendientes order 3
+    Given a one-off task Pagar with due date <due_date>
+    And a weekly recurring task Basura on <days>
+    And the task Basura has a completion that covers <covered>
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | limite     | dias           | cubierta   | cada | unidad | completada          | ahora               | orden                |
+      | due_date   | days           | covered    | every | unit   | completed           | now                 | order                |
       | 2026-07-20 | martes, jueves | 2026-07-14 | 1    | dias   | 2026-07-14T20:00:00 | 2026-07-16T12:00:00 | Regar, Basura, Pagar |
       | 2026-07-17 | jueves         | 2026-07-09 | 4    | horas  | 2026-07-16T05:00:00 | 2026-07-16T12:00:00 | Basura, Regar, Pagar |
 
@@ -101,15 +101,15 @@ Feature: Orden de Pendientes
   # las 00:00 de ese día. Fila 1: fecha límite hoy (00:00) antes que V hoy a
   # las 09:00. Fila 2: fecha límite mañana, después. Fila 3: V ayer a las
   # 23:00, antes que la fecha límite de hoy.
-  Scenario Outline: Orden de Pendientes 4
-    Given una tarea puntual Pagar con fecha límite <limite>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Pendientes order 4
+    Given a one-off task Pagar with due date <due_date>
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | limite     | cada | unidad | completada          | ahora               | orden        |
+      | due_date   | every | unit   | completed           | now                 | order        |
       | 2026-07-16 | 4    | horas  | 2026-07-16T05:00:00 | 2026-07-16T12:00:00 | Pagar, Regar |
       | 2026-07-17 | 4    | horas  | 2026-07-16T05:00:00 | 2026-07-16T12:00:00 | Regar, Pagar |
       | 2026-07-16 | 2    | dias   | 2026-07-13T23:00:00 | 2026-07-16T12:00:00 | Regar, Pagar |
@@ -118,14 +118,14 @@ Feature: Orden de Pendientes
   # Una relativa nunca completada está pendiente desde su creadaEn y compite
   # en el mismo eje. Fila 2: creada un segundo antes de las 00:00 de la
   # fecha límite de Pagar.
-  Scenario Outline: Orden de Pendientes 5
-    Given una tarea puntual Pagar con fecha límite <limite>
-    And una tarea periódica relativa Regar nunca completada creada el <creada_regar>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Pendientes order 5
+    Given a one-off task Pagar with due date <due_date>
+    And a relative recurring task Regar never completed created on <created_water>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | limite     | creada_regar        | ahora               | orden        |
+      | due_date   | created_water       | now                 | order        |
       | 2026-07-15 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 | Pagar, Regar |
       | 2026-07-15 | 2026-07-14T23:59:59 | 2026-07-15T12:00:00 | Regar, Pagar |
       | 2026-07-16 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 | Regar, Pagar |
@@ -134,16 +134,16 @@ Feature: Orden de Pendientes
   # Las puntuales sin fecha límite van al final del grupo pendiente, por
   # creadaEn (la más antigua primero), aunque se hayan creado antes que las
   # demás.
-  Scenario Outline: Orden de Pendientes 6
-    Given una tarea puntual Foco sin fecha límite creada el <creada_foco>
-    And una tarea puntual Dentista sin fecha límite creada el <creada_dentista>
-    And una tarea periódica relativa Regar nunca completada creada el <creada_regar>
-    And una tarea puntual Pagar con fecha límite <limite>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Pendientes order 6
+    Given a one-off task Foco without a due date created on <created_focus>
+    And a one-off task Dentista without a due date created on <created_dentist>
+    And a relative recurring task Regar never completed created on <created_water>
+    And a one-off task Pagar with due date <due_date>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | creada_foco         | creada_dentista     | creada_regar        | limite     | ahora               | orden                         |
+      | created_focus       | created_dentist     | created_water       | due_date   | now                 | order                         |
       | 2026-07-01T08:00:00 | 2026-07-01T08:00:01 | 2026-07-10T08:00:00 | 2026-12-31 | 2026-07-15T12:00:00 | Regar, Pagar, Foco, Dentista  |
       | 2026-07-01T08:00:01 | 2026-07-01T08:00:00 | 2026-07-10T08:00:00 | 2026-12-31 | 2026-07-15T12:00:00 | Regar, Pagar, Dentista, Foco  |
 
@@ -151,14 +151,14 @@ Feature: Orden de Pendientes
   # En espera: primero la que vuelve antes (00:00 de N), aunque se haya
   # creado después. Antes de su primera ocurrencia, P es el día anterior a
   # creadaEn. Fila 3: N de la mensual cae en el mes siguiente.
-  Scenario Outline: Orden de Pendientes 7
-    Given una tarea periódica semanal Basura los <dias_basura> creada el <creada_basura>
-    And una tarea periódica mensual Sábanas los días <dias_sabanas> creada el <creada_sabanas>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Pendientes order 7
+    Given a weekly recurring task Basura on <days_trash> created on <created_trash>
+    And a monthly recurring task Sábanas on days <days_sheets> created on <created_sheets>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | dias_basura | creada_basura       | dias_sabanas | creada_sabanas      | ahora               | orden           |
+      | days_trash  | created_trash       | days_sheets  | created_sheets      | now                 | order           |
       | jueves      | 2026-07-15T08:00:00 | 17           | 2026-07-15T07:00:00 | 2026-07-15T12:00:00 | Basura, Sábanas |
       | sábado      | 2026-07-15T07:00:00 | 17           | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Sábanas, Basura |
       | jueves      | 2026-07-15T08:00:00 | 1            | 2026-07-15T07:00:00 | 2026-07-15T12:00:00 | Basura, Sábanas |
@@ -166,14 +166,14 @@ Feature: Orden de Pendientes
   # Orden de Pendientes 8
   # Desempate en pendiente: con la misma fecha límite, primero la de
   # creadaEn más antigua (aunque su título vaya después).
-  Scenario Outline: Orden de Pendientes 8
-    Given una tarea puntual Planchar con fecha límite <limite_planchar> creada el <creada_planchar>
-    And una tarea puntual Barrer con fecha límite <limite_barrer> creada el <creada_barrer>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Pendientes order 8
+    Given a one-off task Planchar with due date <due_date_iron> created on <created_iron>
+    And a one-off task Barrer with due date <due_date_sweep> created on <created_sweep>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | limite_planchar | creada_planchar     | limite_barrer | creada_barrer       | ahora               | orden            |
+      | due_date_iron   | created_iron        | due_date_sweep | created_sweep       | now                 | order            |
       | 2026-07-20      | 2026-07-10T08:00:00 | 2026-07-20    | 2026-07-10T08:00:01 | 2026-07-15T12:00:00 | Planchar, Barrer |
       | 2026-07-20      | 2026-07-10T08:00:01 | 2026-07-20    | 2026-07-10T08:00:00 | 2026-07-15T12:00:00 | Barrer, Planchar |
 
@@ -181,29 +181,29 @@ Feature: Orden de Pendientes
   # Desempate en atrasada entre tipos: la puntual con fecha límite el 9 y la
   # semanal con N el 9 están atrasadas desde el 10 a las 00:00; primero la de
   # creadaEn más antigua.
-  Scenario Outline: Orden de Pendientes 9
-    Given una tarea puntual Pagar con fecha límite <limite> creada el <creada_pagar>
-    And una tarea periódica semanal Basura los <dias> creada el <creada_basura>
-    And la tarea Basura tiene un completado que cubre el <cubierta>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Pendientes order 9
+    Given a one-off task Pagar with due date <due_date> created on <created_pay>
+    And a weekly recurring task Basura on <days> created on <created_trash>
+    And the task Basura has a completion that covers <covered>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | limite     | creada_pagar        | dias           | creada_basura       | cubierta   | ahora               | orden         |
+      | due_date   | created_pay         | days           | created_trash       | covered    | now                 | order         |
       | 2026-07-09 | 2026-07-01T08:00:00 | martes, jueves | 2026-07-01T08:00:01 | 2026-07-07 | 2026-07-15T12:00:00 | Pagar, Basura |
       | 2026-07-09 | 2026-07-01T08:00:01 | martes, jueves | 2026-07-01T08:00:00 | 2026-07-07 | 2026-07-15T12:00:00 | Basura, Pagar |
 
   # Orden de Pendientes 10
   # Desempate en espera entre semanal y mensual: las dos vuelven el 16 a las
   # 00:00; primero la de creadaEn más antigua.
-  Scenario Outline: Orden de Pendientes 10
-    Given una tarea periódica semanal Basura los <dias_basura> creada el <creada_basura>
-    And una tarea periódica mensual Sábanas los días <dias_sabanas> creada el <creada_sabanas>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Pendientes order 10
+    Given a weekly recurring task Basura on <days_trash> created on <created_trash>
+    And a monthly recurring task Sábanas on days <days_sheets> created on <created_sheets>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | dias_basura | creada_basura       | dias_sabanas | creada_sabanas      | ahora               | orden           |
+      | days_trash  | created_trash       | days_sheets  | created_sheets      | now                 | order           |
       | jueves      | 2026-07-15T08:00:00 | 16           | 2026-07-15T08:00:01 | 2026-07-15T12:00:00 | Basura, Sábanas |
       | jueves      | 2026-07-15T08:00:01 | 16           | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Sábanas, Basura |
 
@@ -212,14 +212,14 @@ Feature: Orden de Pendientes
   # en español. Fila 1: la ñ va después de la n. Fila 2: la Á va con la A.
   # Fila 3: sin distinguir mayúsculas. Fila 4: el título que se declara
   # primero también puede ir primero.
-  Scenario Outline: Orden de Pendientes 11
-    Given una tarea puntual <titulo_1> sin fecha límite creada el <creada_1>
-    And una tarea puntual <titulo_2> sin fecha límite creada el <creada_2>
-    When consulto Pendientes en cualquier momento
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Pendientes order 11
+    Given a one-off task <title_1> without a due date created on <created_1>
+    And a one-off task <title_2> without a due date created on <created_2>
+    When I query Pendientes at any moment
+    Then Pendientes shows in order <order>
 
     Examples:
-      | titulo_1 | creada_1            | titulo_2   | creada_2            | orden               |
+      | title_1  | created_1           | title_2    | created_2           | order               |
       | Ñandú    | 2026-07-10T08:00:00 | Nube       | 2026-07-10T08:00:00 | Nube, Ñandú         |
       | Barrer   | 2026-07-10T08:00:00 | Árbol      | 2026-07-10T08:00:00 | Árbol, Barrer       |
       | Zapallo  | 2026-07-10T08:00:00 | acelga     | 2026-07-10T08:00:00 | acelga, Zapallo     |

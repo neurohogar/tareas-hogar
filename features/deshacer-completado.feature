@@ -14,268 +14,268 @@
 # completadoEn. El progreso es una fracción entre 0 y 1, comparada
 # exactamente.
 # Semana de referencia: lunes 2026-07-13 a domingo 2026-07-19.
-Feature: Deshacer completado
+Feature: Undo completion
 
   # Deshacer completado 1
   # Una puntual vuelve a Pendientes: pendiente hasta terminar el día límite.
-  Scenario Outline: Deshacer completado 1
-    Given una tarea puntual con fecha límite <limite>
-    And la tarea fue completada el <completada>
-    When borro el completado del <completada>
-    And consulto el estado el <ahora>
-    Then la tarea no tiene completados
-    And el estado es pendiente
+  Scenario Outline: Undo completion 1
+    Given a one-off task with due date <due_date>
+    And the task was completed on <completed>
+    When I delete the completion from <completed>
+    And I query the status on <now>
+    Then the task has no completions
+    And the status is pendiente
 
     Examples:
-      | limite     | completada          | ahora               |
+      | due_date   | completed           | now                 |
       | 2026-07-15 | 2026-07-14T10:00:00 | 2026-07-15T23:59:59 |
 
   # Deshacer completado 2
   # Una puntual vuelve a Pendientes atrasada si ya pasó el día límite.
-  Scenario Outline: Deshacer completado 2
-    Given una tarea puntual con fecha límite <limite>
-    And la tarea fue completada el <completada>
-    When borro el completado del <completada>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Undo completion 2
+    Given a one-off task with due date <due_date>
+    And the task was completed on <completed>
+    When I delete the completion from <completed>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | limite     | completada          | ahora               |
+      | due_date   | completed           | now                 |
       | 2026-07-15 | 2026-07-14T10:00:00 | 2026-07-16T00:00:00 |
 
   # Deshacer completado 3
   # Una puntual con dos completados (dos dispositivos sin conexión): borrar
   # uno la deja fuera de Pendientes.
-  Scenario Outline: Deshacer completado 3
-    Given una tarea puntual con fecha límite <limite>
-    And la tarea fue completada el <primera>
-    And la tarea fue completada el <segunda>
-    When borro el completado del <primera>
-    And consulto el estado el <ahora>
-    Then la tarea conserva un solo completado, del <segunda_guardada>
-    And la tarea no aparece en Pendientes
+  Scenario Outline: Undo completion 3
+    Given a one-off task with due date <due_date>
+    And the task was completed on <first>
+    And the task was completed on <second>
+    When I delete the completion from <first>
+    And I query the status on <now>
+    Then the task keeps a single completion, from <second_stored>
+    And the task does not appear in Pendientes
 
     Examples:
-      | limite     | primera             | segunda             | ahora               | segunda_guardada    |
+      | due_date   | first               | second              | now                 | second_stored       |
       | 2026-07-15 | 2026-07-14T10:00:00 | 2026-07-14T10:05:00 | 2026-07-16T00:00:00 | 2026-07-14T10:05:00 |
 
   # Deshacer completado 4
   # Una puntual con dos completados: borrar los dos la devuelve a Pendientes.
-  Scenario Outline: Deshacer completado 4
-    Given una tarea puntual con fecha límite <limite>
-    And la tarea fue completada el <primera>
-    And la tarea fue completada el <segunda>
-    When borro el completado del <primera>
-    And borro el completado del <segunda>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Undo completion 4
+    Given a one-off task with due date <due_date>
+    And the task was completed on <first>
+    And the task was completed on <second>
+    When I delete the completion from <first>
+    And I delete the completion from <second>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | limite     | primera             | segunda             | ahora               |
+      | due_date   | first               | second              | now                 |
       | 2026-07-15 | 2026-07-14T10:00:00 | 2026-07-14T10:05:00 | 2026-07-16T00:00:00 |
 
   # Deshacer completado 5
   # Relativa: borrar el más reciente devuelve U al anterior, con el que ya
   # venció (pendiente); con el borrado estaría en espera. Fila 2: el borde V.
-  Scenario Outline: Deshacer completado 5
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior>
-    And la tarea fue completada el <ultima>
-    When borro el completado del <ultima>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Undo completion 5
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <previous>
+    And the task was completed on <last>
+    When I delete the completion from <last>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | anterior            | ultima              | ahora               |
+      | every | unit   | previous            | last                | now                 |
       | 4    | horas  | 2026-07-15T06:00:00 | 2026-07-15T09:00:00 | 2026-07-15T11:00:00 |
       | 4    | horas  | 2026-07-15T06:00:00 | 2026-07-15T09:00:00 | 2026-07-15T10:00:00 |
 
   # Deshacer completado 6
   # Relativa: borrar el más reciente puede dejarla atrasada (con el anterior
   # se perdió un ciclo completo).
-  Scenario Outline: Deshacer completado 6
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior>
-    And la tarea fue completada el <ultima>
-    When borro el completado del <ultima>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Undo completion 6
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <previous>
+    And the task was completed on <last>
+    When I delete the completion from <last>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | cada | unidad | anterior            | ultima              | ahora               |
+      | every | unit   | previous            | last                | now                 |
       | 4    | horas  | 2026-07-15T06:00:00 | 2026-07-15T11:00:00 | 2026-07-15T14:00:00 |
 
   # Deshacer completado 7
   # Relativa: borrar uno que no es el más reciente no cambia el estado.
-  Scenario Outline: Deshacer completado 7
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior>
-    And la tarea fue completada el <ultima>
-    When borro el completado del <anterior>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
-    And la tarea conserva un solo completado, del <ultima_guardada>
+  Scenario Outline: Undo completion 7
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <previous>
+    And the task was completed on <last>
+    When I delete the completion from <previous>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
+    And the task keeps a single completion, from <last_stored>
 
     Examples:
-      | cada | unidad | anterior            | ultima              | ahora               | progreso | ultima_guardada     |
+      | every | unit   | previous            | last                | now                 | progress | last_stored         |
       | 4    | horas  | 2026-07-15T06:00:00 | 2026-07-15T09:00:00 | 2026-07-15T11:00:00 | 0.5      | 2026-07-15T09:00:00 |
 
   # Deshacer completado 8
   # Relativa: borrar el único completado la deja como nunca completada
   # (pendiente en cualquier momento).
-  Scenario Outline: Deshacer completado 8
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When borro el completado del <completada>
-    And consulto el estado en cualquier momento
-    Then la tarea no tiene completados
-    And el estado es pendiente
+  Scenario Outline: Undo completion 8
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I delete the completion from <completed>
+    And I query the status at any moment
+    Then the task has no completions
+    And the status is pendiente
 
     Examples:
-      | cada | unidad | completada          |
+      | every | unit   | completed           |
       | 2    | dias   | 2026-07-15T09:00:00 |
 
   # Deshacer completado 9
   # Calendario: borrar el que cubre la mayor ocurrencia baja P a la anterior.
   # El jueves vuelve a pendiente (con el borrado, en espera hasta el martes
   # siguiente).
-  Scenario Outline: Deshacer completado 9
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea tiene un completado del <primera> que cubre el <cubierta_primera>
-    And la tarea tiene un completado del <segunda> que cubre el <cubierta_segunda>
-    When borro el completado del <segunda>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Undo completion 9
+    Given a weekly recurring task on <days> created on <created>
+    And the task has a completion from <first> that covers <covered_first>
+    And the task has a completion from <second> that covers <covered_second>
+    When I delete the completion from <second>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias           | creada              | primera             | cubierta_primera | segunda             | cubierta_segunda | ahora               |
+      | days           | created             | first               | covered_first    | second              | covered_second   | now                 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-14T10:00:00 | 2026-07-14       | 2026-07-15T10:00:00 | 2026-07-16       | 2026-07-16T10:00:00 |
 
   # Deshacer completado 10
   # Calendario: con P bajado al martes, el viernes el jueves quedó sin
   # cubrir.
-  Scenario Outline: Deshacer completado 10
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea tiene un completado del <primera> que cubre el <cubierta_primera>
-    And la tarea tiene un completado del <segunda> que cubre el <cubierta_segunda>
-    When borro el completado del <segunda>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Undo completion 10
+    Given a weekly recurring task on <days> created on <created>
+    And the task has a completion from <first> that covers <covered_first>
+    And the task has a completion from <second> that covers <covered_second>
+    When I delete the completion from <second>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias           | creada              | primera             | cubierta_primera | segunda             | cubierta_segunda | ahora               |
+      | days           | created             | first               | covered_first    | second              | covered_second   | now                 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-14T10:00:00 | 2026-07-14       | 2026-07-15T10:00:00 | 2026-07-16       | 2026-07-17T10:00:00 |
 
   # Deshacer completado 11
   # Calendario: borrar uno que no cubre la mayor ocurrencia no cambia P; el
   # inicio de espera es el completadoEn más reciente que queda.
-  Scenario Outline: Deshacer completado 11
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea tiene un completado del <primera> que cubre el <cubierta_primera>
-    And la tarea tiene un completado del <segunda> que cubre el <cubierta_segunda>
-    When borro el completado del <primera>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Undo completion 11
+    Given a weekly recurring task on <days> created on <created>
+    And the task has a completion from <first> that covers <covered_first>
+    And the task has a completion from <second> that covers <covered_second>
+    When I delete the completion from <first>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias           | creada              | primera             | cubierta_primera | segunda             | cubierta_segunda | ahora               | progreso |
+      | days           | created             | first               | covered_first    | second              | covered_second   | now                 | progress |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-14T10:00:00 | 2026-07-14       | 2026-07-15T10:00:00 | 2026-07-16       | 2026-07-18T05:00:00 | 0.5      |
 
   # Deshacer completado 12
   # Calendario: borrar el único completado vuelve P al día anterior a
   # creadaEn. Creada el martes y completada ese martes: sin el completado, el
   # miércoles el martes quedó sin cubrir.
-  Scenario Outline: Deshacer completado 12
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When completo la tarea el <completada>
-    And borro el completado del <completada>
-    And consulto el estado el <ahora>
-    Then la tarea no tiene completados
-    And el estado es atrasada
+  Scenario Outline: Undo completion 12
+    Given a weekly recurring task on <days> created on <created>
+    When I complete the task on <completed>
+    And I delete the completion from <completed>
+    And I query the status on <now>
+    Then the task has no completions
+    And the status is atrasada
 
     Examples:
-      | dias           | creada              | completada          | ahora               |
+      | days           | created             | completed           | now                 |
       | martes, jueves | 2026-07-14T08:00:00 | 2026-07-14T10:00:00 | 2026-07-15T10:00:00 |
 
   # Deshacer completado 13
   # Completado sin ocurrenciaCubierta (de cuando era relativa): borrarlo
   # vuelve P al día anterior a creadaEn. Con él, P sería el miércoles 15 y el
   # jueves estaría pendiente; sin él, el martes 14 quedó sin cubrir.
-  Scenario Outline: Deshacer completado 13
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea fue completada el <completada>
-    When edito la tarea a periódica semanal los <dias>
-    And borro el completado del <completada>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Undo completion 13
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task was completed on <completed>
+    When I edit the task to weekly recurring on <days>
+    And I delete the completion from <completed>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | cada | unidad | creada              | completada          | dias           | ahora               |
+      | every | unit   | created             | completed           | days           | now                 |
       | 1    | dias   | 2026-07-13T08:00:00 | 2026-07-15T09:00:00 | martes, jueves | 2026-07-16T10:00:00 |
 
   # Deshacer completado 14
   # Borrar el que cubre la mayor ocurrencia deja P en el día de completadoEn
   # de uno sin ocurrenciaCubierta: el miércoles 15, así que el jueves 16 está
   # pendiente (con el borrado estaría en espera hasta el martes siguiente).
-  Scenario Outline: Deshacer completado 14
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea fue completada el <relativa>
-    When edito la tarea a periódica semanal los <dias>
-    And completo la tarea el <semanal>
-    And borro el completado del <semanal>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
-    And la tarea conserva un solo completado, del <relativa_guardada>
+  Scenario Outline: Undo completion 14
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task was completed on <relative>
+    When I edit the task to weekly recurring on <days>
+    And I complete the task on <weekly>
+    And I delete the completion from <weekly>
+    And I query the status on <now>
+    Then the status is pendiente
+    And the task keeps a single completion, from <relative_stored>
 
     Examples:
-      | cada | unidad | creada              | relativa            | dias           | semanal             | ahora               | relativa_guardada   |
+      | every | unit   | created             | relative            | days           | weekly              | now                 | relative_stored     |
       | 1    | dias   | 2026-07-13T08:00:00 | 2026-07-15T09:00:00 | martes, jueves | 2026-07-16T10:00:00 | 2026-07-16T12:00:00 | 2026-07-15T09:00:00 |
 
   # Deshacer completado 15
   # Un completado nuevo después de deshacer cubre según el P recalculado:
   # completada el lunes (cubrió el martes) y deshecha, completarla el martes
   # cubre el martes, no el jueves.
-  Scenario Outline: Deshacer completado 15
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When completo la tarea el <deshecha>
-    And borro el completado del <deshecha>
-    And completo la tarea el <completada>
-    Then se registró un completado que cubre el <cubierta>
-    And la tarea conserva un solo completado, del <completada_guardada>
+  Scenario Outline: Undo completion 15
+    Given a weekly recurring task on <days> created on <created>
+    When I complete the task on <undone>
+    And I delete the completion from <undone>
+    And I complete the task on <completed>
+    Then a completion was recorded that covers <covered>
+    And the task keeps a single completion, from <completed_stored>
 
     Examples:
-      | dias           | creada              | deshecha            | completada          | cubierta   | completada_guardada |
+      | days           | created             | undone              | completed           | covered    | completed_stored    |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-13T10:00:00 | 2026-07-14T10:00:00 | 2026-07-14 | 2026-07-14T10:00:00 |
 
   # Deshacer completado 16
   # Borrar un completado que otro dispositivo ya borró no hace nada: el otro
   # completado sigue.
-  Scenario Outline: Deshacer completado 16
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior>
-    And la tarea fue completada el <ultima>
-    When borro el completado del <ultima>
-    And otro dispositivo, sin ver ese cambio, borra el completado del <ultima>
-    Then la tarea conserva un solo completado, del <anterior_guardada>
+  Scenario Outline: Undo completion 16
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <previous>
+    And the task was completed on <last>
+    When I delete the completion from <last>
+    And another device, without seeing that change, deletes the completion from <last>
+    Then the task keeps a single completion, from <previous_stored>
 
     Examples:
-      | cada | unidad | anterior            | ultima              | anterior_guardada   |
+      | every | unit   | previous            | last                | previous_stored     |
       | 2    | dias   | 2026-07-13T09:00:00 | 2026-07-15T09:00:00 | 2026-07-13T09:00:00 |
 
   # Deshacer completado 17
   # Borrar un completado de una tarea que otro dispositivo ya borró no la
   # revive ni deja completados.
-  Scenario Outline: Deshacer completado 17
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    When otro dispositivo, sin ver ese cambio, borra la tarea
-    And borro el completado del <completada>
-    And consulto Pendientes en cualquier momento
-    Then no queda ninguna tarea
-    And no queda ningún completado de Regar
+  Scenario Outline: Undo completion 17
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    When another device, without seeing that change, deletes the task
+    And I delete the completion from <completed>
+    And I query Pendientes at any moment
+    Then no task remains
+    And no completion remains of Regar
 
     Examples:
-      | cada | unidad | completada          |
+      | every | unit   | completed           |
       | 2    | dias   | 2026-07-15T09:00:00 |

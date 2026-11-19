@@ -14,122 +14,122 @@
 # borrada no la revive.
 # Una anotación se nombra por el instante en que se anotó (distinto en cada
 # anotación de un escenario). Cada tarea se nombra por su título (una palabra).
-Feature: Editar anotación
+Feature: Edit annotation
 
   # Editar anotación 1
   # Cambiar el texto deja todo lo demás como estaba.
-  Scenario Outline: Editar anotación 1
-    Given una tarea puntual <titulo> sin fecha límite
-    And una anotación <sentido> en <pantalla> del <anotada>
-    And la anotación se refiere a la tarea <titulo>
-    And la anotación dice <texto>
-    When edito el texto de la anotación del <anotada> a <texto_nuevo>
-    Then queda una sola anotación
-    And la anotación del <anotada> dice <texto_guardado>
-    And la anotación del <anotada> tiene sentido <sentido_guardado> en <pantalla_guardada>
-    And la anotación del <anotada> es de la tarea <titulo>
+  Scenario Outline: Edit annotation 1
+    Given a one-off task <title> without a due date
+    And an annotation <direction> in <screen> from <annotated>
+    And the annotation refers to the task <title>
+    And the annotation says <text>
+    When I edit the text of the annotation from <annotated> to <text_new>
+    Then a single annotation remains
+    And the annotation from <annotated> says <text_stored>
+    And the annotation from <annotated> has direction <direction_stored> in <screen_stored>
+    And the annotation from <annotated> is of the task <title>
 
     Examples:
-      | titulo | sentido    | pantalla         | anotada             | texto       | texto_nuevo  | texto_guardado | sentido_guardado | pantalla_guardada |
+      | title  | direction  | screen           | annotated           | text        | text_new     | text_stored    | direction_stored | screen_stored     |
       | Regar  | Me molestó | Panel de edición | 2026-07-15T08:05:00 | quedó lindo | quedó mal    | quedó mal      | Me molestó       | Panel de edición  |
 
   # Editar anotación 2
   # Una anotación sin texto puede recibir uno, y sin tarea sigue sin tarea.
-  Scenario Outline: Editar anotación 2
-    Given una anotación <sentido> en <pantalla> del <anotada>
-    When edito el texto de la anotación del <anotada> a <texto_nuevo>
-    Then la anotación del <anotada> dice <texto_guardado>
-    And la anotación del <anotada> no es de ninguna tarea
-    And la anotación del <anotada> tiene sentido <sentido_guardado> en <pantalla_guardada>
+  Scenario Outline: Edit annotation 2
+    Given an annotation <direction> in <screen> from <annotated>
+    When I edit the text of the annotation from <annotated> to <text_new>
+    Then the annotation from <annotated> says <text_stored>
+    And the annotation from <annotated> is of no task
+    And the annotation from <annotated> has direction <direction_stored> in <screen_stored>
 
     Examples:
-      | sentido   | pantalla   | anotada             | texto_nuevo | texto_guardado | sentido_guardado | pantalla_guardada |
+      | direction | screen     | annotated           | text_new    | text_stored    | direction_stored | screen_stored     |
       | Me sirvió | Pendientes | 2026-07-15T08:05:00 | quedó lindo | quedó lindo    | Me sirvió        | Pendientes        |
 
   # Editar anotación 3
   # Los espacios del inicio y del final se recortan y los de adentro quedan;
   # el texto no tiene largo máximo.
-  Scenario Outline: Editar anotación 3
-    Given una anotación <sentido> en <pantalla> del <anotada>
-    And la anotación dice <texto>
-    When edito el texto de la anotación del <anotada> a <texto_nuevo> entre <espacios> espacios
-    Then la anotación del <anotada> dice <texto_guardado>
+  Scenario Outline: Edit annotation 3
+    Given an annotation <direction> in <screen> from <annotated>
+    And the annotation says <text>
+    When I edit the text of the annotation from <annotated> to <text_new> between <spaces> spaces
+    Then the annotation from <annotated> says <text_stored>
 
     Examples:
-      | sentido   | pantalla   | anotada             | texto       | texto_nuevo | espacios | texto_guardado |
+      | direction | screen     | annotated           | text        | text_new    | spaces   | text_stored    |
       | Me sirvió | Pendientes | 2026-07-15T08:05:00 | quedó lindo | muy lindo   | 0        | muy lindo      |
       | Me sirvió | Pendientes | 2026-07-15T08:05:00 | quedó lindo | muy lindo   | 3        | muy lindo      |
 
   # Editar anotación 4
   # Vaciar el texto, o dejar solo espacios, la deja sin texto: nunca es un
   # error.
-  Scenario Outline: Editar anotación 4
-    Given una anotación <sentido> en <pantalla> del <anotada>
-    And la anotación dice <texto>
-    When edito el texto de la anotación del <anotada> a <espacios> espacios
-    Then la anotación del <anotada> no tiene texto
-    And la anotación del <anotada> tiene sentido <sentido_guardado> en <pantalla_guardada>
+  Scenario Outline: Edit annotation 4
+    Given an annotation <direction> in <screen> from <annotated>
+    And the annotation says <text>
+    When I edit the text of the annotation from <annotated> to <spaces> spaces
+    Then the annotation from <annotated> has no text
+    And the annotation from <annotated> has direction <direction_stored> in <screen_stored>
 
     Examples:
-      | sentido    | pantalla  | anotada             | texto       | espacios | sentido_guardado | pantalla_guardada |
+      | direction  | screen    | annotated           | text        | spaces   | direction_stored | screen_stored     |
       | Me molestó | Historial | 2026-07-15T08:05:00 | quedó lindo | 0        | Me molestó       | Historial         |
       | Me molestó | Historial | 2026-07-15T08:05:00 | quedó lindo | 2        | Me molestó       | Historial         |
 
   # Editar anotación 5
   # Solo cambia la anotación elegida: las otras no se tocan.
-  Scenario Outline: Editar anotación 5
-    Given una anotación <sentido_a> en <pantalla_a> del <anotada_a>
-    And la anotación dice <texto_a>
-    And una anotación <sentido_b> en <pantalla_b> del <anotada_b>
-    And la anotación dice <texto_b>
-    When edito el texto de la anotación del <anotada_a> a <texto_nuevo>
-    Then la anotación del <anotada_a> dice <texto_nuevo_guardado>
-    And la anotación del <anotada_b> dice <texto_b_guardado>
+  Scenario Outline: Edit annotation 5
+    Given an annotation <direction_a> in <screen_a> from <annotated_a>
+    And the annotation says <text_a>
+    And an annotation <direction_b> in <screen_b> from <annotated_b>
+    And the annotation says <text_b>
+    When I edit the text of the annotation from <annotated_a> to <text_new>
+    Then the annotation from <annotated_a> says <text_new_stored>
+    And the annotation from <annotated_b> says <text_b_stored>
 
     Examples:
-      | sentido_a | pantalla_a | anotada_a           | texto_a | sentido_b  | pantalla_b | anotada_b           | texto_b | texto_nuevo | texto_nuevo_guardado | texto_b_guardado |
+      | direction_a | screen_a   | annotated_a         | text_a  | direction_b | screen_b   | annotated_b         | text_b  | text_new    | text_new_stored      | text_b_stored    |
       | Me sirvió | Pendientes | 2026-07-15T08:05:00 | uno     | Me molestó | Historial  | 2026-07-15T09:10:00 | dos     | tres        | tres                 | dos              |
 
   # Editar anotación 6
   # Dos dispositivos editan el texto: gana el último en llegar.
-  Scenario Outline: Editar anotación 6
-    Given una anotación <sentido> en <pantalla> del <anotada>
-    And la anotación dice <texto>
-    When edito el texto de la anotación del <anotada> a <primero>
-    And otro dispositivo, sin ver ese cambio, edita el texto de la anotación del <anotada> a <segundo>
-    Then la anotación del <anotada> dice <texto_guardado>
-    And la anotación del <anotada> tiene sentido <sentido_guardado> en <pantalla_guardada>
+  Scenario Outline: Edit annotation 6
+    Given an annotation <direction> in <screen> from <annotated>
+    And the annotation says <text>
+    When I edit the text of the annotation from <annotated> to <first>
+    And another device, without seeing that change, edits the text of the annotation from <annotated> to <second>
+    Then the annotation from <annotated> says <text_stored>
+    And the annotation from <annotated> has direction <direction_stored> in <screen_stored>
 
     Examples:
-      | sentido   | pantalla   | anotada             | texto | primero | segundo | texto_guardado | sentido_guardado | pantalla_guardada |
+      | direction | screen     | annotated           | text  | first   | second  | text_stored    | direction_stored | screen_stored     |
       | Me sirvió | Pendientes | 2026-07-15T08:05:00 | uno   | dos     | tres    | tres           | Me sirvió        | Pendientes        |
 
   # Editar anotación 7
   # Borrar gana sobre editar: si otro dispositivo borra la anotación que yo
   # edité, la anotación no queda.
-  Scenario Outline: Editar anotación 7
-    Given una anotación <sentido> en <pantalla> del <anotada>
-    And la anotación dice <texto>
-    When edito el texto de la anotación del <anotada> a <nuevo>
-    And otro dispositivo, sin ver ese cambio, borra la anotación del <anotada>
-    Then no existe la anotación del <anotada>
-    And no queda ninguna anotación
+  Scenario Outline: Edit annotation 7
+    Given an annotation <direction> in <screen> from <annotated>
+    And the annotation says <text>
+    When I edit the text of the annotation from <annotated> to <new>
+    And another device, without seeing that change, deletes the annotation from <annotated>
+    Then there is no annotation from <annotated>
+    And no annotation remains
 
     Examples:
-      | sentido   | pantalla   | anotada             | texto | nuevo |
+      | direction | screen     | annotated           | text  | new   |
       | Me sirvió | Pendientes | 2026-07-15T08:05:00 | uno   | dos   |
 
   # Editar anotación 8
   # Una edición de una anotación ya borrada no la revive: borro yo y después
   # llega la edición del otro dispositivo.
-  Scenario Outline: Editar anotación 8
-    Given una anotación <sentido> en <pantalla> del <anotada>
-    And la anotación dice <texto>
-    When borro la anotación del <anotada>
-    And otro dispositivo, sin ver ese cambio, edita el texto de la anotación del <anotada> a <nuevo>
-    Then no existe la anotación del <anotada>
-    And no queda ninguna anotación
+  Scenario Outline: Edit annotation 8
+    Given an annotation <direction> in <screen> from <annotated>
+    And the annotation says <text>
+    When I delete the annotation from <annotated>
+    And another device, without seeing that change, edits the text of the annotation from <annotated> to <new>
+    Then there is no annotation from <annotated>
+    And no annotation remains
 
     Examples:
-      | sentido   | pantalla   | anotada             | texto | nuevo |
+      | direction | screen     | annotated           | text  | new   |
       | Me sirvió | Pendientes | 2026-07-15T08:05:00 | uno   | dos   |

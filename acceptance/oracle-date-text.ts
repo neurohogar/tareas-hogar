@@ -155,25 +155,25 @@ export function returnOfNoticeOf(s: Situation, now: number): string | undefined 
 	return instant === undefined ? undefined : datePhrase('Vuelve', instant, now);
 }
 
-const ROW_THEN = /^la fila de la tarea (?:muestra el texto (.*)|no muestra texto de fecha)$/su;
-const THEN_OF_ROW_OF_TITLE = /^la fila de ([A-ZÁÉÍÓÚÑ]\w*) muestra el texto (.*)$/su;
-const THEN_OF_FIRST_STEP = /^la fila de la tarea (?:muestra el primer paso (.*)|no muestra primer paso)$/su;
-const FIRST_STEP_SAVED = /^el primer paso de la tarea es (.*)$/su;
-const CHECKBOX_THEN = /^el checkbox de la tarea está (habilitado|deshabilitado)$/;
+const ROW_THEN = /^the task row (?:shows the text (.*)|shows no date text)$/su;
+const THEN_OF_ROW_OF_TITLE = /^the row of ([A-ZÁÉÍÓÚÑ]\w*) shows the text (.*)$/su;
+const THEN_OF_FIRST_STEP = /^the task row (?:shows the first step (.*)|shows no first step)$/su;
+const FIRST_STEP_SAVED = /^the first step of the task is (.*)$/su;
+const CHECKBOX_THEN = /^the task checkbox is (enabled|disabled)$/;
 /** Steps that the editing oracle models better (the tapped checkbox, the deleted completion): that oracle decides. */
-const EDITING_STEP = /^(?:toco el checkbox de la tarea |borro el completado del )/;
-const ORDER_THEN = /^Pendientes muestra en orden (.*)$/su;
-const NOTICE_THEN = /^el aviso del completado (?:muestra el regreso (.*)|no muestra regreso)$/su;
-const NOTICE_QUERY = /^consulto el aviso el (\S+)$/;
-const DECLARES_TASK = /^una tarea /;
-const TITLE_IN_STEP = /\b(tarea(?: puntual| periódica (?:relativa|semanal|mensual))?) ([A-ZÁÉÍÓÚÑ]\w*)\b/u;
+const EDITING_STEP = /^(?:I tap the task checkbox |I delete the completion from )/;
+const ORDER_THEN = /^Pendientes shows in order (.*)$/su;
+const NOTICE_THEN = /^the completion notice (?:shows the return (.*)|shows no return)$/su;
+const NOTICE_QUERY = /^I query the notice on (\S+)$/;
+const DECLARES_TASK = /^a (?:one-off|relative recurring|weekly recurring|monthly recurring) task /;
+const TITLE_IN_STEP = /\b((?:one-off |(?:relative|weekly|monthly) recurring )?task) ([A-ZÁÉÍÓÚÑ]\w*)\b/u;
 const stepTitle = (text: string) => TITLE_IN_STEP.exec(text)?.[2];
 
 /** The task's steps (§4.1, Pasos) are modeled by the editing oracle, which tracks progress and completions. */
-const STEPS_STEP = /^(?:los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|vacío el paso |la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está )/;
+const STEPS_STEP = /^(?:the steps of the task |the current step of the task is |I tap Hecho |I tap Paso anterior$|I clear step |the task row (?:shows the buttons |shows no step buttons$)|the Hecho button of the task is )/;
 
 /** The minimal version (§4.1, §6.1) and its button are modeled by the editing oracle, which tracks completions and the notice. */
-const MINIMAL_STEP = /^(?:la versión mínima de la tarea |toco Hice la mínima |la fila de la tarea (?:muestra la mínima |no muestra mínima$)|el botón Hice la mínima )/;
+const MINIMAL_STEP = /^(?:the minimal version of the task |I tap Hice la mínima |the task row (?:shows the minimal one |shows no minimal one$)|the Hice la mínima button )/;
 
 export const isScenarioOfTextOfDate = (texts: string[]) =>
 	!texts.some((text) => STEPS_STEP.test(text) || MINIMAL_STEP.test(text)) &&
@@ -200,7 +200,7 @@ function situationOf(entries: StepOracle[], row: RowOracle, title?: string): { s
 	if (!steps) return undefined;
 	const texts = steps.map(({ text }) => text);
 	const query = texts.map((text) => NOTICE_QUERY.exec(text)?.[1]).find((m) => m !== undefined);
-	const remaining = texts.filter((text) => !NOTICE_QUERY.test(text) && text !== 'Mostrar pausadas está encendido');
+	const remaining = texts.filter((text) => !NOTICE_QUERY.test(text) && text !== 'Mostrar pausadas is on');
 	const s = build(remaining.map((text) => ({ text })), {});
 	const noticeNow = query === undefined ? undefined : date(query);
 	return s && (query === undefined || noticeNow !== undefined) ? { s, noticeNow } : undefined;

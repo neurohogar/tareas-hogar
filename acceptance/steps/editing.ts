@@ -9,7 +9,7 @@ import { applyChange } from '../../src/lib/core/task-document';
 import { edit } from '../../src/lib/core/editing';
 import { changeOnComplete } from '../../src/lib/core/current-step';
 import type { Task } from '../../src/lib/core/task';
-import { DAYS_VALID, SHAPE_AND_DAYS, WITHOUT_DAYS, daysOf, shapeOf } from './recurring-calendar';
+import { DAYS_VALID, SHAPE_RECURRING_AND_DAYS, WITHOUT_DAYS, daysOf, shapeOf } from './recurring-calendar';
 import { P, TITLE, dateHour, numeric, unit } from './values';
 import {
 	OTHER,
@@ -64,34 +64,34 @@ function remove(world: World, task: Task, completionsKnown: Saved['completions']
 }
 
 const EDITORS: Editor[] = [
-	{ subject: 'edito la tarea', namesTask: false, edit: editMe },
-	{ subject: `edito la tarea ${TITLE}`, namesTask: true, edit: editMe },
-	{ subject: `${OTHER} edita la tarea`, namesTask: false, edit: editsOther }
+	{ subject: 'I edit the task', namesTask: false, edit: editMe },
+	{ subject: `I edit the task ${TITLE}`, namesTask: true, edit: editMe },
+	{ subject: `${OTHER} edits the task`, namesTask: false, edit: editsOther }
 ];
 
 /** Each form of "... a <definition>": the data it loads, with the current title. */
 const DEFINITIONS: { text: string; data: (title: string, ...values: string[]) => TaskData }[] = [
 	{
-		text: `puntual con fecha límite ${P}`,
+		text: `one-off with due date ${P}`,
 		data: (title, dueDate) => ({ shape: 'puntual', title, dueDate })
 	},
-	{ text: 'puntual sin fecha límite', data: (title) => ({ shape: 'puntual', title }) },
+	{ text: 'one-off without a due date', data: (title) => ({ shape: 'puntual', title }) },
 	{
-		text: `periódica relativa cada ${P} ${P}`,
+		text: `relative recurring every ${P} ${P}`,
 		data: (title, every, u) => ({ shape: 'relativa', title, every: numeric(every), unit: unit(u) })
 	},
 	{
-		text: `periódica ${SHAPE_AND_DAYS}`,
-		data: (title, shapeAndConnector, days) => ({ shape: 'calendario', title, ...daysOf(shapeOf(shapeAndConnector), days) })
+		text: SHAPE_RECURRING_AND_DAYS,
+		data: (title, shape, connector, days) => ({ shape: 'calendario', title, ...daysOf(shapeOf(`${shape} ${connector}`), days) })
 	},
-	{ text: 'periódica (?:semanal|mensual) sin días', data: (title) => ({ shape: 'calendario', title, ...WITHOUT_DAYS }) },
+	{ text: '(?:weekly|monthly) recurring without days', data: (title) => ({ shape: 'calendario', title, ...WITHOUT_DAYS }) },
 	{
-		text: 'periódica de calendario con días de la semana y del mes a la vez',
+		text: 'calendar recurring with weekdays and month days at once',
 		data: (title) => ({
 			shape: 'calendario',
 			title,
-			weekdays: DAYS_VALID.semanal.weekdays,
-			monthDays: DAYS_VALID.mensual.monthDays
+			weekdays: DAYS_VALID.weekly.weekdays,
+			monthDays: DAYS_VALID.monthly.monthDays
 		})
 	}
 ];
@@ -104,7 +104,7 @@ function fieldsThatKeeps(task: Task): Pick<TaskData, 'emoji' | 'note' | 'firstSt
 
 const stepsOfEditA: StepDefinition[] = EDITORS.flatMap((editor) =>
 	DEFINITIONS.map(({ text, data }) => ({
-		pattern: new RegExp(`^${editor.subject} a ${text}$`),
+		pattern: new RegExp(`^${editor.subject} to ${text}$`),
 		run: (world: World, ...values: string[]) => {
 			const title = editor.namesTask ? values.shift() : undefined;
 			editor.edit(world, (task) => ({ ...fieldsThatKeeps(task), ...data(task.title, ...values) }), title);
@@ -134,57 +134,57 @@ const theOneThatHadBefore = (world: World, title: string) => theTaskTitled(thatW
 export const editingSteps: StepDefinition[] = [
 	...stepsOfEditA,
 	{
-		pattern: new RegExp(`^edito la tarea a puntual sin fecha límite el ${P}$`),
+		pattern: new RegExp(`^I edit the task to one-off without a due date on ${P}$`),
 		run: (world, moment) =>
 			editMe(world, (task) => ({ ...fieldsThatKeeps(task), shape: 'puntual', title: task.title }), undefined, dateHour(moment))
 	},
 	{
-		pattern: new RegExp(`^edito el título a ${P}$`),
+		pattern: new RegExp(`^I edit the title to ${P}$`),
 		run: (world, title) => editMe(world, withTitle(title))
 	},
 	{
-		pattern: /^edito el título a uno de solo espacios$/,
+		pattern: /^I edit the title to one of only spaces$/,
 		run: (world) => editMe(world, withTitle('   '))
 	},
 	{
-		pattern: new RegExp(`^${OTHER} edita el título a ${P}$`),
+		pattern: new RegExp(`^${OTHER} edits the title to ${P}$`),
 		run: (world, title) => editsOther(world, withTitle(title))
 	},
 	{
-		pattern: new RegExp(`^edito en una misma edición el título a ${P} y la fecha límite a ${P}$`),
+		pattern: new RegExp(`^in a single edit I edit the title to ${P} and the due date to ${P}$`),
 		run: (world, title, dueDate) => editMe(world, () => ({ shape: 'puntual', title, dueDate }))
 	},
 	{
-		pattern: new RegExp(`^${OTHER} edita el título de la tarea ${TITLE} a ${TITLE}$`),
+		pattern: new RegExp(`^${OTHER} edits the title de the task ${TITLE} to ${TITLE}$`),
 		run: (world, title, updated) => editAndSave(world, theTaskTitled(thatSawOther(world), title), withTitle(updated))
 	},
 	{
-		pattern: new RegExp(`^${OTHER} guarda la tarea sin cambios$`),
+		pattern: new RegExp(`^${OTHER} saves the task without changes$`),
 		run: (world) => editsOther(world, taskData)
 	},
 	{
-		pattern: /^borro la tarea$/,
+		pattern: /^I delete the task$/,
 		run: (world) => {
 			rememberBeforeOfMyChange(world);
 			remove(world, theTask(world), world.completions);
 		}
 	},
 	{
-		pattern: new RegExp(`^borro la tarea ${TITLE}$`),
+		pattern: new RegExp(`^I delete the task ${TITLE}$`),
 		run: (world, title) => {
 			rememberBeforeOfMyChange(world);
 			remove(world, theTaskTitled(world, title), world.completions);
 		}
 	},
 	{
-		pattern: new RegExp(`^${OTHER} borra la tarea$`),
+		pattern: new RegExp(`^${OTHER} deletes the task$`),
 		run: (world) => {
 			const seen = thatSawOther(world);
 			remove(world, theTask(seen), seen.completions);
 		}
 	},
 	{
-		pattern: new RegExp(`^${OTHER} completa la tarea ${TITLE} el ${P}$`),
+		pattern: new RegExp(`^${OTHER} completes the task ${TITLE} on ${P}$`),
 		run: (world, title, moment) => {
 			const seen = thatSawOther(world);
 			const task = theTaskTitled(seen, title);
@@ -195,39 +195,39 @@ export const editingSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: /^la tarea no cambia$/,
+		pattern: /^the task does not change$/,
 		run: (world) => expect(world.docs).toStrictEqual(thatSawOther(world).docs)
 	},
 	{
-		pattern: /^la tarea es (puntual|periódica)$/,
-		run: (world, kind) => expect(theTask(world).kind).toBe(kind === 'puntual' ? 'puntual' : 'periodica')
+		pattern: /^the task is (one-off|recurring)$/,
+		run: (world, kind) => expect(theTask(world).kind).toBe(kind === 'one-off' ? 'puntual' : 'periodica')
 	},
 	{
-		pattern: /^la tarea no tiene recurrencia$/,
+		pattern: /^the task has no recurrence$/,
 		run: (world) => expect(theDoc(world)).not.toHaveProperty('recurrence')
 	},
 	{
-		pattern: new RegExp(`^la tarea tiene título ${P}$`),
+		pattern: new RegExp(`^the task has title ${P}$`),
 		run: (world, title) => expect(theTask(world).title).toBe(title)
 	},
 	{
-		pattern: new RegExp(`^la tarea sigue creada el ${P}$`),
+		pattern: new RegExp(`^the task is still created on ${P}$`),
 		run: (world, created) => expect(theTask(world).createdAt).toEqual(dateHour(created))
 	},
 	{
-		pattern: /^la tarea conserva su id$/,
+		pattern: /^the task keeps its id$/,
 		run: (world) => expect(theTask(world).id).toBe(theTask(thatSawOther(world)).id)
 	},
 	{
-		pattern: new RegExp(`^la tarea conserva un solo completado, del ${P}$`),
+		pattern: new RegExp(`^the task keeps a single completion, from ${P}$`),
 		run: (world, completed) => theOnlyCompletionIs(world, theTask(world), completed)
 	},
 	{
-		pattern: new RegExp(`^la tarea ${TITLE} conserva un solo completado, del ${P}$`),
+		pattern: new RegExp(`^the task ${TITLE} keeps a single completion, from ${P}$`),
 		run: (world, title, completed) => theOnlyCompletionIs(world, theTaskTitled(world, title), completed)
 	},
 	{
-		pattern: new RegExp(`^no existe la tarea ${TITLE}$`),
+		pattern: new RegExp(`^there is no task ${TITLE}$`),
 		run: (world, title) => {
 			const id = theOneThatHadBefore(world, title).id;
 			expect(world.docs.map((doc) => doc.id)).not.toContain(id);
@@ -235,15 +235,15 @@ export const editingSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^no queda ningún completado de ${TITLE}$`),
+		pattern: new RegExp(`^no completion remains of ${TITLE}$`),
 		run: (world, title) => expect(completionsOfTask(world.completions, theOneThatHadBefore(world, title).id)).toEqual([])
 	},
 	{
-		pattern: /^no queda ninguna tarea$/,
+		pattern: /^no task remains$/,
 		run: (world) => expect(world.docs).toEqual([])
 	},
 	{
-		pattern: new RegExp(`^los completados huérfanos a limpiar son solo el de ${TITLE} del ${P}$`),
+		pattern: new RegExp(`^the orphan completions to clean are only the one of ${TITLE} from ${P}$`),
 		run: (world, title, completed) => {
 			expect(orphanCompletions(tasksOf(world), world.completions)).toEqual([
 				{ id: expect.any(String), taskId: theOneThatHadBefore(world, title).id, completedAt: dateHour(completed) }

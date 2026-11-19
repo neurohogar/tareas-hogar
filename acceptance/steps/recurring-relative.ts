@@ -60,73 +60,73 @@ function onlyStatus(world: World) {
 
 export const recurringRelativeSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^una tarea periódica relativa cada ${P} ${P}$`),
+		pattern: new RegExp(`^a relative recurring task every ${P} ${P}$`),
 		run: (world, every, u) => createInWorld(world, { title: 'Tarea', every: numeric(every), unit: unit(u) })
 	},
 	{
-		pattern: new RegExp(`^una tarea periódica relativa cada ${P} ${P} creada el ${P}$`),
+		pattern: new RegExp(`^a relative recurring task every ${P} ${P} created on ${P}$`),
 		run: (world, every, u, created) =>
 			createInWorld(world, { title: 'Tarea', every: numeric(every), unit: unit(u) }, dateHour(created))
 	},
 	{
-		pattern: /^una tarea periódica relativa nunca completada$/,
+		pattern: /^a relative recurring task never completed$/,
 		run: (world) => createInWorld(world, { title: 'Tarea', every: 1, unit: 'horas' })
 	},
 	{
-		pattern: new RegExp(`^una tarea periódica relativa ${TITLE} cada ${P} ${P}$`),
+		pattern: new RegExp(`^a relative recurring task ${TITLE} every ${P} ${P}$`),
 		run: (world, title, every, u) =>
 			createInWorld(world, { title, every: numeric(every), unit: unit(u) }, SCENARIO_BEFORE)
 	},
 	{
-		pattern: new RegExp(`^una tarea periódica relativa ${TITLE} cada ${P} ${P} creada el ${P}$`),
+		pattern: new RegExp(`^a relative recurring task ${TITLE} every ${P} ${P} created on ${P}$`),
 		run: (world, title, every, u, created) =>
 			createInWorld(world, { title, every: numeric(every), unit: unit(u) }, dateHour(created))
 	},
 	{
-		pattern: new RegExp(`^una tarea periódica relativa ${TITLE} nunca completada$`),
+		pattern: new RegExp(`^a relative recurring task ${TITLE} never completed$`),
 		run: (world, title) => createInWorld(world, { title, every: 1, unit: 'horas' }, SCENARIO_BEFORE)
 	},
 	{
-		pattern: new RegExp(`^una tarea periódica relativa ${TITLE} nunca completada creada el ${P}$`),
+		pattern: new RegExp(`^a relative recurring task ${TITLE} never completed created on ${P}$`),
 		run: (world, title, created) => createInWorld(world, { title, every: 1, unit: 'horas' }, dateHour(created))
 	},
 	{
-		pattern: new RegExp(`^la tarea ${TITLE} fue completada el ${P}$`),
+		pattern: new RegExp(`^the task ${TITLE} was completed on ${P}$`),
 		run: (world, title, moment) => {
 			recordCompletion(world, dateHour(moment), theTaskTitled(world, title));
 		}
 	},
 	{
-		pattern: new RegExp(`^la tarea fue completada el ${P}$`),
+		pattern: new RegExp(`^the task was completed on ${P}$`),
 		run: (world, moment) => {
 			recordCompletion(world, dateHour(moment));
 		}
 	},
 	{
-		pattern: new RegExp(`^completo la tarea el ${P}$`),
+		pattern: new RegExp(`^I complete the task on ${P}$`),
 		run: (world, moment) => completeMe(world, dateHour(moment), theTask(world))
 	},
 	{
-		pattern: new RegExp(`^completo la tarea ${TITLE} el ${P}$`),
+		pattern: new RegExp(`^I complete the task ${TITLE} on ${P}$`),
 		run: (world, title, moment) => completeMe(world, dateHour(moment), theTaskTitled(world, title))
 	},
 	{
-		pattern: new RegExp(`^consulto el estado el ${P}$`),
+		pattern: new RegExp(`^I query the status on ${P}$`),
 		run: (world, now) => queryStatus(world, [dateHour(now)])
 	},
 	{
-		pattern: /^consulto el estado en cualquier momento$/,
+		pattern: /^I query the status at any moment$/,
 		run: (world) => queryStatus(world, ANY_MOMENT)
 	},
 	{
-		pattern: /^el estado es (pendiente|en espera|atrasada)$/,
+		pattern: /^the status is (pendiente|en espera|atrasada)$/,
 		run: (world, kind) => {
 			expect(world.statuses.length).toBeGreaterThan(0);
 			for (const status of world.statuses) expect(status.kind).toBe(kind);
 		}
 	},
 	{
-		pattern: new RegExp(`^el progreso es ${P}$`),
+		pattern: new RegExp(`^the progress is ${P}$`),
 		run: (world, progress) => {
 			const status = onlyStatus(world);
 			if (status.kind !== 'en espera') throw new Error(`No progress: the status is ${status.kind}`);
@@ -134,7 +134,7 @@ export const recurringRelativeSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: /^se registró un completado sin ocurrencia cubierta$/,
+		pattern: /^a completion without a covered occurrence was recorded$/,
 		run: (world) => {
 			expect(world.newCompletion).toEqual({
 				id: expect.any(String),
@@ -145,7 +145,7 @@ export const recurringRelativeSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: /^el nuevo completado se agrega sin modificar los anteriores$/,
+		pattern: /^the new completion is added without changing the previous ones$/,
 		run: (world) => {
 			const previous = world.completionsPrevious ?? [];
 			expect(previous.length).toBeGreaterThan(0);

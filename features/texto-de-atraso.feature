@@ -30,20 +30,20 @@
 # fila y que dice T. Cuando el paso no da creadaEn, la tarea se creó antes de
 # cualquier otra fecha del escenario. Semana de referencia: viernes 2026-11-13
 # (martes 10, miércoles 11, jueves 12, sábado 14, domingo 15).
-Feature: Texto de atraso
+Feature: Overdue text
 
   # Texto de atraso 1
   # Puntual con fecha límite: el día de la fecha límite, sin hora. Bordes: se
   # atrasa a las 00:00 del día siguiente (fila 3) y hasta las 23:59:59 sigue
   # siendo «ayer» (fila 4); a 2 días (fila 2); otro mes (fila 5) y otro año
   # (fila 6).
-  Scenario Outline: Texto de atraso 1
-    Given una tarea puntual con fecha límite <limite>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Overdue text 1
+    Given a one-off task with due date <due_date>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | limite     | ahora               | texto                                                      |
+      | due_date   | now                 | text                                                       |
       | 2026-11-10 | 2026-11-13T10:00:00 | Tocaba el martes 10 · hace 3 días                          |
       | 2026-11-11 | 2026-11-13T00:00:00 | Tocaba el miércoles 11 · hace 2 días                       |
       | 2026-11-12 | 2026-11-13T00:00:00 | Tocaba ayer                                                |
@@ -56,14 +56,14 @@ Feature: Texto de atraso
   # sin hora, aunque A (la primera ventana desde que se creó) sea semanas
   # antes. Fila 3: se atrasa al cierre de la ventana del día límite, y ese día
   # es «hoy», sin distancia.
-  Scenario Outline: Texto de atraso 2
-    Given una tarea puntual con fecha límite <limite> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Overdue text 2
+    Given a one-off task with due date <due_date> created on <created>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | limite     | creada              | desde | hasta | ahora               | texto                             |
+      | due_date   | created             | from  | to    | now                 | text                              |
       | 2026-11-10 | 2026-11-01T09:00:00 | 08:00 | 11:00 | 2026-11-13T10:00:00 | Tocaba el martes 10 · hace 3 días |
       | 2026-11-12 | 2026-11-01T09:00:00 | 08:00 | 11:00 | 2026-11-13T10:00:00 | Tocaba ayer                       |
       | 2026-11-13 | 2026-11-01T09:00:00 | 08:00 | 11:00 | 2026-11-13T11:00:00 | Tocaba hoy                        |
@@ -73,14 +73,14 @@ Feature: Texto de atraso
   # pasaron 25 horas. Fila 4: cruza la medianoche. Fila 7: lo pasado se
   # redondea hacia abajo (1 hora y media es «1 hora»). Fila 8: otro mes. Fila
   # 9: otro año.
-  Scenario Outline: Texto de atraso 3
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Overdue text 3
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | cada | unidad | completada          | ahora               | texto                                                       |
+      | every | unit   | completed           | now                 | text                                                        |
       | 2    | dias   | 2026-11-08T09:00:00 | 2026-11-13T10:00:00 | Tocaba el martes 10 09:00 · hace 3 días                     |
       | 1    | dias   | 2026-11-10T23:00:00 | 2026-11-13T00:30:00 | Tocaba el miércoles 11 23:00 · hace 2 días                  |
       | 3    | horas  | 2026-11-12T18:00:00 | 2026-11-13T10:00:00 | Tocaba ayer 21:00 · hace 13 horas                           |
@@ -95,14 +95,14 @@ Feature: Texto de atraso
   # El texto avanza solo con el paso del tiempo, sin cambiar de tarea: la hora
   # y la distancia suben (fila 1 a 2), «hoy» pasa a «ayer» a las 00:00 (fila 3)
   # y, dos días locales después, la distancia pasa a días (fila 4).
-  Scenario Outline: Texto de atraso 4
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Overdue text 4
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | cada | unidad | completada          | ahora               | texto                                  |
+      | every | unit   | completed           | now                 | text                                   |
       | 1    | horas  | 2026-11-12T20:00:00 | 2026-11-12T22:00:00 | Tocaba hoy 21:00 · hace 1 hora         |
       | 1    | horas  | 2026-11-12T20:00:00 | 2026-11-12T23:59:59 | Tocaba hoy 21:00 · hace 2 horas        |
       | 1    | horas  | 2026-11-12T20:00:00 | 2026-11-13T00:00:00 | Tocaba ayer 21:00 · hace 3 horas       |
@@ -114,15 +114,15 @@ Feature: Texto de atraso
   # horario (V + intervalo, 08:00) antes de que abriera su ventana (20:00):
   # «Tocaba» nunca nombra un instante futuro y usa V. Fila 3: A llegó (08:00),
   # el atraso es el cierre (09:00).
-  Scenario Outline: Texto de atraso 5
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Overdue text 5
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | ahora               | texto                                  |
+      | every | unit   | completed           | from  | to    | now                 | text                                   |
       | 1    | dias   | 2026-11-11T06:00:00 | 08:00 | 10:00 | 2026-11-12T12:00:00 | Tocaba hoy 08:00 · hace 4 horas        |
       | 3    | horas  | 2026-11-13T02:00:00 | 20:00 | 22:00 | 2026-11-13T10:00:00 | Tocaba hoy 05:00 · hace 5 horas        |
       | 3    | horas  | 2026-11-13T04:00:00 | 08:00 | 09:00 | 2026-11-13T10:00:00 | Tocaba hoy 08:00 · hace 2 horas        |
@@ -132,13 +132,13 @@ Feature: Texto de atraso
   # Calendario semanal: el día de N, sin hora. Fila 1: perdió el martes 3 y el
   # jueves 5 y el 12, y dice la primera sin cubrir, no la última. Fila 3: se
   # atrasa a las 00:00 del día siguiente a N. Filas 4 y 5: otro mes y otro año.
-  Scenario Outline: Texto de atraso 6
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Overdue text 6
+    Given a weekly recurring task on <days> created on <created>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | dias           | creada              | ahora               | texto                                                  |
+      | days           | created             | now                 | text                                                   |
       | martes, jueves | 2026-11-02T08:00:00 | 2026-11-13T10:00:00 | Tocaba el martes 3 · hace 10 días                      |
       | jueves         | 2026-11-11T08:00:00 | 2026-11-13T10:00:00 | Tocaba ayer                                            |
       | jueves         | 2026-11-11T08:00:00 | 2026-11-13T00:00:00 | Tocaba ayer                                            |
@@ -147,13 +147,13 @@ Feature: Texto de atraso
 
   # Texto de atraso 7
   # Calendario mensual: el día de N, sin hora.
-  Scenario Outline: Texto de atraso 7
-    Given una tarea periódica mensual los días <dias> creada el <creada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Overdue text 7
+    Given a monthly recurring task on days <days> created on <created>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | dias | creada              | ahora               | texto                              |
+      | days | created             | now                 | text                               |
       | 10   | 2026-11-01T08:00:00 | 2026-11-13T10:00:00 | Tocaba el martes 10 · hace 3 días  |
       | 1    | 2026-10-31T08:00:00 | 2026-11-13T10:00:00 | Tocaba el domingo 1 · hace 12 días |
 
@@ -162,14 +162,14 @@ Feature: Texto de atraso
   # 2 a 5: en minutos, redondeados hacia abajo (59 segundos de más no suman el
   # minuto); fila 6: a la hora en punto pasa a horas. Fila 1: cruza la
   # medianoche. Fila 8: a 2 o más días, con hora.
-  Scenario Outline: Texto de atraso 8
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Overdue text 8
+    Given a weekly recurring task on <days> created on <created>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | dias    | creada              | desde | hasta | ahora               | texto                                  |
+      | days    | created             | from  | to    | now                 | text                                   |
       | jueves  | 2026-11-11T08:00:00 | 22:00 | 23:30 | 2026-11-13T01:00:00 | Tocaba ayer 22:00 · hace 3 horas       |
       | viernes | 2026-11-12T08:00:00 | 09:20 | 09:50 | 2026-11-13T10:00:00 | Tocaba hoy 09:20 · hace 40 minutos     |
       | viernes | 2026-11-12T08:00:00 | 09:20 | 09:50 | 2026-11-13T10:00:59 | Tocaba hoy 09:20 · hace 40 minutos     |
@@ -183,14 +183,14 @@ Feature: Texto de atraso
   # Calendario con varios horarios: el inicio de N. Perdida la mañana, sigue
   # tocando desde las 07:00, también después de la ventana de la tarde (§5.6:
   # las ocurrencias perdidas no se acumulan).
-  Scenario Outline: Texto de atraso 9
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Overdue text 9
+    Given a weekly recurring task on <days> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | dias    | creada              | desde | hasta | desde2 | hasta2 | ahora               | texto                              |
+      | days    | created             | from  | to    | from2  | to2    | now                 | text                               |
       | viernes | 2026-11-12T08:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-11-13T10:00:00 | Tocaba hoy 07:00 · hace 3 horas    |
       | viernes | 2026-11-12T08:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-11-13T21:00:00 | Tocaba hoy 07:00 · hace 14 horas   |
 
@@ -198,14 +198,14 @@ Feature: Texto de atraso
   # Relativa con varios horarios, nunca completada: el inicio de N, la primera
   # ventana cuyo hasta es posterior a creadaEn (fila 1, la que estaba en
   # curso; fila 2, la de la tarde).
-  Scenario Outline: Texto de atraso 10
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Overdue text 10
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | cada | unidad | creada              | desde | hasta | desde2 | hasta2 | ahora               | texto                                   |
+      | every | unit   | created             | from  | to    | from2  | to2    | now                 | text                                    |
       | 2    | dias   | 2026-11-10T08:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-11-13T10:00:00 | Tocaba el martes 10 07:00 · hace 3 días |
       | 2    | dias   | 2026-11-10T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-11-13T10:00:00 | Tocaba el martes 10 18:00 · hace 3 días |
 
@@ -213,17 +213,17 @@ Feature: Texto de atraso
   # El texto no cambia el orden: el de §6.1 sigue siendo desde cuándo está
   # atrasada (Pagar, desde el 11 a las 00:00, antes que Regar, desde el 12 a las
   # 09:00), aunque Regar «toque» desde antes (domingo 8) que Pagar (martes 10).
-  Scenario Outline: Texto de atraso 11
-    Given una tarea puntual Pagar con fecha límite <limite>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
-    And la fila de Pagar muestra el texto <texto_pagar>
-    And la fila de Regar muestra el texto <texto_regar>
+  Scenario Outline: Overdue text 11
+    Given a one-off task Pagar with due date <due_date>
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
+    And the row of Pagar shows the text <text_pay>
+    And the row of Regar shows the text <text_water>
 
     Examples:
-      | limite     | cada | unidad | completada          | ahora               | orden        | texto_pagar                       | texto_regar                             |
+      | due_date   | every | unit   | completed           | now                 | order        | text_pay                          | text_water                              |
       | 2026-11-10 | 4    | dias   | 2026-11-04T09:00:00 | 2026-11-13T10:00:00 | Pagar, Regar | Tocaba el martes 10 · hace 3 días | Tocaba el domingo 8 09:00 · hace 5 días |
 
   # Texto de atraso 12
@@ -232,14 +232,14 @@ Feature: Texto de atraso
   # pasaron 60 segundos desde A, así que el borde alcanzable es el minuto
   # exacto (fila 1): «hace 1 minuto», singular; 59 segundos más siguen siendo
   # ese minuto (fila 2) y a los 60 pasa a «hace 2 minutos» (fila 3).
-  Scenario Outline: Texto de atraso 12
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra el texto <texto>
+  Scenario Outline: Overdue text 12
+    Given a weekly recurring task on <days> created on <created>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task row shows the text <text>
 
     Examples:
-      | dias    | creada              | desde | hasta | ahora               | texto                              |
+      | days    | created             | from  | to    | now                 | text                               |
       | viernes | 2026-11-12T08:00:00 | 10:00 | 10:01 | 2026-11-13T10:01:00 | Tocaba hoy 10:00 · hace 1 minuto   |
       | viernes | 2026-11-12T08:00:00 | 10:00 | 10:01 | 2026-11-13T10:01:59 | Tocaba hoy 10:00 · hace 1 minuto   |
       | viernes | 2026-11-12T08:00:00 | 10:00 | 10:01 | 2026-11-13T10:02:00 | Tocaba hoy 10:00 · hace 2 minutos  |

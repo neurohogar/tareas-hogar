@@ -6,18 +6,18 @@
 # Spec §4.1 y §4.2 (Relativa). Crear una periódica relativa con título y
 # "cada N horas|dias". Validación: título no vacío (un título de solo espacios
 # cuenta como vacío) y N entero ≥ 1.
-Feature: Crear periódica relativa
+Feature: Create relative recurring task
 
   # Crear periódica relativa 1
   # Datos válidos: se crea la tarea periódica con su recurrencia relativa y sin completados.
-  Scenario Outline: Crear periódica relativa 1
-    When creo una tarea periódica relativa con título <titulo> cada <cada> <unidad>
-    Then se crea una tarea periódica con título <titulo_guardado>
-    And su recurrencia es relativa cada <cada_guardado> <unidad>
-    And la tarea no tiene completados
+  Scenario Outline: Create relative recurring task 1
+    When I create a relative recurring task with title <title> every <every> <unit>
+    Then a recurring task is created with title <title_stored>
+    And its recurrence is relative every <every_stored> <unit>
+    And the task has no completions
 
     Examples:
-      | titulo          | cada | unidad | titulo_guardado | cada_guardado |
+      | title           | every | unit   | title_stored    | every_stored  |
       | Limpiar el baño | 1    | horas  | Limpiar el baño | 1             |
       | Regar plantas   | 3    | dias   | Regar plantas   | 3             |
       | Cambiar sábanas | 14   | dias   | Cambiar sábanas | 14            |
@@ -25,30 +25,30 @@ Feature: Crear periódica relativa
 
   # Crear periódica relativa 2
   # Título vacío: se rechaza y no se crea nada.
-  Scenario Outline: Crear periódica relativa 2
-    When creo una tarea periódica relativa con título <titulo> y un intervalo válido
-    Then la creación se rechaza por título vacío
-    And no se crea ninguna tarea
+  Scenario Outline: Create relative recurring task 2
+    When I create a relative recurring task with title <title> and a valid interval
+    Then creation is rejected for empty title
+    And no task is created
 
     Examples:
-      | titulo |
+      | title  |
       |        |
 
   # Crear periódica relativa 3
   # Título de solo espacios: cuenta como vacío.
-  Scenario: Crear periódica relativa 3
-    When creo una tarea periódica relativa con un título de solo espacios y un intervalo válido
-    Then la creación se rechaza por título vacío
-    And no se crea ninguna tarea
+  Scenario: Create relative recurring task 3
+    When I create a relative recurring task with a title of only spaces and a valid interval
+    Then creation is rejected for empty title
+    And no task is created
 
   # Crear periódica relativa 4
   # N que no es entero ≥ 1: se rechaza y no se crea nada.
-  Scenario Outline: Crear periódica relativa 4
-    When creo una tarea periódica relativa con un título válido y <cada> como cantidad del intervalo
-    Then la creación se rechaza por intervalo inválido
-    And no se crea ninguna tarea
+  Scenario Outline: Create relative recurring task 4
+    When I create a relative recurring task with a valid title and <every> as the interval amount
+    Then creation is rejected for invalid interval
+    And no task is created
 
     Examples:
-      | cada |
+      | every |
       | 0    |
       | 1.5  |

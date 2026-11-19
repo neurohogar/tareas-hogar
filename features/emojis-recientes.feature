@@ -8,63 +8,63 @@
 # repite (se mueve al primer lugar); la lista guarda como máximo 16 y, llena,
 # descarta el más viejo.
 # "los emojis recientes son" da la lista en orden, separada por ", ".
-Feature: Emojis recientes
+Feature: Recent emojis
 
   # Emojis recientes 1
   # Elegir un emoji sin recientes previos: queda como único reciente.
-  Scenario Outline: Emojis recientes 1
-    Given que no hay emojis recientes
-    When elijo el emoji <emoji>
-    Then los emojis recientes son <recientes_guardados>
+  Scenario Outline: Recent emojis 1
+    Given there are no recent emojis
+    When I choose the emoji <emoji>
+    Then the recent emojis are <recents_stored>
 
     Examples:
-      | emoji | recientes_guardados |
+      | emoji | recents_stored      |
       | 🌱     | 🌱                   |
 
   # Emojis recientes 2
   # El emoji elegido pasa al primer lugar y los anteriores bajan.
-  Scenario Outline: Emojis recientes 2
-    Given los emojis recientes son <recientes>
-    When elijo el emoji <emoji>
-    Then los emojis recientes son <recientes_guardados>
+  Scenario Outline: Recent emojis 2
+    Given the recent emojis are <recents>
+    When I choose the emoji <emoji>
+    Then the recent emojis are <recents_stored>
 
     Examples:
-      | recientes | emoji | recientes_guardados |
+      | recents  | emoji | recents_stored    |
       | 🔥, 🌱     | 🧹     | 🧹, 🔥, 🌱           |
 
   # Emojis recientes 3
   # Elegir uno que ya estaba: se mueve al primer lugar, sin repetirse.
-  Scenario Outline: Emojis recientes 3
-    Given los emojis recientes son <recientes>
-    When elijo el emoji <emoji>
-    Then los emojis recientes son <recientes_guardados>
+  Scenario Outline: Recent emojis 3
+    Given the recent emojis are <recents>
+    When I choose the emoji <emoji>
+    Then the recent emojis are <recents_stored>
 
     Examples:
-      | recientes     | emoji | recientes_guardados |
+      | recents     | emoji | recents_stored    |
       | 🔥, 🌱, 🧹     | 🧹     | 🧹, 🔥, 🌱           |
       | 🔥, 🌱, 🧹     | 🔥     | 🔥, 🌱, 🧹           |
 
   # Emojis recientes 4
   # Hasta 16 recientes se conservan todos.
-  Scenario Outline: Emojis recientes 4
-    Given hay <cantidad> emojis recientes
-    When elijo un emoji que no estaba entre los recientes
-    Then hay <cantidad_guardada> emojis recientes
-    And el primero es el que elegí
+  Scenario Outline: Recent emojis 4
+    Given there are <count> recent emojis
+    When I choose an emoji that was not among the recent ones
+    Then there are <count_stored> recent emojis
+    And the first one is the one I chose
 
     Examples:
-      | cantidad | cantidad_guardada |
+      | count    | count_stored      |
       | 15       | 16                |
 
   # Emojis recientes 5
   # Con 16 recientes, uno nuevo descarta el más viejo.
-  Scenario Outline: Emojis recientes 5
-    Given hay <cantidad> emojis recientes
-    When elijo un emoji que no estaba entre los recientes
-    Then hay <cantidad_guardada> emojis recientes
-    And el primero es el que elegí
-    And el emoji más viejo de antes ya no está
+  Scenario Outline: Recent emojis 5
+    Given there are <count> recent emojis
+    When I choose an emoji that was not among the recent ones
+    Then there are <count_stored> recent emojis
+    And the first one is the one I chose
+    And the oldest emoji from before is gone
 
     Examples:
-      | cantidad | cantidad_guardada |
+      | count    | count_stored      |
       | 16       | 16                |

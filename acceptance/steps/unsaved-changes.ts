@@ -286,46 +286,46 @@ const ASKS_CONFIRMATION = 'pide confirmación';
 
 export const unsavedChangesSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con nota ${P}$`),
+		pattern: new RegExp(`^I open the panel to edit the task ${P} with note ${P}$`),
 		run: (world, title, note) => openForEdit(world, { title, note })
 	},
 	{
-		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con versión mínima ${P}$`),
+		pattern: new RegExp(`^I open the panel to edit the task ${P} with minimal version ${P}$`),
 		run: (world, title, minimalVersion) => openForEdit(world, { title, minimalVersion })
 	},
 	{
-		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con primer paso ${P}$`),
+		pattern: new RegExp(`^I open the panel to edit the task ${P} with first step ${P}$`),
 		run: (world, title, firstStep) => openForEdit(world, { title, firstStep })
 	},
 	{
-		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con los pasos ${P}$`),
+		pattern: new RegExp(`^I open the panel to edit the task ${P} with the steps ${P}$`),
 		run: (world, title, steps) => {
 			const [firstStep, ...more] = list(steps);
 			openForEdit(world, { title, firstStep, steps: more });
 		}
 	},
 	{
-		pattern: /^toco Agregar paso$/,
+		pattern: /^I tap Agregar paso$/,
 		run: (world) => changeSteps(world, (steps) => [...steps, ''])
 	},
 	{
-		pattern: new RegExp(`^toco Quitar en el campo ${P}$`),
+		pattern: new RegExp(`^I tap Quitar in the field ${P}$`),
 		run: (world, field) => {
 			changeSteps(world, (steps, form) => steps.filter((_, place) => place !== stepPlace(form, field)));
 		}
 	},
 	{
-		pattern: new RegExp(`^abro el panel para editar la tarea ${P} con los horarios ${P} y ${P}$`),
+		pattern: new RegExp(`^I open the panel to edit the task ${P} with the schedules ${P} and ${P}$`),
 		run: (world, title, first, second) => openForEdit(world, { title, schedule: [timeWindow(first), timeWindow(second)] })
 	},
 	{
-		pattern: /^abro el panel para crear una tarea$/,
+		pattern: /^I open the panel to create a task$/,
 		run: (world) => {
 			world.panel = { pause: undefined, changes: changesOnCreate(DATA_ON_CREATE) };
 		}
 	},
 	{
-		pattern: new RegExp(`^el panel está abierto ${P}$`),
+		pattern: new RegExp(`^the panel is open ${P}$`),
 		run: (world, status) => {
 			const written = ofTable(PANEL_STATUSES, status, 'Estado del panel');
 			openForEdit(world, { title: TITLE_ON_OPEN });
@@ -333,7 +333,7 @@ export const unsavedChangesSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^encima del panel hay ${P}$`),
+		pattern: new RegExp(`^on top of the panel there is ${P}$`),
 		run: (world, onTop) => {
 			const changes = thePanelOpen(world);
 			changes.top = ofTable(ON_TOP_NAMES, onTop, 'Lo de arriba');
@@ -342,102 +342,102 @@ export const unsavedChangesSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: /^el aviso de deshacer está abierto$/,
+		pattern: /^the undo notice is open$/,
 		run: (world) => {
 			world.noticeOfUndoOpen = true;
 		}
 	},
 	{
-		pattern: /^el aviso de deshacer sigue abierto$/,
+		pattern: /^the undo notice is still open$/,
 		run: (world) => expect(world.noticeOfUndoOpen).toBe(true)
 	},
 	{
-		pattern: /^el teclado en pantalla está abierto$/,
+		pattern: /^the on-screen keyboard is open$/,
 		run: (world) => {
 			thePanelOpen(world).keyboardOpen = true;
 		}
 	},
 	{
-		pattern: new RegExp(`^escribo ${P} en el campo ${P}$`),
+		pattern: new RegExp(`^I type ${P} in the field ${P}$`),
 		run: (world, value, field) => write(world, field, value)
 	},
 	{
-		pattern: new RegExp(`^escribo ${P} con espacios alrededor en el campo ${P}$`),
+		pattern: new RegExp(`^I type ${P} with spaces around it in the field ${P}$`),
 		run: (world, value, field) => write(world, field, `  ${value}  `)
 	},
 	{
-		pattern: new RegExp(`^escribo solo espacios en el campo ${P}$`),
+		pattern: new RegExp(`^I type only spaces in the field ${P}$`),
 		run: (world, field) => write(world, field, '   ')
 	},
 	{
-		pattern: new RegExp(`^vacío el campo ${P}$`),
+		pattern: new RegExp(`^I clear the field ${P}$`),
 		run: (world, field) => write(world, field, '')
 	},
 	{
-		pattern: new RegExp(`^elijo ${P} en ${P}$`),
+		pattern: new RegExp(`^I choose ${P} in ${P}$`),
 		run: (world, value, selector) => {
 			const changes = thePanelOpen(world);
 			changes.form = { ...changes.form, data: ofTable(SELECTORS, selector, 'Selector')(changes, value) };
 		}
 	},
 	{
-		pattern: new RegExp(`^cambio los horarios a ${P} y ${P}$`),
+		pattern: new RegExp(`^I change the schedules to ${P} and ${P}$`),
 		run: (world, first, second) => changeSchedule(world, [timeWindow(first), timeWindow(second)])
 	},
 	{
-		pattern: /^agrego una fila de horario vacía$/,
+		pattern: /^I add an empty schedule row$/,
 		run: (world) => changeSchedule(world, [...(thePanelOpen(world).form.data.schedule ?? []), { from: '', to: '' }])
 	},
 	{
-		pattern: /^toco la X del panel$/,
+		pattern: /^I tap the X of the panel$/,
 		run: (world) => {
 			const changes = thePanelOpen(world);
 			closePanelFrom(world, changes, onClosePanel(withChanges(changes)));
 		}
 	},
 	{
-		pattern: /^toco Atrás$/,
+		pattern: /^I tap Atrás$/,
 		run: tapBack
 	},
 	{
-		pattern: new RegExp(`^toco ${P} en el aviso$`),
+		pattern: new RegExp(`^I tap ${P} in the notice$`),
 		run: (world, button) => tapInNotice(world, button)
 	},
 	{
-		pattern: new RegExp(`^toco ${P} en el aviso el ${P}$`),
+		pattern: new RegExp(`^I tap ${P} in the notice on ${P}$`),
 		run: (world, button, moment) => tapInNotice(world, button, moment)
 	},
 	{
-		pattern: new RegExp(`^elijo la acción ${P} el ${P}$`),
+		pattern: new RegExp(`^I choose the action ${P} on ${P}$`),
 		run: chooseAction
 	},
 	{
-		pattern: new RegExp(`^pasa el tiempo hasta ${P}$`),
+		pattern: new RegExp(`^time passes until ${P}$`),
 		run: (world, moment) => {
 			thePanelOpen(world).now = dateHour(moment);
 		}
 	},
 	{
-		pattern: new RegExp(`^queda abierto ${P}$`),
+		pattern: new RegExp(`^what stays open is ${P}$`),
 		run: (world, opened) => {
 			const changes = panelOnDay(world);
 			expect(changes ? (OPEN[changes.top] ?? 'el panel') : 'nada').toBe(opened);
 		}
 	},
 	{
-		pattern: new RegExp(`^el aviso dice ${P}$`),
+		pattern: new RegExp(`^the notice says ${P}$`),
 		run: (world, message) => expect(theNotice(world, thePanelOpen(world)).message).toBe(message)
 	},
 	{
-		pattern: new RegExp(`^el aviso ofrece ${P}$`),
+		pattern: new RegExp(`^the notice offers ${P}$`),
 		run: (world, buttons) => expect(theNotice(world, thePanelOpen(world)).buttons.map(({ text }) => text)).toEqual(list(buttons))
 	},
 	{
-		pattern: new RegExp(`^el campo ${P} sigue con ${P}$`),
+		pattern: new RegExp(`^the field ${P} still has ${P}$`),
 		run: (world, field, value) => expect(fieldOf(field).reads(thePanelOpen(world).form)).toBe(value)
 	},
 	{
-		pattern: new RegExp(`^al recargar la app el navegador ${P}$`),
+		pattern: new RegExp(`^on reloading the app the browser ${P}$`),
 		run: (world, response) => {
 			const changes = panelOnDay(world);
 			expect(changes && withChanges(changes) ? ASKS_CONFIRMATION : DOES_NOT_ASK).toBe(response);
@@ -445,7 +445,7 @@ export const unsavedChangesSteps: StepDefinition[] = [
 	},
 	{
 		// §6.2: the browser confirmation is for reloading or closing the app; Atrás with the panel open does not leave the screen.
-		pattern: new RegExp(`^el navegador ${P}$`),
+		pattern: new RegExp(`^the browser ${P}$`),
 		run: (world, response) => {
 			expect(world.tapBack).toBe(true);
 			expect(DOES_NOT_ASK).toBe(response);

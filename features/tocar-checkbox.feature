@@ -23,88 +23,88 @@
 # completado con el checkbox se verifica en la suite QA.
 # El progreso es una fracción entre 0 y 1, comparada exactamente.
 # Semana de referencia: lunes 2026-07-13 a domingo 2026-07-19.
-Feature: Tocar el checkbox
+Feature: Tap the checkbox
 
   # Tocar el checkbox 1
   # Una puntual no completada: tocar el checkbox la completa y sale de
   # Pendientes.
-  Scenario Outline: Tocar el checkbox 1
-    Given una tarea puntual sin fecha límite
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado en cualquier momento
-    Then se registró un completado sin ocurrencia cubierta
-    And el completado registrado es del <toque_guardado>
-    And la tarea no aparece en Pendientes
+  Scenario Outline: Tap the checkbox 1
+    Given a one-off task without a due date
+    When I tap the task checkbox on <tap>
+    And I query the status at any moment
+    Then a completion without a covered occurrence was recorded
+    And the recorded completion is from <tap_stored>
+    And the task does not appear in Pendientes
 
     Examples:
-      | toque               | toque_guardado      |
+      | tap                 | tap_stored          |
       | 2026-07-15T08:00:00 | 2026-07-15T08:00:00 |
 
   # Tocar el checkbox 2
   # Una periódica con completados pero pendiente (fila 1) o atrasada (fila 2)
   # no está completada: tocar el checkbox agrega un completado nuevo, no
   # borra el anterior.
-  Scenario Outline: Tocar el checkbox 2
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then el nuevo completado se agrega sin modificar los anteriores
-    And el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Tap the checkbox 2
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <previous>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the new completion is added without changing the previous ones
+    And the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | anterior            | toque               | ahora               | progreso |
+      | every | unit   | previous            | tap                 | now                 | progress |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T13:00:00 | 2026-07-15T14:00:00 | 0.25     |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T16:00:00 | 2026-07-15T18:00:00 | 0.5      |
 
   # Tocar el checkbox 3
   # Una puntual completada: tocar el checkbox borra su completado y vuelve
   # pendiente hasta terminar el día límite.
-  Scenario Outline: Tocar el checkbox 3
-    Given Mostrar completadas está encendido
-    And una tarea puntual con fecha límite <limite>
-    And la tarea fue completada el <completada>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then la tarea no tiene completados
-    And el estado es pendiente
+  Scenario Outline: Tap the checkbox 3
+    Given Mostrar completadas is on
+    And a one-off task with due date <due_date>
+    And the task was completed on <completed>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the task has no completions
+    And the status is pendiente
 
     Examples:
-      | limite     | completada          | toque               | ahora               |
+      | due_date   | completed           | tap                 | now                 |
       | 2026-07-15 | 2026-07-14T10:00:00 | 2026-07-15T23:59:00 | 2026-07-15T23:59:59 |
 
   # Tocar el checkbox 4
   # Una puntual completada vuelve atrasada si ya pasó el día límite.
-  Scenario Outline: Tocar el checkbox 4
-    Given Mostrar completadas está encendido
-    And una tarea puntual con fecha límite <limite>
-    And la tarea fue completada el <completada>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then la tarea no tiene completados
-    And el estado es atrasada
+  Scenario Outline: Tap the checkbox 4
+    Given Mostrar completadas is on
+    And a one-off task with due date <due_date>
+    And the task was completed on <completed>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the task has no completions
+    And the status is atrasada
 
     Examples:
-      | limite     | completada          | toque               | ahora               |
+      | due_date   | completed           | tap                 | now                 |
       | 2026-07-15 | 2026-07-14T10:00:00 | 2026-07-16T00:00:00 | 2026-07-16T00:00:01 |
 
   # Tocar el checkbox 5
   # Una puntual con dos completados (dos dispositivos sin conexión): tocar el
   # checkbox borra solo el más reciente, sin importar el orden en que se
   # registraron (fila 2); con el otro, sigue completada.
-  Scenario Outline: Tocar el checkbox 5
-    Given Mostrar completadas está encendido
-    And una tarea puntual sin fecha límite
-    And la tarea fue completada el <primera>
-    And la tarea fue completada el <segunda>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado en cualquier momento
-    Then la tarea conserva un solo completado, del <queda>
-    And la tarea está completada
+  Scenario Outline: Tap the checkbox 5
+    Given Mostrar completadas is on
+    And a one-off task without a due date
+    And the task was completed on <first>
+    And the task was completed on <second>
+    When I tap the task checkbox on <tap>
+    And I query the status at any moment
+    Then the task keeps a single completion, from <remains>
+    And the task is completed
 
     Examples:
-      | primera             | segunda             | toque               | queda               |
+      | first               | second              | tap                 | remains             |
       | 2026-07-14T10:00:00 | 2026-07-14T10:05:00 | 2026-07-15T08:00:00 | 2026-07-14T10:00:00 |
       | 2026-07-14T10:05:00 | 2026-07-14T10:00:00 | 2026-07-15T08:00:00 | 2026-07-14T10:00:00 |
 
@@ -112,18 +112,18 @@ Feature: Tocar el checkbox
   # Una relativa en espera con dos completados: tocar el checkbox borra el
   # más reciente; U pasa al anterior, con el que ya venció, y queda pendiente
   # (no completada). Fila 2: el más reciente se registró primero.
-  Scenario Outline: Tocar el checkbox 6
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <primera>
-    And la tarea fue completada el <segunda>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then la tarea conserva un solo completado, del <queda>
-    And el estado es pendiente
+  Scenario Outline: Tap the checkbox 6
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <first>
+    And the task was completed on <second>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the task keeps a single completion, from <remains>
+    And the status is pendiente
 
     Examples:
-      | cada | unidad | primera             | segunda             | toque               | ahora               | queda               |
+      | every | unit   | first               | second              | tap                 | now                 | remains             |
       | 2    | dias   | 2026-07-13T09:00:00 | 2026-07-15T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 | 2026-07-13T09:00:00 |
       | 2    | dias   | 2026-07-15T09:00:00 | 2026-07-13T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 | 2026-07-13T09:00:00 |
 
@@ -132,17 +132,17 @@ Feature: Tocar el checkbox
   # lo borra y vuelve a "nunca completada" (pendiente). Fila 2: completado a
   # las 00:00 y toque a las 23:59:59, el mismo día. Fila 3: completado "del
   # futuro" (relojes desfasados), posterior a hoy: también se borra.
-  Scenario Outline: Tocar el checkbox 7
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then la tarea no tiene completados
-    And el estado es pendiente
+  Scenario Outline: Tap the checkbox 7
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the task has no completions
+    And the status is pendiente
 
     Examples:
-      | cada | unidad | completada          | toque               | ahora               |
+      | every | unit   | completed           | tap                 | now                 |
       | 2    | dias   | 2026-07-15T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 |
       | 2    | dias   | 2026-07-15T00:00:00 | 2026-07-15T23:59:59 | 2026-07-16T00:00:00 |
       | 2    | dias   | 2026-07-16T09:00:00 | 2026-07-15T12:00:00 | 2026-07-15T12:00:01 |
@@ -151,19 +151,19 @@ Feature: Tocar el checkbox
   # Una semanal en espera con dos completados, el más reciente de hoy: tocar
   # el checkbox lo borra; P pasa a la ocurrencia del que queda y, como N sigue en el
   # futuro, sigue en espera y completada.
-  Scenario Outline: Tocar el checkbox 8
-    Given Mostrar completadas está encendido
-    And una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <primera> que cubre el <cubierta_primera>
-    And la tarea tiene un completado del <segunda> que cubre el <cubierta_segunda>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then la tarea conserva un solo completado, del <queda>
-    And el estado es en espera
-    And la tarea está completada
+  Scenario Outline: Tap the checkbox 8
+    Given Mostrar completadas is on
+    And a weekly recurring task on <days>
+    And the task has a completion from <first> that covers <covered_first>
+    And the task has a completion from <second> that covers <covered_second>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the task keeps a single completion, from <remains>
+    And the status is en espera
+    And the task is completed
 
     Examples:
-      | dias           | primera             | cubierta_primera | segunda             | cubierta_segunda | toque               | ahora               | queda               |
+      | days           | first               | covered_first    | second              | covered_second   | tap                 | now                 | remains             |
       | martes, jueves | 2026-07-14T10:00:00 | 2026-07-14       | 2026-07-15T08:00:00 | 2026-07-16       | 2026-07-15T12:00:00 | 2026-07-15T12:00:01 | 2026-07-14T10:00:00 |
 
   # Tocar el checkbox 9
@@ -171,19 +171,19 @@ Feature: Tocar el checkbox
   # anterior: tocar el checkbox la completa de nuevo y reinicia el intervalo
   # desde el toque. Fila 2: completado a las 23:59:59 de ayer y toque a las
   # 00:00 de hoy.
-  Scenario Outline: Tocar el checkbox 9
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then el nuevo completado se agrega sin modificar los anteriores
-    And el estado es en espera
-    And el progreso es <progreso>
-    And la tarea está completada
+  Scenario Outline: Tap the checkbox 9
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <previous>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the new completion is added without changing the previous ones
+    And the status is en espera
+    And the progress is <progress>
+    And the task is completed
 
     Examples:
-      | cada | unidad | anterior            | toque               | ahora               | progreso |
+      | every | unit   | previous            | tap                 | now                 | progress |
       | 2    | dias   | 2026-07-14T20:00:00 | 2026-07-15T08:00:00 | 2026-07-16T08:00:00 | 0.5      |
       | 2    | dias   | 2026-07-14T23:59:59 | 2026-07-15T00:00:00 | 2026-07-15T12:00:00 | 0.25     |
 
@@ -193,18 +193,18 @@ Feature: Tocar el checkbox
   # ocurrencia (completar antes de tiempo). Fila 1: completado el lunes que
   # cubrió el martes; el martes temprano cubre el jueves. Fila 2: completado
   # a las 23:59:59 del lunes y toque a las 00:00 del martes.
-  Scenario Outline: Tocar el checkbox 10
-    Given Mostrar completadas está encendido
-    And una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <anterior> que cubre el <cubierta_anterior>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then el nuevo completado se agrega sin modificar los anteriores
-    And se registró un completado que cubre el <cubierta>
-    And el estado es en espera
-    And la tarea está completada
+  Scenario Outline: Tap the checkbox 10
+    Given Mostrar completadas is on
+    And a weekly recurring task on <days>
+    And the task has a completion from <previous> that covers <covered_previous>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the new completion is added without changing the previous ones
+    And a completion was recorded that covers <covered>
+    And the status is en espera
+    And the task is completed
 
     Examples:
-      | dias           | anterior            | cubierta_anterior | toque               | ahora               | cubierta   |
+      | days           | previous            | covered_previous  | tap                 | now                 | covered    |
       | martes, jueves | 2026-07-13T10:00:00 | 2026-07-14        | 2026-07-14T08:00:00 | 2026-07-14T12:00:00 | 2026-07-16 |
       | martes, jueves | 2026-07-13T23:59:59 | 2026-07-14        | 2026-07-14T00:00:00 | 2026-07-14T12:00:00 | 2026-07-16 |

@@ -13,17 +13,17 @@
 # siempre, que en la compu no cambie nada, que ninguna pantalla fije la
 # orientación por su cuenta y que una versión nueva la aplique sin reinstalar
 # se verifican en la suite QA (qa/orientacion-vertical.md).
-Feature: Orientación vertical
+Feature: Portrait orientation
 
   # Orientación vertical 1
   # Lo que el manifest publicado declara: nombre, nombre corto, modo de
   # apertura y orientación.
-  Scenario Outline: Orientación vertical 1
-    Given el manifest que publica la app
-    Then el campo <campo> del manifest es <valor>
+  Scenario Outline: Portrait orientation 1
+    Given the manifest the app publishes
+    Then the field <field> of the manifest is <value>
 
     Examples:
-      | campo       | valor        |
+      | field       | value        |
       | name        | Tareas Hogar |
       | short_name  | Tareas       |
       | display     | standalone   |

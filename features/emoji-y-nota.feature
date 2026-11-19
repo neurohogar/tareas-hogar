@@ -17,17 +17,17 @@
 # Es el nombre que usan Pendientes, Historial y el aviso de deshacer.
 # Conflictos: emoji y nota son campos independientes; gana el último cambio,
 # por campo.
-Feature: Emoji y nota
+Feature: Emoji and note
 
   # Emoji y nota 1
   # Un solo emoji, de cualquier forma, se guarda tal cual.
-  Scenario Outline: Emoji y nota 1
-    Given una tarea puntual sin fecha límite
-    When elijo el emoji <emoji>
-    Then la tarea tiene emoji <emoji_guardado>
+  Scenario Outline: Emoji and note 1
+    Given a one-off task without a due date
+    When I choose the emoji <emoji>
+    Then the task has emoji <emoji_stored>
 
     Examples:
-      | emoji | emoji_guardado |
+      | emoji | emoji_stored   |
       | 🌱     | 🌱              |
       | 👨‍👩‍👧   | 👨‍👩‍👧            |
       | 👍🏽    | 👍🏽             |
@@ -36,10 +36,10 @@ Feature: Emoji y nota
 
   # Emoji y nota 2
   # Quitar el emoji deja la tarea sin emoji.
-  Scenario Outline: Emoji y nota 2
-    Given una tarea puntual sin fecha límite con emoji <emoji>
-    When quito el emoji
-    Then la tarea no tiene emoji
+  Scenario Outline: Emoji and note 2
+    Given a one-off task without a due date with emoji <emoji>
+    When I remove the emoji
+    Then the task has no emoji
 
     Examples:
       | emoji |
@@ -47,141 +47,141 @@ Feature: Emoji y nota
 
   # Emoji y nota 5
   # La nota se recorta al inicio y al final.
-  Scenario Outline: Emoji y nota 5
-    Given una tarea puntual sin fecha límite
-    When edito la nota a <nota> con espacios al inicio y al final
-    Then la tarea tiene nota <nota_guardada>
+  Scenario Outline: Emoji and note 5
+    Given a one-off task without a due date
+    When I edit the note to <note> with spaces at the start and end
+    Then the task has note <note_stored>
 
     Examples:
-      | nota                  | nota_guardada         |
+      | note                  | note_stored           |
       | Usar guantes          | Usar guantes          |
       | Comprar detergente    | Comprar detergente    |
 
   # Emoji y nota 6
   # Los saltos de línea internos se conservan.
-  Scenario Outline: Emoji y nota 6
-    Given una tarea puntual sin fecha límite
-    When edito la nota a <primera> y <segunda> en líneas separadas
-    Then la nota de la tarea tiene dos líneas: <primera_guardada> y <segunda_guardada>
+  Scenario Outline: Emoji and note 6
+    Given a one-off task without a due date
+    When I edit the note to <first> and <second> on separate lines
+    Then the task note has two lines: <first_stored> and <second_stored>
 
     Examples:
-      | primera        | segunda     | primera_guardada | segunda_guardada |
+      | first          | second      | first_stored     | second_stored    |
       | Usar guantes   | Ventilar    | Usar guantes     | Ventilar         |
 
   # Emoji y nota 7
   # Una nota de solo espacios quita la nota.
-  Scenario Outline: Emoji y nota 7
-    Given una tarea puntual sin fecha límite con nota <nota>
-    When edito la nota a una de solo espacios
-    Then la tarea no tiene nota
+  Scenario Outline: Emoji and note 7
+    Given a one-off task without a due date with note <note>
+    When I edit the note to one of only spaces
+    Then the task has no note
 
     Examples:
-      | nota         |
+      | note         |
       | Usar guantes |
 
   # Emoji y nota 8
   # La nota no tiene largo máximo.
-  Scenario Outline: Emoji y nota 8
-    Given una tarea puntual sin fecha límite
-    When edito la nota a una de <largo> caracteres
-    Then la tarea tiene una nota de <largo_guardado> caracteres
+  Scenario Outline: Emoji and note 8
+    Given a one-off task without a due date
+    When I edit the note to one of <length> characters
+    Then the task has a note of <length_stored> characters
 
     Examples:
-      | largo | largo_guardado |
+      | length | length_stored  |
       | 5000  | 5000           |
 
   # Emoji y nota 9
   # Crear con emoji y nota: se guardan con la tarea.
-  Scenario Outline: Emoji y nota 9
-    When creo una tarea puntual con título <titulo>, emoji <emoji> y nota <nota>
-    Then se crea una tarea puntual con título <titulo_guardado>
-    And la tarea tiene emoji <emoji_guardado>
-    And la tarea tiene nota <nota_guardada>
+  Scenario Outline: Emoji and note 9
+    When I create a one-off task with title <title>, emoji <emoji> and note <note>
+    Then a one-off task is created with title <title_stored>
+    And the task has emoji <emoji_stored>
+    And the task has note <note_stored>
 
     Examples:
-      | titulo | emoji | nota         | titulo_guardado | emoji_guardado | nota_guardada |
+      | title  | emoji | note         | title_stored    | emoji_stored   | note_stored   |
       | Regar  | 🌱     | Usar guantes | Regar           | 🌱              | Usar guantes  |
 
   # Emoji y nota 11
   # Nombre de la tarea: con emoji, «emoji título»; sin emoji, solo el título.
-  Scenario Outline: Emoji y nota 11
-    Given una tarea puntual <titulo> sin fecha límite con emoji <emoji>
-    Then el nombre de la tarea es <nombre>
+  Scenario Outline: Emoji and note 11
+    Given a one-off task <title> without a due date with emoji <emoji>
+    Then the task name is <name>
 
     Examples:
-      | titulo | emoji | nombre  |
+      | title  | emoji | name    |
       | Regar  | 🌱     | 🌱 Regar |
 
   # Emoji y nota 12
   # Sin emoji, el nombre es solo el título.
-  Scenario Outline: Emoji y nota 12
-    Given una tarea puntual <titulo> sin fecha límite
-    Then el nombre de la tarea es <nombre>
+  Scenario Outline: Emoji and note 12
+    Given a one-off task <title> without a due date
+    Then the task name is <name>
 
     Examples:
-      | titulo | nombre |
+      | title  | name   |
       | Regar  | Regar  |
 
   # Emoji y nota 13
   # Editar emoji y nota no cambia el id ni toca los completados.
-  Scenario Outline: Emoji y nota 13
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When elijo el emoji <emoji> y edito la nota a <nota>
-    Then la tarea conserva su id
-    And la tarea conserva un solo completado, del <completada_guardada>
+  Scenario Outline: Emoji and note 13
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I choose the emoji <emoji> and edit the note to <note>
+    Then the task keeps its id
+    And the task keeps a single completion, from <completed_stored>
 
     Examples:
-      | cada | unidad | completada          | emoji | nota         | completada_guardada |
+      | every | unit   | completed           | emoji | note         | completed_stored    |
       | 2    | dias   | 2026-07-15T08:00:00 | 🌱     | Usar guantes | 2026-07-15T08:00:00 |
 
   # Emoji y nota 14
   # Emoji y nota son campos distintos: se combinan los dos cambios.
-  Scenario Outline: Emoji y nota 14
-    Given una tarea puntual sin fecha límite
-    When elijo el emoji <emoji>
-    And otro dispositivo, sin ver ese cambio, edita la nota a <nota>
-    Then la tarea tiene emoji <emoji_guardado>
-    And la tarea tiene nota <nota_guardada>
+  Scenario Outline: Emoji and note 14
+    Given a one-off task without a due date
+    When I choose the emoji <emoji>
+    And another device, without seeing that change, edits the note to <note>
+    Then the task has emoji <emoji_stored>
+    And the task has note <note_stored>
 
     Examples:
-      | emoji | nota         | emoji_guardado | nota_guardada |
+      | emoji | note         | emoji_stored   | note_stored   |
       | 🌱     | Usar guantes | 🌱              | Usar guantes  |
 
   # Emoji y nota 15
   # El mismo emoji: gana el último cambio en llegar.
-  Scenario Outline: Emoji y nota 15
-    Given una tarea puntual sin fecha límite
-    When elijo el emoji <primero>
-    And otro dispositivo, sin ver ese cambio, elige el emoji <segundo>
-    Then la tarea tiene emoji <emoji_guardado>
+  Scenario Outline: Emoji and note 15
+    Given a one-off task without a due date
+    When I choose the emoji <first>
+    And another device, without seeing that change, chooses the emoji <second>
+    Then the task has emoji <emoji_stored>
 
     Examples:
-      | primero | segundo | emoji_guardado |
+      | first   | second  | emoji_stored   |
       | 🌱       | 🔥       | 🔥              |
 
   # Emoji y nota 16
   # La misma nota: gana el último cambio en llegar y el emoji no se toca.
-  Scenario Outline: Emoji y nota 16
-    Given una tarea puntual sin fecha límite con emoji <emoji>
-    When edito la nota a <primera> con espacios al inicio y al final
-    And otro dispositivo, sin ver ese cambio, edita la nota a <segunda>
-    Then la tarea tiene nota <nota_guardada>
-    And la tarea tiene emoji <emoji_guardado>
+  Scenario Outline: Emoji and note 16
+    Given a one-off task without a due date with emoji <emoji>
+    When I edit the note to <first> with spaces at the start and end
+    And another device, without seeing that change, edits the note to <second>
+    Then the task has note <note_stored>
+    And the task has emoji <emoji_stored>
 
     Examples:
-      | emoji | primera      | segunda  | nota_guardada | emoji_guardado |
+      | emoji | first        | second   | note_stored   | emoji_stored   |
       | 🌱     | Usar guantes | Ventilar | Ventilar      | 🌱              |
 
   # Emoji y nota 17
   # Quitar el emoji en un dispositivo y editar la nota en el otro: se combinan.
-  Scenario Outline: Emoji y nota 17
-    Given una tarea puntual sin fecha límite con emoji <emoji>
-    When quito el emoji
-    And otro dispositivo, sin ver ese cambio, edita la nota a <nota>
-    Then la tarea no tiene emoji
-    And la tarea tiene nota <nota_guardada>
+  Scenario Outline: Emoji and note 17
+    Given a one-off task without a due date with emoji <emoji>
+    When I remove the emoji
+    And another device, without seeing that change, edits the note to <note>
+    Then the task has no emoji
+    And the task has note <note_stored>
 
     Examples:
-      | emoji | nota         | nota_guardada |
+      | emoji | note         | note_stored   |
       | 🌱     | Usar guantes | Usar guantes  |

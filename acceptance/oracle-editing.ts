@@ -173,9 +173,9 @@ const daysKey = (days: string[]) => [...days].sort((a, b) => MONDAY_A_SUNDAY.ind
 
 function recurrenceKey(r: Recurrence | undefined): string {
 	if (r === undefined) return '-';
-	if ('relative' in r) return `relativa ${Number(r.relative.every)} ${r.relative.unit}`;
-	if ('weekly' in r) return `semanal ${daysKey(r.weekly).join(' ')}`;
-	return `mensual ${[...r.monthly].sort((a, b) => a - b).join(' ')}`;
+	if ('relative' in r) return `relative ${Number(r.relative.every)} ${r.relative.unit}`;
+	if ('weekly' in r) return `weekly ${daysKey(r.weekly).join(' ')}`;
+	return `monthly ${[...r.monthly].sort((a, b) => a - b).join(' ')}`;
 }
 
 const scheduleKey = (h: TimeWindow[] | undefined) => (h === undefined ? '-' : h.map((v) => `${v.from}-${v.to}`).join(' '));
@@ -197,7 +197,7 @@ function relativeRecurrence(every: string, unit: string): Data['recurrence'] {
 
 /** Weekly or monthly with days: unreadable names or numbers are not decided; out-of-range ones are a rejection (§4.2). */
 function calendarData(shape: string, value: string): Pick<Data, 'recurrence' | 'reasons'> {
-	if (shape === 'semanal') {
+	if (shape === 'weekly') {
 		const calendar = weekdays(value) ?? undecided(`días ${value}`);
 		return { recurrence: calendar, reasons: [] };
 	}
@@ -207,34 +207,34 @@ function calendarData(shape: string, value: string): Pick<Data, 'recurrence' | '
 	return { recurrence: reasons.length === 0 ? (monthDays(value) as Calendar) : undefined, reasons };
 }
 
-const withoutDays = (): Pick<Data, 'recurrence' | 'reasons'> => ({ reasons: ['falta de días'] });
+const withoutDays = (): Pick<Data, 'recurrence' | 'reasons'> => ({ reasons: ['missing days'] });
 
 /** Without a written schedule: the one that applies is added by whoever edits or creates. */
 type Definition = [RegExp, (title: string, c: string[]) => Omit<Data, 'timeWindowsWritten'>];
 
 const DEFINITIONS: Definition[] = [
 	[
-		/^puntual con fecha límite (\S+)$/,
+		/^one-off with due date (\S+)$/,
 		(title, [l]) => ({ title, kind: 'puntual', limit: day(l), reasons: reasonsDueDate(l) })
 	],
-	[/^puntual sin fecha límite$/, (title) => ({ title, kind: 'puntual', reasons: [] })],
+	[/^one-off without a due date$/, (title) => ({ title, kind: 'puntual', reasons: [] })],
 	[
-		/^periódica relativa cada (\S+) (\S+)$/,
+		/^relative recurring every (\S+) (\S+)$/,
 		(title, [c, u]) => ({
 			title,
 			kind: 'periodica',
 			recurrence: relativeRecurrence(c, u),
-			reasons: intervalValid(c) ? [] : ['intervalo inválido']
+			reasons: intervalValid(c) ? [] : ['invalid interval']
 		})
 	],
 	[
-		/^periódica (semanal los|mensual los días) (.*)$/,
+		/^(weekly recurring on|monthly recurring on days) (.*)$/,
 		(title, [f, d]) => ({ title, kind: 'periodica', ...calendarData(f.split(' ')[0], d) })
 	],
-	[/^periódica (?:semanal|mensual) sin días$/, (title) => ({ title, kind: 'periodica', ...withoutDays() })],
+	[/^(?:weekly|monthly) recurring without days$/, (title) => ({ title, kind: 'periodica', ...withoutDays() })],
 	[
-		/^periódica de calendario con días de la semana y del mes a la vez$/,
-		(title) => ({ title, kind: 'periodica', reasons: ['semanal y mensual combinados'] })
+		/^calendar recurring with weekdays and month days at once$/,
+		(title) => ({ title, kind: 'periodica', reasons: ['weekly and monthly combined'] })
 	]
 ];
 
@@ -271,7 +271,7 @@ function withWritten(data: Data, { emoji, note, firstStep, steps, minimalVersion
 
 /** Spec §4.1: the title cannot be empty (only spaces counts as empty). */
 function withValidation(data: Data): Data {
-	return data.title.trim() === '' ? { ...data, reasons: ['título vacío', ...data.reasons] } : data;
+	return data.title.trim() === '' ? { ...data, reasons: ['empty title', ...data.reasons] } : data;
 }
 
 /** The text fields and the schedule of the task being edited stay the same except those the edit writes. */
@@ -293,7 +293,7 @@ function withScheduleWritten(data: Data, written: WrittenPairs): Data {
 	return reasons.length > 0 ? { ...withWritten, reasons: [...data.reasons, ...reasons] } : { ...withWritten, schedule: read as TimeWindow[] };
 }
 
-const SCHEDULE_REASONS = ['horario incompleto', 'hora de fin no posterior', 'horarios superpuestos'];
+const SCHEDULE_REASONS = ['incomplete schedule', 'end time not after start', 'overlapping schedules'];
 
 /**
  * §4.1: a relative task in hours cannot have more than one window. If the schedule itself is also invalid, the spec
@@ -304,7 +304,7 @@ function withIntervalOfSchedule(data: Data): Data {
 	const inHours = data.kind === 'periodica' && r !== undefined && 'relative' in r && r.relative.unit === 'horas';
 	if (!inHours || data.timeWindowsWritten <= 1) return data;
 	if (data.reasons.some((reason) => SCHEDULE_REASONS.includes(reason))) return undecided('dos errores del horario');
-	return { ...data, reasons: [...data.reasons, 'varios horarios en una relativa en horas'] };
+	return { ...data, reasons: [...data.reasons, 'several schedules in an hourly relative'] };
 }
 
 function dataOf(text: string, title: string): Data {
@@ -716,8 +716,8 @@ const CREATION_MOMENT = (c: string | undefined) => (c === undefined ? undefined 
 /** Tasks with a title that do not say when they were created: earlier than any other date of the scenario. */
 const SCENARIO_BEFORE = 0;
 
-const SHAPES = '(?:semanal|mensual)';
-const created = '(?: creada el (\\S+))?';
+const SHAPES = 'weekly|monthly';
+const created = '(?: created on (\\S+))?';
 
 /** An already stored schedule (not a change from this device); an invalid one is not decided (§4.1). */
 function saveSchedule(task: Doc, hours: string[]): void {
@@ -733,69 +733,69 @@ function saveSteps(task: Doc, text: string): void {
 }
 
 const CREATIONS: Step[] = [
-	[new RegExp(`^la tarea se puede completar ${SCHEDULE}$`), (m, hours) => saveSchedule(only(m), hours)],
-	[new RegExp(`^la tarea (\\S+) se puede completar ${SCHEDULE}$`), (m, [t, ...hours]) => saveSchedule(withTitle(m, t), hours)],
+	[new RegExp(`^the task can be completed ${SCHEDULE}$`), (m, hours) => saveSchedule(only(m), hours)],
+	[new RegExp(`^the task (\\S+) can be completed ${SCHEDULE}$`), (m, [t, ...hours]) => saveSchedule(withTitle(m, t), hours)],
 	[
-		/^una tarea puntual con fecha límite (\S+) creada el (\S+)$/,
-		(m, [l, c]) => create(m, dataOf(`puntual con fecha límite ${l}`, 'Tarea'), moment(c))
+		/^a one-off task with due date (\S+) created on (\S+)$/,
+		(m, [l, c]) => create(m, dataOf(`one-off with due date ${l}`, 'Tarea'), moment(c))
 	],
 	[
-		/^una tarea puntual sin fecha límite con emoji (.*)$/,
-		(m, [e]) => create(m, withWritten(dataOf('puntual sin fecha límite', 'Tarea'), { emoji: e }), undefined)
+		/^a one-off task without a due date with emoji (.*)$/,
+		(m, [e]) => create(m, withWritten(dataOf('one-off without a due date', 'Tarea'), { emoji: e }), undefined)
 	],
 	[
-		/^una tarea puntual (\S+) sin fecha límite con emoji (.*)$/,
-		(m, [t, e]) => create(m, withWritten(dataOf('puntual sin fecha límite', t), { emoji: e }), SCENARIO_BEFORE)
+		/^a one-off task (\S+) without a due date with emoji (.*)$/,
+		(m, [t, e]) => create(m, withWritten(dataOf('one-off without a due date', t), { emoji: e }), SCENARIO_BEFORE)
 	],
 	[
-		/^una tarea puntual sin fecha límite con nota (.*)$/,
-		(m, [n]) => create(m, withWritten(dataOf('puntual sin fecha límite', 'Tarea'), { note: n }), undefined)
+		/^a one-off task without a due date with note (.*)$/,
+		(m, [n]) => create(m, withWritten(dataOf('one-off without a due date', 'Tarea'), { note: n }), undefined)
 	],
 	// §4.1: an already stored first step (not a change from this device); it is stored trimmed.
-	[/^el primer paso de la tarea es (.*)$/, (m, [p]) => void (only(m).firstStep = p.trim() || undefined)],
-	[/^el primer paso de la tarea (\S+) es (.*)$/, (m, [t, p]) => void (withTitle(m, t).firstStep = p.trim() || undefined)],
+	[/^the first step of the task is (.*)$/, (m, [p]) => void (only(m).firstStep = p.trim() || undefined)],
+	[/^the first step of the task (\S+) is (.*)$/, (m, [t, p]) => void (withTitle(m, t).firstStep = p.trim() || undefined)],
 	// §4.1 (Versión mínima): an already stored one (not a change from this device); it is stored trimmed.
-	[/^la versión mínima de la tarea es (.*)$/, (m, [v]) => void (only(m).minimalVersion = v.trim() || undefined)],
-	[/^la versión mínima de la tarea (\S+) es (.*)$/, (m, [t, v]) => void (withTitle(m, t).minimalVersion = v.trim() || undefined)],
+	[/^the minimal version of the task is (.*)$/, (m, [v]) => void (only(m).minimalVersion = v.trim() || undefined)],
+	[/^the minimal version of the task (\S+) is (.*)$/, (m, [t, v]) => void (withTitle(m, t).minimalVersion = v.trim() || undefined)],
 	// §4.1 (Pasos): the already stored steps (not a change from this device), with the first step and the extra steps.
-	[/^los pasos de la tarea son (.*)$/, (m, [p]) => saveSteps(only(m), p)],
-	[/^los pasos de la tarea (\S+) son (.*)$/, (m, [t, p]) => saveSteps(withTitle(m, t), p)],
-	[/^el paso actual de la tarea es (\S+)$/, (m, [p]) => void (only(m).currentStep = stepNumber(p) === 1 ? undefined : stepNumber(p))],
+	[/^the steps of the task are (.*)$/, (m, [p]) => saveSteps(only(m), p)],
+	[/^the steps of the task (\S+) are (.*)$/, (m, [t, p]) => saveSteps(withTitle(m, t), p)],
+	[/^the current step of the task is (\S+)$/, (m, [p]) => void (only(m).currentStep = stepNumber(p) === 1 ? undefined : stepNumber(p))],
 	[
-		/^una tarea puntual (\S+) sin fecha límite$/,
-		(m, [t]) => create(m, dataOf('puntual sin fecha límite', t), SCENARIO_BEFORE)
+		/^a one-off task (\S+) without a due date$/,
+		(m, [t]) => create(m, dataOf('one-off without a due date', t), SCENARIO_BEFORE)
 	],
 	[
-		/^creo una tarea puntual con título (.*), emoji (.*) y nota (.*)$/,
-		(m, [t, e, n]) => create(m, withWritten(dataOf('puntual sin fecha límite', t), { emoji: e, note: n }), undefined)
+		/^I create a one-off task with title (.*), emoji (.*) and note (.*)$/,
+		(m, [t, e, n]) => create(m, withWritten(dataOf('one-off without a due date', t), { emoji: e, note: n }), undefined)
 	],
-	[new RegExp(`^una tarea puntual sin fecha límite${created}$`), (m, [c]) => create(m, dataOf('puntual sin fecha límite', 'Tarea'), CREATION_MOMENT(c))],
-	[/^una tarea puntual con fecha límite (\S+)$/, (m, [l]) => create(m, dataOf(`puntual con fecha límite ${l}`, 'Tarea'), undefined)],
+	[new RegExp(`^a one-off task without a due date${created}$`), (m, [c]) => create(m, dataOf('one-off without a due date', 'Tarea'), CREATION_MOMENT(c))],
+	[/^a one-off task with due date (\S+)$/, (m, [l]) => create(m, dataOf(`one-off with due date ${l}`, 'Tarea'), undefined)],
 	[
-		/^una tarea puntual (\S+) con fecha límite (\S+)$/,
-		(m, [t, l]) => create(m, dataOf(`puntual con fecha límite ${l}`, t), SCENARIO_BEFORE)
-	],
-	[
-		new RegExp(`^una tarea periódica relativa cada (\\S+) (\\S+)${created}$`),
-		(m, [n, u, c]) => create(m, dataOf(`periódica relativa cada ${n} ${u}`, 'Tarea'), CREATION_MOMENT(c))
-	],
-	[/^una tarea periódica relativa nunca completada$/, (m) => create(m, dataOf('periódica relativa cada 1 horas', 'Tarea'), undefined)],
-	[
-		/^una tarea periódica relativa (?!cada )(\S+) cada (\S+) (\S+)$/,
-		(m, [t, n, u]) => create(m, dataOf(`periódica relativa cada ${n} ${u}`, t), SCENARIO_BEFORE)
+		/^a one-off task (\S+) with due date (\S+)$/,
+		(m, [t, l]) => create(m, dataOf(`one-off with due date ${l}`, t), SCENARIO_BEFORE)
 	],
 	[
-		/^una tarea periódica relativa (\S+) nunca completada creada el (\S+)$/,
-		(m, [t, c]) => create(m, dataOf('periódica relativa cada 1 horas', t), moment(c))
+		new RegExp(`^a relative recurring task every (\\S+) (\\S+)${created}$`),
+		(m, [n, u, c]) => create(m, dataOf(`relative recurring every ${n} ${u}`, 'Tarea'), CREATION_MOMENT(c))
+	],
+	[/^a relative recurring task never completed$/, (m) => create(m, dataOf('relative recurring every 1 horas', 'Tarea'), undefined)],
+	[
+		/^a relative recurring task (?!every )(\S+) every (\S+) (\S+)$/,
+		(m, [t, n, u]) => create(m, dataOf(`relative recurring every ${n} ${u}`, t), SCENARIO_BEFORE)
 	],
 	[
-		new RegExp(`^una tarea periódica (semanal los|mensual los días) (.*?)${created}$`),
-		(m, [f, d, c]) => create(m, dataOf(`periódica ${f} ${d}`, 'Tarea'), CREATION_MOMENT(c))
+		/^a relative recurring task (\S+) never completed created on (\S+)$/,
+		(m, [t, c]) => create(m, dataOf('relative recurring every 1 horas', t), moment(c))
 	],
 	[
-		new RegExp(`^una tarea periódica (${SHAPES}) (\\S+) (?:los|los días) (.*?)${created}$`),
-		(m, [f, t, d, c]) =>
-			create(m, dataOf(`periódica ${f === 'semanal' ? 'semanal los' : 'mensual los días'} ${d}`, t), CREATION_MOMENT(c) ?? SCENARIO_BEFORE)
+		new RegExp(`^a (weekly|monthly) recurring task (on|on days) (.*?)${created}$`),
+		(m, [f, k, d, c]) => create(m, dataOf(`${f} recurring ${k} ${d}`, 'Tarea'), CREATION_MOMENT(c))
+	],
+	[
+		new RegExp(`^a (${SHAPES}) recurring task (\\S+) (on|on days) (.*?)${created}$`),
+		(m, [f, t, k, d, c]) =>
+			create(m, dataOf(`${f} recurring ${k} ${d}`, t), CREATION_MOMENT(c) ?? SCENARIO_BEFORE)
 	]
 ];
 
@@ -814,93 +814,93 @@ function saveCompletionOf(m: OracleWorld, task: Doc, at: number, covered: string
 const COMPLETIONS: Step[] = [
 	// §4.4: an already stored minimal-version completion (without a notice and without touching the step the task is on).
 	[
-		/^la tarea fue completada el (\S+) en el paso (\S+) con la mínima$/,
+		/^the task was completed on (\S+) at step (\S+) with the minimal one$/,
 		(m, [t, step]) => {
 			const completion = complete(m, only(m), m.completions, moment(t), undefined, true);
 			completion.step = stepNumber(step);
 		}
 	],
-	[/^la tarea fue completada el (\S+) con la mínima$/, (m, [t]) => void complete(m, only(m), m.completions, moment(t), undefined, true)],
-	[/^la tarea (\S+) fue completada el (\S+) con la mínima$/, (m, [t, e]) => void complete(m, withTitle(m, t), m.completions, moment(e), undefined, true)],
+	[/^the task was completed on (\S+) with the minimal one$/, (m, [t]) => void complete(m, only(m), m.completions, moment(t), undefined, true)],
+	[/^the task (\S+) was completed on (\S+) with the minimal one$/, (m, [t, e]) => void complete(m, withTitle(m, t), m.completions, moment(e), undefined, true)],
 	// §4.4: a completion that stores the step the task was on, without touching the step it is on today.
 	[
-		/^la tarea fue completada el (\S+) en el paso (\S+)$/,
+		/^the task was completed on (\S+) at step (\S+)$/,
 		(m, [t, step]) => void (complete(m, only(m), m.completions, moment(t)).step = stepNumber(step))
 	],
-	[/^la tarea fue completada el (\S+)$/, (m, [t]) => void complete(m, only(m), m.completions, moment(t))],
-	[/^la tarea (\S+) fue completada el (\S+)$/, (m, [t, e]) => void complete(m, withTitle(m, t), m.completions, moment(e))],
-	[/^completo la tarea el (\S+)$/, (m, [e]) => completeMe(m, only(m), moment(e))],
-	[/^completo la tarea (\S+) el (\S+)$/, (m, [t, e]) => completeMe(m, withTitle(m, t), moment(e))],
+	[/^the task was completed on (\S+)$/, (m, [t]) => void complete(m, only(m), m.completions, moment(t))],
+	[/^the task (\S+) was completed on (\S+)$/, (m, [t, e]) => void complete(m, withTitle(m, t), m.completions, moment(e))],
+	[/^I complete the task on (\S+)$/, (m, [e]) => completeMe(m, only(m), moment(e))],
+	[/^I complete the task (\S+) on (\S+)$/, (m, [t, e]) => completeMe(m, withTitle(m, t), moment(e))],
 	[
-		/^la tarea (\S+) fue completada el (\S+) con id (\S+)$/,
+		/^the task (\S+) was completed on (\S+) with id (\S+)$/,
 		(m, [t, e, id]) => void complete(m, withTitle(m, t), m.completions, moment(e), id)
 	],
 	[
-		/^la tarea tiene un completado del (\S+) que cubre el (\S+)$/,
+		/^the task has a completion from (\S+) that covers (\S+)$/,
 		(m, [e, c]) => saveCompletionOf(m, only(m), moment(e), c)
 	],
 	[
-		/^la tarea tiene un completado que cubre el (\S+)$/,
+		/^the task has a completion that covers (\S+)$/,
 		(m, [c]) => saveCompletion(m, only(m), dayOf(c).getTime(), dayOf(c))
 	],
 	[
-		/^la tarea (\S+) tiene un completado que cubre el (\S+)$/,
+		/^the task (\S+) has a completion that covers (\S+)$/,
 		(m, [t, c]) => saveCompletion(m, withTitle(m, t), dayOf(c).getTime(), dayOf(c))
 	]
 ];
 
-const OTHER = 'otro dispositivo, sin ver ese cambio,';
+const OTHER = 'another device, without seeing that change,';
 
 const ONLY_SPACES = '   ';
 
 /** Note changes (§4.1, §6.2): what is written in the panel, with the rest of the task as it is. */
 const NOTE_CHANGES: [string, (c: string[]) => WrittenData][] = [
-	['la nota a (.*) con espacios al inicio y al final', ([n]) => ({ note: `  \n ${n} \n  ` })],
-	['la nota a (.*) y (.*) en líneas separadas', ([a, b]) => ({ note: `${a}\n${b}` })],
-	['la nota a una de solo espacios', () => ({ note: ONLY_SPACES })],
-	['la nota a una de (\\S+) caracteres', ([l]) => ({ note: 'x'.repeat(numeric(l)) })],
-	['la nota a (.*)', ([n]) => ({ note: n })]
+	['the note to (.*) with spaces at the start and end', ([n]) => ({ note: `  \n ${n} \n  ` })],
+	['the note to (.*) and (.*) on separate lines', ([a, b]) => ({ note: `${a}\n${b}` })],
+	['the note to one of only spaces', () => ({ note: ONLY_SPACES })],
+	['the note to one of (\\S+) characters', ([l]) => ({ note: 'x'.repeat(numeric(l)) })],
+	['the note to (.*)', ([n]) => ({ note: n })]
 ];
 
 /** First step changes (§4.1, §6.2): what is written in the field; removing it is emptying it. */
 const CHANGES_OF_FIRST_STEP: [string, (c: string[]) => WrittenData][] = [
-	['el primer paso a (.*) con espacios al inicio y al final', ([p]) => ({ firstStep: `  ${p}  ` })],
-	['el primer paso a uno de solo espacios', () => ({ firstStep: ONLY_SPACES })],
-	['el primer paso a uno de (\\S+) caracteres', ([l]) => ({ firstStep: 'x'.repeat(numeric(l)) })],
-	['el primer paso a (.*)', ([p]) => ({ firstStep: p })]
+	['the first step to (.*) with spaces at the start and end', ([p]) => ({ firstStep: `  ${p}  ` })],
+	['the first step to one of only spaces', () => ({ firstStep: ONLY_SPACES })],
+	['the first step to one of (\\S+) characters', ([l]) => ({ firstStep: 'x'.repeat(numeric(l)) })],
+	['the first step to (.*)', ([p]) => ({ firstStep: p })]
 ];
 
 const editsOfFirstStep = (): Step[] => [
 	...CHANGES_OF_FIRST_STEP.flatMap(([text, written]): Step[] => [
-		[new RegExp(`^edito ${text}$`), (m, c) => editMe(m, undefined, (base) => keeping(base, docData(base), written(c)))],
-		[new RegExp(`^${OTHER} edita ${text}$`), (m, c) => editsOther(m, (base) => keeping(base, docData(base), written(c)))]
+		[new RegExp(`^I edit ${text}$`), (m, c) => editMe(m, undefined, (base) => keeping(base, docData(base), written(c)))],
+		[new RegExp(`^${OTHER} edits ${text}$`), (m, c) => editsOther(m, (base) => keeping(base, docData(base), written(c)))]
 	]),
-	[/^quito el primer paso$/, (m) => editMe(m, undefined, (base) => keeping(base, docData(base), { firstStep: '' }))],
-	[new RegExp(`^${OTHER} quita el primer paso$`), (m) => editsOther(m, (base) => keeping(base, docData(base), { firstStep: '' }))]
+	[/^I remove the first step$/, (m) => editMe(m, undefined, (base) => keeping(base, docData(base), { firstStep: '' }))],
+	[new RegExp(`^${OTHER} removes the first step$`), (m) => editsOther(m, (base) => keeping(base, docData(base), { firstStep: '' }))]
 ];
 
 /** Minimal version changes (§4.1, §6.2): what is written in the field; removing it is emptying it. */
 const CHANGES_OF_MINIMAL_VERSION: [string, (c: string[]) => WrittenData][] = [
-	['la versión mínima a (.*) con espacios al inicio y al final', ([v]) => ({ minimalVersion: `  ${v}  ` })],
-	['la versión mínima a una de solo espacios', () => ({ minimalVersion: ONLY_SPACES })],
-	['la versión mínima a una de (\\S+) caracteres', ([l]) => ({ minimalVersion: 'x'.repeat(numeric(l)) })],
-	['la versión mínima a (.*)', ([v]) => ({ minimalVersion: v })]
+	['the minimal version to (.*) with spaces at the start and end', ([v]) => ({ minimalVersion: `  ${v}  ` })],
+	['the minimal version to one of only spaces', () => ({ minimalVersion: ONLY_SPACES })],
+	['the minimal version to one of (\\S+) characters', ([l]) => ({ minimalVersion: 'x'.repeat(numeric(l)) })],
+	['the minimal version to (.*)', ([v]) => ({ minimalVersion: v })]
 ];
 
 const editsOfMinimalVersion = (): Step[] => [
 	...CHANGES_OF_MINIMAL_VERSION.flatMap(([text, written]): Step[] => [
-		[new RegExp(`^edito ${text}$`), (m, c) => editMe(m, undefined, (base) => keeping(base, docData(base), written(c)))],
-		[new RegExp(`^${OTHER} edita ${text}$`), (m, c) => editsOther(m, (base) => keeping(base, docData(base), written(c)))]
+		[new RegExp(`^I edit ${text}$`), (m, c) => editMe(m, undefined, (base) => keeping(base, docData(base), written(c)))],
+		[new RegExp(`^${OTHER} edits ${text}$`), (m, c) => editsOther(m, (base) => keeping(base, docData(base), written(c)))]
 	]),
-	[/^quito la versión mínima$/, (m) => editMe(m, undefined, (base) => keeping(base, docData(base), { minimalVersion: '' }))],
-	[new RegExp(`^${OTHER} quita la versión mínima$`), (m) => editsOther(m, (base) => keeping(base, docData(base), { minimalVersion: '' }))]
+	[/^I remove the minimal version$/, (m) => editMe(m, undefined, (base) => keeping(base, docData(base), { minimalVersion: '' }))],
+	[new RegExp(`^${OTHER} removes the minimal version$`), (m) => editsOther(m, (base) => keeping(base, docData(base), { minimalVersion: '' }))]
 ];
 
 /** Changes to a step (§4.1, Pasos): what is written in its field; emptying it drops it and those below move up. */
 const STEP_CHANGES: [string, (c: string[]) => string][] = [
-	['(.*) con espacios al inicio y al final', ([p]) => `  ${p}  `],
-	['uno de solo espacios', () => ONLY_SPACES],
-	['uno de (\\S+) caracteres', ([l]) => 'x'.repeat(numeric(l))],
+	['(.*) with spaces at the start and end', ([p]) => `  ${p}  `],
+	['one of only spaces', () => ONLY_SPACES],
+	['one of (\\S+) characters', ([l]) => 'x'.repeat(numeric(l))],
 	['(.*)', ([p]) => p]
 ];
 
@@ -915,12 +915,12 @@ function withStep(base: Doc, n: string, text: string): WrittenData {
 
 const stepsEdits = (): Step[] => [
 	...STEP_CHANGES.flatMap(([text, written]): Step[] => [
-		[new RegExp(`^edito el paso (\\S+) a ${text}$`), (m, [n, ...c]) => editMe(m, undefined, (base) => keeping(base, docData(base), withStep(base, n, written(c))))],
-		[new RegExp(`^${OTHER} edita el paso (\\S+) a ${text}$`), (m, [n, ...c]) => editsOther(m, (base) => keeping(base, docData(base), withStep(base, n, written(c))))]
+		[new RegExp(`^I edit step (\\S+) to ${text}$`), (m, [n, ...c]) => editMe(m, undefined, (base) => keeping(base, docData(base), withStep(base, n, written(c))))],
+		[new RegExp(`^${OTHER} edits step (\\S+) to ${text}$`), (m, [n, ...c]) => editsOther(m, (base) => keeping(base, docData(base), withStep(base, n, written(c))))]
 	]),
-	[/^vacío el paso (\S+)$/, (m, [n]) => editMe(m, undefined, (base) => keeping(base, docData(base), withStep(base, n, '')))],
+	[/^I clear step (\S+)$/, (m, [n]) => editMe(m, undefined, (base) => keeping(base, docData(base), withStep(base, n, '')))],
 	[
-		/^edito la tarea con (\S+) pasos$/,
+		/^I edit the task with (\S+) steps$/,
 		(m, [count]) => {
 			const steps = Array.from({ length: numeric(count) }, (_, i) => `Paso ${i + 1}`);
 			editMe(m, undefined, (base) => keeping(base, docData(base), { firstStep: steps[0], steps: steps.slice(1) }));
@@ -973,13 +973,13 @@ function dueMinimalOther(m: OracleWorld, at: number): void {
 }
 
 const ROW_STEPS: Step[] = [
-	[/^toco Hice la mínima el (\S+)$/, (m, [e]) => tapMinimal(m, only(m), moment(e))],
-	[/^toco Hice la mínima en la tarea (\S+) el (\S+)$/, (m, [t, e]) => tapMinimal(m, withTitle(m, t), moment(e))],
-	[new RegExp(`^${OTHER} toca Hice la mínima el (\\S+)$`), (m, [e]) => dueMinimalOther(m, moment(e))],
-	[/^toco Hecho el (\S+)$/, (m, [e]) => tapDone(m, only(m), moment(e))],
-	[/^toco Hecho en la tarea (\S+) el (\S+)$/, (m, [t, e]) => tapDone(m, withTitle(m, t), moment(e))],
+	[/^I tap Hice la mínima on (\S+)$/, (m, [e]) => tapMinimal(m, only(m), moment(e))],
+	[/^I tap Hice la mínima in the task (\S+) on (\S+)$/, (m, [t, e]) => tapMinimal(m, withTitle(m, t), moment(e))],
+	[new RegExp(`^${OTHER} taps Hice la mínima on (\\S+)$`), (m, [e]) => dueMinimalOther(m, moment(e))],
+	[/^I tap Hecho on (\S+)$/, (m, [e]) => tapDone(m, only(m), moment(e))],
+	[/^I tap Hecho in the task (\S+) on (\S+)$/, (m, [t, e]) => tapDone(m, withTitle(m, t), moment(e))],
 	[
-		/^toco Paso anterior$/,
+		/^I tap Paso anterior$/,
 		(m) => {
 			const d = derived(only(m));
 			if (!severalSteps(d)) undecided('«Paso anterior» no se ve');
@@ -987,32 +987,32 @@ const ROW_STEPS: Step[] = [
 			goOnStep(m, d.id, Math.max(1, stepInThatGoes(d) - 1));
 		}
 	],
-	[new RegExp(`^${OTHER} toca Hecho el (\\S+)$`), (m, [e]) => dueDoneOther(m, moment(e))]
+	[new RegExp(`^${OTHER} taps Hecho on (\\S+)$`), (m, [e]) => dueDoneOther(m, moment(e))]
 ];
 
 /** Choosing an emoji in the picker or removing it (§6.2): whoever edits chooses or removes; removing is leaving the field empty. */
 const EMOJI_CHANGES: [RegExp, string, (c: string[]) => WrittenData][] = [
-	[/^elijo el emoji (.*) y edito la nota a (.*)$/, 'yo', ([e, n]) => ({ emoji: e, note: n })],
-	[/^elijo el emoji (.*)$/, 'yo', ([e]) => ({ emoji: e })],
-	[/^quito el emoji$/, 'yo', () => ({ emoji: '' })],
-	[new RegExp(`^${OTHER} elige el emoji (.*)$`), 'otro', ([e]) => ({ emoji: e })]
+	[/^I choose the emoji (.*) and edit the note to (.*)$/, 'me', ([e, n]) => ({ emoji: e, note: n })],
+	[/^I choose the emoji (.*)$/, 'me', ([e]) => ({ emoji: e })],
+	[/^I remove the emoji$/, 'me', () => ({ emoji: '' })],
+	[new RegExp(`^${OTHER} chooses the emoji (.*)$`), 'other', ([e]) => ({ emoji: e })]
 ];
 
 function editsOfEmojiAndNote(): Step[] {
 	const ofNote = NOTE_CHANGES.flatMap(([text, written]): Step[] => [
 		[
-			new RegExp(`^edito ${text}$`),
+			new RegExp(`^I edit ${text}$`),
 			(m, c) => editMe(m, undefined, (base) => keeping(base, docData(base), written(c)))
 		],
 		[
-			new RegExp(`^${OTHER} edita ${text}$`),
+			new RegExp(`^${OTHER} edits ${text}$`),
 			(m, c) => editsOther(m, (base) => keeping(base, docData(base), written(c)))
 		]
 	]);
 	const ofEmoji = EMOJI_CHANGES.map(([pattern, who, written]): Step => [
 		pattern,
 		(m, c) =>
-			who === 'yo'
+			who === 'me'
 				? editMe(m, undefined, (base) => keeping(base, docData(base), written(c)))
 				: editsOther(m, (base) => keeping(base, docData(base), written(c)))
 	]);
@@ -1023,13 +1023,13 @@ function editsOfEmojiAndNote(): Step[] {
 const withSchedule = (written: WrittenPairs) => (base: Doc) => withScheduleWritten(docData(base), written);
 
 const SCHEDULE_EDITS: Step[] = [
-	[new RegExp(`^pongo el horario ${SCHEDULE}$`), (m, hours) => editMe(m, undefined, withSchedule(writtenOf(hours)))],
-	[/^quito el horario$/, (m) => editMe(m, undefined, withSchedule([]))],
-	[/^pongo un horario con solo la hora de inicio (\S+)$/, (m, [d]) => editMe(m, undefined, withSchedule([[d, undefined]]))],
-	[new RegExp(`^${OTHER} pone el horario ${SCHEDULE}$`), (m, hours) => editsOther(m, withSchedule(writtenOf(hours)))],
-	[new RegExp(`^${OTHER} quita el horario$`), (m) => editsOther(m, withSchedule([]))],
+	[new RegExp(`^I set the schedule ${SCHEDULE}$`), (m, hours) => editMe(m, undefined, withSchedule(writtenOf(hours)))],
+	[/^I remove the schedule$/, (m) => editMe(m, undefined, withSchedule([]))],
+	[/^I set a schedule with only the start time (\S+)$/, (m, [d]) => editMe(m, undefined, withSchedule([[d, undefined]]))],
+	[new RegExp(`^${OTHER} sets the schedule ${SCHEDULE}$`), (m, hours) => editsOther(m, withSchedule(writtenOf(hours)))],
+	[new RegExp(`^${OTHER} removes the schedule$`), (m) => editsOther(m, withSchedule([]))],
 	[
-		new RegExp(`^edito en una misma edición el título a (.+) y el horario ${SCHEDULE}$`),
+		new RegExp(`^in a single edit I edit the title to (.+) and the schedule ${SCHEDULE}$`),
 		(m, [t, ...hours]) => editMe(m, undefined, (base) => withValidation({ ...withSchedule(writtenOf(hours))(base), title: t }))
 	]
 ];
@@ -1038,35 +1038,35 @@ const EDITS: Step[] = [
 	...SCHEDULE_EDITS,
 	// §5.8: changing a paused recurring task to one-off resumes it at that moment.
 	[
-		/^edito la tarea a puntual sin fecha límite el (\S+)$/,
-		(m, [e]) => editMe(m, undefined, (base) => keeping(base, dataOf('puntual sin fecha límite', base.title)), moment(e))
+		/^I edit the task to one-off without a due date on (\S+)$/,
+		(m, [e]) => editMe(m, undefined, (base) => keeping(base, dataOf('one-off without a due date', base.title)), moment(e))
 	],
 	[
-		/^edito la tarea a (.*)$/,
+		/^I edit the task to (.*)$/,
 		(m, [def]) => editMe(m, undefined, (base) => keeping(base, dataOf(def, base.title)))
 	],
 	[
-		/^edito la tarea (\S+) a (.*)$/,
+		/^I edit the task (\S+) to (.*)$/,
 		(m, [t, def]) => editMe(m, t, (base) => keeping(base, dataOf(def, base.title)))
 	],
-	[new RegExp(`^${OTHER} edita la tarea a (.*)$`), (m, [def]) => editsOther(m, (base) => keeping(base, dataOf(def, base.title)))],
+	[new RegExp(`^${OTHER} edits the task to (.*)$`), (m, [def]) => editsOther(m, (base) => keeping(base, dataOf(def, base.title)))],
 	[
-		/^edito el título a uno de solo espacios$/,
+		/^I edit the title to one of only spaces$/,
 		(m) => editMe(m, undefined, (base) => withValidation({ ...docData(base), title: '   ' }))
 	],
 	[
-		/^edito el título a (.*)$/,
+		/^I edit the title to (.*)$/,
 		(m, [t]) => editMe(m, undefined, (base) => withValidation({ ...docData(base), title: t }))
 	],
 	[
-		new RegExp(`^${OTHER} edita el título a (.*)$`),
+		new RegExp(`^${OTHER} edits the title to (.*)$`),
 		(m, [t]) => editsOther(m, (base) => withValidation({ ...docData(base), title: t }))
 	],
 	[
-		/^edito en una misma edición el título a (.+) y la fecha límite a (\S+)$/,
-		(m, [t, l]) => editMe(m, undefined, (base) => keeping(base, withValidation(dataOf(`puntual con fecha límite ${l}`, t))))
+		/^in a single edit I edit the title to (.+) and the due date to (\S+)$/,
+		(m, [t, l]) => editMe(m, undefined, (base) => keeping(base, withValidation(dataOf(`one-off with due date ${l}`, t))))
 	],
-	[new RegExp(`^${OTHER} guarda la tarea sin cambios$`), (m) => editsOther(m, docData)],
+	[new RegExp(`^${OTHER} saves the task without changes$`), (m) => editsOther(m, docData)],
 	...editsOfEmojiAndNote(),
 	...editsOfFirstStep(),
 	...editsOfMinimalVersion(),
@@ -1097,38 +1097,38 @@ function postpone(m: OracleWorld, view: Saved, option: string, value: string): v
 }
 
 const POSTPONEMENTS: Step[] = [
-	[/^la tarea fue pospuesta con la opción (.+) el (\S+)$/, (m, [o, e]) => postpone(m, m, o, e)],
+	[/^the task was postponed with option (.+) on (\S+)$/, (m, [o, e]) => postpone(m, m, o, e)],
 	[
-		/^pospongo la tarea con la opción (.+) el (\S+)$/,
+		/^I postpone the task with option (.+) on (\S+)$/,
 		(m, [o, e]) => {
 			m.before = copy(m);
 			postpone(m, m, o, e);
 		}
 	],
-	[new RegExp(`^${OTHER} pospone la tarea con la opción (.+) el (\\S+)$`), (m, [o, e]) => postpone(m, thatSawOther(m), o, e)]
+	[new RegExp(`^${OTHER} postpones the task with option (.+) on (\\S+)$`), (m, [o, e]) => postpone(m, thatSawOther(m), o, e)]
 ];
 
 const PAUSES: Step[] = [
-	[/^la tarea fue pausada$/, (m) => pause(m, derived(only(m)))],
-	[/^la tarea (\S+) fue pausada$/, (m, [t]) => pause(m, derived(withTitle(m, t)))],
+	[/^the task was paused$/, (m) => pause(m, derived(only(m)))],
+	[/^the task (\S+) was paused$/, (m, [t]) => pause(m, derived(withTitle(m, t)))],
 	[
-		/^pauso la tarea$/,
+		/^I pause the task$/,
 		(m) => {
 			m.before = copy(m);
 			pause(m, derived(only(m)));
 		}
 	],
 	// §7: pausing writes only `pausada`; it lands on what is stored today even if the other device has not seen the resume.
-	[new RegExp(`^${OTHER} pausa la tarea$`), (m) => pause(m, derived(only(m)))],
+	[new RegExp(`^${OTHER} pauses the task$`), (m) => pause(m, derived(only(m)))],
 	[
-		/^reanudo la tarea el (\S+)$/,
+		/^I resume the task on (\S+)$/,
 		(m, [e]) => {
 			m.before = copy(m);
 			resume(m, derived(only(m)), moment(e));
 		}
 	],
 	[
-		/^reanudo la tarea (\S+) el (\S+)$/,
+		/^I resume the task (\S+) on (\S+)$/,
 		(m, [t, e]) => {
 			m.before = copy(m);
 			resume(m, derived(withTitle(m, t)), moment(e));
@@ -1138,28 +1138,28 @@ const PAUSES: Step[] = [
 
 const DELETED: Step[] = [
 	[
-		/^borro la tarea$/,
+		/^I delete the task$/,
 		(m) => {
 			m.before = copy(m);
 			remove(m, only(m), m.completions);
 		}
 	],
 	[
-		/^borro la tarea (\S+)$/,
+		/^I delete the task (\S+)$/,
 		(m, [t]) => {
 			m.before = copy(m);
 			remove(m, withTitle(m, t), m.completions);
 		}
 	],
 	[
-		new RegExp(`^${OTHER} borra la tarea$`),
+		new RegExp(`^${OTHER} deletes the task$`),
 		(m) => {
 			const seen = thatSawOther(m);
 			remove(m, only(seen), seen.completions);
 		}
 	],
 	[
-		new RegExp(`^${OTHER} completa la tarea (\\S+) el (\\S+)$`),
+		new RegExp(`^${OTHER} completes the task (\\S+) on (\\S+)$`),
 		(m, [t, e]) => {
 			const seen = thatSawOther(m);
 			const task = withTitle(seen, t);
@@ -1171,15 +1171,15 @@ const DELETED: Step[] = [
 
 const UNDOS: Step[] = [
 	[
-		/^borro el completado del (\S+)$/,
+		/^I delete the completion from (\S+)$/,
 		(m, [e]) => {
 			m.before = copy(m);
 			undoCompletion(m, theCompletionOf(m, moment(e)).id);
 		}
 	],
-	[new RegExp(`^${OTHER} borra el completado del (\\S+)$`), (m, [e]) => undoCompletion(m, theCompletionOf(m, moment(e)).id)],
-	[/^toco Deshacer en el aviso el (\S+)$/, (m, [e]) => tapUndo(m, moment(e))],
-	[/^toco el checkbox de la tarea el (\S+)$/, (m, [e]) => tapCheckbox(m, moment(e))]
+	[new RegExp(`^${OTHER} deletes the completion from (\\S+)$`), (m, [e]) => undoCompletion(m, theCompletionOf(m, moment(e)).id)],
+	[/^I tap Deshacer in the notice on (\S+)$/, (m, [e]) => tapUndo(m, moment(e))],
+	[/^I tap the task checkbox on (\S+)$/, (m, [e]) => tapCheckbox(m, moment(e))]
 ];
 
 /** The list order is sometimes not decided: it only matters if a Then looks at it; the steps row does not need it. */
@@ -1198,28 +1198,28 @@ function queryPending(m: OracleWorld, now: number | undefined): void {
 
 const QUERIES: Step[] = [
 	[
-		/^consulto el aviso el (\S+)$/,
+		/^I query the notice on (\S+)$/,
 		(m, [t]) => {
 			m.noticeSeen = queryNotice(m, moment(t));
 			m.noticeText = noticeText(m, moment(t));
 			m.noticeIn = moment(t);
 		}
 	],
-	[/^consulto el Historial el (\S+)$/, (m, [t]) => void (m.history = queryHistory(m, moment(t)))],
-	[/^consulto la última vez el (\S+)$/, (m, [t]) => void (m.lastTime = queryLastTime(m, moment(t)))],
+	[/^I query the Historial on (\S+)$/, (m, [t]) => void (m.history = queryHistory(m, moment(t)))],
+	[/^I query the last time on (\S+)$/, (m, [t]) => void (m.lastTime = queryLastTime(m, moment(t)))],
 	[
-		/^consulto el estado el (\S+)$/,
+		/^I query the status on (\S+)$/,
 		(m, [t]) => {
 			m.queriedAt = moment(t);
 			m.status = classify(m, m.queriedAt);
 		}
 	],
-	[/^consulto el estado en cualquier momento$/, (m) => void (m.status = classify(m, undefined))],
-	[/^consulto Pendientes el (\S+)$/, (m, [t]) => queryPending(m, moment(t))],
-	[/^consulto Pendientes en cualquier momento$/, (m) => queryPending(m, undefined)],
+	[/^I query the status at any moment$/, (m) => void (m.status = classify(m, undefined))],
+	[/^I query Pendientes on (\S+)$/, (m, [t]) => queryPending(m, moment(t))],
+	[/^I query Pendientes at any moment$/, (m) => queryPending(m, undefined)],
 	[new RegExp(`^${SHOW_COMPLETED}$`), (m) => void (m.showCompleted = true)],
 	// §6.1: paused tasks are shown with this check; the step line is not shown on them.
-	[/^Mostrar pausadas está encendido$/, () => undefined]
+	[/^Mostrar pausadas is on$/, () => undefined]
 ];
 
 const STEPS: Step[] = [...CREATIONS, ...COMPLETIONS, ...PAUSES, ...POSTPONEMENTS, ...EDITS, ...DELETED, ...UNDOS, ...QUERIES];
@@ -1286,7 +1286,7 @@ function theRowOfSteps(m: OracleWorld): StepsRow {
 	const line = `${step === 1 ? 'Primer paso' : 'Paso'}: ${steps[step - 1]}`;
 	if (steps.length < 2) return { line, buttons: WITHOUT_BUTTONS, done: withoutButtons };
 	const checkbox = () => classifySituation(situationOf(m, task, m.pendingAt), { progress: false, checkbox: true, onlyCheckbox: true })?.replace('checkbox ', '') ?? undecided('checkbox');
-	return { line, buttons: step > 1 ? 'Paso anterior y Hecho' : 'Hecho', done: () => (step < steps.length ? 'habilitado' : checkbox()) };
+	return { line, buttons: step > 1 ? 'Paso anterior y Hecho' : 'Hecho', done: () => (step < steps.length ? 'enabled' : checkbox()) };
 }
 
 /**
@@ -1301,108 +1301,108 @@ function theRowOfMinimal(m: OracleWorld): { line: string; button: () => string }
 	return { line: `Mínima: ${task.minimalVersion}`, button: checkbox };
 }
 
-const OF_ROW_OF_STEPS = /^(?:la fila de la tarea (?:muestra el paso |muestra los botones |no muestra botones de paso$|no muestra primer paso$|muestra la mínima |no muestra mínima$)|el botón Hecho de la tarea está |el botón Hice la mínima de la tarea está |el checkbox de la tarea está )/;
+const OF_ROW_OF_STEPS = /^(?:the task row (?:shows the step |shows the buttons |shows no step buttons$|shows no first step$|shows the minimal one |shows no minimal one$)|the Hecho button of the task is |the Hice la mínima button of the task is |the task checkbox is )/;
 
 type Observation = [RegExp, (m: OracleWorld, c: string[]) => string];
 
 const OBSERVATIONS: Observation[] = [
-	[/^el estado es (?:pendiente|en espera|atrasada)$/, (m) => statusKind(statusQueried(m))],
-	[/^el progreso es (\S+)$/, (m) => statusQueried(m)],
+	[/^the status is (?:pendiente|en espera|atrasada)$/, (m) => statusKind(statusQueried(m))],
+	[/^the progress is (\S+)$/, (m) => statusQueried(m)],
 	// With Mostrar completadas off, completed tasks have no row (§6.1).
-	[/^la tarea no aparece en Pendientes$/, (m) => String(!m.showCompleted && completedQueried(m))],
-	[/^la tarea está completada$/, (m) => String(completedQueried(m))],
-	[/^la tarea no está completada$/, (m) => String(!completedQueried(m))],
-	[/^la tarea está pausada$/, (m) => String(isPaused(m))],
-	[/^la tarea no está pausada$/, (m) => String(!isPaused(m))],
-	[/^la tarea no tiene estado$/, (m) => String(isPaused(m))],
-	[/^la tarea está pospuesta desde (\S+) hasta (\S+)$/, (m) => postponementKey(only(m).postponed)],
-	[/^la tarea no está pospuesta$/, (m) => String(only(m).postponed === undefined)],
-	[/^la tarea tiene (?:un completado|dos completados)$/, (m) => String(completionsOf(m, only(m).id).length)],
-	[/^el nuevo completado se agrega sin modificar los anteriores$/, (m) => String(m.updated !== undefined)],
-	[/^se registró un completado sin ocurrencia cubierta$/, (m) => String(fresh(m).covered === undefined && fresh(m).startCovered === undefined)],
-	[/^el completado registrado es del (\S+)$/, (m) => String(fresh(m).at)],
-	[/^Pendientes muestra en orden (.*)$/, (m) => m.order ?? undecided('sin consulta de Pendientes')],
-	[/^la tarea tiene título (.+)$/, (m) => theTask(m).title],
-	[/^la tarea es (?:puntual|periódica)$/, (m) => theTask(m).kind],
-	[/^su fecha límite es (\S+)$/, (m) => (theTask(m).kind === 'puntual' ? day_(theTask(m).limit) : undecided('no es puntual'))],
-	[/^la tarea no tiene fecha límite$/, (m) => String(only(m).limit === undefined)],
-	[/^la tarea tiene emoji (.*)$/, (m) => only(m).emoji ?? '-'],
-	[/^la tarea no tiene emoji$/, (m) => String(only(m).emoji === undefined)],
-	[/^la tarea tiene nota (.*)$/, (m) => only(m).note ?? '-'],
-	[/^la tarea no tiene nota$/, (m) => String(only(m).note === undefined)],
-	[/^la tarea tiene primer paso (.*)$/, (m) => only(m).firstStep ?? '-'],
-	[/^la fila de la tarea (?:muestra el primer paso .*|muestra el paso .*|no muestra primer paso)$/, (m) => theRowOfSteps(m).line],
-	[/^la fila de la tarea (?:muestra los botones .*|no muestra botones de paso)$/, (m) => theRowOfSteps(m).buttons],
-	[/^el botón Hecho de la tarea está (?:habilitado|deshabilitado)$/, (m) => theRowOfSteps(m).done()],
+	[/^the task does not appear in Pendientes$/, (m) => String(!m.showCompleted && completedQueried(m))],
+	[/^the task is completed$/, (m) => String(completedQueried(m))],
+	[/^the task is not completed$/, (m) => String(!completedQueried(m))],
+	[/^the task is paused$/, (m) => String(isPaused(m))],
+	[/^the task is not paused$/, (m) => String(!isPaused(m))],
+	[/^the task has no status$/, (m) => String(isPaused(m))],
+	[/^the task is postponed from (\S+) to (\S+)$/, (m) => postponementKey(only(m).postponed)],
+	[/^the task is not postponed$/, (m) => String(only(m).postponed === undefined)],
+	[/^the task has (?:a completion|two completions)$/, (m) => String(completionsOf(m, only(m).id).length)],
+	[/^the new completion is added without changing the previous ones$/, (m) => String(m.updated !== undefined)],
+	[/^a completion without a covered occurrence was recorded$/, (m) => String(fresh(m).covered === undefined && fresh(m).startCovered === undefined)],
+	[/^the recorded completion is from (\S+)$/, (m) => String(fresh(m).at)],
+	[/^Pendientes shows in order (.*)$/, (m) => m.order ?? undecided('sin consulta of Pendientes')],
+	[/^the task has title (.+)$/, (m) => theTask(m).title],
+	[/^the task is (?:one-off|recurring)$/, (m) => theTask(m).kind],
+	[/^its due date is (\S+)$/, (m) => (theTask(m).kind === 'puntual' ? day_(theTask(m).limit) : undecided('no is one-off'))],
+	[/^the task has no due date$/, (m) => String(only(m).limit === undefined)],
+	[/^the task has emoji (.*)$/, (m) => only(m).emoji ?? '-'],
+	[/^the task has no emoji$/, (m) => String(only(m).emoji === undefined)],
+	[/^the task has note (.*)$/, (m) => only(m).note ?? '-'],
+	[/^the task has no note$/, (m) => String(only(m).note === undefined)],
+	[/^the task has first step (.*)$/, (m) => only(m).firstStep ?? '-'],
+	[/^the task row (?:shows the first step .*|shows the step .*|shows no first step)$/, (m) => theRowOfSteps(m).line],
+	[/^the task row (?:shows the buttons .*|shows no step buttons)$/, (m) => theRowOfSteps(m).buttons],
+	[/^the Hecho button of the task is (?:habilitado|deshabilitado)$/, (m) => theRowOfSteps(m).done()],
 	[
-		/^el checkbox de la tarea está (?:habilitado|deshabilitado)$/,
+		/^the task checkbox is (?:enabled|disabled)$/,
 		(m) => {
 			const at = m.pendingAt ?? m.queriedAt ?? m.touchedAt ?? undecided('sin momento');
 			return classifySituation(situationOf(m, derived(only(m)), at), { progress: false, checkbox: true, onlyCheckbox: true }) ?? undecided('checkbox');
 		}
 	],
-	[/^la tarea va en el paso (\S+)$/, (m) => String(stepInThatGoes(derived(only(m))))],
-	[/^la tarea tiene los pasos (.*)$/, (m) => stepsOf(only(m)).join(', ')],
-	[/^la tarea no tiene más pasos$/, (m) => String(only(m).steps === undefined)],
-	[/^la tarea tiene (\S+) pasos$/, (m) => String(stepsOf(only(m)).length)],
-	[/^el paso (\S+) de la tarea tiene (\S+) caracteres$/, (m, [n]) => String(stepsOf(only(m))[stepNumber(n) - 1]?.length)],
-	[/^el último completado de la tarea guarda el paso (\S+)$/, (m) => String(theMoreRecent(completionsOf(m, only(m).id)).step)],
-	[/^el último completado de la tarea no guarda paso$/, (m) => String(theMoreRecent(completionsOf(m, only(m).id)).step === undefined)],
-	[/^la tarea no tiene primer paso$/, (m) => String(only(m).firstStep === undefined)],
-	[/^la tarea tiene versión mínima (.*)$/, (m) => only(m).minimalVersion ?? '-'],
-	[/^la tarea no tiene versión mínima$/, (m) => String(only(m).minimalVersion === undefined)],
-	[/^la tarea tiene una versión mínima de (\S+) caracteres$/, (m) => String(only(m).minimalVersion?.length)],
-	[/^la fila de la tarea (?:muestra la mínima .*|no muestra mínima)$/, (m) => theRowOfMinimal(m).line],
-	[/^el botón Hice la mínima de la tarea está (?:habilitado|deshabilitado)$/, (m) => theRowOfMinimal(m).button()],
-	[/^el último completado de la tarea fue (?:la mínima|entero)$/, (m) => String(theMoreRecent(completionsOf(m, only(m).id)).minimal === true)],
-	[/^la tarea tiene dos completados, uno entero y uno de la mínima$/, (m) => JSON.stringify(completionsOf(m, only(m).id).map((c) => c.minimal === true).sort())],
-	[/^el aviso del completado dice (.*)$/, (m) => m.noticeText ?? undecided('sin consulta del aviso')],
-	[/^la tarea tiene un primer paso de (\S+) caracteres$/, (m) => String(only(m).firstStep?.length)],
-	[/^la nota de la tarea tiene dos líneas: .*$/, (m) => JSON.stringify(only(m).note?.split('\n'))],
-	[/^la tarea tiene una nota de (\S+) caracteres$/, (m) => String(only(m).note?.length)],
-	[/^el nombre de la tarea es .*$/, (m) => nameOf(only(m))],
-	[/^la tarea no tiene recurrencia$/, (m) => String(only(m).recurrence === undefined)],
+	[/^the task is on step (\S+)$/, (m) => String(stepInThatGoes(derived(only(m))))],
+	[/^the task has the steps (.*)$/, (m) => stepsOf(only(m)).join(', ')],
+	[/^the task has no more steps$/, (m) => String(only(m).steps === undefined)],
+	[/^the task has (\S+) steps$/, (m) => String(stepsOf(only(m)).length)],
+	[/^step (\S+) of the task has (\S+) characters$/, (m, [n]) => String(stepsOf(only(m))[stepNumber(n) - 1]?.length)],
+	[/^the last completion of the task saves step (\S+)$/, (m) => String(theMoreRecent(completionsOf(m, only(m).id)).step)],
+	[/^the last completion of the task saves no step$/, (m) => String(theMoreRecent(completionsOf(m, only(m).id)).step === undefined)],
+	[/^the task has no first step$/, (m) => String(only(m).firstStep === undefined)],
+	[/^the task has minimal version (.*)$/, (m) => only(m).minimalVersion ?? '-'],
+	[/^the task has no minimal version$/, (m) => String(only(m).minimalVersion === undefined)],
+	[/^the task has a minimal version of (\S+) characters$/, (m) => String(only(m).minimalVersion?.length)],
+	[/^the task row (?:shows the minimal one .*|shows no minimal one)$/, (m) => theRowOfMinimal(m).line],
+	[/^the Hice la mínima button of the task is (?:enabled|disabled)$/, (m) => theRowOfMinimal(m).button()],
+	[/^the last completion of the task was (?:the minimal one|whole)$/, (m) => String(theMoreRecent(completionsOf(m, only(m).id)).minimal === true)],
+	[/^the task has two completions, one whole and one minimal$/, (m) => JSON.stringify(completionsOf(m, only(m).id).map((c) => c.minimal === true).sort())],
+	[/^the completion notice says (.*)$/, (m) => m.noticeText ?? undecided('sin consulta del aviso')],
+	[/^the task has a first step of (\S+) characters$/, (m) => String(only(m).firstStep?.length)],
+	[/^the task note has two lines: .*$/, (m) => JSON.stringify(only(m).note?.split('\n'))],
+	[/^the task has a note of (\S+) characters$/, (m) => String(only(m).note?.length)],
+	[/^the task name is .*$/, (m) => nameOf(only(m))],
+	[/^the task has no recurrence$/, (m) => String(only(m).recurrence === undefined)],
 	[
-		/^su recurrencia es (?:relativa cada|semanal los|mensual los días) .*$/,
-		(m) => (theTask(m).kind === 'periodica' ? recurrenceKey(theTask(m).recurrence) : undecided('no es periódica'))
+		/^its recurrence is (?:relative every|weekly on|monthly on days) .*$/,
+		(m) => (theTask(m).kind === 'periodica' ? recurrenceKey(theTask(m).recurrence) : undecided('not recurring'))
 	],
-	[/^la tarea sigue creada el (\S+)$/, (m) => String(only(m).created)],
-	[/^la tarea conserva su id$/, (m) => String(only(m).id === only(thatSawOther(m)).id)],
-	[/^la tarea conserva un solo completado, del (\S+)$/, (m, [e]) => onlyCompletionOf(m, only(m), e)],
-	[/^la tarea (\S+) conserva un solo completado, del (\S+)$/, (m, [t, e]) => onlyCompletionOf(m, withTitle(m, t), e)],
-	[/^el aviso del completado (?:muestra el regreso .*|no muestra regreso)$/, (m) => noticeReturn(m)],
-	[/^la tarea no tiene completados$/, (m) => String(completionsOf(m, only(m).id).length === 0)],
-	[/^el aviso ofrece deshacer el completado de (\S+) del (\S+)$/, (m) => m.noticeSeen ?? undecided('sin consulta del aviso')],
-	[/^no hay aviso$/, (m) => String((m.noticeSeen ?? undecided('sin consulta del aviso')) === 'sin aviso')],
-	[/^el Historial muestra (.*)$/, (m) => m.history ?? undecided('sin consulta del Historial')],
-	[/^la última vez muestra (.*)$/, (m) => m.lastTime ?? undecided('sin consulta de la última vez')],
-	[/^el Historial está vacío$/, (m) => String((m.history ?? undecided('sin consulta del Historial')) === '')],
-	[/^la edición se rechaza por .*$/, (m) => m.rejection ?? undecided('no hubo rechazo')],
-	[/^la edición se rechaza porque la hora de fin no es posterior a la de inicio$/, (m) => m.rejection ?? undecided('no hubo rechazo')],
-	[new RegExp(`^la tarea tiene horario ${SCHEDULE}$`), (m) => scheduleKey(only(m).schedule)],
-	[/^la tarea no tiene horario$/, (m) => String(only(m).schedule === undefined)],
+	[/^the task is still created on (\S+)$/, (m) => String(only(m).created)],
+	[/^the task keeps its id$/, (m) => String(only(m).id === only(thatSawOther(m)).id)],
+	[/^the task keeps a single completion, from (\S+)$/, (m, [e]) => onlyCompletionOf(m, only(m), e)],
+	[/^the task (\S+) keeps a single completion, from (\S+)$/, (m, [t, e]) => onlyCompletionOf(m, withTitle(m, t), e)],
+	[/^the completion notice (?:shows the return .*|shows no return)$/, (m) => noticeReturn(m)],
+	[/^the task has no completions$/, (m) => String(completionsOf(m, only(m).id).length === 0)],
+	[/^the notice offers to undo the completion of (\S+) from (\S+)$/, (m) => m.noticeSeen ?? undecided('sin consulta del aviso')],
+	[/^there is no notice$/, (m) => String((m.noticeSeen ?? undecided('sin consulta del aviso')) === 'sin aviso')],
+	[/^the Historial shows (.*)$/, (m) => m.history ?? undecided('sin consulta from Historial')],
+	[/^the last time shows (.*)$/, (m) => m.lastTime ?? undecided('sin consulta de la última vez')],
+	[/^the Historial is empty$/, (m) => String((m.history ?? undecided('sin consulta from Historial')) === '')],
+	[/^editing is rejected for .*$/, (m) => m.rejection ?? undecided('no hubo rechazo')],
+	[/^editing is rejected because the end time is not after the start time$/, (m) => m.rejection ?? undecided('no hubo rechazo')],
+	[new RegExp(`^the task has schedule ${SCHEDULE}$`), (m) => scheduleKey(only(m).schedule)],
+	[/^the task has no schedule$/, (m) => String(only(m).schedule === undefined)],
 	[
-		/^la tarea no cambia$/,
+		/^the task does not change$/,
 		(m) => String(JSON.stringify(m.docs.map(docKey)) === JSON.stringify(thatSawOther(m).docs.map(docKey)))
 	],
 	[
-		/^no existe la tarea (\S+)$/,
+		/^there is no task (\S+)$/,
 		(m, [t]) => {
 			const id = theOneThatHadBefore(m, t).id;
 			return String(!m.docs.some((d) => d.id === id) && !m.docs.some((d) => d.title === t));
 		}
 	],
-	[/^no queda ningún completado de (\S+)$/, (m, [t]) => String(completionsOf(m, theOneThatHadBefore(m, t).id).length === 0)],
-	[/^no queda ninguna tarea$/, (m) => String(m.docs.length === 0)],
+	[/^no completion remains of (\S+)$/, (m, [t]) => String(completionsOf(m, theOneThatHadBefore(m, t).id).length === 0)],
+	[/^no task remains$/, (m) => String(m.docs.length === 0)],
 	[
-		/^los completados huérfanos a limpiar son solo el de (\S+) del (\S+)$/,
+		/^the orphan completions to clean are only the one of (\S+) from (\S+)$/,
 		(m, [t]) => {
 			const orphaned = m.completions.filter((c) => !m.docs.some((d) => d.id === c.taskId));
 			return JSON.stringify([theOneThatHadBefore(m, t).id, orphaned.map((c) => [c.taskId, c.at])]);
 		}
 	],
 	[
-		/^se registró un completado que cubre el (\S+)$/,
+		/^a completion was recorded that covers (\S+)$/,
 		// That the completion lands at the completion moment is an invariant; what varies is the occurrence it covers.
 		(m) => (m.updated ? coveredInText(m.updated) : undecided('no se completó'))
 	]
@@ -1410,7 +1410,7 @@ const OBSERVATIONS: Observation[] = [
 
 /** This oracle's own steps: scenarios that edit, delete or concurrently modify. */
 const IS_OF_EDITING =
-	/^(?:edito |vacío el paso |los pasos de la tarea |el paso actual de la tarea es |toco Hecho |toco Paso anterior$|la fila de la tarea (?:muestra los botones |no muestra botones de paso$)|el botón Hecho de la tarea está |elijo |quito el emoji$|quito el horario$|quito el primer paso$|el primer paso de la tarea |la versión mínima de la tarea |quito la versión mínima$|toco Hice la mínima |la fila de la tarea (?:muestra la mínima |no muestra mínima$)|el botón Hice la mínima |pongo |borro |toco Deshacer |toco el checkbox |consulto el aviso |consulto el Historial |consulto la última vez |otro dispositivo, sin ver ese cambio,)/;
+	/^(?:I edit |in a single edit I edit |I clear step |the steps of the task |the current step of the task is |I tap Hecho |I tap Paso anterior$|the task row (?:shows the buttons |shows no step buttons$)|the Hecho button of the task is |I choose |I remove the emoji$|I remove the schedule$|I remove the first step$|the first step of the task |the minimal version of the task |I remove the minimal version$|I tap Hice la mínima |the task row (?:shows the minimal one |shows no minimal one$)|the Hice la mínima button |I set |I delete |I tap Deshacer |I tap the task checkbox |I query the notice |I query the Historial |I query the last time |another device, without seeing that change,)/;
 
 export const isScenarioOfEditing = (texts: string[]) => texts.some((text) => IS_OF_EDITING.test(text));
 

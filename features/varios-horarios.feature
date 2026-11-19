@@ -12,57 +12,57 @@
 # Ventanas superpuestas, o más de una ventana en una relativa en horas,
 # rechazan la creación o la edición entera. Un documento guardado con una
 # sola ventana (formato anterior) se lee como una lista de una.
-Feature: Varios horarios
+Feature: Several schedules
 
   # Varios horarios 1
   # Crear una puntual con dos ventanas: se guardan ordenadas por desde.
   # Fila 2: ya venían en orden. Fila 3: ventanas contiguas.
-  Scenario Outline: Varios horarios 1
-    When creo una tarea puntual con título <titulo> y horario de <desde> a <hasta> y de <desde2> a <hasta2>
-    Then se crea una tarea puntual con título <titulo_guardado>
-    And la tarea tiene horario de <desde_guardado> a <hasta_guardado> y de <desde2_guardado> a <hasta2_guardado>
+  Scenario Outline: Several schedules 1
+    When I create a one-off task with title <title> and schedule from <from> to <to> and from <from2> to <to2>
+    Then a one-off task is created with title <title_stored>
+    And the task has schedule from <from_stored> to <to_stored> and from <from2_stored> to <to2_stored>
 
     Examples:
-      | titulo | desde | hasta | desde2 | hasta2 | titulo_guardado | desde_guardado | hasta_guardado | desde2_guardado | hasta2_guardado |
+      | title  | from  | to    | from2  | to2    | title_stored    | from_stored    | to_stored      | from2_stored    | to2_stored      |
       | Perros | 18:00 | 21:00 | 07:00  | 10:00  | Perros          | 07:00          | 10:00          | 18:00           | 21:00           |
       | Perros | 07:00 | 10:00 | 18:00  | 21:00  | Perros          | 07:00          | 10:00          | 18:00           | 21:00           |
       | Perros | 08:00 | 10:00 | 10:00  | 12:00  | Perros          | 08:00          | 10:00          | 10:00           | 12:00           |
 
   # Varios horarios 2
   # Una relativa en días puede tener dos ventanas.
-  Scenario Outline: Varios horarios 2
-    When creo una tarea periódica relativa con título <titulo> cada <cada> <unidad> y horario de <desde> a <hasta> y de <desde2> a <hasta2>
-    Then se crea una tarea periódica con título <titulo_guardado>
-    And su recurrencia es relativa cada <cada_guardado> <unidad>
-    And la tarea tiene horario de <desde_guardado> a <hasta_guardado> y de <desde2_guardado> a <hasta2_guardado>
+  Scenario Outline: Several schedules 2
+    When I create a relative recurring task with title <title> every <every> <unit> and schedule from <from> to <to> and from <from2> to <to2>
+    Then a recurring task is created with title <title_stored>
+    And its recurrence is relative every <every_stored> <unit>
+    And the task has schedule from <from_stored> to <to_stored> and from <from2_stored> to <to2_stored>
 
     Examples:
-      | titulo | cada | unidad | desde | hasta | desde2 | hasta2 | titulo_guardado | cada_guardado | desde_guardado | hasta_guardado | desde2_guardado | hasta2_guardado |
+      | title  | every | unit   | from  | to    | from2  | to2    | title_stored    | every_stored  | from_stored    | to_stored      | from2_stored    | to2_stored      |
       | Perros | 1    | dias   | 07:00 | 10:00 | 18:00  | 21:00  | Perros          | 1             | 07:00          | 10:00          | 18:00           | 21:00           |
 
   # Varios horarios 3
   # Una de calendario también puede tener dos ventanas.
-  Scenario Outline: Varios horarios 3
-    When creo una tarea periódica semanal con título <titulo> los <dias> y horario de <desde> a <hasta> y de <desde2> a <hasta2>
-    Then se crea una tarea periódica con título <titulo_guardado>
-    And su recurrencia es semanal los <dias_guardados>
-    And la tarea tiene horario de <desde_guardado> a <hasta_guardado> y de <desde2_guardado> a <hasta2_guardado>
+  Scenario Outline: Several schedules 3
+    When I create a weekly recurring task with title <title> on <days> and schedule from <from> to <to> and from <from2> to <to2>
+    Then a recurring task is created with title <title_stored>
+    And its recurrence is weekly on <days_stored>
+    And the task has schedule from <from_stored> to <to_stored> and from <from2_stored> to <to2_stored>
 
     Examples:
-      | titulo | dias              | desde | hasta | desde2 | hasta2 | titulo_guardado | dias_guardados    | desde_guardado | hasta_guardado | desde2_guardado | hasta2_guardado |
+      | title  | days              | from  | to    | from2  | to2    | title_stored    | days_stored       | from_stored    | to_stored      | from2_stored    | to2_stored      |
       | Perros | miércoles, jueves | 07:00 | 10:00 | 18:00  | 21:00  | Perros          | miércoles, jueves | 07:00          | 10:00          | 18:00           | 21:00           |
 
   # Varios horarios 4
   # Ventanas superpuestas rechazan la creación entera. Fila 1: se pisan una
   # hora. Fila 2: iguales. Fila 3: una contiene a la otra. Fila 4: dadas en
   # desorden, se pisan un minuto.
-  Scenario Outline: Varios horarios 4
-    When creo una tarea puntual con un título válido y horario de <desde> a <hasta> y de <desde2> a <hasta2>
-    Then la creación se rechaza por horarios superpuestos
-    And no se crea ninguna tarea
+  Scenario Outline: Several schedules 4
+    When I create a one-off task with a valid title and schedule from <from> to <to> and from <from2> to <to2>
+    Then creation is rejected for overlapping schedules
+    And no task is created
 
     Examples:
-      | desde | hasta | desde2 | hasta2 |
+      | from  | to    | from2  | to2    |
       | 08:00 | 11:00 | 10:00  | 12:00  |
       | 08:00 | 11:00 | 08:00  | 11:00  |
       | 08:00 | 12:00 | 09:00  | 10:00  |
@@ -70,192 +70,192 @@ Feature: Varios horarios
 
   # Varios horarios 5
   # Una relativa en horas con dos ventanas rechaza la creación entera.
-  Scenario Outline: Varios horarios 5
-    When creo una tarea periódica relativa con título <titulo> cada <cada> <unidad> y horario de <desde> a <hasta> y de <desde2> a <hasta2>
-    Then la creación se rechaza por varios horarios en una relativa en horas
-    And no se crea ninguna tarea
+  Scenario Outline: Several schedules 5
+    When I create a relative recurring task with title <title> every <every> <unit> and schedule from <from> to <to> and from <from2> to <to2>
+    Then creation is rejected for several schedules in an hourly relative
+    And no task is created
 
     Examples:
-      | titulo  | cada | unidad | desde | hasta | desde2 | hasta2 |
+      | title   | every | unit   | from  | to    | from2  | to2    |
       | Remedio | 8    | horas  | 07:00 | 10:00 | 18:00  | 21:00  |
 
   # Varios horarios 6
   # Una segunda ventana con desde ≥ hasta rechaza la creación entera.
-  Scenario Outline: Varios horarios 6
-    When creo una tarea puntual con un título válido y horario de <desde> a <hasta> y de <desde2> a <hasta2>
-    Then la creación se rechaza porque la hora de fin no es posterior a la de inicio
-    And no se crea ninguna tarea
+  Scenario Outline: Several schedules 6
+    When I create a one-off task with a valid title and schedule from <from> to <to> and from <from2> to <to2>
+    Then creation is rejected because the end time is not after the start time
+    And no task is created
 
     Examples:
-      | desde | hasta | desde2 | hasta2 |
+      | from  | to    | from2  | to2    |
       | 07:00 | 10:00 | 21:00  | 18:00  |
       | 07:00 | 10:00 | 18:00  | 18:00  |
 
   # Varios horarios 7
   # Una segunda ventana con una sola de las dos horas (la fila que agrega
   # Agregar horario, sin completar) rechaza la creación entera.
-  Scenario Outline: Varios horarios 7
-    When creo una tarea puntual con un título válido, horario de <desde> a <hasta> y otro horario con solo la hora de inicio <desde2>
-    Then la creación se rechaza por horario incompleto
-    And no se crea ninguna tarea
+  Scenario Outline: Several schedules 7
+    When I create a one-off task with a valid title, schedule from <from> to <to> and another schedule with only the start time <from2>
+    Then creation is rejected for incomplete schedule
+    And no task is created
 
     Examples:
-      | desde | hasta | desde2 |
+      | from  | to    | from2  |
       | 07:00 | 10:00 | 18:00  |
 
   # Varios horarios 8
   # Agregar una segunda ventana a una tarea que tenía una.
-  Scenario Outline: Varios horarios 8
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When pongo el horario de <desde> a <hasta> y de <desde2> a <hasta2>
-    Then la tarea tiene horario de <desde_guardado> a <hasta_guardado> y de <desde2_guardado> a <hasta2_guardado>
+  Scenario Outline: Several schedules 8
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    When I set the schedule from <from> to <to> and from <from2> to <to2>
+    Then the task has schedule from <from_stored> to <to_stored> and from <from2_stored> to <to2_stored>
 
     Examples:
-      | desde | hasta | desde2 | hasta2 | desde_guardado | hasta_guardado | desde2_guardado | hasta2_guardado |
+      | from  | to    | from2  | to2    | from_stored    | to_stored      | from2_stored    | to2_stored      |
       | 07:00 | 10:00 | 18:00  | 21:00  | 07:00          | 10:00          | 18:00           | 21:00           |
 
   # Varios horarios 9
   # Quitar una de las dos ventanas deja solo la otra.
-  Scenario Outline: Varios horarios 9
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When pongo el horario de <desde2> a <hasta2>
-    Then la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Several schedules 9
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I set the schedule from <from2> to <to2>
+    Then the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | desde | hasta | desde2 | hasta2 | desde_guardado | hasta_guardado |
+      | from  | to    | from2  | to2    | from_stored    | to_stored      |
       | 07:00 | 10:00 | 18:00  | 21:00  | 18:00          | 21:00          |
 
   # Varios horarios 10
   # Apagar el horario quita todas las ventanas.
-  Scenario Outline: Varios horarios 10
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When quito el horario
-    Then la tarea no tiene horario
+  Scenario Outline: Several schedules 10
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I remove the schedule
+    Then the task has no schedule
 
     Examples:
-      | desde | hasta | desde2 | hasta2 |
+      | from  | to    | from2  | to2    |
       | 07:00 | 10:00 | 18:00  | 21:00  |
 
   # Varios horarios 11
   # Una edición con ventanas superpuestas se rechaza entera: no cambia el
   # título que venía en la misma edición ni el horario guardado.
-  Scenario Outline: Varios horarios 11
-    Given una tarea puntual <titulo> sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When edito en una misma edición el título a <titulo_nuevo> y el horario de <desde_nuevo> a <hasta_nuevo> y de <desde2_nuevo> a <hasta2_nuevo>
-    Then la edición se rechaza por horarios superpuestos
-    And la tarea tiene título <titulo_guardado>
-    And la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Several schedules 11
+    Given a one-off task <title> without a due date
+    And the task can be completed from <from> to <to>
+    When in a single edit I edit the title to <title_new> and the schedule from <from_new> to <to_new> and from <from2_new> to <to2_new>
+    Then editing is rejected for overlapping schedules
+    And the task has title <title_stored>
+    And the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | titulo | desde | hasta | titulo_nuevo | desde_nuevo | hasta_nuevo | desde2_nuevo | hasta2_nuevo | titulo_guardado | desde_guardado | hasta_guardado |
+      | title  | from  | to    | title_new    | from_new    | to_new      | from2_new    | to2_new      | title_stored    | from_stored    | to_stored      |
       | Regar  | 08:00 | 11:00 | Barrer       | 08:00       | 11:00       | 10:59        | 12:00        | Regar           | 08:00          | 11:00          |
 
   # Varios horarios 12
   # Pasar a relativa en horas una tarea con dos ventanas se rechaza y la
   # tarea no cambia.
-  Scenario Outline: Varios horarios 12
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    Then la edición se rechaza por varios horarios en una relativa en horas
-    And la tarea no cambia
+  Scenario Outline: Several schedules 12
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I edit the task to relative recurring every <every> <unit>
+    Then editing is rejected for several schedules in an hourly relative
+    And the task does not change
 
     Examples:
-      | desde | hasta | desde2 | hasta2 | cada | unidad |
+      | from  | to    | from2  | to2    | every | unit   |
       | 07:00 | 10:00 | 18:00  | 21:00  | 8    | horas  |
 
   # Varios horarios 13
   # La misma tarea puede pasar a relativa en días y conserva las dos
   # ventanas.
-  Scenario Outline: Varios horarios 13
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    Then la tarea es periódica
-    And la tarea tiene horario de <desde_guardado> a <hasta_guardado> y de <desde2_guardado> a <hasta2_guardado>
+  Scenario Outline: Several schedules 13
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I edit the task to relative recurring every <every> <unit>
+    Then the task is recurring
+    And the task has schedule from <from_stored> to <to_stored> and from <from2_stored> to <to2_stored>
 
     Examples:
-      | desde | hasta | desde2 | hasta2 | cada | unidad | desde_guardado | hasta_guardado | desde2_guardado | hasta2_guardado |
+      | from  | to    | from2  | to2    | every | unit   | from_stored    | to_stored      | from2_stored    | to2_stored      |
       | 07:00 | 10:00 | 18:00  | 21:00  | 1    | dias   | 07:00          | 10:00          | 18:00           | 21:00           |
 
   # Varios horarios 14
   # Agregar una segunda ventana a una relativa en horas se rechaza y la
   # tarea no cambia.
-  Scenario Outline: Varios horarios 14
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea se puede completar de <desde> a <hasta>
-    When pongo el horario de <desde> a <hasta> y de <desde2> a <hasta2>
-    Then la edición se rechaza por varios horarios en una relativa en horas
-    And la tarea no cambia
+  Scenario Outline: Several schedules 14
+    Given a relative recurring task every <every> <unit>
+    And the task can be completed from <from> to <to>
+    When I set the schedule from <from> to <to> and from <from2> to <to2>
+    Then editing is rejected for several schedules in an hourly relative
+    And the task does not change
 
     Examples:
-      | cada | unidad | desde | hasta | desde2 | hasta2 |
+      | every | unit   | from  | to    | from2  | to2    |
       | 8    | horas  | 07:00 | 10:00 | 18:00  | 21:00  |
 
   # Varios horarios 15
   # Un documento guardado con una sola ventana en el formato anterior se lee
   # como un horario de una ventana.
-  Scenario Outline: Varios horarios 15
-    Given una tarea puntual sin fecha límite guardada en el formato anterior con horario de <desde> a <hasta>
-    Then la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Several schedules 15
+    Given a one-off task without a due date saved in the previous format with schedule from <from> to <to>
+    Then the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | desde | hasta | desde_guardado | hasta_guardado |
+      | from  | to    | from_stored    | to_stored      |
       | 08:00 | 11:00 | 08:00          | 11:00          |
 
   # Varios horarios 16
   # Horario es un solo campo: si un dispositivo agrega una ventana y otro,
   # sin ver ese cambio, cambia la que había, gana entero el último cambio
   # (no se mezclan las listas).
-  Scenario Outline: Varios horarios 16
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When pongo el horario de <desde> a <hasta> y de <desde2> a <hasta2>
-    And otro dispositivo, sin ver ese cambio, pone el horario de <desde_otro> a <hasta_otro>
-    Then la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Several schedules 16
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    When I set the schedule from <from> to <to> and from <from2> to <to2>
+    And another device, without seeing that change, sets the schedule from <from_other> to <to_other>
+    Then the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | desde | hasta | desde2 | hasta2 | desde_otro | hasta_otro | desde_guardado | hasta_guardado |
+      | from  | to    | from2  | to2    | from_other | to_other   | from_stored    | to_stored      |
       | 07:00 | 10:00 | 18:00  | 21:00  | 08:00      | 11:00      | 08:00          | 11:00          |
 
   # Varios horarios 17
   # Con dos ventanas, cambiar cada una en un dispositivo distinto: gana
   # entera la lista del último cambio.
-  Scenario Outline: Varios horarios 17
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When pongo el horario de <desde_mio> a <hasta> y de <desde2> a <hasta2>
-    And otro dispositivo, sin ver ese cambio, pone el horario de <desde> a <hasta> y de <desde2> a <hasta2_otro>
-    Then la tarea tiene horario de <desde_guardado> a <hasta_guardado> y de <desde2_guardado> a <hasta2_guardado>
+  Scenario Outline: Several schedules 17
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I set the schedule from <from_mine> to <to> and from <from2> to <to2>
+    And another device, without seeing that change, sets the schedule from <from> to <to> and from <from2> to <to2_other>
+    Then the task has schedule from <from_stored> to <to_stored> and from <from2_stored> to <to2_stored>
 
     Examples:
-      | desde | hasta | desde2 | hasta2 | desde_mio | hasta2_otro | desde_guardado | hasta_guardado | desde2_guardado | hasta2_guardado |
+      | from  | to    | from2  | to2    | from_mine | to2_other   | from_stored    | to_stored      | from2_stored    | to2_stored      |
       | 07:00 | 10:00 | 18:00  | 21:00  | 06:00     | 22:00       | 07:00          | 10:00          | 18:00           | 22:00           |
 
   # Varios horarios 18
   # El horario en la fila: una ventana como "08:00–11:00".
-  Scenario Outline: Varios horarios 18
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes en cualquier momento
-    Then la fila de la tarea muestra el horario <texto>
+  Scenario Outline: Several schedules 18
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    When I query Pendientes at any moment
+    Then the task row shows the schedule <text>
 
     Examples:
-      | desde | hasta | texto       |
+      | from  | to    | text        |
       | 08:00 | 11:00 | 08:00–11:00 |
 
   # Varios horarios 19
   # Con varias ventanas, en orden y separadas por " · ".
-  Scenario Outline: Varios horarios 19
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes en cualquier momento
-    Then la fila de la tarea muestra el horario <texto>
+  Scenario Outline: Several schedules 19
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes at any moment
+    Then the task row shows the schedule <text>
 
     Examples:
-      | desde | hasta | desde2 | hasta2 | texto                     |
+      | from  | to    | from2  | to2    | text                      |
       | 07:00 | 10:00 | 18:00  | 21:00  | 07:00–10:00 · 18:00–21:00 |

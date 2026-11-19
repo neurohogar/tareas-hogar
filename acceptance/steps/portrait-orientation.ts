@@ -16,14 +16,14 @@ function manifestOf(world: World): Record<string, unknown> {
 
 export const portraitOrientationSteps: StepDefinition[] = [
 	{
-		pattern: /^el manifest que publica la app$/,
+		pattern: /^the manifest the app publishes$/,
 		run: (world) => {
 			const json = JSON.parse(readFileSync(MANIFEST_URL, 'utf8')) as Record<string, unknown>;
 			manifests.set(world, json);
 		}
 	},
 	{
-		pattern: new RegExp(`^el campo ${P} del manifest es ${P}$`),
+		pattern: new RegExp(`^the field ${P} of the manifest is ${P}$`),
 		run: (world, field, value) => {
 			const manifest = manifestOf(world);
 			expect(manifest[field]).toBe(value);

@@ -18,19 +18,19 @@
 # guardados (por ejemplo, sincronizados desde otro dispositivo), con su
 # ocurrenciaCubierta tal cual. Cuando el paso no da el momento del completado,
 # ese momento no influye en el resultado. Con completados, creadaEn no influye.
-Feature: Estado de periódica de calendario
+Feature: Calendar recurring task status
 
   # Estado de periódica de calendario 1
   # Semanal nunca completada, antes de su primera ocurrencia: en espera,
   # con progreso desde creadaEn.
-  Scenario Outline: Estado de periódica de calendario 1
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Calendar recurring task status 1
+    Given a weekly recurring task on <days> created on <created>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias           | creada              | ahora               | progreso |
+      | days           | created             | now                 | progress |
       | martes, jueves | 2026-07-15T12:00:00 | 2026-07-15T18:00:00 | 0.5      |
       | domingo        | 2026-07-13T00:00:00 | 2026-07-16T00:00:00 | 0.5      |
       | lunes, viernes | 2026-07-18T00:00:00 | 2026-07-18T12:00:00 | 0.25     |
@@ -38,26 +38,26 @@ Feature: Estado de periódica de calendario
 
   # Estado de periódica de calendario 2
   # Semanal nunca completada, un segundo antes de su primera ocurrencia: en espera.
-  Scenario Outline: Estado de periódica de calendario 2
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Calendar recurring task status 2
+    Given a weekly recurring task on <days> created on <created>
+    When I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | dias           | creada              | ahora               |
+      | days           | created             | now                 |
       | martes, jueves | 2026-07-15T12:00:00 | 2026-07-15T23:59:59 |
       | domingo        | 2026-07-13T08:00:00 | 2026-07-18T23:59:59 |
 
   # Estado de periódica de calendario 3
   # Semanal nunca completada, el día de su primera ocurrencia: pendiente.
   # Creada en un día de ocurrencia, ya está pendiente ese mismo día.
-  Scenario Outline: Estado de periódica de calendario 3
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Calendar recurring task status 3
+    Given a weekly recurring task on <days> created on <created>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias           | creada              | ahora               |
+      | days           | created             | now                 |
       | martes, jueves | 2026-07-14T08:00:00 | 2026-07-14T08:00:00 |
       | martes, jueves | 2026-07-14T08:00:00 | 2026-07-14T23:59:59 |
       | domingo        | 2026-07-19T00:00:00 | 2026-07-19T12:00:00 |
@@ -66,13 +66,13 @@ Feature: Estado de periódica de calendario
   # Estado de periódica de calendario 4
   # Semanal nunca completada, pasado el día de su primera ocurrencia: atrasada,
   # aunque se hayan perdido varias.
-  Scenario Outline: Estado de periódica de calendario 4
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Calendar recurring task status 4
+    Given a weekly recurring task on <days> created on <created>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias           | creada              | ahora               |
+      | days           | created             | now                 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-15T00:00:00 |
       | martes         | 2026-07-13T08:00:00 | 2026-08-20T10:00:00 |
       | domingo        | 2026-07-19T12:00:00 | 2026-07-20T00:00:00 |
@@ -80,14 +80,14 @@ Feature: Estado de periódica de calendario
   # Estado de periódica de calendario 5
   # Mensual nunca completada, antes de su primera ocurrencia: en espera,
   # con progreso desde creadaEn. El 31 en junio cae el 30.
-  Scenario Outline: Estado de periódica de calendario 5
-    Given una tarea periódica mensual los días <dias> creada el <creada>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Calendar recurring task status 5
+    Given a monthly recurring task on days <days> created on <created>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias   | creada              | ahora               | progreso |
+      | days   | created             | now                 | progress |
       | 10, 20 | 2026-07-15T00:00:00 | 2026-07-17T12:00:00 | 0.5      |
       | 31     | 2026-06-29T00:00:00 | 2026-06-29T18:00:00 | 0.75     |
       | 1      | 2026-07-31T12:00:00 | 2026-07-31T18:00:00 | 0.5      |
@@ -95,26 +95,26 @@ Feature: Estado de periódica de calendario
   # Estado de periódica de calendario 6
   # Mensual nunca completada, el día de su primera ocurrencia: pendiente.
   # El 31 en febrero de 2026 cae el 28.
-  Scenario Outline: Estado de periódica de calendario 6
-    Given una tarea periódica mensual los días <dias> creada el <creada>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Calendar recurring task status 6
+    Given a monthly recurring task on days <days> created on <created>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias   | creada              | ahora               |
+      | days   | created             | now                 |
       | 15     | 2026-07-15T09:00:00 | 2026-07-15T23:59:59 |
       | 31     | 2026-02-28T09:00:00 | 2026-02-28T09:00:00 |
       | 10, 20 | 2026-07-15T00:00:00 | 2026-07-20T00:00:00 |
 
   # Estado de periódica de calendario 7
   # Mensual nunca completada, pasado el día de su primera ocurrencia: atrasada.
-  Scenario Outline: Estado de periódica de calendario 7
-    Given una tarea periódica mensual los días <dias> creada el <creada>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Calendar recurring task status 7
+    Given a monthly recurring task on days <days> created on <created>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias | creada              | ahora               |
+      | days | created             | now                 |
       | 15   | 2026-07-01T08:00:00 | 2026-07-16T00:00:00 |
       | 31   | 2026-06-01T08:00:00 | 2026-07-01T00:00:00 |
       | 1    | 2026-07-02T08:00:00 | 2026-12-25T10:00:00 |
@@ -123,15 +123,15 @@ Feature: Estado de periódica de calendario
   # Semanal completada, antes de N: en espera, con progreso desde el completado.
   # P es la ocurrencia cubierta, no el día del completado (fila 2: completada
   # el lunes cubriendo el martes; fila 4: el viernes cubriendo el jueves).
-  Scenario Outline: Estado de periódica de calendario 8
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Calendar recurring task status 8
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias           | completada          | cubierta   | ahora               | progreso |
+      | days           | completed           | covered    | now                 | progress |
       | martes, jueves | 2026-07-14T12:00:00 | 2026-07-14 | 2026-07-14T21:00:00 | 0.25     |
       | martes, jueves | 2026-07-13T12:00:00 | 2026-07-14 | 2026-07-14T18:00:00 | 0.5      |
       | sábado         | 2026-07-18T00:00:00 | 2026-07-18 | 2026-07-21T12:00:00 | 0.5      |
@@ -140,28 +140,28 @@ Feature: Estado de periódica de calendario
   # Estado de periódica de calendario 9
   # Semanal completada, hasta el último segundo antes de N: en espera,
   # incluido el mismo día de la ocurrencia cubierta.
-  Scenario Outline: Estado de periódica de calendario 9
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Calendar recurring task status 9
+    Given a weekly recurring task on <days>
+    And the task has a completion that covers <covered>
+    When I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | dias           | cubierta   | ahora               |
+      | days           | covered    | now                 |
       | martes, jueves | 2026-07-14 | 2026-07-14T23:59:59 |
       | martes, jueves | 2026-07-14 | 2026-07-15T23:59:59 |
       | domingo        | 2026-07-19 | 2026-07-25T23:59:59 |
 
   # Estado de periódica de calendario 10
   # Semanal completada, el día de N (de 00:00:00 a 23:59:59): pendiente.
-  Scenario Outline: Estado de periódica de calendario 10
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Calendar recurring task status 10
+    Given a weekly recurring task on <days>
+    And the task has a completion that covers <covered>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias           | cubierta   | ahora               |
+      | days           | covered    | now                 |
       | martes, jueves | 2026-07-14 | 2026-07-16T00:00:00 |
       | martes, jueves | 2026-07-14 | 2026-07-16T23:59:59 |
       | martes, jueves | 2026-07-16 | 2026-07-21T00:00:00 |
@@ -170,14 +170,14 @@ Feature: Estado de periódica de calendario
   # Estado de periódica de calendario 11
   # Semanal completada, pasado el día de N: atrasada, una sola vez aunque se
   # hayan perdido varias ocurrencias.
-  Scenario Outline: Estado de periódica de calendario 11
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Calendar recurring task status 11
+    Given a weekly recurring task on <days>
+    And the task has a completion that covers <covered>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias           | cubierta   | ahora               |
+      | days           | covered    | now                 |
       | martes, jueves | 2026-07-14 | 2026-07-17T00:00:00 |
       | martes, jueves | 2026-07-14 | 2026-08-20T10:00:00 |
       | domingo        | 2026-07-12 | 2026-07-20T00:00:00 |
@@ -185,15 +185,15 @@ Feature: Estado de periódica de calendario
   # Estado de periódica de calendario 12
   # Mensual completada, antes de N: en espera, con progreso desde el completado.
   # Fila 2: el 31 en junio cae el 30. Fila 3: completada el 10 cubriendo el 15.
-  Scenario Outline: Estado de periódica de calendario 12
-    Given una tarea periódica mensual los días <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Calendar recurring task status 12
+    Given a monthly recurring task on days <days>
+    And the task has a completion from <completed> that covers <covered>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias   | completada          | cubierta   | ahora               | progreso |
+      | days   | completed           | covered    | now                 | progress |
       | 10, 20 | 2026-07-10T00:00:00 | 2026-07-10 | 2026-07-15T00:00:00 | 0.5      |
       | 31     | 2026-05-31T00:00:00 | 2026-05-31 | 2026-06-07T12:00:00 | 0.25     |
       | 15     | 2026-07-10T12:00:00 | 2026-07-15 | 2026-07-28T06:00:00 | 0.5      |
@@ -202,14 +202,14 @@ Feature: Estado de periódica de calendario
   # Mensual completada, hasta el último segundo antes de N: en espera.
   # El 31 cae el 30 en junio y el 28 en febrero de 2026; el 29 existe en
   # febrero de 2028 (bisiesto).
-  Scenario Outline: Estado de periódica de calendario 13
-    Given una tarea periódica mensual los días <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Calendar recurring task status 13
+    Given a monthly recurring task on days <days>
+    And the task has a completion that covers <covered>
+    When I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | dias   | cubierta   | ahora               |
+      | days   | covered    | now                 |
       | 31     | 2026-05-31 | 2026-06-29T23:59:59 |
       | 31     | 2026-01-31 | 2026-02-27T23:59:59 |
       | 29     | 2028-01-29 | 2028-02-28T23:59:59 |
@@ -219,14 +219,14 @@ Feature: Estado de periódica de calendario
   # Mensual completada, el día de N: pendiente.
   # En un mes más corto, los días que no existen caen en el último día
   # (fila 5: con 30 y 31, cubierto el 30 de junio, N es el 30 de julio).
-  Scenario Outline: Estado de periódica de calendario 14
-    Given una tarea periódica mensual los días <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Calendar recurring task status 14
+    Given a monthly recurring task on days <days>
+    And the task has a completion that covers <covered>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias   | cubierta   | ahora               |
+      | days   | covered    | now                 |
       | 10, 20 | 2026-07-10 | 2026-07-20T00:00:00 |
       | 31     | 2026-05-31 | 2026-06-30T00:00:00 |
       | 31     | 2026-01-31 | 2026-02-28T23:59:59 |
@@ -239,14 +239,14 @@ Feature: Estado de periódica de calendario
   # Mensual completada, pasado el día de N: atrasada.
   # Fila 3: el 29 en febrero de 2026 cae el 28. Fila 4: el 31 de julio también
   # es ocurrencia, pero N (el 30) ya pasó.
-  Scenario Outline: Estado de periódica de calendario 15
-    Given una tarea periódica mensual los días <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Calendar recurring task status 15
+    Given a monthly recurring task on days <days>
+    And the task has a completion that covers <covered>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias   | cubierta   | ahora               |
+      | days   | covered    | now                 |
       | 31     | 2026-05-31 | 2026-07-01T00:00:00 |
       | 10, 20 | 2026-07-10 | 2026-07-21T00:00:00 |
       | 29     | 2026-01-29 | 2026-03-01T00:00:00 |
@@ -255,31 +255,31 @@ Feature: Estado de periódica de calendario
   # Estado de periódica de calendario 16
   # Con varios completados, P es la mayor ocurrencia cubierta, aunque se haya
   # registrado antes. Con solo la menor, la tarea estaría atrasada.
-  Scenario Outline: Estado de periódica de calendario 16
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado que cubre el <mayor>
-    And la tarea tiene un completado que cubre el <menor>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Calendar recurring task status 16
+    Given a weekly recurring task on <days>
+    And the task has a completion that covers <greater>
+    And the task has a completion that covers <lesser>
+    When I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | dias           | mayor      | menor      | ahora               |
+      | days           | greater    | lesser     | now                 |
       | martes, jueves | 2026-07-16 | 2026-07-14 | 2026-07-17T10:00:00 |
       | domingo        | 2026-07-19 | 2026-07-12 | 2026-07-21T10:00:00 |
 
   # Estado de periódica de calendario 17
   # El inicio de espera es el completadoEn más reciente, aunque otro completado
   # más antiguo cubra la misma ocurrencia y se haya registrado después.
-  Scenario Outline: Estado de periódica de calendario 17
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea tiene otro completado más antiguo que cubre la misma ocurrencia
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Calendar recurring task status 17
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task has another older completion that covers the same occurrence
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias           | completada          | cubierta   | ahora               | progreso |
+      | days           | completed           | covered    | now                 | progress |
       | martes, jueves | 2026-07-14T12:00:00 | 2026-07-14 | 2026-07-14T21:00:00 | 0.25     |
 
   # Estado de periódica de calendario 18
@@ -287,14 +287,14 @@ Feature: Estado de periódica de calendario
   # completado "del futuro"): en espera con progreso 0 hasta que ahora lo alcance.
   # Fila 1: completada el miércoles cubriendo el martes; fila 2: cubre una
   # ocurrencia posterior a hoy.
-  Scenario Outline: Estado de periódica de calendario 18
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Calendar recurring task status 18
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias           | completada          | cubierta   | ahora               | progreso |
+      | days           | completed           | covered    | now                 | progress |
       | martes, jueves | 2026-07-15T20:00:00 | 2026-07-14 | 2026-07-15T10:00:00 | 0        |
       | martes, jueves | 2026-07-21T09:00:00 | 2026-07-21 | 2026-07-20T22:00:00 | 0        |

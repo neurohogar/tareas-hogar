@@ -9,75 +9,75 @@
 # y, si hay fecha límite, que sea una fecha que existe en el calendario.
 # Se acepta una fecha límite anterior al día de creación: la tarea queda
 # atrasada de entrada.
-Feature: Crear tarea puntual
+Feature: Create one-off task
 
   # Crear tarea puntual 1
   # Con fecha límite: se crea la tarea puntual con esa fecha y sin completados.
-  Scenario Outline: Crear tarea puntual 1
-    When creo una tarea puntual con título <titulo> y fecha límite <fecha_limite>
-    Then se crea una tarea puntual con título <titulo_guardado>
-    And su fecha límite es <fecha_limite_guardada>
-    And la tarea no tiene completados
+  Scenario Outline: Create one-off task 1
+    When I create a one-off task with title <title> and due date <due_date>
+    Then a one-off task is created with title <title_stored>
+    And its due date is <due_date_stored>
+    And the task has no completions
 
     Examples:
-      | titulo          | fecha_limite | titulo_guardado | fecha_limite_guardada |
+      | title           | due_date     | title_stored    | due_date_stored       |
       | Pagar la luz    | 2026-07-20   | Pagar la luz    | 2026-07-20            |
       | Comprar regalo  | 2026-12-31   | Comprar regalo  | 2026-12-31            |
       | Renovar seguro  | 2028-02-29   | Renovar seguro  | 2028-02-29            |
 
   # Crear tarea puntual 2
   # Sin fecha límite: se crea la tarea puntual sin fecha límite y sin completados.
-  Scenario Outline: Crear tarea puntual 2
-    When creo una tarea puntual con título <titulo> y sin fecha límite
-    Then se crea una tarea puntual con título <titulo_guardado>
-    And la tarea no tiene fecha límite
-    And la tarea no tiene completados
+  Scenario Outline: Create one-off task 2
+    When I create a one-off task with title <title> and no due date
+    Then a one-off task is created with title <title_stored>
+    And the task has no due date
+    And the task has no completions
 
     Examples:
-      | titulo         | titulo_guardado |
+      | title          | title_stored    |
       | Cambiar foco   | Cambiar foco    |
       | Llamar plomero | Llamar plomero  |
 
   # Crear tarea puntual 3
   # Fecha límite anterior al día de creación: se acepta y queda atrasada de entrada.
-  Scenario Outline: Crear tarea puntual 3
-    When creo el <creada> una tarea puntual con un título válido y fecha límite <fecha_limite>
-    And consulto el estado el <creada>
-    Then se crea una tarea puntual
-    And el estado es atrasada
+  Scenario Outline: Create one-off task 3
+    When I create on <created> a one-off task with a valid title and due date <due_date>
+    And I query the status on <created>
+    Then a one-off task is created
+    And the status is atrasada
 
     Examples:
-      | creada              | fecha_limite |
+      | created             | due_date     |
       | 2026-07-15T08:00:00 | 2026-07-14   |
       | 2026-08-01T00:00:00 | 2026-07-31   |
 
   # Crear tarea puntual 4
   # Título vacío: se rechaza y no se crea nada.
-  Scenario Outline: Crear tarea puntual 4
-    When creo una tarea puntual con título <titulo> y sin fecha límite
-    Then la creación se rechaza por título vacío
-    And no se crea ninguna tarea
+  Scenario Outline: Create one-off task 4
+    When I create a one-off task with title <title> and no due date
+    Then creation is rejected for empty title
+    And no task is created
 
     Examples:
-      | titulo |
+      | title  |
       |        |
 
   # Crear tarea puntual 5
   # Título de solo espacios: cuenta como vacío.
-  Scenario: Crear tarea puntual 5
-    When creo una tarea puntual con un título de solo espacios y sin fecha límite
-    Then la creación se rechaza por título vacío
-    And no se crea ninguna tarea
+  Scenario: Create one-off task 5
+    When I create a one-off task with a title of only spaces and no due date
+    Then creation is rejected for empty title
+    And no task is created
 
   # Crear tarea puntual 6
   # Fecha límite que no existe en el calendario: se rechaza y no se crea nada.
-  Scenario Outline: Crear tarea puntual 6
-    When creo una tarea puntual con un título válido y fecha límite <fecha_limite>
-    Then la creación se rechaza por fecha límite inválida
-    And no se crea ninguna tarea
+  Scenario Outline: Create one-off task 6
+    When I create a one-off task with a valid title and due date <due_date>
+    Then creation is rejected for invalid due date
+    And no task is created
 
     Examples:
-      | fecha_limite |
+      | due_date     |
       | 2026-02-29   |
       | 2026-04-31   |
       | 2026-13-01   |

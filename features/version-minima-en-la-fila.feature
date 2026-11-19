@@ -16,266 +16,266 @@
 # con su prefijo; la lista consultada tiene una sola fila. El estilo, el botón
 # de texto y tocar la línea los cubre la suite QA.
 # Semana de referencia: viernes 2026-11-13.
-Feature: Versión mínima en la fila
+Feature: Minimal version in the row
 
   # Versión mínima en la fila 1
   # Una pendiente con versión mínima la muestra con el prefijo «Mínima: »,
   # completa (fila 2: larga, sin cortar), con el botón «Hice la mínima»
   # habilitado.
-  Scenario Outline: Versión mínima en la fila 1
-    Given una tarea puntual sin fecha límite
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes en cualquier momento
-    Then la fila de la tarea muestra la mínima <texto>
-    And el botón Hice la mínima de la tarea está habilitado
+  Scenario Outline: Minimal version in the row 1
+    Given a one-off task without a due date
+    And the minimal version of the task is <minimal>
+    When I query Pendientes at any moment
+    Then the task row shows the minimal one <text>
+    And the Hice la mínima button of the task is enabled
 
     Examples:
-      | minima                                                                                                                         | texto                                                                                                                                       |
+      | minimal                                                                                                                        | text                                                                                                                                        |
       | Solo el inodoro                                                                                                                | Mínima: Solo el inodoro                                                                                                                     |
       | Abrir el cajón de abajo, sacar solo la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla | Mínima: Abrir el cajón de abajo, sacar solo la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla |
 
   # Versión mínima en la fila 2
   # También en una periódica relativa pendiente.
-  Scenario Outline: Versión mínima en la fila 2
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra la mínima <texto>
+  Scenario Outline: Minimal version in the row 2
+    Given a relative recurring task every <every> <unit>
+    And the minimal version of the task is <minimal>
+    When I query Pendientes on <now>
+    Then the task row shows the minimal one <text>
 
     Examples:
-      | cada | unidad | minima            | ahora               | texto                     |
+      | every | unit   | minimal           | now                 | text                      |
       | 2    | dias   | Solo los helechos | 2026-11-13T10:00:00 | Mínima: Solo los helechos |
 
   # Versión mínima en la fila 3
   # También en una periódica de calendario pendiente (el día de su ocurrencia).
-  Scenario Outline: Versión mínima en la fila 3
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra la mínima <texto>
+  Scenario Outline: Minimal version in the row 3
+    Given a weekly recurring task on <days> created on <created>
+    And the minimal version of the task is <minimal>
+    When I query Pendientes on <now>
+    Then the task row shows the minimal one <text>
 
     Examples:
-      | dias   | creada              | minima               | ahora               | texto                         |
+      | days   | created             | minimal              | now                 | text                          |
       | martes | 2026-11-09T08:00:00 | Solo la de la cocina | 2026-11-10T09:00:00 | Mínima: Solo la de la cocina  |
 
   # Versión mínima en la fila 4
   # Una puntual atrasada también la muestra, con el botón habilitado. Fila 1:
   # recién atrasada (a las 00:00 del día siguiente); fila 2: días después.
-  Scenario Outline: Versión mínima en la fila 4
-    Given una tarea puntual con fecha límite <limite>
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra la mínima <texto>
-    And el botón Hice la mínima de la tarea está habilitado
+  Scenario Outline: Minimal version in the row 4
+    Given a one-off task with due date <due_date>
+    And the minimal version of the task is <minimal>
+    When I query Pendientes on <now>
+    Then the task row shows the minimal one <text>
+    And the Hice la mínima button of the task is enabled
 
     Examples:
-      | limite     | minima          | ahora               | texto                   |
+      | due_date   | minimal         | now                 | text                    |
       | 2026-11-12 | Solo el inodoro | 2026-11-13T00:00:00 | Mínima: Solo el inodoro |
       | 2026-11-10 | Solo el inodoro | 2026-11-13T10:00:00 | Mínima: Solo el inodoro |
 
   # Versión mínima en la fila 5
   # Una periódica relativa atrasada también.
-  Scenario Outline: Versión mínima en la fila 5
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra la mínima <texto>
+  Scenario Outline: Minimal version in the row 5
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the minimal version of the task is <minimal>
+    When I query Pendientes on <now>
+    Then the task row shows the minimal one <text>
 
     Examples:
-      | cada | unidad | completada          | minima            | ahora               | texto                     |
+      | every | unit   | completed           | minimal           | now                 | text                      |
       | 2    | dias   | 2026-11-10T09:00:00 | Solo los helechos | 2026-11-14T09:00:00 | Mínima: Solo los helechos |
 
   # Versión mínima en la fila 6
   # Una atrasada con el checkbox deshabilitado hasta que abra su ventana
   # (§5.5) la muestra, con «Hice la mínima» deshabilitado como el checkbox.
-  Scenario Outline: Versión mínima en la fila 6
-    Given una tarea puntual con fecha límite <limite> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes el <ahora>
-    Then el checkbox de la tarea está deshabilitado
-    And la fila de la tarea muestra la mínima <texto>
-    And el botón Hice la mínima de la tarea está deshabilitado
+  Scenario Outline: Minimal version in the row 6
+    Given a one-off task with due date <due_date> created on <created>
+    And the task can be completed from <from> to <to>
+    And the minimal version of the task is <minimal>
+    When I query Pendientes on <now>
+    Then the task checkbox is disabled
+    And the task row shows the minimal one <text>
+    And the Hice la mínima button of the task is disabled
 
     Examples:
-      | limite     | creada              | desde | hasta | minima          | ahora               | texto                   |
+      | due_date   | created             | from  | to    | minimal         | now                 | text                    |
       | 2026-11-10 | 2026-11-01T09:00:00 | 08:00 | 11:00 | Solo el inodoro | 2026-11-13T07:00:00 | Mínima: Solo el inodoro |
 
   # Versión mínima en la fila 7
   # Dentro de la ventana, la misma tarea tiene el checkbox y «Hice la mínima»
   # habilitados.
-  Scenario Outline: Versión mínima en la fila 7
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes el <ahora>
-    Then el checkbox de la tarea está habilitado
-    And la fila de la tarea muestra la mínima <texto>
-    And el botón Hice la mínima de la tarea está habilitado
+  Scenario Outline: Minimal version in the row 7
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to>
+    And the minimal version of the task is <minimal>
+    When I query Pendientes on <now>
+    Then the task checkbox is enabled
+    And the task row shows the minimal one <text>
+    And the Hice la mínima button of the task is enabled
 
     Examples:
-      | creada              | desde | hasta | minima          | ahora               | texto                   |
+      | created             | from  | to    | minimal         | now                 | text                    |
       | 2026-11-13T06:00:00 | 08:00 | 11:00 | Solo el inodoro | 2026-11-13T08:00:00 | Mínima: Solo el inodoro |
 
   # Versión mínima en la fila 8
   # Una tarea sin el campo no tiene versión mínima: la fila se ve como hoy.
-  Scenario Outline: Versión mínima en la fila 8
-    Given una tarea periódica relativa cada <cada> <unidad>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra mínima
+  Scenario Outline: Minimal version in the row 8
+    Given a relative recurring task every <every> <unit>
+    When I query Pendientes on <now>
+    Then the task row shows no minimal one
 
     Examples:
-      | cada | unidad | ahora               |
+      | every | unit   | now                 |
       | 2    | dias   | 2026-11-13T10:00:00 |
 
   # Versión mínima en la fila 9
   # Una periódica relativa en espera (completada) no la muestra.
-  Scenario Outline: Versión mínima en la fila 9
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra mínima
+  Scenario Outline: Minimal version in the row 9
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the minimal version of the task is <minimal>
+    When I query Pendientes on <now>
+    Then the task row shows no minimal one
 
     Examples:
-      | cada | unidad | completada          | minima            | ahora               |
+      | every | unit   | completed           | minimal           | now                 |
       | 2    | dias   | 2026-11-13T08:00:00 | Solo los helechos | 2026-11-13T10:00:00 |
 
   # Versión mínima en la fila 10
   # Una periódica de calendario en espera (antes de su ocurrencia) no la
   # muestra.
-  Scenario Outline: Versión mínima en la fila 10
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra mínima
+  Scenario Outline: Minimal version in the row 10
+    Given a weekly recurring task on <days> created on <created>
+    And the minimal version of the task is <minimal>
+    When I query Pendientes on <now>
+    Then the task row shows no minimal one
 
     Examples:
-      | dias   | creada              | minima               | ahora               |
+      | days   | created             | minimal              | now                 |
       | martes | 2026-11-09T08:00:00 | Solo la de la cocina | 2026-11-09T12:00:00 |
 
   # Versión mínima en la fila 11
   # Una puntual en espera por su horario (fuera de la ventana) no la muestra.
-  Scenario Outline: Versión mínima en la fila 11
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra mínima
+  Scenario Outline: Minimal version in the row 11
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to>
+    And the minimal version of the task is <minimal>
+    When I query Pendientes on <now>
+    Then the task row shows no minimal one
 
     Examples:
-      | creada              | desde | hasta | minima          | ahora               |
+      | created             | from  | to    | minimal         | now                 |
       | 2026-11-13T06:00:00 | 08:00 | 11:00 | Solo el inodoro | 2026-11-13T07:00:00 |
 
   # Versión mínima en la fila 12
   # Una pospuesta (en espera) no la muestra, sea pendiente (fila 1) o atrasada
   # (fila 2) sin la posposición; el checkbox sigue pudiendo completarla entera
   # (§5.9).
-  Scenario Outline: Versión mínima en la fila 12
-    Given una tarea puntual con fecha límite <limite>
-    And la versión mínima de la tarea es <minima>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra mínima
-    And el checkbox de la tarea está habilitado
+  Scenario Outline: Minimal version in the row 12
+    Given a one-off task with due date <due_date>
+    And the minimal version of the task is <minimal>
+    And the task was postponed with option <option> on <postponed>
+    When I query Pendientes on <now>
+    Then the task row shows no minimal one
+    And the task checkbox is enabled
 
     Examples:
-      | limite     | minima          | opcion  | pospuesta           | ahora               |
+      | due_date   | minimal         | option  | postponed           | now                 |
       | 2026-11-20 | Solo el inodoro | 3 horas | 2026-11-13T10:00:00 | 2026-11-13T11:30:00 |
       | 2026-11-10 | Solo el inodoro | 3 horas | 2026-11-13T10:00:00 | 2026-11-13T11:30:00 |
 
   # Versión mínima en la fila 13
   # Una pausada (con Mostrar pausadas) no la muestra, aunque sin pausa estaría
   # atrasada.
-  Scenario Outline: Versión mínima en la fila 13
-    Given Mostrar pausadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la versión mínima de la tarea es <minima>
-    And la tarea fue pausada
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra mínima
+  Scenario Outline: Minimal version in the row 13
+    Given Mostrar pausadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the minimal version of the task is <minimal>
+    And the task was paused
+    When I query Pendientes on <now>
+    Then the task row shows no minimal one
 
     Examples:
-      | cada | unidad | completada          | minima            | ahora               |
+      | every | unit   | completed           | minimal           | now                 |
       | 2    | dias   | 2026-11-10T09:00:00 | Solo los helechos | 2026-11-14T09:00:00 |
 
   # Versión mínima en la fila 14
   # Al completarla entera una puntual (con Mostrar completadas) la línea
   # desaparece.
-  Scenario Outline: Versión mínima en la fila 14
-    Given Mostrar completadas está encendido
-    And una tarea puntual sin fecha límite
-    And la versión mínima de la tarea es <minima>
-    When toco el checkbox de la tarea el <toque>
-    And consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra mínima
+  Scenario Outline: Minimal version in the row 14
+    Given Mostrar completadas is on
+    And a one-off task without a due date
+    And the minimal version of the task is <minimal>
+    When I tap the task checkbox on <tap>
+    And I query Pendientes on <now>
+    Then the task row shows no minimal one
 
     Examples:
-      | minima          | toque               | ahora               |
+      | minimal         | tap                 | now                 |
       | Solo el inodoro | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 |
 
   # Versión mínima en la fila 15
   # Al terminar la posposición vuelve sola: pendiente (fila 1) o atrasada
   # (fila 2).
-  Scenario Outline: Versión mínima en la fila 15
-    Given una tarea puntual con fecha límite <limite>
-    And la versión mínima de la tarea es <minima>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra la mínima <texto>
+  Scenario Outline: Minimal version in the row 15
+    Given a one-off task with due date <due_date>
+    And the minimal version of the task is <minimal>
+    And the task was postponed with option <option> on <postponed>
+    When I query Pendientes on <now>
+    Then the task row shows the minimal one <text>
 
     Examples:
-      | limite     | minima          | opcion  | pospuesta           | ahora               | texto                   |
+      | due_date   | minimal         | option  | postponed           | now                 | text                    |
       | 2026-11-20 | Solo el inodoro | 3 horas | 2026-11-13T10:00:00 | 2026-11-13T13:00:00 | Mínima: Solo el inodoro |
       | 2026-11-10 | Solo el inodoro | 3 horas | 2026-11-13T10:00:00 | 2026-11-13T13:00:00 | Mínima: Solo el inodoro |
 
   # Versión mínima en la fila 16
   # Al reanudar una pausada vuelve sola.
-  Scenario Outline: Versión mínima en la fila 16
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la versión mínima de la tarea es <minima>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra la mínima <texto>
+  Scenario Outline: Minimal version in the row 16
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the minimal version of the task is <minimal>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query Pendientes on <now>
+    Then the task row shows the minimal one <text>
 
     Examples:
-      | cada | unidad | completada          | minima            | reanudada           | ahora               | texto                     |
+      | every | unit   | completed           | minimal           | resumed             | now                 | text                      |
       | 2    | dias   | 2026-11-10T09:00:00 | Solo los helechos | 2026-11-13T10:00:00 | 2026-11-14T09:00:00 | Mínima: Solo los helechos |
 
   # Versión mínima en la fila 17
   # La línea se ve aunque la tarea no tenga primer paso (fila 1), y con primer
   # paso la fila muestra las dos: el paso y la mínima (fila 2).
-  Scenario Outline: Versión mínima en la fila 17
-    Given una tarea puntual sin fecha límite
-    And el primer paso de la tarea es <primer_paso>
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes en cualquier momento
-    Then la fila de la tarea muestra el primer paso <texto_paso>
-    And la fila de la tarea muestra la mínima <texto>
+  Scenario Outline: Minimal version in the row 17
+    Given a one-off task without a due date
+    And the first step of the task is <first_step>
+    And the minimal version of the task is <minimal>
+    When I query Pendientes at any moment
+    Then the task row shows the first step <text_step>
+    And the task row shows the minimal one <text>
 
     Examples:
-      | primer_paso            | minima          | texto_paso                          | texto                   |
+      | first_step             | minimal         | text_step                           | text                    |
       | Separar la ropa blanca | Solo el inodoro | Primer paso: Separar la ropa blanca | Mínima: Solo el inodoro |
 
   # Versión mínima en la fila 18
   # Con pasos, la línea de la mínima se ve en cualquier paso, debajo de la del
   # paso en que va la tarea.
-  Scenario Outline: Versión mínima en la fila 18
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    And el paso actual de la tarea es <actual>
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes en cualquier momento
-    Then la fila de la tarea muestra el paso <texto_paso>
-    And la fila de la tarea muestra la mínima <texto>
+  Scenario Outline: Minimal version in the row 18
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    And the current step of the task is <current>
+    And the minimal version of the task is <minimal>
+    When I query Pendientes at any moment
+    Then the task row shows the step <text_step>
+    And the task row shows the minimal one <text>
 
     Examples:
-      | pasos                                                       | actual | minima          | texto_paso                          | texto                   |
+      | steps                                                       | current | minimal         | text_step                           | text                    |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 1      | Solo el inodoro | Primer paso: Separar la ropa blanca | Mínima: Solo el inodoro |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 2      | Solo el inodoro | Paso: Poner el lavarropas           | Mínima: Solo el inodoro |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 3      | Solo el inodoro | Paso: Tender la ropa                | Mínima: Solo el inodoro |
@@ -284,15 +284,15 @@ Feature: Versión mínima en la fila
   # La app no la ofrece distinto según cuántas veces se hizo: una periódica
   # que ya se completó dos veces con la mínima, al volver pendiente, la
   # muestra igual.
-  Scenario Outline: Versión mínima en la fila 19
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <primera> con la mínima
-    And la tarea fue completada el <segunda> con la mínima
-    And la versión mínima de la tarea es <minima>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea muestra la mínima <texto>
-    And el botón Hice la mínima de la tarea está habilitado
+  Scenario Outline: Minimal version in the row 19
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <first> with the minimal one
+    And the task was completed on <second> with the minimal one
+    And the minimal version of the task is <minimal>
+    When I query Pendientes on <now>
+    Then the task row shows the minimal one <text>
+    And the Hice la mínima button of the task is enabled
 
     Examples:
-      | cada | unidad | primera             | segunda             | minima            | ahora               | texto                     |
+      | every | unit   | first               | second              | minimal           | now                 | text                      |
       | 2    | dias   | 2026-11-08T09:00:00 | 2026-11-10T09:00:00 | Solo los helechos | 2026-11-13T09:00:00 | Mínima: Solo los helechos |

@@ -8,23 +8,23 @@
 # atrasada y A (su desde) como inicio de pendiente. Una relativa sin
 # horario usa V + intervalo y V. Semana de referencia: martes 2026-07-14,
 # miércoles 15.
-Feature: Orden con varios horarios
+Feature: Order with several schedules
 
   # Orden con varios horarios 1
   # Atrasadas: Basura (calendario, creada el martes) perdió la mañana del
   # miércoles y está atrasada desde su cierre (10:00). Regar, relativa sin
   # horario, desde V + intervalo: fila 1, a las 11:00, después; fila 2, a
   # las 09:00, antes.
-  Scenario Outline: Orden con varios horarios 1
-    Given una tarea periódica semanal Basura los <dias> creada el <creada_basura>
-    And la tarea Basura se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada_regar>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Order with several schedules 1
+    Given a weekly recurring task Basura on <days> created on <created_trash>
+    And the task Basura can be completed from <from> to <to> and from <from2> to <to2>
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed_water>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | dias      | creada_basura       | desde | hasta | desde2 | hasta2 | cada | unidad | completada_regar    | ahora               | orden         |
+      | days      | created_trash       | from  | to    | from2  | to2    | every | unit   | completed_water     | now                 | order         |
       | miércoles | 2026-07-14T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 4    | horas  | 2026-07-15T03:00:00 | 2026-07-15T12:00:00 | Basura, Regar |
       | miércoles | 2026-07-14T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 4    | horas  | 2026-07-15T01:00:00 | 2026-07-15T12:00:00 | Regar, Basura |
 
@@ -33,16 +33,16 @@ Feature: Orden con varios horarios
   # desde de la tarde (18:00), no desde las 00:00 del día. Regar, relativa
   # sin horario, desde V: fila 1, a las 18:30, después; fila 2, a las 17:30,
   # antes.
-  Scenario Outline: Orden con varios horarios 2
-    Given una tarea periódica semanal Basura los <dias>
-    And la tarea Basura tiene un completado del <completada_basura> que cubre el <cubierta_basura>
-    And la tarea Basura se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada_regar>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Order with several schedules 2
+    Given a weekly recurring task Basura on <days>
+    And the task Basura has a completion from <completed_trash> that covers <covered_trash>
+    And the task Basura can be completed from <from> to <to> and from <from2> to <to2>
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed_water>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | dias      | completada_basura   | cubierta_basura     | desde | hasta | desde2 | hasta2 | cada | unidad | completada_regar    | ahora               | orden         |
+      | days      | completed_trash     | covered_trash       | from  | to    | from2  | to2    | every | unit   | completed_water     | now                 | order         |
       | miércoles | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 1    | dias   | 2026-07-14T18:30:00 | 2026-07-15T19:00:00 | Basura, Regar |
       | miércoles | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 1    | dias   | 2026-07-14T17:30:00 | 2026-07-15T19:00:00 | Regar, Basura |

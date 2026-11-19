@@ -14,74 +14,74 @@
 # como "<encabezado>: <entradas>", y las entradas como "<título> <HH:MM>"
 # (con " Mínima" al final si fue la mínima). Cada tarea se nombra por su
 # título (una palabra). Semana de referencia: viernes 2026-11-13.
-Feature: Mínima en el Historial
+Feature: Minimal in the Historial
 
   # Mínima en el Historial 1
   # Un completado de la mínima suma «Mínima» después de la hora.
-  Scenario Outline: Mínima en el Historial 1
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada> con la mínima
-    When consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+  Scenario Outline: Minimal in the Historial 1
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed> with the minimal one
+    When I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | cada | unidad | completada          | ahora               | historial          |
+      | every | unit   | completed           | now                 | history                 |
       | 2    | dias   | 2026-11-13T08:05:00 | 2026-11-13T12:00:00 | Hoy: Regar 08:05 Mínima |
 
   # Mínima en el Historial 2
   # Un completado entero de la misma tarea no suma nada, y los dos conviven
   # en el mismo día y en distintos días.
-  Scenario Outline: Mínima en el Historial 2
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And una tarea puntual Pagar sin fecha límite
-    And la tarea Regar fue completada el <regar_ayer>
-    And la tarea Regar fue completada el <regar_hoy> con la mínima
-    And la tarea Pagar fue completada el <pagar>
-    When consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+  Scenario Outline: Minimal in the Historial 2
+    Given a relative recurring task Regar every <every> <unit>
+    And a one-off task Pagar without a due date
+    And the task Regar was completed on <water_yesterday>
+    And the task Regar was completed on <water_today> with the minimal one
+    And the task Pagar was completed on <pay>
+    When I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | cada | unidad | regar_ayer          | regar_hoy           | pagar               | ahora               | historial                                      |
+      | every | unit   | water_yesterday     | water_today         | pay                 | now                 | history                                                 |
       | 2    | dias   | 2026-11-12T09:00:00 | 2026-11-13T08:05:00 | 2026-11-13T10:00:00 | 2026-11-13T12:00:00 | Hoy: Pagar 10:00, Regar 08:05 Mínima; Ayer: Regar 09:00 |
 
   # Mínima en el Historial 3
   # Con otro nombre de la tarea, la entrada muestra el nombre actual y sigue
   # diciendo «Mínima».
-  Scenario Outline: Mínima en el Historial 3
-    Given una tarea periódica relativa <titulo> cada <cada> <unidad>
-    And la tarea fue completada el <completada> con la mínima
-    When edito el título a <titulo_nuevo>
-    And consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+  Scenario Outline: Minimal in the Historial 3
+    Given a relative recurring task <title> every <every> <unit>
+    And the task was completed on <completed> with the minimal one
+    When I edit the title to <title_new>
+    And I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | titulo | cada | unidad | completada          | titulo_nuevo | ahora               | historial                  |
+      | title  | every | unit   | completed           | title_new    | now                 | history                   |
       | Regar  | 2    | dias   | 2026-11-13T08:05:00 | Plantas      | 2026-11-13T12:00:00 | Hoy: Plantas 08:05 Mínima |
 
   # Mínima en el Historial 4
   # Nunca muestra el texto de la versión mínima, ni el que tiene la tarea ahora.
-  Scenario Outline: Mínima en el Historial 4
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    And edito la versión mínima a <nueva>
-    And consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+  Scenario Outline: Minimal in the Historial 4
+    Given a relative recurring task Regar every <every> <unit>
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    And I edit the minimal version to <new>
+    And I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | cada | unidad | minima            | toque               | nueva          | ahora               | historial               |
+      | every | unit   | minimal           | tap                 | new            | now                 | history                 |
       | 2    | dias   | Solo los helechos | 2026-11-13T08:05:00 | Solo el brote  | 2026-11-13T12:00:00 | Hoy: Regar 08:05 Mínima |
 
   # Mínima en el Historial 5
   # Con pasos, la palabra «Mínima» no muestra pasos: la entrada es la misma
   # que la de una tarea sin pasos.
-  Scenario Outline: Mínima en el Historial 5
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And los pasos de la tarea son <pasos>
-    And la tarea fue completada el <completada> en el paso <paso_completado> con la mínima
-    When consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+  Scenario Outline: Minimal in the Historial 5
+    Given a relative recurring task Regar every <every> <unit>
+    And the steps of the task are <steps>
+    And the task was completed on <completed> at step <step_completion> with the minimal one
+    When I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | cada | unidad | pasos                                  | completada          | paso_completado | ahora               | historial               |
+      | every | unit   | steps                                  | completed           | step_completion | now                 | history                 |
       | 2    | dias   | Llenar la regadera, Regar los helechos | 2026-11-13T08:05:00 | 2               | 2026-11-13T12:00:00 | Hoy: Regar 08:05 Mínima |

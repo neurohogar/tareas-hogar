@@ -19,24 +19,24 @@ function theHistoryQueried(world: World): HistoryGroup[] {
 
 export const historySteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^la tarea ${TITLE} fue completada el ${P} con id ${P}$`),
+		pattern: new RegExp(`^the task ${TITLE} was completed on ${P} with id ${P}$`),
 		run: (world, title, moment, id) => {
 			const task = theTaskTitled(world, title);
 			world.completions = [...world.completions, complete(task, world.completions, id, dateHour(moment))];
 		}
 	},
 	{
-		pattern: new RegExp(`^consulto el Historial el ${P}$`),
+		pattern: new RegExp(`^I query the Historial on ${P}$`),
 		run: (world, now) => {
 			world.history = history(tasksOf(world), world.completions, dateHour(now));
 		}
 	},
 	{
-		pattern: new RegExp(`^el Historial muestra ${P}$`),
+		pattern: new RegExp(`^the Historial shows ${P}$`),
 		run: (world, expected) => expect(inText(theHistoryQueried(world))).toBe(expected)
 	},
 	{
-		pattern: /^el Historial está vacío$/,
+		pattern: /^the Historial is empty$/,
 		run: (world) => expect(theHistoryQueried(world)).toEqual([])
 	}
 ];

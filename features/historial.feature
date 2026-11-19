@@ -22,18 +22,18 @@ Feature: Historial
   # Puntuales y periódicas juntas, del más reciente al más antiguo y
   # agrupadas por día, aunque se hayan completado en otro orden.
   Scenario Outline: Historial 1
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And una tarea periódica semanal Basura los <dias>
-    And una tarea puntual Pagar con fecha límite <limite>
-    And la tarea Regar fue completada el <regar_reciente>
-    And la tarea Pagar fue completada el <pagar>
-    And la tarea Regar fue completada el <regar_antiguo>
-    And la tarea Basura fue completada el <basura>
-    When consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+    Given a relative recurring task Regar every <every> <unit>
+    And a weekly recurring task Basura on <days>
+    And a one-off task Pagar with due date <due_date>
+    And the task Regar was completed on <water_recent>
+    And the task Pagar was completed on <pay>
+    And the task Regar was completed on <water_old>
+    And the task Basura was completed on <trash>
+    When I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | cada | unidad | dias           | limite     | regar_reciente      | pagar               | regar_antiguo       | basura              | ahora               | historial                                                              |
+      | every | unit   | days           | due_date   | water_recent        | pay                 | water_old           | trash               | now                 | history                                                                           |
       | 2    | dias   | martes, jueves | 2026-07-20 | 2026-07-15T08:05:00 | 2026-07-15T10:00:00 | 2026-07-13T09:00:00 | 2026-07-14T21:30:00 | 2026-07-15T12:00:00 | Hoy: Pagar 10:00, Regar 08:05; Ayer: Basura 21:30; lunes 13 de julio: Regar 09:00 |
 
   # Historial 2
@@ -42,13 +42,13 @@ Feature: Historial
   # mismo día, más tarde, va en "Hoy"; otro día, con la fecha). La hora se
   # muestra sin segundos.
   Scenario Outline: Historial 2
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    When consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    When I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | cada | unidad | completada          | ahora               | historial                                       |
+      | every | unit   | completed           | now                 | history                                         |
       | 2    | dias   | 2026-07-15T00:00:00 | 2026-07-15T12:00:00 | Hoy: Regar 00:00                                |
       | 2    | dias   | 2026-07-14T23:59:59 | 2026-07-15T12:00:00 | Ayer: Regar 23:59                               |
       | 2    | dias   | 2026-07-14T23:59:59 | 2026-07-16T00:00:00 | martes 14 de julio: Regar 23:59                 |
@@ -62,15 +62,15 @@ Feature: Historial
   # Dos completados en el mismo instante: va primero el de id menor, sin
   # importar en qué orden se registraron.
   Scenario Outline: Historial 3
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And una tarea puntual Pagar con fecha límite <limite>
-    And la tarea Regar fue completada el <momento> con id <id_regar>
-    And la tarea Pagar fue completada el <momento> con id <id_pagar>
-    When consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+    Given a relative recurring task Regar every <every> <unit>
+    And a one-off task Pagar with due date <due_date>
+    And the task Regar was completed on <moment> with id <id_water>
+    And the task Pagar was completed on <moment> with id <id_pay>
+    When I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | cada | unidad | limite     | momento             | id_regar | id_pagar | ahora               | historial                    |
+      | every | unit   | due_date   | moment              | id_water | id_pay   | now                 | history                       |
       | 2    | dias   | 2026-07-20 | 2026-07-15T10:00:00 | c2       | c1       | 2026-07-15T12:00:00 | Hoy: Pagar 10:00, Regar 10:00 |
       | 2    | dias   | 2026-07-20 | 2026-07-15T10:00:00 | c1       | c2       | 2026-07-15T12:00:00 | Hoy: Regar 10:00, Pagar 10:00 |
 
@@ -78,70 +78,70 @@ Feature: Historial
   # Cada entrada muestra el título actual: renombrar la tarea cambia todas
   # sus entradas.
   Scenario Outline: Historial 4
-    Given una tarea periódica relativa <titulo> cada <cada> <unidad>
-    And la tarea fue completada el <primera>
-    And la tarea fue completada el <segunda>
-    When edito el título a <titulo_nuevo>
-    And consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+    Given a relative recurring task <title> every <every> <unit>
+    And the task was completed on <first>
+    And the task was completed on <second>
+    When I edit the title to <title_new>
+    And I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | titulo | cada | unidad | primera             | segunda             | titulo_nuevo | ahora               | historial                                   |
+      | title  | every | unit   | first               | second              | title_new    | now                 | history                                     |
       | Regar  | 2    | dias   | 2026-07-14T09:00:00 | 2026-07-15T08:00:00 | Plantas      | 2026-07-15T12:00:00 | Hoy: Plantas 08:00; Ayer: Plantas 09:00     |
 
   # Historial 5
   # Dos dispositivos completan la misma tarea sin conexión: quedan las dos
   # entradas.
   Scenario Outline: Historial 5
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When completo la tarea el <mia>
-    And otro dispositivo, sin ver ese cambio, completa la tarea Regar el <otra>
-    And consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+    Given a relative recurring task Regar every <every> <unit>
+    When I complete the task on <mine>
+    And another device, without seeing that change, completes the task Regar on <other>
+    And I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | cada | unidad | mia                 | otra                | ahora               | historial                     |
+      | every | unit   | mine                | other               | now                 | history                       |
       | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-15T09:00:00 | 2026-07-15T12:00:00 | Hoy: Regar 09:00, Regar 08:00 |
 
   # Historial 6
   # Borrar una tarea saca del Historial todas sus entradas, y solo las suyas.
   Scenario Outline: Historial 6
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And una tarea puntual Pagar con fecha límite <limite>
-    And la tarea Regar fue completada el <regar_1>
-    And la tarea Regar fue completada el <regar_2>
-    And la tarea Pagar fue completada el <pagar>
-    When borro la tarea Regar
-    And consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+    Given a relative recurring task Regar every <every> <unit>
+    And a one-off task Pagar with due date <due_date>
+    And the task Regar was completed on <water_1>
+    And the task Regar was completed on <water_2>
+    And the task Pagar was completed on <pay>
+    When I delete the task Regar
+    And I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | cada | unidad | limite     | regar_1             | regar_2             | pagar               | ahora               | historial                       |
+      | every | unit   | due_date   | water_1             | water_2             | pay                 | now                 | history                         |
       | 2    | dias   | 2026-07-20 | 2026-07-14T09:00:00 | 2026-07-15T08:00:00 | 2026-07-14T10:00:00 | 2026-07-15T12:00:00 | Ayer: Pagar 10:00               |
 
   # Historial 7
   # Un completado huérfano (otro dispositivo, sin ver el borrado, completa la
   # tarea borrada) no aparece en el Historial.
   Scenario Outline: Historial 7
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And una tarea puntual Pagar con fecha límite <limite>
-    And la tarea Pagar fue completada el <pagar>
-    When borro la tarea Regar
-    And otro dispositivo, sin ver ese cambio, completa la tarea Regar el <huerfano>
-    And consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+    Given a relative recurring task Regar every <every> <unit>
+    And a one-off task Pagar with due date <due_date>
+    And the task Pagar was completed on <pay>
+    When I delete the task Regar
+    And another device, without seeing that change, completes the task Regar on <orphan>
+    And I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | cada | unidad | limite     | pagar               | huerfano            | ahora               | historial        |
+      | every | unit   | due_date   | pay                 | orphan              | now                 | history          |
       | 2    | dias   | 2026-07-20 | 2026-07-15T08:00:00 | 2026-07-15T09:00:00 | 2026-07-15T12:00:00 | Hoy: Pagar 08:00 |
 
   # Historial 8
   # Sin completados, el Historial está vacío.
   Scenario Outline: Historial 8
-    Given una tarea periódica relativa Regar nunca completada creada el <creada>
-    When consulto el Historial el <ahora>
-    Then el Historial está vacío
+    Given a relative recurring task Regar never completed created on <created>
+    When I query the Historial on <now>
+    Then the Historial is empty
 
     Examples:
-      | creada              | ahora               |
+      | created             | now                 |
       | 2026-07-13T08:00:00 | 2026-07-15T12:00:00 |

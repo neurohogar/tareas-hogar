@@ -10,18 +10,18 @@
 # al menos un día, días del mes enteros entre 1 y 31, y semanal y mensual no
 # se combinan.
 # Los días son un conjunto: el orden en que se eligen no importa.
-Feature: Crear periódica de calendario
+Feature: Create calendar recurring task
 
   # Crear periódica de calendario 1
   # Semanal válida: se crea con su recurrencia semanal y sin completados.
-  Scenario Outline: Crear periódica de calendario 1
-    When creo una tarea periódica semanal con título <titulo> los <dias>
-    Then se crea una tarea periódica con título <titulo_guardado>
-    And su recurrencia es semanal los <dias_guardados>
-    And la tarea no tiene completados
+  Scenario Outline: Create calendar recurring task 1
+    When I create a weekly recurring task with title <title> on <days>
+    Then a recurring task is created with title <title_stored>
+    And its recurrence is weekly on <days_stored>
+    And the task has no completions
 
     Examples:
-      | titulo          | dias                                                       | titulo_guardado | dias_guardados                                             |
+      | title           | days                                                       | title_stored    | days_stored                                                |
       | Sacar la basura | martes, jueves                                             | Sacar la basura | martes, jueves                                             |
       | Regar plantas   | domingo                                                    | Regar plantas   | domingo                                                    |
       | Cambiar sábanas | lunes, miércoles, viernes                                  | Cambiar sábanas | lunes, miércoles, viernes                                  |
@@ -31,14 +31,14 @@ Feature: Crear periódica de calendario
   # Crear periódica de calendario 2
   # Mensual válida: se crea con su recurrencia mensual y sin completados.
   # El 31 es válido aunque no exista en todos los meses.
-  Scenario Outline: Crear periódica de calendario 2
-    When creo una tarea periódica mensual con título <titulo> los días <dias>
-    Then se crea una tarea periódica con título <titulo_guardado>
-    And su recurrencia es mensual los días <dias_guardados>
-    And la tarea no tiene completados
+  Scenario Outline: Create calendar recurring task 2
+    When I create a monthly recurring task with title <title> on days <days>
+    Then a recurring task is created with title <title_stored>
+    And its recurrence is monthly on days <days_stored>
+    And the task has no completions
 
     Examples:
-      | titulo           | dias      | titulo_guardado  | dias_guardados |
+      | title            | days      | title_stored     | days_stored    |
       | Pagar expensas   | 10        | Pagar expensas   | 10             |
       | Limpiar heladera | 1, 15     | Limpiar heladera | 1, 15          |
       | Revisar filtro   | 31        | Revisar filtro   | 31             |
@@ -47,63 +47,63 @@ Feature: Crear periódica de calendario
 
   # Crear periódica de calendario 3
   # Semanal con título vacío: se rechaza y no se crea nada.
-  Scenario Outline: Crear periódica de calendario 3
-    When creo una tarea periódica semanal con título <titulo> y días válidos
-    Then la creación se rechaza por título vacío
-    And no se crea ninguna tarea
+  Scenario Outline: Create calendar recurring task 3
+    When I create a weekly recurring task with title <title> and valid days
+    Then creation is rejected for empty title
+    And no task is created
 
     Examples:
-      | titulo |
+      | title  |
       |        |
 
   # Crear periódica de calendario 4
   # Mensual con título vacío: se rechaza y no se crea nada.
-  Scenario Outline: Crear periódica de calendario 4
-    When creo una tarea periódica mensual con título <titulo> y días válidos
-    Then la creación se rechaza por título vacío
-    And no se crea ninguna tarea
+  Scenario Outline: Create calendar recurring task 4
+    When I create a monthly recurring task with title <title> and valid days
+    Then creation is rejected for empty title
+    And no task is created
 
     Examples:
-      | titulo |
+      | title  |
       |        |
 
   # Crear periódica de calendario 5
   # Semanal con título de solo espacios: cuenta como vacío.
-  Scenario: Crear periódica de calendario 5
-    When creo una tarea periódica semanal con un título de solo espacios y días válidos
-    Then la creación se rechaza por título vacío
-    And no se crea ninguna tarea
+  Scenario: Create calendar recurring task 5
+    When I create a weekly recurring task with a title of only spaces and valid days
+    Then creation is rejected for empty title
+    And no task is created
 
   # Crear periódica de calendario 6
   # Mensual con título de solo espacios: cuenta como vacío.
-  Scenario: Crear periódica de calendario 6
-    When creo una tarea periódica mensual con un título de solo espacios y días válidos
-    Then la creación se rechaza por título vacío
-    And no se crea ninguna tarea
+  Scenario: Create calendar recurring task 6
+    When I create a monthly recurring task with a title of only spaces and valid days
+    Then creation is rejected for empty title
+    And no task is created
 
   # Crear periódica de calendario 7
   # Semanal sin ningún día: se rechaza.
-  Scenario: Crear periódica de calendario 7
-    When creo una tarea periódica semanal con un título válido y sin días
-    Then la creación se rechaza por falta de días
-    And no se crea ninguna tarea
+  Scenario: Create calendar recurring task 7
+    When I create a weekly recurring task with a valid title and without days
+    Then creation is rejected for missing days
+    And no task is created
 
   # Crear periódica de calendario 8
   # Mensual sin ningún día: se rechaza.
-  Scenario: Crear periódica de calendario 8
-    When creo una tarea periódica mensual con un título válido y sin días
-    Then la creación se rechaza por falta de días
-    And no se crea ninguna tarea
+  Scenario: Create calendar recurring task 8
+    When I create a monthly recurring task with a valid title and without days
+    Then creation is rejected for missing days
+    And no task is created
 
   # Crear periódica de calendario 9
   # Algún día del mes que no es entero entre 1 y 31: se rechaza toda la tarea.
-  Scenario Outline: Crear periódica de calendario 9
-    When creo una tarea periódica mensual con un título válido los días <dias>
-    Then la creación se rechaza por día del mes inválido
-    And no se crea ninguna tarea
+  Scenario Outline: Create calendar recurring task 9
+    When I create a monthly recurring task with a valid title on days <days>
+    Then creation is rejected for invalid month day
+    And no task is created
 
     Examples:
-      | dias   |
+      | days   |
       | 0      |
       | 32     |
       | -1     |
@@ -113,7 +113,7 @@ Feature: Crear periódica de calendario
 
   # Crear periódica de calendario 10
   # Días de la semana y días del mes a la vez: se rechaza.
-  Scenario: Crear periódica de calendario 10
-    When creo una tarea periódica de calendario con un título válido y días de la semana y del mes a la vez
-    Then la creación se rechaza por semanal y mensual combinados
-    And no se crea ninguna tarea
+  Scenario: Create calendar recurring task 10
+    When I create a calendar recurring task with a valid title and weekdays and month days at once
+    Then creation is rejected for weekly and monthly combined
+    And no task is created

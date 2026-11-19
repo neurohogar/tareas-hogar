@@ -20,33 +20,33 @@
 # escenario en ese momento.
 # El progreso es una fracción entre 0 y 1, comparada exactamente.
 # Semana de referencia: lunes 2026-07-13 a domingo 2026-07-19.
-Feature: Completar con horario
+Feature: Complete with schedule
 
   # Completar con horario 1
   # Dentro de la ventana, el checkbox de una no completada está habilitado.
   # Fila 1: el desde es inclusive.
-  Scenario Outline: Completar con horario 1
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then el checkbox de la tarea está habilitado
+  Scenario Outline: Complete with schedule 1
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task checkbox is enabled
 
     Examples:
-      | creada              | desde | hasta | ahora               |
+      | created             | from  | to    | now                 |
       | 2026-07-15T06:00:00 | 08:00 | 11:00 | 2026-07-15T08:00:00 |
       | 2026-07-15T06:00:00 | 08:00 | 11:00 | 2026-07-15T10:59:59 |
 
   # Completar con horario 2
   # Fuera de la ventana, el checkbox de una no completada está
   # deshabilitado. Fila 2: el hasta es exclusive.
-  Scenario Outline: Completar con horario 2
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then el checkbox de la tarea está deshabilitado
+  Scenario Outline: Complete with schedule 2
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task checkbox is disabled
 
     Examples:
-      | creada              | desde | hasta | ahora               |
+      | created             | from  | to    | now                 |
       | 2026-07-15T06:00:00 | 08:00 | 11:00 | 2026-07-15T07:59:59 |
       | 2026-07-15T06:00:00 | 08:00 | 11:00 | 2026-07-15T11:00:00 |
       | 2026-07-15T06:00:00 | 08:00 | 11:00 | 2026-07-16T03:00:00 |
@@ -54,211 +54,211 @@ Feature: Completar con horario
   # Completar con horario 3
   # Una atrasada fuera de la ventana tiene el checkbox deshabilitado. Fila
   # 1: atrasada antes de que abra la ventana (V + intervalo a las 18:00).
-  Scenario Outline: Completar con horario 3
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then el checkbox de la tarea está deshabilitado
+  Scenario Outline: Complete with schedule 3
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task checkbox is disabled
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | ahora               |
+      | every | unit   | completed           | from  | to    | now                 |
       | 4    | horas  | 2026-07-15T10:00:00 | 08:00 | 11:00 | 2026-07-15T20:00:00 |
       | 1    | dias   | 2026-07-15T09:00:00 | 08:00 | 11:00 | 2026-07-16T11:00:00 |
 
   # Completar con horario 4
   # Una atrasada dentro de la próxima ventana tiene el checkbox habilitado.
-  Scenario Outline: Completar con horario 4
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then el checkbox de la tarea está habilitado
+  Scenario Outline: Complete with schedule 4
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task checkbox is enabled
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | ahora               |
+      | every | unit   | completed           | from  | to    | now                 |
       | 4    | horas  | 2026-07-15T10:00:00 | 08:00 | 11:00 | 2026-07-16T08:00:00 |
       | 1    | dias   | 2026-07-15T09:00:00 | 08:00 | 11:00 | 2026-07-17T09:00:00 |
 
   # Completar con horario 5
   # Tocar el checkbox deshabilitado no registra ningún completado.
-  Scenario Outline: Completar con horario 5
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When toco el checkbox de la tarea el <toque>
-    Then la tarea no tiene completados
+  Scenario Outline: Complete with schedule 5
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to>
+    When I tap the task checkbox on <tap>
+    Then the task has no completions
 
     Examples:
-      | creada              | desde | hasta | toque               |
+      | created             | from  | to    | tap                 |
       | 2026-07-15T06:00:00 | 08:00 | 11:00 | 2026-07-15T07:00:00 |
       | 2026-07-15T06:00:00 | 08:00 | 11:00 | 2026-07-15T11:00:00 |
 
   # Completar con horario 6
   # Tocar el checkbox dentro de la ventana completa la tarea y sale de
   # Pendientes.
-  Scenario Outline: Completar con horario 6
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado en cualquier momento
-    Then se registró un completado sin ocurrencia cubierta
-    And el completado registrado es del <toque_guardado>
-    And la tarea no aparece en Pendientes
+  Scenario Outline: Complete with schedule 6
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to>
+    When I tap the task checkbox on <tap>
+    And I query the status at any moment
+    Then a completion without a covered occurrence was recorded
+    And the recorded completion is from <tap_stored>
+    And the task does not appear in Pendientes
 
     Examples:
-      | creada              | desde | hasta | toque               | toque_guardado      |
+      | created             | from  | to    | tap                 | tap_stored          |
       | 2026-07-15T06:00:00 | 08:00 | 11:00 | 2026-07-15T10:59:59 | 2026-07-15T10:59:59 |
 
   # Completar con horario 7
   # Una relativa atrasada se completa en la próxima ventana: reinicia el
   # intervalo desde el toque (V = 18 a las 08:00, dentro de la ventana).
-  Scenario Outline: Completar con horario 7
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior>
-    And la tarea se puede completar de <desde> a <hasta>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then el nuevo completado se agrega sin modificar los anteriores
-    And el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Complete with schedule 7
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <previous>
+    And the task can be completed from <from> to <to>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the new completion is added without changing the previous ones
+    And the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | anterior            | desde | hasta | toque               | ahora               | progreso |
+      | every | unit   | previous            | from  | to    | tap                 | now                 | progress |
       | 1    | dias   | 2026-07-15T09:00:00 | 08:00 | 11:00 | 2026-07-17T08:00:00 | 2026-07-17T20:00:00 | 0.5      |
 
   # Completar con horario 8
   # Una de calendario atrasada desde el cierre del jueves se completa el
   # viernes dentro de la ventana: cubre el jueves, como en §5.3. Con horario,
   # la ocurrencia cubierta se guarda con la hora desde de su ventana (§4.4).
-  Scenario Outline: Completar con horario 8
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <anterior> que cubre el <cubierta_anterior>
-    And la tarea se puede completar de <desde> a <hasta>
-    When toco el checkbox de la tarea el <toque>
-    Then el nuevo completado se agrega sin modificar los anteriores
-    And se registró un completado que cubre el <cubierta>
+  Scenario Outline: Complete with schedule 8
+    Given a weekly recurring task on <days>
+    And the task has a completion from <previous> that covers <covered_previous>
+    And the task can be completed from <from> to <to>
+    When I tap the task checkbox on <tap>
+    Then the new completion is added without changing the previous ones
+    And a completion was recorded that covers <covered>
 
     Examples:
-      | dias           | anterior            | cubierta_anterior | desde | hasta | toque               | cubierta            |
+      | days           | previous            | covered_previous  | from  | to    | tap                 | covered             |
       | martes, jueves | 2026-07-14T08:00:00 | 2026-07-14        | 08:00 | 11:00 | 2026-07-17T09:00:00 | 2026-07-16T08:00:00 |
 
   # Completar con horario 9
   # Una periódica completada cuyo completado más reciente es de un día
   # anterior: tocar el checkbox la completaría de nuevo, así que fuera de la
   # ventana está deshabilitado.
-  Scenario Outline: Completar con horario 9
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la tarea está completada
-    And el checkbox de la tarea está deshabilitado
+  Scenario Outline: Complete with schedule 9
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task is completed
+    And the task checkbox is disabled
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | ahora               |
+      | every | unit   | completed           | from  | to    | now                 |
       | 3    | dias   | 2026-07-14T09:00:00 | 08:00 | 11:00 | 2026-07-15T12:00:00 |
 
   # Completar con horario 10
   # La misma periódica completada, dentro de la ventana: tocar el checkbox
   # la completa de nuevo.
-  Scenario Outline: Completar con horario 10
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When toco el checkbox de la tarea el <toque>
-    Then el nuevo completado se agrega sin modificar los anteriores
+  Scenario Outline: Complete with schedule 10
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    When I tap the task checkbox on <tap>
+    Then the new completion is added without changing the previous ones
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | toque               |
+      | every | unit   | completed           | from  | to    | tap                 |
       | 3    | dias   | 2026-07-14T09:00:00 | 08:00 | 11:00 | 2026-07-15T09:00:00 |
 
   # Completar con horario 11
   # Una puntual completada, fuera de la ventana: el checkbox borraría su
   # completado, así que está habilitado: tocarlo lo borra y la tarea vuelve
   # en espera hasta la próxima ventana.
-  Scenario Outline: Completar con horario 11
-    Given Mostrar completadas está encendido
-    And una tarea puntual sin fecha límite creada el <creada>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then la tarea no tiene completados
-    And el estado es en espera
+  Scenario Outline: Complete with schedule 11
+    Given Mostrar completadas is on
+    And a one-off task without a due date created on <created>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the task has no completions
+    And the status is en espera
 
     Examples:
-      | creada              | completada          | desde | hasta | toque               | ahora               |
+      | created             | completed           | from  | to    | tap                 | now                 |
       | 2026-07-15T06:00:00 | 2026-07-15T09:00:00 | 08:00 | 11:00 | 2026-07-15T20:00:00 | 2026-07-15T20:00:01 |
 
   # Completar con horario 12
   # Una periódica completada hoy, fuera de la ventana: el checkbox borraría
   # su completado, así que está habilitado: tocarlo lo borra.
-  Scenario Outline: Completar con horario 12
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When toco el checkbox de la tarea el <toque>
-    Then la tarea no tiene completados
+  Scenario Outline: Complete with schedule 12
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    When I tap the task checkbox on <tap>
+    Then the task has no completions
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | toque               |
+      | every | unit   | completed           | from  | to    | tap                 |
       | 3    | dias   | 2026-07-15T09:00:00 | 08:00 | 11:00 | 2026-07-15T20:00:00 |
 
   # Completar con horario 13
   # Deshacer en el aviso se puede aunque la ventana ya cerró.
-  Scenario Outline: Completar con horario 13
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When toco el checkbox de la tarea el <toque>
-    And toco Deshacer en el aviso el <deshacer>
-    Then la tarea no tiene completados
+  Scenario Outline: Complete with schedule 13
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to>
+    When I tap the task checkbox on <tap>
+    And I tap Deshacer in the notice on <undo>
+    Then the task has no completions
 
     Examples:
-      | creada              | desde | hasta | toque               | deshacer            |
+      | created             | from  | to    | tap                 | undo                |
       | 2026-07-15T06:00:00 | 08:00 | 11:00 | 2026-07-15T10:59:58 | 2026-07-15T11:00:02 |
 
   # Completar con horario 14
   # Con Mostrar completadas apagado, una periódica en espera por horario con
   # completados está completada y no se ve: ya pasó V (sin horario estaría
   # pendiente) pero la ventana todavía no abrió.
-  Scenario Outline: Completar con horario 14
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la tarea no aparece en Pendientes
+  Scenario Outline: Complete with schedule 14
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task does not appear in Pendientes
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | ahora               |
+      | every | unit   | completed           | from  | to    | now                 |
       | 1    | dias   | 2026-07-15T12:00:00 | 08:00 | 11:00 | 2026-07-16T14:00:00 |
       | 1    | dias   | 2026-07-15T12:00:00 | 08:00 | 11:00 | 2026-07-17T07:59:59 |
 
   # Completar con horario 15
   # La misma periódica aparece cuando abre la ventana, pendiente.
-  Scenario Outline: Completar con horario 15
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la tarea aparece en Pendientes
+  Scenario Outline: Complete with schedule 15
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task appears in Pendientes
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | ahora               |
+      | every | unit   | completed           | from  | to    | now                 |
       | 1    | dias   | 2026-07-15T12:00:00 | 08:00 | 11:00 | 2026-07-17T08:00:00 |
 
   # Completar con horario 16
   # Una puntual en espera por horario no tiene completados: no está
   # completada y se ve con Mostrar completadas apagado.
-  Scenario Outline: Completar con horario 16
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la tarea aparece en Pendientes
+  Scenario Outline: Complete with schedule 16
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task appears in Pendientes
 
     Examples:
-      | creada              | desde | hasta | ahora               |
+      | created             | from  | to    | now                 |
       | 2026-07-15T06:00:00 | 08:00 | 11:00 | 2026-07-15T07:00:00 |
       | 2026-07-15T06:00:00 | 08:00 | 11:00 | 2026-07-15T20:00:00 |

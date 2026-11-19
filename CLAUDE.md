@@ -72,7 +72,7 @@ Reglas de uso:
 
 ## Gherkin (formato APS)
 
-- Keywords en inglés (`Feature`, `Background`, `Scenario Outline`, `Examples`, `Given/When/Then/And`); texto de pasos en español.
+- Keywords en inglés (`Feature`, `Background`, `Scenario Outline`, `Examples`, `Given/When/Then/And`); texto de pasos en inglés.
 - Sin tags, `Rule`, doc strings ni data tables en pasos.
 - Todo valor que pueda variar va como `<parametro>` en una tabla `Examples`: solo esos valores se mutan.
 - Fechas y horas en ISO-8601 (`2026-07-15T08:00:00`), así el mutador las corre ± en el tiempo.

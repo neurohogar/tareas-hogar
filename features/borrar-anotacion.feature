@@ -12,49 +12,49 @@
 # separados por "; ", cada uno como "<encabezado>: <anotaciones>", y las
 # anotaciones en orden, separadas por ", ", cada una como sus partes separadas
 # por " · ".
-Feature: Borrar anotación
+Feature: Delete annotation
 
   # Borrar anotación 1
   # Borrar una anotación la saca de la pantalla y deja las otras.
-  Scenario Outline: Borrar anotación 1
-    Given una anotación <sentido_a> en <pantalla_a> del <anotada_a>
-    And una anotación <sentido_b> en <pantalla_b> del <anotada_b>
-    And la anotación dice <texto_b>
-    When borro la anotación del <anotada_a>
-    And consulto Anotaciones el <ahora>
-    Then no existe la anotación del <anotada_a>
-    And Anotaciones muestra <anotaciones>
+  Scenario Outline: Delete annotation 1
+    Given an annotation <direction_a> in <screen_a> from <annotated_a>
+    And an annotation <direction_b> in <screen_b> from <annotated_b>
+    And the annotation says <text_b>
+    When I delete the annotation from <annotated_a>
+    And I query Anotaciones on <now>
+    Then there is no annotation from <annotated_a>
+    And Anotaciones shows <annotations>
 
     Examples:
-      | sentido_a | pantalla_a | anotada_a           | sentido_b  | pantalla_b | anotada_b           | texto_b     | ahora               | anotaciones                                          |
+      | direction_a | screen_a   | annotated_a         | direction_b | screen_b   | annotated_b         | text_b      | now                 | annotations                                          |
       | Me sirvió | Pendientes | 2026-07-15T08:05:00 | Me molestó | Historial  | 2026-07-15T09:10:00 | quedó lindo | 2026-07-15T12:00:00 | Hoy: 09:10 · Me molestó · Historial · quedó lindo    |
 
   # Borrar anotación 2
   # Borrar la única anotación deja la pantalla vacía y nada para copiar.
-  Scenario Outline: Borrar anotación 2
-    Given una anotación <sentido> en <pantalla> del <anotada>
-    When borro la anotación del <anotada>
-    And consulto Anotaciones el <ahora>
-    And copio las anotaciones
-    Then Anotaciones está vacía
-    And no hay nada para copiar
-    And no queda ninguna anotación
+  Scenario Outline: Delete annotation 2
+    Given an annotation <direction> in <screen> from <annotated>
+    When I delete the annotation from <annotated>
+    And I query Anotaciones on <now>
+    And I copy the annotations
+    Then Anotaciones is empty
+    And there is nothing to copy
+    And no annotation remains
 
     Examples:
-      | sentido   | pantalla   | anotada             | ahora               |
+      | direction | screen     | annotated           | now                 |
       | Me sirvió | Pendientes | 2026-07-15T08:05:00 | 2026-07-15T12:00:00 |
 
   # Borrar anotación 3
   # Borrar una anotación no toca su tarea ni sus completados.
-  Scenario Outline: Borrar anotación 3
-    Given una tarea puntual <titulo> con fecha límite <limite>
-    And la tarea <titulo> fue completada el <completada>
-    And una anotación <sentido> en <pantalla> del <anotada>
-    And la anotación se refiere a la tarea <titulo>
-    When borro la anotación del <anotada>
-    Then no queda ninguna anotación
-    And la tarea <titulo> conserva un solo completado, del <completada_guardada>
+  Scenario Outline: Delete annotation 3
+    Given a one-off task <title> with due date <due_date>
+    And the task <title> was completed on <completed>
+    And an annotation <direction> in <screen> from <annotated>
+    And the annotation refers to the task <title>
+    When I delete the annotation from <annotated>
+    Then no annotation remains
+    And the task <title> keeps a single completion, from <completed_stored>
 
     Examples:
-      | titulo | limite     | completada          | sentido   | pantalla   | anotada             | completada_guardada |
+      | title  | due_date   | completed           | direction | screen     | annotated           | completed_stored    |
       | Pagar  | 2026-07-20 | 2026-07-15T08:00:00 | Me sirvió | Pendientes | 2026-07-15T08:05:00 | 2026-07-15T08:00:00 |

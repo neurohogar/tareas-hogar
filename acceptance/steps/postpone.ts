@@ -37,19 +37,19 @@ function postponeMe(world: World, task: Task, chosen: string, moment: string): v
 
 export const postponeSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^pospongo la tarea con la opción ${P} el ${P}$`),
+		pattern: new RegExp(`^I postpone the task with option ${P} on ${P}$`),
 		run: (world, chosen, moment) => postponeMe(world, theTask(world), chosen, moment)
 	},
 	{
-		pattern: new RegExp(`^la tarea fue pospuesta con la opción ${P} el ${P}$`),
+		pattern: new RegExp(`^the task was postponed with option ${P} on ${P}$`),
 		run: (world, chosen, moment) => postponeViewing(world, world, theTask(world), chosen, moment)
 	},
 	{
-		pattern: new RegExp(`^la tarea ${TITLE} fue pospuesta con la opción ${P} el ${P}$`),
+		pattern: new RegExp(`^the task ${TITLE} was postponed with option ${P} on ${P}$`),
 		run: (world, title, chosen, moment) => postponeViewing(world, world, theTaskTitled(world, title), chosen, moment)
 	},
 	{
-		pattern: new RegExp(`^${OTHER} pospone la tarea con la opción ${P} el ${P}$`),
+		pattern: new RegExp(`^${OTHER} postpones the task with option ${P} on ${P}$`),
 		run: (world, chosen, moment) => {
 			const view = thatSawOther(world);
 			postponeViewing(world, view, theTask(view), chosen, moment);
@@ -57,7 +57,7 @@ export const postponeSteps: StepDefinition[] = [
 	},
 	{
 		// The step does not give the moment: Quitar posponer acts on the saved postponement (§6.2).
-		pattern: /^quito la posposición$/,
+		pattern: /^I remove the postponement$/,
 		run: (world) => {
 			expect(theDoc(world).postponed).toBeDefined();
 			rememberBeforeOfMyChange(world);
@@ -65,16 +65,16 @@ export const postponeSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^la tarea está pospuesta desde ${P} hasta ${P}$`),
+		pattern: new RegExp(`^the task is postponed from ${P} to ${P}$`),
 		run: (world, from, to) => expect(theDoc(world).postponed).toEqual({ from: dateHour(from), to: dateHour(to) })
 	},
 	{
 		// §4.1: without the field, it is not postponed.
-		pattern: /^la tarea no está pospuesta$/,
+		pattern: /^the task is not postponed$/,
 		run: (world) => expect(theDoc(world)).not.toHaveProperty('postponed')
 	},
 	{
-		pattern: new RegExp(`^abro la tarea en el panel de edición el ${P}$`),
+		pattern: new RegExp(`^I open the task in the edit panel on ${P}$`),
 		run: (world, moment) => {
 			const task = theTask(world);
 			const now = dateHour(moment);
@@ -88,15 +88,15 @@ export const postponeSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^el botón de posponer del panel es ${P}$`),
+		pattern: new RegExp(`^the postpone button of the panel is ${P}$`),
 		run: (world, text) => expect(thePostponement(world).button).toBe(button(text))
 	},
 	{
-		pattern: new RegExp(`^el panel de edición muestra ${P}$`),
+		pattern: new RegExp(`^the edit panel shows ${P}$`),
 		run: (world, text) => expect(thePostponement(world).text).toBe(text)
 	},
 	{
-		pattern: /^el panel de edición no dice que está pospuesta$/,
+		pattern: /^the edit panel does not say it is postponed$/,
 		run: (world) => expect(thePostponement(world).text).toBeUndefined()
 	}
 ];

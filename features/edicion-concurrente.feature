@@ -17,71 +17,71 @@
 #   Edición contra borrado: gana el borrado; una edición de una tarea que ya
 #   no existe no la revive.
 # Los "su recurrencia es ..." comparan la recurrencia entera, sin campos de más.
-Feature: Edición concurrente
+Feature: Concurrent editing
 
   # Edición concurrente 1
   # Campos distintos: se combinan los dos cambios.
-  Scenario Outline: Edición concurrente 1
-    Given una tarea periódica relativa <titulo> cada <cada> <unidad>
-    When edito el título a <titulo_nuevo>
-    And otro dispositivo, sin ver ese cambio, edita la tarea a periódica semanal los <dias>
-    Then la tarea tiene título <titulo_guardado>
-    And su recurrencia es semanal los <dias_guardados>
+  Scenario Outline: Concurrent editing 1
+    Given a relative recurring task <title> every <every> <unit>
+    When I edit the title to <title_new>
+    And another device, without seeing that change, edits the task to weekly recurring on <days>
+    Then the task has title <title_stored>
+    And its recurrence is weekly on <days_stored>
 
     Examples:
-      | titulo | cada | unidad | titulo_nuevo  | dias           | titulo_guardado | dias_guardados |
+      | title  | every | unit   | title_new     | days           | title_stored    | days_stored    |
       | Regar  | 2    | dias   | Regar plantas | martes, jueves | Regar plantas   | martes, jueves |
 
   # Edición concurrente 2
   # El mismo campo: gana el último cambio en llegar.
-  Scenario Outline: Edición concurrente 2
-    Given una tarea puntual <titulo> con fecha límite <limite>
-    When edito el título a <primero>
-    And otro dispositivo, sin ver ese cambio, edita el título a <segundo>
-    Then la tarea tiene título <titulo_guardado>
-    And su fecha límite es <limite_guardado>
+  Scenario Outline: Concurrent editing 2
+    Given a one-off task <title> with due date <due_date>
+    When I edit the title to <first>
+    And another device, without seeing that change, edits the title to <second>
+    Then the task has title <title_stored>
+    And its due date is <due_date_stored>
 
     Examples:
-      | titulo | limite     | primero      | segundo         | titulo_guardado | limite_guardado |
+      | title  | due_date   | first        | second          | title_stored    | due_date_stored |
       | Pagar  | 2026-07-14 | Pagar la luz | Pagar el gas    | Pagar el gas    | 2026-07-14      |
 
   # Edición concurrente 3
   # Guardar sin cambios no escribe nada, así que no pisa el cambio del otro.
-  Scenario Outline: Edición concurrente 3
-    Given una tarea periódica relativa <titulo> cada <cada> <unidad>
-    When edito el título a <titulo_nuevo>
-    And otro dispositivo, sin ver ese cambio, guarda la tarea sin cambios
-    Then la tarea tiene título <titulo_guardado>
-    And su recurrencia es relativa cada <cada_guardado> <unidad>
+  Scenario Outline: Concurrent editing 3
+    Given a relative recurring task <title> every <every> <unit>
+    When I edit the title to <title_new>
+    And another device, without seeing that change, saves the task without changes
+    Then the task has title <title_stored>
+    And its recurrence is relative every <every_stored> <unit>
 
     Examples:
-      | titulo | cada | unidad | titulo_nuevo  | titulo_guardado | cada_guardado |
+      | title  | every | unit   | title_new     | title_stored    | every_stored  |
       | Regar  | 2    | dias   | Regar plantas | Regar plantas   | 2             |
 
   # Edición concurrente 4
   # La recurrencia se reemplaza entera: queda la última, sin días de la
   # semana mezclados con el intervalo.
-  Scenario Outline: Edición concurrente 4
-    Given una tarea periódica relativa cada <cada> <unidad>
-    When edito la tarea a periódica semanal los <dias>
-    And otro dispositivo, sin ver ese cambio, edita la tarea a periódica relativa cada <cada_otro> <unidad_otra>
-    Then su recurrencia es relativa cada <cada_guardado> <unidad_guardada>
+  Scenario Outline: Concurrent editing 4
+    Given a relative recurring task every <every> <unit>
+    When I edit the task to weekly recurring on <days>
+    And another device, without seeing that change, edits the task to relative recurring every <every_other> <unit_other>
+    Then its recurrence is relative every <every_stored> <unit_stored>
 
     Examples:
-      | cada | unidad | dias           | cada_otro | unidad_otra | cada_guardado | unidad_guardada |
+      | every | unit   | days           | every_other | unit_other  | every_stored  | unit_stored     |
       | 2    | dias   | martes, jueves | 8         | horas       | 8             | horas           |
 
   # Edición concurrente 5
   # La recurrencia se reemplaza entera: de semanal a mensual por un lado y a
   # relativa por el otro, queda la mensual (la última).
-  Scenario Outline: Edición concurrente 5
-    Given una tarea periódica semanal los <dias>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    And otro dispositivo, sin ver ese cambio, edita la tarea a periódica mensual los días <dias_mes>
-    Then su recurrencia es mensual los días <dias_guardados>
+  Scenario Outline: Concurrent editing 5
+    Given a weekly recurring task on <days>
+    When I edit the task to relative recurring every <every> <unit>
+    And another device, without seeing that change, edits the task to monthly recurring on days <days_month>
+    Then its recurrence is monthly on days <days_stored>
 
     Examples:
-      | dias           | cada | unidad | dias_mes | dias_guardados |
+      | days           | every | unit   | days_month | days_stored    |
       | martes, jueves | 3    | dias   | 10, 20   | 10, 20         |
 
   # Edición concurrente 6
@@ -89,88 +89,88 @@ Feature: Edición concurrente
   # cambió el intervalo. Queda puntual con una recurrencia que no le
   # corresponde y se ignora: el estado sale de la fecha límite (como
   # relativa nunca completada estaría pendiente).
-  Scenario Outline: Edición concurrente 6
-    Given una tarea periódica relativa nunca completada
-    When edito la tarea a puntual con fecha límite <limite>
-    And otro dispositivo, sin ver ese cambio, edita la tarea a periódica relativa cada <cada> <unidad>
-    And consulto el estado el <ahora>
-    Then la tarea es puntual
-    And el estado es atrasada
+  Scenario Outline: Concurrent editing 6
+    Given a relative recurring task never completed
+    When I edit the task to one-off with due date <due_date>
+    And another device, without seeing that change, edits the task to relative recurring every <every> <unit>
+    And I query the status on <now>
+    Then the task is one-off
+    And the status is atrasada
 
     Examples:
-      | limite     | cada | unidad | ahora               |
+      | due_date   | every | unit   | now                 |
       | 2026-07-14 | 6    | horas  | 2026-07-15T00:00:00 |
 
   # Edición concurrente 7
   # Paso una puntual a relativa; el otro dispositivo solo cambió la fecha
   # límite. Queda periódica con una fecha límite que no le corresponde y se
   # ignora: nunca completada, pendiente (como puntual estaría atrasada).
-  Scenario Outline: Edición concurrente 7
-    Given una tarea puntual con fecha límite <limite>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    And otro dispositivo, sin ver ese cambio, edita la tarea a puntual con fecha límite <limite_otro>
-    And consulto el estado el <ahora>
-    Then la tarea es periódica
-    And el estado es pendiente
+  Scenario Outline: Concurrent editing 7
+    Given a one-off task with due date <due_date>
+    When I edit the task to relative recurring every <every> <unit>
+    And another device, without seeing that change, edits the task to one-off with due date <due_date_other>
+    And I query the status on <now>
+    Then the task is recurring
+    And the status is pendiente
 
     Examples:
-      | limite     | cada | unidad | limite_otro | ahora               |
+      | due_date   | every | unit   | due_date_other | now                 |
       | 2026-07-20 | 2    | dias   | 2026-07-10  | 2026-07-15T10:00:00 |
 
   # Edición concurrente 8
   # Gana el borrado: la edición que llega después no revive la tarea.
-  Scenario Outline: Edición concurrente 8
-    Given una tarea periódica relativa <titulo> cada <cada> <unidad>
-    When borro la tarea
-    And otro dispositivo, sin ver ese cambio, edita el título a <titulo_nuevo>
-    And consulto Pendientes en cualquier momento
-    Then no queda ninguna tarea
+  Scenario Outline: Concurrent editing 8
+    Given a relative recurring task <title> every <every> <unit>
+    When I delete the task
+    And another device, without seeing that change, edits the title to <title_new>
+    And I query Pendientes at any moment
+    Then no task remains
 
     Examples:
-      | titulo | cada | unidad | titulo_nuevo  |
+      | title  | every | unit   | title_new     |
       | Regar  | 2    | dias   | Regar plantas |
 
   # Edición concurrente 9
   # Gana el borrado también si la edición llega antes.
-  Scenario Outline: Edición concurrente 9
-    Given una tarea periódica relativa <titulo> cada <cada> <unidad>
-    When edito el título a <titulo_nuevo>
-    And otro dispositivo, sin ver ese cambio, borra la tarea
-    And consulto Pendientes en cualquier momento
-    Then no queda ninguna tarea
+  Scenario Outline: Concurrent editing 9
+    Given a relative recurring task <title> every <every> <unit>
+    When I edit the title to <title_new>
+    And another device, without seeing that change, deletes the task
+    And I query Pendientes at any moment
+    Then no task remains
 
     Examples:
-      | titulo | cada | unidad | titulo_nuevo  |
+      | title  | every | unit   | title_new     |
       | Regar  | 2    | dias   | Regar plantas |
 
   # Edición concurrente 10
   # Paso una puntual a relativa y el otro dispositivo le cambia la fecha
   # límite: queda periódica con una fecha límite residual. Al pasarla a
   # puntual sin fecha límite, el residuo no sobrevive: queda sin fecha límite.
-  Scenario Outline: Edición concurrente 10
-    Given una tarea puntual con fecha límite <limite>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    And otro dispositivo, sin ver ese cambio, edita la tarea a puntual con fecha límite <limite_otro>
-    And edito la tarea a puntual sin fecha límite
-    Then la tarea es puntual
-    And la tarea no tiene fecha límite
+  Scenario Outline: Concurrent editing 10
+    Given a one-off task with due date <due_date>
+    When I edit the task to relative recurring every <every> <unit>
+    And another device, without seeing that change, edits the task to one-off with due date <due_date_other>
+    And I edit the task to one-off without a due date
+    Then the task is one-off
+    And the task has no due date
 
     Examples:
-      | limite     | cada | unidad | limite_otro |
+      | due_date   | every | unit   | due_date_other |
       | 2026-07-20 | 2    | dias   | 2026-07-10  |
 
   # Edición concurrente 11
   # Espejo: paso una relativa a puntual y el otro dispositivo le cambia el
   # intervalo: queda puntual con una recurrencia residual. Al pasarla a
   # periódica, queda la recurrencia elegida en el panel, no la residual.
-  Scenario Outline: Edición concurrente 11
-    Given una tarea periódica relativa cada <cada> <unidad>
-    When edito la tarea a puntual con fecha límite <limite>
-    And otro dispositivo, sin ver ese cambio, edita la tarea a periódica relativa cada <cada_otro> <unidad_otra>
-    And edito la tarea a periódica semanal los <dias>
-    Then la tarea es periódica
-    And su recurrencia es semanal los <dias_guardados>
+  Scenario Outline: Concurrent editing 11
+    Given a relative recurring task every <every> <unit>
+    When I edit the task to one-off with due date <due_date>
+    And another device, without seeing that change, edits the task to relative recurring every <every_other> <unit_other>
+    And I edit the task to weekly recurring on <days>
+    Then the task is recurring
+    And its recurrence is weekly on <days_stored>
 
     Examples:
-      | cada | unidad | limite     | cada_otro | unidad_otra | dias           | dias_guardados |
+      | every | unit   | due_date   | every_other | unit_other  | days           | days_stored    |
       | 2    | dias   | 2026-07-14 | 6         | horas       | martes, jueves | martes, jueves |

@@ -78,19 +78,19 @@ const withSteps = (steps: readonly string[]) => (task: Task) => {
 /** Each form of step change: "<subject> el paso N a ...". */
 const CHANGES: { text: string; value: (...values: string[]) => string }[] = [
 	{ text: P, value: (step) => step },
-	{ text: `${P} con espacios al inicio y al final`, value: (step) => `  ${step}  ` },
-	{ text: 'uno de solo espacios', value: () => ONLY_SPACES },
-	{ text: `uno de ${P} caracteres`, value: (length) => 'x'.repeat(numeric(length)) }
+	{ text: `${P} with spaces at the start and end`, value: (step) => `  ${step}  ` },
+	{ text: 'one of only spaces', value: () => ONLY_SPACES },
+	{ text: `one of ${P} characters`, value: (length) => 'x'.repeat(numeric(length)) }
 ];
 
 const EDITORS = [
-	{ subject: 'edito', edit: editMe },
-	{ subject: `${OTHER} edita`, edit: editsOther }
+	{ subject: 'I edit', edit: editMe },
+	{ subject: `${OTHER} edits`, edit: editsOther }
 ];
 
 const editSteps: StepDefinition[] = EDITORS.flatMap(({ subject, edit }) =>
 	CHANGES.map(({ text, value }) => ({
-		pattern: new RegExp(`^${subject} el paso ${N} a ${text}$`),
+		pattern: new RegExp(`^${subject} step ${N} to ${text}$`),
 		run: (world: World, step: string, ...values: string[]) => {
 			edit(world, (task) => withSteps(withStep(task, numeric(step), value(...values)))(task));
 			withoutRejection(world);
@@ -140,72 +140,72 @@ const BUTTON_STATUSES: Record<string, boolean> = { habilitado: true, deshabilita
 export const taskStepsSteps: StepDefinition[] = [
 	...editSteps,
 	{
-		pattern: new RegExp(`^creo una tarea puntual con título ${P} y pasos ${P}$`),
+		pattern: new RegExp(`^I create a one-off task with title ${P} and steps ${P}$`),
 		run: (world, title, steps) => createOneOffWithSteps(world, { title, ...listData(steps) })
 	},
 	{
-		pattern: new RegExp(`^creo una tarea puntual con título ${P} y pasos ${P} y un paso más de solo espacios$`),
+		pattern: new RegExp(`^I create a one-off task with title ${P} and steps ${P} and one more step of only spaces$`),
 		run: (world, title, steps) => createOneOffWithSteps(world, { title, ...listData(steps, [ONLY_SPACES]) })
 	},
 	{
-		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} cada 2 dias y pasos ${P}$`),
+		pattern: new RegExp(`^I create a relative recurring task with title ${P} every 2 days and steps ${P}$`),
 		run: (world, title, steps) => {
 			createInWorld(world, { title, every: 2, unit: 'dias', ...listData(steps) });
 			withoutRejection(world);
 		}
 	},
 	{
-		pattern: new RegExp(`^creo una tarea periódica semanal con título ${P} los ${P} y pasos ${P}$`),
+		pattern: new RegExp(`^I create a weekly recurring task with title ${P} on ${P} and steps ${P}$`),
 		run: (world, title, days, steps) => {
-			const data = { title, ...listData(steps), ...daysOf(shapeOf('semanal los'), days) };
+			const data = { title, ...listData(steps), ...daysOf(shapeOf('weekly on'), days) };
 			recordCreation(world, (id) => createRecurringCalendar(data, id, NOW));
 			withoutRejection(world);
 		}
 	},
 	{
-		pattern: new RegExp(`^los pasos de la tarea son ${P}$`),
+		pattern: new RegExp(`^the steps of the task are ${P}$`),
 		run: (world, steps) => savedWithSteps(world, theTask(world), steps)
 	},
 	{
-		pattern: new RegExp(`^los pasos de la tarea ${TITLE} son ${P}$`),
+		pattern: new RegExp(`^the steps of the task ${TITLE} are ${P}$`),
 		run: (world, title, steps) => savedWithSteps(world, theTaskTitled(world, title), steps)
 	},
 	{
-		pattern: new RegExp(`^el paso actual de la tarea es ${P}$`),
+		pattern: new RegExp(`^the current step of the task is ${P}$`),
 		run: (world, current) => savedInStep(world, theTask(world), stepNumber(current))
 	},
 	{
 		// A completion with stepAtCompletion (§4.4) without touching the step the task is on.
-		pattern: new RegExp(`^la tarea fue completada el ${P} en el paso ${P}$`),
+		pattern: new RegExp(`^the task was completed on ${P} at step ${P}$`),
 		run: (world, moment, step) => {
 			const { id } = recordCompletion(world, dateHour(moment));
 			world.completions = world.completions.map((completion) => (completion.id === id ? { ...completion, stepAtCompletion: stepNumber(step) } : completion));
 		}
 	},
 	{
-		pattern: new RegExp(`^vacío el paso ${N}$`),
+		pattern: new RegExp(`^I clear step ${N}$`),
 		run: (world, step) => {
 			editMe(world, (task) => withSteps(withStep(task, numeric(step), ''))(task));
 			withoutRejection(world);
 		}
 	},
 	{
-		pattern: new RegExp(`^edito la tarea con ${P} pasos$`),
+		pattern: new RegExp(`^I edit the task with ${P} steps$`),
 		run: (world, count) => {
 			editMe(world, withSteps(Array.from({ length: numeric(count) }, (_, place) => `Paso ${place + 1}`)));
 			withoutRejection(world);
 		}
 	},
 	{
-		pattern: new RegExp(`^toco Hecho el ${P}$`),
+		pattern: new RegExp(`^I tap Hecho on ${P}$`),
 		run: (world, moment) => tapDone(world, theTask(world), dateHour(moment))
 	},
 	{
-		pattern: new RegExp(`^toco Hecho en la tarea ${TITLE} el ${P}$`),
+		pattern: new RegExp(`^I tap Hecho in the task ${TITLE} on ${P}$`),
 		run: (world, title, moment) => tapDone(world, theTaskTitled(world, title), dateHour(moment))
 	},
 	{
-		pattern: /^toco Paso anterior$/,
+		pattern: /^I tap Paso anterior$/,
 		run: (world) => {
 			const task = theTask(world);
 			rememberBeforeOfMyChange(world);
@@ -213,35 +213,35 @@ export const taskStepsSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^${OTHER} toca Hecho el ${P}$`),
+		pattern: new RegExp(`^${OTHER} taps Hecho on ${P}$`),
 		run: (world, moment) => dueDoneOther(world, dateHour(moment))
 	},
 	{
-		pattern: new RegExp(`^la tarea tiene los pasos ${P}$`),
+		pattern: new RegExp(`^the task has the steps ${P}$`),
 		run: (world, steps) => expect(taskSteps(theTask(world))).toEqual(list(steps))
 	},
 	{
-		pattern: /^la tarea no tiene más pasos$/,
+		pattern: /^the task has no more steps$/,
 		run: (world) => expect(theDoc(world)).not.toHaveProperty('steps')
 	},
 	{
-		pattern: new RegExp(`^la tarea tiene ${P} pasos$`),
+		pattern: new RegExp(`^the task has ${P} steps$`),
 		run: (world, count) => expect(taskSteps(theTask(world))).toHaveLength(numeric(count))
 	},
 	{
-		pattern: new RegExp(`^el paso ${N} de la tarea tiene ${P} caracteres$`),
+		pattern: new RegExp(`^step ${N} of the task has ${P} characters$`),
 		run: (world, step, length) => expect(taskSteps(theTask(world))[numeric(step) - 1]).toHaveLength(numeric(length))
 	},
 	{
-		pattern: new RegExp(`^la tarea va en el paso ${N}$`),
+		pattern: new RegExp(`^the task is on step ${N}$`),
 		run: (world, step) => expect(stepItIsOn(theTask(world))).toBe(numeric(step))
 	},
 	{
-		pattern: new RegExp(`^el último completado de la tarea guarda el paso ${P}$`),
+		pattern: new RegExp(`^the last completion of the task saves step ${P}$`),
 		run: (world, step) => expect(latestCompletion(completionsOfTask(world.completions, theTask(world).id)).stepAtCompletion).toBe(numeric(step))
 	},
 	{
-		pattern: /^el último completado de la tarea no guarda paso$/,
+		pattern: /^the last completion of the task saves no step$/,
 		run: (world) => {
 			const completions = completionsOfTask(world.completions, theTask(world).id);
 			expect(completions.length).toBeGreaterThan(0);
@@ -249,22 +249,22 @@ export const taskStepsSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^la fila de la tarea muestra el paso ${P}$`),
+		pattern: new RegExp(`^the task row shows the step ${P}$`),
 		run: (world, text) => {
 			expect(world.pendingQueries.length).toBeGreaterThan(0);
 			for (const rows of world.pendingQueries) expect(rows.map(({ firstStepText: textOfFirstStep }) => textOfFirstStep)).toEqual([text]);
 		}
 	},
 	{
-		pattern: new RegExp(`^la fila de la tarea muestra los botones ${P}$`),
+		pattern: new RegExp(`^the task row shows the buttons ${P}$`),
 		run: (world, buttons) => theRowShowsButtons(world, buttons)
 	},
 	{
-		pattern: /^la fila de la tarea no muestra botones de paso$/,
+		pattern: /^the task row shows no step buttons$/,
 		run: (world) => theRowShowsButtons(world, undefined)
 	},
 	{
-		pattern: new RegExp(`^el botón Hecho de la tarea está ${P}$`),
+		pattern: new RegExp(`^the Hecho button of the task is ${P}$`),
 		run: (world, status) => {
 			expect(Object.hasOwn(BUTTON_STATUSES, status)).toBe(true);
 			expect(world.pendingQueries.length).toBeGreaterThan(0);

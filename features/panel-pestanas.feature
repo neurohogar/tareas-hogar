@@ -19,17 +19,17 @@
 # límite, Cada, días, horario. "Las secciones marcadas" son las que mientras
 # dure el error se distinguen en la barra de pestañas, "ninguna" si no hay.
 # "ninguno" en una lista de campos es que no hay errores.
-Feature: Panel en pestañas
+Feature: Tabbed panel
 
   # Panel en pestañas 1
   # El corte es 40 rem inclusive: justo en 40 y por debajo hay pestañas;
   # un poco por encima, secciones seguidas.
-  Scenario Outline: Panel en pestañas 1
-    Given una pantalla de <ancho> rem de ancho
-    Then el panel se presenta <presentacion>
+  Scenario Outline: Tabbed panel 1
+    Given a screen <width> rem wide
+    Then the panel is presented <presentation>
 
     Examples:
-      | ancho | presentacion        |
+      | width | presentation        |
       | 22.5  | en pestañas         |
       | 39.9  | en pestañas         |
       | 40    | en pestañas         |
@@ -39,24 +39,24 @@ Feature: Panel en pestañas
   # Panel en pestañas 2
   # Crear no ofrece Acciones (no hay acciones); editar la ofrece siempre
   # (Borrar tarea está en toda edición). Siempre abre en Tarea.
-  Scenario Outline: Panel en pestañas 2
-    Given el panel se abre para <modo>
-    Then el panel ofrece las secciones <secciones>
-    And la pestaña abierta es <abierta>
+  Scenario Outline: Tabbed panel 2
+    Given the panel opens for <mode>
+    Then the panel offers the sections <sections>
+    And the open tab is <open>
 
     Examples:
-      | modo   | secciones               | abierta |
+      | mode   | sections                | open  |
       | crear  | Tarea, Cuándo           | Tarea |
       | editar | Tarea, Cuándo, Acciones | Tarea |
 
   # Panel en pestañas 3
   # La pestaña se marca mientras alguno de sus campos muestra un error.
-  Scenario Outline: Panel en pestañas 3
-    Given el panel muestra errores en los campos <campos>
-    Then las secciones marcadas son <marcadas>
+  Scenario Outline: Tabbed panel 3
+    Given the panel shows errors in the fields <fields>
+    Then the marked sections are <marked>
 
     Examples:
-      | campos                | marcadas    |
+      | fields                | marked      |
       | ninguno               | ninguna     |
       | Título                | Tarea       |
       | fecha límite          | Cuándo      |
@@ -70,14 +70,14 @@ Feature: Panel en pestañas
   # Guardar falla: en el celular salta a la primera pestaña con error (Tarea
   # antes que Cuándo) y baja hasta el primer campo con error; en pantallas
   # anchas no hay pestañas y solo se desplaza hasta ese campo.
-  Scenario Outline: Panel en pestañas 4
-    Given una pantalla de <ancho> rem de ancho
-    And el guardado falla con errores en los campos <campos>
-    Then el panel salta a la pestaña <pestana>
-    And el contenido se desplaza hasta el campo <campo>
+  Scenario Outline: Tabbed panel 4
+    Given a screen <width> rem wide
+    And saving fails with errors in the fields <fields>
+    Then the panel jumps to the tab <tab>
+    And the content scrolls to the field <field>
 
     Examples:
-      | ancho | campos            | pestana | campo      |
+      | width | fields            | tab     | field      |
       | 22.5  | horario           | Cuándo  | horario    |
       | 22.5  | Título            | Tarea   | Título     |
       | 22.5  | horario, Título   | Tarea   | Título     |
@@ -93,13 +93,13 @@ Feature: Panel en pestañas
   # Guardar solo se oculta mientras el teclado en pantalla está abierto; un
   # campo enfocado sin teclado en pantalla (en la compu, o un selector de
   # fecha u hora) no la oculta.
-  Scenario Outline: Panel en pestañas 5
-    Given el teclado en pantalla está <teclado>
-    And el foco está <foco>
-    Then la barra de Guardar está <barra>
+  Scenario Outline: Tabbed panel 5
+    Given the on-screen keyboard is <keyboard>
+    And the focus is <focus>
+    Then the Guardar bar is <bar>
 
     Examples:
-      | teclado | foco                      | barra |
+      | keyboard | focus                     | bar     |
       | abierto | un campo está enfocado    | oculta  |
       | cerrado | un campo está enfocado    | visible |
       | cerrado | ningún campo está enfocado| visible |

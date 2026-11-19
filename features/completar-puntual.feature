@@ -6,33 +6,33 @@
 # Spec §4.4 y §5.1. Completar una tarea puntual registra un Completado
 # (sin ocurrenciaCubierta) con el momento en que se completó, y la tarea deja
 # de aparecer en Pendientes, esté pendiente o atrasada.
-Feature: Completar tarea puntual
+Feature: Complete one-off task
 
   # Completar tarea puntual 1
   # Sin fecha límite: se registra el completado y la tarea sale de Pendientes.
-  Scenario Outline: Completar tarea puntual 1
-    Given una tarea puntual sin fecha límite
-    When completo la tarea el <completada>
-    And consulto el estado en cualquier momento
-    Then se registró un completado sin ocurrencia cubierta
-    And el completado registrado es del <completada_guardada>
-    And la tarea no aparece en Pendientes
+  Scenario Outline: Complete one-off task 1
+    Given a one-off task without a due date
+    When I complete the task on <completed>
+    And I query the status at any moment
+    Then a completion without a covered occurrence was recorded
+    And the recorded completion is from <completed_stored>
+    And the task does not appear in Pendientes
 
     Examples:
-      | completada          | completada_guardada |
+      | completed           | completed_stored    |
       | 2026-07-15T08:00:00 | 2026-07-15T08:00:00 |
 
   # Completar tarea puntual 2
   # Con fecha límite: se registra el completado y la tarea sale de Pendientes,
   # tanto antes como después de la fecha límite.
-  Scenario Outline: Completar tarea puntual 2
-    Given una tarea puntual con una fecha límite cualquiera
-    When completo la tarea el <completada>
-    And consulto el estado en cualquier momento
-    Then se registró un completado sin ocurrencia cubierta
-    And el completado registrado es del <completada_guardada>
-    And la tarea no aparece en Pendientes
+  Scenario Outline: Complete one-off task 2
+    Given a one-off task with any due date
+    When I complete the task on <completed>
+    And I query the status at any moment
+    Then a completion without a covered occurrence was recorded
+    And the recorded completion is from <completed_stored>
+    And the task does not appear in Pendientes
 
     Examples:
-      | completada          | completada_guardada |
+      | completed           | completed_stored    |
       | 2026-07-31T23:59:59 | 2026-07-31T23:59:59 |

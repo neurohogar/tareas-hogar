@@ -22,20 +22,20 @@
 # tarea se creó antes de cualquier otra fecha del escenario.
 # U, V, N como en §5.2 y §5.3. Semana de referencia: lunes 2026-07-13 a
 # domingo 2026-07-19.
-Feature: Estado de una tarea pospuesta
+Feature: Postponed task status
 
   # Estado de una tarea pospuesta 1
   # Una puntual pendiente pospuesta está en espera, con el progreso de la
   # posposición, hasta el borde de hasta.
-  Scenario Outline: Estado de una tarea pospuesta 1
-    Given una tarea puntual sin fecha límite
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Postponed task status 1
+    Given a one-off task without a due date
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | opcion       | pospuesta           | ahora               | progreso |
+      | option       | postponed           | now                 | progress |
       | 3 horas      | 2026-07-15T10:00:00 | 2026-07-15T10:00:00 | 0        |
       | 3 horas      | 2026-07-15T10:00:00 | 2026-07-15T10:45:00 | 0.25     |
       | 3 horas      | 2026-07-15T10:00:00 | 2026-07-15T12:51:00 | 0.95     |
@@ -44,14 +44,14 @@ Feature: Estado de una tarea pospuesta
 
   # Estado de una tarea pospuesta 2
   # Desde hasta (inclusive), la puntual vuelve a estar pendiente.
-  Scenario Outline: Estado de una tarea pospuesta 2
-    Given una tarea puntual sin fecha límite
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Postponed task status 2
+    Given a one-off task without a due date
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | opcion       | pospuesta           | ahora               |
+      | option       | postponed           | now                 |
       | 3 horas      | 2026-07-15T10:00:00 | 2026-07-15T13:00:00 |
       | hasta mañana | 2026-07-15T19:00:00 | 2026-07-16T07:00:00 |
       | 1 hora       | 2026-07-15T10:00:00 | 2026-07-16T10:00:00 |
@@ -59,29 +59,29 @@ Feature: Estado de una tarea pospuesta
   # Estado de una tarea pospuesta 3
   # Una puntual atrasada pospuesta está en espera (fila 1). Si su fecha
   # límite pasa durante la posposición, sigue en espera (fila 2).
-  Scenario Outline: Estado de una tarea pospuesta 3
-    Given una tarea puntual con fecha límite <limite>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Postponed task status 3
+    Given a one-off task with due date <due_date>
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | limite     | opcion       | pospuesta           | ahora               | progreso |
+      | due_date   | option       | postponed           | now                 | progress |
       | 2026-07-14 | 3 horas      | 2026-07-15T10:00:00 | 2026-07-15T11:30:00 | 0.5      |
       | 2026-07-15 | hasta mañana | 2026-07-15T19:00:00 | 2026-07-16T01:00:00 | 0.5      |
 
   # Estado de una tarea pospuesta 4
   # Al vencer la posposición, la puntual cuya fecha límite ya pasó está
   # atrasada en el acto (fila 2: pasó durante la posposición).
-  Scenario Outline: Estado de una tarea pospuesta 4
-    Given una tarea puntual con fecha límite <limite>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Postponed task status 4
+    Given a one-off task with due date <due_date>
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | limite     | opcion       | pospuesta           | ahora               |
+      | due_date   | option       | postponed           | now                 |
       | 2026-07-14 | 3 horas      | 2026-07-15T10:00:00 | 2026-07-15T13:00:00 |
       | 2026-07-15 | hasta mañana | 2026-07-15T19:00:00 | 2026-07-16T07:00:00 |
 
@@ -89,73 +89,73 @@ Feature: Estado de una tarea pospuesta
   # Una relativa pendiente pospuesta está en espera con el progreso de la
   # posposición (fila 1), también después de su propio atraso, V +
   # intervalo = 16:00 (fila 2).
-  Scenario Outline: Estado de una tarea pospuesta 5
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Postponed task status 5
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | completada          | opcion  | pospuesta           | ahora               | progreso |
+      | every | unit   | completed           | option  | postponed           | now                 | progress |
       | 4    | horas  | 2026-07-15T08:00:00 | 3 horas | 2026-07-15T12:30:00 | 2026-07-15T14:00:00 | 0.5      |
       | 4    | horas  | 2026-07-15T08:00:00 | 1 hora  | 2026-07-15T15:40:00 | 2026-07-15T16:10:00 | 0.5      |
 
   # Estado de una tarea pospuesta 6
   # Al vencer la posposición antes de su atraso (16:00), la relativa vuelve
   # a estar pendiente.
-  Scenario Outline: Estado de una tarea pospuesta 6
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Postponed task status 6
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | completada          | opcion  | pospuesta           | ahora               |
+      | every | unit   | completed           | option  | postponed           | now                 |
       | 4    | horas  | 2026-07-15T08:00:00 | 3 horas | 2026-07-15T12:30:00 | 2026-07-15T15:30:00 |
 
   # Estado de una tarea pospuesta 7
   # La posposición no mueve el vencimiento: la relativa se atrasa a las
   # 16:00 como sin posponer (fila 1, no a las 19:00), y si el atraso llegó
   # durante la posposición, está atrasada en el acto al vencer (fila 2).
-  Scenario Outline: Estado de una tarea pospuesta 7
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Postponed task status 7
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | cada | unidad | completada          | opcion  | pospuesta           | ahora               |
+      | every | unit   | completed           | option  | postponed           | now                 |
       | 4    | horas  | 2026-07-15T08:00:00 | 3 horas | 2026-07-15T12:30:00 | 2026-07-15T16:00:00 |
       | 4    | horas  | 2026-07-15T08:00:00 | 1 hora  | 2026-07-15T15:40:00 | 2026-07-15T16:40:00 |
 
   # Estado de una tarea pospuesta 8
   # Una semanal pendiente (martes 14) pospuesta hasta mañana sigue en
   # espera pasada la medianoche, aunque ese día ya estaría atrasada.
-  Scenario Outline: Estado de una tarea pospuesta 8
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Postponed task status 8
+    Given a weekly recurring task on <days> created on <created>
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias           | creada              | opcion       | pospuesta           | ahora               | progreso |
+      | days           | created             | option       | postponed           | now                 | progress |
       | martes, jueves | 2026-07-13T08:00:00 | hasta mañana | 2026-07-14T19:00:00 | 2026-07-15T01:00:00 | 0.5      |
 
   # Estado de una tarea pospuesta 9
   # Al vencer, la semanal que perdió el martes está atrasada en el acto.
-  Scenario Outline: Estado de una tarea pospuesta 9
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Postponed task status 9
+    Given a weekly recurring task on <days> created on <created>
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias           | creada              | opcion       | pospuesta           | ahora               |
+      | days           | created             | option       | postponed           | now                 |
       | martes, jueves | 2026-07-13T08:00:00 | hasta mañana | 2026-07-14T19:00:00 | 2026-07-15T07:00:00 |
 
   # Estado de una tarea pospuesta 10
@@ -164,137 +164,137 @@ Feature: Estado de una tarea pospuesta
   # progreso (12:00 − 11:00) / 4 h). Si su regla la deja pendiente antes de
   # hasta, está en espera con el progreso de la posposición (fila 2: V =
   # 11:30, progreso (11:30 − 10:00) / 3 h).
-  Scenario Outline: Estado de una tarea pospuesta 10
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When completo la tarea el <completada>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Postponed task status 10
+    Given a relative recurring task every <every> <unit>
+    And the task was postponed with option <option> on <postponed>
+    When I complete the task on <completed>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | opcion  | pospuesta           | completada          | ahora               | progreso |
+      | every | unit   | option  | postponed           | completed           | now                 | progress |
       | 4    | horas  | 3 horas | 2026-07-15T10:00:00 | 2026-07-15T11:00:00 | 2026-07-15T12:00:00 | 0.25     |
       | 1    | horas  | 3 horas | 2026-07-15T10:00:00 | 2026-07-15T10:30:00 | 2026-07-15T11:30:00 | 0.5      |
 
   # Estado de una tarea pospuesta 11
   # Una puntual pospuesta se completa tocando el checkbox, y la posposición
   # queda guardada.
-  Scenario Outline: Estado de una tarea pospuesta 11
-    Given una tarea puntual sin fecha límite
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When toco el checkbox de la tarea el <tocado>
-    Then la tarea está completada
-    And la tarea está pospuesta desde <desde> hasta <hasta>
+  Scenario Outline: Postponed task status 11
+    Given a one-off task without a due date
+    And the task was postponed with option <option> on <postponed>
+    When I tap the task checkbox on <tapped>
+    Then the task is completed
+    And the task is postponed from <from> to <to>
 
     Examples:
-      | opcion  | pospuesta           | tocado              | desde               | hasta               |
+      | option  | postponed           | tapped              | from                | to                  |
       | 3 horas | 2026-07-15T10:00:00 | 2026-07-15T10:30:00 | 2026-07-15T10:00:00 | 2026-07-15T13:00:00 |
 
   # Estado de una tarea pospuesta 12
   # Deshacer el completado de una puntual pospuesta la devuelve a en espera
   # por la posposición, que sigue guardada.
-  Scenario Outline: Estado de una tarea pospuesta 12
-    Given una tarea puntual sin fecha límite
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    And la tarea fue completada el <completada>
-    When borro el completado del <completada>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
-    And la tarea está pospuesta desde <desde> hasta <hasta>
+  Scenario Outline: Postponed task status 12
+    Given a one-off task without a due date
+    And the task was postponed with option <option> on <postponed>
+    And the task was completed on <completed>
+    When I delete the completion from <completed>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
+    And the task is postponed from <from> to <to>
 
     Examples:
-      | opcion  | pospuesta           | completada          | ahora               | progreso | desde               | hasta               |
+      | option  | postponed           | completed           | now                 | progress | from                | to                  |
       | 3 horas | 2026-07-15T10:00:00 | 2026-07-15T10:30:00 | 2026-07-15T11:30:00 | 0.5      | 2026-07-15T10:00:00 | 2026-07-15T13:00:00 |
 
   # Estado de una tarea pospuesta 13
   # Una relativa pospuesta con un completado de hoy no está completada:
   # tocar el checkbox la completa de nuevo (no borra el completado de hoy).
-  Scenario Outline: Estado de una tarea pospuesta 13
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When toco el checkbox de la tarea el <tocado>
-    Then la tarea tiene dos completados
+  Scenario Outline: Postponed task status 13
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task was postponed with option <option> on <postponed>
+    When I tap the task checkbox on <tapped>
+    Then the task has two completions
 
     Examples:
-      | cada | unidad | completada          | opcion  | pospuesta           | tocado              |
+      | every | unit   | completed           | option  | postponed           | tapped              |
       | 4    | horas  | 2026-07-15T08:00:00 | 3 horas | 2026-07-15T12:30:00 | 2026-07-15T13:00:00 |
 
   # Estado de una tarea pospuesta 14
   # Con horario, pospuesta dentro de la ventana: el checkbox está
   # habilitado.
-  Scenario Outline: Estado de una tarea pospuesta 14
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
-    And el checkbox de la tarea está habilitado
+  Scenario Outline: Postponed task status 14
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
+    And the task checkbox is enabled
 
     Examples:
-      | desde | hasta | opcion | pospuesta           | ahora               | progreso |
+      | from  | to    | option | postponed           | now                 | progress |
       | 08:00 | 11:00 | 1 hora | 2026-07-15T09:00:00 | 2026-07-15T09:30:00 | 0.5      |
 
   # Estado de una tarea pospuesta 15
   # Con horario, pospuesta y fuera de la ventana: el checkbox está
   # deshabilitado.
-  Scenario Outline: Estado de una tarea pospuesta 15
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el checkbox de la tarea está deshabilitado
+  Scenario Outline: Postponed task status 15
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is en espera
+    And the task checkbox is disabled
 
     Examples:
-      | desde | hasta | opcion  | pospuesta           | ahora               |
+      | from  | to    | option  | postponed           | now                 |
       | 08:00 | 11:00 | 3 horas | 2026-07-15T09:00:00 | 2026-07-15T11:30:00 |
 
   # Estado de una tarea pospuesta 16
   # Una pospuesta que se pausa no tiene estado.
-  Scenario Outline: Estado de una tarea pospuesta 16
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When pauso la tarea
-    And consulto el estado el <ahora>
-    Then la tarea no tiene estado
+  Scenario Outline: Postponed task status 16
+    Given a relative recurring task every <every> <unit>
+    And the task was postponed with option <option> on <postponed>
+    When I pause the task
+    And I query the status on <now>
+    Then the task has no status
 
     Examples:
-      | cada | unidad | opcion  | pospuesta           | ahora               |
+      | every | unit   | option  | postponed           | now                 |
       | 2    | dias   | 3 horas | 2026-07-15T10:00:00 | 2026-07-15T11:00:00 |
 
   # Estado de una tarea pospuesta 17
   # Reanudada antes de hasta, la relativa (pendiente al reanudar) está en
   # espera con el progreso de la posposición.
-  Scenario Outline: Estado de una tarea pospuesta 17
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When pauso la tarea
-    And reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Postponed task status 17
+    Given a relative recurring task every <every> <unit>
+    And the task was postponed with option <option> on <postponed>
+    When I pause the task
+    And I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | opcion  | pospuesta           | reanudada           | ahora               | progreso |
+      | every | unit   | option  | postponed           | resumed             | now                 | progress |
       | 2    | dias   | 3 horas | 2026-07-15T10:00:00 | 2026-07-15T11:00:00 | 2026-07-15T11:30:00 | 0.5      |
 
   # Estado de una tarea pospuesta 18
   # Con ahora anterior a desde (relojes desfasados), la tarea sigue en
   # espera con progreso 0 hasta que el reloj alcanza desde, y desde ahí
   # avanza (fila 3: 08:05 es desde).
-  Scenario Outline: Estado de una tarea pospuesta 18
-    Given una tarea puntual sin fecha límite
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Postponed task status 18
+    Given a one-off task without a due date
+    And the task was postponed with option <option> on <postponed>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | opcion  | pospuesta           | ahora               | progreso |
+      | option  | postponed           | now                 | progress |
       | 1 hora  | 2026-07-15T08:05:00 | 2026-07-15T08:00:00 | 0        |
       | 3 horas | 2026-07-15T10:00:00 | 2026-07-15T09:59:59 | 0        |
       | 1 hora  | 2026-07-15T08:05:00 | 2026-07-15T08:35:00 | 0.5      |

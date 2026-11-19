@@ -136,90 +136,90 @@ function thePanelOpen(world: World) {
 
 export const annotationSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^estoy en ${SCREEN}$`),
+		pattern: new RegExp(`^I am on ${SCREEN}$`),
 		run: (world, screenName) => void (world.screenCurrent = screenCurrent(screenName))
 	},
 	{
-		pattern: new RegExp(`^el panel de edición está abierto al editar la tarea ${TITLE}$`),
+		pattern: new RegExp(`^the edit panel is open when editing the task ${TITLE}$`),
 		run: (world, title) => {
 			const task = theTaskTitled(world, title);
 			world.annotatePanel = { taskId: task.id, changes: changesOnEdit(task), docsOnOpen: structuredClone(world.docs) };
 		}
 	},
 	{
-		pattern: /^el panel de edición está abierto al crear una tarea$/,
+		pattern: /^the edit panel is open when creating a task$/,
 		run: (world) => {
 			world.annotatePanel = { changes: changesOnCreate(DATA_ON_CREATE), docsOnOpen: structuredClone(world.docs) };
 		}
 	},
 	{
-		pattern: new RegExp(`^anoto ${DIRECTION} el ${P}$`),
+		pattern: new RegExp(`^I annotate ${DIRECTION} on ${P}$`),
 		run: (world, chosen, now) => annotateMe(world, chosen, now)
 	},
 	{
-		pattern: new RegExp(`^anoto ${DIRECTION} el ${P} con el texto ${P}$`),
+		pattern: new RegExp(`^I annotate ${DIRECTION} on ${P} with the text ${P}$`),
 		run: (world, chosen, now, text) => annotateMe(world, chosen, now, text)
 	},
 	{
-		pattern: new RegExp(`^anoto ${DIRECTION} el ${P} con el texto ${P} entre ${P} espacios$`),
+		pattern: new RegExp(`^I annotate ${DIRECTION} on ${P} with the text ${P} between ${P} spaces$`),
 		run: (world, chosen, now, text, count) => annotateMe(world, chosen, now, `${spaces(count)}${text}${spaces(count)}`)
 	},
 	{
-		pattern: new RegExp(`^anoto ${DIRECTION} el ${P} con ${P} espacios como texto$`),
+		pattern: new RegExp(`^I annotate ${DIRECTION} on ${P} with ${P} spaces as text$`),
 		run: (world, chosen, now, count) => annotateMe(world, chosen, now, spaces(count))
 	},
 	{
-		pattern: new RegExp(`^anoto ${DIRECTION} el ${P} con un texto de ${P} caracteres$`),
+		pattern: new RegExp(`^I annotate ${DIRECTION} on ${P} with a text of ${P} characters$`),
 		run: (world, chosen, now, length) => annotateMe(world, chosen, now, 'a'.repeat(numeric(length)))
 	},
 	{
-		pattern: new RegExp(`^${OTHER} anota ${DIRECTION} en ${SCREEN} el ${P}$`),
+		pattern: new RegExp(`^${OTHER} annotates ${DIRECTION} in ${SCREEN} on ${P}$`),
 		run: (world, chosen, screenName, now) => annotatesOther(world, chosen, screenName, now)
 	},
 	{
-		pattern: new RegExp(`^${OTHER} anota ${DIRECTION} en ${SCREEN} el ${P} sobre la tarea ${TITLE}$`),
+		pattern: new RegExp(`^${OTHER} annotates ${DIRECTION} in ${SCREEN} on ${P} about the task ${TITLE}$`),
 		run: (world, chosen, screenName, now, title) => annotatesOther(world, chosen, screenName, now, title)
 	},
 	{
-		pattern: new RegExp(`^una anotación ${DIRECTION} en ${SCREEN} del ${P}$`),
+		pattern: new RegExp(`^an annotation ${DIRECTION} in ${SCREEN} from ${P}$`),
 		run: (world, chosen, screenName, annotated) => declare(world, chosen, screenName, annotated)
 	},
 	{
-		pattern: new RegExp(`^la anotación se refiere a la tarea ${TITLE}$`),
+		pattern: new RegExp(`^the annotation refers to the task ${TITLE}$`),
 		run: (world, title) => changeLast(world, (annotation) => ({ ...annotation, taskId: theTaskTitled(world, title).id }))
 	},
 	{
-		pattern: new RegExp(`^la anotación dice ${P}$`),
+		pattern: new RegExp(`^the annotation says ${P}$`),
 		run: (world, text) => {
 			const { id } = theLast(world);
 			world.annotations = editText(world.annotations, id, text);
 		}
 	},
 	{
-		pattern: new RegExp(`^la anotación se registró con id ${P}$`),
+		pattern: new RegExp(`^the annotation was recorded with id ${P}$`),
 		run: (world, id) => changeLast(world, (annotation) => ({ ...annotation, id }))
 	},
 	{
-		pattern: /^queda una sola anotación$/,
+		pattern: /^a single annotation remains$/,
 		run: (world) => expect(world.annotations).toHaveLength(1)
 	},
 	{
-		pattern: new RegExp(`^quedan ${P} anotaciones$`),
+		pattern: new RegExp(`^${P} annotations remain$`),
 		run: (world, count) => expect(world.annotations).toHaveLength(numeric(count))
 	},
 	{
-		pattern: /^no queda ninguna anotación$/,
+		pattern: /^no annotation remains$/,
 		run: (world) => expect(world.annotations).toEqual([])
 	},
 	{
-		pattern: new RegExp(`^no existe la anotación del ${P}$`),
+		pattern: new RegExp(`^there is no annotation from ${P}$`),
 		run: (world, annotated) => {
 			const { id } = momentThe(world, annotated);
 			expect(world.annotations.map((annotation) => annotation.id)).not.toContain(id);
 		}
 	},
 	{
-		pattern: new RegExp(`^la anotación del ${P} tiene sentido ${DIRECTION} en ${SCREEN}$`),
+		pattern: new RegExp(`^the annotation from ${P} has direction ${DIRECTION} in ${SCREEN}$`),
 		run: (world, annotated, chosen, screenName) => {
 			const annotation = theActive(world, annotated);
 			expect(annotation.sense).toBe(chosen);
@@ -227,29 +227,29 @@ export const annotationSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^la anotación del ${P} es de la tarea ${TITLE}$`),
+		pattern: new RegExp(`^the annotation from ${P} is of the task ${TITLE}$`),
 		run: (world, annotated, title) =>
 			expect(theActive(world, annotated).taskId).toBe(theTaskTitled(thatWasSaved(world), title).id)
 	},
 	{
-		pattern: new RegExp(`^la anotación del ${P} no es de ninguna tarea$`),
+		pattern: new RegExp(`^the annotation from ${P} is of no task$`),
 		run: (world, annotated) => expect(theActive(world, annotated)).not.toHaveProperty('taskId')
 	},
 	{
-		pattern: new RegExp(`^la anotación del ${P} dice ${P}$`),
+		pattern: new RegExp(`^the annotation from ${P} says ${P}$`),
 		run: (world, annotated, text) => expect(theActive(world, annotated).text).toBe(text)
 	},
 	{
-		pattern: new RegExp(`^la anotación del ${P} dice un texto de ${P} caracteres$`),
+		pattern: new RegExp(`^the annotation from ${P} says a text of ${P} characters$`),
 		run: (world, annotated, length) => expect(theActive(world, annotated).text).toBe('a'.repeat(numeric(length)))
 	},
 	{
-		pattern: new RegExp(`^la anotación del ${P} no tiene texto$`),
+		pattern: new RegExp(`^the annotation from ${P} has no text$`),
 		run: (world, annotated) => expect(theActive(world, annotated)).not.toHaveProperty('text')
 	},
 	{
 		// §5.10: annotating does not touch the task or the panel; it does not close the panel or open an action notice.
-		pattern: /^el panel sigue abierto sin cambios sin guardar$/,
+		pattern: /^the panel stays open without unsaved changes$/,
 		run: (world) => {
 			const { changes, docsOnOpen } = thePanelOpen(world);
 			expect(world.annotations).toHaveLength(1);
@@ -259,65 +259,65 @@ export const annotationSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^consulto Anotaciones el ${P}$`),
+		pattern: new RegExp(`^I query Anotaciones on ${P}$`),
 		run: (world, now) => {
 			world.annotationsQueried = annotationsOnScreen(tasksOf(world), world.annotations, dateHour(now));
 		}
 	},
 	{
-		pattern: new RegExp(`^Anotaciones muestra ${P}$`),
+		pattern: new RegExp(`^Anotaciones shows ${P}$`),
 		run: (world, expected) => expect(inText(theQueried(world))).toBe(expected)
 	},
 	{
-		pattern: /^Anotaciones está vacía$/,
+		pattern: /^Anotaciones is empty$/,
 		run: (world) => expect(theQueried(world)).toEqual([])
 	},
 	{
-		pattern: /^copio las anotaciones$/,
+		pattern: /^I copy the annotations$/,
 		run: (world) => {
 			world.copied = { text: annotationsText(tasksOf(world), world.annotations) };
 		}
 	},
 	{
-		pattern: new RegExp(`^el texto copiado tiene las líneas ${P}$`),
+		pattern: new RegExp(`^the copied text has the lines ${P}$`),
 		run: (world, lines) => {
 			if (!world.copied) throw new Error('Nothing was copied');
 			expect(world.copied.text?.split('\n')).toEqual(lines.split('; '));
 		}
 	},
 	{
-		pattern: /^no hay nada para copiar$/,
+		pattern: /^there is nothing to copy$/,
 		run: (world) => {
 			if (!world.copied) throw new Error('Nothing was copied');
 			expect(world.copied.text).toBeUndefined();
 		}
 	},
 	{
-		pattern: new RegExp(`^edito el texto de la anotación del ${P} a ${P}$`),
+		pattern: new RegExp(`^I edit the text of the annotation from ${P} to ${P}$`),
 		run: (world, annotated, text) => editTheText(world, annotated, text)
 	},
 	{
-		pattern: new RegExp(`^edito el texto de la anotación del ${P} a ${P} entre ${P} espacios$`),
+		pattern: new RegExp(`^I edit the text of the annotation from ${P} to ${P} between ${P} spaces$`),
 		run: (world, annotated, text, count) => editTheText(world, annotated, `${spaces(count)}${text}${spaces(count)}`)
 	},
 	{
-		pattern: new RegExp(`^edito el texto de la anotación del ${P} a ${P} espacios$`),
+		pattern: new RegExp(`^I edit the text of the annotation from ${P} to ${P} spaces$`),
 		run: (world, annotated, count) => editTheText(world, annotated, spaces(count))
 	},
 	{
-		pattern: new RegExp(`^${OTHER} edita el texto de la anotación del ${P} a ${P}$`),
+		pattern: new RegExp(`^${OTHER} edits the text of the annotation from ${P} to ${P}$`),
 		run: (world, annotated, text) => editTheText(world, annotated, text)
 	},
 	{
-		pattern: new RegExp(`^borro la anotación del ${P}$`),
+		pattern: new RegExp(`^I delete the annotation from ${P}$`),
 		run: (world, annotated) => deleteAnnotation(world, annotated)
 	},
 	{
-		pattern: new RegExp(`^${OTHER} borra la anotación del ${P}$`),
+		pattern: new RegExp(`^${OTHER} deletes the annotation from ${P}$`),
 		run: (world, annotated) => deleteAnnotation(world, annotated)
 	},
 	{
-		pattern: new RegExp(`^las anotaciones huérfanas a limpiar son solo la del ${P}$`),
+		pattern: new RegExp(`^the orphan annotations to clean are only the one from ${P}$`),
 		run: (world, annotated) =>
 			expect(orphanAnnotations(tasksOf(world), world.annotations).map(({ id }) => id)).toEqual([momentThe(world, annotated).id])
 	}

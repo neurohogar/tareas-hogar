@@ -30,11 +30,11 @@ function inEveryMomentQueried(world: World, verify: (now: Date) => void): void {
 
 export const checkboxSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^toco el checkbox de la tarea el ${P}$`),
+		pattern: new RegExp(`^I tap the task checkbox on ${P}$`),
 		run: (world, moment) => tapCheckbox(world, dateHour(moment))
 	},
 	{
-		pattern: /^la tarea (no )?está completada$/,
+		pattern: /^the task is (not )?completed$/,
 		run: (world, no) => {
 			const task = theTask(world);
 			inEveryMomentQueried(world, (now) =>
@@ -43,29 +43,29 @@ export const checkboxSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: /^la tarea aparece en Pendientes$/,
+		pattern: /^the task appears in Pendientes$/,
 		run: (world) =>
 			inEveryMomentQueried(world, (now) =>
 				expect(pendingRows([theTask(world)], world.completions, now, world.showCompleted, world.showPaused)).toHaveLength(1)
 			)
 	},
 	{
-		pattern: /^el checkbox de la tarea está (habilitado|deshabilitado)$/,
+		pattern: /^the task checkbox is (enabled|disabled)$/,
 		run: (world, as) =>
 			inEveryMomentQueried(world, (now) =>
-				expect(checkboxEnabled(theTask(world), world.completions, now)).toBe(as === 'habilitado')
+				expect(checkboxEnabled(theTask(world), world.completions, now)).toBe(as === 'enabled')
 			)
 	},
 	{
 		// §5.8: a paused task is not pending, overdue or waiting.
-		pattern: /^la tarea no tiene estado$/,
+		pattern: /^the task has no status$/,
 		run: (world) =>
 			inEveryMomentQueried(world, (now) =>
 				expect(['pendiente', 'atrasada', 'en espera']).not.toContain(taskStatus(theTask(world), world.completions, now).kind)
 			)
 	},
 	{
-		pattern: /^la tarea no aparece en Pendientes$/,
+		pattern: /^the task does not appear in Pendientes$/,
 		run: (world) =>
 			inEveryMomentQueried(world, (now) =>
 				expect(pendingRows([theTask(world)], world.completions, now, world.showCompleted, world.showPaused)).toEqual([])

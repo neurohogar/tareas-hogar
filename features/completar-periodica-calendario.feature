@@ -15,20 +15,20 @@
 # Después, el estado sigue la §5.3 con el nuevo P. Los completados anteriores
 # no se modifican. El progreso es una fracción entre 0 y 1, comparada exactamente.
 # Semana de referencia: lunes 2026-07-13 a domingo 2026-07-19.
-Feature: Completar periódica de calendario
+Feature: Complete calendar recurring task
 
   # Completar periódica de calendario 1
   # Qué ocurrencia cubre el primer completado. Filas 1 a 4: la tabla
   # "martes y jueves" del spec (martes, lunes antes de tiempo, miércoles con
   # el martes atrasado, viernes con martes y jueves perdidos). Filas 5 y 6:
   # el borde de las 00:00 del jueves.
-  Scenario Outline: Completar periódica de calendario 1
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When completo la tarea el <completada>
-    Then se registró un completado que cubre el <cubierta>
+  Scenario Outline: Complete calendar recurring task 1
+    Given a weekly recurring task on <days> created on <created>
+    When I complete the task on <completed>
+    Then a completion was recorded that covers <covered>
 
     Examples:
-      | dias           | creada              | completada          | cubierta   |
+      | days           | created             | completed           | covered    |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-14T10:00:00 | 2026-07-14 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-13T10:00:00 | 2026-07-14 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-15T10:00:00 | 2026-07-14 |
@@ -41,14 +41,14 @@ Feature: Completar periódica de calendario
   # Completar periódica de calendario 2
   # Después de completar, vuelve a pendiente el día de la próxima ocurrencia
   # sin cubrir (columna "Vuelve a pendiente" de la tabla del spec).
-  Scenario Outline: Completar periódica de calendario 2
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When completo la tarea el <completada>
-    And consulto el estado el <vuelve>
-    Then el estado es pendiente
+  Scenario Outline: Complete calendar recurring task 2
+    Given a weekly recurring task on <days> created on <created>
+    When I complete the task on <completed>
+    And I query the status on <returns>
+    Then the status is pendiente
 
     Examples:
-      | dias           | creada              | completada          | vuelve              |
+      | days           | created             | completed           | returns             |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-14T10:00:00 | 2026-07-16T00:00:00 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-13T10:00:00 | 2026-07-16T00:00:00 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-15T10:00:00 | 2026-07-16T00:00:00 |
@@ -62,15 +62,15 @@ Feature: Completar periódica de calendario
   # Hasta que vuelve, queda en espera con progreso desde el completado, en
   # cualquier estado que estuviera. Fila 2: completada el lunes, el martes ya
   # no está pendiente. Fila 5: en el mismo instante del completado, progreso 0.
-  Scenario Outline: Completar periódica de calendario 3
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When completo la tarea el <completada>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Complete calendar recurring task 3
+    Given a weekly recurring task on <days> created on <created>
+    When I complete the task on <completed>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias           | creada              | completada          | ahora               | progreso |
+      | days           | created             | completed           | now                 | progress |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-14T10:00:00 | 2026-07-14T19:30:00 | 0.25     |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-13T10:00:00 | 2026-07-14T17:00:00 | 0.5      |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-15T10:00:00 | 2026-07-15T20:30:00 | 0.75     |
@@ -85,15 +85,15 @@ Feature: Completar periódica de calendario
   # "lunes, otra vez el lunes" del spec). Fila 4: se perdieron jueves y martes;
   # cubre el martes. Fila 5: completada el lunes (cubre el martes) y otra vez
   # el martes: cubre el jueves.
-  Scenario Outline: Completar periódica de calendario 4
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea fue completada el <anterior>
-    When completo la tarea el <nuevo>
-    Then se registró un completado que cubre el <cubierta>
-    And el nuevo completado se agrega sin modificar los anteriores
+  Scenario Outline: Complete calendar recurring task 4
+    Given a weekly recurring task on <days> created on <created>
+    And the task was completed on <previous>
+    When I complete the task on <new>
+    Then a completion was recorded that covers <covered>
+    And the new completion is added without changing the previous ones
 
     Examples:
-      | dias           | creada              | anterior            | nuevo               | cubierta   |
+      | days           | created             | previous            | new                 | covered    |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-14T08:00:00 | 2026-07-16T09:00:00 | 2026-07-16 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-14T08:00:00 | 2026-07-14T20:00:00 | 2026-07-16 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-13T09:00:00 | 2026-07-13T20:00:00 | 2026-07-16 |
@@ -103,13 +103,13 @@ Feature: Completar periódica de calendario
   # Completar periódica de calendario 5
   # Mensual: qué ocurrencia cubre el primer completado, incluidos los días que
   # no existen en un mes más corto (caen en el último día de ese mes).
-  Scenario Outline: Completar periódica de calendario 5
-    Given una tarea periódica mensual los días <dias> creada el <creada>
-    When completo la tarea el <completada>
-    Then se registró un completado que cubre el <cubierta>
+  Scenario Outline: Complete calendar recurring task 5
+    Given a monthly recurring task on days <days> created on <created>
+    When I complete the task on <completed>
+    Then a completion was recorded that covers <covered>
 
     Examples:
-      | dias   | creada              | completada          | cubierta   |
+      | days   | created             | completed           | covered    |
       | 15     | 2026-07-01T08:00:00 | 2026-07-15T10:00:00 | 2026-07-15 |
       | 15     | 2026-07-01T08:00:00 | 2026-07-10T10:00:00 | 2026-07-15 |
       | 1, 15  | 2026-07-02T08:00:00 | 2026-07-20T10:00:00 | 2026-07-15 |
@@ -126,14 +126,14 @@ Feature: Completar periódica de calendario
   # Completar periódica de calendario 6
   # Mensual: después de completar, vuelve a pendiente el día de la próxima
   # ocurrencia sin cubrir.
-  Scenario Outline: Completar periódica de calendario 6
-    Given una tarea periódica mensual los días <dias> creada el <creada>
-    When completo la tarea el <completada>
-    And consulto el estado el <vuelve>
-    Then el estado es pendiente
+  Scenario Outline: Complete calendar recurring task 6
+    Given a monthly recurring task on days <days> created on <created>
+    When I complete the task on <completed>
+    And I query the status on <returns>
+    Then the status is pendiente
 
     Examples:
-      | dias   | creada              | completada          | vuelve              |
+      | days   | created             | completed           | returns             |
       | 15     | 2026-07-01T08:00:00 | 2026-07-15T10:00:00 | 2026-08-15T00:00:00 |
       | 15     | 2026-07-01T08:00:00 | 2026-07-10T10:00:00 | 2026-08-15T00:00:00 |
       | 1, 15  | 2026-07-02T08:00:00 | 2026-07-20T10:00:00 | 2026-08-01T00:00:00 |
@@ -147,15 +147,15 @@ Feature: Completar periódica de calendario
   # Con un completado anterior, vuelve a pendiente el día de la primera
   # ocurrencia sin cubrir. Filas 2 y 3: completar dos veces el lunes o dos
   # veces el martes cubre martes y jueves; vuelve el martes siguiente.
-  Scenario Outline: Completar periódica de calendario 7
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea fue completada el <anterior>
-    When completo la tarea el <nuevo>
-    And consulto el estado el <vuelve>
-    Then el estado es pendiente
+  Scenario Outline: Complete calendar recurring task 7
+    Given a weekly recurring task on <days> created on <created>
+    And the task was completed on <previous>
+    When I complete the task on <new>
+    And I query the status on <returns>
+    Then the status is pendiente
 
     Examples:
-      | dias           | creada              | anterior            | nuevo               | vuelve              |
+      | days           | created             | previous            | new                 | returns             |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-14T08:00:00 | 2026-07-16T09:00:00 | 2026-07-21T00:00:00 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-13T09:00:00 | 2026-07-13T20:00:00 | 2026-07-21T00:00:00 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-14T08:00:00 | 2026-07-14T20:00:00 | 2026-07-21T00:00:00 |

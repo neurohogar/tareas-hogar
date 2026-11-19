@@ -13,31 +13,31 @@
 # El aviso lo abre un "completo la tarea ..." de este dispositivo; los
 # completados de los Given son anteriores y no abren aviso.
 # Cada tarea se nombra por su título (una palabra).
-Feature: Aviso de deshacer
+Feature: Undo notice
 
   # Aviso de deshacer 1
   # El aviso se ve desde que completo hasta el último segundo antes de los 5.
-  Scenario Outline: Aviso de deshacer 1
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When completo la tarea Regar el <completada>
-    And consulto el aviso el <ahora>
-    Then el aviso ofrece deshacer el completado de Regar del <completada_guardada>
+  Scenario Outline: Undo notice 1
+    Given a relative recurring task Regar every <every> <unit>
+    When I complete the task Regar on <completed>
+    And I query the notice on <now>
+    Then the notice offers to undo the completion of Regar from <completed_stored>
 
     Examples:
-      | cada | unidad | completada          | ahora               | completada_guardada |
+      | every | unit   | completed           | now                 | completed_stored    |
       | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-15T08:00:00 | 2026-07-15T08:00:00 |
       | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-15T08:00:04 | 2026-07-15T08:00:00 |
 
   # Aviso de deshacer 2
   # A los 5 segundos el aviso desaparece solo.
-  Scenario Outline: Aviso de deshacer 2
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When completo la tarea Regar el <completada>
-    And consulto el aviso el <ahora>
-    Then no hay aviso
+  Scenario Outline: Undo notice 2
+    Given a relative recurring task Regar every <every> <unit>
+    When I complete the task Regar on <completed>
+    And I query the notice on <now>
+    Then there is no notice
 
     Examples:
-      | cada | unidad | completada          | ahora               |
+      | every | unit   | completed           | now                 |
       | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-15T08:00:05 |
       | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-15T09:00:00 |
 
@@ -45,107 +45,107 @@ Feature: Aviso de deshacer
   # Completar otra tarea con el aviso abierto lo reemplaza; el aviso nuevo
   # dura 5 segundos desde su propio completado. Fila 1: dentro de los 5
   # segundos de los dos completados. Fila 2: pasados los del primero.
-  Scenario Outline: Aviso de deshacer 3
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And una tarea puntual Pagar con fecha límite <limite>
-    When completo la tarea Regar el <regar>
-    And completo la tarea Pagar el <pagar>
-    And consulto el aviso el <ahora>
-    Then el aviso ofrece deshacer el completado de Pagar del <pagar_guardada>
+  Scenario Outline: Undo notice 3
+    Given a relative recurring task Regar every <every> <unit>
+    And a one-off task Pagar with due date <due_date>
+    When I complete the task Regar on <water>
+    And I complete the task Pagar on <pay>
+    And I query the notice on <now>
+    Then the notice offers to undo the completion of Pagar from <pay_stored>
 
     Examples:
-      | cada | unidad | limite     | regar               | pagar               | ahora               | pagar_guardada      |
+      | every | unit   | due_date   | water               | pay                 | now                 | pay_stored          |
       | 2    | dias   | 2026-07-20 | 2026-07-15T08:00:00 | 2026-07-15T08:00:03 | 2026-07-15T08:00:04 | 2026-07-15T08:00:03 |
       | 2    | dias   | 2026-07-20 | 2026-07-15T08:00:00 | 2026-07-15T08:00:03 | 2026-07-15T08:00:07 | 2026-07-15T08:00:03 |
 
   # Aviso de deshacer 4
   # Completar otra vez la misma tarea con el aviso abierto también lo
   # reemplaza.
-  Scenario Outline: Aviso de deshacer 4
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When completo la tarea Regar el <primera>
-    And completo la tarea Regar el <segunda>
-    And consulto el aviso el <ahora>
-    Then el aviso ofrece deshacer el completado de Regar del <segunda_guardada>
+  Scenario Outline: Undo notice 4
+    Given a relative recurring task Regar every <every> <unit>
+    When I complete the task Regar on <first>
+    And I complete the task Regar on <second>
+    And I query the notice on <now>
+    Then the notice offers to undo the completion of Regar from <second_stored>
 
     Examples:
-      | cada | unidad | primera             | segunda             | ahora               | segunda_guardada    |
+      | every | unit   | first               | second              | now                 | second_stored       |
       | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-15T08:00:02 | 2026-07-15T08:00:03 | 2026-07-15T08:00:02 |
 
   # Aviso de deshacer 5
   # Deshacer en el aviso borra ese completado, recalcula el estado con los
   # que quedan (U vuelve al anterior, que ya venció) y cierra el aviso.
-  Scenario Outline: Aviso de deshacer 5
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <anterior>
-    When completo la tarea Regar el <completada>
-    And toco Deshacer en el aviso el <toque>
-    And consulto el aviso el <toque>
-    And consulto el estado el <ahora>
-    Then no hay aviso
-    And la tarea Regar conserva un solo completado, del <anterior_guardada>
-    And el estado es pendiente
+  Scenario Outline: Undo notice 5
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <previous>
+    When I complete the task Regar on <completed>
+    And I tap Deshacer in the notice on <tap>
+    And I query the notice on <tap>
+    And I query the status on <now>
+    Then there is no notice
+    And the task Regar keeps a single completion, from <previous_stored>
+    And the status is pendiente
 
     Examples:
-      | cada | unidad | anterior            | completada          | toque               | ahora               | anterior_guardada   |
+      | every | unit   | previous            | completed           | tap                 | now                 | previous_stored     |
       | 4    | horas  | 2026-07-15T06:00:00 | 2026-07-15T11:00:00 | 2026-07-15T11:00:04 | 2026-07-15T11:00:05 | 2026-07-15T06:00:00 |
 
   # Aviso de deshacer 6
   # Deshacer una puntual desde el aviso la devuelve a Pendientes.
-  Scenario Outline: Aviso de deshacer 6
-    Given una tarea puntual Pagar con fecha límite <limite>
-    When completo la tarea Pagar el <completada>
-    And toco Deshacer en el aviso el <toque>
-    And consulto Pendientes el <ahora>
-    Then no queda ningún completado de Pagar
-    And Pendientes muestra en orden <orden>
+  Scenario Outline: Undo notice 6
+    Given a one-off task Pagar with due date <due_date>
+    When I complete the task Pagar on <completed>
+    And I tap Deshacer in the notice on <tap>
+    And I query Pendientes on <now>
+    Then no completion remains of Pagar
+    And Pendientes shows in order <order>
 
     Examples:
-      | limite     | completada          | toque               | ahora               | orden |
+      | due_date   | completed           | tap                 | now                 | order |
       | 2026-07-20 | 2026-07-15T08:00:00 | 2026-07-15T08:00:02 | 2026-07-15T08:00:03 | Pagar |
 
   # Aviso de deshacer 7
   # Después de reemplazar el aviso, Deshacer borra solo el último completado;
   # el de la otra tarea sigue.
-  Scenario Outline: Aviso de deshacer 7
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And una tarea puntual Pagar con fecha límite <limite>
-    When completo la tarea Regar el <regar>
-    And completo la tarea Pagar el <pagar>
-    And toco Deshacer en el aviso el <toque>
-    Then no queda ningún completado de Pagar
-    And la tarea Regar conserva un solo completado, del <regar_guardada>
+  Scenario Outline: Undo notice 7
+    Given a relative recurring task Regar every <every> <unit>
+    And a one-off task Pagar with due date <due_date>
+    When I complete the task Regar on <water>
+    And I complete the task Pagar on <pay>
+    And I tap Deshacer in the notice on <tap>
+    Then no completion remains of Pagar
+    And the task Regar keeps a single completion, from <water_stored>
 
     Examples:
-      | cada | unidad | limite     | regar               | pagar               | toque               | regar_guardada      |
+      | every | unit   | due_date   | water               | pay                 | tap                 | water_stored        |
       | 2    | dias   | 2026-07-20 | 2026-07-15T08:00:00 | 2026-07-15T08:00:03 | 2026-07-15T08:00:04 | 2026-07-15T08:00:00 |
 
   # Aviso de deshacer 8
   # Si otro dispositivo ya borró ese completado, Deshacer no hace nada: el
   # completado anterior sigue.
-  Scenario Outline: Aviso de deshacer 8
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <anterior>
-    When completo la tarea Regar el <completada>
-    And otro dispositivo, sin ver ese cambio, borra el completado del <completada>
-    And toco Deshacer en el aviso el <toque>
-    Then la tarea Regar conserva un solo completado, del <anterior_guardada>
+  Scenario Outline: Undo notice 8
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <previous>
+    When I complete the task Regar on <completed>
+    And another device, without seeing that change, deletes the completion from <completed>
+    And I tap Deshacer in the notice on <tap>
+    Then the task Regar keeps a single completion, from <previous_stored>
 
     Examples:
-      | cada | unidad | anterior            | completada          | toque               | anterior_guardada   |
+      | every | unit   | previous            | completed           | tap                 | previous_stored     |
       | 2    | dias   | 2026-07-13T09:00:00 | 2026-07-15T08:00:00 | 2026-07-15T08:00:02 | 2026-07-13T09:00:00 |
 
   # Aviso de deshacer 9
   # Si otro dispositivo ya borró la tarea, Deshacer no la revive.
-  Scenario Outline: Aviso de deshacer 9
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When completo la tarea Regar el <completada>
-    And otro dispositivo, sin ver ese cambio, borra la tarea
-    And toco Deshacer en el aviso el <toque>
-    And consulto Pendientes en cualquier momento
-    Then no queda ninguna tarea
-    And no queda ningún completado de Regar
+  Scenario Outline: Undo notice 9
+    Given a relative recurring task Regar every <every> <unit>
+    When I complete the task Regar on <completed>
+    And another device, without seeing that change, deletes the task
+    And I tap Deshacer in the notice on <tap>
+    And I query Pendientes at any moment
+    Then no task remains
+    And no completion remains of Regar
 
     Examples:
-      | cada | unidad | completada          | toque               |
+      | every | unit   | completed           | tap                 |
       | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-15T08:00:02 |

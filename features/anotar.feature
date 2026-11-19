@@ -18,21 +18,21 @@
 # por su título (una palabra). Que el recuadro tiene el campo y los dos botones,
 # que Atrás lo cierra sin anotar, la confirmación y que el botón está en todas
 # las pantallas con sesión se verifican en la suite QA (qa/anotacion.md).
-Feature: Anotar
+Feature: Annotate
 
   # Anotar 1
   # Sin panel ni aviso: sentido, instante y la pantalla donde está la persona;
   # sin tarea y sin texto.
-  Scenario Outline: Anotar 1
-    Given estoy en <pantalla>
-    When anoto <sentido> el <ahora>
-    Then queda una sola anotación
-    And la anotación del <ahora> tiene sentido <sentido_guardado> en <pantalla_guardada>
-    And la anotación del <ahora> no es de ninguna tarea
-    And la anotación del <ahora> no tiene texto
+  Scenario Outline: Annotate 1
+    Given I am on <screen>
+    When I annotate <direction> on <now>
+    Then a single annotation remains
+    And the annotation from <now> has direction <direction_stored> in <screen_stored>
+    And the annotation from <now> is of no task
+    And the annotation from <now> has no text
 
     Examples:
-      | pantalla     | sentido    | ahora               | sentido_guardado | pantalla_guardada |
+      | screen       | direction  | now                 | direction_stored | screen_stored     |
       | Pendientes   | Me sirvió  | 2026-07-15T08:05:00 | Me sirvió        | Pendientes        |
       | Historial    | Me molestó | 2026-07-15T09:10:30 | Me molestó       | Historial         |
       | Anotaciones  | Me molestó | 2026-07-16T00:00:00 | Me molestó       | Anotaciones       |
@@ -40,172 +40,172 @@ Feature: Anotar
   # Anotar 2
   # Con el panel abierto al editar una tarea, la pantalla es el Panel de
   # edición, sobre cualquier pantalla, y la tarea es la del panel.
-  Scenario Outline: Anotar 2
-    Given una tarea puntual Regar sin fecha límite
-    And estoy en <pantalla>
-    And el panel de edición está abierto al editar la tarea Regar
-    When anoto <sentido> el <ahora>
-    Then queda una sola anotación
-    And la anotación del <ahora> tiene sentido <sentido_guardado> en <pantalla_guardada>
-    And la anotación del <ahora> es de la tarea Regar
+  Scenario Outline: Annotate 2
+    Given a one-off task Regar without a due date
+    And I am on <screen>
+    And the edit panel is open when editing the task Regar
+    When I annotate <direction> on <now>
+    Then a single annotation remains
+    And the annotation from <now> has direction <direction_stored> in <screen_stored>
+    And the annotation from <now> is of the task Regar
 
     Examples:
-      | pantalla    | sentido    | ahora               | sentido_guardado | pantalla_guardada |
+      | screen      | direction  | now                 | direction_stored | screen_stored     |
       | Pendientes  | Me sirvió  | 2026-07-15T08:05:00 | Me sirvió        | Panel de edición  |
       | Historial   | Me molestó | 2026-07-15T08:05:00 | Me molestó       | Panel de edición  |
       | Anotaciones | Me molestó | 2026-07-15T08:05:00 | Me molestó       | Panel de edición  |
 
   # Anotar 3
   # Con el panel abierto al crear no hay tarea, sobre cualquier pantalla.
-  Scenario Outline: Anotar 3
-    Given estoy en <pantalla>
-    And el panel de edición está abierto al crear una tarea
-    When anoto <sentido> el <ahora>
-    Then queda una sola anotación
-    And la anotación del <ahora> tiene sentido <sentido_guardado> en <pantalla_guardada>
-    And la anotación del <ahora> no es de ninguna tarea
+  Scenario Outline: Annotate 3
+    Given I am on <screen>
+    And the edit panel is open when creating a task
+    When I annotate <direction> on <now>
+    Then a single annotation remains
+    And the annotation from <now> has direction <direction_stored> in <screen_stored>
+    And the annotation from <now> is of no task
 
     Examples:
-      | pantalla    | sentido    | ahora               | sentido_guardado | pantalla_guardada |
+      | screen      | direction  | now                 | direction_stored | screen_stored     |
       | Pendientes  | Me sirvió  | 2026-07-15T08:05:00 | Me sirvió        | Panel de edición  |
       | Historial   | Me molestó | 2026-07-15T08:05:00 | Me molestó       | Panel de edición  |
 
   # Anotar 4
   # Con el panel cerrado y el aviso de deshacer visible, la tarea es la que
   # nombra el aviso: visible hasta el último segundo antes de los 5 segundos.
-  Scenario Outline: Anotar 4
-    Given una tarea puntual Regar sin fecha límite
-    And estoy en <pantalla>
-    When completo la tarea Regar el <completada>
-    And anoto <sentido> el <ahora>
-    Then queda una sola anotación
-    And la anotación del <ahora> tiene sentido <sentido_guardado> en <pantalla_guardada>
-    And la anotación del <ahora> es de la tarea Regar
+  Scenario Outline: Annotate 4
+    Given a one-off task Regar without a due date
+    And I am on <screen>
+    When I complete the task Regar on <completed>
+    And I annotate <direction> on <now>
+    Then a single annotation remains
+    And the annotation from <now> has direction <direction_stored> in <screen_stored>
+    And the annotation from <now> is of the task Regar
 
     Examples:
-      | pantalla    | sentido    | completada          | ahora               | sentido_guardado | pantalla_guardada |
+      | screen      | direction  | completed           | now                 | direction_stored | screen_stored     |
       | Pendientes  | Me sirvió  | 2026-07-15T08:00:00 | 2026-07-15T08:00:00 | Me sirvió        | Pendientes        |
       | Historial   | Me molestó | 2026-07-15T08:00:00 | 2026-07-15T08:00:04 | Me molestó       | Historial         |
       | Anotaciones | Me molestó | 2026-07-15T08:00:00 | 2026-07-15T08:00:04 | Me molestó       | Anotaciones       |
 
   # Anotar 5
   # Con el aviso de deshacer ya vencido (5 segundos o más) no hay tarea.
-  Scenario Outline: Anotar 5
-    Given una tarea puntual Regar sin fecha límite
-    And estoy en <pantalla>
-    When completo la tarea Regar el <completada>
-    And anoto <sentido> el <ahora>
-    Then queda una sola anotación
-    And la anotación del <ahora> tiene sentido <sentido_guardado> en <pantalla_guardada>
-    And la anotación del <ahora> no es de ninguna tarea
+  Scenario Outline: Annotate 5
+    Given a one-off task Regar without a due date
+    And I am on <screen>
+    When I complete the task Regar on <completed>
+    And I annotate <direction> on <now>
+    Then a single annotation remains
+    And the annotation from <now> has direction <direction_stored> in <screen_stored>
+    And the annotation from <now> is of no task
 
     Examples:
-      | pantalla   | sentido   | completada          | ahora               | sentido_guardado | pantalla_guardada |
+      | screen     | direction | completed           | now                 | direction_stored | screen_stored     |
       | Pendientes | Me sirvió | 2026-07-15T08:00:00 | 2026-07-15T08:00:05 | Me sirvió        | Pendientes        |
       | Historial  | Me sirvió | 2026-07-15T08:00:00 | 2026-07-15T09:00:00 | Me sirvió        | Historial         |
 
   # Anotar 6
   # Con el panel abierto al editar, manda la tarea del panel aunque haya un
   # aviso de deshacer visible de otra tarea.
-  Scenario Outline: Anotar 6
-    Given una tarea puntual Regar sin fecha límite
-    And una tarea puntual Pagar sin fecha límite
-    And estoy en <pantalla>
-    When completo la tarea Regar el <completada>
-    And el panel de edición está abierto al editar la tarea Pagar
-    And anoto <sentido> el <ahora>
-    Then queda una sola anotación
-    And la anotación del <ahora> tiene sentido <sentido_guardado> en <pantalla_guardada>
-    And la anotación del <ahora> es de la tarea Pagar
+  Scenario Outline: Annotate 6
+    Given a one-off task Regar without a due date
+    And a one-off task Pagar without a due date
+    And I am on <screen>
+    When I complete the task Regar on <completed>
+    And the edit panel is open when editing the task Pagar
+    And I annotate <direction> on <now>
+    Then a single annotation remains
+    And the annotation from <now> has direction <direction_stored> in <screen_stored>
+    And the annotation from <now> is of the task Pagar
 
     Examples:
-      | pantalla   | sentido   | completada          | ahora               | sentido_guardado | pantalla_guardada |
+      | screen     | direction | completed           | now                 | direction_stored | screen_stored     |
       | Pendientes | Me sirvió | 2026-07-15T08:00:00 | 2026-07-15T08:00:02 | Me sirvió        | Panel de edición  |
 
   # Anotar 7
   # Con el panel abierto al crear no hay tarea aunque haya un aviso de
   # deshacer visible.
-  Scenario Outline: Anotar 7
-    Given una tarea puntual Regar sin fecha límite
-    And estoy en <pantalla>
-    When completo la tarea Regar el <completada>
-    And el panel de edición está abierto al crear una tarea
-    And anoto <sentido> el <ahora>
-    Then queda una sola anotación
-    And la anotación del <ahora> tiene sentido <sentido_guardado> en <pantalla_guardada>
-    And la anotación del <ahora> no es de ninguna tarea
+  Scenario Outline: Annotate 7
+    Given a one-off task Regar without a due date
+    And I am on <screen>
+    When I complete the task Regar on <completed>
+    And the edit panel is open when creating a task
+    And I annotate <direction> on <now>
+    Then a single annotation remains
+    And the annotation from <now> has direction <direction_stored> in <screen_stored>
+    And the annotation from <now> is of no task
 
     Examples:
-      | pantalla   | sentido    | completada          | ahora               | sentido_guardado | pantalla_guardada |
+      | screen     | direction  | completed           | now                 | direction_stored | screen_stored     |
       | Pendientes | Me molestó | 2026-07-15T08:00:00 | 2026-07-15T08:00:02 | Me molestó       | Panel de edición  |
 
   # Anotar 8
   # El texto escrito se guarda tal cual; los espacios del inicio y del final
   # se recortan y los de adentro quedan.
-  Scenario Outline: Anotar 8
-    Given estoy en <pantalla>
-    When anoto <sentido> el <ahora> con el texto <texto> entre <espacios> espacios
-    Then queda una sola anotación
-    And la anotación del <ahora> dice <texto_guardado>
+  Scenario Outline: Annotate 8
+    Given I am on <screen>
+    When I annotate <direction> on <now> with the text <text> between <spaces> spaces
+    Then a single annotation remains
+    And the annotation from <now> says <text_stored>
 
     Examples:
-      | pantalla   | sentido    | ahora               | texto       | espacios | texto_guardado |
+      | screen     | direction  | now                 | text        | spaces   | text_stored    |
       | Pendientes | Me sirvió  | 2026-07-15T08:05:00 | quedó lindo | 0        | quedó lindo    |
       | Historial  | Me molestó | 2026-07-15T08:05:00 | quedó lindo | 3        | quedó lindo    |
 
   # Anotar 9
   # Vacío o solo espacios es sin texto: el campo no se guarda y nunca es un
   # error.
-  Scenario Outline: Anotar 9
-    Given estoy en <pantalla>
-    When anoto <sentido> el <ahora> con <espacios> espacios como texto
-    Then queda una sola anotación
-    And la anotación del <ahora> no tiene texto
+  Scenario Outline: Annotate 9
+    Given I am on <screen>
+    When I annotate <direction> on <now> with <spaces> spaces as text
+    Then a single annotation remains
+    And the annotation from <now> has no text
 
     Examples:
-      | pantalla   | sentido    | ahora               | espacios |
+      | screen     | direction  | now                 | spaces   |
       | Pendientes | Me sirvió  | 2026-07-15T08:05:00 | 0        |
       | Historial  | Me molestó | 2026-07-15T08:05:00 | 1        |
       | Historial  | Me sirvió  | 2026-07-15T08:05:00 | 4        |
 
   # Anotar 10
   # El texto no tiene largo máximo.
-  Scenario Outline: Anotar 10
-    Given estoy en <pantalla>
-    When anoto <sentido> el <ahora> con un texto de <largo> caracteres
-    Then queda una sola anotación
-    And la anotación del <ahora> dice un texto de <largo_guardado> caracteres
+  Scenario Outline: Annotate 10
+    Given I am on <screen>
+    When I annotate <direction> on <now> with a text of <length> characters
+    Then a single annotation remains
+    And the annotation from <now> says a text of <length_stored> characters
 
     Examples:
-      | pantalla   | sentido   | ahora               | largo | largo_guardado |
+      | screen     | direction | now                 | length | length_stored  |
       | Pendientes | Me sirvió | 2026-07-15T08:05:00 | 1     | 1              |
       | Pendientes | Me sirvió | 2026-07-15T08:05:00 | 5000  | 5000           |
 
   # Anotar 11
   # Anotar no es un cambio del panel: con el panel abierto sin cambios sigue
   # abierto y sin cambios sin guardar.
-  Scenario Outline: Anotar 11
-    Given una tarea puntual Regar sin fecha límite
-    And estoy en <pantalla>
-    And el panel de edición está abierto al editar la tarea Regar
-    When anoto <sentido> el <ahora> con el texto <texto>
-    Then el panel sigue abierto sin cambios sin guardar
+  Scenario Outline: Annotate 11
+    Given a one-off task Regar without a due date
+    And I am on <screen>
+    And the edit panel is open when editing the task Regar
+    When I annotate <direction> on <now> with the text <text>
+    Then the panel stays open without unsaved changes
 
     Examples:
-      | pantalla   | sentido    | ahora               | texto       |
+      | screen     | direction  | now                 | text        |
       | Pendientes | Me molestó | 2026-07-15T08:05:00 | quedó lindo |
 
   # Anotar 12
   # Dos dispositivos anotan sin conexión: no se pierde ninguna, cada una
   # con su contexto.
-  Scenario Outline: Anotar 12
-    Given estoy en <pantalla>
-    When anoto <sentido> el <ahora>
-    And otro dispositivo, sin ver ese cambio, anota <sentido_otro> en <pantalla_otro> el <ahora_otro>
-    Then quedan <cantidad> anotaciones
-    And la anotación del <ahora> tiene sentido <sentido> en <pantalla>
-    And la anotación del <ahora_otro> tiene sentido <sentido_otro> en <pantalla_otro>
+  Scenario Outline: Annotate 12
+    Given I am on <screen>
+    When I annotate <direction> on <now>
+    And another device, without seeing that change, annotates <direction_other> in <screen_other> on <now_other>
+    Then <count> annotations remain
+    And the annotation from <now> has direction <direction> in <screen>
+    And the annotation from <now_other> has direction <direction_other> in <screen_other>
 
     Examples:
-      | pantalla   | sentido   | ahora               | sentido_otro | pantalla_otro | ahora_otro          | cantidad |
+      | screen     | direction | now                 | direction_other | screen_other  | now_other           | count    |
       | Pendientes | Me sirvió | 2026-07-15T08:05:00 | Me molestó   | Historial     | 2026-07-15T08:06:00 | 2        |

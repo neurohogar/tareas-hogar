@@ -26,19 +26,19 @@ Feature: Anotaciones
   # Con y sin tarea, con y sin texto, del más reciente al más antiguo y
   # agrupadas por día, aunque se hayan anotado en otro orden.
   Scenario Outline: Anotaciones 1
-    Given una tarea puntual Regar sin fecha límite
-    And una anotación <sentido_a> en <pantalla_a> del <anotada_a>
-    And la anotación se refiere a la tarea Regar
-    And la anotación dice <texto_a>
-    And una anotación <sentido_b> en <pantalla_b> del <anotada_b>
-    And una anotación <sentido_c> en <pantalla_c> del <anotada_c>
-    And la anotación dice <texto_c>
-    And una anotación <sentido_d> en <pantalla_d> del <anotada_d>
-    When consulto Anotaciones el <ahora>
-    Then Anotaciones muestra <anotaciones>
+    Given a one-off task Regar without a due date
+    And an annotation <direction_a> in <screen_a> from <annotated_a>
+    And the annotation refers to the task Regar
+    And the annotation says <text_a>
+    And an annotation <direction_b> in <screen_b> from <annotated_b>
+    And an annotation <direction_c> in <screen_c> from <annotated_c>
+    And the annotation says <text_c>
+    And an annotation <direction_d> in <screen_d> from <annotated_d>
+    When I query Anotaciones on <now>
+    Then Anotaciones shows <annotations>
 
     Examples:
-      | sentido_a | pantalla_a | anotada_a           | texto_a     | sentido_b  | pantalla_b | anotada_b           | sentido_c | pantalla_c | anotada_c           | texto_c  | sentido_d  | pantalla_d  | anotada_d           | ahora               | anotaciones                                                                                                                                                       |
+      | direction_a | screen_a   | annotated_a         | text_a      | direction_b | screen_b   | annotated_b         | direction_c | screen_c   | annotated_c         | text_c    | direction_d | screen_d    | annotated_d         | now                 | annotations                                                                                                                                                                                     |
       | Me sirvió | Pendientes | 2026-07-15T08:05:00 | quedó lindo | Me molestó | Historial  | 2026-07-15T09:10:00 | Me sirvió | Etiquetas  | 2026-07-14T21:30:00 | muy lento | Me molestó | Anotaciones | 2026-07-13T09:00:00 | 2026-07-15T12:00:00 | Hoy: 09:10 · Me molestó · Historial, 08:05 · Me sirvió · Pendientes · Regar · quedó lindo; Ayer: 21:30 · Me sirvió · Etiquetas · muy lento; lunes 13 de julio: 09:00 · Me molestó · Anotaciones |
 
   # Anotaciones 2
@@ -47,12 +47,12 @@ Feature: Anotaciones
   # mismo día, más tarde, va en "Hoy"; otro día, con la fecha, nunca "Mañana").
   # La hora se muestra sin segundos.
   Scenario Outline: Anotaciones 2
-    Given una anotación Me sirvió en Pendientes del <anotada>
-    When consulto Anotaciones el <ahora>
-    Then Anotaciones muestra <anotaciones>
+    Given an annotation Me sirvió in Pendientes from <annotated>
+    When I query Anotaciones on <now>
+    Then Anotaciones shows <annotations>
 
     Examples:
-      | anotada             | ahora               | anotaciones                                                 |
+      | annotated           | now                 | annotations                                                 |
       | 2026-07-15T00:00:00 | 2026-07-15T12:00:00 | Hoy: 00:00 · Me sirvió · Pendientes                         |
       | 2026-07-14T23:59:59 | 2026-07-15T12:00:00 | Ayer: 23:59 · Me sirvió · Pendientes                        |
       | 2026-07-14T23:59:59 | 2026-07-16T00:00:00 | martes 14 de julio: 23:59 · Me sirvió · Pendientes          |
@@ -66,15 +66,15 @@ Feature: Anotaciones
   # Dos anotaciones en el mismo instante: va primero la de id menor, sin
   # importar en qué orden se registraron.
   Scenario Outline: Anotaciones 3
-    Given una anotación <sentido_a> en <pantalla> del <momento>
-    And la anotación se registró con id <id_a>
-    And una anotación <sentido_b> en <pantalla> del <momento>
-    And la anotación se registró con id <id_b>
-    When consulto Anotaciones el <ahora>
-    Then Anotaciones muestra <anotaciones>
+    Given an annotation <direction_a> in <screen> from <moment>
+    And the annotation was recorded with id <id_a>
+    And an annotation <direction_b> in <screen> from <moment>
+    And the annotation was recorded with id <id_b>
+    When I query Anotaciones on <now>
+    Then Anotaciones shows <annotations>
 
     Examples:
-      | sentido_a  | sentido_b | pantalla   | momento             | id_a | id_b | ahora               | anotaciones                                                              |
+      | direction_a | direction_b | screen     | moment              | id_a | id_b | now                 | annotations                                                              |
       | Me molestó | Me sirvió | Pendientes | 2026-07-15T10:00:00 | a2   | a1   | 2026-07-15T12:00:00 | Hoy: 10:00 · Me sirvió · Pendientes, 10:00 · Me molestó · Pendientes     |
       | Me molestó | Me sirvió | Pendientes | 2026-07-15T10:00:00 | a1   | a2   | 2026-07-15T12:00:00 | Hoy: 10:00 · Me molestó · Pendientes, 10:00 · Me sirvió · Pendientes     |
 
@@ -82,54 +82,54 @@ Feature: Anotaciones
   # La pantalla muestra el nombre actual de la tarea: renombrarla cambia todas
   # sus anotaciones, y con emoji el nombre es «emoji título».
   Scenario Outline: Anotaciones 4
-    Given una tarea puntual <titulo> sin fecha límite con emoji <emoji>
-    And una anotación Me sirvió en Pendientes del <primera>
-    And la anotación se refiere a la tarea <titulo>
-    And una anotación Me molestó en Historial del <segunda>
-    And la anotación se refiere a la tarea <titulo>
-    When edito el título a <titulo_nuevo>
-    And consulto Anotaciones el <ahora>
-    Then Anotaciones muestra <anotaciones>
+    Given a one-off task <title> without a due date with emoji <emoji>
+    And an annotation Me sirvió in Pendientes from <first>
+    And the annotation refers to the task <title>
+    And an annotation Me molestó in Historial from <second>
+    And the annotation refers to the task <title>
+    When I edit the title to <title_new>
+    And I query Anotaciones on <now>
+    Then Anotaciones shows <annotations>
 
     Examples:
-      | titulo | emoji | primera             | segunda             | titulo_nuevo | ahora               | anotaciones                                                                                               |
+      | title  | emoji | first               | second              | title_new    | now                 | annotations                                                                                       |
       | Regar  | 🌱    | 2026-07-14T09:00:00 | 2026-07-15T08:00:00 | Plantas      | 2026-07-15T12:00:00 | Hoy: 08:00 · Me molestó · Historial · 🌱 Plantas; Ayer: 09:00 · Me sirvió · Pendientes · 🌱 Plantas |
 
   # Anotaciones 5
   # Sin anotaciones, la pantalla está vacía.
   Scenario Outline: Anotaciones 5
-    Given una tarea puntual Regar sin fecha límite
-    When consulto Anotaciones el <ahora>
-    Then Anotaciones está vacía
+    Given a one-off task Regar without a due date
+    When I query Anotaciones on <now>
+    Then Anotaciones is empty
 
     Examples:
-      | ahora               |
+      | now                 |
       | 2026-07-15T12:00:00 |
 
   # Anotaciones 6
   # Una anotación de una tarea sin emoji muestra solo el título, y el texto
   # va al final.
   Scenario Outline: Anotaciones 6
-    Given una tarea puntual <titulo> sin fecha límite
-    And una anotación <sentido> en <pantalla> del <anotada>
-    And la anotación se refiere a la tarea <titulo>
-    And la anotación dice <texto>
-    When consulto Anotaciones el <ahora>
-    Then Anotaciones muestra <anotaciones>
+    Given a one-off task <title> without a due date
+    And an annotation <direction> in <screen> from <annotated>
+    And the annotation refers to the task <title>
+    And the annotation says <text>
+    When I query Anotaciones on <now>
+    Then Anotaciones shows <annotations>
 
     Examples:
-      | titulo | sentido    | pantalla         | anotada             | texto       | ahora               | anotaciones                                                          |
+      | title  | direction  | screen           | annotated           | text        | now                 | annotations                                                          |
       | Pagar  | Me molestó | Panel de edición | 2026-07-15T08:05:00 | quedó lindo | 2026-07-15T12:00:00 | Hoy: 08:05 · Me molestó · Panel de edición · Pagar · quedó lindo     |
 
   # Anotaciones 7
   # Dos dispositivos anotan sin conexión: la pantalla muestra las dos.
   Scenario Outline: Anotaciones 7
-    Given estoy en <pantalla>
-    When anoto <sentido> el <ahora>
-    And otro dispositivo, sin ver ese cambio, anota <sentido_otro> en <pantalla_otro> el <ahora_otro>
-    And consulto Anotaciones el <consulta>
-    Then Anotaciones muestra <anotaciones>
+    Given I am on <screen>
+    When I annotate <direction> on <now>
+    And another device, without seeing that change, annotates <direction_other> in <screen_other> on <now_other>
+    And I query Anotaciones on <query>
+    Then Anotaciones shows <annotations>
 
     Examples:
-      | pantalla   | sentido   | ahora               | sentido_otro | pantalla_otro | ahora_otro          | consulta            | anotaciones                                                          |
+      | screen     | direction | now                 | direction_other | screen_other  | now_other           | query               | annotations                                                          |
       | Pendientes | Me sirvió | 2026-07-15T08:05:00 | Me molestó   | Historial     | 2026-07-15T08:06:00 | 2026-07-15T12:00:00 | Hoy: 08:06 · Me molestó · Historial, 08:05 · Me sirvió · Pendientes  |

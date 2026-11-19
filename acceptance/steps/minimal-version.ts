@@ -45,19 +45,19 @@ function savedWithMinimal(world: World, task: Task, minimalVersion: string): voi
 /** Each form of minimal-version change: "<subject> la versión mínima a ...". */
 const CHANGES: { text: string; value: (...values: string[]) => string }[] = [
 	{ text: P, value: (minimal) => minimal },
-	{ text: `${P} con espacios al inicio y al final`, value: (minimal) => withMargins(minimal) },
-	{ text: 'una de solo espacios', value: () => ONLY_SPACES },
-	{ text: `una de ${P} caracteres`, value: (length) => 'x'.repeat(numeric(length)) }
+	{ text: `${P} with spaces at the start and end`, value: (minimal) => withMargins(minimal) },
+	{ text: 'one of only spaces', value: () => ONLY_SPACES },
+	{ text: `one of ${P} characters`, value: (length) => 'x'.repeat(numeric(length)) }
 ];
 
 const EDITORS = [
-	{ subject: 'edito', edit: editMe },
-	{ subject: `${OTHER} edita`, edit: editsOther }
+	{ subject: 'I edit', edit: editMe },
+	{ subject: `${OTHER} edits`, edit: editsOther }
 ];
 
 const editSteps: StepDefinition[] = EDITORS.flatMap(({ subject, edit }) =>
 	CHANGES.map(({ text, value }) => ({
-		pattern: new RegExp(`^${subject} la versión mínima a ${text}$`),
+		pattern: new RegExp(`^${subject} the minimal version to ${text}$`),
 		run: (world: World, ...values: string[]) => {
 			edit(world, withMinimalVersion(value(...values)));
 			withoutRejection(world);
@@ -104,78 +104,78 @@ function theRowShowsMinimal(world: World, line: string | undefined): void {
 	for (const rows of world.pendingQueries) expect(rows.map(({ minimal }) => minimal?.text)).toEqual([line]);
 }
 
-const BUTTON_STATUSES: Record<string, boolean> = { habilitado: true, deshabilitado: false };
+const BUTTON_STATUSES: Record<string, boolean> = { enabled: true, disabled: false };
 
 export const minimalVersionSteps: StepDefinition[] = [
 	...editSteps,
 	{
-		pattern: new RegExp(`^creo una tarea puntual con título ${P} y versión mínima ${P}$`),
+		pattern: new RegExp(`^I create a one-off task with title ${P} and minimal version ${P}$`),
 		run: (world, title, minimalVersion) => createOneOffWithMinimal(world, { title, minimalVersion })
 	},
 	{
-		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} cada 2 dias y versión mínima ${P}$`),
+		pattern: new RegExp(`^I create a relative recurring task with title ${P} every 2 days and minimal version ${P}$`),
 		run: (world, title, minimalVersion) => {
 			createInWorld(world, { title, every: 2, unit: 'dias', minimalVersion });
 			withoutRejection(world);
 		}
 	},
 	{
-		pattern: new RegExp(`^creo una tarea periódica semanal con título ${P} los ${P} y versión mínima ${P}$`),
+		pattern: new RegExp(`^I create a weekly recurring task with title ${P} on ${P} and minimal version ${P}$`),
 		run: (world, title, days, minimalVersion) => {
-			const data = { title, minimalVersion, ...daysOf(shapeOf('semanal los'), days) };
+			const data = { title, minimalVersion, ...daysOf(shapeOf('weekly on'), days) };
 			recordCreation(world, (id) => createRecurringCalendar(data, id, NOW));
 			withoutRejection(world);
 		}
 	},
 	{
-		pattern: new RegExp(`^creo una tarea puntual con título ${P} y una versión mínima de solo espacios$`),
+		pattern: new RegExp(`^I create a one-off task with title ${P} and a minimal version of only spaces$`),
 		run: (world, title) => createOneOffWithMinimal(world, { title, minimalVersion: ONLY_SPACES })
 	},
 	{
-		pattern: new RegExp(`^la versión mínima de la tarea es ${P}$`),
+		pattern: new RegExp(`^the minimal version of the task is ${P}$`),
 		run: (world, minimalVersion) => savedWithMinimal(world, theTask(world), minimalVersion)
 	},
 	{
-		pattern: new RegExp(`^la versión mínima de la tarea ${TITLE} es ${P}$`),
+		pattern: new RegExp(`^the minimal version of the task ${TITLE} is ${P}$`),
 		run: (world, title, minimalVersion) => savedWithMinimal(world, theTaskTitled(world, title), minimalVersion)
 	},
 	{
 		// Removing means emptying the field: the task is left without a minimal version.
-		pattern: /^quito la versión mínima$/,
+		pattern: /^I remove the minimal version$/,
 		run: (world) => {
 			editMe(world, withMinimalVersion(''));
 			withoutRejection(world);
 		}
 	},
 	{
-		pattern: new RegExp(`^${OTHER} quita la versión mínima$`),
+		pattern: new RegExp(`^${OTHER} removes the minimal version$`),
 		run: (world) => {
 			editsOther(world, withMinimalVersion(''));
 			withoutRejection(world);
 		}
 	},
 	{
-		pattern: new RegExp(`^la tarea tiene versión mínima ${P}$`),
+		pattern: new RegExp(`^the task has minimal version ${P}$`),
 		run: (world, minimalVersion) => expect(theTask(world).minimalVersion).toBe(minimalVersion)
 	},
 	{
-		pattern: /^la tarea no tiene versión mínima$/,
+		pattern: /^the task has no minimal version$/,
 		run: (world) => expect(theDoc(world)).not.toHaveProperty('minimalVersion')
 	},
 	{
-		pattern: new RegExp(`^la tarea tiene una versión mínima de ${P} caracteres$`),
+		pattern: new RegExp(`^the task has a minimal version of ${P} characters$`),
 		run: (world, length) => expect(theTask(world).minimalVersion).toHaveLength(numeric(length))
 	},
 	{
-		pattern: new RegExp(`^la fila de la tarea muestra la mínima ${P}$`),
+		pattern: new RegExp(`^the task row shows the minimal one ${P}$`),
 		run: (world, text) => theRowShowsMinimal(world, text)
 	},
 	{
-		pattern: /^la fila de la tarea no muestra mínima$/,
+		pattern: /^the task row shows no minimal one$/,
 		run: (world) => theRowShowsMinimal(world, undefined)
 	},
 	{
-		pattern: /^el botón Hice la mínima de la tarea está (habilitado|deshabilitado)$/,
+		pattern: /^the Hice la mínima button of the task is (enabled|disabled)$/,
 		run: (world, status) => {
 			expect(Object.hasOwn(BUTTON_STATUSES, status)).toBe(true);
 			expect(world.pendingQueries.length).toBeGreaterThan(0);
@@ -183,39 +183,39 @@ export const minimalVersionSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^toco Hice la mínima el ${P}$`),
+		pattern: new RegExp(`^I tap Hice la mínima on ${P}$`),
 		run: (world, moment) => tapMinimal(world, theTask(world), dateHour(moment))
 	},
 	{
-		pattern: new RegExp(`^toco Hice la mínima en la tarea ${TITLE} el ${P}$`),
+		pattern: new RegExp(`^I tap Hice la mínima in the task ${TITLE} on ${P}$`),
 		run: (world, title, moment) => tapMinimal(world, theTaskTitled(world, title), dateHour(moment))
 	},
 	{
-		pattern: new RegExp(`^${OTHER} toca Hice la mínima el ${P}$`),
+		pattern: new RegExp(`^${OTHER} taps Hice la mínima on ${P}$`),
 		run: (world, moment) => dueMinimalOther(world, dateHour(moment))
 	},
 	{
-		pattern: new RegExp(`^la tarea fue completada el ${P} con la mínima$`),
+		pattern: new RegExp(`^the task was completed on ${P} with the minimal one$`),
 		run: (world, moment) => completedWithMinimal(world, theTask(world), moment)
 	},
 	{
-		pattern: new RegExp(`^la tarea ${TITLE} fue completada el ${P} con la mínima$`),
+		pattern: new RegExp(`^the task ${TITLE} was completed on ${P} with the minimal one$`),
 		run: (world, title, moment) => completedWithMinimal(world, theTaskTitled(world, title), moment)
 	},
 	{
-		pattern: new RegExp(`^la tarea fue completada el ${P} en el paso ${P} con la mínima$`),
+		pattern: new RegExp(`^the task was completed on ${P} at step ${P} with the minimal one$`),
 		run: (world, moment, step) => completedWithMinimal(world, theTask(world), moment, step)
 	},
 	{
-		pattern: /^el último completado de la tarea fue la mínima$/,
+		pattern: /^the last completion of the task was the minimal one$/,
 		run: (world) => expect(theLastCompletion(world).wasMinimal).toBe(true)
 	},
 	{
-		pattern: /^el último completado de la tarea fue entero$/,
+		pattern: /^the last completion of the task was whole$/,
 		run: (world) => expect(theLastCompletion(world)).not.toHaveProperty('wasMinimal')
 	},
 	{
-		pattern: new RegExp(`^el aviso del completado dice ${P}$`),
+		pattern: new RegExp(`^the completion notice says ${P}$`),
 		run: (world, text) => {
 			const notice = world.noticeQueried?.notice;
 			expect(notice).toBeDefined();
@@ -223,7 +223,7 @@ export const minimalVersionSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: /^la tarea tiene dos completados, uno entero y uno de la mínima$/,
+		pattern: /^the task has two completions, one whole and one minimal$/,
 		run: (world) => {
 			const completions = completionsOfTask(world.completions, theTask(world).id);
 			expect(completions.map(({ wasMinimal }) => wasMinimal === true).sort()).toEqual([false, true]);

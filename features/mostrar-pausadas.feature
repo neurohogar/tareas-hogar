@@ -31,77 +31,77 @@ Feature: Mostrar pausadas
   # Apagado (valor inicial): las pausadas no se ven, aunque sin pausa
   # estarían atrasadas.
   Scenario Outline: Mostrar pausadas 1
-    Given una tarea puntual Foco sin fecha límite
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    And la tarea Regar fue pausada
-    And una tarea periódica semanal Basura los <dias> creada el <creada_basura>
-    And la tarea Basura fue pausada
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+    Given a one-off task Foco without a due date
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    And the task Regar was paused
+    And a weekly recurring task Basura on <days> created on <created_trash>
+    And the task Basura was paused
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | cada | unidad | completada          | dias   | creada_basura       | ahora               | orden |
+      | every | unit   | completed           | days   | created_trash       | now                 | order |
       | 2    | dias   | 2026-07-01T09:00:00 | martes | 2026-07-01T08:00:00 | 2026-07-15T12:00:00 | Foco  |
 
   # Mostrar pausadas 2
   # Encendido: las pausadas van al final, por título y no por urgencia
   # (sin pausa, Regar iría primero: atrasada desde el 5, Basura desde el 8).
   Scenario Outline: Mostrar pausadas 2
-    Given Mostrar pausadas está encendido
-    And una tarea puntual Foco sin fecha límite
-    And una tarea puntual Pagar con fecha límite <limite>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    And la tarea Regar fue pausada
-    And una tarea periódica semanal Basura los <dias> creada el <creada_basura>
-    And la tarea Basura fue pausada
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
-    And Pendientes muestra como pausadas <pausadas>
+    Given Mostrar pausadas is on
+    And a one-off task Foco without a due date
+    And a one-off task Pagar with due date <due_date>
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    And the task Regar was paused
+    And a weekly recurring task Basura on <days> created on <created_trash>
+    And the task Basura was paused
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
+    And Pendientes shows as paused <paused>
 
     Examples:
-      | limite     | cada | unidad | completada          | dias   | creada_basura       | ahora               | orden                      | pausadas      |
+      | due_date   | every | unit   | completed           | days   | created_trash       | now                 | order                      | paused        |
       | 2026-07-14 | 2    | dias   | 2026-07-01T09:00:00 | martes | 2026-07-01T08:00:00 | 2026-07-15T12:00:00 | Pagar, Foco, Basura, Regar | Basura, Regar |
 
   # Mostrar pausadas 3
   # Con Mostrar completadas encendido y Mostrar pausadas apagado: una
   # pausada con un completado reciente no se ve (no está completada).
   Scenario Outline: Mostrar pausadas 3
-    Given Mostrar completadas está encendido
-    And una tarea puntual Foco sin fecha límite
-    And una tarea puntual Pagar sin fecha límite
-    And la tarea Pagar fue completada el <completada_pagar>
-    And una tarea periódica relativa Barrer cada <cada> <unidad>
-    And la tarea Barrer fue completada el <completada_barrer>
-    And la tarea Barrer fue pausada
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
-    And Pendientes muestra como completadas <completadas>
+    Given Mostrar completadas is on
+    And a one-off task Foco without a due date
+    And a one-off task Pagar without a due date
+    And the task Pagar was completed on <completed_pay>
+    And a relative recurring task Barrer every <every> <unit>
+    And the task Barrer was completed on <completed_sweep>
+    And the task Barrer was paused
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
+    And Pendientes shows as completed <completed_list>
 
     Examples:
-      | completada_pagar    | cada | unidad | completada_barrer   | ahora               | orden       | completadas |
+      | completed_pay       | every | unit   | completed_sweep     | now                 | order       | completed_list |
       | 2026-07-15T09:00:00 | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Foco, Pagar | Pagar       |
 
   # Mostrar pausadas 4
   # Los dos encendidos: primero las no completadas, después las completadas
   # y al final las pausadas, aunque el título de la pausada vaya antes.
   Scenario Outline: Mostrar pausadas 4
-    Given Mostrar completadas está encendido
-    And Mostrar pausadas está encendido
-    And una tarea puntual Foco sin fecha límite
-    And una tarea puntual Pagar sin fecha límite
-    And la tarea Pagar fue completada el <completada_pagar>
-    And una tarea periódica relativa Barrer cada <cada> <unidad>
-    And la tarea Barrer fue completada el <completada_barrer>
-    And la tarea Barrer fue pausada
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
-    And Pendientes muestra como completadas <completadas>
-    And Pendientes muestra como pausadas <pausadas>
+    Given Mostrar completadas is on
+    And Mostrar pausadas is on
+    And a one-off task Foco without a due date
+    And a one-off task Pagar without a due date
+    And the task Pagar was completed on <completed_pay>
+    And a relative recurring task Barrer every <every> <unit>
+    And the task Barrer was completed on <completed_sweep>
+    And the task Barrer was paused
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
+    And Pendientes shows as completed <completed_list>
+    And Pendientes shows as paused <paused>
 
     Examples:
-      | completada_pagar    | cada | unidad | completada_barrer   | ahora               | orden               | completadas | pausadas |
+      | completed_pay       | every | unit   | completed_sweep     | now                 | order               | completed_list | paused   |
       | 2026-07-15T09:00:00 | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Foco, Pagar, Barrer | Pagar       | Barrer   |
 
   # Mostrar pausadas 5
@@ -110,17 +110,17 @@ Feature: Mostrar pausadas
   # A. Fila 3: sin distinguir mayúsculas. Fila 4: la creada primero también
   # puede ir primero.
   Scenario Outline: Mostrar pausadas 5
-    Given Mostrar pausadas está encendido
-    And una tarea periódica relativa <titulo_1> nunca completada
-    And la tarea <titulo_1> fue pausada
-    And una tarea periódica relativa <titulo_2> nunca completada
-    And la tarea <titulo_2> fue pausada
-    When consulto Pendientes en cualquier momento
-    Then Pendientes muestra en orden <orden>
-    And Pendientes muestra como pausadas <orden>
+    Given Mostrar pausadas is on
+    And a relative recurring task <title_1> never completed
+    And the task <title_1> was paused
+    And a relative recurring task <title_2> never completed
+    And the task <title_2> was paused
+    When I query Pendientes at any moment
+    Then Pendientes shows in order <order>
+    And Pendientes shows as paused <order>
 
     Examples:
-      | titulo_1 | titulo_2   | orden              |
+      | title_1  | title_2    | order              |
       | Ñandú    | Nube       | Nube, Ñandú        |
       | Barrer   | Árbol      | Árbol, Barrer      |
       | Zapallo  | acelga     | acelga, Zapallo    |
@@ -129,42 +129,42 @@ Feature: Mostrar pausadas
   # Mostrar pausadas 7
   # Apagado: al pausar una tarea, su fila desaparece de Pendientes.
   Scenario Outline: Mostrar pausadas 7
-    Given una tarea puntual Foco sin fecha límite
-    And una tarea periódica relativa Regar nunca completada
-    When pauso la tarea Regar
-    And consulto Pendientes en cualquier momento
-    Then Pendientes muestra en orden <orden>
+    Given a one-off task Foco without a due date
+    And a relative recurring task Regar never completed
+    When I pause the task Regar
+    And I query Pendientes at any moment
+    Then Pendientes shows in order <order>
 
     Examples:
-      | orden |
+      | order |
       | Foco  |
 
   # Mostrar pausadas 8
   # Encendido: al pausar una tarea, pasa al final (sin pausa, Regar
   # pendiente va antes que la puntual sin fecha límite).
   Scenario Outline: Mostrar pausadas 8
-    Given Mostrar pausadas está encendido
-    And una tarea puntual Foco sin fecha límite
-    And una tarea periódica relativa Regar nunca completada
-    When pauso la tarea Regar
-    And consulto Pendientes en cualquier momento
-    Then Pendientes muestra en orden <orden>
-    And Pendientes muestra como pausadas <pausadas>
+    Given Mostrar pausadas is on
+    And a one-off task Foco without a due date
+    And a relative recurring task Regar never completed
+    When I pause the task Regar
+    And I query Pendientes at any moment
+    Then Pendientes shows in order <order>
+    And Pendientes shows as paused <paused>
 
     Examples:
-      | orden       | pausadas |
+      | order       | paused   |
       | Foco, Regar | Regar    |
 
   # Mostrar pausadas 9
   # Apagado: al reanudar una tarea, vuelve a su lugar por urgencia.
   Scenario Outline: Mostrar pausadas 9
-    Given una tarea puntual Foco sin fecha límite
-    And una tarea periódica relativa Regar nunca completada
-    And la tarea Regar fue pausada
-    When reanudo la tarea Regar el <reanudada>
-    And consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+    Given a one-off task Foco without a due date
+    And a relative recurring task Regar never completed
+    And the task Regar was paused
+    When I resume the task Regar on <resumed>
+    And I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | reanudada           | ahora               | orden       |
+      | resumed             | now                 | order       |
       | 2026-07-15T10:00:00 | 2026-07-15T10:00:00 | Regar, Foco |

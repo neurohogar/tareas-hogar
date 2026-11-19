@@ -26,19 +26,19 @@ function everyQueryShows(world: World, titles: string[], included = (_: RowQueri
 
 export const pendingSteps: StepDefinition[] = [
 	{
-		pattern: /^Mostrar completadas está encendido$/,
+		pattern: /^Mostrar completadas is on$/,
 		run: (world) => {
 			world.showCompleted = true;
 		}
 	},
 	{
-		pattern: /^Mostrar pausadas está encendido$/,
+		pattern: /^Mostrar pausadas is on$/,
 		run: (world) => {
 			world.showPaused = true;
 		}
 	},
 	{
-		pattern: new RegExp(`^consulto Pendientes el ${P}$`),
+		pattern: new RegExp(`^I query Pendientes on ${P}$`),
 		run: (world, now) => {
 			const moment = dateHour(now);
 			world.statusMoments = [moment];
@@ -46,25 +46,25 @@ export const pendingSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: /^consulto Pendientes en cualquier momento$/,
+		pattern: /^I query Pendientes at any moment$/,
 		run: (world) => {
 			world.pendingQueries = ANY_MOMENT.map((now) => rowsIn(world, now));
 		}
 	},
 	{
-		pattern: new RegExp(`^Pendientes muestra en orden ${P}$`),
+		pattern: new RegExp(`^Pendientes shows in order ${P}$`),
 		run: (world, order) => everyQueryShows(world, list(order))
 	},
 	{
-		pattern: new RegExp(`^Pendientes muestra como completadas ${P}$`),
+		pattern: new RegExp(`^Pendientes shows as completed ${P}$`),
 		run: (world, completedList) => everyQueryShows(world, list(completedList), ({ completed }) => completed)
 	},
 	{
-		pattern: new RegExp(`^Pendientes muestra como pausadas ${P}$`),
+		pattern: new RegExp(`^Pendientes shows as paused ${P}$`),
 		run: (world, paused) => everyQueryShows(world, list(paused), ({ paused }) => paused)
 	},
 	{
-		pattern: /^Pendientes no muestra ninguna tarea$/,
+		pattern: /^Pendientes shows no task$/,
 		run: (world) => everyQueryShows(world, [])
 	}
 ];

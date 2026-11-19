@@ -20,33 +20,33 @@ import { isScenarioOfScreenOfLoading, observeScreenOfLoading } from './oracle-lo
 
 /** Then steps that only observe the rule's classification. */
 const CLASSIFICATION_THEN = [
-	/^el estado es (pendiente|en espera|atrasada)$/,
-	/^el estado es <[A-Za-z0-9_]+>$/,
-	/^la creación se rechaza por (título vacío|intervalo inválido|falta de días|día del mes inválido|semanal y mensual combinados|fecha límite inválida|emoji inválido|horario incompleto|horarios superpuestos|varios horarios en una relativa en horas)$/,
-	/^la creación se rechaza porque la hora de fin no es posterior a la de inicio$/,
-	/^no se crea ninguna tarea$/,
-	/^se crea una tarea puntual$/,
-	/^la tarea no aparece en Pendientes$/,
-	/^la tarea aparece en Pendientes$/,
-	/^la tarea (no )?está completada$/,
+	/^the status is (pendiente|en espera|atrasada)$/,
+	/^the status is <[A-Za-z0-9_]+>$/,
+	/^creation is rejected for (empty title|invalid interval|missing days|invalid month day|weekly and monthly combined|invalid due date|invalid emoji|incomplete schedule|overlapping schedules|several schedules in an hourly relative)$/,
+	/^creation is rejected because the end time is not after the start time$/,
+	/^no task is created$/,
+	/^a one-off task is created$/,
+	/^the task does not appear in Pendientes$/,
+	/^the task appears in Pendientes$/,
+	/^the task is (?:not )?completed$/,
 	// §5.8 and §6.2: the pause and the panel's pause button.
-	/^la tarea (no )?está pausada$/,
-	/^la tarea no tiene estado$/,
-	/^el panel de edición ofrece <[A-Za-z0-9_]+>$/,
-	/^el panel de edición no ofrece pausar$/,
+	/^the task is (?:not )?paused$/,
+	/^the task has no status$/,
+	/^the edit panel offers <[A-Za-z0-9_]+>$/,
+	/^the edit panel does not offer pause$/,
 	// §5.9 and §6.2: the stored postponement, and the panel's postpone button and text.
-	/^la tarea está pospuesta desde <[A-Za-z0-9_]+> hasta <[A-Za-z0-9_]+>$/,
-	/^la tarea no está pospuesta$/,
-	/^el botón de posponer del panel es <[A-Za-z0-9_]+>$/,
-	/^el panel de edición muestra <[A-Za-z0-9_]+>$/,
-	/^el panel de edición no dice que está pospuesta$/,
-	/^el checkbox de la tarea está (habilitado|deshabilitado)$/,
-	/^se registró un completado que cubre el <[A-Za-z0-9_]+>$/,
+	/^the task is postponed from <[A-Za-z0-9_]+> to <[A-Za-z0-9_]+>$/,
+	/^the task is not postponed$/,
+	/^the postpone button of the panel is <[A-Za-z0-9_]+>$/,
+	/^the edit panel shows <[A-Za-z0-9_]+>$/,
+	/^the edit panel does not say it is postponed$/,
+	/^the task checkbox is (enabled|disabled)$/,
+	/^a completion was recorded that covers <[A-Za-z0-9_]+>$/,
 	// Structural invariants that do not depend on the moments: the new completion is appended
 	// at the end with its own id, and with no covered occurrence in the relative ones.
-	/^el nuevo completado se agrega sin modificar los anteriores$/,
-	/^se registró un completado sin ocurrencia cubierta$/,
-	/^el progreso es <[A-Za-z0-9_]+>$/
+	/^the new completion is added without changing the previous ones$/,
+	/^a completion without a covered occurrence was recorded$/,
+	/^the progress is <[A-Za-z0-9_]+>$/
 ];
 
 const isThen = (keyword: string, previous: boolean) => keyword === 'Then' || (keyword === 'And' && previous);
@@ -80,10 +80,10 @@ function namesThen(feature: Feature, scenario: Scenario, column: string): boolea
 
 /** The Pending Thens (§6.1) and the part of the view each one asserts. */
 const PENDING_THENS: [RegExp, keyof PendingView][] = [
-	[/^Pendientes no muestra ninguna tarea$/, 'order'],
-	[/^Pendientes muestra en orden <([A-Za-z0-9_]+)>$/, 'order'],
-	[/^Pendientes muestra como completadas <([A-Za-z0-9_]+)>$/, 'completedList'],
-	[/^Pendientes muestra como pausadas <([A-Za-z0-9_]+)>$/, 'paused']
+	[/^Pendientes shows no task$/, 'order'],
+	[/^Pendientes shows in order <([A-Za-z0-9_]+)>$/, 'order'],
+	[/^Pendientes shows as completed <([A-Za-z0-9_]+)>$/, 'completedList'],
+	[/^Pendientes shows as paused <([A-Za-z0-9_]+)>$/, 'paused']
 ];
 
 function pendingThen(text: string): { column?: string; part: keyof PendingView } | undefined {
@@ -114,7 +114,7 @@ function isEquivalentOfOrder(feature: Feature, scenario: Scenario, candidate: Ca
 }
 
 /** Thens that the editing oracle verifies against the value they name: if that value changes, what is observed changes. */
-const THEN_THAT_VERIFIES_THAT_NAMES = /^la tarea (?:\S+ )?conserva un solo completado, del <[A-Za-z0-9_]+>$/;
+const THEN_THAT_VERIFIES_THAT_NAMES = /^the task (?:\S+ )?keeps a single completion, from <[A-Za-z0-9_]+>$/;
 
 /**
  * A column that is only named by verified Thens and that an input step also gives arrives mutated on both sides:
@@ -217,13 +217,13 @@ export function esEquivalente(feature: Feature, candidate: Candidate): boolean {
 	// §5.8: a row that completes after resuming with an earlier moment is not a possible scenario.
 	if (!isChronologyImpossible(entries, original) && isChronologyImpossible(entries, mutated)) return true;
 	const observesInThen = (pattern: RegExp) => stepsOf(feature, scenario).some(({ step, inThen }) => inThen && pattern.test(step.text));
-	const progress = observesInThen(/^el progreso es /);
-	const status = observesInThen(/^el estado es |^la tarea (no )?está completada$|^la tarea no tiene estado$/);
-	const appearance = observesInThen(/^la tarea (no )?aparece en Pendientes$/);
-	const checkbox = observesInThen(/^el checkbox de la tarea está /);
-	const covered = observesInThen(/^se registró un completado que cubre /);
-	const postponed = observesInThen(/^la tarea está pospuesta desde /);
-	const panelText = observesInThen(/^el panel de edición (?:muestra|no dice que está pospuesta)/);
+	const progress = observesInThen(/^the progress is /);
+	const status = observesInThen(/^the status is |^the task is (?:not )?completed$|^the task has no status$/);
+	const appearance = observesInThen(/^the task (?:appears|does not appear) in Pendientes$/);
+	const checkbox = observesInThen(/^the task checkbox is /);
+	const covered = observesInThen(/^a completion was recorded that covers /);
+	const postponed = observesInThen(/^the task is postponed from /);
+	const panelText = observesInThen(/^the edit panel (?:shows|does not say it is postponed)/);
 	const observes = { progress, checkbox, covered, postponed, panelText, onlyAppearance: !status && !progress, onlyCheckbox: checkbox && !status && !progress && !appearance };
 	const before = classifyRow(entries, original, observes);
 	return before !== undefined && before === classifyRow(entries, mutated, observes);

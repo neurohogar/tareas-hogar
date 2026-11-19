@@ -32,22 +32,22 @@ function declareOVerify(world: World, expected: string[]): void {
 
 export const recentEmojisSteps: StepDefinition[] = [
 	{
-		pattern: /^que no hay emojis recientes$/,
+		pattern: /^there are no recent emojis$/,
 		run: (world) => void (world.recent = [])
 	},
 	{
-		pattern: new RegExp(`^los emojis recientes son ${P}$`),
+		pattern: new RegExp(`^the recent emojis are ${P}$`),
 		run: (world, recent) => declareOVerify(world, list(recent))
 	},
 	{
-		pattern: new RegExp(`^hay ${P} emojis recientes$`),
+		pattern: new RegExp(`^there are ${P} recent emojis$`),
 		run: (world, count) =>
 			world.wasActionOnRecent
 				? expect(world.recent).toHaveLength(numeric(count))
 				: void (world.recent = emojisDistinct(numeric(count)))
 	},
 	{
-		pattern: /^elijo un emoji que no estaba entre los recientes$/,
+		pattern: /^I choose an emoji that was not among the recent ones$/,
 		run: (world) => {
 			world.emojiMoreOld = recentDeclared(world).at(-1);
 			world.emojiChosen = NEW;
@@ -58,11 +58,11 @@ export const recentEmojisSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: /^el primero es el que elegí$/,
+		pattern: /^the first one is the one I chose$/,
 		run: (world) => expect(world.recent?.[0]).toBe(world.emojiChosen)
 	},
 	{
-		pattern: /^el emoji más viejo de antes ya no está$/,
+		pattern: /^the oldest emoji from before is gone$/,
 		run: (world) => expect(world.recent).not.toContain(world.emojiMoreOld)
 	}
 ];

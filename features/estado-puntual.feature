@@ -12,25 +12,25 @@
 #   Sin completado y hoy ≤ fechaLimite: pendiente.
 #   Sin completado y hoy > fechaLimite: atrasada.
 # Una puntual nunca está en espera. creadaEn no influye en su estado.
-Feature: Estado de tarea puntual
+Feature: One-off task status
 
   # Estado de tarea puntual 1
   # Sin completado y sin fecha límite: pendiente, en cualquier momento.
-  Scenario: Estado de tarea puntual 1
-    Given una tarea puntual sin fecha límite
-    When consulto el estado en cualquier momento
-    Then el estado es pendiente
+  Scenario: One-off task status 1
+    Given a one-off task without a due date
+    When I query the status at any moment
+    Then the status is pendiente
 
   # Estado de tarea puntual 2
   # Sin completado y hoy ≤ fechaLimite: pendiente.
   # Bordes: el primer y el último segundo del día límite, y el día anterior.
-  Scenario Outline: Estado de tarea puntual 2
-    Given una tarea puntual con fecha límite <fecha_limite>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: One-off task status 2
+    Given a one-off task with due date <due_date>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | fecha_limite | ahora               |
+      | due_date     | now                 |
       | 2026-07-15   | 2026-07-15T00:00:00 |
       | 2026-07-15   | 2026-07-15T23:59:59 |
       | 2026-07-15   | 2026-07-14T23:59:59 |
@@ -39,13 +39,13 @@ Feature: Estado de tarea puntual
   # Estado de tarea puntual 3
   # Sin completado y hoy > fechaLimite: atrasada.
   # Bordes: el primer segundo del día siguiente, fin de mes y fin de año.
-  Scenario Outline: Estado de tarea puntual 3
-    Given una tarea puntual con fecha límite <fecha_limite>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: One-off task status 3
+    Given a one-off task with due date <due_date>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | fecha_limite | ahora               |
+      | due_date     | now                 |
       | 2026-07-15   | 2026-07-16T00:00:00 |
       | 2026-07-31   | 2026-08-01T00:00:00 |
       | 2026-12-31   | 2027-01-01T00:00:00 |
@@ -53,17 +53,17 @@ Feature: Estado de tarea puntual
 
   # Estado de tarea puntual 4
   # Con un completado: no aparece en Pendientes, en cualquier momento.
-  Scenario: Estado de tarea puntual 4
-    Given una tarea puntual sin fecha límite
-    And la tarea tiene un completado
-    When consulto el estado en cualquier momento
-    Then la tarea no aparece en Pendientes
+  Scenario: One-off task status 4
+    Given a one-off task without a due date
+    And the task has a completion
+    When I query the status at any moment
+    Then the task does not appear in Pendientes
 
   # Estado de tarea puntual 5
   # Con fecha límite y dos completados (por ejemplo, de dos dispositivos):
   # no aparece en Pendientes, ni antes ni después de la fecha límite.
-  Scenario: Estado de tarea puntual 5
-    Given una tarea puntual con una fecha límite cualquiera
-    And la tarea tiene dos completados
-    When consulto el estado en cualquier momento
-    Then la tarea no aparece en Pendientes
+  Scenario: One-off task status 5
+    Given a one-off task with any due date
+    And the task has two completions
+    When I query the status at any moment
+    Then the task does not appear in Pendientes

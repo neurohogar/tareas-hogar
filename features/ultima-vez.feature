@@ -18,19 +18,19 @@
 # La hora va en 24 h, sin segundos. "la última vez muestra <texto>" afirma que
 # el panel dice "Última vez: <texto>".
 # Semana de referencia: lunes 2026-07-13 a domingo 2026-07-19.
-Feature: Última vez
+Feature: Last time
 
   # Última vez 1
   # Completada el día de ahora: "hoy" con la hora. Bordes de las 00:00, hora
   # sin segundos, y un completado "del futuro" del mismo día también es "hoy".
-  Scenario Outline: Última vez 1
-    Given una tarea puntual sin fecha límite
-    And la tarea fue completada el <completada>
-    When consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+  Scenario Outline: Last time 1
+    Given a one-off task without a due date
+    And the task was completed on <completed>
+    When I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | completada          | ahora               | ultima_vez |
+      | completed           | now                 | last_time  |
       | 2026-07-15T08:05:00 | 2026-07-15T12:00:00 | hoy 08:05  |
       | 2026-07-15T00:00:00 | 2026-07-15T23:59:59 | hoy 00:00  |
       | 2026-07-15T23:59:59 | 2026-07-15T23:59:59 | hoy 23:59  |
@@ -39,14 +39,14 @@ Feature: Última vez
   # Última vez 2
   # Completada el día anterior: "ayer" con la hora. Bordes de las 00:00 y el
   # cambio de año.
-  Scenario Outline: Última vez 2
-    Given una tarea puntual sin fecha límite
-    And la tarea fue completada el <completada>
-    When consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+  Scenario Outline: Last time 2
+    Given a one-off task without a due date
+    And the task was completed on <completed>
+    When I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | completada          | ahora               | ultima_vez |
+      | completed           | now                 | last_time  |
       | 2026-07-14T19:30:00 | 2026-07-15T12:00:00 | ayer 19:30 |
       | 2026-07-14T23:59:59 | 2026-07-15T00:00:00 | ayer 23:59 |
       | 2026-07-14T00:00:00 | 2026-07-15T23:59:59 | ayer 00:00 |
@@ -55,14 +55,14 @@ Feature: Última vez
   # Última vez 3
   # Completada dos o más días antes: "hace N días", contando días locales y
   # no horas transcurridas. Bordes de las 00:00, cambio de mes y de año.
-  Scenario Outline: Última vez 3
-    Given una tarea puntual sin fecha límite
-    And la tarea fue completada el <completada>
-    When consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+  Scenario Outline: Last time 3
+    Given a one-off task without a due date
+    And the task was completed on <completed>
+    When I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | completada          | ahora               | ultima_vez   |
+      | completed           | now                 | last_time    |
       | 2026-07-13T23:59:59 | 2026-07-15T00:00:00 | hace 2 días  |
       | 2026-07-13T00:00:00 | 2026-07-15T23:59:59 | hace 2 días  |
       | 2026-07-05T10:00:00 | 2026-07-15T09:00:00 | hace 10 días |
@@ -73,94 +73,94 @@ Feature: Última vez
   # Un completado "del futuro" de otro día (relojes desfasados) se muestra
   # con la fecha y la hora, como en el Historial, nunca como "mañana"; con el
   # año si no es el de ahora.
-  Scenario Outline: Última vez 4
-    Given una tarea puntual sin fecha límite
-    And la tarea fue completada el <completada>
-    When consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+  Scenario Outline: Last time 4
+    Given a one-off task without a due date
+    And the task was completed on <completed>
+    When I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | completada          | ahora               | ultima_vez                         |
+      | completed           | now                 | last_time                          |
       | 2026-07-16T08:05:00 | 2026-07-15T12:00:00 | jueves 16 de julio 08:05           |
       | 2026-07-16T00:00:00 | 2026-07-15T23:59:59 | jueves 16 de julio 00:00           |
       | 2027-01-01T08:00:00 | 2026-12-31T20:00:00 | viernes 1 de enero de 2027 08:00   |
 
   # Última vez 5
   # Sin completados: "nunca".
-  Scenario Outline: Última vez 5
-    Given una tarea puntual sin fecha límite
-    When consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+  Scenario Outline: Last time 5
+    Given a one-off task without a due date
+    When I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | ahora               | ultima_vez |
+      | now                 | last_time  |
       | 2026-07-15T12:00:00 | nunca      |
 
   # Última vez 6
   # Con varios completados (dos dispositivos sin conexión) cuenta el de
   # completadoEn más reciente, aunque se haya registrado antes; fila 2: uno
   # "del futuro" es el más reciente.
-  Scenario Outline: Última vez 6
-    Given una tarea puntual sin fecha límite
-    And la tarea fue completada el <reciente>
-    And la tarea fue completada el <antigua>
-    When consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+  Scenario Outline: Last time 6
+    Given a one-off task without a due date
+    And the task was completed on <recent>
+    And the task was completed on <old>
+    When I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | reciente            | antigua             | ahora               | ultima_vez               |
+      | recent              | old                 | now                 | last_time                |
       | 2026-07-15T09:00:00 | 2026-07-14T10:00:00 | 2026-07-15T12:00:00 | hoy 09:00                |
       | 2026-07-16T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 | jueves 16 de julio 09:00 |
 
   # Última vez 7
   # Borrar el completado más reciente (deshacer) vuelve al anterior.
-  Scenario Outline: Última vez 7
-    Given una tarea puntual sin fecha límite
-    And la tarea fue completada el <antigua>
-    And la tarea fue completada el <reciente>
-    When borro el completado del <reciente>
-    And consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+  Scenario Outline: Last time 7
+    Given a one-off task without a due date
+    And the task was completed on <old>
+    And the task was completed on <recent>
+    When I delete the completion from <recent>
+    And I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | antigua             | reciente            | ahora               | ultima_vez |
+      | old                 | recent              | now                 | last_time  |
       | 2026-07-14T10:00:00 | 2026-07-15T09:00:00 | 2026-07-15T12:00:00 | ayer 10:00 |
 
   # Última vez 8
   # Borrar el único completado deja "nunca".
-  Scenario Outline: Última vez 8
-    Given una tarea puntual sin fecha límite
-    And la tarea fue completada el <completada>
-    When borro el completado del <completada>
-    And consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+  Scenario Outline: Last time 8
+    Given a one-off task without a due date
+    And the task was completed on <completed>
+    When I delete the completion from <completed>
+    And I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | completada          | ahora               | ultima_vez |
+      | completed           | now                 | last_time  |
       | 2026-07-15T09:00:00 | 2026-07-15T12:00:00 | nunca      |
 
   # Última vez 9
   # En una periódica calendario cuenta el momento del completado, no la
   # ocurrencia que cubre.
-  Scenario Outline: Última vez 9
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    When consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+  Scenario Outline: Last time 9
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    When I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | dias   | completada          | cubierta   | ahora               | ultima_vez |
+      | days   | completed           | covered    | now                 | last_time  |
       | martes | 2026-07-15T08:00:00 | 2026-07-14 | 2026-07-15T12:00:00 | hoy 08:00  |
 
   # Última vez 10
   # Cambiar el tipo de la tarea conserva sus completados y su última vez.
-  Scenario Outline: Última vez 10
-    Given una tarea puntual sin fecha límite
-    And la tarea fue completada el <completada>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    And consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+  Scenario Outline: Last time 10
+    Given a one-off task without a due date
+    And the task was completed on <completed>
+    When I edit the task to relative recurring every <every> <unit>
+    And I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | completada          | cada | unidad | ahora               | ultima_vez  |
+      | completed           | every | unit   | now                 | last_time   |
       | 2026-07-13T09:00:00 | 4    | horas  | 2026-07-15T12:00:00 | hace 2 días |

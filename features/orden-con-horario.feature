@@ -22,7 +22,7 @@
 # "la tarea X se puede completar de D a H" es el horario de la tarea X.
 # Las tareas se declaran en un orden distinto del esperado: el orden de carga
 # no decide nada.
-Feature: Orden con horario
+Feature: Order with schedule
 
   # Orden con horario 1
   # Atrasadas: Pagar (horario) está atrasada desde el cierre de la ventana
@@ -31,20 +31,20 @@ Feature: Orden con horario
   # por título). Basura, sin horario, desde V + intervalo (el 16 a las
   # 10:45). Fila 1: Regar desde C (el 16 a las 11:00). Fila 2: Regar desde
   # V + intervalo (10:30), anterior a C.
-  Scenario Outline: Orden con horario 1
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada_regar>
-    And la tarea Regar se puede completar de <desde> a <hasta>
-    And una tarea periódica relativa Basura cada <cada_basura> <unidad_basura>
-    And la tarea Basura fue completada el <completada_basura>
-    And una tarea puntual Barrer con fecha límite <limite>
-    And una tarea puntual Pagar con fecha límite <limite>
-    And la tarea Pagar se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Order with schedule 1
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed_water>
+    And the task Regar can be completed from <from> to <to>
+    And a relative recurring task Basura every <every_trash> <unit_trash>
+    And the task Basura was completed on <completed_trash>
+    And a one-off task Barrer with due date <due_date>
+    And a one-off task Pagar with due date <due_date>
+    And the task Pagar can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | cada | unidad | completada_regar    | desde | hasta | cada_basura | unidad_basura | completada_basura   | limite     | ahora               | orden                        |
+      | every | unit   | completed_water     | from  | to    | every_trash | unit_trash    | completed_trash     | due_date   | now                 | order                        |
       | 1    | dias   | 2026-07-15T09:00:00 | 08:00 | 11:00 | 4           | horas         | 2026-07-16T02:45:00 | 2026-07-15 | 2026-07-16T12:00:00 | Pagar, Barrer, Basura, Regar |
       | 1    | horas  | 2026-07-16T08:30:00 | 08:00 | 11:00 | 4           | horas         | 2026-07-16T02:45:00 | 2026-07-15 | 2026-07-16T12:00:00 | Pagar, Barrer, Regar, Basura |
 
@@ -53,17 +53,17 @@ Feature: Orden con horario
   # (08:00), no desde V (el 15 a las 12:00, fuera de la ventana). Fila 1:
   # Basura, sin horario, desde V el 15 a las 20:00, va primero. Fila 2:
   # Basura desde V el 16 a las 08:30, va después.
-  Scenario Outline: Orden con horario 2
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada_regar>
-    And la tarea Regar se puede completar de <desde> a <hasta>
-    And una tarea periódica relativa Basura cada <cada> <unidad>
-    And la tarea Basura fue completada el <completada_basura>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Order with schedule 2
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed_water>
+    And the task Regar can be completed from <from> to <to>
+    And a relative recurring task Basura every <every> <unit>
+    And the task Basura was completed on <completed_trash>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | cada | unidad | completada_regar    | desde | hasta | completada_basura   | ahora               | orden         |
+      | every | unit   | completed_water     | from  | to    | completed_trash     | now                 | order         |
       | 1    | dias   | 2026-07-14T12:00:00 | 08:00 | 11:00 | 2026-07-14T20:00:00 | 2026-07-16T09:00:00 | Basura, Regar |
       | 1    | dias   | 2026-07-14T12:00:00 | 08:00 | 11:00 | 2026-07-15T08:30:00 | 2026-07-16T09:00:00 | Regar, Basura |
 
@@ -73,17 +73,17 @@ Feature: Orden con horario
   # el jueves a las 00:00; Basura, el jueves al abrir su ventana (09:00);
   # Foco, puntual creada después de su ventana, al abrir la del jueves.
   # Fila 1: Foco a las 08:00. Fila 2: Foco a las 10:00.
-  Scenario Outline: Orden con horario 3
-    Given una tarea puntual Foco sin fecha límite creada el <creada_foco>
-    And la tarea Foco se puede completar de <desde_foco> a <hasta_foco>
-    And una tarea periódica semanal Basura los <dias> creada el <creada_basura>
-    And la tarea Basura se puede completar de <desde_basura> a <hasta_basura>
-    And una tarea periódica semanal Sábanas los <dias_sabanas> creada el <creada_sabanas>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Order with schedule 3
+    Given a one-off task Foco without a due date created on <created_focus>
+    And the task Foco can be completed from <from_bulb> to <to_bulb>
+    And a weekly recurring task Basura on <days> created on <created_trash>
+    And the task Basura can be completed from <from_trash> to <to_trash>
+    And a weekly recurring task Sábanas on <days_sheets> created on <created_sheets>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | creada_foco         | desde_foco | hasta_foco | dias   | creada_basura       | desde_basura | hasta_basura | dias_sabanas | creada_sabanas      | ahora               | orden                 |
+      | created_focus       | from_bulb  | to_bulb    | days   | created_trash       | from_trash   | to_trash     | days_sheets  | created_sheets      | now                 | order                 |
       | 2026-07-15T12:00:00 | 08:00      | 11:00      | jueves | 2026-07-15T08:00:00 | 09:00        | 10:00        | jueves       | 2026-07-15T08:00:00 | 2026-07-15T14:00:00 | Sábanas, Foco, Basura |
       | 2026-07-15T12:00:00 | 10:00      | 11:00      | jueves | 2026-07-15T08:00:00 | 09:00        | 10:00        | jueves       | 2026-07-15T08:00:00 | 2026-07-15T14:00:00 | Sábanas, Basura, Foco |
 
@@ -92,17 +92,17 @@ Feature: Orden con horario
   # (que, por su creadaEn, sería anterior a todo). Pagar va por las 00:00
   # de su fecha límite: fila 1, el 16, antes de Basura (V el 16 a las
   # 08:30); fila 2, el 17, después. Foco, sin fecha límite, va al final.
-  Scenario Outline: Orden con horario 4
-    Given una tarea puntual Foco sin fecha límite
-    And la tarea Foco se puede completar de <desde> a <hasta>
-    And una tarea periódica relativa Basura cada <cada> <unidad>
-    And la tarea Basura fue completada el <completada_basura>
-    And una tarea puntual Pagar con fecha límite <limite>
-    And la tarea Pagar se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Order with schedule 4
+    Given a one-off task Foco without a due date
+    And the task Foco can be completed from <from> to <to>
+    And a relative recurring task Basura every <every> <unit>
+    And the task Basura was completed on <completed_trash>
+    And a one-off task Pagar with due date <due_date>
+    And the task Pagar can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | desde | hasta | cada | unidad | completada_basura   | limite     | ahora               | orden               |
+      | from  | to    | every | unit   | completed_trash     | due_date   | now                 | order               |
       | 08:00 | 11:00 | 1    | dias   | 2026-07-15T08:30:00 | 2026-07-16 | 2026-07-16T09:00:00 | Pagar, Basura, Foco |
       | 08:00 | 11:00 | 1    | dias   | 2026-07-15T08:30:00 | 2026-07-17 | 2026-07-16T09:00:00 | Basura, Pagar, Foco |

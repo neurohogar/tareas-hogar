@@ -84,84 +84,84 @@ function targetOf(world: World) {
 
 export const panelTabsSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^una pantalla de ${P} rem de ancho$`),
+		pattern: new RegExp(`^a screen ${P} rem wide$`),
 		run: (world, width) => {
 			declaredOf(world).widthRem = widthOf(width);
 		}
 	},
 	{
-		pattern: new RegExp(`^el panel se presenta ${P}$`),
+		pattern: new RegExp(`^the panel is presented ${P}$`),
 		run: (world, presentation) => {
 			const width = requireDeclared(declaredOf(world).widthRem, 'el ancho de la pantalla');
 			expect(panelPresentation(width)).toBe(ofTable(PRESENTATIONS, presentation, 'Presentación'));
 		}
 	},
 	{
-		pattern: new RegExp(`^el panel se abre para ${P}$`),
+		pattern: new RegExp(`^the panel opens for ${P}$`),
 		run: (world, mode) => {
 			declaredOf(world).mode = ofTable(MODES, mode, 'Modo');
 		}
 	},
 	{
-		pattern: new RegExp(`^el panel ofrece las secciones ${P}$`),
+		pattern: new RegExp(`^the panel offers the sections ${P}$`),
 		run: (world, sections) => {
 			expect(panelSections(requireDeclared(declaredOf(world).mode, 'el modo del panel'))).toEqual(sectionsOf(sections));
 		}
 	},
 	{
-		pattern: new RegExp(`^la pestaña abierta es ${P}$`),
+		pattern: new RegExp(`^the open tab is ${P}$`),
 		run: (world, opened) => {
 			requireDeclared(declaredOf(world).mode, 'el modo del panel');
 			expect(TAB_ON_OPEN).toBe(oneOf(SECTIONS, opened, 'Sección'));
 		}
 	},
 	{
-		pattern: new RegExp(`^el panel muestra errores en los campos ${P}$`),
+		pattern: new RegExp(`^the panel shows errors in the fields ${P}$`),
 		run: (world, fields) => {
 			declaredOf(world).fieldsWithError = fieldsOf(fields);
 		}
 	},
 	{
-		pattern: new RegExp(`^las secciones marcadas son ${P}$`),
+		pattern: new RegExp(`^the marked sections are ${P}$`),
 		run: (world, marked) => {
 			const expected = marked === 'ninguna' ? [] : sectionsOf(marked);
 			expect(markedSections(requireDeclared(declaredOf(world).fieldsWithError, 'los campos con error'))).toEqual(expected);
 		}
 	},
 	{
-		pattern: new RegExp(`^el guardado falla con errores en los campos ${P}$`),
+		pattern: new RegExp(`^saving fails with errors in the fields ${P}$`),
 		run: (world, fields) => {
 			declaredOf(world).savedFields = fieldsOf(fields);
 		}
 	},
 	{
-		pattern: new RegExp(`^el panel salta a la pestaña ${P}$`),
+		pattern: new RegExp(`^the panel jumps to the tab ${P}$`),
 		run: (world, tab) => {
 			const expected = tab === 'ninguna' ? undefined : oneOf(SECTIONS, tab, 'Sección');
 			expect(targetOf(world).tab).toBe(expected);
 		}
 	},
 	{
-		pattern: new RegExp(`^el contenido se desplaza hasta el campo ${P}$`),
+		pattern: new RegExp(`^the content scrolls to the field ${P}$`),
 		run: (world, field) => {
 			expect(targetOf(world).field).toBe(oneOf(FIELDS, field, 'Campo'));
 		}
 	},
 	{
-		pattern: new RegExp(`^el teclado en pantalla está ${P}$`),
+		pattern: new RegExp(`^the on-screen keyboard is ${P}$`),
 		run: (world, keyboard) => {
 			declaredOf(world).keyboardOpen = ofTable(KEYBOARDS, keyboard, 'Teclado');
 		}
 	},
 	{
 		// §6.2: the bar depends on the keyboard and not on focus; so focus is only validated.
-		pattern: new RegExp(`^el foco está ${P}$`),
+		pattern: new RegExp(`^the focus is ${P}$`),
 		run: (_world, focus) => {
 			oneOf(FOCUSES, focus, 'Foco');
 		}
 	},
 	{
-		pattern: new RegExp(`^la barra de Guardar está ${P}$`),
+		pattern: new RegExp(`^the Guardar bar is ${P}$`),
 		run: (world, bar) => {
 			const keyboardOpen = requireDeclared(declaredOf(world).keyboardOpen, 'el teclado en pantalla');
 			expect(saveBarVisible(keyboardOpen)).toBe(ofTable(BARS, bar, 'Barra'));

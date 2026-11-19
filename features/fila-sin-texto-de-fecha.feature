@@ -13,138 +13,138 @@
 # fecha límite nunca está atrasada, así que nunca lleva «Tocaba». Cuando el
 # paso no da creadaEn, la tarea se creó antes de cualquier otra fecha del
 # escenario. Semana de referencia: viernes 2026-11-13.
-Feature: Fila sin texto de fecha
+Feature: Row without date text
 
   # Fila sin texto de fecha 1
   # Puntual pendiente con fecha límite: hasta el último segundo del día límite.
-  Scenario Outline: Fila sin texto de fecha 1
-    Given una tarea puntual con fecha límite <limite>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra texto de fecha
+  Scenario Outline: Row without date text 1
+    Given a one-off task with due date <due_date>
+    When I query Pendientes on <now>
+    Then the task row shows no date text
 
     Examples:
-      | limite     | ahora               |
+      | due_date   | now                 |
       | 2026-11-13 | 2026-11-13T10:00:00 |
       | 2026-11-13 | 2026-11-13T23:59:59 |
       | 2026-11-20 | 2026-11-13T10:00:00 |
 
   # Fila sin texto de fecha 2
   # Puntual sin fecha límite: nunca está atrasada, por mucho tiempo que pase.
-  Scenario Outline: Fila sin texto de fecha 2
-    Given una tarea puntual sin fecha límite
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra texto de fecha
+  Scenario Outline: Row without date text 2
+    Given a one-off task without a due date
+    When I query Pendientes on <now>
+    Then the task row shows no date text
 
     Examples:
-      | ahora               |
+      | now                 |
       | 2026-11-13T10:00:00 |
       | 2027-11-13T10:00:00 |
 
   # Fila sin texto de fecha 3
   # Relativa pendiente, de V (inclusive) hasta V + intervalo (exclusive).
-  Scenario Outline: Fila sin texto de fecha 3
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra texto de fecha
+  Scenario Outline: Row without date text 3
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I query Pendientes on <now>
+    Then the task row shows no date text
 
     Examples:
-      | cada | unidad | completada          | ahora               |
+      | every | unit   | completed           | now                 |
       | 2    | dias   | 2026-11-11T10:00:00 | 2026-11-13T10:00:00 |
       | 4    | horas  | 2026-11-13T04:00:00 | 2026-11-13T11:59:59 |
 
   # Fila sin texto de fecha 4
   # Relativa nunca completada: pendiente, por mucho tiempo que pase.
-  Scenario Outline: Fila sin texto de fecha 4
-    Given una tarea periódica relativa nunca completada
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra texto de fecha
+  Scenario Outline: Row without date text 4
+    Given a relative recurring task never completed
+    When I query Pendientes on <now>
+    Then the task row shows no date text
 
     Examples:
-      | ahora               |
+      | now                 |
       | 2026-11-13T10:00:00 |
       | 2026-12-13T10:00:00 |
 
   # Fila sin texto de fecha 5
   # Calendario pendiente el día de la ocurrencia, de las 00:00 a las 23:59:59.
-  Scenario Outline: Fila sin texto de fecha 5
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra texto de fecha
+  Scenario Outline: Row without date text 5
+    Given a weekly recurring task on <days> created on <created>
+    When I query Pendientes on <now>
+    Then the task row shows no date text
 
     Examples:
-      | dias    | creada              | ahora               |
+      | days    | created             | now                 |
       | viernes | 2026-11-12T08:00:00 | 2026-11-13T00:00:00 |
       | viernes | 2026-11-12T08:00:00 | 2026-11-13T23:59:59 |
 
   # Fila sin texto de fecha 6
   # Con horario, pendiente dentro de la ventana (desde inclusive, hasta
   # exclusive).
-  Scenario Outline: Fila sin texto de fecha 6
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra texto de fecha
+  Scenario Outline: Row without date text 6
+    Given a weekly recurring task on <days> created on <created>
+    And the task can be completed from <from> to <to>
+    When I query Pendientes on <now>
+    Then the task row shows no date text
 
     Examples:
-      | dias    | creada              | desde | hasta | ahora               |
+      | days    | created             | from  | to    | now                 |
       | viernes | 2026-11-12T08:00:00 | 09:00 | 11:00 | 2026-11-13T09:00:00 |
       | viernes | 2026-11-12T08:00:00 | 09:00 | 11:00 | 2026-11-13T10:59:59 |
 
   # Fila sin texto de fecha 7
   # Puntual completada (con Mostrar completadas): sin texto de regreso, porque
   # no vuelve.
-  Scenario Outline: Fila sin texto de fecha 7
-    Given Mostrar completadas está encendido
-    And una tarea puntual sin fecha límite
-    And la tarea fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra texto de fecha
+  Scenario Outline: Row without date text 7
+    Given Mostrar completadas is on
+    And a one-off task without a due date
+    And the task was completed on <completed>
+    When I query Pendientes on <now>
+    Then the task row shows no date text
 
     Examples:
-      | completada          | ahora               |
+      | completed           | now                 |
       | 2026-11-12T09:00:00 | 2026-11-13T10:00:00 |
       | 2026-11-13T09:30:00 | 2026-11-13T10:00:00 |
 
   # Fila sin texto de fecha 8
   # Puntual con horario completada, que fuera de la ventana está en espera hasta
   # la próxima: sigue completada y sin texto de regreso.
-  Scenario Outline: Fila sin texto de fecha 8
-    Given Mostrar completadas está encendido
-    And una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la tarea fue completada el <completada>
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra texto de fecha
+  Scenario Outline: Row without date text 8
+    Given Mostrar completadas is on
+    And a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to>
+    And the task was completed on <completed>
+    When I query Pendientes on <now>
+    Then the task row shows no date text
 
     Examples:
-      | creada              | desde | hasta | completada          | ahora               |
+      | created             | from  | to    | completed           | now                 |
       | 2026-11-13T06:00:00 | 08:00 | 11:00 | 2026-11-13T09:00:00 | 2026-11-13T12:00:00 |
 
   # Fila sin texto de fecha 9
   # Pausada que sin la pausa estaría atrasada: dice «Pausada», sin «Tocaba».
-  Scenario Outline: Fila sin texto de fecha 9
-    Given Mostrar pausadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea fue pausada
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra texto de fecha
+  Scenario Outline: Row without date text 9
+    Given Mostrar pausadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task was paused
+    When I query Pendientes on <now>
+    Then the task row shows no date text
 
     Examples:
-      | cada | unidad | completada          | ahora               |
+      | every | unit   | completed           | now                 |
       | 1    | dias   | 2026-11-10T09:00:00 | 2026-11-13T10:00:00 |
 
   # Fila sin texto de fecha 10
   # Pausada que sin la pausa estaría en espera: dice «Pausada», sin «Vuelve».
-  Scenario Outline: Fila sin texto de fecha 10
-    Given Mostrar pausadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea fue pausada
-    When consulto Pendientes el <ahora>
-    Then la fila de la tarea no muestra texto de fecha
+  Scenario Outline: Row without date text 10
+    Given Mostrar pausadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task was paused
+    When I query Pendientes on <now>
+    Then the task row shows no date text
 
     Examples:
-      | cada | unidad | completada          | ahora               |
+      | every | unit   | completed           | now                 |
       | 8    | horas  | 2026-11-13T10:00:00 | 2026-11-13T12:00:00 |

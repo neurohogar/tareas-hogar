@@ -42,54 +42,54 @@ const inTabs = (m: PanelWorld) => m.width !== undefined && m.width <= MAX_PHONE_
 /** Each panel Given leaves its part in the world; returns false if the value is not one the spec defines. */
 const PANEL_ENTRIES: [RegExp, (m: PanelWorld, value: string) => boolean][] = [
 	[
-		/^una pantalla de (\S+) rem de ancho$/,
+		/^a screen (\S+) rem wide$/,
 		(m, value) => {
 			m.width = Number(value);
 			return NUMBER.test(value) && m.width > 0;
 		}
 	],
 	[
-		/^el panel se abre para (.+)$/,
+		/^the panel opens for (.+)$/,
 		(m, value) => {
 			m.mode = value;
 			return value in SECTIONS_BY_MODE;
 		}
 	],
 	[
-		/^(?:el panel muestra errores|el guardado falla con errores) en los campos (.+)$/,
+		/^(?:the panel shows errors|saving fails with errors) in the fields (.+)$/,
 		(m, value) => {
 			m.fields = panelFields(value);
 			return m.fields !== undefined;
 		}
 	],
 	[
-		/^el teclado en pantalla está (.+)$/,
+		/^the on-screen keyboard is (.+)$/,
 		(m, value) => {
 			m.keyboard = value;
 			return value === 'abierto' || value === 'cerrado';
 		}
 	],
-	[/^el foco está (.+)$/, (_m, value) => PANEL_FOCUSES.includes(value)]
+	[/^the focus is (.+)$/, (_m, value) => PANEL_FOCUSES.includes(value)]
 ];
 
 /** What each Then observes according to the spec; undefined if the world is not enough to decide it. */
 const PANEL_OBSERVATIONS: [RegExp, (m: PanelWorld) => string | undefined][] = [
-	[/^el panel se presenta (.+)$/, (m) => (m.width === undefined ? undefined : inTabs(m) ? 'en pestañas' : 'en secciones seguidas')],
-	[/^el panel ofrece las secciones (.+)$/, (m) => (m.mode === undefined ? undefined : SECTIONS_BY_MODE[m.mode])],
+	[/^the panel is presented (.+)$/, (m) => (m.width === undefined ? undefined : inTabs(m) ? 'en pestañas' : 'en secciones seguidas')],
+	[/^the panel offers the sections (.+)$/, (m) => (m.mode === undefined ? undefined : SECTIONS_BY_MODE[m.mode])],
 	// §6.2: it always opens on Tarea, when creating and when editing.
-	[/^la pestaña abierta es (.+)$/, (m) => (m.mode === undefined ? undefined : 'Tarea')],
+	[/^the open tab is (.+)$/, (m) => (m.mode === undefined ? undefined : 'Tarea')],
 	[
-		/^las secciones marcadas son (.+)$/,
+		/^the marked sections are (.+)$/,
 		(m) => (m.fields === undefined ? undefined : [...new Set(m.fields.map(([, section]) => section))].join(', ') || 'ninguna')
 	],
 	// §6.2: Tarea before Cuándo; on wide screens there are no tabs.
-	[/^el panel salta a la pestaña (.+)$/, (m) => (m.width === undefined || !m.fields?.length ? undefined : inTabs(m) ? m.fields[0][1] : 'ninguna')],
-	[/^el contenido se desplaza hasta el campo (.+)$/, (m) => m.fields?.[0]?.[0]],
+	[/^the panel jumps to the tab (.+)$/, (m) => (m.width === undefined || !m.fields?.length ? undefined : inTabs(m) ? m.fields[0][1] : 'ninguna')],
+	[/^the content scrolls to the field (.+)$/, (m) => m.fields?.[0]?.[0]],
 	// §6.2: the bar is hidden only while the on-screen keyboard is open.
-	[/^la barra de Guardar está (.+)$/, (m) => (m.keyboard === undefined ? undefined : m.keyboard === 'abierto' ? 'oculta' : 'visible')]
+	[/^the Guardar bar is (.+)$/, (m) => (m.keyboard === undefined ? undefined : m.keyboard === 'abierto' ? 'oculta' : 'visible')]
 ];
 
-const IS_OF_PANEL = /^(?:una pantalla de |el panel se abre para |el panel muestra errores |el guardado falla con errores |el teclado en pantalla está )/;
+const IS_OF_PANEL = /^(?:a screen |the panel opens for |the panel shows errors |saving fails with errors |the on-screen keyboard is )/;
 
 export const isScenarioOfPanel = (texts: string[]) => texts.some((text) => IS_OF_PANEL.test(text));
 
@@ -337,7 +337,7 @@ function tapBack(m: ChangesWorld): void {
 
 /** Creates the step's one-off (§4.1: non-empty title) and opens the panel with its values (§6.2). */
 function openForEdit(m: ChangesWorld, values: Partial<Form> & { title: string }): void {
-	if (values.title.trim() === '') undecided('título vacío');
+	if (values.title.trim() === '') undecided('empty title');
 	m.task = { title: values.title.trim(), recurring: false, paused: false };
 	openWithTask(m, values);
 }
@@ -386,34 +386,34 @@ function chooseIn(m: ChangesWorld, selector: string, value: string): void {
 const theTaskOfOther = (m: ChangesWorld) => m.task ?? undecided('otro dispositivo sin tarea');
 
 const CHANGES_STEPS: [RegExp, (m: ChangesWorld, ...groups: string[]) => void][] = [
-	[/^abro el panel para editar la tarea (.+) con nota (.+)$/, (m, title, note) => openForEdit(m, { title, note })],
-	[/^abro el panel para editar la tarea (.+) con versión mínima (.+)$/, (m, title, minimalVersion) => openForEdit(m, { title, minimalVersion })],
-	[/^abro el panel para editar la tarea (.+) con primer paso (.+)$/, (m, title, firstStep) => openForEdit(m, { title, firstStep })],
+	[/^I open the panel to edit the task (.+) with note (.+)$/, (m, title, note) => openForEdit(m, { title, note })],
+	[/^I open the panel to edit the task (.+) with minimal version (.+)$/, (m, title, minimalVersion) => openForEdit(m, { title, minimalVersion })],
+	[/^I open the panel to edit the task (.+) with first step (.+)$/, (m, title, firstStep) => openForEdit(m, { title, firstStep })],
 	[
-		/^abro el panel para editar la tarea (.+) con los pasos (.+)$/,
+		/^I open the panel to edit the task (.+) with the steps (.+)$/,
 		(m, title, steps) => {
 			const [firstStep, ...more] = elements(steps) ?? undecided(`pasos ${steps}`);
 			openForEdit(m, { title, firstStep, steps: more });
 		}
 	],
-	[/^toco Agregar paso$/, (m) => void theWritten(m).steps.push('')],
+	[/^I tap Agregar paso$/, (m) => void theWritten(m).steps.push('')],
 	[
-		/^toco Quitar en el campo (.+)$/,
+		/^I tap Quitar in the field (.+)$/,
 		(m, field) => {
 			const f = theWritten(m);
 			f.steps.splice(stepPlace(f, field), 1);
 		}
 	],
-	[/^abro el panel para editar la tarea (.+) con los horarios (.+) y (.+)$/, (m, title, a, b) => openForEdit(m, { title, schedules: timeWindowsValid(a, b) })],
+	[/^I open the panel to edit the task (.+) with the schedules (.+) and (.+)$/, (m, title, a, b) => openForEdit(m, { title, schedules: timeWindowsValid(a, b) })],
 	[
-		/^abro el panel para crear una tarea$/,
+		/^I open the panel to create a task$/,
 		(m) => {
 			m.mode = 'crear';
 			openWith(m, FORM_ON_CREATE);
 		}
 	],
 	[
-		/^el panel está abierto (.+)$/,
+		/^the panel is open (.+)$/,
 		(m, status) => {
 			if (status !== 'con cambios sin guardar' && status !== 'sin cambios') undecided(`estado ${status}`);
 			openForEdit(m, { title: 'Pagar' });
@@ -423,26 +423,26 @@ const CHANGES_STEPS: [RegExp, (m: ChangesWorld, ...groups: string[]) => void][] 
 		}
 	],
 	[
-		/^encima del panel hay (.+)$/,
+		/^on top of the panel there is (.+)$/,
 		(m, onTop) => {
 			if (!OF_TOP.includes(onTop)) undecided(`encima ${onTop}`);
 			m.onTop = onTop;
 			if (onTop === 'el aviso de acción') m.action = 'posponer 1 hora';
 		}
 	],
-	[/^el aviso de deshacer está abierto$/, (m) => void (m.undo = true)],
-	[/^el teclado en pantalla está abierto$/, (m) => void (m.keyboard = true)],
+	[/^the undo notice is open$/, (m) => void (m.undo = true)],
+	[/^the on-screen keyboard is open$/, (m) => void (m.keyboard = true)],
 	[
-		/^una tarea periódica relativa Regar cada (.+) (.+)$/,
+		/^a relative recurring task Regar every (.+) (.+)$/,
 		(m, every, unit) => {
 			const interval = intervalValid(every) ? intervalMs(every, unit) : undefined;
 			m.task = { title: 'Regar', recurring: true, interval: interval ?? undecided('intervalo'), paused: false };
 		}
 	],
-	[/^una tarea puntual sin fecha límite$/, (m) => void (m.task = { title: 'Tarea', recurring: false, paused: false })],
-	[/^la tarea Regar fue pausada$/, (m) => void (theTaskOfOther(m).paused = true)],
+	[/^a one-off task without a due date$/, (m) => void (m.task = { title: 'Tarea', recurring: false, paused: false })],
+	[/^the task Regar was paused$/, (m) => void (theTaskOfOther(m).paused = true)],
 	[
-		/^la tarea fue pospuesta con la opción (.+) el (.+)$/,
+		/^the task was postponed with option (.+) on (.+)$/,
 		(m, option, moment) => {
 			const task = theTaskOfOther(m);
 			if (task.recurring) undecided('posponer una periódica antes de abrir');
@@ -450,42 +450,42 @@ const CHANGES_STEPS: [RegExp, (m: ChangesWorld, ...groups: string[]) => void][] 
 		}
 	],
 	[
-		/^abro la tarea en el panel de edición el (.+)$/,
+		/^I open the task in the edit panel on (.+)$/,
 		(m, moment) => {
 			m.now = moment;
 			openWithTask(m, { title: theTaskOfOther(m).title });
 		}
 	],
-	[/^escribo (.+) con espacios alrededor en el campo (.+)$/, (m, value, field) => writeIn(m, field, `  ${value}  `)],
-	[/^escribo solo espacios en el campo (.+)$/, (m, field) => writeIn(m, field, '   ')],
-	[/^vacío el campo (.+)$/, (m, field) => writeIn(m, field, '')],
-	[/^escribo (.+) en el campo (.+)$/, (m, value, field) => writeIn(m, field, value)],
-	[/^elijo la acción (.+) el (.+)$/, (m, action, moment) => chooseAction(m, action, moment)],
+	[/^I type (.+) with spaces around it in the field (.+)$/, (m, value, field) => writeIn(m, field, `  ${value}  `)],
+	[/^I type only spaces in the field (.+)$/, (m, field) => writeIn(m, field, '   ')],
+	[/^I clear the field (.+)$/, (m, field) => writeIn(m, field, '')],
+	[/^I type (.+) in the field (.+)$/, (m, value, field) => writeIn(m, field, value)],
+	[/^I choose the action (.+) on (.+)$/, (m, action, moment) => chooseAction(m, action, moment)],
 	[
-		/^elijo un emoji que no estaba entre los recientes$/,
+		/^I choose an emoji that was not among the recent ones$/,
 		(m) => {
 			theWritten(m).emoji = 'elegido';
 			m.choseEmoji = true;
 		}
 	],
-	[/^que no hay emojis recientes$/, () => undefined],
-	[/^elijo (.+) en (.+)$/, (m, value, selector) => chooseIn(m, selector, value)],
-	[/^cambio los horarios a (.+) y (.+)$/, (m, a, b) => void (theWritten(m).schedules = timeWindowsValid(a, b))],
-	[/^agrego una fila de horario vacía$/, (m) => void theWritten(m).schedules.push('')],
-	[/^toco la X del panel$/, closeWithX],
-	[/^toco Atrás$/, tapBack],
-	[/^toco (.+) en el aviso el (.+)$/, (m, button, moment) => ((m.now = moment), tapInNotice(m, button))],
-	[/^toco (.+) en el aviso$/, (m, button) => tapInNotice(m, button)],
-	[/^pasa el tiempo hasta (.+)$/, (m, moment) => void (m.now = moment)],
+	[/^there are no recent emojis$/, () => undefined],
+	[/^I choose (.+) in (.+)$/, (m, value, selector) => chooseIn(m, selector, value)],
+	[/^I change the schedules to (.+) and (.+)$/, (m, a, b) => void (theWritten(m).schedules = timeWindowsValid(a, b))],
+	[/^I add an empty schedule row$/, (m) => void theWritten(m).schedules.push('')],
+	[/^I tap the X of the panel$/, closeWithX],
+	[/^I tap Atrás$/, tapBack],
+	[/^I tap (.+) in the notice on (.+)$/, (m, button, moment) => ((m.now = moment), tapInNotice(m, button))],
+	[/^I tap (.+) in the notice$/, (m, button) => tapInNotice(m, button)],
+	[/^time passes until (.+)$/, (m, moment) => void (m.now = moment)],
 	[
-		/^otro dispositivo, sin ver ese cambio, edita el título a (.+)$/,
+		/^another device, without seeing that change, edits the title to (.+)$/,
 		(m, title) => {
-			if (title.trim() === '') undecided('título vacío');
+			if (title.trim() === '') undecided('empty title');
 			theTaskOfOther(m).title = title.trim();
 		}
 	],
-	[/^otro dispositivo, sin ver ese cambio, pausa la tarea$/, (m) => void (theTaskOfOther(m).paused = true)],
-	[/^otro dispositivo, sin ver ese cambio, borra la tarea$/, (m) => void (m.task = undefined)]
+	[/^another device, without seeing that change, pauses the task$/, (m) => void (theTaskOfOther(m).paused = true)],
+	[/^another device, without seeing that change, deletes the task$/, (m) => void (m.task = undefined)]
 ];
 
 const OPEN_ON_TOP: Record<string, string> = {
@@ -508,26 +508,26 @@ const thePostponed = ({ postponed }: TaskSaved) => (postponed ? `${postponed.fro
 
 /** What each Then observes and asserts. */
 const CHANGES_THENS: [RegExp, (m: ChangesWorld, ...groups: string[]) => [string, string]][] = [
-	[/^queda abierto (.+)$/, (m, opened) => [m.written ? (OPEN_ON_TOP[m.onTop] ?? 'el panel') : 'nada', opened]],
-	[/^el aviso dice (.+)$/, (m, message) => [theNoticeOpen(m).message, message]],
-	[/^el aviso ofrece (.+)$/, (m, buttons) => [theNoticeOpen(m).buttons.join(', '), elements(buttons)?.join(', ') ?? undecided('botones')]],
-	[/^el campo (.+) sigue con (.+)$/, (m, field, value) => [(FIELD_WRITTEN[field] ?? undecided(`campo ${field}`))(theWritten(m)), value]],
-	[/^la tarea tiene título (.+)$/, (m, title) => [whetherHasTask(m, (t) => t.title), title]],
-	[/^no queda ninguna tarea$/, (m) => [whetherHasTask(m, () => 'hay una'), 'sin tarea']],
-	[/^se crea una tarea puntual con título (.+)$/, (m, title) => [whetherHasTask(m, (t) => (t.recurring ? 'periódica' : t.title)), title]],
-	[/^no existe la tarea (.+)$/, (m) => [whetherHasTask(m, () => 'existe'), 'sin tarea']],
-	[/^la tarea está pausada$/, (m) => [whetherHasTask(m, (t) => String(t.paused)), 'true']],
-	[/^la tarea no está pausada$/, (m) => [whetherHasTask(m, (t) => String(t.paused)), 'false']],
-	[/^la tarea es periódica$/, (m) => [whetherHasTask(m, (t) => String(t.recurring)), 'true']],
-	[/^la tarea está pospuesta desde (.+) hasta (.+)$/, (m, from, to) => [whetherHasTask(m, thePostponed), `${instant(from)} ${instant(to)}`]],
-	[/^el primero es el que elegí$/, (m) => [String(m.choseEmoji), 'true']],
-	[/^el aviso de deshacer sigue abierto$/, (m) => [String(m.undo), 'true']],
-	[/^al recargar la app el navegador (.+)$/, (m, response) => [m.written && hasChanges(m) ? 'pide confirmación' : 'no pregunta', response]],
+	[/^what stays open is (.+)$/, (m, opened) => [m.written ? (OPEN_ON_TOP[m.onTop] ?? 'el panel') : 'nada', opened]],
+	[/^the notice says (.+)$/, (m, message) => [theNoticeOpen(m).message, message]],
+	[/^the notice offers (.+)$/, (m, buttons) => [theNoticeOpen(m).buttons.join(', '), elements(buttons)?.join(', ') ?? undecided('botones')]],
+	[/^the field (.+) still has (.+)$/, (m, field, value) => [(FIELD_WRITTEN[field] ?? undecided(`campo ${field}`))(theWritten(m)), value]],
+	[/^the task has title (.+)$/, (m, title) => [whetherHasTask(m, (t) => t.title), title]],
+	[/^no task remains$/, (m) => [whetherHasTask(m, () => 'hay una'), 'sin tarea']],
+	[/^a one-off task is created with title (.+)$/, (m, title) => [whetherHasTask(m, (t) => (t.recurring ? 'recurring' : t.title)), title]],
+	[/^there is no task (.+)$/, (m) => [whetherHasTask(m, () => 'existe'), 'sin tarea']],
+	[/^the task is paused$/, (m) => [whetherHasTask(m, (t) => String(t.paused)), 'true']],
+	[/^the task is not paused$/, (m) => [whetherHasTask(m, (t) => String(t.paused)), 'false']],
+	[/^the task is recurring$/, (m) => [whetherHasTask(m, (t) => String(t.recurring)), 'true']],
+	[/^the task is postponed from (.+) to (.+)$/, (m, from, to) => [whetherHasTask(m, thePostponed), `${instant(from)} ${instant(to)}`]],
+	[/^the first one is the one I chose$/, (m) => [String(m.choseEmoji), 'true']],
+	[/^the undo notice is still open$/, (m) => [String(m.undo), 'true']],
+	[/^on reloading the app the browser (.+)$/, (m, response) => [m.written && hasChanges(m) ? 'pide confirmación' : 'no pregunta', response]],
 	// §6.2: never by Back with the panel open.
-	[/^el navegador (.+)$/, (m, response) => [m.tapBack ? 'no pregunta' : undecided('sin Atrás'), response]]
+	[/^the browser (.+)$/, (m, response) => [m.tapBack ? 'no pregunta' : undecided('sin Atrás'), response]]
 ];
 
-const IS_OF_CHANGES = /^(?:abro el panel para |el panel está abierto |toco la X del panel$|toco Atrás$|elijo la acción )/;
+const IS_OF_CHANGES = /^(?:I open the panel to |the panel is open |I tap the X of the panel$|I tap Atrás$|I choose the action )/;
 
 export const isScenarioOfChanges = (texts: string[]) => texts.some((text) => IS_OF_CHANGES.test(text));
 

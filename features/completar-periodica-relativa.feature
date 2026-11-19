@@ -7,35 +7,35 @@
 # (sin ocurrenciaCubierta) y reinicia el intervalo desde ese momento,
 # en cualquier estado. Los completados anteriores no se modifican.
 # El progreso es una fracción entre 0 y 1, comparada exactamente.
-Feature: Completar periódica relativa
+Feature: Complete relative recurring task
 
   # Completar periódica relativa 1
   # Completar una tarea nunca completada la deja en espera desde ese momento.
-  Scenario Outline: Completar periódica relativa 1
-    Given una tarea periódica relativa cada <cada> <unidad>
-    When completo la tarea el <completada>
-    And consulto el estado el <ahora>
-    Then se registró un completado sin ocurrencia cubierta
-    And el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Complete relative recurring task 1
+    Given a relative recurring task every <every> <unit>
+    When I complete the task on <completed>
+    And I query the status on <now>
+    Then a completion without a covered occurrence was recorded
+    And the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | completada          | ahora               | progreso |
+      | every | unit   | completed           | now                 | progress |
       | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-16T08:00:00 | 0.5      |
 
   # Completar periódica relativa 2
   # Completar en espera, pendiente o atrasada reinicia el intervalo desde el nuevo completado.
-  Scenario Outline: Completar periódica relativa 2
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior>
-    When completo la tarea el <nuevo>
-    And consulto el estado el <ahora>
-    Then el nuevo completado se agrega sin modificar los anteriores
-    And el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Complete relative recurring task 2
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <previous>
+    When I complete the task on <new>
+    And I query the status on <now>
+    Then the new completion is added without changing the previous ones
+    And the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | anterior            | nuevo               | ahora               | progreso |
+      | every | unit   | previous            | new                 | now                 | progress |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T09:00:00 | 2026-07-15T10:00:00 | 0.25     |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T13:00:00 | 2026-07-15T15:00:00 | 0.5      |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-16T08:00:00 | 2026-07-16T11:00:00 | 0.75     |
@@ -44,15 +44,15 @@ Feature: Completar periódica relativa
   # Completar periódica relativa 3
   # Tras completar antes de tiempo, vuelve a pendiente al vencer el nuevo intervalo
   # (con el completado anterior, en esos momentos estaría atrasada).
-  Scenario Outline: Completar periódica relativa 3
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior>
-    When completo la tarea el <nuevo>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Complete relative recurring task 3
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <previous>
+    When I complete the task on <new>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | anterior            | nuevo               | ahora               |
+      | every | unit   | previous            | new                 | now                 |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T11:00:00 | 2026-07-15T15:00:00 |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T11:00:00 | 2026-07-15T16:00:00 |
       | 3    | dias   | 2026-07-15T08:00:00 | 2026-07-17T08:00:00 | 2026-07-21T08:00:00 |
@@ -60,14 +60,14 @@ Feature: Completar periódica relativa
   # Completar periódica relativa 4
   # Consultado en el mismo instante del completado: en espera, sin progreso.
   # El intervalo no influye en este borde, por eso no es parámetro.
-  Scenario Outline: Completar periódica relativa 4
-    Given una tarea periódica relativa nunca completada
-    When completo la tarea el <completada>
-    And consulto el estado el <ahora>
-    Then se registró un completado sin ocurrencia cubierta
-    And el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Complete relative recurring task 4
+    Given a relative recurring task never completed
+    When I complete the task on <completed>
+    And I query the status on <now>
+    Then a completion without a covered occurrence was recorded
+    And the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | completada          | ahora               | progreso |
+      | completed           | now                 | progress |
       | 2026-07-15T08:00:00 | 2026-07-15T08:00:00 | 0        |

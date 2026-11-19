@@ -14,19 +14,19 @@
 # no muestra la confirmación del navegador. Qué queda abierto lo da "queda
 # abierto". Que Atrás no salga de la pantalla (Pendientes o Historial) y lo que
 # pasa con el panel cerrado se verifican en la suite QA (qa/cambios-sin-guardar.md).
-Feature: Atrás del panel
+Feature: Panel back
 
   # Atrás del panel 1
   # Atrás cierra solo lo que está arriba del panel, y el panel queda como
   # estaba.
-  Scenario Outline: Atrás del panel 1
-    Given el panel está abierto <cambios>
-    And encima del panel hay <encima>
-    When toco Atrás
-    Then queda abierto <abierto>
+  Scenario Outline: Panel back 1
+    Given the panel is open <changes>
+    And on top of the panel there is <on_top>
+    When I tap Atrás
+    Then what stays open is <open>
 
     Examples:
-      | cambios                  | encima                             | abierto  |
+      | changes                  | on_top                             | open     |
       | con cambios sin guardar  | el aviso de cierre                 | el panel |
       | con cambios sin guardar  | el aviso de acción                 | el panel |
       | con cambios sin guardar  | la confirmación de Borrar tarea    | el panel |
@@ -37,44 +37,44 @@ Feature: Atrás del panel
   # Atrás del panel 2
   # Con el panel solo arriba: sin cambios lo cierra directo; con cambios abre
   # el aviso de cierre.
-  Scenario Outline: Atrás del panel 2
-    Given el panel está abierto <cambios>
-    And encima del panel hay <encima>
-    When toco Atrás
-    Then queda abierto <abierto>
+  Scenario Outline: Panel back 2
+    Given the panel is open <changes>
+    And on top of the panel there is <on_top>
+    When I tap Atrás
+    Then what stays open is <open>
 
     Examples:
-      | cambios                  | encima                           | abierto                         |
+      | changes                  | on_top                           | open                            |
       | sin cambios              | nada                             | nada                            |
       | con cambios sin guardar  | nada                             | el panel con el aviso de cierre |
 
   # Atrás del panel 3
   # El aviso de deshacer no cuenta: Atrás lo ignora y el aviso sigue.
-  Scenario Outline: Atrás del panel 3
-    Given el panel está abierto <cambios>
-    And el aviso de deshacer está abierto
-    When toco Atrás
-    Then queda abierto <abierto>
-    And el aviso de deshacer sigue abierto
+  Scenario Outline: Panel back 3
+    Given the panel is open <changes>
+    And the undo notice is open
+    When I tap Atrás
+    Then what stays open is <open>
+    And the undo notice is still open
 
     Examples:
-      | cambios                  | abierto                         |
+      | changes                  | open                            |
       | sin cambios              | nada                            |
       | con cambios sin guardar  | el panel con el aviso de cierre |
 
   # Atrás del panel 4
   # Un nuevo Atrás cierra el panel (o abre el aviso de cierre si queda con
   # cambios), después de haber cerrado lo de arriba.
-  Scenario Outline: Atrás del panel 4
-    Given el panel está abierto <cambios>
-    And encima del panel hay <encima>
-    When toco Atrás
-    Then queda abierto <abierto_primero>
-    When toco Atrás
-    Then queda abierto <abierto>
+  Scenario Outline: Panel back 4
+    Given the panel is open <changes>
+    And on top of the panel there is <on_top>
+    When I tap Atrás
+    Then what stays open is <open_first>
+    When I tap Atrás
+    Then what stays open is <open>
 
     Examples:
-      | cambios                  | encima                          | abierto                         | abierto_primero |
+      | changes                  | on_top                          | open                            | open_first |
       | con cambios sin guardar  | el selector de emoji            | el panel con el aviso de cierre | el panel |
       | sin cambios              | el selector de emoji            | nada                            | el panel |
       | con cambios sin guardar  | la confirmación de Borrar tarea | el panel con el aviso de cierre | el panel |
@@ -84,26 +84,26 @@ Feature: Atrás del panel
   # Atrás del panel 5
   # Con el teclado en pantalla abierto, el primer Atrás lo cierra el sistema y
   # el panel sigue igual; el siguiente aplica las reglas.
-  Scenario Outline: Atrás del panel 5
-    Given el panel está abierto <cambios>
-    And el teclado en pantalla está abierto
-    When toco Atrás
-    Then queda abierto <abierto_primero>
-    When toco Atrás
-    Then queda abierto <abierto>
+  Scenario Outline: Panel back 5
+    Given the panel is open <changes>
+    And the on-screen keyboard is open
+    When I tap Atrás
+    Then what stays open is <open_first>
+    When I tap Atrás
+    Then what stays open is <open>
 
     Examples:
-      | cambios                  | abierto                         | abierto_primero |
+      | changes                  | open                            | open_first |
       | sin cambios              | nada                            | el panel |
       | con cambios sin guardar  | el panel con el aviso de cierre | el panel |
 
   # Atrás del panel 6
   # Atrás con el panel abierto nunca muestra la confirmación del navegador.
-  Scenario Outline: Atrás del panel 6
-    Given el panel está abierto <cambios>
-    When toco Atrás
-    Then el navegador <respuesta>
+  Scenario Outline: Panel back 6
+    Given the panel is open <changes>
+    When I tap Atrás
+    Then the browser <response>
 
     Examples:
-      | cambios                  | respuesta   |
+      | changes                  | response    |
       | con cambios sin guardar  | no pregunta |

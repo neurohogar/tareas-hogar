@@ -15,127 +15,127 @@
 # como "hay cambios" está en cambios-sin-guardar.feature.
 # Las acciones del panel son Pausar, Reanudar, "Posponer 1 hora", "Posponer 3
 # horas", "Posponer hasta mañana", Quitar posponer y Borrar tarea.
-Feature: Aviso de acción
+Feature: Action notice
 
   # Aviso de acción 1
   # Sin cambios, la acción actúa en el momento y cierra el panel.
-  Scenario Outline: Aviso de acción 1
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When abro la tarea en el panel de edición el <ahora>
-    And elijo la acción <accion> el <ahora>
-    Then queda abierto <abierto>
-    And la tarea está pausada
+  Scenario Outline: Action notice 1
+    Given a relative recurring task Regar every <every> <unit>
+    When I open the task in the edit panel on <now>
+    And I choose the action <action> on <now>
+    Then what stays open is <open>
+    And the task is paused
 
     Examples:
-      | cada | unidad | ahora               | accion | abierto |
+      | every | unit   | now                 | action | open    |
       | 2    | dias   | 2026-07-15T08:00:00 | Pausar | nada    |
 
   # Aviso de acción 2
-  Scenario Outline: Aviso de acción 2
-    Given una tarea puntual sin fecha límite
-    When abro la tarea en el panel de edición el <ahora>
-    And elijo la acción <accion> el <ahora>
-    Then queda abierto <abierto>
-    And la tarea está pospuesta desde <desde> hasta <hasta>
+  Scenario Outline: Action notice 2
+    Given a one-off task without a due date
+    When I open the task in the edit panel on <now>
+    And I choose the action <action> on <now>
+    Then what stays open is <open>
+    And the task is postponed from <from> to <to>
 
     Examples:
-      | ahora               | accion              | abierto | desde               | hasta               |
+      | now                 | action              | open    | from                | to                  |
       | 2026-07-15T08:00:00 | Posponer 1 hora     | nada    | 2026-07-15T08:00:00 | 2026-07-15T09:00:00 |
 
   # Aviso de acción 3
   # Con cambios, cada acción abre el aviso con los tres botones; para posponer,
   # el botón nombra la opción tocada.
-  Scenario Outline: Aviso de acción 3
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When abro la tarea en el panel de edición el <ahora>
-    And escribo <valor> en el campo <campo>
-    And elijo la acción <accion> el <ahora>
-    Then queda abierto <abierto>
-    And el aviso dice <mensaje>
-    And el aviso ofrece <botones>
+  Scenario Outline: Action notice 3
+    Given a relative recurring task Regar every <every> <unit>
+    When I open the task in the edit panel on <now>
+    And I type <value> in the field <field>
+    And I choose the action <action> on <now>
+    Then what stays open is <open>
+    And the notice says <message>
+    And the notice offers <buttons>
 
     Examples:
-      | cada | unidad | ahora               | campo  | valor         | accion                   | mensaje                   | botones                                                                      | abierto |
+      | every | unit   | now                 | field  | value         | action                   | message                   | buttons                                                                      | open                            |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Regar plantas | Pausar                   | Tenés cambios sin guardar | Seguir editando, Descartar y pausar, Guardar y pausar                        | el panel con el aviso de acción |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Regar plantas | Posponer 1 hora          | Tenés cambios sin guardar | Seguir editando, Descartar y posponer 1 hora, Guardar y posponer 1 hora      | el panel con el aviso de acción |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Regar plantas | Posponer 3 horas         | Tenés cambios sin guardar | Seguir editando, Descartar y posponer 3 horas, Guardar y posponer 3 horas    | el panel con el aviso de acción |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Regar plantas | Posponer hasta mañana    | Tenés cambios sin guardar | Seguir editando, Descartar y posponer hasta mañana, Guardar y posponer hasta mañana | el panel con el aviso de acción |
 
   # Aviso de acción 4
-  Scenario Outline: Aviso de acción 4
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue pausada
-    When abro la tarea en el panel de edición el <ahora>
-    And escribo <valor> en el campo <campo>
-    And elijo la acción <accion> el <ahora>
-    Then queda abierto <abierto>
-    And el aviso ofrece <botones>
+  Scenario Outline: Action notice 4
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar was paused
+    When I open the task in the edit panel on <now>
+    And I type <value> in the field <field>
+    And I choose the action <action> on <now>
+    Then what stays open is <open>
+    And the notice offers <buttons>
 
     Examples:
-      | cada | unidad | ahora               | campo  | valor         | accion   | botones                                                   | abierto |
+      | every | unit   | now                 | field  | value         | action   | buttons                                                   | open                            |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Regar plantas | Reanudar | Seguir editando, Descartar y reanudar, Guardar y reanudar | el panel con el aviso de acción |
 
   # Aviso de acción 5
-  Scenario Outline: Aviso de acción 5
-    Given una tarea puntual sin fecha límite
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When abro la tarea en el panel de edición el <ahora>
-    And escribo <valor> en el campo <campo>
-    And elijo la acción <accion> el <ahora>
-    Then queda abierto <abierto>
-    And el aviso ofrece <botones>
+  Scenario Outline: Action notice 5
+    Given a one-off task without a due date
+    And the task was postponed with option <option> on <postponed>
+    When I open the task in the edit panel on <now>
+    And I type <value> in the field <field>
+    And I choose the action <action> on <now>
+    Then what stays open is <open>
+    And the notice offers <buttons>
 
     Examples:
-      | opcion  | pospuesta           | ahora               | campo | valor | accion           | botones                                                                   | abierto |
+      | option  | postponed           | now                 | field | value | action           | buttons                                                                   | open                            |
       | 3 horas | 2026-07-15T08:00:00 | 2026-07-15T08:30:00 | Nota  | Luz   | Quitar posponer  | Seguir editando, Descartar y quitar posponer, Guardar y quitar posponer   | el panel con el aviso de acción |
 
   # Aviso de acción 6
   # Seguir editando cierra el aviso sin actuar: el panel sigue con lo escrito.
-  Scenario Outline: Aviso de acción 6
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When abro la tarea en el panel de edición el <ahora>
-    And escribo <valor> en el campo <campo>
-    And elijo la acción <accion> el <ahora>
-    And toco <boton> en el aviso
-    Then queda abierto <abierto>
-    And el campo <campo> sigue con <valor>
-    And la tarea no está pausada
+  Scenario Outline: Action notice 6
+    Given a relative recurring task Regar every <every> <unit>
+    When I open the task in the edit panel on <now>
+    And I type <value> in the field <field>
+    And I choose the action <action> on <now>
+    And I tap <button> in the notice
+    Then what stays open is <open>
+    And the field <field> still has <value>
+    And the task is not paused
 
     Examples:
-      | cada | unidad | ahora               | campo  | valor         | accion | boton           | abierto  |
+      | every | unit   | now                 | field  | value         | action | button          | open     |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Regar plantas | Pausar | Seguir editando | el panel |
 
   # Aviso de acción 7
   # Descartar y <acción> descarta lo escrito y actúa sobre la tarea como estaba
   # guardada; Guardar y <acción> guarda y actúa.
-  Scenario Outline: Aviso de acción 7
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When abro la tarea en el panel de edición el <ahora>
-    And escribo <valor> en el campo <campo>
-    And elijo la acción <accion> el <ahora>
-    And toco <boton> en el aviso
-    Then queda abierto <abierto>
-    And la tarea está pausada
-    And la tarea tiene título <guardado>
+  Scenario Outline: Action notice 7
+    Given a relative recurring task Regar every <every> <unit>
+    When I open the task in the edit panel on <now>
+    And I type <value> in the field <field>
+    And I choose the action <action> on <now>
+    And I tap <button> in the notice
+    Then what stays open is <open>
+    And the task is paused
+    And the task has title <stored>
 
     Examples:
-      | cada | unidad | ahora               | campo  | valor         | accion | boton               | abierto | guardado      |
+      | every | unit   | now                 | field  | value         | action | button              | open    | stored        |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Regar plantas | Pausar | Descartar y pausar  | nada    | Regar         |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Regar plantas | Pausar | Guardar y pausar    | nada    | Regar plantas |
 
   # Aviso de acción 8
   # "Ahora" es el momento de tocar el botón del aviso, no el de elegir la
   # acción.
-  Scenario Outline: Aviso de acción 8
-    Given una tarea puntual sin fecha límite
-    When abro la tarea en el panel de edición el <elegida>
-    And escribo <valor> en el campo <campo>
-    And elijo la acción <accion> el <elegida>
-    And toco <boton> en el aviso el <tocado>
-    Then la tarea está pospuesta desde <desde> hasta <hasta>
+  Scenario Outline: Action notice 8
+    Given a one-off task without a due date
+    When I open the task in the edit panel on <chosen>
+    And I type <value> in the field <field>
+    And I choose the action <action> on <chosen>
+    And I tap <button> in the notice on <tapped>
+    Then the task is postponed from <from> to <to>
 
     Examples:
-      | elegida             | campo | valor | accion                | boton                              | tocado              | desde               | hasta               |
+      | chosen              | field | value | action                | button                             | tapped              | from                | to                  |
       | 2026-07-15T08:00:00 | Nota  | Luz   | Posponer 1 hora       | Guardar y posponer 1 hora          | 2026-07-15T08:03:00 | 2026-07-15T08:03:00 | 2026-07-15T09:03:00 |
       | 2026-07-15T08:00:00 | Nota  | Luz   | Posponer 3 horas      | Descartar y posponer 3 horas       | 2026-07-15T08:03:00 | 2026-07-15T08:03:00 | 2026-07-15T11:03:00 |
       | 2026-07-15T23:58:00 | Nota  | Luz   | Posponer hasta mañana | Guardar y posponer hasta mañana    | 2026-07-16T00:01:00 | 2026-07-16T00:01:00 | 2026-07-17T07:00:00 |
@@ -144,139 +144,139 @@ Feature: Aviso de acción
   # Si lo guardado deja la acción sin sentido, el aviso lo dice y no ofrece
   # Guardar y <acción>: Pausar una tarea que se cambió a No se repite, y
   # Reanudar una pausada que se cambió a No se repite (guardar ya la reanuda).
-  Scenario Outline: Aviso de acción 9
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When abro la tarea en el panel de edición el <ahora>
-    And elijo <valor> en <selector>
-    And elijo la acción <accion> el <ahora>
-    Then queda abierto <abierto>
-    And el aviso dice <mensaje>
-    And el aviso ofrece <botones>
+  Scenario Outline: Action notice 9
+    Given a relative recurring task Regar every <every> <unit>
+    When I open the task in the edit panel on <now>
+    And I choose <value> in <selector>
+    And I choose the action <action> on <now>
+    Then what stays open is <open>
+    And the notice says <message>
+    And the notice offers <buttons>
 
     Examples:
-      | cada | unidad | ahora               | selector  | valor        | accion | mensaje                                             | botones                              | abierto |
+      | every | unit   | now                 | selector  | value        | action | message                                             | buttons                              | open                            |
       | 2    | dias   | 2026-07-15T08:00:00 | Se repite | No se repite | Pausar | Con estos cambios la tarea ya no se puede pausar    | Seguir editando, Descartar y pausar  | el panel con el aviso de acción |
 
   # Aviso de acción 10
-  Scenario Outline: Aviso de acción 10
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue pausada
-    When abro la tarea en el panel de edición el <ahora>
-    And elijo <valor> en <selector>
-    And elijo la acción <accion> el <ahora>
-    Then queda abierto <abierto>
-    And el aviso dice <mensaje>
-    And el aviso ofrece <botones>
+  Scenario Outline: Action notice 10
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar was paused
+    When I open the task in the edit panel on <now>
+    And I choose <value> in <selector>
+    And I choose the action <action> on <now>
+    Then what stays open is <open>
+    And the notice says <message>
+    And the notice offers <buttons>
 
     Examples:
-      | cada | unidad | ahora               | selector  | valor        | accion   | mensaje                                              | botones                                | abierto |
+      | every | unit   | now                 | selector  | value        | action   | message                                              | buttons                                | open                            |
       | 2    | dias   | 2026-07-15T08:00:00 | Se repite | No se repite | Reanudar | Con estos cambios la tarea ya no se puede reanudar   | Seguir editando, Descartar y reanudar  | el panel con el aviso de acción |
 
   # Aviso de acción 11
   # Con la acción sin sentido, Descartar y <acción> actúa sobre la
   # tarea como estaba guardada.
-  Scenario Outline: Aviso de acción 11
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When abro la tarea en el panel de edición el <ahora>
-    And elijo <valor> en <selector>
-    And elijo la acción <accion> el <ahora>
-    And toco <boton> en el aviso
-    Then queda abierto <abierto>
-    And la tarea está pausada
-    And la tarea es periódica
+  Scenario Outline: Action notice 11
+    Given a relative recurring task Regar every <every> <unit>
+    When I open the task in the edit panel on <now>
+    And I choose <value> in <selector>
+    And I choose the action <action> on <now>
+    And I tap <button> in the notice
+    Then what stays open is <open>
+    And the task is paused
+    And the task is recurring
 
     Examples:
-      | cada | unidad | ahora               | selector  | valor        | accion | boton              | abierto |
+      | every | unit   | now                 | selector  | value        | action | button             | open    |
       | 2    | dias   | 2026-07-15T08:00:00 | Se repite | No se repite | Pausar | Descartar y pausar | nada    |
 
   # Aviso de acción 12
   # Si lo escrito es inválido no hay cómo evaluarlo: se ofrece Guardar y
   # <acción>.
-  Scenario Outline: Aviso de acción 12
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When abro la tarea en el panel de edición el <ahora>
-    And vacío el campo <campo>
-    And elijo la acción <accion> el <ahora>
-    Then queda abierto <abierto>
-    And el aviso ofrece <botones>
+  Scenario Outline: Action notice 12
+    Given a relative recurring task Regar every <every> <unit>
+    When I open the task in the edit panel on <now>
+    And I clear the field <field>
+    And I choose the action <action> on <now>
+    Then what stays open is <open>
+    And the notice offers <buttons>
 
     Examples:
-      | cada | unidad | ahora               | campo  | accion | botones                                               | abierto |
+      | every | unit   | now                 | field  | action | buttons                                               | open                            |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Pausar | Seguir editando, Descartar y pausar, Guardar y pausar | el panel con el aviso de acción |
 
   # Aviso de acción 13
   # Si Guardar falla, no se ejecuta nada: ni la acción ni el cierre.
-  Scenario Outline: Aviso de acción 13
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When abro la tarea en el panel de edición el <ahora>
-    And vacío el campo <campo>
-    And elijo la acción <accion> el <ahora>
-    And toco <boton> en el aviso
-    Then queda abierto <abierto>
-    And la tarea no está pausada
-    And la tarea tiene título <guardado>
+  Scenario Outline: Action notice 13
+    Given a relative recurring task Regar every <every> <unit>
+    When I open the task in the edit panel on <now>
+    And I clear the field <field>
+    And I choose the action <action> on <now>
+    And I tap <button> in the notice
+    Then what stays open is <open>
+    And the task is not paused
+    And the task has title <stored>
 
     Examples:
-      | cada | unidad | ahora               | campo  | accion | boton            | abierto  | guardado |
+      | every | unit   | now                 | field  | action | button           | open     | stored   |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Pausar | Guardar y pausar | el panel | Regar    |
 
   # Aviso de acción 14
   # El aviso se mantiene al día: si otro dispositivo hace que la acción ya no
   # corresponda, el aviso se cierra y queda el panel con lo escrito.
-  Scenario Outline: Aviso de acción 14
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When abro la tarea en el panel de edición el <ahora>
-    And escribo <valor> en el campo <campo>
-    And elijo la acción <accion> el <ahora>
-    And otro dispositivo, sin ver ese cambio, pausa la tarea
-    Then queda abierto <abierto>
-    And el campo <campo> sigue con <valor>
+  Scenario Outline: Action notice 14
+    Given a relative recurring task Regar every <every> <unit>
+    When I open the task in the edit panel on <now>
+    And I type <value> in the field <field>
+    And I choose the action <action> on <now>
+    And another device, without seeing that change, pauses the task
+    Then what stays open is <open>
+    And the field <field> still has <value>
 
     Examples:
-      | cada | unidad | ahora               | campo  | valor         | accion | abierto  |
+      | every | unit   | now                 | field  | value         | action | open     |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Regar plantas | Pausar | el panel |
 
   # Aviso de acción 15
   # También cuando pasa el tiempo: una posposición que vence deja sin sentido
   # Quitar posponer.
-  Scenario Outline: Aviso de acción 15
-    Given una tarea puntual sin fecha límite
-    And la tarea fue pospuesta con la opción <opcion> el <pospuesta>
-    When abro la tarea en el panel de edición el <ahora>
-    And escribo <valor> en el campo <campo>
-    And elijo la acción <accion> el <ahora>
-    And pasa el tiempo hasta <despues>
-    Then queda abierto <abierto>
+  Scenario Outline: Action notice 15
+    Given a one-off task without a due date
+    And the task was postponed with option <option> on <postponed>
+    When I open the task in the edit panel on <now>
+    And I type <value> in the field <field>
+    And I choose the action <action> on <now>
+    And time passes until <after>
+    Then what stays open is <open>
 
     Examples:
-      | opcion | pospuesta           | ahora               | campo | valor | accion          | despues             | abierto  |
+      | option | postponed           | now                 | field | value | action          | after               | open     |
       | 1 hora | 2026-07-15T08:00:00 | 2026-07-15T08:30:00 | Nota  | Luz   | Quitar posponer | 2026-07-15T09:00:00 | el panel |
 
   # Aviso de acción 16
   # Si otro dispositivo borra la tarea con el aviso abierto, se cierran el
   # aviso y el panel sin pedir nada.
-  Scenario Outline: Aviso de acción 16
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When abro la tarea en el panel de edición el <ahora>
-    And escribo <valor> en el campo <campo>
-    And elijo la acción <accion> el <ahora>
-    And otro dispositivo, sin ver ese cambio, borra la tarea
-    Then queda abierto <abierto>
+  Scenario Outline: Action notice 16
+    Given a relative recurring task Regar every <every> <unit>
+    When I open the task in the edit panel on <now>
+    And I type <value> in the field <field>
+    And I choose the action <action> on <now>
+    And another device, without seeing that change, deletes the task
+    Then what stays open is <open>
 
     Examples:
-      | cada | unidad | ahora               | campo  | valor         | accion | abierto |
+      | every | unit   | now                 | field  | value         | action | open    |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Regar plantas | Pausar | nada    |
 
   # Aviso de acción 17
   # Borrar tarea no suma el aviso de cambios sin guardar: con o sin cambios,
   # solo pide su confirmación.
-  Scenario Outline: Aviso de acción 17
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When abro la tarea en el panel de edición el <ahora>
-    And escribo <valor> en el campo <campo>
-    And elijo la acción <accion> el <ahora>
-    Then queda abierto <abierto>
+  Scenario Outline: Action notice 17
+    Given a relative recurring task Regar every <every> <unit>
+    When I open the task in the edit panel on <now>
+    And I type <value> in the field <field>
+    And I choose the action <action> on <now>
+    Then what stays open is <open>
 
     Examples:
-      | cada | unidad | ahora               | campo  | valor         | accion       | abierto                                          |
+      | every | unit   | now                 | field  | value         | action       | open                                             |
       | 2    | dias   | 2026-07-15T08:00:00 | Título | Regar plantas | Borrar tarea | el panel con la confirmación de Borrar tarea     |

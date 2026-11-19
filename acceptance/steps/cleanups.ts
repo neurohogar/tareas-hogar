@@ -25,9 +25,9 @@ function status(world: World): Cleanup {
 	return current;
 }
 
-/** Ids separated by ", "; "ninguno" is the empty list. */
+/** Ids separated by ", "; "ninguno" (or "none" in the step text) is the empty list. */
 function ids(value: string): string[] {
-	if (value === 'ninguno') return [];
+	if (value === 'ninguno' || value === 'none') return [];
 	const parts = value.split(', ');
 	if (parts.some((part) => part === '' || part !== part.trim())) throw new Error(`Invalid id list: "${value}"`);
 	return parts;
@@ -50,26 +50,26 @@ const EVENTS: Record<string, AppEvent> = { 'vuelve la conexión': 'connectionBac
 
 export const cleanupsSteps: StepDefinition[] = [
 	{
-		pattern: /^hay por limpiar (.+) de (.+)$/,
+		pattern: /^(.+) of (.+) are left to clean$/,
 		run: (world, elements, cleanup) => {
 			if (!CLEANUPS.includes(cleanup)) throw new Error(`Unknown cleanup: "${cleanup}"`);
 			statuses.set(world, { original: ids(elements), byClean: ids(elements), fail: new Set(), cleaned: [] });
 		}
 	},
 	{
-		pattern: /^falla el intento de limpiar (.+)$/,
+		pattern: /^the attempt to clean fails: (.+)$/,
 		run: (world, fail) => ids(fail).forEach((id) => status(world).fail.add(id))
 	},
 	{
-		pattern: /^deja de fallar el intento de limpiar (.+)$/,
+		pattern: /^the attempt to clean stops failing: (.+)$/,
 		run: (world, fail) => ids(fail).forEach((id) => status(world).fail.delete(id))
 	},
 	{
-		pattern: /^la app intent(?:a|ó) las limpiezas$/,
+		pattern: /^the app attempt(?:s|ed) the cleanups$/,
 		run: attempt
 	},
 	{
-		pattern: /^sucede que (.+)$/,
+		pattern: /^this happens: (.+)$/,
 		run: (world, incident) => {
 			const event = EVENTS[incident];
 			if (event === undefined) throw new Error(`Unknown incident: "${incident}"`);
@@ -77,18 +77,18 @@ export const cleanupsSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: /^pasan (.+) minutos sin que suceda nada más$/,
+		pattern: /^(.+) minutes pass with nothing else happening$/,
 		run: (world, minutes) => {
 			if (!/^\d+$/.test(minutes)) throw new Error(`Invalid minutes: "${minutes}"`);
 			happens(world, 'timePasses');
 		}
 	},
 	{
-		pattern: /^quedan limpios (.+)$/,
+		pattern: /^the items left clean are (.+)$/,
 		run: (world, clean) => expect(status(world).original.filter((id) => status(world).cleaned.includes(id))).toEqual(ids(clean))
 	},
 	{
-		pattern: /^quedan por limpiar (.+)$/,
+		pattern: /^the items left to clean are (.+)$/,
 		run: (world, pending) => expect(status(world).byClean).toEqual(ids(pending))
 	}
 ];

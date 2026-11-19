@@ -13,18 +13,18 @@
 # no contra lo que escribió otro dispositivo. Al editar, la tarea se abre
 # puntual y sin horario salvo que el paso diga
 # otra cosa. El aviso en sí se verifica en aviso-de-cierre.feature.
-Feature: Cambios sin guardar
+Feature: Unsaved changes
 
   # Cambios sin guardar 1
   # Al editar, un campo con otro valor es un cambio; con el mismo valor, no.
-  Scenario Outline: Cambios sin guardar 1
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo <valor> en el campo <campo>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 1
+    Given I open the panel to edit the task <title> with note <note>
+    When I type <value> in the field <field>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | titulo | nota | campo                   | valor     | abierto                         |
+      | title  | note | field                   | value     | open                            |
       | Pagar  | Luz  | Título                  | Pagar luz | el panel con el aviso de cierre |
       | Pagar  | Luz  | Nota                    | Gas       | el panel con el aviso de cierre |
       | Pagar  | Luz  | Título                  | Pagar     | nada                            |
@@ -33,15 +33,15 @@ Feature: Cambios sin guardar
   # Cambios sin guardar 2
   # Escribir y volver al valor original no cuenta como cambio; volver a otro
   # valor sí.
-  Scenario Outline: Cambios sin guardar 2
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo <primero> en el campo <campo>
-    And escribo <segundo> en el campo <campo>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 2
+    Given I open the panel to edit the task <title> with note <note>
+    When I type <first> in the field <field>
+    And I type <second> in the field <field>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | titulo | nota | campo  | primero   | segundo   | abierto                         |
+      | title  | note | field  | first     | second    | open                            |
       | Pagar  | Luz  | Título | Pagar luz | Pagar     | nada                            |
       | Pagar  | Luz  | Título | Pagar luz | Pagar gas | el panel con el aviso de cierre |
       | Pagar  | Luz  | Nota   | Gas       | Luz       | nada                            |
@@ -49,14 +49,14 @@ Feature: Cambios sin guardar
 
   # Cambios sin guardar 3
   # Los espacios que Guardar recorta (título y nota) no cuentan.
-  Scenario Outline: Cambios sin guardar 3
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo <valor> con espacios alrededor en el campo <campo>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 3
+    Given I open the panel to edit the task <title> with note <note>
+    When I type <value> with spaces around it in the field <field>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | titulo | nota | campo                   | valor     | abierto                         |
+      | title  | note | field                   | value     | open                            |
       | Pagar  | Luz  | Título                  | Pagar     | nada                            |
       | Pagar  | Luz  | Título                  | Pagar luz | el panel con el aviso de cierre |
       | Pagar  | Luz  | Nota                    | Luz       | nada                            |
@@ -65,194 +65,194 @@ Feature: Cambios sin guardar
   # Cambios sin guardar 4
   # Un campo vaciado cuenta, aunque sea inválido (un título vacío no se puede
   # guardar).
-  Scenario Outline: Cambios sin guardar 4
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When vacío el campo <campo>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 4
+    Given I open the panel to edit the task <title> with note <note>
+    When I clear the field <field>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | titulo | nota | campo  | abierto                         |
+      | title  | note | field  | open                            |
       | Pagar  | Luz  | Título | el panel con el aviso de cierre |
       | Pagar  | Luz  | Nota   | el panel con el aviso de cierre |
 
   # Cambios sin guardar 5
   # Solo espacios: en Título y Nota es un campo vaciado (cuenta).
-  Scenario Outline: Cambios sin guardar 5
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo solo espacios en el campo <campo>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 5
+    Given I open the panel to edit the task <title> with note <note>
+    When I type only spaces in the field <field>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | titulo | nota | campo                   | abierto                         |
+      | title  | note | field                   | open                            |
       | Pagar  | Luz  | Título                  | el panel con el aviso de cierre |
       | Pagar  | Luz  | Nota                    | el panel con el aviso de cierre |
 
   # Cambios sin guardar 6
   # Elegir en un selector otro valor es un cambio; el mismo valor, no.
-  Scenario Outline: Cambios sin guardar 6
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When elijo <valor> en <selector>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 6
+    Given I open the panel to edit the task <title> with note <note>
+    When I choose <value> in <selector>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | titulo | nota | selector  | valor        | abierto                         |
+      | title  | note | selector  | value        | open                            |
       | Pagar  | Luz  | Se repite | Intervalo    | el panel con el aviso de cierre |
       | Pagar  | Luz  | Se repite | No se repite | nada                            |
 
   # Cambios sin guardar 7
   # Las ventanas de horario se comparan ordenadas, como las guarda Guardar:
   # intercambiar los valores de dos ventanas no cambia nada; cambiar una sí.
-  Scenario Outline: Cambios sin guardar 7
-    Given abro el panel para editar la tarea <titulo> con los horarios <primero> y <segundo>
-    When cambio los horarios a <nuevo_primero> y <nuevo_segundo>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 7
+    Given I open the panel to edit the task <title> with the schedules <first> and <second>
+    When I change the schedules to <new_first> and <new_second>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | titulo | primero     | segundo     | nuevo_primero | nuevo_segundo | abierto                         |
+      | title  | first       | second      | new_first     | new_second    | open                            |
       | Pagar  | 08:00-10:00 | 12:00-14:00 | 12:00-14:00   | 08:00-10:00   | nada                            |
       | Pagar  | 08:00-10:00 | 12:00-14:00 | 08:00-10:00   | 12:00-15:00   | el panel con el aviso de cierre |
 
   # Cambios sin guardar 8
   # Una fila de horario vacía cuenta, aunque sea inválida.
-  Scenario Outline: Cambios sin guardar 8
-    Given abro el panel para editar la tarea <titulo> con los horarios <primero> y <segundo>
-    When agrego una fila de horario vacía
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 8
+    Given I open the panel to edit the task <title> with the schedules <first> and <second>
+    When I add an empty schedule row
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | titulo | primero     | segundo     | abierto                         |
+      | title  | first       | second      | open                            |
       | Pagar  | 08:00-10:00 | 12:00-14:00 | el panel con el aviso de cierre |
 
   # Cambios sin guardar 11
   # Al crear, "sin cambios" es que el formulario sigue como se abrió: tocar
   # cualquier campo con otro valor es cargar algo.
-  Scenario Outline: Cambios sin guardar 11
-    Given abro el panel para crear una tarea
-    When escribo <valor> en el campo <campo>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 11
+    Given I open the panel to create a task
+    When I type <value> in the field <field>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | campo                   | valor | abierto                         |
+      | field                   | value | open                            |
       | Título                  | Pagar | el panel con el aviso de cierre |
       | Nota                    | Luz   | el panel con el aviso de cierre |
 
   # Cambios sin guardar 12
   # Al crear, Se repite viene con No se repite: elegir Intervalo es cargar algo.
-  Scenario Outline: Cambios sin guardar 12
-    Given abro el panel para crear una tarea
-    When elijo <valor> en <selector>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 12
+    Given I open the panel to create a task
+    When I choose <value> in <selector>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | selector  | valor     | abierto                         |
+      | selector  | value     | open                            |
       | Se repite | Intervalo | el panel con el aviso de cierre |
 
   # Cambios sin guardar 13
   # Al crear, un formulario sin tocar, o con solo espacios, cierra directo.
-  Scenario Outline: Cambios sin guardar 13
-    Given abro el panel para crear una tarea
-    When escribo solo espacios en el campo <campo>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 13
+    Given I open the panel to create a task
+    When I type only spaces in the field <field>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | campo                   | abierto |
+      | field                   | open    |
       | Título                  | nada    |
       | Nota                    | nada    |
 
   # Cambios sin guardar 14
-  Scenario Outline: Cambios sin guardar 14
-    Given abro el panel para crear una tarea
-    When toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 14
+    Given I open the panel to create a task
+    When I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | abierto |
+      | open    |
       | nada    |
 
   # Cambios sin guardar 15
   # Al crear, escribir y volver a vaciar el campo vuelve a "como se abrió".
-  Scenario Outline: Cambios sin guardar 15
-    Given abro el panel para crear una tarea
-    When escribo <valor> en el campo <campo>
-    And vacío el campo <campo>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 15
+    Given I open the panel to create a task
+    When I type <value> in the field <field>
+    And I clear the field <field>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | campo  | valor | abierto |
+      | field  | value | open    |
       | Título | Pagar | nada    |
 
   # Cambios sin guardar 16
   # Lo que escribe otro dispositivo después de abrir el panel no es un cambio
   # de esta persona.
-  Scenario Outline: Cambios sin guardar 16
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When otro dispositivo, sin ver ese cambio, edita el título a <remoto>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 16
+    Given I open the panel to edit the task <title> with note <note>
+    When another device, without seeing that change, edits the title to <remote>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | titulo | nota | remoto    | abierto |
+      | title  | note | remote    | open    |
       | Pagar  | Luz  | Pagar luz | nada    |
 
   # Cambios sin guardar 17
   # Se mide contra los valores al abrir: escribir lo que el otro dispositivo
   # escribió sigue siendo distinto de lo que había al abrir.
-  Scenario Outline: Cambios sin guardar 17
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When otro dispositivo, sin ver ese cambio, edita el título a <remoto>
-    And escribo <valor> en el campo <campo>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 17
+    Given I open the panel to edit the task <title> with note <note>
+    When another device, without seeing that change, edits the title to <remote>
+    And I type <value> in the field <field>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | titulo | nota | remoto    | campo  | valor     | abierto                         |
+      | title  | note | remote    | field  | value     | open                            |
       | Pagar  | Luz  | Pagar luz | Título | Pagar luz | el panel con el aviso de cierre |
 
   # Cambios sin guardar 18
   # Recargar o cerrar la app pide la confirmación del navegador solo si hay
   # cambios.
-  Scenario Outline: Cambios sin guardar 18
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo <valor> en el campo <campo>
-    Then al recargar la app el navegador <respuesta>
+  Scenario Outline: Unsaved changes 18
+    Given I open the panel to edit the task <title> with note <note>
+    When I type <value> in the field <field>
+    Then on reloading the app the browser <response>
 
     Examples:
-      | titulo | nota | campo                   | valor     | respuesta           |
+      | title  | note | field                   | value     | response            |
       | Pagar  | Luz  | Título                  | Pagar luz | pide confirmación   |
       | Pagar  | Luz  | Título                  | Pagar     | no pregunta         |
 
   # Cambios sin guardar 19
   # Con el aviso de cierre abierto, la confirmación del navegador también
   # aparece (hay cambios).
-  Scenario Outline: Cambios sin guardar 19
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo <valor> en el campo <campo>
-    And toco la X del panel
-    Then al recargar la app el navegador <respuesta>
+  Scenario Outline: Unsaved changes 19
+    Given I open the panel to edit the task <title> with note <note>
+    When I type <value> in the field <field>
+    And I tap the X of the panel
+    Then on reloading the app the browser <response>
 
     Examples:
-      | titulo | nota | campo  | valor     | respuesta         |
+      | title  | note | field  | value     | response          |
       | Pagar  | Luz  | Título | Pagar luz | pide confirmación |
 
   # Cambios sin guardar 20
   # Al crear, Se repite viene con No se repite: elegir otra opción y volver a
   # No se repite deja el formulario como se abrió.
-  Scenario Outline: Cambios sin guardar 20
-    Given abro el panel para crear una tarea
-    When elijo <otro> en <selector>
-    And elijo <inicial> en <selector>
-    And toco la X del panel
-    Then queda abierto <abierto>
+  Scenario Outline: Unsaved changes 20
+    Given I open the panel to create a task
+    When I choose <other> in <selector>
+    And I choose <initial> in <selector>
+    And I tap the X of the panel
+    Then what stays open is <open>
 
     Examples:
-      | selector  | otro      | inicial      | abierto |
+      | selector  | other     | initial      | open    |
       | Se repite | Intervalo | No se repite | nada    |

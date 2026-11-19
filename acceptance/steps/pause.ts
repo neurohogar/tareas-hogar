@@ -36,55 +36,55 @@ export function thePanel(world: World): NonNullable<World['panel']> {
 
 export const pauseSteps: StepDefinition[] = [
 	{
-		pattern: /^pauso la tarea$/,
+		pattern: /^I pause the task$/,
 		run: (world) => tapButton(world, 'pausar', pause())
 	},
 	{
-		pattern: new RegExp(`^pauso la tarea ${TITLE}$`),
+		pattern: new RegExp(`^I pause the task ${TITLE}$`),
 		run: (world, title) => tapButton(world, 'pausar', pause(), title)
 	},
 	{
-		pattern: /^la tarea fue pausada$/,
+		pattern: /^the task was paused$/,
 		run: (world) => saveChange(world, theTask(world), pause())
 	},
 	{
-		pattern: new RegExp(`^la tarea ${TITLE} fue pausada$`),
+		pattern: new RegExp(`^the task ${TITLE} was paused$`),
 		run: (world, title) => saveChange(world, theTaskTitled(world, title), pause())
 	},
 	{
-		pattern: new RegExp(`^${OTHER} pausa la tarea$`),
+		pattern: new RegExp(`^${OTHER} pauses the task$`),
 		run: (world) => saveChange(world, theTask(thatSawOther(world)), pause())
 	},
 	{
-		pattern: new RegExp(`^reanudo la tarea el ${P}$`),
+		pattern: new RegExp(`^I resume the task on ${P}$`),
 		run: (world, moment) => tapButton(world, 'reanudar', resume(dateHour(moment)))
 	},
 	{
-		pattern: new RegExp(`^reanudo la tarea ${TITLE} el ${P}$`),
+		pattern: new RegExp(`^I resume the task ${TITLE} on ${P}$`),
 		run: (world, title, moment) => tapButton(world, 'reanudar', resume(dateHour(moment)), title)
 	},
 	{
 		// §4.1: without the field, it is not paused.
-		pattern: /^la tarea está pausada$/,
+		pattern: /^the task is paused$/,
 		run: (world) => expect(theDoc(world).paused).toBe(true)
 	},
 	{
-		pattern: /^la tarea no está pausada$/,
+		pattern: /^the task is not paused$/,
 		run: (world) => expect(theDoc(world)).not.toHaveProperty('paused')
 	},
 	{
-		pattern: /^abro la tarea en el panel de edición$/,
+		pattern: /^I open the task in the edit panel$/,
 		run: (world) => {
 			const task = theTask(world);
 			world.panel = { pause: pauseAction(task), changes: changesOnEdit(task) };
 		}
 	},
 	{
-		pattern: new RegExp(`^el panel de edición ofrece ${P}$`),
+		pattern: new RegExp(`^the edit panel offers ${P}$`),
 		run: (world, action) => expect(thePanel(world).pause).toBe(button(action))
 	},
 	{
-		pattern: /^el panel de edición no ofrece pausar$/,
+		pattern: /^the edit panel does not offer pause$/,
 		run: (world) => expect(thePanel(world).pause).toBeUndefined()
 	}
 ];

@@ -7,250 +7,250 @@
 # más pasos (`pasos`: los pasos 2 en adelante, en orden). El primer paso es el
 # paso 1. Los números de paso de los escenarios cuentan el primer paso como 1.
 # "Los pasos de la tarea son A, B, C" es el primer paso A y `pasos` B, C.
-Feature: Pasos
+Feature: Steps
 
   # Pasos 1
   # Una puntual puede crearse con más pasos además del primer paso (§4.1).
-  Scenario Outline: Pasos 1
-    When creo una tarea puntual con título <titulo> y pasos <pasos>
-    Then se crea una tarea puntual con título <titulo_guardado>
-    And la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 1
+    When I create a one-off task with title <title> and steps <steps>
+    Then a one-off task is created with title <title_stored>
+    And the task has the steps <steps_stored>
 
     Examples:
-      | titulo | pasos                                                       | titulo_guardado | pasos_guardados                                             |
+      | title  | steps                                                       | title_stored    | steps_stored                                                |
       | Lavar  | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | Lavar           | Separar la ropa blanca, Poner el lavarropas, Tender la ropa |
 
   # Pasos 2
   # Una periódica relativa también.
-  Scenario Outline: Pasos 2
-    When creo una tarea periódica relativa con título <titulo> cada 2 dias y pasos <pasos>
-    Then se crea una tarea periódica con título <titulo_guardado>
-    And la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 2
+    When I create a relative recurring task with title <title> every 2 days and steps <steps>
+    Then a recurring task is created with title <title_stored>
+    And the task has the steps <steps_stored>
 
     Examples:
-      | titulo | pasos                                     | titulo_guardado | pasos_guardados                           |
+      | title  | steps                                     | title_stored    | steps_stored                              |
       | Regar  | Llenar la regadera, Regar los helechos    | Regar           | Llenar la regadera, Regar los helechos    |
 
   # Pasos 3
   # Una periódica de calendario también.
-  Scenario Outline: Pasos 3
-    When creo una tarea periódica semanal con título <titulo> los <dias> y pasos <pasos>
-    Then se crea una tarea periódica con título <titulo_guardado>
-    And la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 3
+    When I create a weekly recurring task with title <title> on <days> and steps <steps>
+    Then a recurring task is created with title <title_stored>
+    And the task has the steps <steps_stored>
 
     Examples:
-      | titulo | dias           | pasos                                  | titulo_guardado | pasos_guardados                        |
+      | title  | days           | steps                                  | title_stored    | steps_stored                           |
       | Basura | martes, jueves | Atar la bolsa llena, Bajar la basura   | Basura          | Atar la bolsa llena, Bajar la basura   |
 
   # Pasos 5
   # Al guardar se recortan los espacios del inicio y del final de cada paso.
-  Scenario Outline: Pasos 5
-    Given una tarea puntual sin fecha límite
-    And el primer paso de la tarea es <primer_paso>
-    When edito el paso 2 a <paso> con espacios al inicio y al final
-    Then la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 5
+    Given a one-off task without a due date
+    And the first step of the task is <first_step>
+    When I edit step 2 to <step> with spaces at the start and end
+    Then the task has the steps <steps_stored>
 
     Examples:
-      | primer_paso            | paso                | pasos_guardados                             |
+      | first_step             | step                | steps_stored                                |
       | Separar la ropa blanca | Poner el lavarropas | Separar la ropa blanca, Poner el lavarropas |
       | Separar la ropa blanca | Tender la ropa      | Separar la ropa blanca, Tender la ropa      |
 
   # Pasos 6
   # Un paso vaciado se descarta al guardar y los de abajo suben.
-  Scenario Outline: Pasos 6
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    When vacío el paso <numero>
-    Then la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 6
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    When I clear step <number>
+    Then the task has the steps <steps_stored>
 
     Examples:
-      | pasos                                                       | numero | pasos_guardados                             |
+      | steps                                                       | number | steps_stored                                |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 2      | Separar la ropa blanca, Tender la ropa      |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 3      | Separar la ropa blanca, Poner el lavarropas |
 
   # Pasos 7
   # Un paso de solo espacios también se descarta, sin rechazar la edición.
-  Scenario Outline: Pasos 7
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    When edito el paso <numero> a uno de solo espacios
-    Then la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 7
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    When I edit step <number> to one of only spaces
+    Then the task has the steps <steps_stored>
 
     Examples:
-      | pasos                                                       | numero | pasos_guardados                        |
+      | steps                                                       | number | steps_stored                           |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 2      | Separar la ropa blanca, Tender la ropa |
 
   # Pasos 8
   # Si el primer paso queda vacío y el paso 2 no, el paso 2 pasa a ser el
   # primer paso.
-  Scenario Outline: Pasos 8
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    When vacío el paso 1
-    Then la tarea tiene primer paso <primer_paso_guardado>
-    And la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 8
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    When I clear step 1
+    Then the task has first step <first_step_stored>
+    And the task has the steps <steps_stored>
 
     Examples:
-      | pasos                                                       | primer_paso_guardado | pasos_guardados                    |
+      | steps                                                       | first_step_stored    | steps_stored                        |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | Poner el lavarropas  | Poner el lavarropas, Tender la ropa |
 
   # Pasos 9
   # Sin pasos más allá del primero, la tarea queda sin más pasos (el campo no
   # se guarda).
-  Scenario Outline: Pasos 9
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    When vacío el paso 2
-    Then la tarea no tiene más pasos
-    And la tarea tiene primer paso <primer_paso_guardado>
+  Scenario Outline: Steps 9
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    When I clear step 2
+    Then the task has no more steps
+    And the task has first step <first_step_stored>
 
     Examples:
-      | pasos                                       | primer_paso_guardado   |
+      | steps                                       | first_step_stored      |
       | Separar la ropa blanca, Poner el lavarropas | Separar la ropa blanca |
 
   # Pasos 10
   # Crear con un paso de solo espacios no se rechaza: la tarea se crea sin él.
-  Scenario Outline: Pasos 10
-    When creo una tarea puntual con título <titulo> y pasos <pasos> y un paso más de solo espacios
-    Then se crea una tarea puntual con título <titulo_guardado>
-    And la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 10
+    When I create a one-off task with title <title> and steps <steps> and one more step of only spaces
+    Then a one-off task is created with title <title_stored>
+    And the task has the steps <steps_stored>
 
     Examples:
-      | titulo | pasos                                       | titulo_guardado | pasos_guardados                             |
+      | title  | steps                                       | title_stored    | steps_stored                                |
       | Lavar  | Separar la ropa blanca, Poner el lavarropas | Lavar           | Separar la ropa blanca, Poner el lavarropas |
 
   # Pasos 11
   # Un paso no tiene largo máximo.
-  Scenario Outline: Pasos 11
-    Given una tarea puntual sin fecha límite
-    And el primer paso de la tarea es <primer_paso>
-    When edito el paso 2 a uno de <largo> caracteres
-    Then el paso 2 de la tarea tiene <largo_guardado> caracteres
+  Scenario Outline: Steps 11
+    Given a one-off task without a due date
+    And the first step of the task is <first_step>
+    When I edit step 2 to one of <length> characters
+    Then step 2 of the task has <length_stored> characters
 
     Examples:
-      | primer_paso            | largo | largo_guardado |
+      | first_step             | length | length_stored  |
       | Separar la ropa blanca | 5000  | 5000           |
 
   # Pasos 12
   # No hay máximo de pasos.
-  Scenario Outline: Pasos 12
-    Given una tarea puntual sin fecha límite
-    When edito la tarea con <cantidad> pasos
-    Then la tarea tiene <cantidad_guardada> pasos
+  Scenario Outline: Steps 12
+    Given a one-off task without a due date
+    When I edit the task with <count> steps
+    Then the task has <count_stored> steps
 
     Examples:
-      | cantidad | cantidad_guardada |
+      | count    | count_stored      |
       | 100      | 100               |
 
   # Pasos 13
   # Completar la tarea no borra ni cambia los pasos.
-  Scenario Outline: Pasos 13
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And los pasos de la tarea son <pasos>
-    When toco el checkbox de la tarea el <toque>
-    Then la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 13
+    Given a relative recurring task every <every> <unit>
+    And the steps of the task are <steps>
+    When I tap the task checkbox on <tap>
+    Then the task has the steps <steps_stored>
 
     Examples:
-      | cada | unidad | pasos                                       | toque               | pasos_guardados                             |
+      | every | unit   | steps                                       | tap                 | steps_stored                                |
       | 2    | dias   | Llenar la regadera, Regar los helechos      | 2026-11-13T08:00:00 | Llenar la regadera, Regar los helechos      |
 
   # Pasos 14
   # Posponer no borra ni cambia los pasos ni el paso en que va la tarea.
-  Scenario Outline: Pasos 14
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    And el paso actual de la tarea es <actual>
-    When pospongo la tarea con la opción <opcion> el <ahora>
-    Then la tarea tiene los pasos <pasos_guardados>
-    And la tarea va en el paso <actual_guardado>
+  Scenario Outline: Steps 14
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    And the current step of the task is <current>
+    When I postpone the task with option <option> on <now>
+    Then the task has the steps <steps_stored>
+    And the task is on step <current_stored>
 
     Examples:
-      | pasos                                                       | actual | opcion  | ahora               | pasos_guardados                                             | actual_guardado |
+      | steps                                                       | current | option  | now                 | steps_stored                                                | current_stored  |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 2      | 3 horas | 2026-11-13T10:00:00 | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 2               |
 
   # Pasos 15
   # Pausar y reanudar tampoco.
-  Scenario Outline: Pasos 15
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And los pasos de la tarea son <pasos>
-    And el paso actual de la tarea es <actual>
-    When pauso la tarea
-    And reanudo la tarea el <reanudada>
-    Then la tarea tiene los pasos <pasos_guardados>
-    And la tarea va en el paso <actual_guardado>
+  Scenario Outline: Steps 15
+    Given a relative recurring task every <every> <unit>
+    And the steps of the task are <steps>
+    And the current step of the task is <current>
+    When I pause the task
+    And I resume the task on <resumed>
+    Then the task has the steps <steps_stored>
+    And the task is on step <current_stored>
 
     Examples:
-      | cada | unidad | pasos                                  | actual | reanudada           | pasos_guardados                        | actual_guardado |
+      | every | unit   | steps                                  | current | resumed             | steps_stored                           | current_stored  |
       | 2    | dias   | Llenar la regadera, Regar los helechos | 2      | 2026-11-13T10:00:00 | Llenar la regadera, Regar los helechos | 2               |
 
   # Pasos 16
   # Deshacer un completado no borra ni cambia los pasos.
-  Scenario Outline: Pasos 16
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And los pasos de la tarea son <pasos>
-    And la tarea fue completada el <completada>
-    When borro el completado del <completada>
-    Then la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 16
+    Given a relative recurring task every <every> <unit>
+    And the steps of the task are <steps>
+    And the task was completed on <completed>
+    When I delete the completion from <completed>
+    Then the task has the steps <steps_stored>
 
     Examples:
-      | cada | unidad | pasos                                  | completada          | pasos_guardados                        |
+      | every | unit   | steps                                  | completed           | steps_stored                           |
       | 2    | dias   | Llenar la regadera, Regar los helechos | 2026-11-13T08:00:00 | Llenar la regadera, Regar los helechos |
 
   # Pasos 17
   # Cambiar de puntual a periódica no borra ni cambia los pasos ni el paso en
   # que va la tarea.
-  Scenario Outline: Pasos 17
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    And el paso actual de la tarea es <actual>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    Then la tarea tiene los pasos <pasos_guardados>
-    And la tarea va en el paso <actual_guardado>
+  Scenario Outline: Steps 17
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    And the current step of the task is <current>
+    When I edit the task to relative recurring every <every> <unit>
+    Then the task has the steps <steps_stored>
+    And the task is on step <current_stored>
 
     Examples:
-      | pasos                                  | actual | cada | unidad | pasos_guardados                        | actual_guardado |
+      | steps                                  | current | every | unit   | steps_stored                           | current_stored  |
       | Llenar la regadera, Regar los helechos | 2      | 3    | dias   | Llenar la regadera, Regar los helechos | 2               |
 
   # Pasos 18
   # Cambiar de periódica a puntual tampoco.
-  Scenario Outline: Pasos 18
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And los pasos de la tarea son <pasos>
-    And el paso actual de la tarea es <actual>
-    When edito la tarea a puntual sin fecha límite
-    Then la tarea tiene los pasos <pasos_guardados>
-    And la tarea va en el paso <actual_guardado>
+  Scenario Outline: Steps 18
+    Given a relative recurring task every <every> <unit>
+    And the steps of the task are <steps>
+    And the current step of the task is <current>
+    When I edit the task to one-off without a due date
+    Then the task has the steps <steps_stored>
+    And the task is on step <current_stored>
 
     Examples:
-      | cada | unidad | pasos                                  | actual | pasos_guardados                        | actual_guardado |
+      | every | unit   | steps                                  | current | steps_stored                           | current_stored  |
       | 2    | dias   | Llenar la regadera, Regar los helechos | 2      | Llenar la regadera, Regar los helechos | 2               |
 
   # Pasos 19
   # Cambiar de modo (de relativa a de calendario) tampoco.
-  Scenario Outline: Pasos 19
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And los pasos de la tarea son <pasos>
-    And el paso actual de la tarea es <actual>
-    When edito la tarea a periódica semanal los <dias>
-    Then la tarea tiene los pasos <pasos_guardados>
-    And la tarea va en el paso <actual_guardado>
+  Scenario Outline: Steps 19
+    Given a relative recurring task every <every> <unit>
+    And the steps of the task are <steps>
+    And the current step of the task is <current>
+    When I edit the task to weekly recurring on <days>
+    Then the task has the steps <steps_stored>
+    And the task is on step <current_stored>
 
     Examples:
-      | cada | unidad | pasos                                  | actual | dias   | pasos_guardados                        | actual_guardado |
+      | every | unit   | steps                                  | current | days   | steps_stored                           | current_stored  |
       | 2    | dias   | Llenar la regadera, Regar los helechos | 2      | martes | Llenar la regadera, Regar los helechos | 2               |
 
   # Pasos 20
   # Los pasos no cambian el estado: una puntual con fecha límite sigue
   # pendiente el día límite (fila 1) y atrasada después (fila 2).
-  Scenario Outline: Pasos 20
-    Given una tarea puntual con fecha límite <limite>
-    And los pasos de la tarea son <pasos>
-    And el paso actual de la tarea es <actual>
-    When consulto el estado el <ahora>
-    Then el estado es <estado>
+  Scenario Outline: Steps 20
+    Given a one-off task with due date <due_date>
+    And the steps of the task are <steps>
+    And the current step of the task is <current>
+    When I query the status on <now>
+    Then the status is <status>
 
     Examples:
-      | limite     | pasos                                  | actual | ahora               | estado    |
+      | due_date   | steps                                  | current | now                 | status    |
       | 2026-11-12 | Llenar la regadera, Regar los helechos | 2      | 2026-11-12T23:59:59 | pendiente |
       | 2026-11-12 | Llenar la regadera, Regar los helechos | 2      | 2026-11-13T00:00:00 | atrasada  |
 
@@ -258,96 +258,96 @@ Feature: Pasos
   # No cambian el orden de la lista: sigue el de antes, por título entre
   # tareas igual de urgentes, tenga o no pasos la que va primero (fila 1) o la
   # que va segunda (fila 2).
-  Scenario Outline: Pasos 21
-    Given una tarea puntual <primera> sin fecha límite
-    And una tarea puntual <segunda> sin fecha límite
-    And los pasos de la tarea <con_pasos> son <pasos>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Steps 21
+    Given a one-off task <first> without a due date
+    And a one-off task <second> without a due date
+    And the steps of the task <with_steps> are <steps>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | primera | segunda | con_pasos | pasos                                  | ahora               | orden         |
+      | first   | second  | with_steps | steps                                  | now                 | order         |
       | Barrer  | Lavar   | Barrer    | Llenar la regadera, Regar los helechos | 2026-11-13T10:00:00 | Barrer, Lavar |
       | Barrer  | Lavar   | Lavar     | Llenar la regadera, Regar los helechos | 2026-11-13T10:00:00 | Barrer, Lavar |
 
   # Pasos 22
   # El nombre de la tarea sigue siendo emoji y título.
-  Scenario Outline: Pasos 22
-    Given una tarea puntual <titulo> sin fecha límite con emoji <emoji>
-    And el primer paso de la tarea es <primer_paso>
-    When edito el paso 2 a <paso>
-    Then el nombre de la tarea es <nombre>
+  Scenario Outline: Steps 22
+    Given a one-off task <title> without a due date with emoji <emoji>
+    And the first step of the task is <first_step>
+    When I edit step 2 to <step>
+    Then the task name is <name>
 
     Examples:
-      | titulo | emoji | primer_paso            | paso                | nombre  |
+      | title  | emoji | first_step             | step                | name    |
       | Lavar  | 🧺     | Separar la ropa blanca | Poner el lavarropas | 🧺 Lavar |
 
   # Pasos 23
   # Los pasos y el título son campos distintos: se combinan los dos cambios.
-  Scenario Outline: Pasos 23
-    Given una tarea puntual sin fecha límite
-    And el primer paso de la tarea es <primer_paso>
-    When edito el título a <titulo_nuevo>
-    And otro dispositivo, sin ver ese cambio, edita el paso 2 a <paso>
-    Then la tarea tiene título <titulo_guardado>
-    And la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 23
+    Given a one-off task without a due date
+    And the first step of the task is <first_step>
+    When I edit the title to <title_new>
+    And another device, without seeing that change, edits step 2 to <step>
+    Then the task has title <title_stored>
+    And the task has the steps <steps_stored>
 
     Examples:
-      | primer_paso            | titulo_nuevo | paso                | titulo_guardado | pasos_guardados                             |
+      | first_step             | title_new    | step                | title_stored    | steps_stored                                |
       | Separar la ropa blanca | Lavar a mano | Poner el lavarropas | Lavar a mano    | Separar la ropa blanca, Poner el lavarropas |
 
   # Pasos 24
   # El primer paso y los pasos más son campos distintos: se combinan los dos
   # cambios.
-  Scenario Outline: Pasos 24
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    When edito el primer paso a <primer_paso>
-    And otro dispositivo, sin ver ese cambio, edita el paso 2 a <paso>
-    Then la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 24
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    When I edit the first step to <first_step>
+    And another device, without seeing that change, edits step 2 to <step>
+    Then the task has the steps <steps_stored>
 
     Examples:
-      | pasos                                       | primer_paso       | paso                | pasos_guardados                        |
+      | steps                                       | first_step        | step                | steps_stored                           |
       | Separar la ropa blanca, Poner el lavarropas | Juntar las llaves | Tender la ropa      | Juntar las llaves, Tender la ropa      |
 
   # Pasos 25
   # El mismo paso: gana el último cambio en llegar.
-  Scenario Outline: Pasos 25
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    When edito el paso 2 a <primero>
-    And otro dispositivo, sin ver ese cambio, edita el paso 2 a <segundo>
-    Then la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 25
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    When I edit step 2 to <first>
+    And another device, without seeing that change, edits step 2 to <second>
+    Then the task has the steps <steps_stored>
 
     Examples:
-      | pasos                                                       | primero              | segundo           | pasos_guardados                                                |
+      | steps                                                       | first                | second            | steps_stored                                              |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | Buscar el detergente | Juntar las llaves | Separar la ropa blanca, Juntar las llaves, Tender la ropa |
 
   # Pasos 26
   # `pasos` es un solo campo que se reemplaza entero: dos
   # ediciones de pasos distintos no se mezclan; gana la lista del último
   # cambio en llegar, que parte de lo que ese dispositivo veía.
-  Scenario Outline: Pasos 26
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    When edito el paso 2 a <primero>
-    And otro dispositivo, sin ver ese cambio, edita el paso 3 a <segundo>
-    Then la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 26
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    When I edit step 2 to <first>
+    And another device, without seeing that change, edits step 3 to <second>
+    Then the task has the steps <steps_stored>
 
     Examples:
-      | pasos                                                       | primero              | segundo           | pasos_guardados                                          |
+      | steps                                                       | first                | second            | steps_stored                                                   |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | Buscar el detergente | Juntar las llaves | Separar la ropa blanca, Poner el lavarropas, Juntar las llaves |
 
   # Pasos 27
   # Una edición escribe solo si cambió: otro dispositivo que guarda sin
   # cambios no pisa el paso que acaba de escribirse.
-  Scenario Outline: Pasos 27
-    Given una tarea puntual sin fecha límite
-    And el primer paso de la tarea es <primer_paso>
-    When edito el paso 2 a <paso>
-    And otro dispositivo, sin ver ese cambio, guarda la tarea sin cambios
-    Then la tarea tiene los pasos <pasos_guardados>
+  Scenario Outline: Steps 27
+    Given a one-off task without a due date
+    And the first step of the task is <first_step>
+    When I edit step 2 to <step>
+    And another device, without seeing that change, saves the task without changes
+    Then the task has the steps <steps_stored>
 
     Examples:
-      | primer_paso            | paso                | pasos_guardados                             |
+      | first_step             | step                | steps_stored                                |
       | Separar la ropa blanca | Poner el lavarropas | Separar la ropa blanca, Poner el lavarropas |

@@ -10,72 +10,72 @@
 # detecta para limpiarlo. La confirmación se verifica en la suite QA.
 # Cada tarea se nombra por su título (una palabra). "Pendientes muestra en
 # orden" da los títulos de arriba hacia abajo y la lista no tiene otras filas.
-Feature: Borrar tarea
+Feature: Delete task
 
   # Borrar tarea 1
   # Borrar una relativa borra sus completados y deja los de otra tarea.
-  Scenario Outline: Borrar tarea 1
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada_regar>
-    And la tarea Regar fue completada el <otra_regar>
-    And una tarea puntual Pagar con fecha límite <limite>
-    And la tarea Pagar fue completada el <completada_pagar>
-    When borro la tarea Regar
-    Then no existe la tarea Regar
-    And no queda ningún completado de Regar
-    And la tarea Pagar conserva un solo completado, del <completada_pagar_guardada>
+  Scenario Outline: Delete task 1
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed_water>
+    And the task Regar was completed on <other_water>
+    And a one-off task Pagar with due date <due_date>
+    And the task Pagar was completed on <completed_pay>
+    When I delete the task Regar
+    Then there is no task Regar
+    And no completion remains of Regar
+    And the task Pagar keeps a single completion, from <completed_pay_stored>
 
     Examples:
-      | cada | unidad | completada_regar    | otra_regar          | limite     | completada_pagar    | completada_pagar_guardada |
+      | every | unit   | completed_water     | other_water         | due_date   | completed_pay       | completed_pay_stored      |
       | 2    | dias   | 2026-07-13T08:00:00 | 2026-07-15T08:00:00 | 2026-07-20 | 2026-07-14T10:00:00 | 2026-07-14T10:00:00       |
 
   # Borrar tarea 2
   # Borrar una semanal borra sus completados; la otra tarea sigue en
   # Pendientes con el mismo estado.
-  Scenario Outline: Borrar tarea 2
-    Given una tarea periódica semanal Basura los <dias>
-    And la tarea Basura tiene un completado que cubre el <cubierta>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    When borro la tarea Basura
-    And consulto Pendientes el <ahora>
-    Then no existe la tarea Basura
-    And no queda ningún completado de Basura
-    And Pendientes muestra en orden <orden>
+  Scenario Outline: Delete task 2
+    Given a weekly recurring task Basura on <days>
+    And the task Basura has a completion that covers <covered>
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    When I delete the task Basura
+    And I query Pendientes on <now>
+    Then there is no task Basura
+    And no completion remains of Basura
+    And Pendientes shows in order <order>
 
     Examples:
-      | dias           | cubierta   | cada | unidad | completada          | ahora               | orden |
+      | days           | covered    | every | unit   | completed           | now                 | order |
       | martes, jueves | 2026-07-14 | 4    | horas  | 2026-07-15T06:00:00 | 2026-07-15T12:00:00 | Regar |
 
   # Borrar tarea 3
   # Borrar una tarea nunca completada: deja de aparecer en Pendientes.
-  Scenario Outline: Borrar tarea 3
-    Given una tarea puntual Pagar con fecha límite <limite>
-    And una tarea periódica relativa Regar nunca completada creada el <creada_regar>
-    When borro la tarea Pagar
-    And consulto Pendientes el <ahora>
-    Then no existe la tarea Pagar
-    And Pendientes muestra en orden <orden>
+  Scenario Outline: Delete task 3
+    Given a one-off task Pagar with due date <due_date>
+    And a relative recurring task Regar never completed created on <created_water>
+    When I delete the task Pagar
+    And I query Pendientes on <now>
+    Then there is no task Pagar
+    And Pendientes shows in order <order>
 
     Examples:
-      | limite     | creada_regar        | ahora               | orden |
+      | due_date   | created_water       | now                 | order |
       | 2026-07-14 | 2026-07-13T08:00:00 | 2026-07-15T12:00:00 | Regar |
 
   # Borrar tarea 4
   # Completado huérfano: otro dispositivo, sin ver el borrado, completa la
   # tarea borrada. Se ignora en Pendientes y es el único que se detecta para
   # limpiar; los completados de las tareas que existen no.
-  Scenario Outline: Borrar tarea 4
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And una tarea periódica semanal Basura los <dias>
-    And la tarea Basura tiene un completado que cubre el <cubierta>
-    When borro la tarea Regar
-    And otro dispositivo, sin ver ese cambio, completa la tarea Regar el <completada>
-    And consulto Pendientes el <ahora>
-    Then no existe la tarea Regar
-    And Pendientes muestra en orden <orden>
-    And los completados huérfanos a limpiar son solo el de Regar del <completada_guardada>
+  Scenario Outline: Delete task 4
+    Given a relative recurring task Regar every <every> <unit>
+    And a weekly recurring task Basura on <days>
+    And the task Basura has a completion that covers <covered>
+    When I delete the task Regar
+    And another device, without seeing that change, completes the task Regar on <completed>
+    And I query Pendientes on <now>
+    Then there is no task Regar
+    And Pendientes shows in order <order>
+    And the orphan completions to clean are only the one of Regar from <completed_stored>
 
     Examples:
-      | cada | unidad | dias           | cubierta   | completada          | ahora               | orden  | completada_guardada |
+      | every | unit   | days           | covered    | completed           | now                 | order  | completed_stored    |
       | 2    | dias   | martes, jueves | 2026-07-09 | 2026-07-15T09:00:00 | 2026-07-15T12:00:00 | Basura | 2026-07-15T09:00:00 |

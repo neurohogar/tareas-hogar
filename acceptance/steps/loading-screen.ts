@@ -27,7 +27,6 @@ function seconds(value: string): number {
 
 const fontNew = (): OpeningFont => ({ arrives: NEVER, failure: NEVER, saved: false });
 
-const COLLECTION = { tareas: 'tasks', completados: 'completions' } as const;
 
 function opening(world: World): AppOpening {
 	world.opening ??= {
@@ -83,50 +82,50 @@ function output(a: AppOpening): number {
 
 export const loadingScreenSteps: StepDefinition[] = [
 	{
-		pattern: /^la app arranca (con|sin) sesión$/,
+		pattern: /^the app starts (with|without) a session$/,
 		run: (world, session) => {
-			opening(world).session = session === 'con';
+			opening(world).session = session === 'with';
 		}
 	},
 	{
-		pattern: /^no hay conexión$/,
+		pattern: /^there is no connection$/,
 		run: (world) => {
 			opening(world).withoutConnection = true;
 		}
 	},
 	{
-		pattern: new RegExp(`^se pierde la conexión a los ${P} segundos$`),
+		pattern: new RegExp(`^the connection is lost at ${P} seconds$`),
 		run: (world, lost) => {
 			opening(world).losesConnection = seconds(lost);
 		}
 	},
 	{
-		pattern: /^Auth responde enseguida$/,
+		pattern: /^Auth responds immediately$/,
 		run: (world) => {
 			opening(world).auth = 0;
 		}
 	},
 	{
-		pattern: new RegExp(`^Auth responde a los ${P} segundos$`),
+		pattern: new RegExp(`^Auth responds at ${P} seconds$`),
 		run: (world, auth) => {
 			opening(world).auth = seconds(auth);
 		}
 	},
 	{
-		pattern: new RegExp(`^(?:las|los) (tareas|completados) responden a los ${P} segundos$`),
+		pattern: new RegExp(`^the (tasks|completions) respond at ${P} seconds$`),
 		run: (world, collection, moment) => {
-			opening(world)[COLLECTION[collection as 'tareas' | 'completados']] = seconds(moment);
+			opening(world)[collection as 'tasks' | 'completions'] = seconds(moment);
 		}
 	},
 	{
-		pattern: new RegExp(`^los datos responden a los ${P} segundos$`),
+		pattern: new RegExp(`^the data responds at ${P} seconds$`),
 		run: (world, moment) => {
 			const a = opening(world);
 			a.tasks = a.completions = seconds(moment);
 		}
 	},
 	{
-		pattern: new RegExp(`^(Atkinson|Noto) queda list[ao] a los ${P} segundos$`),
+		pattern: new RegExp(`^(Atkinson|Noto) is ready at ${P} seconds$`),
 		run: (world, name, moment) => {
 			const arrives = seconds(moment);
 			const font = fontOf(world, name);
@@ -135,47 +134,47 @@ export const loadingScreenSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^(Atkinson|Noto) falla a los ${P} segundos$`),
+		pattern: new RegExp(`^(Atkinson|Noto) fails at ${P} seconds$`),
 		run: (world, name, moment) => {
 			fontOf(world, name).failure = seconds(moment);
 		}
 	},
 	{
 		// §6: a browser that receives the font set and cannot draw it behaves like a failure.
-		pattern: new RegExp(`^el navegador no puede dibujar Noto a los ${P} segundos$`),
+		pattern: new RegExp(`^the browser cannot draw Noto at ${P} seconds$`),
 		run: (world, moment) => {
 			opening(world).noto.failure = seconds(moment);
 		}
 	},
 	{
-		pattern: /^(Atkinson|Noto) no está guardad[ao]$/,
+		pattern: /^(Atkinson|Noto) is not saved$/,
 		run: (world, name) => {
 			fontOf(world, name).saved = false;
 		}
 	},
 	{
-		pattern: /^el dispositivo ya recordaba un tope con Noto sin bajar$/,
+		pattern: /^the device already remembered a cap with Noto not downloaded$/,
 		run: (world) => {
 			opening(world).remembered = true;
 		}
 	},
 	{
-		pattern: /^una versión nueva (no )?cambió el juego de emoji$/,
-		run: (world, no) => {
-			opening(world).versionChangeSet = no === undefined;
+		pattern: /^a new version (changed|did not change) the emoji set$/,
+		run: (world, change) => {
+			opening(world).versionChangeSet = change === 'changed';
 		}
 	},
 	{
-		pattern: new RegExp(`^la pantalla de carga se va a los ${P} segundos$`),
+		pattern: new RegExp(`^the loading screen goes away at ${P} seconds$`),
 		run: (world, expected) => expect(output(opening(world))).toBe(seconds(expected))
 	},
 	{
 		// The memory is queried when the screen goes away and again if Noto becomes ready afterwards.
-		pattern: /^el dispositivo (no )?recuerda un tope con Noto sin bajar$/,
-		run: (world, no) => {
+		pattern: /^the device (does not remember|remembers) a cap with Noto not downloaded$/,
+		run: (world, remembers) => {
 			const a = opening(world);
 			const moment = a.noto.arrives === NEVER ? output(a) : Math.max(output(a), a.noto.arrives);
-			expect(notoLimitMemory(statusIn(a, moment))).toBe(no === undefined);
+			expect(notoLimitMemory(statusIn(a, moment))).toBe(remembers === 'remembers');
 		}
 	}
 ];

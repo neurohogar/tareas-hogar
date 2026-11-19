@@ -20,88 +20,88 @@
 # resultado sería otro (salvo donde el comentario dice lo contrario).
 # "tiene un completado que cubre el ..." es un completado ya guardado; cuando
 # el paso no da su momento, ese momento no influye en el resultado.
-Feature: Estado tras editar
+Feature: Status after editing
 
   # Estado tras editar 1
   # Relativa: acortar el intervalo la deja pendiente (antes, en espera).
-  Scenario Outline: Estado tras editar 1
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When edito la tarea a periódica relativa cada <cada_nuevo> <unidad_nueva>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status after editing 1
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I edit the task to relative recurring every <every_new> <unit_new>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | completada          | cada_nuevo | unidad_nueva | ahora               |
+      | every | unit   | completed           | every_new  | unit_new     | now                 |
       | 3    | dias   | 2026-07-15T08:00:00 | 1          | dias         | 2026-07-16T10:00:00 |
       | 12   | horas  | 2026-07-15T08:00:00 | 4          | horas        | 2026-07-15T12:30:00 |
 
   # Estado tras editar 2
   # Relativa: alargar el intervalo la deja en espera, con el progreso del
   # intervalo nuevo (antes, atrasada o pendiente).
-  Scenario Outline: Estado tras editar 2
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When edito la tarea a periódica relativa cada <cada_nuevo> <unidad_nueva>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status after editing 2
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I edit the task to relative recurring every <every_new> <unit_new>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | completada          | cada_nuevo | unidad_nueva | ahora               | progreso |
+      | every | unit   | completed           | every_new  | unit_new     | now                 | progress |
       | 4    | horas  | 2026-07-15T08:00:00 | 2          | dias         | 2026-07-15T20:00:00 | 0.25     |
       | 1    | dias   | 2026-07-15T08:00:00 | 36         | horas        | 2026-07-16T11:00:00 | 0.75     |
 
   # Estado tras editar 3
   # Relativa: acortar el intervalo puede dejarla atrasada (antes, en espera).
-  Scenario Outline: Estado tras editar 3
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When edito la tarea a periódica relativa cada <cada_nuevo> <unidad_nueva>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status after editing 3
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I edit the task to relative recurring every <every_new> <unit_new>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | cada | unidad | completada          | cada_nuevo | unidad_nueva | ahora               |
+      | every | unit   | completed           | every_new  | unit_new     | now                 |
       | 2    | dias   | 2026-07-15T08:00:00 | 4          | horas        | 2026-07-15T16:00:00 |
       | 3    | dias   | 2026-07-15T08:00:00 | 1          | dias         | 2026-07-17T08:00:00 |
 
   # Estado tras editar 4
   # Puntual: mover la fecha límite al futuro la deja pendiente (antes,
   # atrasada). Fila 2: el último segundo del día límite nuevo.
-  Scenario Outline: Estado tras editar 4
-    Given una tarea puntual con fecha límite <limite>
-    When edito la tarea a puntual con fecha límite <limite_nuevo>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status after editing 4
+    Given a one-off task with due date <due_date>
+    When I edit the task to one-off with due date <due_date_new>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | limite     | limite_nuevo | ahora               |
+      | due_date   | due_date_new | now                 |
       | 2026-07-14 | 2026-07-20   | 2026-07-15T10:00:00 |
       | 2026-07-14 | 2026-07-15   | 2026-07-15T23:59:59 |
 
   # Estado tras editar 5
   # Puntual: mover la fecha límite al pasado la deja atrasada (antes, pendiente).
-  Scenario Outline: Estado tras editar 5
-    Given una tarea puntual con fecha límite <limite>
-    When edito la tarea a puntual con fecha límite <limite_nuevo>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status after editing 5
+    Given a one-off task with due date <due_date>
+    When I edit the task to one-off with due date <due_date_new>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | limite     | limite_nuevo | ahora               |
+      | due_date   | due_date_new | now                 |
       | 2026-07-20 | 2026-07-14   | 2026-07-15T00:00:00 |
 
   # Estado tras editar 6
   # Puntual: quitar la fecha límite la deja pendiente (antes, atrasada).
-  Scenario Outline: Estado tras editar 6
-    Given una tarea puntual con fecha límite <limite>
-    When edito la tarea a puntual sin fecha límite
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status after editing 6
+    Given a one-off task with due date <due_date>
+    When I edit the task to one-off without a due date
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | limite     | ahora               |
+      | due_date   | now                 |
       | 2026-07-10 | 2026-07-15T10:00:00 |
 
   # Estado tras editar 7
@@ -109,180 +109,180 @@ Feature: Estado tras editar
   # ocurrencia nueva, con progreso desde el completado. Fila 1: antes,
   # pendiente (jueves). Fila 2: P (martes) ya no es ocurrencia de "lunes";
   # N es el lunes 20 (antes, atrasada).
-  Scenario Outline: Estado tras editar 7
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    When edito la tarea a periódica semanal los <dias_nuevos>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status after editing 7
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    When I edit the task to weekly recurring on <days_new>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias           | completada          | cubierta   | dias_nuevos | ahora               | progreso |
+      | days           | completed           | covered    | days_new    | now                 | progress |
       | martes, jueves | 2026-07-14T12:00:00 | 2026-07-14 | sábado      | 2026-07-16T06:00:00 | 0.5      |
       | martes, jueves | 2026-07-14T12:00:00 | 2026-07-14 | lunes       | 2026-07-17T06:00:00 | 0.5      |
 
   # Estado tras editar 8
   # Semanal: cambiar los días puede dejarla pendiente hoy (antes, en espera).
-  Scenario Outline: Estado tras editar 8
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When edito la tarea a periódica semanal los <dias_nuevos>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status after editing 8
+    Given a weekly recurring task on <days>
+    And the task has a completion that covers <covered>
+    When I edit the task to weekly recurring on <days_new>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias           | cubierta   | dias_nuevos | ahora               |
+      | days           | covered    | days_new    | now                 |
       | martes, jueves | 2026-07-14 | miércoles   | 2026-07-15T10:00:00 |
 
   # Estado tras editar 9
   # Semanal: cambiar los días puede dejarla atrasada (antes, pendiente).
-  Scenario Outline: Estado tras editar 9
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When edito la tarea a periódica semanal los <dias_nuevos>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status after editing 9
+    Given a weekly recurring task on <days>
+    And the task has a completion that covers <covered>
+    When I edit the task to weekly recurring on <days_new>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias           | cubierta   | dias_nuevos | ahora               |
+      | days           | covered    | days_new    | now                 |
       | martes, jueves | 2026-07-14 | miércoles   | 2026-07-16T10:00:00 |
 
   # Estado tras editar 10
   # Semanal a mensual: N es el primer día del mes nuevo posterior al P
   # guardado (antes, atrasada).
-  Scenario Outline: Estado tras editar 10
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When edito la tarea a periódica mensual los días <dias_mes>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status after editing 10
+    Given a weekly recurring task on <days>
+    And the task has a completion that covers <covered>
+    When I edit the task to monthly recurring on days <days_month>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias           | cubierta   | dias_mes | ahora               |
+      | days           | covered    | days_month | now                 |
       | martes, jueves | 2026-07-14 | 20       | 2026-07-20T08:00:00 |
 
   # Estado tras editar 11
   # Mensual a semanal: con el P guardado, la primera ocurrencia nueva ya pasó
   # (antes, en espera).
-  Scenario Outline: Estado tras editar 11
-    Given una tarea periódica mensual los días <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When edito la tarea a periódica semanal los <dias_semana>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status after editing 11
+    Given a monthly recurring task on days <days>
+    And the task has a completion that covers <covered>
+    When I edit the task to weekly recurring on <days_week>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias | cubierta   | dias_semana | ahora               |
+      | days | covered    | days_week   | now                 |
       | 1    | 2026-07-01 | lunes       | 2026-07-15T10:00:00 |
 
   # Estado tras editar 12
   # Semanal nunca completada, creada hace semanas: P sigue siendo el día
   # anterior a creadaEn, así que sigue atrasada con los días nuevos
   # (también lo estaba antes).
-  Scenario Outline: Estado tras editar 12
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When edito la tarea a periódica semanal los <dias_nuevos>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status after editing 12
+    Given a weekly recurring task on <days> created on <created>
+    When I edit the task to weekly recurring on <days_new>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias  | creada              | dias_nuevos | ahora               |
+      | days  | created             | days_new    | now                 |
       | lunes | 2026-06-22T08:00:00 | viernes     | 2026-07-15T10:00:00 |
 
   # Estado tras editar 13
   # Semanal nunca completada: con los días nuevos espera desde creadaEn
   # (antes, atrasada).
-  Scenario Outline: Estado tras editar 13
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When edito la tarea a periódica semanal los <dias_nuevos>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status after editing 13
+    Given a weekly recurring task on <days> created on <created>
+    When I edit the task to weekly recurring on <days_new>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias  | creada              | dias_nuevos | ahora               | progreso |
+      | days  | created             | days_new    | now                 | progress |
       | lunes | 2026-07-13T08:00:00 | jueves      | 2026-07-14T16:00:00 | 0.5      |
 
   # Estado tras editar 14
   # Periódica con completados que pasa a puntual: sale de Pendientes, con o
   # sin fecha límite.
-  Scenario Outline: Estado tras editar 14
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When edito la tarea a puntual con fecha límite <limite>
-    And consulto el estado en cualquier momento
-    Then la tarea no aparece en Pendientes
+  Scenario Outline: Status after editing 14
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I edit the task to one-off with due date <due_date>
+    And I query the status at any moment
+    Then the task does not appear in Pendientes
 
     Examples:
-      | cada | unidad | completada          | limite     |
+      | every | unit   | completed           | due_date   |
       | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-20 |
 
   # Estado tras editar 15
   # Semanal con un completado que pasa a puntual sin fecha límite: sale de
   # Pendientes.
-  Scenario Outline: Estado tras editar 15
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When edito la tarea a puntual sin fecha límite
-    And consulto el estado en cualquier momento
-    Then la tarea no aparece en Pendientes
+  Scenario Outline: Status after editing 15
+    Given a weekly recurring task on <days>
+    And the task has a completion that covers <covered>
+    When I edit the task to one-off without a due date
+    And I query the status at any moment
+    Then the task does not appear in Pendientes
 
     Examples:
-      | dias           | cubierta   |
+      | days           | covered    |
       | martes, jueves | 2026-07-14 |
 
   # Estado tras editar 16
   # Periódica nunca completada que pasa a puntual: se rige por la fecha
   # límite. Atrasada desde el día siguiente al límite.
-  Scenario Outline: Estado tras editar 16
-    Given una tarea periódica relativa nunca completada
-    When edito la tarea a puntual con fecha límite <limite>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status after editing 16
+    Given a relative recurring task never completed
+    When I edit the task to one-off with due date <due_date>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | limite     | ahora               |
+      | due_date   | now                 |
       | 2026-07-14 | 2026-07-15T00:00:00 |
 
   # Estado tras editar 17
   # Periódica nunca completada que pasa a puntual: pendiente hasta el último
   # segundo del día límite.
-  Scenario Outline: Estado tras editar 17
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    When edito la tarea a puntual con fecha límite <limite>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status after editing 17
+    Given a weekly recurring task on <days> created on <created>
+    When I edit the task to one-off with due date <due_date>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias   | creada              | limite     | ahora               |
+      | days   | created             | due_date   | now                 |
       | martes | 2026-06-22T08:00:00 | 2026-07-15 | 2026-07-15T23:59:59 |
 
   # Estado tras editar 18
   # Puntual sin completados que pasa a relativa: nunca completada, pendiente
   # (antes, atrasada).
-  Scenario Outline: Estado tras editar 18
-    Given una tarea puntual con fecha límite <limite>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status after editing 18
+    Given a one-off task with due date <due_date>
+    When I edit the task to relative recurring every <every> <unit>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | limite     | cada | unidad | ahora               |
+      | due_date   | every | unit   | now                 |
       | 2026-07-10 | 2    | dias   | 2026-07-15T10:00:00 |
 
   # Estado tras editar 19
   # Puntual sin completados que pasa a semanal: P es el día anterior a
   # creadaEn y espera desde creadaEn.
-  Scenario Outline: Estado tras editar 19
-    Given una tarea puntual sin fecha límite creada el <creada>
-    When edito la tarea a periódica semanal los <dias>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status after editing 19
+    Given a one-off task without a due date created on <created>
+    When I edit the task to weekly recurring on <days>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | creada              | dias   | ahora               | progreso |
+      | created             | days   | now                 | progress |
       | 2026-07-13T08:00:00 | jueves | 2026-07-14T16:00:00 | 0.5      |
 
   # Estado tras editar 20
@@ -290,15 +290,15 @@ Feature: Estado tras editar
   # cubierta aporta a P el día de su completadoEn. Completada el lunes y
   # pasada a martes y jueves: pendiente el martes (antes, en espera; con P
   # desde creadaEn, estaría atrasada).
-  Scenario Outline: Estado tras editar 20
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea fue completada el <completada>
-    When edito la tarea a periódica semanal los <dias>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status after editing 20
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task was completed on <completed>
+    When I edit the task to weekly recurring on <days>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | creada              | completada          | dias           | ahora               |
+      | every | unit   | created             | completed           | days           | now                 |
       | 1    | dias   | 2026-06-01T08:00:00 | 2026-07-13T10:00:00 | martes, jueves | 2026-07-14T09:00:00 |
 
   # Estado tras editar 21
@@ -306,64 +306,64 @@ Feature: Estado tras editar
   # ocurrencia posterior al día del completado, con progreso desde el
   # completado. Fila 1: completada el martes, que ya cuenta como cubierto.
   # Fila 2: mensual.
-  Scenario Outline: Estado tras editar 21
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea fue completada el <completada>
-    When edito la tarea a periódica semanal los <dias>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status after editing 21
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task was completed on <completed>
+    When I edit the task to weekly recurring on <days>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | creada              | completada          | dias           | ahora               | progreso |
+      | every | unit   | created             | completed           | days           | now                 | progress |
       | 1    | dias   | 2026-06-01T08:00:00 | 2026-07-14T08:00:00 | martes, jueves | 2026-07-14T18:00:00 | 0.25     |
 
   # Estado tras editar 22
   # Relativa completada que pasa a mensual: lo mismo con días del mes.
-  Scenario Outline: Estado tras editar 22
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea fue completada el <completada>
-    When edito la tarea a periódica mensual los días <dias>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status after editing 22
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task was completed on <completed>
+    When I edit the task to monthly recurring on days <days>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | creada              | completada          | dias   | ahora               | progreso |
+      | every | unit   | created             | completed           | days   | now                 | progress |
       | 3    | horas  | 2026-06-01T08:00:00 | 2026-07-14T08:00:00 | 14, 20 | 2026-07-15T18:00:00 | 0.25     |
 
   # Estado tras editar 23
   # P es la mayor entre las ocurrencias cubiertas y los días de los
   # completados sin cubierta. Cubre el martes 7 y se completó como relativa
   # el lunes 13: P = 13, pendiente el martes 14 (con P = 7, atrasada).
-  Scenario Outline: Estado tras editar 23
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    And completo la tarea el <completada>
-    And edito la tarea a periódica semanal los <dias_nuevos>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status after editing 23
+    Given a weekly recurring task on <days>
+    And the task has a completion that covers <covered>
+    When I edit the task to relative recurring every <every> <unit>
+    And I complete the task on <completed>
+    And I edit the task to weekly recurring on <days_new>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias   | cubierta   | cada | unidad | completada          | dias_nuevos    | ahora               |
+      | days   | covered    | every | unit   | completed           | days_new       | now                 |
       | martes | 2026-07-07 | 1    | dias   | 2026-07-13T10:00:00 | martes, jueves | 2026-07-14T10:00:00 |
 
   # Estado tras editar 24
   # Cubre el jueves 16 (completada antes de tiempo) y se completó como
   # relativa el martes 14: P = 16, en espera el viernes 17 (con P = 14,
   # atrasada).
-  Scenario Outline: Estado tras editar 24
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    And completo la tarea el <completada>
-    And edito la tarea a periódica semanal los <dias_nuevos>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Status after editing 24
+    Given a weekly recurring task on <days>
+    And the task has a completion that covers <covered>
+    When I edit the task to relative recurring every <every> <unit>
+    And I complete the task on <completed>
+    And I edit the task to weekly recurring on <days_new>
+    And I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | dias           | cubierta   | cada | unidad | completada          | dias_nuevos    | ahora               |
+      | days           | covered    | every | unit   | completed           | days_new       | now                 |
       | martes, jueves | 2026-07-16 | 1    | dias   | 2026-07-14T10:00:00 | martes, jueves | 2026-07-17T10:00:00 |
 
   # Estado tras editar 25
@@ -371,71 +371,71 @@ Feature: Estado tras editar
   # calcula con el P que incluye el día del completado sin cubierta. Fila 1:
   # P = lunes 13, cubre el martes 14. Fila 2: P = martes 14, no hay
   # ocurrencias sin cubrir en (P, hoy], cubre el jueves 16.
-  Scenario Outline: Estado tras editar 25
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea fue completada el <anterior>
-    When edito la tarea a periódica semanal los <dias>
-    And completo la tarea el <nuevo>
-    Then se registró un completado que cubre el <cubierta>
+  Scenario Outline: Status after editing 25
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task was completed on <previous>
+    When I edit the task to weekly recurring on <days>
+    And I complete the task on <new>
+    Then a completion was recorded that covers <covered>
 
     Examples:
-      | cada | unidad | creada              | anterior            | dias           | nuevo               | cubierta   |
+      | every | unit   | created             | previous            | days           | new                 | covered    |
       | 1    | dias   | 2026-06-01T08:00:00 | 2026-07-13T10:00:00 | martes, jueves | 2026-07-14T10:00:00 | 2026-07-14 |
       | 1    | dias   | 2026-06-01T08:00:00 | 2026-07-14T08:00:00 | martes, jueves | 2026-07-14T20:00:00 | 2026-07-16 |
 
   # Estado tras editar 26
   # Puntual completada: editar su fecha límite no la devuelve a Pendientes.
-  Scenario Outline: Estado tras editar 26
-    Given una tarea puntual con fecha límite <limite>
-    And la tarea fue completada el <completada>
-    When edito la tarea a puntual con fecha límite <limite_nuevo>
-    And consulto el estado en cualquier momento
-    Then la tarea no aparece en Pendientes
+  Scenario Outline: Status after editing 26
+    Given a one-off task with due date <due_date>
+    And the task was completed on <completed>
+    When I edit the task to one-off with due date <due_date_new>
+    And I query the status at any moment
+    Then the task does not appear in Pendientes
 
     Examples:
-      | limite     | completada          | limite_nuevo |
+      | due_date   | completed           | due_date_new |
       | 2026-07-14 | 2026-07-13T10:00:00 | 2026-07-20   |
 
   # Estado tras editar 27
   # Puntual completada que pasa a relativa: U es su completado.
-  Scenario Outline: Estado tras editar 27
-    Given una tarea puntual sin fecha límite
-    And la tarea fue completada el <completada>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status after editing 27
+    Given a one-off task without a due date
+    And the task was completed on <completed>
+    When I edit the task to relative recurring every <every> <unit>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | completada          | cada | unidad | ahora               | progreso |
+      | completed           | every | unit   | now                 | progress |
       | 2026-07-15T08:00:00 | 2    | dias   | 2026-07-16T08:00:00 | 0.5      |
 
   # Estado tras editar 28
   # Puntual completada que pasa a semanal: P es el día de su completado.
-  Scenario Outline: Estado tras editar 28
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea fue completada el <completada>
-    When edito la tarea a periódica semanal los <dias>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status after editing 28
+    Given a one-off task without a due date created on <created>
+    And the task was completed on <completed>
+    When I edit the task to weekly recurring on <days>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | creada              | completada          | dias   | ahora               |
+      | created             | completed           | days   | now                 |
       | 2026-06-01T08:00:00 | 2026-07-13T10:00:00 | martes | 2026-07-14T10:00:00 |
 
   # Estado tras editar 29
   # Editar la fecha límite cambia el lugar en Pendientes. Fila 1: Pagar
   # deja de estar atrasada y pasa detrás de Regar (pendiente desde las
   # 10:00). Fila 2: Pagar pasa a atrasada y va primero.
-  Scenario Outline: Estado tras editar 29
-    Given una tarea puntual Pagar con fecha límite <limite>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    When edito la tarea Pagar a puntual con fecha límite <limite_nuevo>
-    And consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Status after editing 29
+    Given a one-off task Pagar with due date <due_date>
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    When I edit the task Pagar to one-off with due date <due_date_new>
+    And I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | limite     | cada | unidad | completada          | limite_nuevo | ahora               | orden        |
+      | due_date   | every | unit   | completed           | due_date_new | now                 | order        |
       | 2026-07-14 | 4    | horas  | 2026-07-15T06:00:00 | 2026-07-20   | 2026-07-15T12:00:00 | Regar, Pagar |
       | 2026-07-20 | 4    | horas  | 2026-07-15T06:00:00 | 2026-07-14   | 2026-07-15T12:00:00 | Pagar, Regar |

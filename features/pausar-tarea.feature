@@ -20,24 +20,24 @@
 # Que el botón guarde y cierre el panel, que no exista al crear una tarea y
 # el texto "Pausada" se verifican en la suite QA.
 # Semana de referencia: lunes 2026-07-13 a domingo 2026-07-19.
-Feature: Pausar tarea
+Feature: Pause task
 
   # Pausar tarea 1
   # Una relativa pausada no tiene estado, no está completada y su checkbox
   # está deshabilitado. Fila 1: sin pausa estaría en espera y completada.
   # Fila 2: sin pausa estaría atrasada.
-  Scenario Outline: Pausar tarea 1
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When pauso la tarea
-    And consulto el estado el <ahora>
-    Then la tarea está pausada
-    And la tarea no tiene estado
-    And la tarea no está completada
-    And el checkbox de la tarea está deshabilitado
+  Scenario Outline: Pause task 1
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I pause the task
+    And I query the status on <now>
+    Then the task is paused
+    And the task has no status
+    And the task is not completed
+    And the task checkbox is disabled
 
     Examples:
-      | cada | unidad | completada          | ahora               |
+      | every | unit   | completed           | now                 |
       | 2    | dias   | 2026-07-15T09:00:00 | 2026-07-15T12:00:00 |
       | 2    | dias   | 2026-07-01T09:00:00 | 2026-07-15T12:00:00 |
 
@@ -45,163 +45,163 @@ Feature: Pausar tarea
   # Una semanal pausada nunca completada no tiene estado ni se atrasa,
   # aunque pasen sus ocurrencias. Fila 1: sin pausa estaría pendiente.
   # Fila 2: sin pausa estaría atrasada.
-  Scenario Outline: Pausar tarea 2
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea fue pausada
-    When consulto el estado el <ahora>
-    Then la tarea no tiene estado
-    And el checkbox de la tarea está deshabilitado
+  Scenario Outline: Pause task 2
+    Given a weekly recurring task on <days> created on <created>
+    And the task was paused
+    When I query the status on <now>
+    Then the task has no status
+    And the task checkbox is disabled
 
     Examples:
-      | dias           | creada              | ahora               |
+      | days           | created             | now                 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-07-14T10:00:00 |
       | martes, jueves | 2026-07-13T08:00:00 | 2026-08-20T10:00:00 |
 
   # Pausar tarea 3
   # Una mensual pausada con completados no tiene estado (sin pausa estaría
   # pendiente) y no está completada.
-  Scenario Outline: Pausar tarea 3
-    Given una tarea periódica mensual los días <dias>
-    And la tarea tiene un completado que cubre el <cubierta>
-    And la tarea fue pausada
-    When consulto el estado el <ahora>
-    Then la tarea no tiene estado
-    And la tarea no está completada
+  Scenario Outline: Pause task 3
+    Given a monthly recurring task on days <days>
+    And the task has a completion that covers <covered>
+    And the task was paused
+    When I query the status on <now>
+    Then the task has no status
+    And the task is not completed
 
     Examples:
-      | dias | cubierta   | ahora               |
+      | days | covered    | now                 |
       | 15   | 2026-06-15 | 2026-07-15T10:00:00 |
 
   # Pausar tarea 4
   # Con horario, la pausada tampoco tiene estado y su checkbox sigue
   # deshabilitado dentro de la ventana.
-  Scenario Outline: Pausar tarea 4
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la tarea fue pausada
-    When consulto el estado el <ahora>
-    Then la tarea no tiene estado
-    And el checkbox de la tarea está deshabilitado
+  Scenario Outline: Pause task 4
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    And the task was paused
+    When I query the status on <now>
+    Then the task has no status
+    And the task checkbox is disabled
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | ahora               |
+      | every | unit   | completed           | from  | to    | now                 |
       | 1    | dias   | 2026-07-14T09:00:00 | 08:00 | 11:00 | 2026-07-15T09:00:00 |
 
   # Pausar tarea 5
   # Al editar una relativa no pausada, el panel ofrece Pausar.
-  Scenario Outline: Pausar tarea 5
-    Given una tarea periódica relativa cada <cada> <unidad>
-    When abro la tarea en el panel de edición
-    Then el panel de edición ofrece <accion>
+  Scenario Outline: Pause task 5
+    Given a relative recurring task every <every> <unit>
+    When I open the task in the edit panel
+    Then the edit panel offers <action>
 
     Examples:
-      | cada | unidad | accion |
+      | every | unit   | action |
       | 2    | dias   | Pausar |
 
   # Pausar tarea 6
   # Al editar una de calendario no pausada, el panel ofrece Pausar.
-  Scenario Outline: Pausar tarea 6
-    Given una tarea periódica mensual los días <dias>
-    When abro la tarea en el panel de edición
-    Then el panel de edición ofrece <accion>
+  Scenario Outline: Pause task 6
+    Given a monthly recurring task on days <days>
+    When I open the task in the edit panel
+    Then the edit panel offers <action>
 
     Examples:
-      | dias | accion |
+      | days | action |
       | 10   | Pausar |
 
   # Pausar tarea 7
   # Al editar una pausada, el panel ofrece Reanudar.
-  Scenario Outline: Pausar tarea 7
-    Given una tarea periódica semanal los <dias>
-    And la tarea fue pausada
-    When abro la tarea en el panel de edición
-    Then el panel de edición ofrece <accion>
+  Scenario Outline: Pause task 7
+    Given a weekly recurring task on <days>
+    And the task was paused
+    When I open the task in the edit panel
+    Then the edit panel offers <action>
 
     Examples:
-      | dias           | accion   |
+      | days           | action   |
       | martes, jueves | Reanudar |
 
   # Pausar tarea 8
   # Una puntual no se puede pausar: el panel no ofrece Pausar.
-  Scenario: Pausar tarea 8
-    Given una tarea puntual sin fecha límite
-    When abro la tarea en el panel de edición
-    Then el panel de edición no ofrece pausar
+  Scenario: Pause task 8
+    Given a one-off task without a due date
+    When I open the task in the edit panel
+    Then the edit panel does not offer pause
 
   # Pausar tarea 9
   # Editar una pausada (título, modo) la deja pausada.
-  Scenario Outline: Pausar tarea 9
-    Given una tarea periódica relativa <titulo> cada <cada> <unidad>
-    And la tarea fue pausada
-    When edito el título a <titulo_nuevo>
-    And edito la tarea a periódica semanal los <dias>
-    Then la tarea tiene título <titulo_guardado>
-    And su recurrencia es semanal los <dias_guardados>
-    And la tarea está pausada
+  Scenario Outline: Pause task 9
+    Given a relative recurring task <title> every <every> <unit>
+    And the task was paused
+    When I edit the title to <title_new>
+    And I edit the task to weekly recurring on <days>
+    Then the task has title <title_stored>
+    And its recurrence is weekly on <days_stored>
+    And the task is paused
 
     Examples:
-      | titulo | cada | unidad | titulo_nuevo  | dias   | titulo_guardado | dias_guardados |
+      | title  | every | unit   | title_new     | days   | title_stored    | days_stored    |
       | Regar  | 2    | dias   | Regar plantas | jueves | Regar plantas   | jueves         |
 
   # Pausar tarea 10
   # Pausar no toca los completados, y con la tarea pausada se pueden borrar;
   # sigue pausada.
-  Scenario Outline: Pausar tarea 10
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <primera>
-    And la tarea fue completada el <segunda>
-    When pauso la tarea
-    And borro el completado del <segunda>
-    Then la tarea conserva un solo completado, del <queda>
-    And la tarea está pausada
+  Scenario Outline: Pause task 10
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <first>
+    And the task was completed on <second>
+    When I pause the task
+    And I delete the completion from <second>
+    Then the task keeps a single completion, from <remains>
+    And the task is paused
 
     Examples:
-      | cada | unidad | primera             | segunda             | queda               |
+      | every | unit   | first               | second              | remains             |
       | 2    | dias   | 2026-07-13T09:00:00 | 2026-07-15T09:00:00 | 2026-07-13T09:00:00 |
 
   # Pausar tarea 11
   # Pausar en un dispositivo y cambiar el título en otro: se conservan los
   # dos cambios.
-  Scenario Outline: Pausar tarea 11
-    Given una tarea periódica relativa <titulo> cada <cada> <unidad>
-    When pauso la tarea
-    And otro dispositivo, sin ver ese cambio, edita el título a <titulo_nuevo>
-    Then la tarea tiene título <titulo_guardado>
-    And la tarea está pausada
+  Scenario Outline: Pause task 11
+    Given a relative recurring task <title> every <every> <unit>
+    When I pause the task
+    And another device, without seeing that change, edits the title to <title_new>
+    Then the task has title <title_stored>
+    And the task is paused
 
     Examples:
-      | titulo | cada | unidad | titulo_nuevo  | titulo_guardado |
+      | title  | every | unit   | title_new     | title_stored    |
       | Regar  | 2    | dias   | Regar plantas | Regar plantas   |
 
   # Pausar tarea 12
   # Reanudar en un dispositivo y, después, pausar en otro que no vio la
   # reanudación: gana el último cambio, queda pausada.
-  Scenario Outline: Pausar tarea 12
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And otro dispositivo, sin ver ese cambio, pausa la tarea
-    And consulto el estado el <ahora>
-    Then la tarea está pausada
-    And la tarea no tiene estado
+  Scenario Outline: Pause task 12
+    Given a relative recurring task every <every> <unit>
+    And the task was paused
+    When I resume the task on <resumed>
+    And another device, without seeing that change, pauses the task
+    And I query the status on <now>
+    Then the task is paused
+    And the task has no status
 
     Examples:
-      | cada | unidad | reanudada           | ahora               |
+      | every | unit   | resumed             | now                 |
       | 2    | dias   | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 |
 
   # Pausar tarea 13
   # Otro dispositivo, sin ver la pausa, completa la tarea: el completado se
   # guarda y la tarea sigue pausada, sin estado.
-  Scenario Outline: Pausar tarea 13
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When pauso la tarea
-    And otro dispositivo, sin ver ese cambio, completa la tarea Regar el <completada>
-    And consulto el estado el <ahora>
-    Then la tarea conserva un solo completado, del <completada_guardada>
-    And la tarea está pausada
-    And la tarea no tiene estado
+  Scenario Outline: Pause task 13
+    Given a relative recurring task Regar every <every> <unit>
+    When I pause the task
+    And another device, without seeing that change, completes the task Regar on <completed>
+    And I query the status on <now>
+    Then the task keeps a single completion, from <completed_stored>
+    And the task is paused
+    And the task has no status
 
     Examples:
-      | cada | unidad | completada          | ahora               | completada_guardada |
+      | every | unit   | completed           | now                 | completed_stored    |
       | 2    | dias   | 2026-07-15T09:00:00 | 2026-07-15T12:00:00 | 2026-07-15T09:00:00 |

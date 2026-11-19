@@ -20,7 +20,7 @@
 # panel en ese momento y elegir la opción. Sin el paso "Mostrar completadas
 # está encendido", el check está en su valor inicial (apagado).
 # Semana de referencia: lunes 2026-07-13 a domingo 2026-07-19.
-Feature: Orden con tareas pospuestas
+Feature: Order with postponed tasks
 
   # Orden con tareas pospuestas 1
   # Pagar (atrasada, pospuesta hasta las 13:00 del 15) y Regar (pendiente,
@@ -28,18 +28,18 @@ Feature: Orden con tareas pospuestas
   # espera por su regla (Sábanas vuelve a las 00:00 del 16): fila 1. Al
   # vencer, Pagar vuelve a ser la primera atrasada (fila 2) y Regar vuelve
   # a pendiente con su clave, creadaEn (fila 3).
-  Scenario Outline: Orden con tareas pospuestas 1
-    Given una tarea puntual Foco sin fecha límite
-    And una tarea puntual Pagar con fecha límite <limite>
-    And la tarea Pagar fue pospuesta con la opción <opcion_pagar> el <pospuesta_pagar>
-    And una tarea periódica relativa Regar cada <cada_regar> <unidad_regar>
-    And la tarea Regar fue pospuesta con la opción <opcion_regar> el <pospuesta_regar>
-    And una tarea periódica semanal Sábanas los <dias> creada el <creada_sabanas>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Order with postponed tasks 1
+    Given a one-off task Foco without a due date
+    And a one-off task Pagar with due date <due_date>
+    And the task Pagar was postponed with option <option_pay> on <postponed_pay>
+    And a relative recurring task Regar every <every_water> <unit_water>
+    And the task Regar was postponed with option <option_water> on <postponed_water>
+    And a weekly recurring task Sábanas on <days> created on <created_sheets>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | limite     | opcion_pagar | pospuesta_pagar     | cada_regar | unidad_regar | opcion_regar | pospuesta_regar     | dias   | creada_sabanas      | ahora               | orden                       |
+      | due_date   | option_pay   | postponed_pay       | every_water | unit_water   | option_water | postponed_water     | days   | created_sheets      | now                 | order                       |
       | 2026-07-14 | 3 horas      | 2026-07-15T10:00:00 | 2          | dias         | hasta mañana | 2026-07-15T10:00:00 | jueves | 2026-07-15T08:00:00 | 2026-07-15T11:00:00 | Foco, Pagar, Sábanas, Regar |
       | 2026-07-14 | 3 horas      | 2026-07-15T10:00:00 | 2          | dias         | hasta mañana | 2026-07-15T10:00:00 | jueves | 2026-07-15T08:00:00 | 2026-07-15T13:00:00 | Pagar, Foco, Sábanas, Regar |
       | 2026-07-14 | 3 horas      | 2026-07-15T10:00:00 | 2          | dias         | hasta mañana | 2026-07-15T10:00:00 | jueves | 2026-07-15T08:00:00 | 2026-07-16T07:00:00 | Pagar, Regar, Sábanas, Foco |
@@ -48,35 +48,35 @@ Feature: Orden con tareas pospuestas
   # Con Mostrar completadas apagado, Regar (pospuesta, con un completado de
   # hoy) se ve: no está completada. Basura, en espera por su regla con un
   # completado, no se ve.
-  Scenario Outline: Orden con tareas pospuestas 2
-    Given una tarea puntual Foco sin fecha límite
-    And una tarea periódica relativa Regar cada <cada_regar> <unidad_regar>
-    And la tarea Regar fue completada el <completada_regar>
-    And la tarea Regar fue pospuesta con la opción <opcion_regar> el <pospuesta_regar>
-    And una tarea periódica relativa Basura cada <cada_basura> <unidad_basura>
-    And la tarea Basura fue completada el <completada_basura>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Order with postponed tasks 2
+    Given a one-off task Foco without a due date
+    And a relative recurring task Regar every <every_water> <unit_water>
+    And the task Regar was completed on <completed_water>
+    And the task Regar was postponed with option <option_water> on <postponed_water>
+    And a relative recurring task Basura every <every_trash> <unit_trash>
+    And the task Basura was completed on <completed_trash>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | cada_regar | unidad_regar | completada_regar    | opcion_regar | pospuesta_regar     | cada_basura | unidad_basura | completada_basura   | ahora               | orden       |
+      | every_water | unit_water   | completed_water     | option_water | postponed_water     | every_trash | unit_trash    | completed_trash     | now                 | order       |
       | 4          | horas        | 2026-07-15T08:00:00 | 3 horas      | 2026-07-15T12:30:00 | 1           | dias          | 2026-07-15T09:00:00 | 2026-07-15T13:00:00 | Foco, Regar |
 
   # Orden con tareas pospuestas 3
   # Con Mostrar completadas encendido, Regar va con las no completadas y
   # Basura con las completadas.
-  Scenario Outline: Orden con tareas pospuestas 3
-    Given Mostrar completadas está encendido
-    And una tarea puntual Foco sin fecha límite
-    And una tarea periódica relativa Regar cada <cada_regar> <unidad_regar>
-    And la tarea Regar fue completada el <completada_regar>
-    And la tarea Regar fue pospuesta con la opción <opcion_regar> el <pospuesta_regar>
-    And una tarea periódica relativa Basura cada <cada_basura> <unidad_basura>
-    And la tarea Basura fue completada el <completada_basura>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
-    And Pendientes muestra como completadas <completadas>
+  Scenario Outline: Order with postponed tasks 3
+    Given Mostrar completadas is on
+    And a one-off task Foco without a due date
+    And a relative recurring task Regar every <every_water> <unit_water>
+    And the task Regar was completed on <completed_water>
+    And the task Regar was postponed with option <option_water> on <postponed_water>
+    And a relative recurring task Basura every <every_trash> <unit_trash>
+    And the task Basura was completed on <completed_trash>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
+    And Pendientes shows as completed <completed_list>
 
     Examples:
-      | cada_regar | unidad_regar | completada_regar    | opcion_regar | pospuesta_regar     | cada_basura | unidad_basura | completada_basura   | ahora               | orden               | completadas |
+      | every_water | unit_water   | completed_water     | option_water | postponed_water     | every_trash | unit_trash    | completed_trash     | now                 | order               | completed_list |
       | 4          | horas        | 2026-07-15T08:00:00 | 3 horas      | 2026-07-15T12:30:00 | 1           | dias          | 2026-07-15T09:00:00 | 2026-07-15T13:00:00 | Foco, Regar, Basura | Basura      |

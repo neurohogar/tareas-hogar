@@ -11,7 +11,7 @@ const DUE_DATE = '2026-07-20';
 
 /** Moments of already recorded completions: the scenario says they do not influence the result. */
 const COMPLETIONS_MOMENTS = [new Date(2026, 6, 10, 9, 0, 0), new Date(2026, 6, 25, 18, 30, 0)];
-const COMPLETIONS_COUNT = { 'un completado': 1, 'dos completados': 2 };
+const COMPLETIONS_COUNT = { 'a completion': 1, 'two completions': 2 };
 const COUNT = `(${Object.keys(COMPLETIONS_COUNT).join('|')})`;
 
 function recordCompletions(world: World, task: Task, count: string): void {
@@ -28,87 +28,87 @@ const theOneOff = (world: World) => theTaskOfKind(world, 'puntual');
 
 export const oneOffSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^creo una tarea puntual con título ${P} y fecha límite ${P}$`),
+		pattern: new RegExp(`^I create a one-off task with title ${P} and due date ${P}$`),
 		run: (world, title, dueDate) => create(world, { title, dueDate })
 	},
 	{
-		pattern: new RegExp(`^creo una tarea puntual con título ${P} y sin fecha límite$`),
+		pattern: new RegExp(`^I create a one-off task with title ${P} and no due date$`),
 		run: (world, title) => create(world, { title })
 	},
 	{
-		pattern: /^creo una tarea puntual con un título de solo espacios y sin fecha límite$/,
+		pattern: /^I create a one-off task with a title of only spaces and no due date$/,
 		run: (world) => create(world, { title: '   ' })
 	},
 	{
-		pattern: new RegExp(`^creo una tarea puntual con un título válido y fecha límite ${P}$`),
+		pattern: new RegExp(`^I create a one-off task with a valid title and due date ${P}$`),
 		run: (world, dueDate) => create(world, { title: TITLE_VALID, dueDate })
 	},
 	{
-		pattern: new RegExp(`^creo el ${P} una tarea puntual con un título válido y fecha límite ${P}$`),
+		pattern: new RegExp(`^I create on ${P} a one-off task with a valid title and due date ${P}$`),
 		run: (world, created, dueDate) => create(world, { title: TITLE_VALID, dueDate }, dateHour(created))
 	},
 	{
-		pattern: /^una tarea puntual sin fecha límite$/,
+		pattern: /^a one-off task without a due date$/,
 		run: (world) => create(world, { title: 'Tarea' })
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual sin fecha límite creada el ${P}$`),
+		pattern: new RegExp(`^a one-off task without a due date created on ${P}$`),
 		run: (world, created) => create(world, { title: 'Tarea' }, dateHour(created))
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual con fecha límite ${P}$`),
+		pattern: new RegExp(`^a one-off task with due date ${P}$`),
 		run: (world, dueDate) => create(world, { title: 'Tarea', dueDate })
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual con fecha límite ${P} creada el ${P}$`),
+		pattern: new RegExp(`^a one-off task with due date ${P} created on ${P}$`),
 		run: (world, dueDate, created) => create(world, { title: 'Tarea', dueDate }, dateHour(created))
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual ${TITLE} con fecha límite ${P}$`),
+		pattern: new RegExp(`^a one-off task ${TITLE} with due date ${P}$`),
 		run: (world, title, dueDate) => create(world, { title, dueDate }, SCENARIO_BEFORE)
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual ${TITLE} con fecha límite ${P} creada el ${P}$`),
+		pattern: new RegExp(`^a one-off task ${TITLE} with due date ${P} created on ${P}$`),
 		run: (world, title, dueDate, created) => create(world, { title, dueDate }, dateHour(created))
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual ${TITLE} sin fecha límite$`),
+		pattern: new RegExp(`^a one-off task ${TITLE} without a due date$`),
 		run: (world, title) => create(world, { title }, SCENARIO_BEFORE)
 	},
 	{
-		pattern: new RegExp(`^una tarea puntual ${TITLE} sin fecha límite creada el ${P}$`),
+		pattern: new RegExp(`^a one-off task ${TITLE} without a due date created on ${P}$`),
 		run: (world, title, created) => create(world, { title }, dateHour(created))
 	},
 	{
-		pattern: /^una tarea puntual con una fecha límite cualquiera$/,
+		pattern: /^a one-off task with any due date$/,
 		run: (world) => create(world, { title: 'Tarea', dueDate: DUE_DATE })
 	},
 	{
-		pattern: /^se crea una tarea puntual$/,
+		pattern: /^a one-off task is created$/,
 		run: (world) => theOneOff(world)
 	},
 	{
-		pattern: new RegExp(`^su fecha límite es ${P}$`),
+		pattern: new RegExp(`^its due date is ${P}$`),
 		run: (world, dueDate) => expect(theOneOff(world).dueDate).toEqual(date(dueDate))
 	},
 	{
-		pattern: /^la tarea no tiene fecha límite$/,
+		pattern: /^the task has no due date$/,
 		run: (world) => expect(theDoc(world)).not.toHaveProperty('dueDate')
 	},
 	{
 		// Before tapping the checkbox it declares the completions; afterwards, it asserts how many remain.
-		pattern: new RegExp(`^la tarea tiene ${COUNT}$`),
+		pattern: new RegExp(`^the task has ${COUNT}$`),
 		run: (world, count) => {
 			if (!world.checkboxTouched) return recordCompletions(world, theTask(world), count);
 			expect(world.completions.filter(({ taskId }) => taskId === theTask(world).id)).toHaveLength(COMPLETIONS_COUNT[count as keyof typeof COMPLETIONS_COUNT]);
 		}
 	},
 	{
-		pattern: new RegExp(`^la tarea ${TITLE} tiene ${COUNT}$`),
+		pattern: new RegExp(`^the task ${TITLE} has ${COUNT}$`),
 		run: (world, title, count) => recordCompletions(world, theTaskTitled(world, title), count)
 	},
 	{
-		pattern: new RegExp(`^el completado registrado es del ${P}$`),
+		pattern: new RegExp(`^the recorded completion is from ${P}$`),
 		run: (world, completed) => expect(world.newCompletion?.completedAt).toEqual(dateHour(completed))
 	}
 ];

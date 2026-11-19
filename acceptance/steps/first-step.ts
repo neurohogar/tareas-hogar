@@ -35,22 +35,22 @@ function savedWithFirstStep(world: World, task: Task, firstStep: string): void {
 	world.docs = world.docs.map((doc) => (doc.id === task.id ? { ...doc, firstStep } : doc));
 }
 
-/** Each form of first-step change: "<subject> el primer paso a ...". */
+/** Each form of first-step change: "<subject> the first step to ...". */
 const CHANGES: { text: string; value: (...values: string[]) => string }[] = [
 	{ text: P, value: (firstStep) => firstStep },
-	{ text: `${P} con espacios al inicio y al final`, value: (firstStep) => withMargins(firstStep) },
-	{ text: 'uno de solo espacios', value: () => ONLY_SPACES },
-	{ text: `uno de ${P} caracteres`, value: (length) => 'x'.repeat(numeric(length)) }
+	{ text: `${P} with spaces at the start and end`, value: (firstStep) => withMargins(firstStep) },
+	{ text: 'one of only spaces', value: () => ONLY_SPACES },
+	{ text: `one of ${P} characters`, value: (length) => 'x'.repeat(numeric(length)) }
 ];
 
 const EDITORS = [
-	{ subject: 'edito', edit: editMe },
-	{ subject: `${OTHER} edita`, edit: editsOther }
+	{ subject: 'I edit', edit: editMe },
+	{ subject: `${OTHER} edits`, edit: editsOther }
 ];
 
 const editSteps: StepDefinition[] = EDITORS.flatMap(({ subject, edit }) =>
 	CHANGES.map(({ text, value }) => ({
-		pattern: new RegExp(`^${subject} el primer paso a ${text}$`),
+		pattern: new RegExp(`^${subject} the first step to ${text}$`),
 		run: (world: World, ...values: string[]) => {
 			edit(world, withFirstStep(value(...values)));
 			withoutRejection(world);
@@ -67,18 +67,18 @@ function theRowShowsFirstStep(world: World, text: string | undefined): void {
 export const firstStepSteps: StepDefinition[] = [
 	...editSteps,
 	{
-		pattern: new RegExp(`^creo una tarea puntual con título ${P} y primer paso ${P}$`),
+		pattern: new RegExp(`^I create a one-off task with title ${P} and first step ${P}$`),
 		run: (world, title, firstStep) => createOneOffWithFirstStep(world, { title, firstStep })
 	},
 	{
-		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} cada 2 dias y primer paso ${P}$`),
+		pattern: new RegExp(`^I create a relative recurring task with title ${P} every 2 days and first step ${P}$`),
 		run: (world, title, firstStep) => {
 			createInWorld(world, { title, every: 2, unit: 'dias', firstStep });
 			withoutRejection(world);
 		}
 	},
 	{
-		pattern: new RegExp(`^creo una tarea periódica (semanal|mensual) con título ${P} (los|los días) ${P} y primer paso ${P}$`),
+		pattern: new RegExp(`^I create a (weekly|monthly) recurring task with title ${P} (on|on days) ${P} and first step ${P}$`),
 		run: (world, shape, title, connector, days, firstStep) => {
 			const data = { title, firstStep, ...daysOf(shapeOf(`${shape} ${connector}`), days) };
 			recordCreation(world, (id) => createRecurringCalendar(data, id, NOW));
@@ -86,47 +86,47 @@ export const firstStepSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^creo una tarea puntual con título ${P} y un primer paso de solo espacios$`),
+		pattern: new RegExp(`^I create a one-off task with title ${P} and a first step of only spaces$`),
 		run: (world, title) => createOneOffWithFirstStep(world, { title, firstStep: ONLY_SPACES })
 	},
 	{
-		pattern: new RegExp(`^el primer paso de la tarea es ${P}$`),
+		pattern: new RegExp(`^the first step of the task is ${P}$`),
 		run: (world, firstStep) => savedWithFirstStep(world, theTask(world), firstStep)
 	},
 	{
-		pattern: new RegExp(`^el primer paso de la tarea ${TITLE} es ${P}$`),
+		pattern: new RegExp(`^the first step of the task ${TITLE} is ${P}$`),
 		run: (world, title, firstStep) => savedWithFirstStep(world, theTaskTitled(world, title), firstStep)
 	},
 	{
 		// Removing means emptying the field: the task is left without a first step.
-		pattern: /^quito el primer paso$/,
+		pattern: /^I remove the first step$/,
 		run: (world) => {
 			editMe(world, withFirstStep(''));
 			withoutRejection(world);
 		}
 	},
 	{
-		pattern: new RegExp(`^${OTHER} quita el primer paso$`),
+		pattern: new RegExp(`^${OTHER} removes the first step$`),
 		run: (world) => {
 			editsOther(world, withFirstStep(''));
 			withoutRejection(world);
 		}
 	},
 	{
-		pattern: new RegExp(`^la tarea tiene primer paso ${P}$`),
+		pattern: new RegExp(`^the task has first step ${P}$`),
 		run: (world, firstStep) => expect(theTask(world).firstStep).toBe(firstStep)
 	},
 	{
-		pattern: /^la tarea no tiene primer paso$/,
+		pattern: /^the task has no first step$/,
 		run: (world) => expect(theDoc(world)).not.toHaveProperty('firstStep')
 	},
 	{
-		pattern: new RegExp(`^la tarea tiene un primer paso de ${P} caracteres$`),
+		pattern: new RegExp(`^the task has a first step of ${P} characters$`),
 		run: (world, length) => expect(theTask(world).firstStep).toHaveLength(numeric(length))
 	},
 	{
 		// The expected status arrives as a table value; the first step's is the usual one (§5).
-		pattern: new RegExp(`^el estado es ${P}$`),
+		pattern: new RegExp(`^the status is ${P}$`),
 		run: (world, kind) => {
 			expect(STATUSES).toContain(kind);
 			expect(world.statuses.length).toBeGreaterThan(0);
@@ -134,11 +134,11 @@ export const firstStepSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^la fila de la tarea muestra el primer paso ${P}$`),
+		pattern: new RegExp(`^the task row shows the first step ${P}$`),
 		run: (world, text) => theRowShowsFirstStep(world, text)
 	},
 	{
-		pattern: /^la fila de la tarea no muestra primer paso$/,
+		pattern: /^the task row shows no first step$/,
 		run: (world) => theRowShowsFirstStep(world, undefined)
 	}
 ];

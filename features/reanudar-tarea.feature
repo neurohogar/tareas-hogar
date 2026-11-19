@@ -28,23 +28,23 @@
 # fecha del escenario. El progreso es una fracción entre 0 y 1, comparada
 # exactamente.
 # Semana de referencia: lunes 2026-07-13 a domingo 2026-07-19.
-Feature: Reanudar tarea
+Feature: Resume task
 
   # Reanudar tarea 1
   # Relativa: al reanudar queda pendiente, sin importar el completado de
   # antes de la pausa (fila 1: sin la regla estaría en espera; fila 2:
   # atrasada), y no se atrasa mientras no se complete (fila 3).
-  Scenario Outline: Reanudar tarea 1
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then la tarea no está pausada
-    And el estado es pendiente
+  Scenario Outline: Resume task 1
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the task is not paused
+    And the status is pendiente
 
     Examples:
-      | cada | unidad | completada          | reanudada           | ahora               |
+      | every | unit   | completed           | resumed             | now                 |
       | 2    | dias   | 2026-07-15T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T10:00:00 |
       | 2    | dias   | 2026-07-01T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T10:00:00 |
       | 4    | horas  | 2026-07-14T09:00:00 | 2026-07-15T10:00:00 | 2026-07-20T10:00:00 |
@@ -52,18 +52,18 @@ Feature: Reanudar tarea
   # Reanudar tarea 2
   # Relativa: un completado después de reanudar cuenta como siempre; uno en
   # el mismo instante de la reanudación también (fila 2).
-  Scenario Outline: Reanudar tarea 2
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And completo la tarea el <completada>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Resume task 2
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <previous>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I complete the task on <completed>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | anterior            | reanudada           | completada          | ahora               | progreso |
+      | every | unit   | previous            | resumed             | completed           | now                 | progress |
       | 2    | dias   | 2026-07-01T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T11:00:00 | 2026-07-16T11:00:00 | 0.5      |
       | 2    | dias   | 2026-07-01T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T10:00:00 | 2026-07-16T10:00:00 | 0.5      |
 
@@ -71,16 +71,16 @@ Feature: Reanudar tarea
   # Calendario reanudada un día de ocurrencia: pendiente ese día. Filas 1 y
   # 2: sin la regla estaría atrasada. Fila 3: el completado de antes de la
   # pausa cubría hoy; sin la regla estaría en espera.
-  Scenario Outline: Reanudar tarea 3
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Resume task 3
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias           | completada          | cubierta   | reanudada           | ahora               |
+      | days           | completed           | covered    | resumed             | now                 |
       | martes, jueves | 2026-07-07T09:00:00 | 2026-07-07 | 2026-07-16T10:00:00 | 2026-07-16T10:00:00 |
       | martes, jueves | 2026-07-07T09:00:00 | 2026-07-07 | 2026-07-16T10:00:00 | 2026-07-16T23:59:59 |
       | jueves         | 2026-07-16T08:00:00 | 2026-07-16 | 2026-07-16T10:00:00 | 2026-07-16T12:00:00 |
@@ -88,115 +88,115 @@ Feature: Reanudar tarea
   # Reanudar tarea 4
   # Semanal reanudada un día sin ocurrencia: en espera hasta la próxima,
   # con progreso desde reanudadaEn (sin la regla estaría atrasada).
-  Scenario Outline: Reanudar tarea 4
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Resume task 4
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias           | completada          | cubierta   | reanudada           | ahora               | progreso |
+      | days           | completed           | covered    | resumed             | now                 | progress |
       | martes, jueves | 2026-07-07T09:00:00 | 2026-07-07 | 2026-07-15T12:00:00 | 2026-07-15T18:00:00 | 0.5      |
       | sábado         | 2026-07-11T09:00:00 | 2026-07-11 | 2026-07-13T00:00:00 | 2026-07-16T00:00:00 | 0.6      |
 
   # Reanudar tarea 5
   # Mensual reanudada un día sin ocurrencia: en espera hasta la próxima,
   # con progreso desde reanudadaEn.
-  Scenario Outline: Reanudar tarea 5
-    Given una tarea periódica mensual los días <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Resume task 5
+    Given a monthly recurring task on days <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias | completada          | cubierta   | reanudada           | ahora               | progreso |
+      | days | completed           | covered    | resumed             | now                 | progress |
       | 20   | 2026-05-20T09:00:00 | 2026-05-20 | 2026-07-15T00:00:00 | 2026-07-17T12:00:00 | 0.5      |
 
   # Reanudar tarea 6
   # Después de reanudar, las reglas siguen como siempre: si pasa la próxima
   # ocurrencia sin completarse, queda atrasada.
-  Scenario Outline: Reanudar tarea 6
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Resume task 6
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias           | completada          | cubierta   | reanudada           | ahora               |
+      | days           | completed           | covered    | resumed             | now                 |
       | martes, jueves | 2026-07-07T09:00:00 | 2026-07-07 | 2026-07-15T12:00:00 | 2026-07-17T00:00:00 |
 
   # Reanudar tarea 7
   # Completar una calendario reanudada un día sin ocurrencia cubre la
   # próxima (sin la regla cubriría el martes, perdido durante la pausa).
-  Scenario Outline: Reanudar tarea 7
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And completo la tarea el <nueva>
-    And consulto el estado el <ahora>
-    Then se registró un completado que cubre el <cubierta_nueva>
-    And el estado es en espera
+  Scenario Outline: Resume task 7
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I complete the task on <new>
+    And I query the status on <now>
+    Then a completion was recorded that covers <covered_new>
+    And the status is en espera
 
     Examples:
-      | dias           | completada          | cubierta   | reanudada           | nueva               | ahora               | cubierta_nueva |
+      | days           | completed           | covered    | resumed             | new                 | now                 | covered_new    |
       | martes, jueves | 2026-07-07T09:00:00 | 2026-07-07 | 2026-07-15T10:00:00 | 2026-07-15T11:00:00 | 2026-07-15T12:00:00 | 2026-07-16     |
 
   # Reanudar tarea 8
   # Relativa con horario reanudada fuera de la ventana: en espera hasta el
   # desde siguiente, con progreso desde reanudadaEn (sin la regla estaría
   # atrasada).
-  Scenario Outline: Reanudar tarea 8
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Resume task 8
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | reanudada           | ahora               | progreso |
+      | every | unit   | completed           | from  | to    | resumed             | now                 | progress |
       | 1    | dias   | 2026-07-10T09:00:00 | 08:00 | 11:00 | 2026-07-15T12:00:00 | 2026-07-15T20:00:00 | 0.4      |
 
   # Reanudar tarea 9
   # Relativa con horario reanudada dentro de la ventana: pendiente.
-  Scenario Outline: Reanudar tarea 9
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Resume task 9
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | reanudada           | ahora               |
+      | every | unit   | completed           | from  | to    | resumed             | now                 |
       | 1    | dias   | 2026-07-10T09:00:00 | 08:00 | 11:00 | 2026-07-15T09:00:00 | 2026-07-15T10:00:00 |
 
   # Reanudar tarea 10
   # Relativa con horario reanudada dentro de la ventana: si la ventana
   # cierra sin completarse, queda atrasada.
-  Scenario Outline: Reanudar tarea 10
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Resume task 10
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | reanudada           | ahora               |
+      | every | unit   | completed           | from  | to    | resumed             | now                 |
       | 1    | dias   | 2026-07-10T09:00:00 | 08:00 | 11:00 | 2026-07-15T09:00:00 | 2026-07-15T11:00:00 |
 
   # Reanudar tarea 11
@@ -204,18 +204,18 @@ Feature: Reanudar tarea
   # ventana, en espera hasta el desde (fila 1); con la ventana ya cerrada,
   # esa ocurrencia no cuenta como perdida y queda en espera hasta la
   # próxima (fila 2), también en el instante exacto del hasta (fila 3).
-  Scenario Outline: Reanudar tarea 11
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Resume task 11
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias               | completada          | cubierta   | desde | hasta | reanudada           | ahora               | progreso |
+      | days               | completed           | covered    | from  | to    | resumed             | now                 | progress |
       | miércoles, viernes | 2026-07-10T09:00:00 | 2026-07-10 | 08:00 | 11:00 | 2026-07-15T06:00:00 | 2026-07-15T07:00:00 | 0.5      |
       | miércoles, viernes | 2026-07-10T09:00:00 | 2026-07-10 | 08:00 | 11:00 | 2026-07-15T12:00:00 | 2026-07-15T23:00:00 | 0.25     |
       | miércoles, viernes | 2026-07-10T09:00:00 | 2026-07-10 | 08:00 | 11:00 | 2026-07-15T11:00:00 | 2026-07-15T11:00:00 | 0        |
@@ -225,17 +225,17 @@ Feature: Reanudar tarea
   # que corresponde (fila 1: reanudada dentro; fila 2: reanudada antes, al
   # abrir; fila 3: reanudada con la ventana cerrada, la ocurrencia
   # siguiente).
-  Scenario Outline: Reanudar tarea 12
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Resume task 12
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias               | completada          | cubierta   | desde | hasta | reanudada           | ahora               |
+      | days               | completed           | covered    | from  | to    | resumed             | now                 |
       | miércoles, viernes | 2026-07-10T09:00:00 | 2026-07-10 | 08:00 | 11:00 | 2026-07-15T09:00:00 | 2026-07-15T10:59:59 |
       | miércoles, viernes | 2026-07-10T09:00:00 | 2026-07-10 | 08:00 | 11:00 | 2026-07-15T06:00:00 | 2026-07-15T08:00:00 |
       | miércoles, viernes | 2026-07-10T09:00:00 | 2026-07-10 | 08:00 | 11:00 | 2026-07-15T12:00:00 | 2026-07-17T08:00:00 |
@@ -244,17 +244,17 @@ Feature: Reanudar tarea
   # Calendario con horario: una ventana abierta al reanudar que cierra sin
   # completarse sí cuenta como perdida (fila 1); también la de la
   # ocurrencia siguiente (fila 2).
-  Scenario Outline: Reanudar tarea 13
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Resume task 13
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias               | completada          | cubierta   | desde | hasta | reanudada           | ahora               |
+      | days               | completed           | covered    | from  | to    | resumed             | now                 |
       | miércoles, viernes | 2026-07-10T09:00:00 | 2026-07-10 | 08:00 | 11:00 | 2026-07-15T10:59:59 | 2026-07-15T11:00:00 |
       | miércoles, viernes | 2026-07-10T09:00:00 | 2026-07-10 | 08:00 | 11:00 | 2026-07-15T12:00:00 | 2026-07-17T11:00:00 |
 
@@ -263,18 +263,18 @@ Feature: Reanudar tarea
   # antes de reanudar no cuentan; en espera hasta la próxima ventana (fila
   # 1: la de la tarde del mismo día; fila 2: la de la mañana de la próxima
   # ocurrencia).
-  Scenario Outline: Reanudar tarea 14
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Resume task 14
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias               | completada          | cubierta            | desde | hasta | desde2 | hasta2 | reanudada           | ahora               | progreso |
+      | days               | completed           | covered             | from  | to    | from2  | to2    | resumed             | now                 | progress |
       | miércoles, viernes | 2026-07-10T08:00:00 | 2026-07-10T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T12:00:00 | 2026-07-15T15:00:00 | 0.5      |
       | miércoles, viernes | 2026-07-10T08:00:00 | 2026-07-10T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T22:00:00 | 2026-07-16T14:30:00 | 0.5      |
 
@@ -282,148 +282,148 @@ Feature: Reanudar tarea
   # Relativa en días con varios horarios: como nunca completada desde
   # reanudadaEn; en espera hasta la primera ventana que cierra después de
   # reanudar (sin la regla estaría atrasada).
-  Scenario Outline: Reanudar tarea 15
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Resume task 15
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | creada              | desde | hasta | desde2 | hasta2 | reanudada           | ahora               | progreso |
+      | every | unit   | created             | from  | to    | from2  | to2    | resumed             | now                 | progress |
       | 1    | dias   | 2026-07-01T08:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T12:00:00 | 2026-07-15T15:00:00 | 0.5      |
 
   # Reanudar tarea 16
   # Un completado que otro dispositivo registró durante la pausa, sin verla,
   # es anterior a reanudadaEn: no cuenta y la relativa queda pendiente.
-  Scenario Outline: Reanudar tarea 16
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea fue pausada
-    When otro dispositivo, sin ver ese cambio, completa la tarea Regar el <completada>
-    And reanudo la tarea el <reanudada>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Resume task 16
+    Given a relative recurring task Regar every <every> <unit>
+    And the task was paused
+    When another device, without seeing that change, completes the task Regar on <completed>
+    And I resume the task on <resumed>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | completada          | reanudada           | ahora               |
+      | every | unit   | completed           | resumed             | now                 |
       | 2    | dias   | 2026-07-14T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T11:00:00 |
 
   # Reanudar tarea 17
   # Tocar el checkbox de una reanudada que se había completado hoy antes de
   # la pausa la completa (no está completada), en lugar de borrar ese
   # completado.
-  Scenario Outline: Reanudar tarea 17
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then el nuevo completado se agrega sin modificar los anteriores
-    And el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Resume task 17
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <previous>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the new completion is added without changing the previous ones
+    And the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | anterior            | reanudada           | toque               | ahora               | progreso |
+      | every | unit   | previous            | resumed             | tap                 | now                 | progress |
       | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-15T09:00:00 | 2026-07-15T10:00:00 | 2026-07-16T10:00:00 | 0.5      |
 
   # Reanudar tarea 18
   # La Última vez sigue contando los completados de antes de la pausa.
-  Scenario Outline: Reanudar tarea 18
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+  Scenario Outline: Resume task 18
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | cada | unidad | completada          | reanudada           | ahora               | ultima_vez |
+      | every | unit   | completed           | resumed             | now                 | last_time  |
       | 2    | dias   | 2026-07-14T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 | ayer 09:00 |
 
   # Reanudar tarea 19
   # El Historial sigue mostrando los completados de antes de la pausa.
-  Scenario Outline: Reanudar tarea 19
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    And la tarea Regar fue pausada
-    When reanudo la tarea Regar el <reanudada>
-    And consulto el Historial el <ahora>
-    Then el Historial muestra <historial>
+  Scenario Outline: Resume task 19
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    And the task Regar was paused
+    When I resume the task Regar on <resumed>
+    And I query the Historial on <now>
+    Then the Historial shows <history>
 
     Examples:
-      | cada | unidad | completada          | reanudada           | ahora               | historial         |
+      | every | unit   | completed           | resumed             | now                 | history           |
       | 2    | dias   | 2026-07-14T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 | Ayer: Regar 09:00 |
 
   # Reanudar tarea 20
   # El filtro es permanente: después de reanudar, pasar la relativa a
   # semanal sigue ignorando el completado de antes de la pausa (P es el día
   # anterior a reanudadaEn y el progreso cuenta desde reanudadaEn).
-  Scenario Outline: Reanudar tarea 20
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea fue pausada
-    When reanudo la tarea el <reanudada>
-    And edito la tarea a periódica semanal los <dias>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Resume task 20
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task was paused
+    When I resume the task on <resumed>
+    And I edit the task to weekly recurring on <days>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | completada          | reanudada           | dias   | ahora               | progreso |
+      | every | unit   | completed           | resumed             | days   | now                 | progress |
       | 2    | dias   | 2026-07-14T09:00:00 | 2026-07-15T00:00:00 | jueves | 2026-07-15T12:00:00 | 0.5      |
 
   # Reanudar tarea 21
   # Pasar una periódica pausada a puntual la reanuda; la puntual ignora
   # reanudadaEn, así que con el completado de antes de la pausa queda
   # completada.
-  Scenario Outline: Reanudar tarea 21
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea fue pausada
-    When edito la tarea a puntual sin fecha límite el <editada>
-    And consulto el estado el <ahora>
-    Then la tarea es puntual
-    And la tarea no está pausada
-    And la tarea está completada
+  Scenario Outline: Resume task 21
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task was paused
+    When I edit the task to one-off without a due date on <edited>
+    And I query the status on <now>
+    Then the task is one-off
+    And the task is not paused
+    And the task is completed
 
     Examples:
-      | cada | unidad | completada          | editada             | ahora               |
+      | every | unit   | completed           | edited              | now                 |
       | 2    | dias   | 2026-07-10T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 |
 
   # Reanudar tarea 22
   # La reanudación al pasar a puntual vale si vuelve a ser periódica: el
   # completado de antes de la pausa no cuenta y queda pendiente (sin la
   # regla estaría atrasada).
-  Scenario Outline: Reanudar tarea 22
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea fue pausada
-    When edito la tarea a puntual sin fecha límite el <editada>
-    And edito la tarea a periódica relativa cada <cada> <unidad>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Resume task 22
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task was paused
+    When I edit the task to one-off without a due date on <edited>
+    And I edit the task to relative recurring every <every> <unit>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | completada          | editada             | ahora               |
+      | every | unit   | completed           | edited              | now                 |
       | 2    | dias   | 2026-07-10T09:00:00 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 |
 
   # Reanudar tarea 23
   # Orden: una relativa reanudada está pendiente desde reanudadaEn (fila 1:
   # va después de una creada antes); si empata con otra, el desempate usa
   # su creadaEn real, más antiguo (fila 2, aunque el título vaya después).
-  Scenario Outline: Reanudar tarea 23
-    Given una tarea periódica relativa Regar nunca completada creada el <creada_regar>
-    And la tarea Regar fue pausada
-    And una tarea periódica relativa Barrer nunca completada creada el <creada_barrer>
-    When reanudo la tarea Regar el <reanudada>
-    And consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+  Scenario Outline: Resume task 23
+    Given a relative recurring task Regar never completed created on <created_water>
+    And the task Regar was paused
+    And a relative recurring task Barrer never completed created on <created_sweep>
+    When I resume the task Regar on <resumed>
+    And I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | creada_regar        | creada_barrer       | reanudada           | ahora               | orden         |
+      | created_water       | created_sweep       | resumed             | now                 | order         |
       | 2026-07-01T08:00:00 | 2026-07-10T08:00:00 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 | Barrer, Regar |
       | 2026-07-01T08:00:00 | 2026-07-15T10:00:00 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 | Regar, Barrer |
       | 2026-07-01T08:00:00 | 2026-07-15T11:00:00 | 2026-07-15T10:00:00 | 2026-07-15T12:00:00 | Regar, Barrer |

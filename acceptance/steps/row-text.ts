@@ -24,11 +24,11 @@ function theRowShowsText(world: World, text: string | undefined): void {
 
 export const rowTextSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^la fila de la tarea muestra el texto ${P}$`),
+		pattern: new RegExp(`^the task row shows the text ${P}$`),
 		run: (world, text) => theRowShowsText(world, text)
 	},
 	{
-		pattern: new RegExp(`^la fila de ${TITLE} muestra el texto ${P}$`),
+		pattern: new RegExp(`^the row of ${TITLE} shows the text ${P}$`),
 		run: (world, title, text) => {
 			expect(world.pendingQueries.length).toBeGreaterThan(0);
 			for (const rows of world.pendingQueries) {
@@ -39,15 +39,15 @@ export const rowTextSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: /^la fila de la tarea no muestra texto de fecha$/,
+		pattern: /^the task row shows no date text$/,
 		run: (world) => theRowShowsText(world, undefined)
 	},
 	{
-		pattern: new RegExp(`^el aviso del completado muestra el regreso ${P}$`),
+		pattern: new RegExp(`^the completion notice shows the return ${P}$`),
 		run: (world, returned) => expect(completionReturn(world)).toBe(returned)
 	},
 	{
-		pattern: /^el aviso del completado no muestra regreso$/,
+		pattern: /^the completion notice shows no return$/,
 		run: (world) => expect(completionReturn(world)).toBeUndefined()
 	}
 ];

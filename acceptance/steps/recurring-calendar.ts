@@ -8,25 +8,27 @@ import { NOW, SCENARIO_BEFORE, TITLE_VALID, recordCreation } from './create';
 import { P, TITLE, monthDays, weekdays, date, dateHour, occurrence } from './values';
 import { theTask, theTaskOfKind, theTaskTitled, newId, type StepDefinition, type World } from './world';
 
-export type Shape = 'semanal' | 'mensual';
+export type Shape = 'weekly' | 'monthly';
 
-/** How the days of each form are named: "los martes" or "los días 10". */
-const CONNECTOR: Record<Shape, string> = { semanal: 'los', mensual: 'los días' };
-export const SHAPE_AND_DAYS = `(semanal los|mensual los días) ${P}`;
-/** "semanal Basura los martes": the title goes between the shape and the connector. */
-const SHAPE_TITLE_AND_DAYS = `(semanal|mensual) ${TITLE} (los|los días) ${P}`;
+/** How the days of each form are named: "on Tuesday" or "on days 10". */
+const CONNECTOR: Record<Shape, string> = { weekly: 'on', monthly: 'on days' };
+export const SHAPE_AND_DAYS = `(weekly|monthly) (on|on days) ${P}`;
+/** "weekly recurring task Basura on martes": the title goes between the task and the connector. */
+export const SHAPE_RECURRING_AND_DAYS = `(weekly|monthly) recurring (on|on days) ${P}`;
+const SHAPE_TASK_AND_DAYS = `(weekly|monthly) recurring task (on|on days) ${P}`;
+const SHAPE_TASK_TITLE_AND_DAYS = `(weekly|monthly) recurring task ${TITLE} (on|on days) ${P}`;
 
 export const DAYS_VALID: Record<Shape, Pick<RecurringCalendarData, 'weekdays' | 'monthDays'>> = {
-	semanal: { weekdays: ['martes'], monthDays: [] },
-	mensual: { weekdays: [], monthDays: [15] }
+	weekly: { weekdays: ['martes'], monthDays: [] },
+	monthly: { weekdays: [], monthDays: [15] }
 };
 export const WITHOUT_DAYS = { weekdays: [], monthDays: [] };
 
 export function daysOf(shape: Shape, days: string): Pick<RecurringCalendarData, 'weekdays' | 'monthDays'> {
-	return shape === 'semanal' ? { weekdays: weekdays(days), monthDays: [] } : { weekdays: [], monthDays: monthDays(days) };
+	return shape === 'weekly' ? { weekdays: weekdays(days), monthDays: [] } : { weekdays: [], monthDays: monthDays(days) };
 }
 
-/** "semanal los" or "mensual los días": the shape, validating that the connector corresponds to it. */
+/** "weekly on" or "monthly on days": the shape, validating that the connector corresponds to it. */
 export function shapeOf(shapeAndConnector: string): Shape {
 	const [shape] = shapeAndConnector.split(' ') as [Shape];
 	if (`${shape} ${CONNECTOR[shape]}` !== shapeAndConnector) throw new Error(`Invalid shape: "${shapeAndConnector}"`);
@@ -58,87 +60,87 @@ function theLastCompletion(world: World): Completion {
 
 export const recurringCalendarSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^creo una tarea periódica (semanal|mensual) con título ${P} (los|los días) ${P}$`),
+		pattern: new RegExp(`^I create a (weekly|monthly) recurring task with title ${P} (on|on days) ${P}$`),
 		run: (world, shape, title, connector, days) => {
 			const theShape = shapeOf(`${shape} ${connector}`);
 			create(world, { title, ...daysOf(theShape, days) });
 		}
 	},
 	{
-		pattern: new RegExp(`^creo una tarea periódica (semanal|mensual) con título ${P} y días válidos$`),
+		pattern: new RegExp(`^I create a (weekly|monthly) recurring task with title ${P} and valid days$`),
 		run: (world, shape, title) => create(world, { title, ...DAYS_VALID[shape as Shape] })
 	},
 	{
-		pattern: /^creo una tarea periódica (semanal|mensual) con un título de solo espacios y días válidos$/,
+		pattern: /^I create a (weekly|monthly) recurring task with a title of only spaces and valid days$/,
 		run: (world, shape) => create(world, { title: '   ', ...DAYS_VALID[shape as Shape] })
 	},
 	{
-		pattern: /^creo una tarea periódica (semanal|mensual) con un título válido y sin días$/,
+		pattern: /^I create a (weekly|monthly) recurring task with a valid title and without days$/,
 		run: (world) => create(world, { title: TITLE_VALID, ...WITHOUT_DAYS })
 	},
 	{
-		pattern: new RegExp(`^creo una tarea periódica mensual con un título válido los días ${P}$`),
-		run: (world, days) => create(world, { title: TITLE_VALID, ...daysOf('mensual', days) })
+		pattern: new RegExp(`^I create a monthly recurring task with a valid title on days ${P}$`),
+		run: (world, days) => create(world, { title: TITLE_VALID, ...daysOf('monthly', days) })
 	},
 	{
 		pattern:
-			/^creo una tarea periódica de calendario con un título válido y días de la semana y del mes a la vez$/,
+			/^I create a calendar recurring task with a valid title and weekdays and month days at once$/,
 		run: (world) =>
 			create(world, {
 				title: TITLE_VALID,
-				weekdays: DAYS_VALID.semanal.weekdays,
-				monthDays: DAYS_VALID.mensual.monthDays
+				weekdays: DAYS_VALID.weekly.weekdays,
+				monthDays: DAYS_VALID.monthly.monthDays
 			})
 	},
 	{
-		pattern: new RegExp(`^su recurrencia es ${SHAPE_AND_DAYS}$`),
-		run: (world, shapeAndConnector, days) => {
-			const shape = shapeOf(shapeAndConnector);
+		pattern: new RegExp(`^its recurrence is ${SHAPE_AND_DAYS}$`),
+		run: (world, shapeWord, connector, days) => {
+			const shape = shapeOf(`${shapeWord} ${connector}`);
 			const { weekdays: week, monthDays: month } = daysOf(shape, days);
-			const expected = shape === 'semanal' ? { weekdays: week } : { monthDays: month };
+			const expected = shape === 'weekly' ? { weekdays: week } : { monthDays: month };
 			expect(theTaskOfKind(world, 'periodica').recurrence).toStrictEqual({ mode: 'calendario', ...expected });
 		}
 	},
 	{
-		pattern: new RegExp(`^una tarea periódica ${SHAPE_AND_DAYS} creada el ${P}$`),
-		run: (world, shapeAndConnector, days, created) =>
-			create(world, { title: 'Tarea', ...daysOf(shapeOf(shapeAndConnector), days) }, dateHour(created))
+		pattern: new RegExp(`^a ${SHAPE_TASK_AND_DAYS} created on ${P}$`),
+		run: (world, shape, connector, days, created) =>
+			create(world, { title: 'Tarea', ...daysOf(shapeOf(`${shape} ${connector}`), days) }, dateHour(created))
 	},
 	{
-		pattern: new RegExp(`^una tarea periódica ${SHAPE_AND_DAYS}$`),
-		run: (world, shapeAndConnector, days) => create(world, { title: 'Tarea', ...daysOf(shapeOf(shapeAndConnector), days) })
+		pattern: new RegExp(`^a ${SHAPE_TASK_AND_DAYS}$`),
+		run: (world, shape, connector, days) => create(world, { title: 'Tarea', ...daysOf(shapeOf(`${shape} ${connector}`), days) })
 	},
 	{
-		pattern: new RegExp(`^una tarea periódica ${SHAPE_TITLE_AND_DAYS}$`),
+		pattern: new RegExp(`^a ${SHAPE_TASK_TITLE_AND_DAYS}$`),
 		run: (world, shape, title, connector, days) =>
 			create(world, { title, ...daysOf(shapeOf(`${shape} ${connector}`), days) }, SCENARIO_BEFORE)
 	},
 	{
-		pattern: new RegExp(`^una tarea periódica ${SHAPE_TITLE_AND_DAYS} creada el ${P}$`),
+		pattern: new RegExp(`^a ${SHAPE_TASK_TITLE_AND_DAYS} created on ${P}$`),
 		run: (world, shape, title, connector, days, created) =>
 			create(world, { title, ...daysOf(shapeOf(`${shape} ${connector}`), days) }, dateHour(created))
 	},
 	{
-		pattern: new RegExp(`^la tarea ${TITLE} tiene un completado que cubre el ${P}$`),
+		pattern: new RegExp(`^the task ${TITLE} has a completion that covers ${P}$`),
 		run: (world, title, covered) =>
 			addCompletion(world, date(covered), date(covered), theTaskTitled(world, title))
 	},
 	{
-		pattern: new RegExp(`^la tarea ${TITLE} tiene un completado del ${P} que cubre el ${P}$`),
+		pattern: new RegExp(`^the task ${TITLE} has a completion from ${P} that covers ${P}$`),
 		run: (world, title, completed, covered) =>
 			addCompletion(world, dateHour(completed), occurrence(covered), theTaskTitled(world, title))
 	},
 	{
-		pattern: new RegExp(`^la tarea tiene un completado del ${P} que cubre el ${P}$`),
+		pattern: new RegExp(`^the task has a completion from ${P} that covers ${P}$`),
 		run: (world, completed, covered) => addCompletion(world, dateHour(completed), occurrence(covered))
 	},
 	{
 		// The moment does not influence the result: the start of the covered day is used.
-		pattern: new RegExp(`^la tarea tiene un completado que cubre el ${P}$`),
+		pattern: new RegExp(`^the task has a completion that covers ${P}$`),
 		run: (world, covered) => addCompletion(world, date(covered), date(covered))
 	},
 	{
-		pattern: /^la tarea tiene otro completado más antiguo que cubre la misma ocurrencia$/,
+		pattern: /^the task has another older completion that covers the same occurrence$/,
 		run: (world) => {
 			const last = theLastCompletion(world);
 			if (!last.coveredOccurrence) throw new Error('The last completion does not cover any occurrence');
@@ -146,7 +148,7 @@ export const recurringCalendarSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^se registró un completado que cubre el ${P}$`),
+		pattern: new RegExp(`^a completion was recorded that covers ${P}$`),
 		run: (world, covered) => {
 			const { wasMinimal, ...rest } = world.newCompletion ?? {};
 			expect(rest).toStrictEqual({

@@ -18,277 +18,277 @@
 # tener el campo que ya no corresponde (recurrencia en una puntual, fecha
 # límite en una periódica). Los "su recurrencia es ..." comparan la
 # recurrencia entera, sin campos de más.
-Feature: Editar tarea
+Feature: Edit task
 
   # Editar tarea 1
   # Cambiar el título: se guarda el título nuevo y la recurrencia no cambia.
-  Scenario Outline: Editar tarea 1
-    Given una tarea periódica relativa <titulo> cada <cada> <unidad>
-    When edito el título a <titulo_nuevo>
-    Then la tarea tiene título <titulo_guardado>
-    And su recurrencia es relativa cada <cada_guardado> <unidad>
+  Scenario Outline: Edit task 1
+    Given a relative recurring task <title> every <every> <unit>
+    When I edit the title to <title_new>
+    Then the task has title <title_stored>
+    And its recurrence is relative every <every_stored> <unit>
 
     Examples:
-      | titulo | cada | unidad | titulo_nuevo    | titulo_guardado | cada_guardado |
+      | title  | every | unit   | title_new       | title_stored    | every_stored  |
       | Regar  | 3    | dias   | Regar plantas   | Regar plantas   | 3             |
       | Baño   | 12   | horas  | Limpiar el baño | Limpiar el baño | 12            |
 
   # Editar tarea 2
   # Puntual: cambiar o agregar la fecha límite.
-  Scenario Outline: Editar tarea 2
-    Given una tarea puntual con fecha límite <limite>
-    When edito la tarea a puntual con fecha límite <limite_nuevo>
-    Then la tarea es puntual
-    And su fecha límite es <limite_guardado>
+  Scenario Outline: Edit task 2
+    Given a one-off task with due date <due_date>
+    When I edit the task to one-off with due date <due_date_new>
+    Then the task is one-off
+    And its due date is <due_date_stored>
 
     Examples:
-      | limite     | limite_nuevo | limite_guardado |
+      | due_date   | due_date_new | due_date_stored |
       | 2026-07-14 | 2026-07-20   | 2026-07-20      |
       | 2026-07-20 | 2026-02-28   | 2026-02-28      |
       | 2026-07-14 | 2028-02-29   | 2028-02-29      |
 
   # Editar tarea 3
   # Puntual sin fecha límite: se le agrega una.
-  Scenario Outline: Editar tarea 3
-    Given una tarea puntual sin fecha límite
-    When edito la tarea a puntual con fecha límite <limite_nuevo>
-    Then la tarea es puntual
-    And su fecha límite es <limite_guardado>
+  Scenario Outline: Edit task 3
+    Given a one-off task without a due date
+    When I edit the task to one-off with due date <due_date_new>
+    Then the task is one-off
+    And its due date is <due_date_stored>
 
     Examples:
-      | limite_nuevo | limite_guardado |
+      | due_date_new | due_date_stored |
       | 2026-07-20   | 2026-07-20      |
 
   # Editar tarea 4
   # Puntual: quitar la fecha límite.
-  Scenario Outline: Editar tarea 4
-    Given una tarea puntual con fecha límite <limite>
-    When edito la tarea a puntual sin fecha límite
-    Then la tarea es puntual
-    And la tarea no tiene fecha límite
+  Scenario Outline: Edit task 4
+    Given a one-off task with due date <due_date>
+    When I edit the task to one-off without a due date
+    Then the task is one-off
+    And the task has no due date
 
     Examples:
-      | limite     |
+      | due_date   |
       | 2026-07-14 |
 
   # Editar tarea 5
   # Relativa: cambiar el intervalo (cantidad y unidad).
-  Scenario Outline: Editar tarea 5
-    Given una tarea periódica relativa cada <cada> <unidad>
-    When edito la tarea a periódica relativa cada <cada_nuevo> <unidad_nueva>
-    Then su recurrencia es relativa cada <cada_guardado> <unidad_guardada>
+  Scenario Outline: Edit task 5
+    Given a relative recurring task every <every> <unit>
+    When I edit the task to relative recurring every <every_new> <unit_new>
+    Then its recurrence is relative every <every_stored> <unit_stored>
 
     Examples:
-      | cada | unidad | cada_nuevo | unidad_nueva | cada_guardado | unidad_guardada |
+      | every | unit   | every_new  | unit_new     | every_stored  | unit_stored     |
       | 3    | dias   | 1          | dias         | 1             | dias            |
       | 3    | dias   | 3          | horas        | 3             | horas           |
       | 4    | horas  | 36         | horas        | 36            | horas           |
 
   # Editar tarea 6
   # Semanal: cambiar los días (el orden en que se eligen no importa).
-  Scenario Outline: Editar tarea 6
-    Given una tarea periódica semanal los <dias>
-    When edito la tarea a periódica semanal los <dias_nuevos>
-    Then su recurrencia es semanal los <dias_guardados>
+  Scenario Outline: Edit task 6
+    Given a weekly recurring task on <days>
+    When I edit the task to weekly recurring on <days_new>
+    Then its recurrence is weekly on <days_stored>
 
     Examples:
-      | dias           | dias_nuevos       | dias_guardados    |
+      | days           | days_new          | days_stored       |
       | martes, jueves | viernes           | viernes           |
       | domingo        | sábado, lunes     | lunes, sábado     |
       | martes, jueves | martes, miércoles | martes, miércoles |
 
   # Editar tarea 7
   # Mensual: cambiar los días.
-  Scenario Outline: Editar tarea 7
-    Given una tarea periódica mensual los días <dias>
-    When edito la tarea a periódica mensual los días <dias_nuevos>
-    Then su recurrencia es mensual los días <dias_guardados>
+  Scenario Outline: Edit task 7
+    Given a monthly recurring task on days <days>
+    When I edit the task to monthly recurring on days <days_new>
+    Then its recurrence is monthly on days <days_stored>
 
     Examples:
-      | dias | dias_nuevos | dias_guardados |
+      | days | days_new    | days_stored    |
       | 10   | 31, 5       | 5, 31          |
       | 1    | 15          | 15             |
 
   # Editar tarea 8
   # Cambiar de modo: relativa a semanal; la recurrencia queda solo semanal.
-  Scenario Outline: Editar tarea 8
-    Given una tarea periódica relativa cada <cada> <unidad>
-    When edito la tarea a periódica semanal los <dias>
-    Then su recurrencia es semanal los <dias_guardados>
+  Scenario Outline: Edit task 8
+    Given a relative recurring task every <every> <unit>
+    When I edit the task to weekly recurring on <days>
+    Then its recurrence is weekly on <days_stored>
 
     Examples:
-      | cada | unidad | dias           | dias_guardados |
+      | every | unit   | days           | days_stored    |
       | 2    | dias   | martes, jueves | martes, jueves |
 
   # Editar tarea 9
   # Cambiar de modo: semanal a mensual; la recurrencia queda solo mensual.
-  Scenario Outline: Editar tarea 9
-    Given una tarea periódica semanal los <dias>
-    When edito la tarea a periódica mensual los días <dias_mes>
-    Then su recurrencia es mensual los días <dias_guardados>
+  Scenario Outline: Edit task 9
+    Given a weekly recurring task on <days>
+    When I edit the task to monthly recurring on days <days_month>
+    Then its recurrence is monthly on days <days_stored>
 
     Examples:
-      | dias           | dias_mes | dias_guardados |
+      | days           | days_month | days_stored    |
       | martes, jueves | 1, 15    | 1, 15          |
 
   # Editar tarea 10
   # Cambiar de modo: mensual a relativa; la recurrencia queda solo relativa.
-  Scenario Outline: Editar tarea 10
-    Given una tarea periódica mensual los días <dias>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    Then su recurrencia es relativa cada <cada_guardado> <unidad>
+  Scenario Outline: Edit task 10
+    Given a monthly recurring task on days <days>
+    When I edit the task to relative recurring every <every> <unit>
+    Then its recurrence is relative every <every_stored> <unit>
 
     Examples:
-      | dias | cada | unidad | cada_guardado |
+      | days | every | unit   | every_stored  |
       | 10   | 8    | horas  | 8             |
 
   # Editar tarea 11
   # Cambiar de tipo: periódica a puntual; queda sin recurrencia.
-  Scenario Outline: Editar tarea 11
-    Given una tarea periódica semanal los <dias>
-    When edito la tarea a puntual con fecha límite <limite>
-    Then la tarea es puntual
-    And su fecha límite es <limite_guardado>
-    And la tarea no tiene recurrencia
+  Scenario Outline: Edit task 11
+    Given a weekly recurring task on <days>
+    When I edit the task to one-off with due date <due_date>
+    Then the task is one-off
+    And its due date is <due_date_stored>
+    And the task has no recurrence
 
     Examples:
-      | dias           | limite     | limite_guardado |
+      | days           | due_date   | due_date_stored |
       | martes, jueves | 2026-07-20 | 2026-07-20      |
 
   # Editar tarea 12
   # Cambiar de tipo: puntual a periódica; queda sin fecha límite.
-  Scenario Outline: Editar tarea 12
-    Given una tarea puntual con fecha límite <limite>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    Then la tarea es periódica
-    And su recurrencia es relativa cada <cada_guardado> <unidad>
-    And la tarea no tiene fecha límite
+  Scenario Outline: Edit task 12
+    Given a one-off task with due date <due_date>
+    When I edit the task to relative recurring every <every> <unit>
+    Then the task is recurring
+    And its recurrence is relative every <every_stored> <unit>
+    And the task has no due date
 
     Examples:
-      | limite     | cada | unidad | cada_guardado |
+      | due_date   | every | unit   | every_stored  |
       | 2026-07-20 | 2    | dias   | 2             |
 
   # Editar tarea 13
   # Editar no cambia creadaEn ni los completados, aunque cambie el tipo o el modo.
-  Scenario Outline: Editar tarea 13
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea fue completada el <completada>
-    When edito la tarea a periódica semanal los <dias>
-    Then la tarea sigue creada el <creada_guardada>
-    And la tarea conserva su id
-    And la tarea conserva un solo completado, del <completada_guardada>
+  Scenario Outline: Edit task 13
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task was completed on <completed>
+    When I edit the task to weekly recurring on <days>
+    Then the task is still created on <created_stored>
+    And the task keeps its id
+    And the task keeps a single completion, from <completed_stored>
 
     Examples:
-      | cada | unidad | creada              | completada          | dias   | creada_guardada     | completada_guardada |
+      | every | unit   | created             | completed           | days   | created_stored      | completed_stored    |
       | 2    | dias   | 2026-07-01T08:00:00 | 2026-07-14T10:00:00 | martes | 2026-07-01T08:00:00 | 2026-07-14T10:00:00 |
 
   # Editar tarea 14
   # Título vacío: la edición se rechaza y la tarea no cambia.
-  Scenario Outline: Editar tarea 14
-    Given una tarea periódica relativa <titulo> cada <cada> <unidad>
-    When edito el título a <titulo_nuevo>
-    Then la edición se rechaza por título vacío
-    And la tarea no cambia
+  Scenario Outline: Edit task 14
+    Given a relative recurring task <title> every <every> <unit>
+    When I edit the title to <title_new>
+    Then editing is rejected for empty title
+    And the task does not change
 
     Examples:
-      | titulo | cada | unidad | titulo_nuevo |
+      | title  | every | unit   | title_new    |
       | Regar  | 2    | dias   |              |
 
   # Editar tarea 15
   # Título de solo espacios: cuenta como vacío.
-  Scenario: Editar tarea 15
-    Given una tarea puntual sin fecha límite
-    When edito el título a uno de solo espacios
-    Then la edición se rechaza por título vacío
-    And la tarea no cambia
+  Scenario: Edit task 15
+    Given a one-off task without a due date
+    When I edit the title to one of only spaces
+    Then editing is rejected for empty title
+    And the task does not change
 
   # Editar tarea 16
   # Fecha límite que no existe en el calendario: se rechaza.
-  Scenario Outline: Editar tarea 16
-    Given una tarea puntual sin fecha límite
-    When edito la tarea a puntual con fecha límite <limite_nuevo>
-    Then la edición se rechaza por fecha límite inválida
-    And la tarea no cambia
+  Scenario Outline: Edit task 16
+    Given a one-off task without a due date
+    When I edit the task to one-off with due date <due_date_new>
+    Then editing is rejected for invalid due date
+    And the task does not change
 
     Examples:
-      | limite_nuevo |
+      | due_date_new |
       | 2026-02-29   |
       | 2026-04-31   |
       | 2026-13-01   |
 
   # Editar tarea 17
   # N que no es entero ≥ 1: se rechaza.
-  Scenario Outline: Editar tarea 17
-    Given una tarea periódica semanal los <dias>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    Then la edición se rechaza por intervalo inválido
-    And la tarea no cambia
+  Scenario Outline: Edit task 17
+    Given a weekly recurring task on <days>
+    When I edit the task to relative recurring every <every> <unit>
+    Then editing is rejected for invalid interval
+    And the task does not change
 
     Examples:
-      | dias   | cada | unidad |
+      | days   | every | unit   |
       | martes | 0    | dias   |
       | martes | 1.5  | horas  |
 
   # Editar tarea 18
   # Semanal sin ningún día: se rechaza.
-  Scenario Outline: Editar tarea 18
-    Given una tarea periódica semanal los <dias>
-    When edito la tarea a periódica semanal sin días
-    Then la edición se rechaza por falta de días
-    And la tarea no cambia
+  Scenario Outline: Edit task 18
+    Given a weekly recurring task on <days>
+    When I edit the task to weekly recurring without days
+    Then editing is rejected for missing days
+    And the task does not change
 
     Examples:
-      | dias           |
+      | days           |
       | martes, jueves |
 
   # Editar tarea 19
   # Mensual sin ningún día: se rechaza.
-  Scenario Outline: Editar tarea 19
-    Given una tarea periódica relativa cada <cada> <unidad>
-    When edito la tarea a periódica mensual sin días
-    Then la edición se rechaza por falta de días
-    And la tarea no cambia
+  Scenario Outline: Edit task 19
+    Given a relative recurring task every <every> <unit>
+    When I edit the task to monthly recurring without days
+    Then editing is rejected for missing days
+    And the task does not change
 
     Examples:
-      | cada | unidad |
+      | every | unit   |
       | 2    | dias   |
 
   # Editar tarea 20
   # Algún día del mes que no es entero entre 1 y 31: se rechaza.
-  Scenario Outline: Editar tarea 20
-    Given una tarea periódica mensual los días <dias>
-    When edito la tarea a periódica mensual los días <dias_nuevos>
-    Then la edición se rechaza por día del mes inválido
-    And la tarea no cambia
+  Scenario Outline: Edit task 20
+    Given a monthly recurring task on days <days>
+    When I edit the task to monthly recurring on days <days_new>
+    Then editing is rejected for invalid month day
+    And the task does not change
 
     Examples:
-      | dias | dias_nuevos |
+      | days | days_new    |
       | 10   | 32          |
       | 10   | 0, 15       |
       | 10   | 1.5         |
 
   # Editar tarea 21
   # Días de la semana y del mes a la vez: se rechaza.
-  Scenario Outline: Editar tarea 21
-    Given una tarea periódica semanal los <dias>
-    When edito la tarea a periódica de calendario con días de la semana y del mes a la vez
-    Then la edición se rechaza por semanal y mensual combinados
-    And la tarea no cambia
+  Scenario Outline: Edit task 21
+    Given a weekly recurring task on <days>
+    When I edit the task to calendar recurring with weekdays and month days at once
+    Then editing is rejected for weekly and monthly combined
+    And the task does not change
 
     Examples:
-      | dias   |
+      | days   |
       | martes |
 
   # Editar tarea 22
   # Un campo inválido rechaza la edición entera: el título nuevo, válido,
   # tampoco se guarda.
-  Scenario Outline: Editar tarea 22
-    Given una tarea puntual <titulo> con fecha límite <limite>
-    When edito en una misma edición el título a <titulo_nuevo> y la fecha límite a <limite_nuevo>
-    Then la edición se rechaza por fecha límite inválida
-    And la tarea tiene título <titulo_guardado>
-    And su fecha límite es <limite_guardado>
+  Scenario Outline: Edit task 22
+    Given a one-off task <title> with due date <due_date>
+    When in a single edit I edit the title to <title_new> and the due date to <due_date_new>
+    Then editing is rejected for invalid due date
+    And the task has title <title_stored>
+    And its due date is <due_date_stored>
 
     Examples:
-      | titulo | limite     | titulo_nuevo  | limite_nuevo | titulo_guardado | limite_guardado |
+      | title  | due_date   | title_new     | due_date_new | title_stored    | due_date_stored |
       | Pagar  | 2026-07-14 | Pagar la luz  | 2026-04-31   | Pagar           | 2026-07-14      |

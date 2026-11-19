@@ -14,21 +14,21 @@
 # Los reintentos silenciosos (sin aviso, contador ni indicador de pendientes,
 # §7) y el aviso «No se pudo copiar» de Copiar (§6.7) se verifican en la suite
 # QA (qa/reintento-y-aviso-de-copia.md): QA-only S4, S5, S6, S7.
-Feature: Reintento de limpiezas
+Feature: Cleanups retry
 
   # Reintento de limpiezas 1
   # Cada elemento se intenta por separado: los que fallan no impiden limpiar los
   # demás, y quedan por limpiar solo los que fallaron. Vale para las dos
   # limpiezas, también sin conexión (fallan todos).
-  Scenario Outline: Reintento de limpiezas 1
-    Given hay por limpiar <elementos> de <limpieza>
-    And falla el intento de limpiar <fallan>
-    When la app intenta las limpiezas
-    Then quedan limpios <limpios>
-    And quedan por limpiar <pendientes>
+  Scenario Outline: Cleanups retry 1
+    Given <items> of <cleanup> are left to clean
+    And the attempt to clean fails: <failing>
+    When the app attempts the cleanups
+    Then the items left clean are <clean>
+    And the items left to clean are <pending>
 
     Examples:
-      | limpieza                          | elementos      | fallan         | limpios        | pendientes     |
+      | cleanup                           | items          | failing        | clean          | pending        |
       | completados huérfanos             | a1, a2, a3     | a2             | a1, a3         | a2             |
       | anotaciones huérfanas             | a1, a2, a3     | a1             | a2, a3         | a1             |
       | anotaciones huérfanas             | a1, a2, a3     | a1, a2, a3     | ninguno        | a1, a2, a3     |
@@ -37,33 +37,33 @@ Feature: Reintento de limpiezas
   # Reintento de limpiezas 2
   # Lo que quedó sin limpiar se reintenta al volver la conexión y cuando
   # cambian los datos; al reintentar no se pierde lo ya limpiado.
-  Scenario Outline: Reintento de limpiezas 2
-    Given hay por limpiar <elementos> de <limpieza>
-    And falla el intento de limpiar <fallan>
-    And la app intentó las limpiezas
-    And deja de fallar el intento de limpiar <fallan>
-    When sucede que <suceso>
-    Then quedan limpios <elementos>
-    And quedan por limpiar ninguno
+  Scenario Outline: Cleanups retry 2
+    Given <items> of <cleanup> are left to clean
+    And the attempt to clean fails: <failing>
+    And the app attempted the cleanups
+    And the attempt to clean stops failing: <failing>
+    When this happens: <event>
+    Then the items left clean are <items>
+    And the items left to clean are none
 
     Examples:
-      | limpieza                         | elementos  | fallan | suceso             |
+      | cleanup                          | items      | failing | event              |
       | completados huérfanos            | a1, a2, a3 | a2     | vuelve la conexión |
       | anotaciones huérfanas            | a1, a2, a3 | a2     | cambian los datos  |
 
   # Reintento de limpiezas 3
   # Sin temporizadores: por más que pase el tiempo, sin conexión nueva ni
   # cambio de datos no se reintenta.
-  Scenario Outline: Reintento de limpiezas 3
-    Given hay por limpiar <elementos> de <limpieza>
-    And falla el intento de limpiar <fallan>
-    And la app intentó las limpiezas
-    And deja de fallar el intento de limpiar <fallan>
-    When pasan <minutos> minutos sin que suceda nada más
-    Then quedan limpios <limpios>
-    And quedan por limpiar <fallan>
+  Scenario Outline: Cleanups retry 3
+    Given <items> of <cleanup> are left to clean
+    And the attempt to clean fails: <failing>
+    And the app attempted the cleanups
+    And the attempt to clean stops failing: <failing>
+    When <minutes> minutes pass with nothing else happening
+    Then the items left clean are <clean>
+    And the items left to clean are <failing>
 
     Examples:
-      | limpieza              | elementos  | fallan | limpios | minutos |
+      | cleanup               | items      | failing | clean   | minutes |
       | anotaciones huérfanas | a1, a2, a3 | a2     | a1, a3  | 5       |
       | completados huérfanos | a1, a2, a3 | a2     | a1, a3  | 60      |

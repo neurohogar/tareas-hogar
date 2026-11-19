@@ -31,41 +31,41 @@ export function createInWorld(world: World, data: RecurringRelativeData, now = N
 }
 
 const REASONS = {
-	'título vacío': { title: 'vacio' },
-	'intervalo inválido': { every: 'invalido' },
-	'falta de días': { days: 'faltan' },
-	'día del mes inválido': { days: 'diaDelMesInvalido' },
-	'semanal y mensual combinados': { days: 'combinados' },
-	'fecha límite inválida': { dueDate: 'invalida' },
-	'emoji inválido': { emoji: 'invalido' },
-	'horario incompleto': { schedule: 'incomplete' },
-	'horarios superpuestos': { schedule: 'overlapping' },
-	'varios horarios en una relativa en horas': { schedule: 'severalInHours' }
+	'empty title': { title: 'vacio' },
+	'invalid interval': { every: 'invalido' },
+	'missing days': { days: 'faltan' },
+	'invalid month day': { days: 'diaDelMesInvalido' },
+	'weekly and monthly combined': { days: 'combinados' },
+	'invalid due date': { dueDate: 'invalida' },
+	'invalid emoji': { emoji: 'invalido' },
+	'incomplete schedule': { schedule: 'incomplete' },
+	'overlapping schedules': { schedule: 'overlapping' },
+	'several schedules in an hourly relative': { schedule: 'severalInHours' }
 };
 
-const KINDS = { periódica: 'periodica', puntual: 'puntual' };
+const KINDS = { recurring: 'periodica', 'one-off': 'puntual' };
 
 export const createSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} cada ${P} ${P}$`),
+		pattern: new RegExp(`^I create a relative recurring task with title ${P} every ${P} ${P}$`),
 		run: (world, title, every, u) => createInWorld(world, { title, every: numeric(every), unit: unit(u) })
 	},
 	{
-		pattern: new RegExp(`^creo una tarea periódica relativa con título ${P} y un intervalo válido$`),
+		pattern: new RegExp(`^I create a relative recurring task with title ${P} and a valid interval$`),
 		run: (world, title) => createInWorld(world, { title, every: EVERY_VALID, unit: 'dias' })
 	},
 	{
-		pattern: /^creo una tarea periódica relativa con un título de solo espacios y un intervalo válido$/,
+		pattern: /^I create a relative recurring task with a title of only spaces and a valid interval$/,
 		run: (world) => createInWorld(world, { title: '   ', every: EVERY_VALID, unit: 'dias' })
 	},
 	{
 		pattern: new RegExp(
-			`^creo una tarea periódica relativa con un título válido y ${P} como cantidad del intervalo$`
+			`^I create a relative recurring task with a valid title and ${P} as the interval amount$`
 		),
 		run: (world, every) => createInWorld(world, { title: TITLE_VALID, every: numeric(every), unit: 'dias' })
 	},
 	{
-		pattern: new RegExp(`^se crea una tarea (${Object.keys(KINDS).join('|')}) con título ${P}$`),
+		pattern: new RegExp(`^a (${Object.keys(KINDS).join('|')}) task is created with title ${P}$`),
 		run: (world, kind, title) => {
 			const task = theTask(world);
 			expect(task.kind).toBe(KINDS[kind as keyof typeof KINDS]);
@@ -73,21 +73,21 @@ export const createSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^su recurrencia es relativa cada ${P} ${P}$`),
+		pattern: new RegExp(`^its recurrence is relative every ${P} ${P}$`),
 		run: (world, every, u) => {
 			expect(theTaskOfKind(world, 'periodica').recurrence).toEqual({ mode: 'relativo', every: numeric(every), unit: unit(u) });
 		}
 	},
 	{
-		pattern: /^la tarea no tiene completados$/,
+		pattern: /^the task has no completions$/,
 		run: (world) => expect(completionsOfTask(world.completions, theTask(world).id)).toEqual([])
 	},
 	{
-		pattern: new RegExp(`^la (?:creación|edición) se rechaza por (${Object.keys(REASONS).join('|')})$`),
+		pattern: new RegExp(`^(?:creation|editing) is rejected for (${Object.keys(REASONS).join('|')})$`),
 		run: (world, reason) => expect(world.errors).toEqual(REASONS[reason as keyof typeof REASONS])
 	},
 	{
-		pattern: /^no se crea ninguna tarea$/,
+		pattern: /^no task is created$/,
 		run: (world) => expect(world.docs).toEqual([])
 	}
 ];

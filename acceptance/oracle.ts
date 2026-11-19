@@ -143,8 +143,8 @@ export function hourMinutes(value: string | undefined): number | undefined {
 function readTimeWindow(from: string | undefined, to: string | undefined): TimeWindow | string[] {
 	const d = hourMinutes(from);
 	const h = hourMinutes(to);
-	if (d === undefined || h === undefined) return ['horario incompleto'];
-	return d < h ? { from: d, to: h } : ['hora de fin no posterior'];
+	if (d === undefined || h === undefined) return ['incomplete schedule'];
+	return d < h ? { from: d, to: h } : ['end time not after start'];
 }
 
 /**
@@ -156,7 +156,7 @@ export function readSchedule(written: [string | undefined, string | undefined][]
 	const read = written.map(([d, h]) => readTimeWindow(d, h));
 	const reasons = [...new Set(read.filter((l): l is string[] => Array.isArray(l)).flat())];
 	const timeWindows = read.filter((l): l is TimeWindow => !Array.isArray(l)).sort((a, b) => a.from - b.from);
-	if (timeWindows.some((v, i) => i > 0 && v.from < timeWindows[i - 1].to)) reasons.push('horarios superpuestos');
+	if (timeWindows.some((v, i) => i > 0 && v.from < timeWindows[i - 1].to)) reasons.push('overlapping schedules');
 	return reasons.length > 0 ? reasons : timeWindows;
 }
 
@@ -167,7 +167,7 @@ export function scheduleValid(written: [string, string][]): TimeWindow[] | undef
 }
 
 /** One or two windows from a step: "de D a H" or "de D a H y de D2 a H2". */
-export const SCHEDULE = 'de (\\S+) a (\\S+)(?: y de (\\S+) a (\\S+))?';
+export const SCHEDULE = 'from (\\S+) to (\\S+)(?: and from (\\S+) to (\\S+))?';
 
 /** The windows named by the HORARIO captures. */
 export const writtenOf = ([d, h, d2, h2]: (string | undefined)[]): [string, string][] =>
@@ -441,11 +441,11 @@ const reasonsWeek = (value: string) => (weekdays(value) ? [] : undefined);
 export function reasonsMonth(value: string): string[] | undefined {
 	const list = elements(value);
 	if (!list?.every((d) => NUMBER.test(d))) return undefined;
-	return list.every((d) => isDayOfMonth(Number(d))) ? [] : ['día del mes inválido'];
+	return list.every((d) => isDayOfMonth(Number(d))) ? [] : ['invalid month day'];
 }
 
 /** §4.1: the due date must be an existing YYYY-MM-DD date; the past is accepted. */
-export const reasonsDueDate = (value: string) => (day(value) ? [] : ['fecha límite inválida']);
+export const reasonsDueDate = (value: string) => (day(value) ? [] : ['invalid due date']);
 
 /** §4.1: empty or only spaces means no emoji; otherwise exactly one emoji grapheme (pictogram, flag or keycap). */
 export function reasonsEmoji(value: string): string[] {
@@ -453,7 +453,7 @@ export function reasonsEmoji(value: string): string[] {
 	const graphemes = [...new Intl.Segmenter('es', { granularity: 'grapheme' }).segment(written)].length;
 	const isEmoji = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator}{2}|[0-9#*]\uFE0F?\u20E3)/u.test(written);
 	const emoji = graphemes === 1 && isEmoji;
-	return written === '' || emoji ? [] : ['emoji inválido'];
+	return written === '' || emoji ? [] : ['invalid emoji'];
 }
 
 /** Declared one-off: with a valid due date, without one, or with any one. */
@@ -463,7 +463,7 @@ function declareOneOff(s: Situation, limit?: string): boolean {
 	return limit === undefined || d !== undefined;
 }
 
-const ONE_OFF_COMPLETIONS: Record<string, number> = { 'un completado': 1, 'dos completados': 2 };
+const ONE_OFF_COMPLETIONS: Record<string, number> = { 'a completion': 1, 'two completions': 2 };
 
 /** Already recorded completions whose moment the scenario says does not matter (§5.1). */
 function hasCompletions(s: Situation, count: string): boolean {
@@ -479,8 +479,8 @@ function scheduleReasons(written: [string | undefined, string | undefined][]): s
 
 /** §4.1: a relative task in hours cannot have more than one window. */
 const relativeReasons = (every: string, unit: string, written: unknown[]) => [
-	...(intervalValid(every) ? [] : ['intervalo inválido']),
-	...(unit === 'horas' && written.length > 1 ? ['varios horarios en una relativa en horas'] : [])
+	...(intervalValid(every) ? [] : ['invalid interval']),
+	...(unit === 'horas' && written.length > 1 ? ['several schedules in an hourly relative'] : [])
 ];
 
 /** An already stored schedule: it has to be valid, also for a relative task's interval (§4.1). */
@@ -497,49 +497,49 @@ function declareCreated(s: Situation, created: string): boolean {
 
 /** Schedule (§4.1, §5.5), before the general rules: its steps also end in free text. */
 const SCHEDULE_RULES: Rule[] = [
-	[new RegExp(`^la tarea se puede completar ${SCHEDULE}$`), (s, hours) => declareSchedule(s, writtenOf(hours))],
-	[/^una tarea puntual sin fecha límite creada el (\S+)$/, (s, [c]) => declareOneOff(s) && declareCreated(s, c)],
-	[/^una tarea puntual con fecha límite (\S+) creada el (\S+)$/, (s, [l, c]) => declareOneOff(s, l) && declareCreated(s, c)],
+	[new RegExp(`^the task can be completed ${SCHEDULE}$`), (s, hours) => declareSchedule(s, writtenOf(hours))],
+	[/^a one-off task without a due date created on (\S+)$/, (s, [c]) => declareOneOff(s) && declareCreated(s, c)],
+	[/^a one-off task with due date (\S+) created on (\S+)$/, (s, [l, c]) => declareOneOff(s, l) && declareCreated(s, c)],
 	[
-		/^una tarea periódica relativa cada (\S+) (\S+) creada el (\S+)$/,
+		/^a relative recurring task every (\S+) (\S+) created on (\S+)$/,
 		(s, [n, u, c]) => (Object.assign(s, { every: n, unit: u }), declareCreated(s, c))
 	],
-	[/^consulto Pendientes el (\S+)$/, (s, [t]) => ((s.now = MOMENT(t)), s.now !== undefined)],
+	[/^I query Pendientes on (\S+)$/, (s, [t]) => ((s.now = MOMENT(t)), s.now !== undefined)],
 	// The check changes neither the task's state nor its checkbox (§6.1).
-	[/^Mostrar completadas está encendido$/, () => true],
+	[/^Mostrar completadas is on$/, () => true],
 	[
-		new RegExp(`^creo una tarea puntual con título (.*) y horario ${SCHEDULE}$`),
+		new RegExp(`^I create a one-off task with title (.*) and schedule ${SCHEDULE}$`),
 		(s, [t, ...hours]) => void (s.creation = { title: t, reasons: scheduleReasons(writtenOf(hours)) })
 	],
 	[
-		new RegExp(`^creo una tarea puntual con un título válido y horario ${SCHEDULE}$`),
+		new RegExp(`^I create a one-off task with a valid title and schedule ${SCHEDULE}$`),
 		(s, hours) => void (s.creation = { title: 'Tarea', reasons: scheduleReasons(writtenOf(hours)) })
 	],
 	[
-		/^creo una tarea puntual con un título válido y un horario con solo la hora de inicio (\S+)$/,
+		/^I create a one-off task with a valid title and a schedule with only the start time (\S+)$/,
 		(s, [d]) => void (s.creation = { title: 'Tarea', reasons: scheduleReasons([[d, undefined]]) })
 	],
 	[
-		/^creo una tarea puntual con un título válido y un horario con solo la hora de fin (\S+)$/,
+		/^I create a one-off task with a valid title and a schedule with only the end time (\S+)$/,
 		(s, [h]) => void (s.creation = { title: 'Tarea', reasons: scheduleReasons([[undefined, h]]) })
 	],
 	[
-		/^creo una tarea puntual con un título válido, horario de (\S+) a (\S+) y otro horario con solo la hora de inicio (\S+)$/,
+		/^I create a one-off task with a valid title, schedule from (\S+) to (\S+) and another schedule with only the start time (\S+)$/,
 		(s, [d, h, d2]) => void (s.creation = { title: 'Tarea', reasons: scheduleReasons([[d, h], [d2, undefined]]) })
 	],
 	[
-		new RegExp(`^creo una tarea periódica relativa con título (.*) cada (\\S+) (\\S+) y horario ${SCHEDULE}$`),
+		new RegExp(`^I create a relative recurring task with title (.*) every (\\S+) (\\S+) and schedule ${SCHEDULE}$`),
 		(s, [t, c, u, ...hours]) => {
 			const written = writtenOf(hours);
 			// An error in the schedule itself takes priority over that of the relative task in hours: with it, the spec does not decide which one is seen.
 			const ofSchedule = scheduleReasons(written);
 			const ofRelative = relativeReasons(c, u, written);
-			if (ofSchedule.length > 0 && ofRelative.includes('varios horarios en una relativa en horas')) return false;
+			if (ofSchedule.length > 0 && ofRelative.includes('several schedules in an hourly relative')) return false;
 			s.creation = { title: t, reasons: [...ofRelative, ...ofSchedule] };
 		}
 	],
 	[
-		new RegExp(`^creo una tarea periódica semanal con título (.*) los (.*) y horario ${SCHEDULE}$`),
+		new RegExp(`^I create a weekly recurring task with title (.*) on (.*) and schedule ${SCHEDULE}$`),
 		(s, [t, days, ...hours]) => {
 			const reasons = reasonsWeek(days);
 			return createCalendar(s, t, reasons && [...reasons, ...scheduleReasons(writtenOf(hours))]);
@@ -550,97 +550,97 @@ const SCHEDULE_RULES: Rule[] = [
 const RULES: Rule[] = [
 	...SCHEDULE_RULES,
 	// One-off (§4.1 and §5.1).
-	[/^una tarea puntual sin fecha límite$/, (s) => declareOneOff(s)],
-	[/^una tarea puntual con fecha límite (\S+)$/, (s, [l]) => declareOneOff(s, l)],
-	[/^una tarea puntual con una fecha límite cualquiera$/, (s) => void (s.oneOff = { any: true })],
-	[/^la tarea tiene (un completado|dos completados)$/, (s, [c]) => hasCompletions(s, c)],
+	[/^a one-off task without a due date$/, (s) => declareOneOff(s)],
+	[/^a one-off task with due date (\S+)$/, (s, [l]) => declareOneOff(s, l)],
+	[/^a one-off task with any due date$/, (s) => void (s.oneOff = { any: true })],
+	[/^the task has (a completion|two completions)$/, (s, [c]) => hasCompletions(s, c)],
 	// Created with a valid due date and queried: creadaEn does not influence the state (§5.1).
-	[/^creo el (\S+) una tarea puntual con un título válido y fecha límite (\S+)$/, (s, [, l]) => declareOneOff(s, l)],
+	[/^I create on (\S+) a one-off task with a valid title and due date (\S+)$/, (s, [, l]) => declareOneOff(s, l)],
 	[
-		/^creo una tarea puntual con título (.*) y fecha límite (\S+)$/,
+		/^I create a one-off task with title (.*) and due date (\S+)$/,
 		(s, [t, l]) => void (s.creation = { title: t, reasons: reasonsDueDate(l) })
 	],
 	[
-		/^creo una tarea puntual con título (.*), emoji (.*) y nota (.*)$/,
+		/^I create a one-off task with title (.*), emoji (.*) and note (.*)$/,
 		(s, [t, e]) => void (s.creation = { title: t, reasons: reasonsEmoji(e) })
 	],
-	[/^creo una tarea puntual con título (.*) y sin fecha límite$/, (s, [t]) => void (s.creation = { title: t, reasons: [] })],
+	[/^I create a one-off task with title (.*) and no due date$/, (s, [t]) => void (s.creation = { title: t, reasons: [] })],
 	[
-		/^creo una tarea puntual con un título de solo espacios y sin fecha límite$/,
+		/^I create a one-off task with a title of only spaces and no due date$/,
 		(s) => void (s.creation = { title: '   ', reasons: [] })
 	],
 	[
-		/^creo una tarea puntual con un título válido y fecha límite (\S+)$/,
+		/^I create a one-off task with a valid title and due date (\S+)$/,
 		(s, [l]) => void (s.creation = { title: 'Tarea', reasons: reasonsDueDate(l) })
 	],
-	[/^una tarea periódica relativa cada (\S+) (\S+)$/, (s, [c, u]) => void Object.assign(s, { every: c, unit: u })],
-	[/^una tarea periódica relativa nunca completada$/, () => undefined],
+	[/^a relative recurring task every (\S+) (\S+)$/, (s, [c, u]) => void Object.assign(s, { every: c, unit: u })],
+	[/^a relative recurring task never completed$/, () => undefined],
 	// §4.1 and §5: the first step has no state: it does not change the task's state.
-	[/^el primer paso de la tarea es (.*)$/, () => undefined],
+	[/^the first step of the task is (.*)$/, () => undefined],
 	// §4.1 and §5: the minimal version has no state: it does not change the task's state.
-	[/^la versión mínima de la tarea es (.*)$/, () => undefined],
-	[/^la tarea fue completada el (\S+)$/, (s, [t]) => record(s, t)],
-	[/^completo la tarea el (\S+)$/, (s, [t]) => complete(s, t)],
-	[/^consulto el estado el (\S+)$/, (s, [t]) => ((s.now = MOMENT(t)), s.now !== undefined)],
-	[/^consulto el estado en cualquier momento$/, (s) => void (s.anyMoment = true)],
+	[/^the minimal version of the task is (.*)$/, () => undefined],
+	[/^the task was completed on (\S+)$/, (s, [t]) => record(s, t)],
+	[/^I complete the task on (\S+)$/, (s, [t]) => complete(s, t)],
+	[/^I query the status on (\S+)$/, (s, [t]) => ((s.now = MOMENT(t)), s.now !== undefined)],
+	[/^I query the status at any moment$/, (s) => void (s.anyMoment = true)],
 	[
-		/^creo una tarea periódica relativa con título (.*) cada (\S+) (\S+)$/,
-		(s, [t, c]) => void (s.creation = { title: t, reasons: intervalValid(c) ? [] : ['intervalo inválido'] })
+		/^I create a relative recurring task with title (.*) every (\S+) (\S+)$/,
+		(s, [t, c]) => void (s.creation = { title: t, reasons: intervalValid(c) ? [] : ['invalid interval'] })
 	],
 	[
-		/^creo una tarea periódica relativa con título (.*) y un intervalo válido$/,
+		/^I create a relative recurring task with title (.*) and a valid interval$/,
 		(s, [t]) => void (s.creation = { title: t, reasons: [] })
 	],
 	[
-		/^creo una tarea periódica relativa con un título de solo espacios y un intervalo válido$/,
+		/^I create a relative recurring task with a title of only spaces and a valid interval$/,
 		(s) => void (s.creation = { title: '   ', reasons: [] })
 	],
 	[
-		/^creo una tarea periódica relativa con un título válido y (\S+) como cantidad del intervalo$/,
+		/^I create a relative recurring task with a valid title and (\S+) as the interval amount$/,
 		(s, [c]) =>
-			void (s.creation = { title: 'Regar plantas', reasons: intervalValid(c) ? [] : ['intervalo inválido'] })
+			void (s.creation = { title: 'Regar plantas', reasons: intervalValid(c) ? [] : ['invalid interval'] })
 	],
 	// Calendar state and completion (§5.3). With completions, creadaEn does not influence.
-	[/^una tarea periódica semanal los (.*) creada el (\S+)$/, (s, [d, c]) => declare(s, weekdays(d), c)],
-	[/^una tarea periódica mensual los días (.*) creada el (\S+)$/, (s, [d, c]) => declare(s, monthDays(d), c)],
-	[/^una tarea periódica semanal los (.*)$/, (s, [d]) => declare(s, weekdays(d))],
-	[/^una tarea periódica mensual los días (.*)$/, (s, [d]) => declare(s, monthDays(d))],
-	[/^la tarea tiene un completado del (\S+) que cubre el (\S+)$/, (s, [t, c]) => coveredDeclared(s, c, t)],
-	[/^la tarea tiene un completado que cubre el (\S+)$/, (s, [c]) => coveredDeclared(s, c)],
-	[/^la tarea tiene otro completado más antiguo que cubre la misma ocurrencia$/, () => undefined],
+	[/^a weekly recurring task on (.*) created on (\S+)$/, (s, [d, c]) => declare(s, weekdays(d), c)],
+	[/^a monthly recurring task on days (.*) created on (\S+)$/, (s, [d, c]) => declare(s, monthDays(d), c)],
+	[/^a weekly recurring task on (.*)$/, (s, [d]) => declare(s, weekdays(d))],
+	[/^a monthly recurring task on days (.*)$/, (s, [d]) => declare(s, monthDays(d))],
+	[/^the task has a completion from (\S+) that covers (\S+)$/, (s, [t, c]) => coveredDeclared(s, c, t)],
+	[/^the task has a completion that covers (\S+)$/, (s, [c]) => coveredDeclared(s, c)],
+	[/^the task has another older completion that covers the same occurrence$/, () => undefined],
 	// §5.8 and §6.2: only a recurring task is paused (the panel's Pausar button); Reanudar only the paused one.
-	[/^(?:la tarea fue pausada|pauso la tarea)$/, (s) => !s.oneOff && !s.paused && void (s.paused = true)],
-	[/^reanudo la tarea el (\S+)$/, (s, [t]) => resumeSituation(s, t)],
-	[/^abro la tarea en el panel de edición$/, (s) => void (s.panel = true)],
+	[/^(?:the task was paused|I pause the task)$/, (s) => !s.oneOff && !s.paused && void (s.paused = true)],
+	[/^I resume the task on (\S+)$/, (s, [t]) => resumeSituation(s, t)],
+	[/^I open the task in the edit panel$/, (s) => void (s.panel = true)],
 	// §5.9 and §6.2: postponing acts at the moment; removing deletes the field.
-	[/^(?:pospongo la tarea|la tarea fue pospuesta) con la opción (.+) el (\S+)$/, (s, [o, m]) => postponeSituation(s, o, m)],
-	[/^quito la posposición$/, (s) => s.postponed !== undefined && void (s.postponed = undefined)],
-	[/^abro la tarea en el panel de edición el (\S+)$/, (s, [t]) => ((s.postponePanel = true), (s.now = MOMENT(t)), s.now !== undefined)],
+	[/^(?:I postpone the task|the task was postponed) with option (.+) on (\S+)$/, (s, [o, m]) => postponeSituation(s, o, m)],
+	[/^I remove the postponement$/, (s) => s.postponed !== undefined && void (s.postponed = undefined)],
+	[/^I open the task in the edit panel on (\S+)$/, (s, [t]) => ((s.postponePanel = true), (s.now = MOMENT(t)), s.now !== undefined)],
 	// Calendar creation (§4.1 and §4.2).
 	[
-		/^creo una tarea periódica semanal con título (.*) los (.*)$/,
+		/^I create a weekly recurring task with title (.*) on (.*)$/,
 		(s, [t, d]) => createCalendar(s, t, reasonsWeek(d))
 	],
 	[
-		/^creo una tarea periódica mensual con título (.*) los días (.*)$/,
+		/^I create a monthly recurring task with title (.*) on days (.*)$/,
 		(s, [t, d]) => createCalendar(s, t, reasonsMonth(d))
 	],
-	[/^creo una tarea periódica (?:semanal|mensual) con título (.*) y días válidos$/, (s, [t]) => createCalendar(s, t, [])],
+	[/^I create a (?:weekly|monthly) recurring task with title (.*) and valid days$/, (s, [t]) => createCalendar(s, t, [])],
 	[
-		/^creo una tarea periódica (?:semanal|mensual) con un título de solo espacios y días válidos$/,
+		/^I create a (?:weekly|monthly) recurring task with a title of only spaces and valid days$/,
 		(s) => createCalendar(s, '   ', [])
 	],
 	[
-		/^creo una tarea periódica (?:semanal|mensual) con un título válido y sin días$/,
-		(s) => createCalendar(s, 'Tarea', ['falta de días'])
+		/^I create a (?:weekly|monthly) recurring task with a valid title and without days$/,
+		(s) => createCalendar(s, 'Tarea', ['missing days'])
 	],
 	[
-		/^creo una tarea periódica mensual con un título válido los días (.*)$/,
+		/^I create a monthly recurring task with a valid title on days (.*)$/,
 		(s, [d]) => createCalendar(s, 'Tarea', reasonsMonth(d))
 	],
 	[
-		/^creo una tarea periódica de calendario con un título válido y días de la semana y del mes a la vez$/,
-		(s) => createCalendar(s, 'Tarea', ['semanal y mensual combinados'])
+		/^I create a calendar recurring task with a valid title and weekdays and month days at once$/,
+		(s) => createCalendar(s, 'Tarea', ['weekly and monthly combined'])
 	]
 ];
 
@@ -668,7 +668,7 @@ export function build(steps: StepOracle[], row: RowOracle): Situation | undefine
 }
 
 function classifyCreation(c: { title: string; reasons: string[] }): string {
-	const reasons = [...(c.title.trim() === '' ? ['título vacío'] : []), ...c.reasons];
+	const reasons = [...(c.title.trim() === '' ? ['empty title'] : []), ...c.reasons];
 	return reasons.length === 0 ? 'creada' : `rechazada: ${reasons.join(', ')}`;
 }
 
@@ -859,7 +859,7 @@ function checkboxOf(s: Situation, classification: string): string | undefined {
 	const inWaitOwn = classification.startsWith('en espera') && !inWaitByPostponement(s);
 	const completed = classification === 'no aparece en Pendientes' || isCompleted(Boolean(s.oneOff), inWaitOwn, withCompletions);
 	const wouldDelete = completed && (Boolean(s.oneOff) || Math.max(...s.completions) >= dayStart(s.now).getTime());
-	return wouldDelete || !s.schedule || insideOfTimeWindow(s.schedule, s.now) ? 'habilitado' : 'deshabilitado';
+	return wouldDelete || !s.schedule || insideOfTimeWindow(s.schedule, s.now) ? 'enabled' : 'disabled';
 }
 
 /** §6.2: the panel's pause button: none on a one-off; Reanudar if paused; otherwise Pausar. */
@@ -873,7 +873,7 @@ function pauseButton(s: Situation): string | undefined {
 function classifyPaused(s: Situation, observes: Observes): string | undefined {
 	if (!intervalDeclaredValid(s) || (s.now === undefined && !s.anyMoment)) return undefined;
 	if (!observes.checkbox) return 'pausada';
-	return observes.onlyCheckbox ? 'checkbox deshabilitado' : 'pausada, checkbox deshabilitado';
+	return observes.onlyCheckbox ? 'checkbox disabled' : 'pausada, checkbox disabled';
 }
 
 /** §5.3: with the queried state, the occurrence covered by the new completion, if a Then asserts it. */
@@ -1044,11 +1044,11 @@ function withTitle(tasks: OrderTask[], title: string): OrderTask | undefined {
 
 export const ORDER_RULES: OrderRule[] = [
 	// §4.1 and §6.1: the first step does not change the list order; the task has to exist.
-	[/^el primer paso de la tarea (\S+) es (.*)$/, (ts, [t]) => withTitle(ts, t) !== undefined],
+	[/^the first step of the task (\S+) is (.*)$/, (ts, [t]) => withTitle(ts, t) !== undefined],
 	// §4.1 and §6.1: the minimal version does not change the list order; the task has to exist.
-	[/^la versión mínima de la tarea (\S+) es (.*)$/, (ts, [t]) => withTitle(ts, t) !== undefined],
+	[/^the minimal version of the task (\S+) is (.*)$/, (ts, [t]) => withTitle(ts, t) !== undefined],
 	[
-		/^la tarea (\S+) fue pospuesta con la opción (.+) el (\S+)$/,
+		/^the task (\S+) was postponed with option (.+) on (\S+)$/,
 		(ts, [t, o, m]) => {
 			const task = withTitle(ts, t);
 			const postponed = postponementOf(o, m);
@@ -1057,7 +1057,7 @@ export const ORDER_RULES: OrderRule[] = [
 	],
 	// §5.8: only a recurring task is paused; Reanudar only the paused one.
 	[
-		/^(?:la tarea (\S+) fue pausada|pauso la tarea (\S+))$/,
+		/^(?:the task (\S+) was paused|I pause the task (\S+))$/,
 		(ts, [was, pause]) => {
 			const task = withTitle(ts, was ?? pause);
 			if (!task || task.oneOff || task.paused || task.intervalInvalid) return false;
@@ -1066,7 +1066,7 @@ export const ORDER_RULES: OrderRule[] = [
 		}
 	],
 	[
-		/^reanudo la tarea (\S+) el (\S+)$/,
+		/^I resume the task (\S+) on (\S+)$/,
 		(ts, [t, m]) => {
 			const task = withTitle(ts, t);
 			const moment = MOMENT(m);
@@ -1076,7 +1076,7 @@ export const ORDER_RULES: OrderRule[] = [
 		}
 	],
 	[
-		new RegExp(`^la tarea (\\S+) se puede completar ${SCHEDULE}$`),
+		new RegExp(`^the task (\\S+) can be completed ${SCHEDULE}$`),
 		(ts, [t, ...hours]) => {
 			const task = withTitle(ts, t);
 			const schedule = scheduleValid(writtenOf(hours));
@@ -1085,28 +1085,28 @@ export const ORDER_RULES: OrderRule[] = [
 		}
 	],
 	[
-		/^una tarea puntual (\S+) con fecha límite (\S+?)(?: creada el (\S+))?$/,
+		/^a one-off task (\S+) with due date (\S+?)(?: created on (\S+))?$/,
 		(ts, [t, l, c]) => day(l) !== undefined && add(ts, fresh(t, c, { oneOff: true, limit: day(l) }))
 	],
-	[/^una tarea puntual (\S+) sin fecha límite(?: creada el (\S+))?$/, (ts, [t, c]) => add(ts, fresh(t, c, { oneOff: true }))],
+	[/^a one-off task (\S+) without a due date(?: created on (\S+))?$/, (ts, [t, c]) => add(ts, fresh(t, c, { oneOff: true }))],
 	[
-		/^una tarea periódica relativa (\S+) cada (\S+) (\S+)(?: creada el (\S+))?$/,
+		/^a relative recurring task (\S+) every (\S+) (\S+)(?: created on (\S+))?$/,
 		(ts, [t, n, u, c]) =>
 			add(ts, fresh(t, c, { interval: intervalMs(n, u), ...(intervalMs(n, u) === undefined && { intervalInvalid: true }) }))
 	],
-	[/^una tarea periódica relativa (\S+) nunca completada(?: creada el (\S+))?$/, (ts, [t, c]) => add(ts, fresh(t, c, {}))],
+	[/^a relative recurring task (\S+) never completed(?: created on (\S+))?$/, (ts, [t, c]) => add(ts, fresh(t, c, {}))],
 	[
-		/^una tarea periódica semanal (\S+) los (.*?)(?: creada el (\S+))?$/,
+		/^a weekly recurring task (\S+) on (.*?)(?: created on (\S+))?$/,
 		(ts, [t, d, c]) => weekdays(d) !== undefined && add(ts, fresh(t, c, { calendar: weekdays(d) }))
 	],
 	[
-		/^una tarea periódica mensual (\S+) los días (.*?)(?: creada el (\S+))?$/,
+		/^a monthly recurring task (\S+) on days (.*?)(?: created on (\S+))?$/,
 		(ts, [t, d, c]) => monthDays(d) !== undefined && add(ts, fresh(t, c, { calendar: monthDays(d) }))
 	],
 	// For calendar tasks, the ordering oracle does not compute the occurrence it covers (§5.3): it does not model it.
 	[
 		// §4.4 and §6.1: a minimal-version completion counts like any other for the list.
-		/^(?:la tarea (\S+) fue completada|completo la tarea (\S+)) el (\S+)(?: con la mínima)?$/,
+		/^(?:the task (\S+) was completed|I complete the task (\S+)) on (\S+)(?: with the minimal one)?$/,
 		(ts, [was, complete, m]) => {
 			const moment = MOMENT(m);
 			const task = withTitle(ts, was ?? complete);
@@ -1116,7 +1116,7 @@ export const ORDER_RULES: OrderRule[] = [
 		}
 	],
 	[
-		/^la tarea (\S+) tiene un completado que cubre el (\S+)$/,
+		/^the task (\S+) has a completion that covers (\S+)$/,
 		(ts, [t, c]) => {
 			const covered = day(c);
 			const task = withTitle(ts, t);
@@ -1127,7 +1127,7 @@ export const ORDER_RULES: OrderRule[] = [
 		}
 	],
 	[
-		/^la tarea (\S+) tiene un completado del (\S+) que cubre el (\S+)$/,
+		/^the task (\S+) has a completion from (\S+) that covers (\S+)$/,
 		(ts, [t, m, c]) => {
 			const covered = day(c);
 			const start = MOMENT(c);
@@ -1141,7 +1141,7 @@ export const ORDER_RULES: OrderRule[] = [
 		}
 	],
 	[
-		/^la tarea (\S+) tiene (?:un completado|dos completados)$/,
+		/^the task (\S+) has (?:a completion|two completions)$/,
 		(ts, [t]) => {
 			const task = withTitle(ts, t);
 			if (!task?.oneOff) return false;
@@ -1172,9 +1172,9 @@ export function pendingOrder(steps: StepOracle[], row: RowOracle): PendingView |
 	for (const step of steps) {
 		const text = resolve(step.text, row);
 		if (text === undefined) return undefined;
-		const query = /^consulto Pendientes el (\S+)$/.exec(text);
+		const query = /^I query Pendientes on (\S+)$/.exec(text);
 		if (query) now = nowOf(query[1]);
-		else if (text === 'consulto Pendientes en cualquier momento') anyMoment = true;
+		else if (text === 'I query Pendientes at any moment') anyMoment = true;
 		else if (text === SHOW_COMPLETED) showCompleted = true;
 		else if (text === SHOW_PAUSED) showPaused = true;
 		else {
@@ -1189,10 +1189,10 @@ export function pendingOrder(steps: StepOracle[], row: RowOracle): PendingView |
 }
 
 /** The step that turns on the "Mostrar completadas" check (§6.1); without it, it is off. */
-export const SHOW_COMPLETED = 'Mostrar completadas está encendido';
+export const SHOW_COMPLETED = 'Mostrar completadas is on';
 
 /** The step that turns on the "Mostrar pausadas" check (§6.1); without it, it is off. */
-export const SHOW_PAUSED = 'Mostrar pausadas está encendido';
+export const SHOW_PAUSED = 'Mostrar pausadas is on';
 
 /**
  * §5.8: a resumed task is evaluated as just created at reanudadaEn (creadaEn = reanudadaEn, without the earlier
@@ -1320,13 +1320,13 @@ function fontsOf(text: string): string[] | undefined {
 	return [...new Set(fonts as string[])];
 }
 
-export const isScenarioOfFont = (texts: string[]) => texts.some((text) => /^el texto se dibuja con /.test(text));
+export const isScenarioOfFont = (texts: string[]) => texts.some((text) => /^the text is drawn with /.test(text));
 
 /** What "el texto se dibuja con" observes and asserts: undefined if the oracle does not recognize the scenario. */
 export function observeFont(entries: StepOracle[], thens: StepOracle[], row: RowOracle): { observed: string[]; asserted: string[] } | undefined {
 	if (entries.length !== 1 || thens.length !== 1) return undefined;
-	const text = /^el texto (.*)$/su.exec(resolve(entries[0].text, row) ?? '')?.[1];
-	const font = /^el texto se dibuja con (.*)$/su.exec(resolve(thens[0].text, row) ?? '')?.[1];
+	const text = /^the text (.*)$/su.exec(resolve(entries[0].text, row) ?? '')?.[1];
+	const font = /^the text is drawn with (.*)$/su.exec(resolve(thens[0].text, row) ?? '')?.[1];
 	const observed = text === undefined ? undefined : fontsOf(text);
 	return observed === undefined || font === undefined ? undefined : { observed, asserted: [font] };
 }

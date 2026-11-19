@@ -24,226 +24,226 @@ Feature: Hice la mínima
   # En una puntual agrega un completado que fue la mínima y la tarea queda
   # completada.
   Scenario Outline: Hice la mínima 1
-    Given una tarea puntual sin fecha límite
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    Then la tarea está completada
-    And el completado registrado es del <toque_guardado>
-    And el último completado de la tarea fue la mínima
+    Given a one-off task without a due date
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    Then the task is completed
+    And the recorded completion is from <tap_stored>
+    And the last completion of the task was the minimal one
 
     Examples:
-      | minima          | toque               | toque_guardado      |
+      | minimal         | tap                 | tap_stored          |
       | Solo el inodoro | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 |
 
   # Hice la mínima 2
   # En una relativa reinicia el intervalo desde el toque: queda en espera, con
   # el progreso de un completado entero.
   Scenario Outline: Hice la mínima 2
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+    Given a relative recurring task every <every> <unit>
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | minima            | toque               | ahora               | progreso |
+      | every | unit   | minimal           | tap                 | now                 | progress |
       | 4    | horas  | Solo los helechos | 2026-11-13T10:00:00 | 2026-11-13T12:00:00 | 0.5      |
 
   # Hice la mínima 3
   # En una de calendario cubre la ocurrencia que corresponde, como un
   # completado entero: la última sin cubrir (el jueves 12) y queda en espera.
   Scenario Outline: Hice la mínima 3
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    And consulto el estado el <ahora>
-    Then se registró un completado que cubre el <cubierta>
-    And el estado es en espera
+    Given a weekly recurring task on <days> created on <created>
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    And I query the status on <now>
+    Then a completion was recorded that covers <covered>
+    And the status is en espera
 
     Examples:
-      | dias   | creada              | minima               | toque               | ahora               | cubierta   |
+      | days   | created             | minimal              | tap                 | now                 | covered    |
       | jueves | 2026-11-01T08:00:00 | Solo la de la cocina | 2026-11-13T10:00:00 | 2026-11-13T10:00:01 | 2026-11-12 |
 
   # Hice la mínima 4
   # Dentro de la ventana de la tarea se puede hacer, como completar (§5.5).
   Scenario Outline: Hice la mínima 4
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta>
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    Then la tarea está completada
-    And el último completado de la tarea fue la mínima
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to>
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    Then the task is completed
+    And the last completion of the task was the minimal one
 
     Examples:
-      | creada              | desde | hasta | minima          | toque               |
+      | created             | from  | to    | minimal         | tap                 |
       | 2026-11-13T06:00:00 | 08:00 | 11:00 | Solo el inodoro | 2026-11-13T09:00:00 |
 
   # Hice la mínima 5
   # El aviso nombra la tarea (emoji y título) y suma « · mínima»; no muestra el
   # texto de la versión mínima.
   Scenario Outline: Hice la mínima 5
-    Given una tarea puntual <titulo> sin fecha límite con emoji <emoji>
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    And consulto el aviso el <ahora>
-    Then el aviso del completado dice <texto>
+    Given a one-off task <title> without a due date with emoji <emoji>
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    And I query the notice on <now>
+    Then the completion notice says <text>
 
     Examples:
-      | titulo | emoji | minima          | toque               | ahora               | texto                           |
+      | title  | emoji | minimal           | tap                 | now                 | text                           |
       | Regar  | 🌱     | Solo los helechos | 2026-11-13T10:00:00 | 2026-11-13T10:00:04 | Completaste «🌱 Regar» · mínima |
 
   # Hice la mínima 6
   # Sin emoji, solo el título.
   Scenario Outline: Hice la mínima 6
-    Given una tarea puntual <titulo> sin fecha límite
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    And consulto el aviso el <ahora>
-    Then el aviso del completado dice <texto>
+    Given a one-off task <title> without a due date
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    And I query the notice on <now>
+    Then the completion notice says <text>
 
     Examples:
-      | titulo | minima            | toque               | ahora               | texto                        |
+      | title  | minimal           | tap                 | now                 | text                         |
       | Regar  | Solo los helechos | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Completaste «Regar» · mínima |
 
   # Hice la mínima 7
   # Completar entera la misma tarea (checkbox) no suma « · mínima».
   Scenario Outline: Hice la mínima 7
-    Given una tarea puntual <titulo> sin fecha límite con emoji <emoji>
-    And la versión mínima de la tarea es <minima>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el aviso el <ahora>
-    Then el aviso del completado dice <texto>
-    And el último completado de la tarea fue entero
+    Given a one-off task <title> without a due date with emoji <emoji>
+    And the minimal version of the task is <minimal>
+    When I tap the task checkbox on <tap>
+    And I query the notice on <now>
+    Then the completion notice says <text>
+    And the last completion of the task was whole
 
     Examples:
-      | titulo | emoji | minima            | toque               | ahora               | texto                 |
+      | title  | emoji | minimal           | tap                 | now                 | text                  |
       | Regar  | 🌱     | Solo los helechos | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Completaste «🌱 Regar» |
 
   # Hice la mínima 8
   # El aviso de una periódica dice cuándo vuelve, debajo, como siempre.
   Scenario Outline: Hice la mínima 8
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la versión mínima de la tarea Regar es <minima>
-    When toco Hice la mínima en la tarea Regar el <toque>
-    And consulto el aviso el <ahora>
-    Then el aviso del completado dice <texto>
-    And el aviso del completado muestra el regreso <regreso>
+    Given a relative recurring task Regar every <every> <unit>
+    And the minimal version of the task Regar is <minimal>
+    When I tap Hice la mínima in the task Regar on <tap>
+    And I query the notice on <now>
+    Then the completion notice says <text>
+    And the completion notice shows the return <return>
 
     Examples:
-      | cada | unidad | minima            | toque               | ahora               | texto                        | regreso                       |
+      | every | unit   | minimal           | tap                 | now                 | text                         | return                        |
       | 8    | horas  | Solo los helechos | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Completaste «Regar» · mínima | Vuelve hoy 18:00 · en 8 horas |
 
   # Hice la mínima 9
   # Deshacer en el aviso borra el completado de la mínima y cierra el aviso.
   Scenario Outline: Hice la mínima 9
-    Given una tarea puntual sin fecha límite
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    And toco Deshacer en el aviso el <deshacer>
-    And consulto el aviso el <ahora>
-    Then la tarea no tiene completados
-    And no hay aviso
+    Given a one-off task without a due date
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    And I tap Deshacer in the notice on <undo>
+    And I query the notice on <now>
+    Then the task has no completions
+    And there is no notice
 
     Examples:
-      | minima          | toque               | deshacer            | ahora               |
+      | minimal         | tap                 | undo                | now                 |
       | Solo el inodoro | 2026-11-13T10:00:00 | 2026-11-13T10:00:02 | 2026-11-13T10:00:03 |
 
   # Hice la mínima 10
   # Borrar el completado (Historial) recalcula el estado con los que quedan:
   # U pasa al anterior, con el que ya venció, y la tarea vuelve pendiente.
   Scenario Outline: Hice la mínima 10
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <primera>
-    And la tarea fue completada el <segunda> con la mínima
-    When borro el completado del <segunda>
-    And consulto el estado el <ahora>
-    Then la tarea conserva un solo completado, del <primera>
-    And el estado es pendiente
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <first>
+    And the task was completed on <second> with the minimal one
+    When I delete the completion from <second>
+    And I query the status on <now>
+    Then the task keeps a single completion, from <first>
+    And the status is pendiente
 
     Examples:
-      | cada | unidad | primera             | segunda             | ahora               |
+      | every | unit   | first               | second              | now                 |
       | 2    | dias   | 2026-11-09T09:00:00 | 2026-11-10T09:00:00 | 2026-11-11T12:00:00 |
 
   # Hice la mínima 11
   # El checkbox de una puntual completada con la mínima borra ese completado.
   Scenario Outline: Hice la mínima 11
-    Given Mostrar completadas está encendido
-    And una tarea puntual sin fecha límite
-    And la tarea fue completada el <completada> con la mínima
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then la tarea no tiene completados
-    And el estado es pendiente
+    Given Mostrar completadas is on
+    And a one-off task without a due date
+    And the task was completed on <completed> with the minimal one
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the task has no completions
+    And the status is pendiente
 
     Examples:
-      | completada          | toque               | ahora               |
+      | completed           | tap                 | now                 |
       | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | 2026-11-13T10:00:01 |
 
   # Hice la mínima 12
   # El checkbox de una completada borra el completado más reciente, sea entero
   # o la mínima: acá el más reciente es la mínima y queda el entero.
   Scenario Outline: Hice la mínima 12
-    Given Mostrar completadas está encendido
-    And una tarea puntual sin fecha límite
-    And la tarea fue completada el <primera>
-    And la tarea fue completada el <segunda> con la mínima
-    When toco el checkbox de la tarea el <toque>
-    Then la tarea conserva un solo completado, del <primera>
-    And el último completado de la tarea fue entero
+    Given Mostrar completadas is on
+    And a one-off task without a due date
+    And the task was completed on <first>
+    And the task was completed on <second> with the minimal one
+    When I tap the task checkbox on <tap>
+    Then the task keeps a single completion, from <first>
+    And the last completion of the task was whole
 
     Examples:
-      | primera             | segunda             | toque               |
+      | first               | second              | tap                 |
       | 2026-11-13T08:00:00 | 2026-11-13T08:05:00 | 2026-11-13T10:00:00 |
 
   # Hice la mínima 13
   # Acá el más reciente es el entero y queda la mínima.
   Scenario Outline: Hice la mínima 13
-    Given Mostrar completadas está encendido
-    And una tarea puntual sin fecha límite
-    And la tarea fue completada el <primera> con la mínima
-    And la tarea fue completada el <segunda>
-    When toco el checkbox de la tarea el <toque>
-    Then la tarea conserva un solo completado, del <primera>
-    And el último completado de la tarea fue la mínima
+    Given Mostrar completadas is on
+    And a one-off task without a due date
+    And the task was completed on <first> with the minimal one
+    And the task was completed on <second>
+    When I tap the task checkbox on <tap>
+    Then the task keeps a single completion, from <first>
+    And the last completion of the task was the minimal one
 
     Examples:
-      | primera             | segunda             | toque               |
+      | first               | second              | tap                 |
       | 2026-11-13T08:00:00 | 2026-11-13T08:05:00 | 2026-11-13T10:00:00 |
 
   # Hice la mínima 14
   # El checkbox de una periódica completada un día anterior con la mínima la
   # completa de nuevo, entera: reinicia el intervalo desde el toque.
   Scenario Outline: Hice la mínima 14
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <anterior> con la mínima
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then el nuevo completado se agrega sin modificar los anteriores
-    And el último completado de la tarea fue entero
-    And el estado es en espera
-    And el progreso es <progreso>
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <previous> with the minimal one
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the new completion is added without changing the previous ones
+    And the last completion of the task was whole
+    And the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | anterior            | toque               | ahora               | progreso |
+      | every | unit   | previous            | tap                 | now                 | progress |
       | 2    | dias   | 2026-11-14T20:00:00 | 2026-11-15T08:00:00 | 2026-11-16T08:00:00 | 0.5      |
 
   # Hice la mínima 15
   # En una tarea de dos pasos o más, en cualquier paso, completa la tarea: la
   # tarea vuelve al paso 1 y el completado guarda el paso en que iba.
   Scenario Outline: Hice la mínima 15
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    And el paso actual de la tarea es <actual>
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    Then la tarea va en el paso 1
-    And el último completado de la tarea guarda el paso <paso_guardado>
-    And el último completado de la tarea fue la mínima
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    And the current step of the task is <current>
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    Then the task is on step 1
+    And the last completion of the task saves step <step_stored>
+    And the last completion of the task was the minimal one
 
     Examples:
-      | pasos                                                       | actual | minima          | toque               | paso_guardado |
+      | steps                                                       | current | minimal         | tap                 | step_stored   |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 1      | Solo el inodoro | 2026-11-13T10:00:00 | 1             |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 2      | Solo el inodoro | 2026-11-13T10:00:00 | 2             |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 3      | Solo el inodoro | 2026-11-13T10:00:00 | 3             |
@@ -251,16 +251,16 @@ Feature: Hice la mínima
   # Hice la mínima 16
   # Deshacer en el aviso devuelve el paso en que iba la tarea.
   Scenario Outline: Hice la mínima 16
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    And el paso actual de la tarea es <actual>
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    And toco Deshacer en el aviso el <deshacer>
-    Then la tarea va en el paso <actual_guardado>
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    And the current step of the task is <current>
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    And I tap Deshacer in the notice on <undo>
+    Then the task is on step <current_stored>
 
     Examples:
-      | pasos                                                       | actual | minima          | toque               | deshacer            | actual_guardado |
+      | steps                                                       | current | minimal         | tap                 | undo                | current_stored  |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 2      | Solo el inodoro | 2026-11-13T10:00:00 | 2026-11-13T10:00:02 | 2               |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 3      | Solo el inodoro | 2026-11-13T10:00:00 | 2026-11-13T10:00:02 | 3               |
 
@@ -268,130 +268,130 @@ Feature: Hice la mínima
   # Borrar el completado de la mínima desde el Historial o el checkbox también
   # devuelve el paso que guarda.
   Scenario Outline: Hice la mínima 17
-    Given una tarea puntual sin fecha límite
-    And los pasos de la tarea son <pasos>
-    And la tarea fue completada el <completada> en el paso <paso_completado> con la mínima
-    When borro el completado del <completada>
-    Then la tarea va en el paso <actual_guardado>
+    Given a one-off task without a due date
+    And the steps of the task are <steps>
+    And the task was completed on <completed> at step <step_completion> with the minimal one
+    When I delete the completion from <completed>
+    Then the task is on step <current_stored>
 
     Examples:
-      | pasos                                                       | completada          | paso_completado | actual_guardado |
+      | steps                                                       | completed           | step_completion | current_stored  |
       | Separar la ropa blanca, Poner el lavarropas, Tender la ropa | 2026-11-13T08:00:00 | 2               | 2               |
 
   # Hice la mínima 18
   # En una tarea de un solo paso el completado no guarda paso.
   Scenario Outline: Hice la mínima 18
-    Given una tarea puntual sin fecha límite
-    And el primer paso de la tarea es <primer_paso>
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    Then el último completado de la tarea no guarda paso
+    Given a one-off task without a due date
+    And the first step of the task is <first_step>
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    Then the last completion of the task saves no step
 
     Examples:
-      | primer_paso            | minima          | toque               |
+      | first_step             | minimal         | tap                 |
       | Separar la ropa blanca | Solo el inodoro | 2026-11-13T10:00:00 |
 
   # Hice la mínima 19
   # Hacer la mínima no borra ni cambia la versión mínima de la tarea.
   Scenario Outline: Hice la mínima 19
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la versión mínima de la tarea es <minima>
-    When toco Hice la mínima el <toque>
-    Then la tarea tiene versión mínima <minima_guardada>
+    Given a relative recurring task every <every> <unit>
+    And the minimal version of the task is <minimal>
+    When I tap Hice la mínima on <tap>
+    Then the task has minimal version <minimal_stored>
 
     Examples:
-      | cada | unidad | minima            | toque               | minima_guardada   |
+      | every | unit   | minimal           | tap                 | minimal_stored    |
       | 2    | dias   | Solo los helechos | 2026-11-13T08:00:00 | Solo los helechos |
 
   # Hice la mínima 20
   # Editar la versión mínima no toca los completados que ya fueron la mínima.
   Scenario Outline: Hice la mínima 20
-    Given una tarea puntual sin fecha límite
-    And la versión mínima de la tarea es <minima>
-    And la tarea fue completada el <completada> con la mínima
-    When edito la versión mínima a <nueva>
-    Then el último completado de la tarea fue la mínima
+    Given a one-off task without a due date
+    And the minimal version of the task is <minimal>
+    And the task was completed on <completed> with the minimal one
+    When I edit the minimal version to <new>
+    Then the last completion of the task was the minimal one
 
     Examples:
-      | minima          | completada          | nueva          |
+      | minimal         | completed           | new            |
       | Solo el inodoro | 2026-11-13T08:00:00 | Solo el lavabo |
 
   # Hice la mínima 21
   # Vaciarla tampoco.
   Scenario Outline: Hice la mínima 21
-    Given una tarea puntual sin fecha límite
-    And la versión mínima de la tarea es <minima>
-    And la tarea fue completada el <completada> con la mínima
-    When quito la versión mínima
-    Then la tarea no tiene versión mínima
-    And el último completado de la tarea fue la mínima
+    Given a one-off task without a due date
+    And the minimal version of the task is <minimal>
+    And the task was completed on <completed> with the minimal one
+    When I remove the minimal version
+    Then the task has no minimal version
+    And the last completion of the task was the minimal one
 
     Examples:
-      | minima          | completada          |
+      | minimal         | completed           |
       | Solo el inodoro | 2026-11-13T08:00:00 |
 
   # Hice la mínima 22
   # Ni escribirla vuelve «mínima» a un completado entero: no se puede pasar un
   # completado entero a mínimo.
   Scenario Outline: Hice la mínima 22
-    Given una tarea puntual sin fecha límite
-    And la tarea fue completada el <completada>
-    When edito la versión mínima a <nueva>
-    Then el último completado de la tarea fue entero
+    Given a one-off task without a due date
+    And the task was completed on <completed>
+    When I edit the minimal version to <new>
+    Then the last completion of the task was whole
 
     Examples:
-      | completada          | nueva           |
+      | completed           | new             |
       | 2026-11-13T08:00:00 | Solo el inodoro |
 
   # Hice la mínima 23
   # Un completado de la mínima cuenta para Mostrar completadas: encendido, la
   # puntual se ve completada.
   Scenario Outline: Hice la mínima 23
-    Given Mostrar completadas está encendido
-    And una tarea puntual <titulo> sin fecha límite
-    And la tarea <titulo> fue completada el <completada> con la mínima
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra como completadas <completadas>
+    Given Mostrar completadas is on
+    And a one-off task <title> without a due date
+    And the task <title> was completed on <completed> with the minimal one
+    When I query Pendientes on <now>
+    Then Pendientes shows as completed <completed_list>
 
     Examples:
-      | titulo | completada          | ahora               | completadas |
+      | title  | completed           | now                 | completed_list |
       | Pagar  | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | Pagar       |
 
   # Hice la mínima 24
   # Con Mostrar completadas apagado, la puntual completada con la mínima no se
   # ve, como una completada entera.
   Scenario Outline: Hice la mínima 24
-    Given una tarea puntual <titulo> sin fecha límite
-    And la tarea <titulo> fue completada el <completada> con la mínima
-    When consulto Pendientes el <ahora>
-    Then Pendientes no muestra ninguna tarea
+    Given a one-off task <title> without a due date
+    And the task <title> was completed on <completed> with the minimal one
+    When I query Pendientes on <now>
+    Then Pendientes shows no task
 
     Examples:
-      | titulo | completada          | ahora               |
+      | title  | completed           | now                 |
       | Pagar  | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 |
 
   # Hice la mínima 25
   # Cuenta para Última vez, como cualquier completado.
   Scenario Outline: Hice la mínima 25
-    Given una tarea puntual sin fecha límite
-    And la tarea fue completada el <completada> con la mínima
-    When consulto la última vez el <ahora>
-    Then la última vez muestra <ultima_vez>
+    Given a one-off task without a due date
+    And the task was completed on <completed> with the minimal one
+    When I query the last time on <now>
+    Then the last time shows <last_time>
 
     Examples:
-      | completada          | ahora               | ultima_vez |
+      | completed           | now                 | last_time  |
       | 2026-11-13T08:05:00 | 2026-11-13T12:00:00 | hoy 08:05  |
 
   # Hice la mínima 26
   # Dos dispositivos que completan sin conexión, uno entera y otro con «Hice la
   # mínima», dejan las dos entradas, cada una con lo suyo.
   Scenario Outline: Hice la mínima 26
-    Given una tarea puntual sin fecha límite
-    And la versión mínima de la tarea es <minima>
-    When toco el checkbox de la tarea el <toque>
-    And otro dispositivo, sin ver ese cambio, toca Hice la mínima el <toque_otro>
-    Then la tarea tiene dos completados, uno entero y uno de la mínima
+    Given a one-off task without a due date
+    And the minimal version of the task is <minimal>
+    When I tap the task checkbox on <tap>
+    And another device, without seeing that change, taps Hice la mínima on <tap_other>
+    Then the task has two completions, one whole and one minimal
 
     Examples:
-      | minima          | toque               | toque_otro          |
+      | minimal         | tap                 | tap_other           |
       | Solo el inodoro | 2026-11-13T10:00:00 | 2026-11-13T10:00:05 |

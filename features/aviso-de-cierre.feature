@@ -14,146 +14,146 @@
 # Que los avisos se abren sobre el panel, bloquean lo de abajo y al cerrarlos
 # se vuelve a la misma pestaña sin perder nada (qué se ve) se verifica en la
 # suite QA (qa/cambios-sin-guardar.md).
-Feature: Aviso de cierre
+Feature: Close notice
 
   # Aviso de cierre 1
   # El aviso dice qué pasa y ofrece los tres botones, al editar y al crear.
-  Scenario Outline: Aviso de cierre 1
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo <valor> en el campo <campo>
-    And toco la X del panel
-    Then queda abierto <abierto>
-    And el aviso dice <mensaje>
-    And el aviso ofrece <botones>
+  Scenario Outline: Close notice 1
+    Given I open the panel to edit the task <title> with note <note>
+    When I type <value> in the field <field>
+    And I tap the X of the panel
+    Then what stays open is <open>
+    And the notice says <message>
+    And the notice offers <buttons>
 
     Examples:
-      | titulo | nota | campo  | valor     | mensaje                    | botones                            | abierto |
+      | title  | note | field  | value     | message                   | buttons                             | open                            |
       | Pagar  | Luz  | Título | Pagar luz | Tenés cambios sin guardar | Seguir editando, Descartar, Guardar | el panel con el aviso de cierre |
 
   # Aviso de cierre 2
-  Scenario Outline: Aviso de cierre 2
-    Given abro el panel para crear una tarea
-    When escribo <valor> en el campo <campo>
-    And toco la X del panel
-    Then queda abierto <abierto>
-    And el aviso ofrece <botones>
+  Scenario Outline: Close notice 2
+    Given I open the panel to create a task
+    When I type <value> in the field <field>
+    And I tap the X of the panel
+    Then what stays open is <open>
+    And the notice offers <buttons>
 
     Examples:
-      | campo  | valor | botones                            | abierto |
+      | field  | value | buttons                             | open                            |
       | Título | Pagar | Seguir editando, Descartar, Guardar | el panel con el aviso de cierre |
 
   # Aviso de cierre 3
   # Seguir editando cierra el aviso y deja el panel como estaba, con lo
   # escrito, sin guardar.
-  Scenario Outline: Aviso de cierre 3
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo <valor> en el campo <campo>
-    And toco la X del panel
-    And toco <boton> en el aviso
-    Then queda abierto <abierto>
-    And el campo <campo> sigue con <valor>
-    And la tarea tiene título <guardado>
+  Scenario Outline: Close notice 3
+    Given I open the panel to edit the task <title> with note <note>
+    When I type <value> in the field <field>
+    And I tap the X of the panel
+    And I tap <button> in the notice
+    Then what stays open is <open>
+    And the field <field> still has <value>
+    And the task has title <stored>
 
     Examples:
-      | titulo | nota | campo  | valor     | boton           | abierto   | guardado |
+      | title  | note | field  | value     | button          | open      | stored   |
       | Pagar  | Luz  | Título | Pagar luz | Seguir editando | el panel  | Pagar    |
 
   # Aviso de cierre 4
   # Descartar cierra el panel sin guardar; Guardar guarda y cierra.
-  Scenario Outline: Aviso de cierre 4
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo <valor> en el campo <campo>
-    And toco la X del panel
-    And toco <boton> en el aviso
-    Then queda abierto <abierto>
-    And la tarea tiene título <guardado>
+  Scenario Outline: Close notice 4
+    Given I open the panel to edit the task <title> with note <note>
+    When I type <value> in the field <field>
+    And I tap the X of the panel
+    And I tap <button> in the notice
+    Then what stays open is <open>
+    And the task has title <stored>
 
     Examples:
-      | titulo | nota | campo  | valor     | boton     | abierto | guardado  |
+      | title  | note | field  | value     | button    | open    | stored    |
       | Pagar  | Luz  | Título | Pagar luz | Descartar | nada    | Pagar     |
       | Pagar  | Luz  | Título | Pagar luz | Guardar   | nada    | Pagar luz |
 
   # Aviso de cierre 5
   # Al crear, Descartar no crea nada.
-  Scenario Outline: Aviso de cierre 5
-    Given abro el panel para crear una tarea
-    When escribo <valor> en el campo <campo>
-    And toco la X del panel
-    And toco <boton> en el aviso
-    Then queda abierto <abierto>
-    And no queda ninguna tarea
+  Scenario Outline: Close notice 5
+    Given I open the panel to create a task
+    When I type <value> in the field <field>
+    And I tap the X of the panel
+    And I tap <button> in the notice
+    Then what stays open is <open>
+    And no task remains
 
     Examples:
-      | campo  | valor | boton     | abierto |
+      | field  | value | button    | open    |
       | Título | Pagar | Descartar | nada    |
 
   # Aviso de cierre 6
   # Al crear, Guardar crea la tarea y cierra.
-  Scenario Outline: Aviso de cierre 6
-    Given abro el panel para crear una tarea
-    When escribo <valor> en el campo <campo>
-    And toco la X del panel
-    And toco <boton> en el aviso
-    Then queda abierto <abierto>
-    And se crea una tarea puntual con título <valor>
+  Scenario Outline: Close notice 6
+    Given I open the panel to create a task
+    When I type <value> in the field <field>
+    And I tap the X of the panel
+    And I tap <button> in the notice
+    Then what stays open is <open>
+    And a one-off task is created with title <value>
 
     Examples:
-      | campo  | valor | boton   | abierto |
+      | field  | value | button  | open    |
       | Título | Pagar | Guardar | nada    |
 
   # Aviso de cierre 7
   # Si Guardar falla por validación, no se cierra nada: el aviso se cierra y
   # el panel sigue abierto con lo escrito; la tarea no cambia. Título vacío.
-  Scenario Outline: Aviso de cierre 7
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When vacío el campo <campo>
-    And toco la X del panel
-    And toco <boton> en el aviso
-    Then queda abierto <abierto>
-    And la tarea tiene título <guardado>
+  Scenario Outline: Close notice 7
+    Given I open the panel to edit the task <title> with note <note>
+    When I clear the field <field>
+    And I tap the X of the panel
+    And I tap <button> in the notice
+    Then what stays open is <open>
+    And the task has title <stored>
 
     Examples:
-      | titulo | nota | campo  | boton   | abierto  | guardado |
+      | title  | note | field  | button  | open     | stored   |
       | Pagar  | Luz  | Título | Guardar | el panel | Pagar    |
 
   # Aviso de cierre 9
   # Si otro dispositivo borra la tarea con el aviso abierto, se cierran el
   # aviso y el panel sin pedir nada (gana el borrado).
-  Scenario Outline: Aviso de cierre 9
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo <valor> en el campo <campo>
-    And toco la X del panel
-    And otro dispositivo, sin ver ese cambio, borra la tarea
-    Then queda abierto <abierto>
-    And no existe la tarea <titulo>
+  Scenario Outline: Close notice 9
+    Given I open the panel to edit the task <title> with note <note>
+    When I type <value> in the field <field>
+    And I tap the X of the panel
+    And another device, without seeing that change, deletes the task
+    Then what stays open is <open>
+    And there is no task <title>
 
     Examples:
-      | titulo | nota | campo  | valor     | abierto |
+      | title  | note | field  | value     | open    |
       | Pagar  | Luz  | Título | Pagar luz | nada    |
 
   # Aviso de cierre 10
   # Si otro dispositivo borra la tarea con el panel abierto y cambios sin
   # guardar, el panel se cierra sin pedir nada.
-  Scenario Outline: Aviso de cierre 10
-    Given abro el panel para editar la tarea <titulo> con nota <nota>
-    When escribo <valor> en el campo <campo>
-    And otro dispositivo, sin ver ese cambio, borra la tarea
-    Then queda abierto <abierto>
+  Scenario Outline: Close notice 10
+    Given I open the panel to edit the task <title> with note <note>
+    When I type <value> in the field <field>
+    And another device, without seeing that change, deletes the task
+    Then what stays open is <open>
 
     Examples:
-      | titulo | nota | campo  | valor     | abierto |
+      | title  | note | field  | value     | open    |
       | Pagar  | Luz  | Título | Pagar luz | nada    |
 
   # Aviso de cierre 11
   # Descartar no quita de Recientes un emoji elegido en el panel.
-  Scenario Outline: Aviso de cierre 11
-    Given que no hay emojis recientes
-    And abro el panel para crear una tarea
-    When elijo un emoji que no estaba entre los recientes
-    And toco la X del panel
-    And toco <boton> en el aviso
-    Then el primero es el que elegí
+  Scenario Outline: Close notice 11
+    Given there are no recent emojis
+    And I open the panel to create a task
+    When I choose an emoji that was not among the recent ones
+    And I tap the X of the panel
+    And I tap <button> in the notice
+    Then the first one is the one I chose
 
     Examples:
-      | boton     |
+      | button    |
       | Descartar |

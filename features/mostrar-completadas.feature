@@ -33,18 +33,18 @@ Feature: Mostrar completadas
   # atrasadas con completados (filas 2 y 3) y la semanal en espera que
   # todavía no tuvo su primera ocurrencia (fila 1).
   Scenario Outline: Mostrar completadas 1
-    Given una tarea puntual Pagar sin fecha límite
-    And la tarea Pagar tiene un completado
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada>
-    And una tarea periódica semanal Basura los <dias>
-    And la tarea Basura tiene un completado que cubre el <cubierta>
-    And una tarea periódica semanal Sábanas los <dias_sabanas> creada el <creada_sabanas>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+    Given a one-off task Pagar without a due date
+    And the task Pagar has a completion
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed>
+    And a weekly recurring task Basura on <days>
+    And the task Basura has a completion that covers <covered>
+    And a weekly recurring task Sábanas on <days_sheets> created on <created_sheets>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | cada | unidad | completada          | dias           | cubierta   | dias_sabanas | creada_sabanas      | ahora               | orden                  |
+      | every | unit   | completed           | days           | covered    | days_sheets  | created_sheets      | now                 | order                  |
       | 1    | dias   | 2026-07-15T08:00:00 | martes, jueves | 2026-07-14 | sábado       | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Sábanas                |
       | 4    | horas  | 2026-07-15T07:00:00 | miércoles      | 2026-07-08 | jueves       | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Basura, Regar, Sábanas |
       | 4    | horas  | 2026-07-15T21:00:00 | lunes          | 2026-07-06 | miércoles    | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Basura, Sábanas        |
@@ -56,20 +56,20 @@ Feature: Mostrar completadas
   # va con las no completadas. Fila 4: un completado "del futuro" (relojes
   # desfasados) es el más reciente.
   Scenario Outline: Mostrar completadas 2
-    Given Mostrar completadas está encendido
-    And una tarea puntual Foco sin fecha límite
-    And una tarea puntual Pagar sin fecha límite
-    And la tarea Pagar fue completada el <completada_pagar>
-    And una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar fue completada el <completada_regar>
-    And una tarea periódica semanal Basura los <dias>
-    And la tarea Basura tiene un completado del <completada_basura> que cubre el <cubierta>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
-    And Pendientes muestra como completadas <completadas>
+    Given Mostrar completadas is on
+    And a one-off task Foco without a due date
+    And a one-off task Pagar without a due date
+    And the task Pagar was completed on <completed_pay>
+    And a relative recurring task Regar every <every> <unit>
+    And the task Regar was completed on <completed_water>
+    And a weekly recurring task Basura on <days>
+    And the task Basura has a completion from <completed_trash> that covers <covered>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
+    And Pendientes shows as completed <completed_list>
 
     Examples:
-      | completada_pagar    | cada | unidad | completada_regar    | dias           | completada_basura   | cubierta   | ahora               | orden                       | completadas                 |
+      | completed_pay       | every | unit   | completed_water     | days           | completed_trash     | covered    | now                 | order                       | completed_list              |
       | 2026-07-15T09:00:00 | 1    | dias   | 2026-07-15T08:00:00 | martes, jueves | 2026-07-14T10:00:00 | 2026-07-14 | 2026-07-15T12:00:00 | Foco, Pagar, Regar, Basura  | Pagar, Regar, Basura        |
       | 2026-07-13T09:00:00 | 1    | dias   | 2026-07-15T10:00:00 | martes, jueves | 2026-07-15T11:00:00 | 2026-07-16 | 2026-07-15T12:00:00 | Foco, Basura, Regar, Pagar  | Basura, Regar, Pagar        |
       | 2026-07-14T09:00:00 | 4    | horas  | 2026-07-15T07:00:00 | martes, jueves | 2026-07-15T11:00:00 | 2026-07-16 | 2026-07-15T12:00:00 | Regar, Foco, Basura, Pagar  | Basura, Pagar               |
@@ -81,17 +81,17 @@ Feature: Mostrar completadas
   # espera, antes de las completadas (fila 1). Creada en un día de
   # ocurrencia, está pendiente (fila 2).
   Scenario Outline: Mostrar completadas 3
-    Given Mostrar completadas está encendido
-    And una tarea puntual Foco sin fecha límite
-    And una tarea puntual Pagar sin fecha límite
-    And la tarea Pagar tiene un completado
-    And una tarea periódica semanal Sábanas los <dias_sabanas> creada el <creada_sabanas>
-    When consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
-    And Pendientes muestra como completadas <completadas>
+    Given Mostrar completadas is on
+    And a one-off task Foco without a due date
+    And a one-off task Pagar without a due date
+    And the task Pagar has a completion
+    And a weekly recurring task Sábanas on <days_sheets> created on <created_sheets>
+    When I query Pendientes on <now>
+    Then Pendientes shows in order <order>
+    And Pendientes shows as completed <completed_list>
 
     Examples:
-      | dias_sabanas | creada_sabanas      | ahora               | orden                | completadas |
+      | days_sheets  | created_sheets      | now                 | order                | completed_list |
       | sábado       | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Foco, Sábanas, Pagar | Pagar       |
       | miércoles    | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Sábanas, Foco, Pagar | Pagar       |
 
@@ -100,16 +100,16 @@ Feature: Mostrar completadas
   # más antigua (filas 1 y 2); con la misma creadaEn, por título en orden
   # alfabético en español (fila 3).
   Scenario Outline: Mostrar completadas 4
-    Given Mostrar completadas está encendido
-    And una tarea puntual Planchar sin fecha límite creada el <creada_planchar>
-    And la tarea Planchar fue completada el <completada_planchar>
-    And una tarea puntual Barrer sin fecha límite creada el <creada_barrer>
-    And la tarea Barrer fue completada el <completada_barrer>
-    When consulto Pendientes en cualquier momento
-    Then Pendientes muestra en orden <orden>
+    Given Mostrar completadas is on
+    And a one-off task Planchar without a due date created on <created_iron>
+    And the task Planchar was completed on <completed_iron>
+    And a one-off task Barrer without a due date created on <created_sweep>
+    And the task Barrer was completed on <completed_sweep>
+    When I query Pendientes at any moment
+    Then Pendientes shows in order <order>
 
     Examples:
-      | creada_planchar     | completada_planchar | creada_barrer       | completada_barrer   | orden            |
+      | created_iron        | completed_iron      | created_sweep       | completed_sweep     | order            |
       | 2026-07-10T08:00:00 | 2026-07-15T08:00:00 | 2026-07-10T08:00:01 | 2026-07-15T08:00:00 | Planchar, Barrer |
       | 2026-07-10T08:00:01 | 2026-07-15T08:00:00 | 2026-07-10T08:00:00 | 2026-07-15T08:00:00 | Barrer, Planchar |
       | 2026-07-10T08:00:00 | 2026-07-15T08:00:00 | 2026-07-10T08:00:00 | 2026-07-15T08:00:00 | Barrer, Planchar |
@@ -117,27 +117,27 @@ Feature: Mostrar completadas
   # Mostrar completadas 6
   # Apagado: al completar una tarea, su fila desaparece de Pendientes.
   Scenario Outline: Mostrar completadas 6
-    Given una tarea puntual Foco sin fecha límite
-    And una tarea periódica relativa Regar nunca completada
-    When completo la tarea Regar el <completada>
-    And consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
+    Given a one-off task Foco without a due date
+    And a relative recurring task Regar never completed
+    When I complete the task Regar on <completed>
+    And I query Pendientes on <now>
+    Then Pendientes shows in order <order>
 
     Examples:
-      | completada          | ahora               | orden |
+      | completed           | now                 | order |
       | 2026-07-15T08:00:00 | 2026-07-15T08:00:01 | Foco  |
 
   # Mostrar completadas 7
   # Encendido: al completar una tarea, pasa a las completadas, al final.
   Scenario Outline: Mostrar completadas 7
-    Given Mostrar completadas está encendido
-    And una tarea puntual Foco sin fecha límite
-    And una tarea periódica relativa Regar nunca completada
-    When completo la tarea Regar el <completada>
-    And consulto Pendientes el <ahora>
-    Then Pendientes muestra en orden <orden>
-    And Pendientes muestra como completadas <completadas>
+    Given Mostrar completadas is on
+    And a one-off task Foco without a due date
+    And a relative recurring task Regar never completed
+    When I complete the task Regar on <completed>
+    And I query Pendientes on <now>
+    Then Pendientes shows in order <order>
+    And Pendientes shows as completed <completed_list>
 
     Examples:
-      | completada          | ahora               | orden       | completadas |
+      | completed           | now                 | order       | completed_list |
       | 2026-07-15T08:00:00 | 2026-07-15T08:00:01 | Foco, Regar | Regar       |

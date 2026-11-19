@@ -16,7 +16,7 @@
 # sin servicios externos, la espera sin aviso, el reintento y la instalación
 # que no depende de las fuentes se verifican en la suite QA
 # (qa/fuente-empaquetada.md).
-Feature: Fuente empaquetada
+Feature: Bundled font
 
   # Fuente empaquetada 1
   # Una fila por fila de la tabla de la §6: Atkinson para el texto que tiene
@@ -25,12 +25,12 @@ Feature: Fuente empaquetada
   # marca que Atkinson no tiene y para todo emoji que Noto tiene (con o sin
   # marca, ZWJ, tono, bandera); el emoji del dispositivo para uno que Noto no
   # tiene (de una versión de Unicode más nueva).
-  Scenario Outline: Fuente empaquetada 1
-    Given el texto <texto>
-    Then el texto se dibuja con <fuente>
+  Scenario Outline: Bundled font 1
+    Given the text <text>
+    Then the text is drawn with <font>
 
     Examples:
-      | texto                   | fuente                     |
+      | text                    | font                       |
       | Atención, camión y niño | Atkinson Hyperlegible Next |
       | 0123456789              | Atkinson Hyperlegible Next |
       | #                       | Atkinson Hyperlegible Next |
@@ -54,13 +54,13 @@ Feature: Fuente empaquetada
   # Fuente empaquetada 2
   # Un emoji que el juego no tiene se guarda igual, y también uno que el selector
   # no ofrece y llegó por otra vía: un cabello suelto o una variante de dos tonos.
-  Scenario Outline: Fuente empaquetada 2
-    Given una tarea puntual sin fecha límite
-    When elijo el emoji <emoji>
-    Then la tarea tiene emoji <emoji_guardado>
+  Scenario Outline: Bundled font 2
+    Given a one-off task without a due date
+    When I choose the emoji <emoji>
+    Then the task has emoji <emoji_stored>
 
     Examples:
-      | emoji | emoji_guardado |
+      | emoji | emoji_stored  |
       | 🫿    | 🫿             |
       | 🦰    | 🦰             |
       | 🦱    | 🦱             |
@@ -71,13 +71,13 @@ Feature: Fuente empaquetada
   # Fuente empaquetada 3
   # Un tono de piel suelto tampoco lo ofrece el selector, pero no es un emoji
   # válido: llegado por otra vía, se rechaza (§4.1, §6.2).
-  Scenario Outline: Fuente empaquetada 3
-    When creo una tarea puntual con título <titulo>, emoji <emoji> y nota <nota>
-    Then la creación se rechaza por emoji inválido
-    And no se crea ninguna tarea
+  Scenario Outline: Bundled font 3
+    When I create a one-off task with title <title>, emoji <emoji> and note <note>
+    Then creation is rejected for invalid emoji
+    And no task is created
 
     Examples:
-      | titulo | emoji | nota  |
+      | title  | emoji | note  |
       | Regar  | 🏻    | Cerca |
       | Regar  | 🏼    | Cerca |
       | Regar  | 🏽    | Cerca |

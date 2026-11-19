@@ -43,18 +43,18 @@ function theNoticeQueried(world: World) {
 
 export const undoSteps: StepDefinition[] = [
 	{
-		pattern: new RegExp(`^borro el completado del ${P}$`),
+		pattern: new RegExp(`^I delete the completion from ${P}$`),
 		run: (world, moment) => {
 			rememberBeforeOfMyChange(world);
 			deleteCompletion(world, theCompletionOf(world, moment));
 		}
 	},
 	{
-		pattern: new RegExp(`^${OTHER} borra el completado del ${P}$`),
+		pattern: new RegExp(`^${OTHER} deletes the completion from ${P}$`),
 		run: (world, moment) => deleteCompletion(world, theCompletionOf(world, moment))
 	},
 	{
-		pattern: new RegExp(`^toco Deshacer en el aviso el ${P}$`),
+		pattern: new RegExp(`^I tap Deshacer in the notice on ${P}$`),
 		run: (world, moment) => {
 			rememberBeforeOfMyChange(world);
 			deleteCompletion(world, completionToUndo(world.notice, dateHour(moment)));
@@ -62,14 +62,14 @@ export const undoSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: new RegExp(`^consulto el aviso el ${P}$`),
+		pattern: new RegExp(`^I query the notice on ${P}$`),
 		run: (world, now) => {
 			const moment = dateHour(now);
 			world.noticeQueried = { notice: visibleNotice(world.notice, moment), now: moment };
 		}
 	},
 	{
-		pattern: new RegExp(`^el aviso ofrece deshacer el completado de ${TITLE} del ${P}$`),
+		pattern: new RegExp(`^the notice offers to undo the completion of ${TITLE} from ${P}$`),
 		run: (world, title, moment) => {
 			const task = theTaskTitled(world, title);
 			const notice = theNoticeQueried(world);
@@ -84,7 +84,7 @@ export const undoSteps: StepDefinition[] = [
 		}
 	},
 	{
-		pattern: /^no hay aviso$/,
+		pattern: /^there is no notice$/,
 		run: (world) => expect(theNoticeQueried(world)).toBeUndefined()
 	}
 ];

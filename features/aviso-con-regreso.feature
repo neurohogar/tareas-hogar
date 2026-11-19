@@ -15,19 +15,19 @@
 # cuenta desde ahora. "el aviso del completado muestra el regreso T" afirma
 # que el aviso nombra la tarea y dice T debajo. Cada tarea se nombra por su
 # título (una palabra). Semana de referencia: viernes 2026-11-13.
-Feature: Aviso con regreso
+Feature: Notice with return
 
   # Aviso con regreso 1
   # Relativa: V con hora. Fila 2: ahora es 4 segundos después del completado
   # (7 horas, 59 minutos y 56 segundos es «en 8 horas»).
-  Scenario Outline: Aviso con regreso 1
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    When completo la tarea Regar el <completada>
-    And consulto el aviso el <ahora>
-    Then el aviso del completado muestra el regreso <regreso>
+  Scenario Outline: Notice with return 1
+    Given a relative recurring task Regar every <every> <unit>
+    When I complete the task Regar on <completed>
+    And I query the notice on <now>
+    Then the completion notice shows the return <return>
 
     Examples:
-      | cada | unidad | completada          | ahora               | regreso                                 |
+      | every | unit   | completed           | now                 | return                                  |
       | 8    | horas  | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve hoy 18:00 · en 8 horas           |
       | 8    | horas  | 2026-11-13T10:00:00 | 2026-11-13T10:00:04 | Vuelve hoy 18:00 · en 8 horas           |
       | 1    | horas  | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve hoy 11:00 · en 1 hora            |
@@ -39,14 +39,14 @@ Feature: Aviso con regreso
   # reciente sin cubrir (el 12) y vuelve el jueves siguiente. Fila 2: «mañana»
   # no lleva distancia. Fila 3: completar antes de tiempo cubre la próxima (el
   # 19), así que vuelve la semana siguiente (el 26).
-  Scenario Outline: Aviso con regreso 2
-    Given una tarea periódica semanal Regar los <dias> creada el <creada>
-    When completo la tarea Regar el <completada>
-    And consulto el aviso el <ahora>
-    Then el aviso del completado muestra el regreso <regreso>
+  Scenario Outline: Notice with return 2
+    Given a weekly recurring task Regar on <days> created on <created>
+    When I complete the task Regar on <completed>
+    And I query the notice on <now>
+    Then the completion notice shows the return <return>
 
     Examples:
-      | dias   | creada              | completada          | ahora               | regreso                           |
+      | days   | created             | completed           | now                 | return                            |
       | jueves | 2026-11-01T08:00:00 | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve el jueves 19 · en 6 días   |
       | sábado | 2026-11-01T08:00:00 | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve mañana                     |
       | jueves | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve el jueves 26 · en 13 días  |
@@ -54,40 +54,40 @@ Feature: Aviso con regreso
   # Aviso con regreso 3
   # Relativa con horario: A. Fila 1: V (22:00) cae fuera de la ventana y vuelve
   # cuando abre (mañana 08:00). Fila 2: V cae dentro de la ventana.
-  Scenario Outline: Aviso con regreso 3
-    Given una tarea periódica relativa Regar cada <cada> <unidad>
-    And la tarea Regar se puede completar de <desde> a <hasta>
-    When completo la tarea Regar el <completada>
-    And consulto el aviso el <ahora>
-    Then el aviso del completado muestra el regreso <regreso>
+  Scenario Outline: Notice with return 3
+    Given a relative recurring task Regar every <every> <unit>
+    And the task Regar can be completed from <from> to <to>
+    When I complete the task Regar on <completed>
+    And I query the notice on <now>
+    Then the completion notice shows the return <return>
 
     Examples:
-      | cada | unidad | desde | hasta | completada          | ahora               | regreso                           |
+      | every | unit   | from  | to    | completed           | now                 | return                            |
       | 12   | horas  | 08:00 | 10:30 | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve mañana 08:00 · en 22 horas |
       | 1    | dias   | 08:00 | 11:00 | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve mañana 10:00 · en 24 horas |
 
   # Aviso con regreso 4
   # Puntual con fecha límite (pendiente en la fila 1, atrasada en la fila 2):
   # no vuelve, así que el aviso es solo «Completaste …».
-  Scenario Outline: Aviso con regreso 4
-    Given una tarea puntual Pagar con fecha límite <limite>
-    When completo la tarea Pagar el <completada>
-    And consulto el aviso el <ahora>
-    Then el aviso del completado no muestra regreso
+  Scenario Outline: Notice with return 4
+    Given a one-off task Pagar with due date <due_date>
+    When I complete the task Pagar on <completed>
+    And I query the notice on <now>
+    Then the completion notice shows no return
 
     Examples:
-      | limite     | completada          | ahora               |
+      | due_date   | completed           | now                 |
       | 2026-11-20 | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 |
       | 2026-11-05 | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 |
 
   # Aviso con regreso 5
   # Puntual sin fecha límite: tampoco lleva regreso.
-  Scenario Outline: Aviso con regreso 5
-    Given una tarea puntual Pagar sin fecha límite
-    When completo la tarea Pagar el <completada>
-    And consulto el aviso el <ahora>
-    Then el aviso del completado no muestra regreso
+  Scenario Outline: Notice with return 5
+    Given a one-off task Pagar without a due date
+    When I complete the task Pagar on <completed>
+    And I query the notice on <now>
+    Then the completion notice shows no return
 
     Examples:
-      | completada          | ahora               |
+      | completed           | now                 |
       | 2026-11-13T10:00:00 | 2026-11-13T10:00:04 |

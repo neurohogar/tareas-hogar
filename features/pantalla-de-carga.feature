@@ -11,22 +11,22 @@
 # de 30 segundos es algo que no llega antes del tope. Cuándo aparece, qué se ve, el
 # nombre accesible, el movimiento reducido y el tema se verifican en la suite QA
 # (qa/fuente-empaquetada.md, Flujo 9).
-Feature: Pantalla de carga
+Feature: Loading screen
 
   # Pantalla de carga 1
   # Con sesión espera Auth, las dos colecciones y las dos fuentes, con un mínimo de
   # 0,5 s y un tope de 10 s para todo menos Auth. Las filas 1, 7 y 8 son los ejemplos del spec.
-  Scenario Outline: Pantalla de carga 1
-    Given la app arranca con sesión
-    And Auth responde a los <auth> segundos
-    And las tareas responden a los <tareas> segundos
-    And los completados responden a los <completados> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    And Noto queda listo a los <noto> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 1
+    Given the app starts with a session
+    And Auth responds at <auth> seconds
+    And the tasks respond at <tasks> seconds
+    And the completions respond at <completions> seconds
+    And Atkinson is ready at <atkinson> seconds
+    And Noto is ready at <noto> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | auth | tareas | completados | atkinson | noto | salida |
+      | auth | tasks  | completions | atkinson | noto | exit   |
       | 0.1  | 0.2    | 0.2         | 0.2      | 0.2  | 0.5    |
       | 0.1  | 0.6    | 0.1         | 0.1      | 0.1  | 0.6    |
       | 0.1  | 0.1    | 0.7         | 0.1      | 0.1  | 0.7    |
@@ -44,15 +44,15 @@ Feature: Pantalla de carga
 
   # Pantalla de carga 2
   # Sin sesión espera Auth y solo Atkinson; Noto sigue bajando detrás.
-  Scenario Outline: Pantalla de carga 2
-    Given la app arranca sin sesión
-    And Auth responde a los <auth> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    And Noto queda listo a los <noto> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 2
+    Given the app starts without a session
+    And Auth responds at <auth> seconds
+    And Atkinson is ready at <atkinson> seconds
+    And Noto is ready at <noto> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | auth | atkinson | noto | salida |
+      | auth | atkinson | noto | exit   |
       | 0.1  | 0.2      | 30   | 0.5    |
       | 0.1  | 3        | 30   | 3      |
       | 4    | 0.1      | 30   | 4      |
@@ -62,16 +62,16 @@ Feature: Pantalla de carga
 
   # Pantalla de carga 3
   # Noto que falla deja de esperarse en ese momento; lo demás se sigue esperando.
-  Scenario Outline: Pantalla de carga 3
-    Given la app arranca con sesión
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    And Noto falla a los <noto_falla> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 3
+    Given the app starts with a session
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    And Noto fails at <noto_fails> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | datos | atkinson | noto_falla | salida |
+      | data  | atkinson | noto_fails | exit   |
       | 0.1   | 0.1      | 0.2        | 0.5    |
       | 0.1   | 0.1      | 4          | 4      |
       | 3     | 2        | 1          | 3      |
@@ -81,16 +81,16 @@ Feature: Pantalla de carga
 
   # Pantalla de carga 4
   # Atkinson que falla deja de esperarse en ese momento; lo demás se sigue esperando.
-  Scenario Outline: Pantalla de carga 4
-    Given la app arranca con sesión
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson falla a los <atkinson_falla> segundos
-    And Noto queda listo a los <noto> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 4
+    Given the app starts with a session
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson fails at <atkinson_fails> seconds
+    And Noto is ready at <noto> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | datos | atkinson_falla | noto | salida |
+      | data  | atkinson_fails | noto | exit   |
       | 0.1   | 0.2            | 0.1  | 0.5    |
       | 0.1   | 4              | 0.1  | 4      |
       | 3     | 1              | 2    | 3      |
@@ -100,47 +100,47 @@ Feature: Pantalla de carga
 
   # Pantalla de carga 5
   # Un juego que el navegador no puede dibujar se deja de esperar como una falla.
-  Scenario Outline: Pantalla de carga 5
-    Given la app arranca con sesión
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    And el navegador no puede dibujar Noto a los <no_dibuja> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 5
+    Given the app starts with a session
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    And the browser cannot draw Noto at <cannot_draw> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | datos | atkinson | no_dibuja | salida |
+      | data  | atkinson | cannot_draw | exit   |
       | 0.1   | 0.1      | 0.2       | 0.5    |
       | 0.1   | 0.1      | 4         | 4      |
       | 3     | 2        | 1         | 3      |
 
   # Pantalla de carga 6
   # Sin sesión, Atkinson que falla deja de esperarse.
-  Scenario Outline: Pantalla de carga 6
-    Given la app arranca sin sesión
-    And Auth responde a los <auth> segundos
-    And Atkinson falla a los <atkinson_falla> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 6
+    Given the app starts without a session
+    And Auth responds at <auth> seconds
+    And Atkinson fails at <atkinson_fails> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | auth | atkinson_falla | salida |
+      | auth | atkinson_fails | exit   |
       | 0.1  | 0.2            | 0.5    |
       | 0.1  | 4              | 4      |
       | 3    | 1              | 3      |
 
   # Pantalla de carga 7
   # Sin conexión y con las fuentes guardadas, espera el caché local y esas fuentes.
-  Scenario Outline: Pantalla de carga 7
-    Given la app arranca con sesión
-    And no hay conexión
-    And Auth responde a los <auth> segundos
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    And Noto queda listo a los <noto> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 7
+    Given the app starts with a session
+    And there is no connection
+    And Auth responds at <auth> seconds
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    And Noto is ready at <noto> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | auth | datos | atkinson | noto | salida |
+      | auth | data  | atkinson | noto | exit   |
       | 0.1  | 0.2   | 0.2      | 0.2  | 0.5    |
       | 0.1  | 3     | 1        | 1    | 3      |
       | 0.1  | 1     | 2        | 1    | 2      |
@@ -150,97 +150,97 @@ Feature: Pantalla de carga
 
   # Pantalla de carga 8
   # Sin conexión no espera a Noto si no está guardado.
-  Scenario Outline: Pantalla de carga 8
-    Given la app arranca con sesión
-    And no hay conexión
-    And Noto no está guardado
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 8
+    Given the app starts with a session
+    And there is no connection
+    And Noto is not saved
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | datos | atkinson | salida |
+      | data  | atkinson | exit   |
       | 0.2   | 0.2      | 0.5    |
       | 3     | 1        | 3      |
       | 1     | 2        | 2      |
 
   # Pantalla de carga 9
   # Sin conexión no espera a Atkinson si no está guardada.
-  Scenario Outline: Pantalla de carga 9
-    Given la app arranca con sesión
-    And no hay conexión
-    And Atkinson no está guardada
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Noto queda listo a los <noto> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 9
+    Given the app starts with a session
+    And there is no connection
+    And Atkinson is not saved
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Noto is ready at <noto> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | datos | noto | salida |
+      | data  | noto | exit   |
       | 0.2   | 0.2  | 0.5    |
       | 3     | 1    | 3      |
       | 1     | 2    | 2      |
 
   # Pantalla de carga 10
   # Sin conexión y sin ninguna fuente guardada, solo espera el caché local.
-  Scenario Outline: Pantalla de carga 10
-    Given la app arranca con sesión
-    And no hay conexión
-    And Atkinson no está guardada
-    And Noto no está guardado
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 10
+    Given the app starts with a session
+    And there is no connection
+    And Atkinson is not saved
+    And Noto is not saved
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | datos | salida |
+      | data  | exit   |
       | 0.2   | 0.5    |
       | 3     | 3      |
       | 30    | 10     |
 
   # Pantalla de carga 11
   # Sin sesión y sin conexión, espera Atkinson si está guardada.
-  Scenario Outline: Pantalla de carga 11
-    Given la app arranca sin sesión
-    And no hay conexión
-    And Auth responde enseguida
-    And Atkinson queda lista a los <atkinson> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 11
+    Given the app starts without a session
+    And there is no connection
+    And Auth responds immediately
+    And Atkinson is ready at <atkinson> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | atkinson | salida |
+      | atkinson | exit   |
       | 0.2      | 0.5    |
       | 2        | 2      |
 
   # Pantalla de carga 12
   # Sin sesión y sin conexión, sin Atkinson guardada solo espera Auth.
-  Scenario Outline: Pantalla de carga 12
-    Given la app arranca sin sesión
-    And no hay conexión
-    And Atkinson no está guardada
-    And Auth responde a los <auth> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 12
+    Given the app starts without a session
+    And there is no connection
+    And Atkinson is not saved
+    And Auth responds at <auth> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | auth | salida |
+      | auth | exit   |
       | 0.1  | 0.5    |
       | 2    | 2      |
 
   # Pantalla de carga 13
   # Perder la conexión con la pantalla abierta cuenta igual: lo que solo puede venir
   # por red se deja de esperar en ese momento.
-  Scenario Outline: Pantalla de carga 13
-    Given la app arranca con sesión
-    And Atkinson no está guardada
-    And Noto no está guardado
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And se pierde la conexión a los <perdida> segundos
-    Then la pantalla de carga se va a los <salida> segundos
+  Scenario Outline: Loading screen 13
+    Given the app starts with a session
+    And Atkinson is not saved
+    And Noto is not saved
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And the connection is lost at <lost> seconds
+    Then the loading screen goes away at <exit> seconds
 
     Examples:
-      | datos | perdida | salida |
+      | data  | lost    | exit   |
       | 0.1   | 0.2     | 0.5    |
       | 1     | 3       | 3      |
       | 3     | 1       | 3      |
@@ -250,61 +250,61 @@ Feature: Pantalla de carga
   # Pantalla de carga 14
   # Después de un tope con Noto sin bajar, una apertura con sesión no lo espera y el
   # dispositivo lo sigue recordando.
-  Scenario Outline: Pantalla de carga 14
-    Given el dispositivo ya recordaba un tope con Noto sin bajar
-    And la app arranca con sesión
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    Then la pantalla de carga se va a los <salida> segundos
-    And el dispositivo recuerda un tope con Noto sin bajar
+  Scenario Outline: Loading screen 14
+    Given the device already remembered a cap with Noto not downloaded
+    And the app starts with a session
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    Then the loading screen goes away at <exit> seconds
+    And the device remembers a cap with Noto not downloaded
 
     Examples:
-      | datos | atkinson | salida |
+      | data  | atkinson | exit   |
       | 0.2   | 0.2      | 0.5    |
       | 3     | 1        | 3      |
       | 1     | 30       | 10     |
 
   # Pantalla de carga 15
   # Un tope con Noto sin bajar en una apertura que lo esperaba se recuerda.
-  Scenario Outline: Pantalla de carga 15
-    Given la app arranca con sesión
-    And Auth responde a los <auth> segundos
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    And Noto queda listo a los <noto> segundos
-    Then el dispositivo recuerda un tope con Noto sin bajar
+  Scenario Outline: Loading screen 15
+    Given the app starts with a session
+    And Auth responds at <auth> seconds
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    And Noto is ready at <noto> seconds
+    Then the device remembers a cap with Noto not downloaded
 
     Examples:
-      | auth | datos | atkinson | noto |
+      | auth | data  | atkinson | noto |
       | 0.1  | 1     | 1        | 30   |
       | 0.1  | 30    | 30       | 30   |
       | 12   | 1     | 1        | 30   |
 
   # Pantalla de carga 16
   # Sin tope, o con Noto ya bajado al llegar el tope, no hay nada que recordar.
-  Scenario Outline: Pantalla de carga 16
-    Given la app arranca con sesión
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    And Noto queda listo a los <noto> segundos
-    Then el dispositivo no recuerda un tope con Noto sin bajar
+  Scenario Outline: Loading screen 16
+    Given the app starts with a session
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    And Noto is ready at <noto> seconds
+    Then the device does not remember a cap with Noto not downloaded
 
     Examples:
-      | datos | atkinson | noto |
+      | data  | atkinson | noto |
       | 1     | 1        | 5    |
       | 30    | 1        | 5    |
       | 1     | 30       | 5    |
 
   # Pantalla de carga 17
   # Una apertura sin sesión no espera a Noto, así que su tope no cuenta.
-  Scenario Outline: Pantalla de carga 17
-    Given la app arranca sin sesión
-    And Auth responde enseguida
-    And Atkinson queda lista a los <atkinson> segundos
-    And Noto queda listo a los <noto> segundos
-    Then el dispositivo no recuerda un tope con Noto sin bajar
+  Scenario Outline: Loading screen 17
+    Given the app starts without a session
+    And Auth responds immediately
+    And Atkinson is ready at <atkinson> seconds
+    And Noto is ready at <noto> seconds
+    Then the device does not remember a cap with Noto not downloaded
 
     Examples:
       | atkinson | noto |
@@ -313,113 +313,113 @@ Feature: Pantalla de carga
 
   # Pantalla de carga 18
   # Noto que falló antes del tope ya no se esperaba, así que ese tope no cuenta.
-  Scenario Outline: Pantalla de carga 18
-    Given la app arranca con sesión
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    And Noto falla a los <noto_falla> segundos
-    Then el dispositivo no recuerda un tope con Noto sin bajar
+  Scenario Outline: Loading screen 18
+    Given the app starts with a session
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    And Noto fails at <noto_fails> seconds
+    Then the device does not remember a cap with Noto not downloaded
 
     Examples:
-      | datos | atkinson | noto_falla |
+      | data  | atkinson | noto_fails |
       | 30    | 1        | 2          |
 
   # Pantalla de carga 19
   # Sin conexión, Noto sin guardar no se espera, así que ese tope no cuenta.
-  Scenario Outline: Pantalla de carga 19
-    Given la app arranca con sesión
-    And no hay conexión
-    And Noto no está guardado
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    Then el dispositivo no recuerda un tope con Noto sin bajar
+  Scenario Outline: Loading screen 19
+    Given the app starts with a session
+    And there is no connection
+    And Noto is not saved
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    Then the device does not remember a cap with Noto not downloaded
 
     Examples:
-      | datos | atkinson |
+      | data  | atkinson |
       | 30    | 1        |
 
   # Pantalla de carga 20
   # Una apertura sin sesión no olvida lo que se recordaba.
-  Scenario Outline: Pantalla de carga 20
-    Given el dispositivo ya recordaba un tope con Noto sin bajar
-    And la app arranca sin sesión
-    And Auth responde enseguida
-    And Atkinson queda lista a los <atkinson> segundos
-    Then la pantalla de carga se va a los <salida> segundos
-    And el dispositivo recuerda un tope con Noto sin bajar
+  Scenario Outline: Loading screen 20
+    Given the device already remembered a cap with Noto not downloaded
+    And the app starts without a session
+    And Auth responds immediately
+    And Atkinson is ready at <atkinson> seconds
+    Then the loading screen goes away at <exit> seconds
+    And the device remembers a cap with Noto not downloaded
 
     Examples:
-      | atkinson | salida |
+      | atkinson | exit   |
       | 0.2      | 0.5    |
       | 2        | 2      |
 
   # Pantalla de carga 21
   # Lo recordado se olvida cuando Noto queda guardado, sin demorar la pantalla.
-  Scenario Outline: Pantalla de carga 21
-    Given el dispositivo ya recordaba un tope con Noto sin bajar
-    And la app arranca con sesión
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    And Noto queda listo a los <noto> segundos
-    Then la pantalla de carga se va a los <salida> segundos
-    And el dispositivo no recuerda un tope con Noto sin bajar
+  Scenario Outline: Loading screen 21
+    Given the device already remembered a cap with Noto not downloaded
+    And the app starts with a session
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    And Noto is ready at <noto> seconds
+    Then the loading screen goes away at <exit> seconds
+    And the device does not remember a cap with Noto not downloaded
 
     Examples:
-      | datos | atkinson | noto | salida |
+      | data  | atkinson | noto | exit   |
       | 1     | 1        | 4    | 1      |
       | 4     | 1        | 1    | 4      |
 
   # Pantalla de carga 22
   # Una versión nueva que cambia el juego vuelve a esperar a Noto una vez.
-  Scenario Outline: Pantalla de carga 22
-    Given el dispositivo ya recordaba un tope con Noto sin bajar
-    And una versión nueva cambió el juego de emoji
-    And la app arranca con sesión
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    And Noto queda listo a los <noto> segundos
-    Then la pantalla de carga se va a los <salida> segundos
-    And el dispositivo no recuerda un tope con Noto sin bajar
+  Scenario Outline: Loading screen 22
+    Given the device already remembered a cap with Noto not downloaded
+    And a new version changed the emoji set
+    And the app starts with a session
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    And Noto is ready at <noto> seconds
+    Then the loading screen goes away at <exit> seconds
+    And the device does not remember a cap with Noto not downloaded
 
     Examples:
-      | datos | atkinson | noto | salida |
+      | data  | atkinson | noto | exit   |
       | 1     | 1        | 5    | 5      |
       | 0.2   | 0.2      | 0.2  | 0.5    |
 
   # Pantalla de carga 23
   # Si esa vez también llega el tope con Noto sin bajar, se vuelve a recordar.
-  Scenario Outline: Pantalla de carga 23
-    Given el dispositivo ya recordaba un tope con Noto sin bajar
-    And una versión nueva cambió el juego de emoji
-    And la app arranca con sesión
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    And Noto queda listo a los <noto> segundos
-    Then la pantalla de carga se va a los <salida> segundos
-    And el dispositivo recuerda un tope con Noto sin bajar
+  Scenario Outline: Loading screen 23
+    Given the device already remembered a cap with Noto not downloaded
+    And a new version changed the emoji set
+    And the app starts with a session
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    And Noto is ready at <noto> seconds
+    Then the loading screen goes away at <exit> seconds
+    And the device remembers a cap with Noto not downloaded
 
     Examples:
-      | datos | atkinson | noto | salida |
+      | data  | atkinson | noto | exit   |
       | 1     | 1        | 30   | 10     |
 
   # Pantalla de carga 24
   # Una versión nueva que no cambia el juego no vuelve a esperar a Noto.
-  Scenario Outline: Pantalla de carga 24
-    Given el dispositivo ya recordaba un tope con Noto sin bajar
-    And una versión nueva no cambió el juego de emoji
-    And la app arranca con sesión
-    And Auth responde enseguida
-    And los datos responden a los <datos> segundos
-    And Atkinson queda lista a los <atkinson> segundos
-    Then la pantalla de carga se va a los <salida> segundos
-    And el dispositivo recuerda un tope con Noto sin bajar
+  Scenario Outline: Loading screen 24
+    Given the device already remembered a cap with Noto not downloaded
+    And a new version did not change the emoji set
+    And the app starts with a session
+    And Auth responds immediately
+    And the data responds at <data> seconds
+    And Atkinson is ready at <atkinson> seconds
+    Then the loading screen goes away at <exit> seconds
+    And the device remembers a cap with Noto not downloaded
 
     Examples:
-      | datos | atkinson | salida |
+      | data  | atkinson | exit   |
       | 3     | 1        | 3      |
       | 0.2   | 0.2      | 0.5    |

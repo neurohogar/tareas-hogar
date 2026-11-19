@@ -19,23 +19,23 @@
 #     completado de hoy.
 # Semana de referencia: lunes 2026-07-13, miércoles 15, jueves 16, miércoles
 # siguiente 22; jueves anterior 2026-07-09.
-Feature: Completar con varios horarios
+Feature: Complete with several schedules
 
   # Completar con varios horarios 1
   # Calendario: qué ocurrencia cubre un completado. Fila 1: en la mañana,
   # cubre la mañana. Fila 2: perdida la mañana, en la tarde cubre la tarde
   # (la mañana se descarta). Fila 3: con la mañana cubierta, en la tarde
   # cubre la tarde.
-  Scenario Outline: Completar con varios horarios 1
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <anterior> que cubre el <cubierta_anterior>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When toco el checkbox de la tarea el <toque>
-    Then el nuevo completado se agrega sin modificar los anteriores
-    And se registró un completado que cubre el <cubierta>
+  Scenario Outline: Complete with several schedules 1
+    Given a weekly recurring task on <days>
+    And the task has a completion from <previous> that covers <covered_previous>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I tap the task checkbox on <tap>
+    Then the new completion is added without changing the previous ones
+    And a completion was recorded that covers <covered>
 
     Examples:
-      | dias              | anterior            | cubierta_anterior   | desde | hasta | desde2 | hasta2 | toque               | cubierta            |
+      | days              | previous            | covered_previous    | from  | to    | from2  | to2    | tap                 | covered             |
       | miércoles, jueves | 2026-07-09T19:00:00 | 2026-07-09T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 |
       | miércoles, jueves | 2026-07-09T19:00:00 | 2026-07-09T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T18:30:00 | 2026-07-15T18:00:00 |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T18:00:00 | 2026-07-15T18:00:00 |
@@ -43,93 +43,93 @@ Feature: Completar con varios horarios
   # Completar con varios horarios 2
   # Calendario: después de completar la tarde con la mañana perdida, queda
   # en espera hasta la mañana del jueves, con progreso desde el toque.
-  Scenario Outline: Completar con varios horarios 2
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <anterior> que cubre el <cubierta_anterior>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Complete with several schedules 2
+    Given a weekly recurring task on <days>
+    And the task has a completion from <previous> that covers <covered_previous>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias              | anterior            | cubierta_anterior   | desde | hasta | desde2 | hasta2 | toque               | ahora               | progreso |
+      | days              | previous            | covered_previous    | from  | to    | from2  | to2    | tap                 | now                 | progress |
       | miércoles, jueves | 2026-07-09T19:00:00 | 2026-07-09T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T18:30:00 | 2026-07-16T00:45:00 | 0.5      |
 
   # Completar con varios horarios 3
   # Calendario completada con la ronda del día hecha: al día siguiente, en
   # una ventana de un día que no le toca, tocar el checkbox (completado de
   # un día anterior) la completa de nuevo y cubre N, la próxima mañana.
-  Scenario Outline: Completar con varios horarios 3
-    Given Mostrar completadas está encendido
-    And una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <anterior> que cubre el <cubierta_anterior>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When toco el checkbox de la tarea el <toque>
-    Then el nuevo completado se agrega sin modificar los anteriores
-    And se registró un completado que cubre el <cubierta>
+  Scenario Outline: Complete with several schedules 3
+    Given Mostrar completadas is on
+    And a weekly recurring task on <days>
+    And the task has a completion from <previous> that covers <covered_previous>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I tap the task checkbox on <tap>
+    Then the new completion is added without changing the previous ones
+    And a completion was recorded that covers <covered>
 
     Examples:
-      | dias      | anterior            | cubierta_anterior   | desde | hasta | desde2 | hasta2 | toque               | cubierta            |
+      | days      | previous            | covered_previous    | from  | to    | from2  | to2    | tap                 | covered             |
       | miércoles | 2026-07-15T19:00:00 | 2026-07-15T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-16T08:00:00 | 2026-07-22T07:00:00 |
 
   # Completar con varios horarios 4
   # Calendario con la mañana completada hoy: entre ventanas está completada
   # y el checkbox (que borraría) está habilitado.
-  Scenario Outline: Completar con varios horarios 4
-    Given Mostrar completadas está encendido
-    And una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then la tarea está completada
-    And el checkbox de la tarea está habilitado
+  Scenario Outline: Complete with several schedules 4
+    Given Mostrar completadas is on
+    And a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task is completed
+    And the task checkbox is enabled
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T12:00:00 |
 
   # Completar con varios horarios 5
   # La misma tarea: tocar el checkbox entre ventanas borra el completado de
   # la mañana.
-  Scenario Outline: Completar con varios horarios 5
-    Given Mostrar completadas está encendido
-    And una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When toco el checkbox de la tarea el <toque>
-    Then la tarea no tiene completados
+  Scenario Outline: Complete with several schedules 5
+    Given Mostrar completadas is on
+    And a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I tap the task checkbox on <tap>
+    Then the task has no completions
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | toque               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | tap                 |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T12:00:00 |
 
   # Completar con varios horarios 6
   # Con Mostrar completadas apagado, la tarea con la mañana hecha no se ve
   # entre ventanas (está completada).
-  Scenario Outline: Completar con varios horarios 6
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then la tarea no aparece en Pendientes
+  Scenario Outline: Complete with several schedules 6
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task does not appear in Pendientes
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T17:59:59 |
 
   # Completar con varios horarios 7
   # La misma tarea aparece al abrir la ventana de la tarde: está pendiente,
   # no completada.
-  Scenario Outline: Completar con varios horarios 7
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then la tarea aparece en Pendientes
+  Scenario Outline: Complete with several schedules 7
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task appears in Pendientes
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T18:00:00 |
 
   # Completar con varios horarios 8
@@ -137,88 +137,88 @@ Feature: Completar con varios horarios
   # mañana, está completada con un completado de un día anterior; tocar la
   # completaría y está fuera de las ventanas, así que el checkbox está
   # deshabilitado.
-  Scenario Outline: Completar con varios horarios 8
-    Given Mostrar completadas está encendido
-    And una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then la tarea está completada
-    And el checkbox de la tarea está deshabilitado
+  Scenario Outline: Complete with several schedules 8
+    Given Mostrar completadas is on
+    And a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task is completed
+    And the task checkbox is disabled
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-15T19:00:00 | 2026-07-15T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-16T05:00:00 |
 
   # Completar con varios horarios 9
   # Calendario atrasada por la mañana perdida: entre ventanas el checkbox
   # está deshabilitado.
-  Scenario Outline: Completar con varios horarios 9
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then el checkbox de la tarea está deshabilitado
+  Scenario Outline: Complete with several schedules 9
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task checkbox is disabled
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-09T19:00:00 | 2026-07-09T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T12:00:00 |
 
   # Completar con varios horarios 10
   # La misma tarea: en la ventana de la tarde, el checkbox está habilitado.
-  Scenario Outline: Completar con varios horarios 10
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then el checkbox de la tarea está habilitado
+  Scenario Outline: Complete with several schedules 10
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task checkbox is enabled
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-09T19:00:00 | 2026-07-09T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T18:00:00 |
 
   # Completar con varios horarios 11
   # Puntual fuera de las ventanas: checkbox deshabilitado. Fila 1: el hasta
   # de la mañana es exclusive. Fila 2: entre ventanas.
-  Scenario Outline: Completar con varios horarios 11
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then el checkbox de la tarea está deshabilitado
+  Scenario Outline: Complete with several schedules 11
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task checkbox is disabled
 
     Examples:
-      | creada              | desde | hasta | desde2 | hasta2 | ahora               |
+      | created             | from  | to    | from2  | to2    | now                 |
       | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T10:00:00 |
       | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T12:00:00 |
 
   # Completar con varios horarios 12
   # La misma puntual dentro de cualquiera de las ventanas: checkbox
   # habilitado.
-  Scenario Outline: Completar con varios horarios 12
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then el checkbox de la tarea está habilitado
+  Scenario Outline: Complete with several schedules 12
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task checkbox is enabled
 
     Examples:
-      | creada              | desde | hasta | desde2 | hasta2 | ahora               |
+      | created             | from  | to    | from2  | to2    | now                 |
       | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T09:59:59 |
       | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T18:00:00 |
 
   # Completar con varios horarios 13
   # Puntual: se completa una sola vez, en la ventana de la tarde, sin
   # ocurrencia cubierta, y sale de Pendientes.
-  Scenario Outline: Completar con varios horarios 13
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado en cualquier momento
-    Then se registró un completado sin ocurrencia cubierta
-    And el completado registrado es del <toque_guardado>
-    And la tarea no aparece en Pendientes
+  Scenario Outline: Complete with several schedules 13
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I tap the task checkbox on <tap>
+    And I query the status at any moment
+    Then a completion without a covered occurrence was recorded
+    And the recorded completion is from <tap_stored>
+    And the task does not appear in Pendientes
 
     Examples:
-      | creada              | desde | hasta | desde2 | hasta2 | toque               | toque_guardado      |
+      | created             | from  | to    | from2  | to2    | tap                 | tap_stored          |
       | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T19:00:00 | 2026-07-15T19:00:00 |
 
   # Completar con varios horarios 14
@@ -230,17 +230,17 @@ Feature: Completar con varios horarios
   # perdió la mañana del miércoles), el jueves cubre la ventana con el
   # inicio más reciente, la mañana del jueves. Fila 5: perdida la mañana del
   # miércoles, en la tarde cubre la tarde.
-  Scenario Outline: Completar con varios horarios 14
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <anterior> que cubre el <cubierta_anterior>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When toco el checkbox de la tarea el <toque>
-    Then el nuevo completado se agrega sin modificar los anteriores
-    And se registró un completado que cubre el <cubierta>
+  Scenario Outline: Complete with several schedules 14
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task has a completion from <previous> that covers <covered_previous>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I tap the task checkbox on <tap>
+    Then the new completion is added without changing the previous ones
+    And a completion was recorded that covers <covered>
 
     Examples:
-      | cada | unidad | anterior            | cubierta_anterior   | desde | hasta | desde2 | hasta2 | toque               | cubierta            |
+      | every | unit   | previous            | covered_previous    | from  | to    | from2  | to2    | tap                 | covered             |
       | 2    | dias   | 2026-07-13T08:00:00 | 2026-07-13T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T19:00:00 | 2026-07-13T18:00:00 |
       | 2    | dias   | 2026-07-13T19:00:00 | 2026-07-13T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 |
       | 2    | dias   | 2026-07-13T19:00:00 | 2026-07-13T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-14T19:00:00 | 2026-07-15T07:00:00 |
@@ -250,83 +250,83 @@ Feature: Completar con varios horarios
   # Completar con varios horarios 15
   # Relativa atrasada completada el jueves en la mañana: la secuencia sigue
   # desde ahí, en espera hasta la tarde del jueves.
-  Scenario Outline: Completar con varios horarios 15
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <anterior> que cubre el <cubierta_anterior>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Complete with several schedules 15
+    Given a relative recurring task every <every> <unit>
+    And the task has a completion from <previous> that covers <covered_previous>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | cada | unidad | anterior            | cubierta_anterior   | desde | hasta | desde2 | hasta2 | toque               | ahora               |
+      | every | unit   | previous            | covered_previous    | from  | to    | from2  | to2    | tap                 | now                 |
       | 2    | dias   | 2026-07-13T19:00:00 | 2026-07-13T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-16T08:00:00 | 2026-07-16T13:00:00 |
 
   # Completar con varios horarios 16
   # La misma relativa: pendiente en la tarde del jueves.
-  Scenario Outline: Completar con varios horarios 16
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <anterior> que cubre el <cubierta_anterior>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When toco el checkbox de la tarea el <toque>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Complete with several schedules 16
+    Given a relative recurring task every <every> <unit>
+    And the task has a completion from <previous> that covers <covered_previous>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I tap the task checkbox on <tap>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | anterior            | cubierta_anterior   | desde | hasta | desde2 | hasta2 | toque               | ahora               |
+      | every | unit   | previous            | covered_previous    | from  | to    | from2  | to2    | tap                 | now                 |
       | 2    | dias   | 2026-07-13T19:00:00 | 2026-07-13T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-16T08:00:00 | 2026-07-16T18:00:00 |
 
   # Completar con varios horarios 17
   # Relativa en días nunca completada creada entre ventanas: el primer
   # completado, en la tarde, cubre la tarde.
-  Scenario Outline: Completar con varios horarios 17
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When toco el checkbox de la tarea el <toque>
-    Then se registró un completado que cubre el <cubierta>
+  Scenario Outline: Complete with several schedules 17
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I tap the task checkbox on <tap>
+    Then a completion was recorded that covers <covered>
 
     Examples:
-      | cada | unidad | creada              | desde | hasta | desde2 | hasta2 | toque               | cubierta            |
+      | every | unit   | created             | from  | to    | from2  | to2    | tap                 | covered             |
       | 2    | dias   | 2026-07-13T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T18:30:00 | 2026-07-13T18:00:00 |
 
   # Completar con varios horarios 18
   # Relativa con la mañana del lunes hecha: entre ventanas está completada y
   # tocar el checkbox borra el completado de hoy.
-  Scenario Outline: Completar con varios horarios 18
-    Given Mostrar completadas está encendido
-    And una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When toco el checkbox de la tarea el <toque>
-    Then la tarea no tiene completados
+  Scenario Outline: Complete with several schedules 18
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I tap the task checkbox on <tap>
+    Then the task has no completions
 
     Examples:
-      | cada | unidad | completada          | cubierta            | desde | hasta | desde2 | hasta2 | toque               |
+      | every | unit   | completed           | covered             | from  | to    | from2  | to2    | tap                 |
       | 2    | dias   | 2026-07-13T08:00:00 | 2026-07-13T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T12:00:00 |
 
   # Completar con varios horarios 19
   # La misma relativa con Mostrar completadas apagado: entre ventanas no se
   # ve.
-  Scenario Outline: Completar con varios horarios 19
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then la tarea no aparece en Pendientes
+  Scenario Outline: Complete with several schedules 19
+    Given a relative recurring task every <every> <unit>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task does not appear in Pendientes
 
     Examples:
-      | cada | unidad | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | every | unit   | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | 2    | dias   | 2026-07-13T08:00:00 | 2026-07-13T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T12:00:00 |
 
   # Completar con varios horarios 20
   # La misma relativa aparece al abrir la ventana de la tarde.
-  Scenario Outline: Completar con varios horarios 20
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto Pendientes el <ahora>
-    Then la tarea aparece en Pendientes
+  Scenario Outline: Complete with several schedules 20
+    Given a relative recurring task every <every> <unit>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query Pendientes on <now>
+    Then the task appears in Pendientes
 
     Examples:
-      | cada | unidad | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | every | unit   | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | 2    | dias   | 2026-07-13T08:00:00 | 2026-07-13T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T18:00:00 |

@@ -133,7 +133,7 @@ export interface RowQueried {
 }
 
 /** The subject of the other-device steps: it acts on what was stored before my last change. */
-export const OTHER = 'otro dispositivo, sin ver ese cambio,';
+export const OTHER = 'another device, without seeing that change,';
 
 function changesOnOpen(onOpen: PanelForm, taskOnOpen?: Task, now?: Date): PanelChanges {
 	return { taskOnOpen, onOpen, form: onOpen, top: 'nothing', now, keyboardOpen: false };

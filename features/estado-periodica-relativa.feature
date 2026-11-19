@@ -8,26 +8,26 @@
 # Horas en la zona local del dispositivo; "cada N dias" equivale a N × 24 horas.
 # El progreso es una fracción entre 0 y 1: (ahora − U) / intervalo, comparada
 # exactamente (solo se tolera el error de punto flotante).
-Feature: Estado de periódica relativa
+Feature: Relative recurring task status
 
   # Estado de periódica relativa 1
   # Nunca completada: pendiente, sin importar el intervalo ni el momento.
-  Scenario: Estado de periódica relativa 1
-    Given una tarea periódica relativa nunca completada
-    When consulto el estado en cualquier momento
-    Then el estado es pendiente
+  Scenario: Relative recurring task status 1
+    Given a relative recurring task never completed
+    When I query the status at any moment
+    Then the status is pendiente
 
   # Estado de periódica relativa 2
   # ahora < V: en espera, con progreso (ahora − U) / intervalo.
-  Scenario Outline: Estado de periódica relativa 2
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Relative recurring task status 2
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | completada          | ahora               | progreso |
+      | every | unit   | completed           | now                 | progress |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T09:00:00 | 0.25     |
       | 8    | horas  | 2026-07-31T22:00:00 | 2026-08-01T04:00:00 | 0.75     |
       | 1    | dias   | 2026-07-15T08:00:00 | 2026-07-15T14:00:00 | 0.25     |
@@ -36,27 +36,27 @@ Feature: Estado de periódica relativa
 
   # Estado de periódica relativa 3
   # Un segundo antes del vencimiento sigue en espera.
-  Scenario Outline: Estado de periódica relativa 3
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Relative recurring task status 3
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | cada | unidad | completada          | ahora               |
+      | every | unit   | completed           | now                 |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T11:59:59 |
       | 3    | dias   | 2026-07-15T08:00:00 | 2026-07-18T07:59:59 |
 
   # Estado de periódica relativa 4
   # V ≤ ahora < V + intervalo: pendiente.
-  Scenario Outline: Estado de periódica relativa 4
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Relative recurring task status 4
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | completada          | ahora               |
+      | every | unit   | completed           | now                 |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T15:59:59 |
       | 3    | dias   | 2026-07-15T08:00:00 | 2026-07-18T08:00:00 |
@@ -65,14 +65,14 @@ Feature: Estado de periódica relativa
 
   # Estado de periódica relativa 5
   # ahora ≥ V + intervalo (se perdió un ciclo completo): atrasada.
-  Scenario Outline: Estado de periódica relativa 5
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Relative recurring task status 5
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | cada | unidad | completada          | ahora               |
+      | every | unit   | completed           | now                 |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T16:00:00 |
       | 12   | horas  | 2026-12-31T20:00:00 | 2027-01-01T20:00:00 |
       | 3    | dias   | 2026-07-15T08:00:00 | 2026-07-21T08:00:00 |
@@ -81,30 +81,30 @@ Feature: Estado de periódica relativa
   # Estado de periódica relativa 6
   # Con varios completados, U es el más reciente, sin importar el orden de registro.
   # Con solo el anterior, la tarea estaría atrasada.
-  Scenario Outline: Estado de periódica relativa 6
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <reciente>
-    And la tarea fue completada el <anterior>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Relative recurring task status 6
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <recent>
+    And the task was completed on <previous>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | reciente            | anterior            | ahora               | progreso |
+      | every | unit   | recent              | previous            | now                 | progress |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-14T08:00:00 | 2026-07-15T10:00:00 | 0.5      |
       | 2    | dias   | 2026-07-20T08:00:00 | 2026-07-10T08:00:00 | 2026-07-20T20:00:00 | 0.25     |
 
   # Estado de periódica relativa 7
   # ahora < U (relojes desfasados: se sincronizó un completado "del futuro"):
   # en espera con progreso 0 hasta que ahora alcance a U.
-  Scenario Outline: Estado de periódica relativa 7
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Relative recurring task status 7
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | completada          | ahora               | progreso |
+      | every | unit   | completed           | now                 | progress |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 0        |
       | 2    | dias   | 2026-07-31T22:00:00 | 2026-07-30T10:00:00 | 0        |

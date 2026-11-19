@@ -16,235 +16,235 @@
 # campos.
 # "la tarea se puede completar de D a H" es una tarea que ya tiene ese
 # horario guardado; "la tarea tiene horario de D a H" mira lo guardado.
-Feature: Horario de tarea
+Feature: Task schedule
 
   # Horario de tarea 1
   # Crear una puntual con horario lo guarda tal cual. Fila 2: el horario
   # más amplio posible. Fila 3: un minuto de ventana.
-  Scenario Outline: Horario de tarea 1
-    When creo una tarea puntual con título <titulo> y horario de <desde> a <hasta>
-    Then se crea una tarea puntual con título <titulo_guardado>
-    And la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Task schedule 1
+    When I create a one-off task with title <title> and schedule from <from> to <to>
+    Then a one-off task is created with title <title_stored>
+    And the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | titulo | desde | hasta | titulo_guardado | desde_guardado | hasta_guardado |
+      | title  | from  | to    | title_stored    | from_stored    | to_stored      |
       | Regar  | 08:00 | 11:00 | Regar           | 08:00          | 11:00          |
       | Regar  | 00:00 | 23:59 | Regar           | 00:00          | 23:59          |
       | Regar  | 09:00 | 09:01 | Regar           | 09:00          | 09:01          |
 
   # Horario de tarea 2
   # Una periódica relativa también puede tener horario.
-  Scenario Outline: Horario de tarea 2
-    When creo una tarea periódica relativa con título <titulo> cada <cada> <unidad> y horario de <desde> a <hasta>
-    Then se crea una tarea periódica con título <titulo_guardado>
-    And su recurrencia es relativa cada <cada_guardado> <unidad>
-    And la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Task schedule 2
+    When I create a relative recurring task with title <title> every <every> <unit> and schedule from <from> to <to>
+    Then a recurring task is created with title <title_stored>
+    And its recurrence is relative every <every_stored> <unit>
+    And the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | titulo | cada | unidad | desde | hasta | titulo_guardado | cada_guardado | desde_guardado | hasta_guardado |
+      | title  | every | unit   | from  | to    | title_stored    | every_stored  | from_stored    | to_stored      |
       | Regar  | 2    | dias   | 08:00 | 11:00 | Regar           | 2             | 08:00          | 11:00          |
 
   # Horario de tarea 3
   # Una periódica de calendario también puede tener horario.
-  Scenario Outline: Horario de tarea 3
-    When creo una tarea periódica semanal con título <titulo> los <dias> y horario de <desde> a <hasta>
-    Then se crea una tarea periódica con título <titulo_guardado>
-    And su recurrencia es semanal los <dias_guardados>
-    And la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Task schedule 3
+    When I create a weekly recurring task with title <title> on <days> and schedule from <from> to <to>
+    Then a recurring task is created with title <title_stored>
+    And its recurrence is weekly on <days_stored>
+    And the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | titulo | dias           | desde | hasta | titulo_guardado | dias_guardados | desde_guardado | hasta_guardado |
+      | title  | days           | from  | to    | title_stored    | days_stored    | from_stored    | to_stored      |
       | Basura | martes, jueves | 20:00 | 22:30 | Basura          | martes, jueves | 20:00          | 22:30          |
 
   # Horario de tarea 4
   # Sin horario, la tarea no lo tiene.
-  Scenario Outline: Horario de tarea 4
-    When creo una tarea puntual con título <titulo> y sin fecha límite
-    Then se crea una tarea puntual con título <titulo_guardado>
-    And la tarea no tiene horario
+  Scenario Outline: Task schedule 4
+    When I create a one-off task with title <title> and no due date
+    Then a one-off task is created with title <title_stored>
+    And the task has no schedule
 
     Examples:
-      | titulo | titulo_guardado |
+      | title  | title_stored    |
       | Regar  | Regar           |
 
   # Horario de tarea 5
   # Con desde ≥ hasta, la creación se rechaza entera. Fila 2: iguales. Fila
   # 3: la ventana cruzaría la medianoche.
-  Scenario Outline: Horario de tarea 5
-    When creo una tarea puntual con un título válido y horario de <desde> a <hasta>
-    Then la creación se rechaza porque la hora de fin no es posterior a la de inicio
-    And no se crea ninguna tarea
+  Scenario Outline: Task schedule 5
+    When I create a one-off task with a valid title and schedule from <from> to <to>
+    Then creation is rejected because the end time is not after the start time
+    And no task is created
 
     Examples:
-      | desde | hasta |
+      | from  | to    |
       | 11:00 | 08:00 |
       | 09:00 | 09:00 |
       | 22:00 | 02:00 |
 
   # Horario de tarea 6
   # Con una sola de las dos horas, la creación se rechaza entera.
-  Scenario Outline: Horario de tarea 6
-    When creo una tarea puntual con un título válido y un horario con solo la hora de inicio <desde>
-    Then la creación se rechaza por horario incompleto
-    And no se crea ninguna tarea
+  Scenario Outline: Task schedule 6
+    When I create a one-off task with a valid title and a schedule with only the start time <from>
+    Then creation is rejected for incomplete schedule
+    And no task is created
 
     Examples:
-      | desde |
+      | from  |
       | 08:00 |
 
   # Horario de tarea 7
   # Con solo la hora de fin, también.
-  Scenario Outline: Horario de tarea 7
-    When creo una tarea puntual con un título válido y un horario con solo la hora de fin <hasta>
-    Then la creación se rechaza por horario incompleto
-    And no se crea ninguna tarea
+  Scenario Outline: Task schedule 7
+    When I create a one-off task with a valid title and a schedule with only the end time <to>
+    Then creation is rejected for incomplete schedule
+    And no task is created
 
     Examples:
-      | hasta |
+      | to    |
       | 11:00 |
 
   # Horario de tarea 8
   # Poner un horario a una tarea que no lo tenía.
-  Scenario Outline: Horario de tarea 8
-    Given una tarea puntual sin fecha límite
-    When pongo el horario de <desde> a <hasta>
-    Then la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Task schedule 8
+    Given a one-off task without a due date
+    When I set the schedule from <from> to <to>
+    Then the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | desde | hasta | desde_guardado | hasta_guardado |
+      | from  | to    | from_stored    | to_stored      |
       | 08:00 | 11:00 | 08:00          | 11:00          |
 
   # Horario de tarea 9
   # Cambiar el horario reemplaza las dos horas.
-  Scenario Outline: Horario de tarea 9
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When pongo el horario de <desde_nuevo> a <hasta_nuevo>
-    Then la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Task schedule 9
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    When I set the schedule from <from_new> to <to_new>
+    Then the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | desde | hasta | desde_nuevo | hasta_nuevo | desde_guardado | hasta_guardado |
+      | from  | to    | from_new    | to_new      | from_stored    | to_stored      |
       | 08:00 | 11:00 | 18:00       | 20:00       | 18:00          | 20:00          |
 
   # Horario de tarea 10
   # Quitar el horario deja la tarea sin horario.
-  Scenario Outline: Horario de tarea 10
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When quito el horario
-    Then la tarea no tiene horario
+  Scenario Outline: Task schedule 10
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    When I remove the schedule
+    Then the task has no schedule
 
     Examples:
-      | desde | hasta |
+      | from  | to    |
       | 08:00 | 11:00 |
 
   # Horario de tarea 11
   # Una edición con desde ≥ hasta se rechaza entera: no cambia el título que
   # venía en la misma edición ni el horario guardado.
-  Scenario Outline: Horario de tarea 11
-    Given una tarea puntual <titulo> sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When edito en una misma edición el título a <titulo_nuevo> y el horario de <desde_nuevo> a <hasta_nuevo>
-    Then la edición se rechaza porque la hora de fin no es posterior a la de inicio
-    And la tarea tiene título <titulo_guardado>
-    And la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Task schedule 11
+    Given a one-off task <title> without a due date
+    And the task can be completed from <from> to <to>
+    When in a single edit I edit the title to <title_new> and the schedule from <from_new> to <to_new>
+    Then editing is rejected because the end time is not after the start time
+    And the task has title <title_stored>
+    And the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | titulo | desde | hasta | titulo_nuevo | desde_nuevo | hasta_nuevo | titulo_guardado | desde_guardado | hasta_guardado |
+      | title  | from  | to    | title_new    | from_new    | to_new      | title_stored    | from_stored    | to_stored      |
       | Regar  | 08:00 | 11:00 | Barrer       | 11:00       | 10:00       | Regar           | 08:00          | 11:00          |
       | Regar  | 08:00 | 11:00 | Barrer       | 10:00       | 10:00       | Regar           | 08:00          | 11:00          |
 
   # Horario de tarea 12
   # Una edición con una sola de las dos horas se rechaza y la tarea no
   # cambia.
-  Scenario Outline: Horario de tarea 12
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When pongo un horario con solo la hora de inicio <desde_nuevo>
-    Then la edición se rechaza por horario incompleto
-    And la tarea no cambia
+  Scenario Outline: Task schedule 12
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    When I set a schedule with only the start time <from_new>
+    Then editing is rejected for incomplete schedule
+    And the task does not change
 
     Examples:
-      | desde | hasta | desde_nuevo |
+      | from  | to    | from_new    |
       | 08:00 | 11:00 | 09:00       |
 
   # Horario de tarea 13
   # Cambiar el tipo de la tarea conserva el horario.
-  Scenario Outline: Horario de tarea 13
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When edito la tarea a periódica relativa cada <cada> <unidad>
-    Then la tarea es periódica
-    And la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Task schedule 13
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    When I edit the task to relative recurring every <every> <unit>
+    Then the task is recurring
+    And the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | desde | hasta | cada | unidad | desde_guardado | hasta_guardado |
+      | from  | to    | every | unit   | from_stored    | to_stored      |
       | 08:00 | 11:00 | 2    | dias   | 08:00          | 11:00          |
 
   # Horario de tarea 14
   # Poner el horario no cambia el id ni toca los completados.
-  Scenario Outline: Horario de tarea 14
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    When pongo el horario de <desde> a <hasta>
-    Then la tarea conserva su id
-    And la tarea conserva un solo completado, del <completada_guardada>
+  Scenario Outline: Task schedule 14
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I set the schedule from <from> to <to>
+    Then the task keeps its id
+    And the task keeps a single completion, from <completed_stored>
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | completada_guardada |
+      | every | unit   | completed           | from  | to    | completed_stored    |
       | 2    | dias   | 2026-07-15T08:00:00 | 08:00 | 11:00 | 2026-07-15T08:00:00 |
 
   # Horario de tarea 15
   # Horario y título son campos distintos: se combinan los dos cambios.
-  Scenario Outline: Horario de tarea 15
-    Given una tarea puntual sin fecha límite
-    When pongo el horario de <desde> a <hasta>
-    And otro dispositivo, sin ver ese cambio, edita el título a <titulo_nuevo>
-    Then la tarea tiene horario de <desde_guardado> a <hasta_guardado>
-    And la tarea tiene título <titulo_guardado>
+  Scenario Outline: Task schedule 15
+    Given a one-off task without a due date
+    When I set the schedule from <from> to <to>
+    And another device, without seeing that change, edits the title to <title_new>
+    Then the task has schedule from <from_stored> to <to_stored>
+    And the task has title <title_stored>
 
     Examples:
-      | desde | hasta | titulo_nuevo | desde_guardado | hasta_guardado | titulo_guardado |
+      | from  | to    | title_new    | from_stored    | to_stored      | title_stored    |
       | 08:00 | 11:00 | Barrer       | 08:00          | 11:00          | Barrer          |
 
   # Horario de tarea 16
   # Horario es un solo campo: si un dispositivo cambia el desde y otro el
   # hasta, gana entero el último cambio (no se mezclan las horas).
-  Scenario Outline: Horario de tarea 16
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When pongo el horario de <desde_mio> a <hasta>
-    And otro dispositivo, sin ver ese cambio, pone el horario de <desde> a <hasta_otro>
-    Then la tarea tiene horario de <desde_guardado> a <hasta_guardado>
+  Scenario Outline: Task schedule 16
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    When I set the schedule from <from_mine> to <to>
+    And another device, without seeing that change, sets the schedule from <from> to <to_other>
+    Then the task has schedule from <from_stored> to <to_stored>
 
     Examples:
-      | desde | hasta | desde_mio | hasta_otro | desde_guardado | hasta_guardado |
+      | from  | to    | from_mine | to_other   | from_stored    | to_stored      |
       | 08:00 | 11:00 | 07:00     | 12:00      | 08:00          | 12:00          |
 
   # Horario de tarea 17
   # Quitar el horario y editar el título en otro dispositivo: se combinan.
-  Scenario Outline: Horario de tarea 17
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When quito el horario
-    And otro dispositivo, sin ver ese cambio, edita el título a <titulo_nuevo>
-    Then la tarea no tiene horario
-    And la tarea tiene título <titulo_guardado>
+  Scenario Outline: Task schedule 17
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    When I remove the schedule
+    And another device, without seeing that change, edits the title to <title_new>
+    Then the task has no schedule
+    And the task has title <title_stored>
 
     Examples:
-      | desde | hasta | titulo_nuevo | titulo_guardado |
+      | from  | to    | title_new    | title_stored    |
       | 08:00 | 11:00 | Barrer       | Barrer          |
 
   # Horario de tarea 18
   # Cambiar el horario y que otro dispositivo, después, lo quite: gana el
   # último cambio y la tarea queda sin horario.
-  Scenario Outline: Horario de tarea 18
-    Given una tarea puntual sin fecha límite
-    And la tarea se puede completar de <desde> a <hasta>
-    When pongo el horario de <desde_nuevo> a <hasta_nuevo>
-    And otro dispositivo, sin ver ese cambio, quita el horario
-    Then la tarea no tiene horario
+  Scenario Outline: Task schedule 18
+    Given a one-off task without a due date
+    And the task can be completed from <from> to <to>
+    When I set the schedule from <from_new> to <to_new>
+    And another device, without seeing that change, removes the schedule
+    Then the task has no schedule
 
     Examples:
-      | desde | hasta | desde_nuevo | hasta_nuevo |
+      | from  | to    | from_new    | to_new      |
       | 08:00 | 11:00 | 18:00       | 20:00       |

@@ -21,65 +21,65 @@
 # El progreso es una fracción entre 0 y 1, comparada exactamente.
 # Semana de referencia: lunes 2026-07-13, miércoles 15, jueves 16; jueves
 # anterior 2026-07-09.
-Feature: Estado con varios horarios
+Feature: Status with several schedules
 
   # Estado con varios horarios 1
   # Calendario: después de completar la ventana de la mañana, en espera
   # hasta el desde de la de la tarde, con progreso desde el completado.
-  Scenario Outline: Estado con varios horarios 1
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status with several schedules 1
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               | progreso |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 | progress |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T13:00:00 | 0.5      |
 
   # Estado con varios horarios 2
   # Calendario con la mañana cubierta: un segundo antes del desde de la
   # ventana de la tarde sigue en espera.
-  Scenario Outline: Estado con varios horarios 2
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Status with several schedules 2
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T17:59:59 |
 
   # Estado con varios horarios 3
   # Calendario: la ocurrencia de la tarde está pendiente dentro de su
   # ventana. Fila 1: el desde es inclusive. Fila 2: un segundo antes del
   # hasta.
-  Scenario Outline: Estado con varios horarios 3
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status with several schedules 3
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T18:00:00 |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T20:59:59 |
 
   # Estado con varios horarios 4
   # Calendario: si la ocurrencia de la tarde no se completa, atrasada desde
   # su hasta, también de noche y en la mañana siguiente.
-  Scenario Outline: Estado con varios horarios 4
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status with several schedules 4
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T21:00:00 |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-16T05:00:00 |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-16T08:00:00 |
@@ -87,43 +87,43 @@ Feature: Estado con varios horarios
   # Estado con varios horarios 5
   # Calendario con la ronda anterior completa (P = jueves 18:00): el
   # miércoles, un segundo antes de la mañana, en espera.
-  Scenario Outline: Estado con varios horarios 5
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Status with several schedules 5
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-09T19:00:00 | 2026-07-09T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T06:59:59 |
 
   # Estado con varios horarios 6
   # La misma tarea: en el desde de la mañana del miércoles, pendiente.
-  Scenario Outline: Estado con varios horarios 6
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status with several schedules 6
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-09T19:00:00 | 2026-07-09T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T07:00:00 |
 
   # Estado con varios horarios 7
   # Calendario: perder la mañana deja la tarea atrasada entre ventanas y
   # también dentro de la ventana de la tarde (una sola instancia: la
   # ocurrencia perdida no se acumula).
-  Scenario Outline: Estado con varios horarios 7
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status with several schedules 7
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias              | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-09T19:00:00 | 2026-07-09T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T10:00:00 |
       | miércoles, jueves | 2026-07-09T19:00:00 | 2026-07-09T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T17:59:59 |
       | miércoles, jueves | 2026-07-09T19:00:00 | 2026-07-09T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T19:00:00 |
@@ -132,46 +132,46 @@ Feature: Estado con varios horarios
   # Calendario: una ocurrenciaCubierta guardada solo como fecha cubre el día
   # entero, así que la ventana de la tarde de ese día no se pide: en espera
   # hasta la mañana del jueves.
-  Scenario Outline: Estado con varios horarios 8
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status with several schedules 8
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias              | completada          | cubierta   | desde | hasta | desde2 | hasta2 | ahora               | progreso |
+      | days              | completed           | covered    | from  | to    | from2  | to2    | now                 | progress |
       | miércoles, jueves | 2026-07-15T08:00:00 | 2026-07-15 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T19:30:00 | 0.5      |
 
   # Estado con varios horarios 9
   # Calendario: un completado sin ocurrenciaCubierta (hecho cuando la tarea
   # era relativa) cubre el día entero de su completadoEn.
-  Scenario Outline: Estado con varios horarios 9
-    Given una tarea periódica semanal los <dias>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status with several schedules 9
+    Given a weekly recurring task on <days>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias              | completada          | desde | hasta | desde2 | hasta2 | ahora               | progreso |
+      | days              | completed           | from  | to    | from2  | to2    | now                 | progress |
       | miércoles, jueves | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T08:00:00 | 0.08     |
       | miércoles, jueves | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T19:00:00 | 0.52     |
 
   # Estado con varios horarios 10
   # Calendario sin completados, creada un día de ocurrencia antes de la
   # primera ventana: en espera con progreso desde creadaEn.
-  Scenario Outline: Estado con varios horarios 10
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status with several schedules 10
+    Given a weekly recurring task on <days> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias              | creada              | desde | hasta | desde2 | hasta2 | ahora               | progreso |
+      | days              | created             | from  | to    | from2  | to2    | now                 | progress |
       | miércoles, jueves | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T06:30:00 | 0.5      |
 
   # Estado con varios horarios 11
@@ -179,88 +179,88 @@ Feature: Estado con varios horarios
   # el día de creación cuenta entero (P = el día anterior), así que la
   # ocurrencia de la mañana ya se perdió y queda atrasada en el acto, también
   # dentro de la ventana de la tarde.
-  Scenario Outline: Estado con varios horarios 11
-    Given una tarea periódica semanal los <dias> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status with several schedules 11
+    Given a weekly recurring task on <days> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | dias              | creada              | desde | hasta | desde2 | hasta2 | ahora               |
+      | days              | created             | from  | to    | from2  | to2    | now                 |
       | miércoles, jueves | 2026-07-15T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T12:00:00 |
       | miércoles, jueves | 2026-07-15T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T19:00:00 |
 
   # Estado con varios horarios 12
   # Ventanas contiguas (la segunda abre cuando cierra la primera), con la
   # primera cubierta: un segundo antes del desde de la segunda, en espera.
-  Scenario Outline: Estado con varios horarios 12
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Status with several schedules 12
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | dias      | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days      | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles | 2026-07-15T09:00:00 | 2026-07-15T08:00:00 | 08:00 | 10:00 | 10:00  | 12:00  | 2026-07-15T09:59:59 |
 
   # Estado con varios horarios 13
   # Las mismas ventanas contiguas: en el desde de la segunda, pendiente.
-  Scenario Outline: Estado con varios horarios 13
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status with several schedules 13
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias      | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | days      | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | miércoles | 2026-07-15T09:00:00 | 2026-07-15T08:00:00 | 08:00 | 10:00 | 10:00  | 12:00  | 2026-07-15T10:00:00 |
 
   # Estado con varios horarios 14
   # Con una sola ventana, una ocurrenciaCubierta con hora da el mismo estado
   # que la fecha sola (Estado con horario 16): en espera hasta el desde del
   # jueves.
-  Scenario Outline: Estado con varios horarios 14
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status with several schedules 14
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | dias           | completada          | cubierta            | desde | hasta | ahora               | progreso |
+      | days           | completed           | covered             | from  | to    | now                 | progress |
       | martes, jueves | 2026-07-14T08:00:00 | 2026-07-14T08:00:00 | 08:00 | 11:00 | 2026-07-15T08:00:00 | 0.5      |
 
   # Estado con varios horarios 15
   # Excepción de §5.6: con P con hora, mover la única ventana más tarde el
   # mismo día vuelve a abrir la ocurrencia ya hecha.
-  Scenario Outline: Estado con varios horarios 15
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta>
-    When pongo el horario de <desde_nuevo> a <hasta_nuevo>
-    And consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status with several schedules 15
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to>
+    When I set the schedule from <from_new> to <to_new>
+    And I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | dias      | completada          | cubierta            | desde | hasta | desde_nuevo | hasta_nuevo | ahora               |
+      | days      | completed           | covered             | from  | to    | from_new    | to_new      | now                 |
       | miércoles | 2026-07-15T08:30:00 | 2026-07-15T08:00:00 | 08:00 | 11:00 | 09:00       | 12:00       | 2026-07-15T09:00:00 |
 
   # Estado con varios horarios 16
   # El mismo cambio con la ocurrenciaCubierta guardada solo como fecha (de
   # antes de esta feature): cubre el día entero y la tarea sigue en espera.
-  Scenario Outline: Estado con varios horarios 16
-    Given una tarea periódica semanal los <dias>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta>
-    When pongo el horario de <desde_nuevo> a <hasta_nuevo>
-    And consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Status with several schedules 16
+    Given a weekly recurring task on <days>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to>
+    When I set the schedule from <from_new> to <to_new>
+    And I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | dias      | completada          | cubierta   | desde | hasta | desde_nuevo | hasta_nuevo | ahora               |
+      | days      | completed           | covered    | from  | to    | from_new    | to_new      | now                 |
       | miércoles | 2026-07-15T08:30:00 | 2026-07-15 | 08:00 | 11:00 | 09:00       | 12:00       | 2026-07-15T09:00:00 |
 
   # Estado con varios horarios 17
@@ -268,15 +268,15 @@ Feature: Estado con varios horarios
   # desde creadaEn hasta la primera (fila 1 y fila 2, creada entre ventanas)
   # y después desde el hasta de la ventana anterior (filas 3 a 5: entre
   # ventanas, en el cierre de la tarde y de noche).
-  Scenario Outline: Estado con varios horarios 17
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status with several schedules 17
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | creada              | desde | hasta | desde2 | hasta2 | ahora               | progreso |
+      | created             | from  | to    | from2  | to2    | now                 | progress |
       | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T06:30:00 | 0.5      |
       | 2026-07-15T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T15:00:00 | 0.5      |
       | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T14:00:00 | 0.5      |
@@ -286,14 +286,14 @@ Feature: Estado con varios horarios
   # Estado con varios horarios 18
   # Puntual sin fecha límite: pendiente dentro de cualquiera de las
   # ventanas, el mismo día y los siguientes.
-  Scenario Outline: Estado con varios horarios 18
-    Given una tarea puntual sin fecha límite creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status with several schedules 18
+    Given a one-off task without a due date created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | creada              | desde | hasta | desde2 | hasta2 | ahora               |
+      | created             | from  | to    | from2  | to2    | now                 |
       | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T07:00:00 |
       | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T09:59:59 |
       | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T18:00:00 |
@@ -303,39 +303,39 @@ Feature: Estado con varios horarios
   # Estado con varios horarios 19
   # Puntual con fecha límite: el día límite, entre ventanas, sigue en espera
   # (no atrasada: el atraso es el hasta de la última ventana).
-  Scenario Outline: Estado con varios horarios 19
-    Given una tarea puntual con fecha límite <limite> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Status with several schedules 19
+    Given a one-off task with due date <due_date> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | limite     | creada              | desde | hasta | desde2 | hasta2 | ahora               |
+      | due_date   | created             | from  | to    | from2  | to2    | now                 |
       | 2026-07-15 | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T12:00:00 |
 
   # Estado con varios horarios 20
   # La misma puntual: dentro de la última ventana del día límite, pendiente.
-  Scenario Outline: Estado con varios horarios 20
-    Given una tarea puntual con fecha límite <limite> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status with several schedules 20
+    Given a one-off task with due date <due_date> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | limite     | creada              | desde | hasta | desde2 | hasta2 | ahora               |
+      | due_date   | created             | from  | to    | from2  | to2    | now                 |
       | 2026-07-15 | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T20:59:59 |
 
   # Estado con varios horarios 21
   # Puntual con fecha límite: atrasada desde el hasta de la última ventana
   # del día límite (filas 1 y 2), también si se crea después (fila 3).
-  Scenario Outline: Estado con varios horarios 21
-    Given una tarea puntual con fecha límite <limite> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status with several schedules 21
+    Given a one-off task with due date <due_date> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | limite     | creada              | desde | hasta | desde2 | hasta2 | ahora               |
+      | due_date   | created             | from  | to    | from2  | to2    | now                 |
       | 2026-07-15 | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T21:00:00 |
       | 2026-07-15 | 2026-07-15T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-16T08:00:00 |
       | 2026-07-15 | 2026-07-15T21:30:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T21:30:00 |
@@ -344,42 +344,42 @@ Feature: Estado con varios horarios
   # Relativa en días nunca completada: arranca en la primera ventana cuyo
   # hasta es posterior a creadaEn. Fila 1: creada antes de la mañana. Fila
   # 2: creada entre ventanas, espera a la tarde.
-  Scenario Outline: Estado con varios horarios 22
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status with several schedules 22
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | creada              | desde | hasta | desde2 | hasta2 | ahora               | progreso |
+      | every | unit   | created             | from  | to    | from2  | to2    | now                 | progress |
       | 2    | dias   | 2026-07-13T06:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T06:30:00 | 0.5      |
       | 2    | dias   | 2026-07-13T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T15:00:00 | 0.5      |
 
   # Estado con varios horarios 23
   # Relativa en días nunca completada, creada dentro de la mañana: pendiente
   # (A = el desde de esa ventana).
-  Scenario Outline: Estado con varios horarios 23
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status with several schedules 23
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | creada              | desde | hasta | desde2 | hasta2 | ahora               |
+      | every | unit   | created             | from  | to    | from2  | to2    | now                 |
       | 2    | dias   | 2026-07-13T08:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T08:00:00 |
 
   # Estado con varios horarios 24
   # Relativa en días nunca completada creada entre ventanas: si pierde la
   # tarde, atrasada (fila 1), también el día siguiente (fila 2).
-  Scenario Outline: Estado con varios horarios 24
-    Given una tarea periódica relativa cada <cada> <unidad> creada el <creada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status with several schedules 24
+    Given a relative recurring task every <every> <unit> created on <created>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | cada | unidad | creada              | desde | hasta | desde2 | hasta2 | ahora               |
+      | every | unit   | created             | from  | to    | from2  | to2    | now                 |
       | 2    | dias   | 2026-07-13T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T21:00:00 |
       | 2    | dias   | 2026-07-13T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-14T08:00:00 |
 
@@ -387,97 +387,97 @@ Feature: Estado con varios horarios
   # Relativa en días con la mañana del lunes cubierta: la ronda del día
   # sigue. Entre ventanas, en espera hasta la tarde (no hasta V, el
   # miércoles).
-  Scenario Outline: Estado con varios horarios 25
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Status with several schedules 25
+    Given a relative recurring task every <every> <unit>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | cada | unidad | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | every | unit   | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | 2    | dias   | 2026-07-13T08:00:00 | 2026-07-13T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T13:00:00 |
 
   # Estado con varios horarios 26
   # La misma relativa: pendiente en la ventana de la tarde del lunes.
-  Scenario Outline: Estado con varios horarios 26
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status with several schedules 26
+    Given a relative recurring task every <every> <unit>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | every | unit   | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | 2    | dias   | 2026-07-13T08:00:00 | 2026-07-13T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T18:00:00 |
 
   # Estado con varios horarios 27
   # La misma relativa: atrasada si pierde la tarde (el atraso es C, no
   # V + intervalo).
-  Scenario Outline: Estado con varios horarios 27
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status with several schedules 27
+    Given a relative recurring task every <every> <unit>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | cada | unidad | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | every | unit   | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | 2    | dias   | 2026-07-13T08:00:00 | 2026-07-13T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-13T21:00:00 |
 
   # Estado con varios horarios 28
   # Relativa en días con la ronda del lunes completa: en espera hasta la
   # mañana del miércoles, con progreso desde el último completado.
-  Scenario Outline: Estado con varios horarios 28
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status with several schedules 28
+    Given a relative recurring task every <every> <unit>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               | progreso |
+      | every | unit   | completed           | covered             | from  | to    | from2  | to2    | now                 | progress |
       | 2    | dias   | 2026-07-13T19:00:00 | 2026-07-13T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-14T13:00:00 | 0.5      |
 
   # Estado con varios horarios 29
   # La misma relativa con la ronda del lunes completa: el martes, dentro de
   # una ventana, sigue en espera (ese día no le toca).
-  Scenario Outline: Estado con varios horarios 29
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
+  Scenario Outline: Status with several schedules 29
+    Given a relative recurring task every <every> <unit>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
 
     Examples:
-      | cada | unidad | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | every | unit   | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | 2    | dias   | 2026-07-13T19:00:00 | 2026-07-13T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-14T19:00:00 |
 
   # Estado con varios horarios 30
   # La misma relativa: pendiente en la mañana del miércoles.
-  Scenario Outline: Estado con varios horarios 30
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es pendiente
+  Scenario Outline: Status with several schedules 30
+    Given a relative recurring task every <every> <unit>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is pendiente
 
     Examples:
-      | cada | unidad | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | every | unit   | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | 2    | dias   | 2026-07-13T19:00:00 | 2026-07-13T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T07:00:00 |
 
   # Estado con varios horarios 31
   # La misma relativa: atrasada al cerrarse la mañana del miércoles.
-  Scenario Outline: Estado con varios horarios 31
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea tiene un completado del <completada> que cubre el <cubierta>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es atrasada
+  Scenario Outline: Status with several schedules 31
+    Given a relative recurring task every <every> <unit>
+    And the task has a completion from <completed> that covers <covered>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is atrasada
 
     Examples:
-      | cada | unidad | completada          | cubierta            | desde | hasta | desde2 | hasta2 | ahora               |
+      | every | unit   | completed           | covered             | from  | to    | from2  | to2    | now                 |
       | 2    | dias   | 2026-07-13T19:00:00 | 2026-07-13T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-15T10:00:00 |
 
   # Estado con varios horarios 32
@@ -485,14 +485,14 @@ Feature: Estado con varios horarios
   # tenía una sola ventana): cubre el día entero de su completadoEn, así que
   # la tarde del lunes no se pide (si se pidiera, el martes estaría
   # atrasada); en espera hasta el miércoles a las 07:00.
-  Scenario Outline: Estado con varios horarios 32
-    Given una tarea periódica relativa cada <cada> <unidad>
-    And la tarea fue completada el <completada>
-    And la tarea se puede completar de <desde> a <hasta> y de <desde2> a <hasta2>
-    When consulto el estado el <ahora>
-    Then el estado es en espera
-    And el progreso es <progreso>
+  Scenario Outline: Status with several schedules 32
+    Given a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    And the task can be completed from <from> to <to> and from <from2> to <to2>
+    When I query the status on <now>
+    Then the status is en espera
+    And the progress is <progress>
 
     Examples:
-      | cada | unidad | completada          | desde | hasta | desde2 | hasta2 | ahora               | progreso |
+      | every | unit   | completed           | from  | to    | from2  | to2    | now                 | progress |
       | 2    | dias   | 2026-07-13T08:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-07-14T07:30:00 | 0.5      |
