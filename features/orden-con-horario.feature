@@ -3,34 +3,34 @@
 # {"version":1,"tested_at":"2026-11-17T21:00:20.056442354Z","feature_name":"Orden con horario","feature_path":"features/orden-con-horario.feature","background_hash":"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b","implementation_hash":"sha256:5f22d9c112d51f38368be135fa61801af55896cfaec41cd4512e7ea9202b5c9c","scenarios":[{"index":0,"name":"Orden con horario 1","scenario_hash":"e5f0615662d2b5ab025302fe4dcad03bf628b27ca3c901a697ebc5fde224779e","mutation_count":26,"result":{"Total":26,"Killed":26,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:00:20.056442354Z"},{"index":1,"name":"Orden con horario 2","scenario_hash":"6bb44915217cd4ccc791a0a5bb920ffa790a7ae25c948c2752064eb5496671e3","mutation_count":19,"result":{"Total":19,"Killed":19,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:00:20.056442354Z"},{"index":2,"name":"Orden con horario 3","scenario_hash":"68355ba710ec4c0faa3c4a62249892d76163061887fe240bb3a89b5a6d727bfc","mutation_count":17,"result":{"Total":17,"Killed":17,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:00:20.056442354Z"},{"index":3,"name":"Orden con horario 4","scenario_hash":"95e5adb0e68c76d3f7a3ec325e9419be4fbd473162fdd4dc6fdef469129060fb","mutation_count":17,"result":{"Total":17,"Killed":17,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:00:20.056442354Z"}]}
 # acceptance-mutation-manifest-end
 
-# Spec §5.5 (último punto) y §6.1 (orden por urgencia).
-# Con horario, el orden de §6.1 usa:
-#   atrasada: el atraso, el primero entre C y el atraso sin horario
-#     (relativa: V + intervalo; puntual con fecha límite: el hasta de la
-#     ventana del día fechaLimite).
-#   pendiente: en una periódica, A, el instante en que quedó disponible.
-#     Una puntual conserva la clave de §6.1: 00:00 de fechaLimite; sin
-#     fecha límite, al final del grupo por creadaEn.
-#   en espera: A, el momento en que vuelve a pendiente.
-# Las tareas sin horario siguen con los instantes de §6.1. A, C, U, V y N como
-# en §5.2, §5.3 y §5.5. Semana de referencia: lunes 2026-07-13 a domingo
+# Spec §5.5 (last point) and §6.1 (order by urgency).
+# With a schedule, the order of §6.1 uses:
+#   overdue: the overdue point, the earlier of C and the overdue point without a schedule
+#     (relative: V + interval; one-off with due date: the to of the
+#     window of the day fechaLimite).
+#   pending: in a recurring task, A, the instant at which it became available.
+#     A one-off keeps the key of §6.1: 00:00 of fechaLimite; without a
+#     due date, at the end of the group by creadaEn.
+#   waiting: A, the moment it goes back to pending.
+# Tasks without a schedule keep using the instants of §6.1. A, C, U, V and N as
+# in §5.2, §5.3 and §5.5. Reference week: Monday 2026-07-13 to Sunday
 # 2026-07-19.
-# Cada tarea se nombra por su título (una palabra). "Pendientes muestra en
-# orden" da los títulos de arriba hacia abajo, separados por ", ", y la lista
-# no tiene otras filas. Cuando el paso no da creadaEn, todas esas tareas se
-# crearon en el mismo instante, anterior a cualquier otra fecha del escenario.
-# "la tarea X se puede completar de D a H" es el horario de la tarea X.
-# Las tareas se declaran en un orden distinto del esperado: el orden de carga
-# no decide nada.
+# Each task is named by its title (one word). "Pendientes shows in
+# order" gives the titles from top to bottom, separated by ", ", and the list
+# has no other rows. When the step does not give creadaEn, all those tasks were
+# created at the same instant, earlier than any other date in the scenario.
+# "the task X can be completed from D to H" is the schedule of task X.
+# Tasks are declared in an order different from the expected one: the loading order
+# decides nothing.
 Feature: Order with schedule
 
-  # Orden con horario 1
-  # Atrasadas: Pagar (horario) está atrasada desde el cierre de la ventana
-  # de su día límite (el 15 a las 11:00), antes que Barrer, sin horario,
-  # desde las 00:00 del 16 (sin horario empatarían y Barrer iría primero
-  # por título). Basura, sin horario, desde V + intervalo (el 16 a las
-  # 10:45). Fila 1: Regar desde C (el 16 a las 11:00). Fila 2: Regar desde
-  # V + intervalo (10:30), anterior a C.
+  # Order with schedule 1
+  # Overdue: Pagar (schedule) is overdue since the close of the window
+  # of its due day (the 15th at 11:00), before Barrer, without a schedule,
+  # since 00:00 of the 16th (without a schedule they would tie and Barrer would go first
+  # by title). Basura, without a schedule, since V + interval (the 16th at
+  # 10:45). Row 1: Regar since C (the 16th at 11:00). Row 2: Regar since
+  # V + interval (10:30), earlier than C.
   Scenario Outline: Order with schedule 1
     Given a relative recurring task Regar every <every> <unit>
     And the task Regar was completed on <completed_water>
@@ -48,11 +48,11 @@ Feature: Order with schedule
       | 1    | dias   | 2026-07-15T09:00:00 | 08:00 | 11:00 | 4           | horas         | 2026-07-16T02:45:00 | 2026-07-15 | 2026-07-16T12:00:00 | Pagar, Barrer, Basura, Regar |
       | 1    | horas  | 2026-07-16T08:30:00 | 08:00 | 11:00 | 4           | horas         | 2026-07-16T02:45:00 | 2026-07-15 | 2026-07-16T12:00:00 | Pagar, Barrer, Regar, Basura |
 
-  # Orden con horario 2
-  # Pendientes: Regar (horario) está pendiente desde A, el desde del 16
-  # (08:00), no desde V (el 15 a las 12:00, fuera de la ventana). Fila 1:
-  # Basura, sin horario, desde V el 15 a las 20:00, va primero. Fila 2:
-  # Basura desde V el 16 a las 08:30, va después.
+  # Order with schedule 2
+  # Pendientes: Regar (schedule) is pending since A, the from of the 16th
+  # (08:00), not since V (the 15th at 12:00, outside the window). Row 1:
+  # Basura, without a schedule, since V the 15th at 20:00, goes first. Row 2:
+  # Basura since V the 16th at 08:30, goes after.
   Scenario Outline: Order with schedule 2
     Given a relative recurring task Regar every <every> <unit>
     And the task Regar was completed on <completed_water>
@@ -67,12 +67,12 @@ Feature: Order with schedule
       | 1    | dias   | 2026-07-14T12:00:00 | 08:00 | 11:00 | 2026-07-14T20:00:00 | 2026-07-16T09:00:00 | Basura, Regar |
       | 1    | dias   | 2026-07-14T12:00:00 | 08:00 | 11:00 | 2026-07-15T08:30:00 | 2026-07-16T09:00:00 | Regar, Basura |
 
-  # Orden con horario 3
-  # En espera (sin completados, así que se ven con Mostrar completadas
-  # apagado): las que vuelven antes, primero. Sábanas, sin horario, vuelve
-  # el jueves a las 00:00; Basura, el jueves al abrir su ventana (09:00);
-  # Foco, puntual creada después de su ventana, al abrir la del jueves.
-  # Fila 1: Foco a las 08:00. Fila 2: Foco a las 10:00.
+  # Order with schedule 3
+  # Waiting (without completions, so they are shown with Mostrar completadas
+  # off): the ones that come back sooner go first. Sábanas, without a schedule, comes back
+  # on Thursday at 00:00; Basura, on Thursday when its window opens (09:00);
+  # Foco, a one-off created after its window, when Thursday's opens.
+  # Row 1: Foco at 08:00. Row 2: Foco at 10:00.
   Scenario Outline: Order with schedule 3
     Given a one-off task Foco without a due date created on <created_focus>
     And the task Foco can be completed from <from_bulb> to <to_bulb>
@@ -87,11 +87,11 @@ Feature: Order with schedule
       | 2026-07-15T12:00:00 | 08:00      | 11:00      | jueves | 2026-07-15T08:00:00 | 09:00        | 10:00        | jueves       | 2026-07-15T08:00:00 | 2026-07-15T14:00:00 | Sábanas, Foco, Basura |
       | 2026-07-15T12:00:00 | 10:00      | 11:00      | jueves | 2026-07-15T08:00:00 | 09:00        | 10:00        | jueves       | 2026-07-15T08:00:00 | 2026-07-15T14:00:00 | Sábanas, Basura, Foco |
 
-  # Orden con horario 4
-  # Pendientes: una puntual con horario conserva la clave de §6.1, no A
-  # (que, por su creadaEn, sería anterior a todo). Pagar va por las 00:00
-  # de su fecha límite: fila 1, el 16, antes de Basura (V el 16 a las
-  # 08:30); fila 2, el 17, después. Foco, sin fecha límite, va al final.
+  # Order with schedule 4
+  # Pendientes: a one-off with a schedule keeps the key of §6.1, not A
+  # (which, by its creadaEn, would be earlier than everything). Pagar goes by 00:00
+  # of its due date: row 1, the 16th, before Basura (V the 16th at
+  # 08:30); row 2, the 17th, after. Foco, with no due date, goes last.
   Scenario Outline: Order with schedule 4
     Given a one-off task Foco without a due date
     And the task Foco can be completed from <from> to <to>

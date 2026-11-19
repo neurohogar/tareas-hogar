@@ -44,7 +44,7 @@ export function textOfLastTime(completedAts: number[], now: number): string {
 
 export interface OracleEntry {
 	completedAt: number;
-	/** Only when the scenario fixes it ("con id c1"). */
+	/** Only when the scenario fixes it ("with id c1"). */
 	id?: string;
 	/** The task's current title. */
 	title: string;

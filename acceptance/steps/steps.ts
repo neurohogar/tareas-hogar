@@ -75,7 +75,7 @@ const withSteps = (steps: readonly string[]) => (task: Task) => {
 	return { ...taskData(task), firstStep, steps: more };
 };
 
-/** Each form of step change: "<subject> el paso N a ...". */
+/** Each form of step change: "<subject> step N to ...". */
 const CHANGES: { text: string; value: (...values: string[]) => string }[] = [
 	{ text: P, value: (step) => step },
 	{ text: `${P} with spaces at the start and end`, value: (step) => `  ${step}  ` },

@@ -5,9 +5,9 @@
 
 Feature: First step in the row
 
-  # Primer paso en la fila 1
-  # Una pendiente con primer paso lo muestra con el prefijo «Primer paso: »,
-  # completo (fila 2: largo, sin cortar).
+  # First step in the row 1
+  # A pending task with a first step shows it with the prefix «Primer paso: »,
+  # in full (row 2: long, not truncated).
   Scenario Outline: First step in the row 1
     Given a one-off task without a due date
     And the first step of the task is <first_step>
@@ -19,8 +19,8 @@ Feature: First step in the row
       | Separar la ropa blanca                                                                                                         | Primer paso: Separar la ropa blanca                                                                                                         |
       | Abrir el cajón de abajo, sacar toda la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla | Primer paso: Abrir el cajón de abajo, sacar toda la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla |
 
-  # Primer paso en la fila 2
-  # También en una periódica relativa pendiente.
+  # First step in the row 2
+  # Also on a pending relative recurring task.
   Scenario Outline: First step in the row 2
     Given a relative recurring task every <every> <unit>
     And the first step of the task is <first_step>
@@ -31,8 +31,8 @@ Feature: First step in the row
       | every | unit   | first_step         | now                 | text                            |
       | 2    | dias   | Llenar la regadera | 2026-11-13T10:00:00 | Primer paso: Llenar la regadera |
 
-  # Primer paso en la fila 3
-  # También en una periódica de calendario pendiente (el día de su ocurrencia).
+  # First step in the row 3
+  # Also on a pending calendar recurring task (on the day of its occurrence).
   Scenario Outline: First step in the row 3
     Given a weekly recurring task on <days> created on <created>
     And the first step of the task is <first_step>
@@ -43,9 +43,9 @@ Feature: First step in the row
       | days   | created             | first_step          | now                 | text                             |
       | martes | 2026-11-09T08:00:00 | Atar la bolsa llena | 2026-11-10T09:00:00 | Primer paso: Atar la bolsa llena |
 
-  # Primer paso en la fila 4
-  # Una puntual atrasada también lo muestra. Fila 1: recién atrasada (a las
-  # 00:00 del día siguiente); fila 2: días después.
+  # First step in the row 4
+  # An overdue one-off task also shows it. Row 1: just became overdue (at
+  # 00:00 of the next day); row 2: days later.
   Scenario Outline: First step in the row 4
     Given a one-off task with due date <due_date>
     And the first step of the task is <first_step>
@@ -57,8 +57,8 @@ Feature: First step in the row
       | 2026-11-12 | Separar la ropa blanca | 2026-11-13T00:00:00 | Primer paso: Separar la ropa blanca |
       | 2026-11-10 | Separar la ropa blanca | 2026-11-13T10:00:00 | Primer paso: Separar la ropa blanca |
 
-  # Primer paso en la fila 5
-  # Una periódica relativa atrasada también.
+  # First step in the row 5
+  # An overdue relative recurring task too.
   Scenario Outline: First step in the row 5
     Given a relative recurring task every <every> <unit>
     And the task was completed on <completed>
@@ -70,9 +70,9 @@ Feature: First step in the row
       | every | unit   | completed           | first_step         | now                 | text                            |
       | 2    | dias   | 2026-11-10T09:00:00 | Llenar la regadera | 2026-11-14T09:00:00 | Primer paso: Llenar la regadera |
 
-  # Primer paso en la fila 6
-  # Una atrasada con el checkbox deshabilitado hasta que abra su ventana
-  # (§5.5) lo muestra.
+  # First step in the row 6
+  # An overdue task with the checkbox disabled until its window opens
+  # (§5.5) shows it.
   Scenario Outline: First step in the row 6
     Given a one-off task with due date <due_date> created on <created>
     And the task can be completed from <from> to <to>
@@ -85,8 +85,8 @@ Feature: First step in the row
       | due_date   | created             | from  | to    | first_step             | now                 | text                                |
       | 2026-11-10 | 2026-11-01T09:00:00 | 08:00 | 11:00 | Separar la ropa blanca | 2026-11-13T07:00:00 | Primer paso: Separar la ropa blanca |
 
-  # Primer paso en la fila 7
-  # Una tarea sin el campo no tiene primer paso: la fila se ve como hoy.
+  # First step in the row 7
+  # A task without the field has no first step: the row looks as it does today.
   Scenario Outline: First step in the row 7
     Given a relative recurring task every <every> <unit>
     When I query Pendientes on <now>
@@ -96,8 +96,8 @@ Feature: First step in the row
       | every | unit   | now                 |
       | 2    | dias   | 2026-11-13T10:00:00 |
 
-  # Primer paso en la fila 8
-  # Una periódica relativa en espera (completada) no lo muestra.
+  # First step in the row 8
+  # A waiting (completed) relative recurring task does not show it.
   Scenario Outline: First step in the row 8
     Given Mostrar completadas is on
     And a relative recurring task every <every> <unit>
@@ -110,9 +110,9 @@ Feature: First step in the row
       | every | unit   | completed           | first_step         | now                 |
       | 2    | dias   | 2026-11-13T08:00:00 | Llenar la regadera | 2026-11-13T10:00:00 |
 
-  # Primer paso en la fila 9
-  # Una periódica de calendario en espera (antes de su ocurrencia) no lo
-  # muestra.
+  # First step in the row 9
+  # A waiting calendar recurring task (before its occurrence) does not
+  # show it.
   Scenario Outline: First step in the row 9
     Given a weekly recurring task on <days> created on <created>
     And the first step of the task is <first_step>
@@ -123,8 +123,8 @@ Feature: First step in the row
       | days   | created             | first_step          | now                 |
       | martes | 2026-11-09T08:00:00 | Atar la bolsa llena | 2026-11-09T12:00:00 |
 
-  # Primer paso en la fila 10
-  # Una puntual en espera por su horario (fuera de la ventana) no lo muestra.
+  # First step in the row 10
+  # A one-off task waiting because of its schedule (outside the window) does not show it.
   Scenario Outline: First step in the row 10
     Given a one-off task without a due date created on <created>
     And the task can be completed from <from> to <to>
@@ -136,8 +136,8 @@ Feature: First step in the row
       | created             | from  | to    | first_step             | now                 |
       | 2026-11-13T06:00:00 | 08:00 | 11:00 | Separar la ropa blanca | 2026-11-13T07:00:00 |
 
-  # Primer paso en la fila 11
-  # Dentro de la ventana, la misma tarea está pendiente y sí lo muestra.
+  # First step in the row 11
+  # Inside the window, the same task is pending and does show it.
   Scenario Outline: First step in the row 11
     Given a one-off task without a due date created on <created>
     And the task can be completed from <from> to <to>
@@ -149,9 +149,9 @@ Feature: First step in the row
       | created             | from  | to    | first_step             | now                 | text                                |
       | 2026-11-13T06:00:00 | 08:00 | 11:00 | Separar la ropa blanca | 2026-11-13T08:00:00 | Primer paso: Separar la ropa blanca |
 
-  # Primer paso en la fila 12
-  # Una pospuesta (en espera) no lo muestra, sea pendiente (fila 1) o
-  # atrasada (fila 2) sin la posposición.
+  # First step in the row 12
+  # A postponed task (waiting) does not show it, whether it is pending (row 1) or
+  # overdue (row 2) without the postponement.
   Scenario Outline: First step in the row 12
     Given a one-off task with due date <due_date>
     And the first step of the task is <first_step>
@@ -164,9 +164,9 @@ Feature: First step in the row
       | 2026-11-20 | Separar la ropa blanca | 3 horas | 2026-11-13T10:00:00 | 2026-11-13T11:30:00 |
       | 2026-11-10 | Separar la ropa blanca | 3 horas | 2026-11-13T10:00:00 | 2026-11-13T11:30:00 |
 
-  # Primer paso en la fila 13
-  # Una pausada (con Mostrar pausadas) no lo muestra, aunque sin pausa estaría
-  # atrasada.
+  # First step in the row 13
+  # A paused task (with Mostrar pausadas) does not show it, even though without the pause it would be
+  # overdue.
   Scenario Outline: First step in the row 13
     Given Mostrar pausadas is on
     And a relative recurring task every <every> <unit>
@@ -180,8 +180,8 @@ Feature: First step in the row
       | every | unit   | completed           | first_step         | now                 |
       | 2    | dias   | 2026-11-10T09:00:00 | Llenar la regadera | 2026-11-14T09:00:00 |
 
-  # Primer paso en la fila 14
-  # Al completarla una puntual (con Mostrar completadas) la línea desaparece.
+  # First step in the row 14
+  # On completing a one-off task (with Mostrar completadas) the line disappears.
   Scenario Outline: First step in the row 14
     Given Mostrar completadas is on
     And a one-off task without a due date
@@ -194,9 +194,9 @@ Feature: First step in the row
       | first_step             | tap                 | now                 |
       | Separar la ropa blanca | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 |
 
-  # Primer paso en la fila 15
-  # Al terminar la posposición vuelve sola: pendiente (fila 1) o atrasada
-  # (fila 2).
+  # First step in the row 15
+  # When the postponement ends it comes back on its own: pending (row 1) or overdue
+  # (row 2).
   Scenario Outline: First step in the row 15
     Given a one-off task with due date <due_date>
     And the first step of the task is <first_step>
@@ -209,9 +209,9 @@ Feature: First step in the row
       | 2026-11-20 | Separar la ropa blanca | 3 horas | 2026-11-13T10:00:00 | 2026-11-13T13:00:00 | Primer paso: Separar la ropa blanca |
       | 2026-11-10 | Separar la ropa blanca | 3 horas | 2026-11-13T10:00:00 | 2026-11-13T13:00:00 | Primer paso: Separar la ropa blanca |
 
-  # Primer paso en la fila 16
-  # Una periódica que vuelve (se cumple su intervalo) muestra el mismo primer
-  # paso. Fila 1: en el momento de volver (pendiente); fila 2: ya atrasada.
+  # First step in the row 16
+  # A recurring task that comes back (its interval elapses) shows the same first
+  # step. Row 1: at the moment it comes back (pending); row 2: already overdue.
   Scenario Outline: First step in the row 16
     Given a relative recurring task every <every> <unit>
     And the task was completed on <completed>
@@ -224,8 +224,8 @@ Feature: First step in the row
       | 2    | dias   | 2026-11-10T09:00:00 | Llenar la regadera | 2026-11-12T09:00:00 | Primer paso: Llenar la regadera |
       | 2    | dias   | 2026-11-10T09:00:00 | Llenar la regadera | 2026-11-14T09:00:00 | Primer paso: Llenar la regadera |
 
-  # Primer paso en la fila 17
-  # Al reanudarla vuelve sola: la relativa reanudada está pendiente.
+  # First step in the row 17
+  # On resuming it, it comes back on its own: the resumed relative task is pending.
   Scenario Outline: First step in the row 17
     Given a relative recurring task every <every> <unit>
     And the task was completed on <completed>
@@ -239,8 +239,8 @@ Feature: First step in the row
       | every | unit   | completed           | first_step         | resumed             | now                 | text                            |
       | 2    | dias   | 2026-11-12T09:00:00 | Llenar la regadera | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Primer paso: Llenar la regadera |
 
-  # Primer paso en la fila 18
-  # Al deshacer el completado vuelve sola: la puntual vuelve a pendiente.
+  # First step in the row 18
+  # On undoing the completion it comes back on its own: the one-off task goes back to pending.
   Scenario Outline: First step in the row 18
     Given a one-off task with due date <due_date>
     And the first step of the task is <first_step>

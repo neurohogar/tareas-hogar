@@ -3,18 +3,18 @@
 # {"version":1,"tested_at":"2026-11-17T21:00:40.581861369Z","feature_name":"Orden con varios horarios","feature_path":"features/orden-con-varios-horarios.feature","background_hash":"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b","implementation_hash":"sha256:82b373a2f6d81666df146b13399291be319713565a41d2ace170444a34d6324b","scenarios":[{"index":0,"name":"Orden con varios horarios 1","scenario_hash":"652ebe97dcb5792e79cfa7eba3bac2bc7240cf0f1ed540ad76a1c0cdb6a0ef22","mutation_count":21,"result":{"Total":21,"Killed":21,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:00:40.581861369Z"},{"index":1,"name":"Orden con varios horarios 2","scenario_hash":"5992a6193aba5d26324caa0d510abf08ac331f67c875eb7bb85baf186e5c09ae","mutation_count":26,"result":{"Total":26,"Killed":26,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:00:40.581861369Z"}]}
 # acceptance-mutation-manifest-end
 
-# Spec §5.5, §5.6 y §6.1. El orden por urgencia de una tarea con varias
-# ventanas usa la ocurrencia N: C (el hasta de su ventana) como inicio de
-# atrasada y A (su desde) como inicio de pendiente. Una relativa sin
-# horario usa V + intervalo y V. Semana de referencia: martes 2026-07-14,
-# miércoles 15.
+# Spec §5.5, §5.6 and §6.1. The order by urgency of a task with several
+# windows uses the occurrence N: C (the to of its window) as the start of
+# overdue and A (its from) as the start of pending. A relative without a
+# schedule uses V + interval and V. Reference week: Tuesday 2026-07-14,
+# Wednesday 15.
 Feature: Order with several schedules
 
-  # Orden con varios horarios 1
-  # Atrasadas: Basura (calendario, creada el martes) perdió la mañana del
-  # miércoles y está atrasada desde su cierre (10:00). Regar, relativa sin
-  # horario, desde V + intervalo: fila 1, a las 11:00, después; fila 2, a
-  # las 09:00, antes.
+  # Order with several schedules 1
+  # Overdue: Basura (calendar, created on Tuesday) missed the Wednesday morning
+  # and is overdue since its close (10:00). Regar, relative without a
+  # schedule, since V + interval: row 1, at 11:00, after; row 2, at
+  # 09:00, before.
   Scenario Outline: Order with several schedules 1
     Given a weekly recurring task Basura on <days> created on <created_trash>
     And the task Basura can be completed from <from> to <to> and from <from2> to <to2>
@@ -28,11 +28,11 @@ Feature: Order with several schedules
       | miércoles | 2026-07-14T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 4    | horas  | 2026-07-15T03:00:00 | 2026-07-15T12:00:00 | Basura, Regar |
       | miércoles | 2026-07-14T12:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 4    | horas  | 2026-07-15T01:00:00 | 2026-07-15T12:00:00 | Regar, Basura |
 
-  # Orden con varios horarios 2
-  # Pendientes: Basura, con la mañana cubierta, está pendiente desde el
-  # desde de la tarde (18:00), no desde las 00:00 del día. Regar, relativa
-  # sin horario, desde V: fila 1, a las 18:30, después; fila 2, a las 17:30,
-  # antes.
+  # Order with several schedules 2
+  # Pendientes: Basura, with the morning covered, is pending since the
+  # from of the afternoon (18:00), not since 00:00 of the day. Regar, relative
+  # without a schedule, since V: row 1, at 18:30, after; row 2, at 17:30,
+  # before.
   Scenario Outline: Order with several schedules 2
     Given a weekly recurring task Basura on <days>
     And the task Basura has a completion from <completed_trash> that covers <covered_trash>

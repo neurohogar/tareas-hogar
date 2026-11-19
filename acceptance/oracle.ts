@@ -76,7 +76,7 @@ export interface Situation {
 	coveredWithHour?: number[];
 	/** Days of completions made before being calendar-based (without ocurrenciaCubierta); §5.3 adds them to P. */
 	withoutCovered: Date[];
-	/** Occurrence covered by the completion made by "completo la tarea". */
+	/** Occurrence covered by the completion made by "I complete the task". */
 	coveredNew?: Date;
 	/** One-off task (§5.1): its due date, if it has one; `cualquiera` if the scenario says it does not matter. */
 	oneOff?: { limit?: Date; any?: boolean };
@@ -166,7 +166,7 @@ export function scheduleValid(written: [string, string][]): TimeWindow[] | undef
 	return read.every((v) => typeof v !== 'string') ? (read as TimeWindow[]) : undefined;
 }
 
-/** One or two windows from a step: "de D a H" or "de D a H y de D2 a H2". */
+/** One or two windows from a step: "from D to H" or "from D to H and from D2 to H2". */
 export const SCHEDULE = 'from (\\S+) to (\\S+)(?: and from (\\S+) to (\\S+))?';
 
 /** The windows named by the HORARIO captures. */
@@ -391,7 +391,7 @@ function recordWithSchedule(s: Situation, vs: TimeWindow[], moment: number): boo
 	return true;
 }
 
-/** "completo la tarea el <t>": it is also the new completion whose coverage is verified. */
+/** "I complete the task on <t>": it is also the new completion whose coverage is verified. */
 function complete(s: Situation, value: string): boolean {
 	const before = s.covered.length;
 	if (!record(s, value)) return false;
@@ -917,7 +917,7 @@ export interface OrderTask {
 	covered: Date[];
 	/** §4.4: covered occurrences with a time, by their start. */
 	coveredWithHour?: number[];
-	/** Has completions whose moment the scenario says does not matter ("la tarea X tiene un completado"). */
+	/** Has completions whose moment the scenario says does not matter ("the task X has a completion"). */
 	withCompletionWithoutMoment?: boolean;
 	/** §5.5: its daily windows, sorted, if it has a schedule. */
 	schedule?: TimeWindow[];
@@ -1322,7 +1322,7 @@ function fontsOf(text: string): string[] | undefined {
 
 export const isScenarioOfFont = (texts: string[]) => texts.some((text) => /^the text is drawn with /.test(text));
 
-/** What "el texto se dibuja con" observes and asserts: undefined if the oracle does not recognize the scenario. */
+/** What "the text is drawn with" observes and asserts: undefined if the oracle does not recognize the scenario. */
 export function observeFont(entries: StepOracle[], thens: StepOracle[], row: RowOracle): { observed: string[]; asserted: string[] } | undefined {
 	if (entries.length !== 1 || thens.length !== 1) return undefined;
 	const text = /^the text (.*)$/su.exec(resolve(entries[0].text, row) ?? '')?.[1];

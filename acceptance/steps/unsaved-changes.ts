@@ -277,7 +277,7 @@ function tapBack(world: World): void {
 	else topClose(changes);
 }
 
-/** The title written in each state of the step "el panel está abierto". */
+/** The title written in each state of the step "the panel is open". */
 const TITLE_ON_OPEN = 'Pagar';
 const PANEL_STATUSES: Record<string, string | undefined> = { 'con cambios sin guardar': 'Pagar luz', 'sin cambios': undefined };
 

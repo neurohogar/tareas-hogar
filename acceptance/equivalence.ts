@@ -180,7 +180,7 @@ function isEquivalentWhetherStaysFulfilling(observe: Observer, feature: Feature,
 	return plays(original) && plays({ ...original, [candidate.key]: candidate.mutated });
 }
 
-export function esEquivalente(feature: Feature, candidate: Candidate): boolean {
+export function isEquivalent(feature: Feature, candidate: Candidate): boolean {
 	const scenario = feature.scenarios[candidate.scenario];
 	if (isScenarioOfCleanups(stepsOf(feature, scenario).map(({ step }) => step.text))) {
 		return isEquivalentWhetherStaysFulfilling(observeCleanups, feature, scenario, candidate);

@@ -3,21 +3,21 @@
 # {"version":1,"tested_at":"2026-11-05T22:45:35.649018756Z","feature_name":"Orientación vertical","feature_path":"features/orientacion-vertical.feature","background_hash":"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b","implementation_hash":"sha256:b59665f37cf3966a4e1a7f5387636f87da05946c007c399670fb445e3b0e63b1","scenarios":[{"index":0,"name":"Orientación vertical 1","scenario_hash":"36fd1d9798d58177eb990a567732eb6035017b7592661ed28b2f7815ca349fe0","mutation_count":8,"result":{"Total":8,"Killed":8,"Survived":0,"Errors":0},"tested_at":"2026-11-05T22:45:17.203995897Z"}]}
 # acceptance-mutation-manifest-end
 
-# Spec §6 (Orientación) y §8 (Manifest). La app instalada se usa en vertical
-# porque el manifest que publica lo declara, y es lo único que lo decide: la
-# orientación rige en la app instalada, en todas sus pantallas, y no en una
-# pestaña del navegador ni en la compu. `portrait` admite los dos sentidos
-# verticales (`portrait-primary` o `portrait-secondary` fijarían uno), y
-# `standalone` es lo que hace que la orientación se aplique al abrirla desde su
-# ícono. Que en una pestaña del navegador siga girando con el diseño ancho de
-# siempre, que en la compu no cambie nada, que ninguna pantalla fije la
-# orientación por su cuenta y que una versión nueva la aplique sin reinstalar
-# se verifican en la suite QA (qa/orientacion-vertical.md).
+# Spec §6 (Orientation) and §8 (Manifest). The installed app is used in portrait
+# because the manifest it publishes declares so, and that is the only thing that decides it: the
+# orientation applies to the installed app, on all its screens, and not in a
+# browser tab nor on the computer. `portrait` allows both vertical
+# directions (`portrait-primary` or `portrait-secondary` would fix one), and
+# `standalone` is what makes the orientation apply when opened from its
+# icon. That in a browser tab it keeps rotating with the usual wide layout,
+# that nothing changes on the computer, that no screen fixes the
+# orientation on its own and that a new version applies it without reinstalling
+# are verified in the QA suite (qa/orientacion-vertical.md).
 Feature: Portrait orientation
 
-  # Orientación vertical 1
-  # Lo que el manifest publicado declara: nombre, nombre corto, modo de
-  # apertura y orientación.
+  # Portrait orientation 1
+  # What the published manifest declares: name, short name, opening
+  # mode and orientation.
   Scenario Outline: Portrait orientation 1
     Given the manifest the app publishes
     Then the field <field> of the manifest is <value>

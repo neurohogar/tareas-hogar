@@ -5,8 +5,8 @@
 
 Feature: First step
 
-  # Primer paso 1
-  # Una puntual puede crearse con primer paso (§4.1).
+  # First step 1
+  # A one-off task can be created with a first step (§4.1).
   Scenario Outline: First step 1
     When I create a one-off task with title <title> and first step <first_step>
     Then a one-off task is created with title <title_stored>
@@ -16,8 +16,8 @@ Feature: First step
       | title  | first_step             | title_stored    | first_step_stored      |
       | Lavar  | Separar la ropa blanca | Lavar           | Separar la ropa blanca |
 
-  # Primer paso 2
-  # Una periódica relativa también.
+  # First step 2
+  # A recurring relative one too.
   Scenario Outline: First step 2
     When I create a relative recurring task with title <title> every 2 days and first step <first_step>
     Then a recurring task is created with title <title_stored>
@@ -27,8 +27,8 @@ Feature: First step
       | title  | first_step         | title_stored    | first_step_stored    |
       | Regar  | Llenar la regadera | Regar           | Llenar la regadera   |
 
-  # Primer paso 3
-  # Una periódica de calendario también.
+  # First step 3
+  # A recurring calendar one too.
   Scenario Outline: First step 3
     When I create a weekly recurring task with title <title> on <days> and first step <first_step>
     Then a recurring task is created with title <title_stored>
@@ -38,8 +38,8 @@ Feature: First step
       | title  | days           | first_step          | title_stored    | first_step_stored    |
       | Basura | martes, jueves | Atar la bolsa llena | Basura          | Atar la bolsa llena  |
 
-  # Primer paso 5
-  # Al guardar se recortan los espacios del inicio y del final.
+  # First step 5
+  # On saving, the spaces at the start and at the end are trimmed.
   Scenario Outline: First step 5
     Given a one-off task without a due date
     When I edit the first step to <first_step> with spaces at the start and end
@@ -50,8 +50,8 @@ Feature: First step
       | Separar la ropa blanca | Separar la ropa blanca |
       | Juntar las llaves      | Juntar las llaves      |
 
-  # Primer paso 6
-  # Vaciar el campo deja la tarea sin primer paso (el campo no se guarda).
+  # First step 6
+  # Emptying the field leaves the task without a first step (the field is not stored).
   Scenario Outline: First step 6
     Given a one-off task without a due date
     And the first step of the task is <first_step>
@@ -62,9 +62,9 @@ Feature: First step
       | first_step             |
       | Separar la ropa blanca |
 
-  # Primer paso 7
-  # Solo espacios también deja la tarea sin primer paso, y la edición no se
-  # rechaza.
+  # First step 7
+  # Only spaces also leaves the task without a first step, and the edit is not
+  # rejected.
   Scenario Outline: First step 7
     Given a one-off task without a due date
     And the first step of the task is <first_step>
@@ -75,9 +75,9 @@ Feature: First step
       | first_step             |
       | Separar la ropa blanca |
 
-  # Primer paso 8
-  # Crear con un primer paso de solo espacios no se rechaza: la tarea se crea
-  # sin primer paso.
+  # First step 8
+  # Creating with a first step of only spaces is not rejected: the task is created
+  # without a first step.
   Scenario Outline: First step 8
     When I create a one-off task with title <title> and a first step of only spaces
     Then a one-off task is created with title <title_stored>
@@ -87,8 +87,8 @@ Feature: First step
       | title  | title_stored    |
       | Lavar  | Lavar           |
 
-  # Primer paso 9
-  # El primer paso no tiene largo máximo.
+  # First step 9
+  # The first step has no maximum length.
   Scenario Outline: First step 9
     Given a one-off task without a due date
     When I edit the first step to one of <length> characters
@@ -98,8 +98,8 @@ Feature: First step
       | length | length_stored  |
       | 5000  | 5000           |
 
-  # Primer paso 10
-  # Completar la tarea no borra ni cambia el primer paso.
+  # First step 10
+  # Completing the task does not delete or change the first step.
   Scenario Outline: First step 10
     Given a relative recurring task every <every> <unit>
     And the first step of the task is <first_step>
@@ -110,8 +110,8 @@ Feature: First step
       | every | unit   | first_step         | tap                 | first_step_stored    |
       | 2    | dias   | Llenar la regadera | 2026-11-13T08:00:00 | Llenar la regadera   |
 
-  # Primer paso 11
-  # Posponer no lo borra ni lo cambia.
+  # First step 11
+  # Posponer does not delete or change it.
   Scenario Outline: First step 11
     Given a one-off task without a due date
     And the first step of the task is <first_step>
@@ -122,8 +122,8 @@ Feature: First step
       | first_step             | option  | now                 | first_step_stored      |
       | Separar la ropa blanca | 3 horas | 2026-11-13T10:00:00 | Separar la ropa blanca |
 
-  # Primer paso 12
-  # Pausar y reanudar no lo borran ni lo cambian.
+  # First step 12
+  # Pausar and Reanudar do not delete or change it.
   Scenario Outline: First step 12
     Given a relative recurring task every <every> <unit>
     And the first step of the task is <first_step>
@@ -135,8 +135,8 @@ Feature: First step
       | every | unit   | first_step         | resumed             | first_step_stored    |
       | 2    | dias   | Llenar la regadera | 2026-11-13T10:00:00 | Llenar la regadera   |
 
-  # Primer paso 13
-  # Deshacer un completado no lo borra ni lo cambia.
+  # First step 13
+  # Deshacer a completion does not delete or change it.
   Scenario Outline: First step 13
     Given a relative recurring task every <every> <unit>
     And the first step of the task is <first_step>
@@ -148,8 +148,8 @@ Feature: First step
       | every | unit   | first_step         | completed           | first_step_stored    |
       | 2    | dias   | Llenar la regadera | 2026-11-13T08:00:00 | Llenar la regadera   |
 
-  # Primer paso 14
-  # Cambiar de puntual a periódica no lo borra ni lo cambia.
+  # First step 14
+  # Changing from one-off to recurring does not delete or change it.
   Scenario Outline: First step 14
     Given a one-off task without a due date
     And the first step of the task is <first_step>
@@ -161,8 +161,8 @@ Feature: First step
       | first_step             | every | unit   | first_step_stored      |
       | Separar la ropa blanca | 3    | dias   | Separar la ropa blanca |
 
-  # Primer paso 15
-  # Cambiar de periódica a puntual tampoco.
+  # First step 15
+  # Changing from recurring to one-off neither.
   Scenario Outline: First step 15
     Given a relative recurring task every <every> <unit>
     And the first step of the task is <first_step>
@@ -174,8 +174,8 @@ Feature: First step
       | every | unit   | first_step         | first_step_stored    |
       | 2    | dias   | Llenar la regadera | Llenar la regadera   |
 
-  # Primer paso 16
-  # Cambiar de modo (de relativa a de calendario) tampoco.
+  # First step 16
+  # Changing mode (from relative to calendar) neither.
   Scenario Outline: First step 16
     Given a relative recurring task every <every> <unit>
     And the first step of the task is <first_step>
@@ -186,9 +186,9 @@ Feature: First step
       | every | unit   | first_step         | days   | first_step_stored    |
       | 2    | dias   | Llenar la regadera | martes | Llenar la regadera   |
 
-  # Primer paso 17
-  # El primer paso no cambia el estado: una puntual con fecha límite sigue
-  # pendiente el día límite (fila 1) y atrasada después (fila 2).
+  # First step 17
+  # The first step does not change the status: a one-off with a due date is still
+  # pending on the due day (row 1) and overdue after (row 2).
   Scenario Outline: First step 17
     Given a one-off task with due date <due_date>
     And the first step of the task is <first_step>
@@ -200,10 +200,10 @@ Feature: First step
       | 2026-11-12 | Separar la ropa blanca | 2026-11-12T23:59:59 | pendiente |
       | 2026-11-12 | Separar la ropa blanca | 2026-11-13T00:00:00 | atrasada  |
 
-  # Primer paso 18
-  # No cambia el orden de la lista: sigue el de antes, por título entre
-  # tareas igual de urgentes, tenga o no primer paso la que va primero (fila
-  # 1) o la que va segunda (fila 2).
+  # First step 18
+  # It does not change the order of the list: it follows the previous one, by title among
+  # equally urgent tasks, whether or not the one that goes first (row
+  # 1) or the one that goes second (row 2) has a first step.
   Scenario Outline: First step 18
     Given a one-off task <first> without a due date
     And a one-off task <second> without a due date
@@ -216,8 +216,8 @@ Feature: First step
       | Barrer  | Lavar   | Barrer          | Separar la ropa blanca | 2026-11-13T10:00:00 | Barrer, Lavar |
       | Barrer  | Lavar   | Lavar           | Separar la ropa blanca | 2026-11-13T10:00:00 | Barrer, Lavar |
 
-  # Primer paso 19
-  # El nombre de la tarea sigue siendo emoji y título.
+  # First step 19
+  # The name of the task is still emoji and title.
   Scenario Outline: First step 19
     Given a one-off task <title> without a due date with emoji <emoji>
     When I edit the first step to <first_step>
@@ -227,8 +227,8 @@ Feature: First step
       | title  | emoji | first_step             | name    |
       | Lavar  | 🧺     | Separar la ropa blanca | 🧺 Lavar |
 
-  # Primer paso 20
-  # Primer paso y título son campos distintos: se combinan los dos cambios.
+  # First step 20
+  # First step and title are different fields: both changes are combined.
   Scenario Outline: First step 20
     Given a one-off task without a due date
     When I edit the title to <title_new>
@@ -240,8 +240,8 @@ Feature: First step
       | title_new    | first_step             | title_stored    | first_step_stored      |
       | Lavar a mano | Separar la ropa blanca | Lavar a mano    | Separar la ropa blanca |
 
-  # Primer paso 21
-  # Primer paso y nota son campos distintos: se combinan los dos cambios.
+  # First step 21
+  # First step and note are different fields: both changes are combined.
   Scenario Outline: First step 21
     Given a one-off task without a due date
     When I edit the first step to <first_step>
@@ -253,8 +253,8 @@ Feature: First step
       | first_step             | note         | first_step_stored      | note_stored   |
       | Separar la ropa blanca | Usar guantes | Separar la ropa blanca | Usar guantes  |
 
-  # Primer paso 22
-  # El mismo campo: gana el último cambio en llegar y la nota no se toca.
+  # First step 22
+  # The same field: the last change to arrive wins and the note is not touched.
   Scenario Outline: First step 22
     Given a one-off task without a due date with note <note>
     When I edit the first step to <first_step> with spaces at the start and end
@@ -266,9 +266,9 @@ Feature: First step
       | note         | first_step             | second            | first_step_stored    | note_stored   |
       | Usar guantes | Separar la ropa blanca | Juntar las llaves | Juntar las llaves    | Usar guantes  |
 
-  # Primer paso 23
-  # Quitarlo en un dispositivo y escribirlo en el otro: gana el último en
-  # llegar (el escrito).
+  # First step 23
+  # Removing it on one device and writing it on the other: the last one to
+  # arrive wins (the written one).
   Scenario Outline: First step 23
     Given a one-off task without a due date
     And the first step of the task is <first_step>
@@ -280,9 +280,9 @@ Feature: First step
       | first_step             | second            | first_step_stored    |
       | Separar la ropa blanca | Juntar las llaves | Juntar las llaves    |
 
-  # Primer paso 24
-  # Cambiarlo en un dispositivo y quitarlo en el otro, que ve un primer paso
-  # previo: gana el último en llegar (el quitado).
+  # First step 24
+  # Changing it on one device and removing it on the other, which sees a previous
+  # first step: the last one to arrive wins (the removed one).
   Scenario Outline: First step 24
     Given a one-off task without a due date
     And the first step of the task is <other_first_step>
@@ -294,9 +294,9 @@ Feature: First step
       | other_first_step  | first_step             |
       | Juntar las llaves | Separar la ropa blanca |
 
-  # Primer paso 25
-  # Una edición escribe solo si cambió: otro dispositivo que guarda sin
-  # cambios no pisa el primer paso que acaba de escribirse.
+  # First step 25
+  # An edit writes only if it changed: another device that saves without
+  # changes does not overwrite the first step that was just written.
   Scenario Outline: First step 25
     Given a one-off task without a due date
     When I edit the first step to <first_step>

@@ -3,19 +3,19 @@
 # {"version":1,"tested_at":"2026-11-17T21:03:37.536085182Z","feature_name":"Pantalla de carga","feature_path":"features/pantalla-de-carga.feature","background_hash":"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b","implementation_hash":"sha256:ace7bfc00c3763d13a7705e25d2b91dd865b70365f393f35d1dcd9c0534c3645","scenarios":[{"index":0,"name":"Pantalla de carga 1","scenario_hash":"974676662d549d9b73e40cfe058552160cd45924fca15553a043fe1813f95d83","mutation_count":36,"result":{"Total":36,"Killed":36,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":1,"name":"Pantalla de carga 2","scenario_hash":"ff9ee603efa7adcb87f4e495f7dc13a567c7eaa9a043beccb0437ff8967fc0d0","mutation_count":12,"result":{"Total":12,"Killed":12,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":2,"name":"Pantalla de carga 3","scenario_hash":"17b2ec06d3756d1619e98c698883529a49cf777173177651539521ceef84779b","mutation_count":12,"result":{"Total":12,"Killed":12,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":3,"name":"Pantalla de carga 4","scenario_hash":"095f42b334efae180086fea8f529b6ddead24ed4e2c9f67b87be605adf86f264","mutation_count":10,"result":{"Total":10,"Killed":10,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":4,"name":"Pantalla de carga 5","scenario_hash":"92524d2516c9ec2f9bba80c442c985759ee8a7b69a79e244555b815820cffef2","mutation_count":7,"result":{"Total":7,"Killed":7,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":5,"name":"Pantalla de carga 6","scenario_hash":"a9563f0370e3e72667fc28b932b12e44d578f9e8f09cc2037ad6e5c205f8a43e","mutation_count":7,"result":{"Total":7,"Killed":7,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":6,"name":"Pantalla de carga 7","scenario_hash":"54d9024e1313f25d0d55b6d4bc39da8c54c104fb20155a18b5bd9e25b308e666","mutation_count":14,"result":{"Total":14,"Killed":14,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":7,"name":"Pantalla de carga 8","scenario_hash":"58b79928510027d2056e275be5226c516e7a6dc8d6c997270c2f92c1781b884c","mutation_count":7,"result":{"Total":7,"Killed":7,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":8,"name":"Pantalla de carga 9","scenario_hash":"fa9cf8336a04c5d00937722352f7cdda64b1e5a65a2080f3b70c1c4778cb730e","mutation_count":7,"result":{"Total":7,"Killed":7,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":9,"name":"Pantalla de carga 10","scenario_hash":"4aac3b8d936c46edfbe34d74d998ae58696093290bed3fc0b1712ae0bfa109c3","mutation_count":5,"result":{"Total":5,"Killed":5,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":10,"name":"Pantalla de carga 11","scenario_hash":"254ea7d079992a132cfb2c0161b3b728f63049064ce14c16c74a738b71ec4b06","mutation_count":4,"result":{"Total":4,"Killed":4,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":11,"name":"Pantalla de carga 12","scenario_hash":"f19125564cfe0e145881cdb322c029e3d5a0ad3fc705679bb1b8414e36d99fe4","mutation_count":3,"result":{"Total":3,"Killed":3,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":12,"name":"Pantalla de carga 13","scenario_hash":"7816fc1c0f553efe09bf6a12c65f773fc064cec5cbcb410f9efbbb559b2eafbc","mutation_count":9,"result":{"Total":9,"Killed":9,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":13,"name":"Pantalla de carga 14","scenario_hash":"841e3ec8659811ec3677d2c8f98fa8d5a0ffbe059ef2b6aee0adb33773746f0b","mutation_count":4,"result":{"Total":4,"Killed":4,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":14,"name":"Pantalla de carga 15","scenario_hash":"c596b85e3f8b885a8680a82df482bf73dce8035057dc5867ee436299981816e3","mutation_count":1,"result":{"Total":1,"Killed":1,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":19,"name":"Pantalla de carga 20","scenario_hash":"6928ac5c52a688f0a92a03589236c27e7770346773ba04e37c6456a65cdb973a","mutation_count":3,"result":{"Total":3,"Killed":3,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":20,"name":"Pantalla de carga 21","scenario_hash":"83eaa74323366f1c84c31cb28153f0c2da943203e5cb33c4acaeff3230f1432d","mutation_count":5,"result":{"Total":5,"Killed":5,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":21,"name":"Pantalla de carga 22","scenario_hash":"5eadcd293d074fb348c9af8e731a5ca484f15fd2bd719c72bf7a9d7daff31ba7","mutation_count":4,"result":{"Total":4,"Killed":4,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":22,"name":"Pantalla de carga 23","scenario_hash":"d434d60e0966ebf7caaf237d8a2ef5758ba566d7a64a157bccbc1779894840d6","mutation_count":2,"result":{"Total":2,"Killed":2,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"},{"index":23,"name":"Pantalla de carga 24","scenario_hash":"28bdc8c948b393528c2ab7e0419f4451f04a5d29aa218757ad7c89377460fb1c","mutation_count":3,"result":{"Total":3,"Killed":3,"Survived":0,"Errors":0},"tested_at":"2026-11-17T21:03:37.536085182Z"}]}
 # acceptance-mutation-manifest-end
 
-# Spec §6.6 (Pantalla de carga) y §7 (preferencias locales). Cuándo se va la
-# pantalla de carga según lo que espera, y qué recuerda el dispositivo de un tope
-# con Noto sin bajar. Los tiempos cuentan en segundos desde que la app arranca.
-# "Los datos" son tareas y completados juntos; una fuente guardada queda
-# lista desde el dispositivo, y una sin guardar solo puede venir por red. Un valor
-# de 30 segundos es algo que no llega antes del tope. Cuándo aparece, qué se ve, el
-# nombre accesible, el movimiento reducido y el tema se verifican en la suite QA
-# (qa/fuente-empaquetada.md, Flujo 9).
+# Spec §6.6 (Loading screen) and §7 (local preferences). When the loading
+# screen goes away depending on what it waits for, and what the device remembers from a cap
+# with Noto not downloaded. Times count in seconds since the app starts.
+# "The data" is tasks and completions together; a saved font is ready
+# from the device, and one not saved can only come over the network. A value
+# of 30 seconds is something that does not arrive before the cap. When it appears, what is shown, the
+# accessible name, reduced motion and the theme are verified in the QA suite
+# (qa/fuente-empaquetada.md, Flow 9).
 Feature: Loading screen
 
-  # Pantalla de carga 1
-  # Con sesión espera Auth, las dos colecciones y las dos fuentes, con un mínimo de
-  # 0,5 s y un tope de 10 s para todo menos Auth. Las filas 1, 7 y 8 son los ejemplos del spec.
+  # Loading screen 1
+  # With a session it waits for Auth, the two collections and the two fonts, with a minimum of
+  # 0.5 s and a cap of 10 s for everything except Auth. Rows 1, 7 and 8 are the spec examples.
   Scenario Outline: Loading screen 1
     Given the app starts with a session
     And Auth responds at <auth> seconds
@@ -42,8 +42,8 @@ Feature: Loading screen
       | 12   | 1      | 1           | 1        | 1    | 12     |
       | 12   | 1      | 1           | 1        | 30   | 12     |
 
-  # Pantalla de carga 2
-  # Sin sesión espera Auth y solo Atkinson; Noto sigue bajando detrás.
+  # Loading screen 2
+  # Without a session it waits for Auth and only Atkinson; Noto keeps downloading behind.
   Scenario Outline: Loading screen 2
     Given the app starts without a session
     And Auth responds at <auth> seconds
@@ -60,8 +60,8 @@ Feature: Loading screen
       | 0.1  | 30       | 0.1  | 10     |
       | 12   | 30       | 30   | 12     |
 
-  # Pantalla de carga 3
-  # Noto que falla deja de esperarse en ese momento; lo demás se sigue esperando.
+  # Loading screen 3
+  # A Noto that fails stops being waited for at that moment; the rest is still waited for.
   Scenario Outline: Loading screen 3
     Given the app starts with a session
     And Auth responds immediately
@@ -79,8 +79,8 @@ Feature: Loading screen
       | 30    | 1        | 1          | 10     |
       | 1     | 1        | 30         | 10     |
 
-  # Pantalla de carga 4
-  # Atkinson que falla deja de esperarse en ese momento; lo demás se sigue esperando.
+  # Loading screen 4
+  # An Atkinson that fails stops being waited for at that moment; the rest is still waited for.
   Scenario Outline: Loading screen 4
     Given the app starts with a session
     And Auth responds immediately
@@ -98,8 +98,8 @@ Feature: Loading screen
       | 30    | 1              | 1    | 10     |
       | 1     | 30             | 1    | 10     |
 
-  # Pantalla de carga 5
-  # Un juego que el navegador no puede dibujar se deja de esperar como una falla.
+  # Loading screen 5
+  # A font set that the browser cannot draw stops being waited for like a failure.
   Scenario Outline: Loading screen 5
     Given the app starts with a session
     And Auth responds immediately
@@ -114,8 +114,8 @@ Feature: Loading screen
       | 0.1   | 0.1      | 4         | 4      |
       | 3     | 2        | 1         | 3      |
 
-  # Pantalla de carga 6
-  # Sin sesión, Atkinson que falla deja de esperarse.
+  # Loading screen 6
+  # Without a session, an Atkinson that fails stops being waited for.
   Scenario Outline: Loading screen 6
     Given the app starts without a session
     And Auth responds at <auth> seconds
@@ -128,8 +128,8 @@ Feature: Loading screen
       | 0.1  | 4              | 4      |
       | 3    | 1              | 3      |
 
-  # Pantalla de carga 7
-  # Sin conexión y con las fuentes guardadas, espera el caché local y esas fuentes.
+  # Loading screen 7
+  # Offline and with the fonts saved, it waits for the local cache and those fonts.
   Scenario Outline: Loading screen 7
     Given the app starts with a session
     And there is no connection
@@ -148,8 +148,8 @@ Feature: Loading screen
       | 0.1  | 30    | 1        | 1    | 10     |
       | 12   | 30    | 1        | 1    | 12     |
 
-  # Pantalla de carga 8
-  # Sin conexión no espera a Noto si no está guardado.
+  # Loading screen 8
+  # Offline it does not wait for Noto if it is not saved.
   Scenario Outline: Loading screen 8
     Given the app starts with a session
     And there is no connection
@@ -165,8 +165,8 @@ Feature: Loading screen
       | 3     | 1        | 3      |
       | 1     | 2        | 2      |
 
-  # Pantalla de carga 9
-  # Sin conexión no espera a Atkinson si no está guardada.
+  # Loading screen 9
+  # Offline it does not wait for Atkinson if it is not saved.
   Scenario Outline: Loading screen 9
     Given the app starts with a session
     And there is no connection
@@ -182,8 +182,8 @@ Feature: Loading screen
       | 3     | 1    | 3      |
       | 1     | 2    | 2      |
 
-  # Pantalla de carga 10
-  # Sin conexión y sin ninguna fuente guardada, solo espera el caché local.
+  # Loading screen 10
+  # Offline and with no font saved, it only waits for the local cache.
   Scenario Outline: Loading screen 10
     Given the app starts with a session
     And there is no connection
@@ -199,8 +199,8 @@ Feature: Loading screen
       | 3     | 3      |
       | 30    | 10     |
 
-  # Pantalla de carga 11
-  # Sin sesión y sin conexión, espera Atkinson si está guardada.
+  # Loading screen 11
+  # Without a session and offline, it waits for Atkinson if it is saved.
   Scenario Outline: Loading screen 11
     Given the app starts without a session
     And there is no connection
@@ -213,8 +213,8 @@ Feature: Loading screen
       | 0.2      | 0.5    |
       | 2        | 2      |
 
-  # Pantalla de carga 12
-  # Sin sesión y sin conexión, sin Atkinson guardada solo espera Auth.
+  # Loading screen 12
+  # Without a session and offline, without Atkinson saved it only waits for Auth.
   Scenario Outline: Loading screen 12
     Given the app starts without a session
     And there is no connection
@@ -227,9 +227,9 @@ Feature: Loading screen
       | 0.1  | 0.5    |
       | 2    | 2      |
 
-  # Pantalla de carga 13
-  # Perder la conexión con la pantalla abierta cuenta igual: lo que solo puede venir
-  # por red se deja de esperar en ese momento.
+  # Loading screen 13
+  # Losing the connection with the screen open counts the same: what can only come
+  # over the network stops being waited for at that moment.
   Scenario Outline: Loading screen 13
     Given the app starts with a session
     And Atkinson is not saved
@@ -247,9 +247,9 @@ Feature: Loading screen
       | 30    | 2       | 10     |
       | 1     | 12      | 10     |
 
-  # Pantalla de carga 14
-  # Después de un tope con Noto sin bajar, una apertura con sesión no lo espera y el
-  # dispositivo lo sigue recordando.
+  # Loading screen 14
+  # After a cap with Noto not downloaded, an opening with a session does not wait for it and the
+  # device keeps remembering it.
   Scenario Outline: Loading screen 14
     Given the device already remembered a cap with Noto not downloaded
     And the app starts with a session
@@ -265,8 +265,8 @@ Feature: Loading screen
       | 3     | 1        | 3      |
       | 1     | 30       | 10     |
 
-  # Pantalla de carga 15
-  # Un tope con Noto sin bajar en una apertura que lo esperaba se recuerda.
+  # Loading screen 15
+  # A cap with Noto not downloaded in an opening that was waiting for it is remembered.
   Scenario Outline: Loading screen 15
     Given the app starts with a session
     And Auth responds at <auth> seconds
@@ -281,8 +281,8 @@ Feature: Loading screen
       | 0.1  | 30    | 30       | 30   |
       | 12   | 1     | 1        | 30   |
 
-  # Pantalla de carga 16
-  # Sin tope, o con Noto ya bajado al llegar el tope, no hay nada que recordar.
+  # Loading screen 16
+  # Without a cap, or with Noto already downloaded when the cap arrives, there is nothing to remember.
   Scenario Outline: Loading screen 16
     Given the app starts with a session
     And Auth responds immediately
@@ -297,8 +297,8 @@ Feature: Loading screen
       | 30    | 1        | 5    |
       | 1     | 30       | 5    |
 
-  # Pantalla de carga 17
-  # Una apertura sin sesión no espera a Noto, así que su tope no cuenta.
+  # Loading screen 17
+  # An opening without a session does not wait for Noto, so its cap does not count.
   Scenario Outline: Loading screen 17
     Given the app starts without a session
     And Auth responds immediately
@@ -311,8 +311,8 @@ Feature: Loading screen
       | 30       | 30   |
       | 1        | 30   |
 
-  # Pantalla de carga 18
-  # Noto que falló antes del tope ya no se esperaba, así que ese tope no cuenta.
+  # Loading screen 18
+  # A Noto that failed before the cap was no longer being waited for, so that cap does not count.
   Scenario Outline: Loading screen 18
     Given the app starts with a session
     And Auth responds immediately
@@ -325,8 +325,8 @@ Feature: Loading screen
       | data  | atkinson | noto_fails |
       | 30    | 1        | 2          |
 
-  # Pantalla de carga 19
-  # Sin conexión, Noto sin guardar no se espera, así que ese tope no cuenta.
+  # Loading screen 19
+  # Offline, a Noto not saved is not waited for, so that cap does not count.
   Scenario Outline: Loading screen 19
     Given the app starts with a session
     And there is no connection
@@ -340,8 +340,8 @@ Feature: Loading screen
       | data  | atkinson |
       | 30    | 1        |
 
-  # Pantalla de carga 20
-  # Una apertura sin sesión no olvida lo que se recordaba.
+  # Loading screen 20
+  # An opening without a session does not forget what was remembered.
   Scenario Outline: Loading screen 20
     Given the device already remembered a cap with Noto not downloaded
     And the app starts without a session
@@ -355,8 +355,8 @@ Feature: Loading screen
       | 0.2      | 0.5    |
       | 2        | 2      |
 
-  # Pantalla de carga 21
-  # Lo recordado se olvida cuando Noto queda guardado, sin demorar la pantalla.
+  # Loading screen 21
+  # What was remembered is forgotten when Noto ends up saved, without delaying the screen.
   Scenario Outline: Loading screen 21
     Given the device already remembered a cap with Noto not downloaded
     And the app starts with a session
@@ -372,8 +372,8 @@ Feature: Loading screen
       | 1     | 1        | 4    | 1      |
       | 4     | 1        | 1    | 4      |
 
-  # Pantalla de carga 22
-  # Una versión nueva que cambia el juego vuelve a esperar a Noto una vez.
+  # Loading screen 22
+  # A new version that changes the font set waits for Noto again once.
   Scenario Outline: Loading screen 22
     Given the device already remembered a cap with Noto not downloaded
     And a new version changed the emoji set
@@ -390,8 +390,8 @@ Feature: Loading screen
       | 1     | 1        | 5    | 5      |
       | 0.2   | 0.2      | 0.2  | 0.5    |
 
-  # Pantalla de carga 23
-  # Si esa vez también llega el tope con Noto sin bajar, se vuelve a recordar.
+  # Loading screen 23
+  # If that time the cap also arrives with Noto not downloaded, it is remembered again.
   Scenario Outline: Loading screen 23
     Given the device already remembered a cap with Noto not downloaded
     And a new version changed the emoji set
@@ -407,8 +407,8 @@ Feature: Loading screen
       | data  | atkinson | noto | exit   |
       | 1     | 1        | 30   | 10     |
 
-  # Pantalla de carga 24
-  # Una versión nueva que no cambia el juego no vuelve a esperar a Noto.
+  # Loading screen 24
+  # A new version that does not change the font set does not wait for Noto again.
   Scenario Outline: Loading screen 24
     Given the device already remembered a cap with Noto not downloaded
     And a new version did not change the emoji set

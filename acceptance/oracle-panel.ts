@@ -418,7 +418,7 @@ const CHANGES_STEPS: [RegExp, (m: ChangesWorld, ...groups: string[]) => void][] 
 			if (status !== 'con cambios sin guardar' && status !== 'sin cambios') undecided(`estado ${status}`);
 			openForEdit(m, { title: 'Pagar' });
 			if (status === 'con cambios sin guardar') theWritten(m).title = 'Pagar luz';
-			// The action notice declared by "encima del panel hay" is that of a one-off that can be postponed.
+			// The action notice declared by "on top of the panel there is" is that of a one-off that can be postponed.
 			m.now = '2026-07-15T08:00:00';
 		}
 	],

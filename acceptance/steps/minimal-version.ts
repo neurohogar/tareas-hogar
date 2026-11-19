@@ -42,7 +42,7 @@ function savedWithMinimal(world: World, task: Task, minimalVersion: string): voi
 	world.docs = world.docs.map((doc) => (doc.id === task.id ? { ...doc, minimalVersion } : doc));
 }
 
-/** Each form of minimal-version change: "<subject> la versión mínima a ...". */
+/** Each form of minimal-version change: "<subject> the minimal version to ...". */
 const CHANGES: { text: string; value: (...values: string[]) => string }[] = [
 	{ text: P, value: (minimal) => minimal },
 	{ text: `${P} with spaces at the start and end`, value: (minimal) => withMargins(minimal) },

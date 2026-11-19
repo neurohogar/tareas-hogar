@@ -4,37 +4,37 @@
 # acceptance-mutation-manifest-end
 
 # Spec §5.9 (Posponer), §4.1 (pospuesta), §6.2 (Posponer / Quitar
-# posponer) y §7 (pospuesta es un solo campo).
-# Posponer guarda pospuesta = { desde: ahora, hasta }, con hasta = ahora +
-# 1 hora, ahora + 3 horas, o las 07:00 del día local siguiente a ahora
-# ("hasta mañana"). Solo se puede posponer una tarea pendiente o atrasada
-# (según §5.1–§5.8) que no está pausada ni pospuesta. Quitar posponer borra
-# pospuesta; completar, deshacer o editar no la borran.
-# "pospongo la tarea con la opción <opcion> el <momento>" toca Posponer en
-# el panel de edición en ese momento y elige la opción: actúa en el momento,
-# sin Guardar. "la tarea fue pospuesta con la opción <opcion> el <momento>"
-# es la misma acción, ya hecha. "quito la posposición" toca Quitar posponer.
-# "la tarea está pospuesta desde <desde> hasta <hasta>" afirma el valor
-# guardado de pospuesta.
-# "abro la tarea en el panel de edición el <ahora>" abre el panel en ese
-# momento. "el botón de posponer del panel es <boton>": Posponer, Quitar
-# posponer o ninguno. Una tarea está pospuesta mientras ahora < hasta; desde
-# hasta, el panel la trata como no pospuesta. "el panel de edición muestra
-# <texto>" da el texto de la posposición: "Pospuesta hasta HH:MM" si hasta
-# es del día de ahora, "Pospuesta hasta mañana HH:MM" si es del día
-# siguiente (24 h, sin segundos).
-# Que el botón ofrezca las tres opciones, que cierre el panel y que no
-# exista al crear una tarea se verifican en la suite QA.
-# Cuando el paso no da creadaEn, la tarea se creó antes de cualquier otra
-# fecha del escenario.
-# Semana de referencia: lunes 2026-07-13 a domingo 2026-07-19.
+# posponer) and §7 (pospuesta is a single field).
+# Posponer stores pospuesta = { desde: now, hasta }, with hasta = now +
+# 1 hour, now + 3 hours, or 07:00 of the local day after now
+# ("hasta mañana"). Only a pending or overdue task can be postponed
+# (per §5.1–§5.8) that is neither paused nor postponed. Quitar posponer deletes
+# pospuesta; completing, undoing or editing do not delete it.
+# "I postpone the task with option <option> on <moment>" taps Posponer in
+# the edit panel at that moment and chooses the option: it acts at that moment,
+# without Guardar. "the task was postponed with option <option> on <moment>"
+# is the same action, already done. "I remove the postponement" taps Quitar posponer.
+# "the task is postponed from <from> to <to>" asserts the stored value
+# of pospuesta.
+# "I open the task in the edit panel on <now>" opens the panel at that
+# moment. "the postpone button of the panel is <button>": Posponer, Quitar
+# posponer or none. A task is postponed while now < hasta; from
+# hasta on, the panel treats it as not postponed. "the edit panel shows
+# <text>" gives the postponement text: "Pospuesta hasta HH:MM" if hasta
+# is on the day of now, "Pospuesta hasta mañana HH:MM" if it is on the next
+# day (24 h, without seconds).
+# That the button offers the three options, that it closes the panel and that it does not
+# exist when creating a task are verified in the QA suite.
+# When the step does not give creadaEn, the task was created before any other
+# date of the scenario.
+# Reference week: Monday 2026-07-13 to Sunday 2026-07-19.
 Feature: Postpone task
 
-  # Posponer tarea 1
-  # Las tres opciones: 1 hora y 3 horas suman al momento (con los segundos,
-  # y pasando la medianoche, el fin de mes y el de año); Hasta mañana es a
-  # las 07:00 del día siguiente, aunque sea de madrugada (fila 6: no es a
-  # las 07:00 de hoy).
+  # Postpone task 1
+  # The three options: 1 hour and 3 hours add to the moment (with the seconds,
+  # and across midnight, the end of the month and the end of the year); Hasta mañana is at
+  # 07:00 of the next day, even in the small hours (row 6: it is not at
+  # 07:00 today).
   Scenario Outline: Postpone task 1
     Given a one-off task without a due date
     When I postpone the task with option <option> on <postponed>
@@ -51,8 +51,8 @@ Feature: Postpone task
       | hasta mañana | 2026-07-15T23:59:59 | 2026-07-15T23:59:59 | 2026-07-16T07:00:00 |
       | hasta mañana | 2026-12-31T08:00:00 | 2026-12-31T08:00:00 | 2027-01-01T07:00:00 |
 
-  # Posponer tarea 2
-  # Una atrasada también se puede posponer.
+  # Postpone task 2
+  # An overdue task can also be postponed.
   Scenario Outline: Postpone task 2
     Given a one-off task with due date <due_date>
     When I postpone the task with option <option> on <postponed>
@@ -62,9 +62,9 @@ Feature: Postpone task
       | due_date   | option | postponed           | from                | to                  |
       | 2026-07-14 | 1 hora | 2026-07-15T10:00:00 | 2026-07-15T10:00:00 | 2026-07-15T11:00:00 |
 
-  # Posponer tarea 3
-  # El panel ofrece Posponer solo si la relativa está pendiente o atrasada:
-  # en espera (filas 1 y 2, hasta el borde del vencimiento) no lo ofrece.
+  # Postpone task 3
+  # The panel offers Posponer only if the relative one is pending or overdue:
+  # waiting (rows 1 and 2, up to the edge of the deadline) it does not offer it.
   Scenario Outline: Postpone task 3
     Given a relative recurring task every <every> <unit>
     And the task was completed on <completed>
@@ -78,8 +78,8 @@ Feature: Postpone task
       | 2    | dias   | 2026-07-14T09:00:00 | 2026-07-16T09:00:00 | Posponer |
       | 2    | dias   | 2026-07-14T09:00:00 | 2026-07-18T09:00:00 | Posponer |
 
-  # Posponer tarea 4
-  # Una puntual pendiente (fila 1) o atrasada (fila 2) ofrece Posponer.
+  # Postpone task 4
+  # A pending (row 1) or overdue (row 2) one-off offers Posponer.
   Scenario Outline: Postpone task 4
     Given a one-off task with due date <due_date>
     When I open the task in the edit panel on <now>
@@ -90,8 +90,8 @@ Feature: Postpone task
       | 2026-07-15 | 2026-07-15T23:00:00 | Posponer |
       | 2026-07-14 | 2026-07-15T10:00:00 | Posponer |
 
-  # Posponer tarea 5
-  # Una puntual completada no se puede posponer.
+  # Postpone task 5
+  # A completed one-off cannot be postponed.
   Scenario Outline: Postpone task 5
     Given a one-off task without a due date
     And the task was completed on <completed>
@@ -102,8 +102,8 @@ Feature: Postpone task
       | completed           | now                 | button  |
       | 2026-07-15T09:00:00 | 2026-07-15T10:00:00 | ninguno |
 
-  # Posponer tarea 6
-  # Una pausada no se puede posponer, aunque sin pausa estaría atrasada.
+  # Postpone task 6
+  # A paused one cannot be postponed, even though without the pause it would be overdue.
   Scenario Outline: Postpone task 6
     Given a relative recurring task every <every> <unit>
     And the task was completed on <completed>
@@ -115,11 +115,11 @@ Feature: Postpone task
       | every | unit   | completed           | now                 | button  |
       | 2    | dias   | 2026-07-01T09:00:00 | 2026-07-15T10:00:00 | ninguno |
 
-  # Posponer tarea 7
-  # Pospuesta: el panel ofrece Quitar posponer y dice hasta cuándo, con
-  # "mañana" si hasta es del día siguiente a ahora (filas 2, 4, 5 y 6) y
-  # sin "mañana" si ya es del día de ahora (fila 3). La hora va sin
-  # segundos (fila 1).
+  # Postpone task 7
+  # Postponed: the panel offers Quitar posponer and says until when, with
+  # "mañana" if hasta is on the day after now (rows 2, 4, 5 and 6) and
+  # without "mañana" if it is on the day of now (row 3). The time goes without
+  # seconds (row 1).
   Scenario Outline: Postpone task 7
     Given a one-off task without a due date
     And the task was postponed with option <option> on <postponed>
@@ -136,9 +136,9 @@ Feature: Postpone task
       | hasta mañana | 2026-07-15T00:30:00 | 2026-07-15T00:30:00 | Quitar posponer | Pospuesta hasta mañana 07:00 |
       | hasta mañana | 2026-07-31T20:00:00 | 2026-07-31T20:00:00 | Quitar posponer | Pospuesta hasta mañana 07:00 |
 
-  # Posponer tarea 8
-  # Desde hasta (inclusive), la posposición venció: el panel no dice que
-  # está pospuesta y vuelve a ofrecer Posponer.
+  # Postpone task 8
+  # From hasta on (inclusive), the postponement has expired: the panel does not say that
+  # it is postponed and offers Posponer again.
   Scenario Outline: Postpone task 8
     Given a one-off task without a due date
     And the task was postponed with option <option> on <postponed>
@@ -151,9 +151,9 @@ Feature: Postpone task
       | 1 hora       | 2026-07-15T10:00:00 | 2026-07-15T11:00:00 | Posponer |
       | hasta mañana | 2026-07-15T10:00:00 | 2026-07-16T10:00:00 | Posponer |
 
-  # Posponer tarea 9
-  # Una periódica pospuesta y después completada está en espera por su
-  # propia regla, pero sigue pospuesta: el panel ofrece Quitar posponer.
+  # Postpone task 9
+  # A recurring task postponed and then completed is waiting by its
+  # own rule, but is still postponed: the panel offers Quitar posponer.
   Scenario Outline: Postpone task 9
     Given a relative recurring task every <every> <unit>
     And the task was postponed with option <option> on <postponed>
@@ -165,9 +165,9 @@ Feature: Postpone task
       | every | unit   | option  | postponed           | completed           | now                 | button          |
       | 4    | horas  | 3 horas | 2026-07-15T10:00:00 | 2026-07-15T11:00:00 | 2026-07-15T12:00:00 | Quitar posponer |
 
-  # Posponer tarea 10
-  # Quitar posponer borra pospuesta: una atrasada vuelve a estar atrasada
-  # en el acto.
+  # Postpone task 10
+  # Quitar posponer deletes pospuesta: an overdue task is overdue again
+  # right away.
   Scenario Outline: Postpone task 10
     Given a one-off task with due date <due_date>
     And the task was postponed with option <option> on <postponed>
@@ -180,8 +180,8 @@ Feature: Postpone task
       | due_date   | option  | postponed           | now                 |
       | 2026-07-14 | 3 horas | 2026-07-15T10:00:00 | 2026-07-15T11:00:00 |
 
-  # Posponer tarea 11
-  # Editar una pospuesta no borra la posposición.
+  # Postpone task 11
+  # Editing a postponed task does not delete the postponement.
   Scenario Outline: Postpone task 11
     Given a one-off task <title> without a due date
     And the task was postponed with option <option> on <postponed>
@@ -193,9 +193,9 @@ Feature: Postpone task
       | title  | option  | postponed           | title_new    | title_stored    | from                | to                  |
       | Pagar  | 3 horas | 2026-07-15T10:00:00 | Pagar luz    | Pagar luz       | 2026-07-15T10:00:00 | 2026-07-15T13:00:00 |
 
-  # Posponer tarea 12
-  # Posponer en un dispositivo y cambiar el título en otro: se conservan los
-  # dos cambios.
+  # Postpone task 12
+  # Postponing on one device and changing the title on another: both
+  # changes are kept.
   Scenario Outline: Postpone task 12
     Given a one-off task <title> without a due date
     When I postpone the task with option <option> on <postponed>
@@ -207,10 +207,10 @@ Feature: Postpone task
       | title  | option  | postponed           | title_new    | title_stored    | from                | to                  |
       | Pagar  | 3 horas | 2026-07-15T10:00:00 | Pagar luz    | Pagar luz       | 2026-07-15T10:00:00 | 2026-07-15T13:00:00 |
 
-  # Posponer tarea 13
-  # pospuesta es un solo campo: si otro dispositivo, sin ver la primera
-  # posposición, pospone después, queda entera la suya (desde y hasta), sin
-  # mezclar con la primera.
+  # Postpone task 13
+  # pospuesta is a single field: if another device, without seeing the first
+  # postponement, postpones afterwards, its own is kept whole (desde and hasta), without
+  # mixing with the first one.
   Scenario Outline: Postpone task 13
     Given a one-off task without a due date
     When I postpone the task with option <option> on <postponed>

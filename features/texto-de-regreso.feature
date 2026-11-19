@@ -3,33 +3,33 @@
 # {"version":1,"tested_at":"2026-11-14T01:41:37.166367912Z","feature_name":"Texto de regreso","feature_path":"features/texto-de-regreso.feature","background_hash":"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b","implementation_hash":"sha256:cb9af1b362207bc964ac585e7b2680e8456d4f2ac669d19d55fa90b35b36c6c6","scenarios":[{"index":0,"name":"Texto de regreso 1","scenario_hash":"2b083408c805357c5b87f5989e9f6cec7f385b6a254ba4ec92de4497a8a32b0e","mutation_count":96,"result":{"Total":96,"Killed":96,"Survived":0,"Errors":0},"tested_at":"2026-11-14T01:41:37.166367912Z"},{"index":1,"name":"Texto de regreso 2","scenario_hash":"04ccafcca1d56440f2537ee890c1a709bdaf632bf95257a4f43f0e4f9bd5e421","mutation_count":40,"result":{"Total":40,"Killed":40,"Survived":0,"Errors":0},"tested_at":"2026-11-14T01:41:37.166367912Z"},{"index":2,"name":"Texto de regreso 3","scenario_hash":"564d57e52ac520625abbe5e1fedf4bc10d49d2bdbe729342a9e953e4415ba0f4","mutation_count":27,"result":{"Total":27,"Killed":27,"Survived":0,"Errors":0},"tested_at":"2026-11-14T01:41:37.166367912Z"},{"index":3,"name":"Texto de regreso 4","scenario_hash":"161293a4ded894ee322046cecedb97feda3d4dae8e8ade8de793e2bffdd7c41f","mutation_count":8,"result":{"Total":8,"Killed":8,"Survived":0,"Errors":0},"tested_at":"2026-11-14T01:41:37.166367912Z"},{"index":4,"name":"Texto de regreso 5","scenario_hash":"590d0ab51399ef615efc7ea686567523cedfe4d43566383a929daf0b4043c6a6","mutation_count":17,"result":{"Total":17,"Killed":17,"Survived":0,"Errors":0},"tested_at":"2026-11-14T01:41:37.166367912Z"},{"index":5,"name":"Texto de regreso 6","scenario_hash":"7427a5a3d9e3649d07595d7cc1e9fccf023558448b6dfe97344555d737e3c78c","mutation_count":30,"result":{"Total":30,"Killed":30,"Survived":0,"Errors":0},"tested_at":"2026-11-14T01:41:37.166367912Z"},{"index":6,"name":"Texto de regreso 7","scenario_hash":"65f3fea9dd631806462ab801aaff7852e02b152ddd71d2a3da7541000425b648","mutation_count":14,"result":{"Total":14,"Killed":14,"Survived":0,"Errors":0},"tested_at":"2026-11-14T01:41:37.166367912Z"},{"index":7,"name":"Texto de regreso 8","scenario_hash":"a460ddf4a3ceb01059ffa41c74df5af3fb39dd8fae4f84287ab961dd75bfac4d","mutation_count":22,"result":{"Total":22,"Killed":22,"Survived":0,"Errors":0},"tested_at":"2026-11-14T01:41:37.166367912Z"},{"index":8,"name":"Texto de regreso 9","scenario_hash":"76020d266378f4e079ddb94f5af2b15de406052929b38b64e7dc59585d79b754","mutation_count":34,"result":{"Total":34,"Killed":34,"Survived":0,"Errors":0},"tested_at":"2026-11-14T01:41:37.166367912Z"},{"index":9,"name":"Texto de regreso 10","scenario_hash":"c54d55ac21ed1ae7f015c41e7b97973df8cc24bcc82b351eb391d34894732c13","mutation_count":16,"result":{"Total":16,"Killed":16,"Survived":0,"Errors":0},"tested_at":"2026-11-14T01:41:37.166367912Z"},{"index":10,"name":"Texto de regreso 11","scenario_hash":"bfb9d1e3b84ce72eacf602e920430441420e84a04800f28896a8555abd5b8f47","mutation_count":34,"result":{"Total":34,"Killed":34,"Survived":0,"Errors":0},"tested_at":"2026-11-14T01:41:37.166367912Z"}]}
 # acceptance-mutation-manifest-end
 
-# Spec §6.1 (texto de regreso «Vuelve …» y Fecha y distancia), con §5.2, §5.3,
-# §5.5–§5.7 y §5.9 (cuándo vuelve cada tarea). La fila de una tarea en espera
-# dice cuándo vuelve: «Vuelve <fecha>[ · <distancia>]», con «el» solo delante de
-# la fecha con día de la semana. Vale también para las periódicas completadas
-# que se ven con Mostrar completadas y para las pospuestas, sin nombrar la
-# posposición. No cambia los estados de §5 ni el orden de la lista.
-# Instante de «Vuelve» (el mismo con el que §6.1 ordena las en espera):
-# relativa, V; calendario, 00:00 de N (sin hora); con horario, A (una puntual
-# fuera de ventana, el desde de la próxima); pospuesta, pospuesta.hasta. Si dos
-# causas la tienen en espera, el instante en que deja de estarlo (el más tarde).
-# Fecha y distancia como en texto-de-atraso.feature; lo futuro se redondea
-# hacia arriba, nunca «en 0 minutos»: se cuenta desde ahora, aunque cruce la
-# medianoche, y a la hora en punto en horas («en 1 hora», no 60 minutos).
-# Sin hora, con «mañana», no hay distancia.
-# "la fila de la tarea muestra el texto T" afirma que la lista tiene una sola
-# fila y que dice T. Una periódica en espera con completados está completada y
-# solo tiene fila con Mostrar completadas encendido. Cuando el paso no da
-# creadaEn, la tarea se creó antes de cualquier otra fecha del escenario.
-# Semana de referencia: viernes 2026-11-13 (jueves 19, sábado 14, domingo 15).
+# Spec §6.1 (return text «Vuelve …» and Date and distance), with §5.2, §5.3,
+# §5.5–§5.7 and §5.9 (when each task comes back). The row of a waiting task
+# says when it comes back: «Vuelve <date>[ · <distance>]», with «el» only before
+# the date with a weekday. It also applies to completed recurring tasks
+# seen with Mostrar completadas and to postponed tasks, without naming the
+# postponement. It does not change the statuses of §5 or the order of the list.
+# Instant of «Vuelve» (the same one §6.1 uses to order the waiting ones):
+# relative, V; calendar, 00:00 of N (no time); with a schedule, A (a one-off task
+# outside the window, the from of the next one); postponed, pospuesta.hasta. If two
+# causes keep it waiting, the instant it stops being so (the later one).
+# Date and distance as in texto-de-atraso.feature; the future is rounded
+# up, never «en 0 minutos»: counted from now, even across
+# midnight, and on the hour in hours («en 1 hora», not 60 minutes).
+# Without a time, with «mañana», there is no distance.
+# "the task row shows the text <text>" asserts that the list has a single
+# row and that it says the text. A waiting recurring task with completions is completed and
+# only has a row with Mostrar completadas turned on. When the step gives no
+# creadaEn, the task was created before any other date of the scenario.
+# Reference week: Friday 2026-11-13 (Thursday 19, Saturday 14, Sunday 15).
 Feature: Return text
 
-  # Texto de regreso 1
-  # Relativa completada: V con hora. Fila 2: 7 horas y 59 minutos y medio es
-  # «en 8 horas» (se redondea hacia arriba). Filas 3 a 5: menos de una hora, en
-  # minutos (también 39 minutos y medio es «en 40» y 30 segundos es «en 1
-  # minuto»). Fila 6: exactamente una hora. Fila 8: cruza la medianoche. Filas
-  # 10 y 11: otro mes y otro año.
+  # Return text 1
+  # Completed relative task: V with time. Row 2: 7 hours and 59 and a half minutes is
+  # «en 8 horas» (rounded up). Rows 3 to 5: less than an hour, in
+  # minutes (also 39 and a half minutes is «en 40» and 30 seconds is «en 1
+  # minuto»). Row 6: exactly one hour. Row 8: crosses midnight. Rows
+  # 10 and 11: another month and another year.
   Scenario Outline: Return text 1
     Given Mostrar completadas is on
     And a relative recurring task every <every> <unit>
@@ -51,9 +51,9 @@ Feature: Return text
       | 6    | dias   | 2026-11-27T08:00:00 | 2026-11-27T10:00:00 | Vuelve el jueves 3 de diciembre 08:00 · en 6 días          |
       | 6    | dias   | 2026-12-30T08:00:00 | 2026-12-30T10:00:00 | Vuelve el martes 5 de enero de 2027 08:00 · en 6 días      |
 
-  # Texto de regreso 2
-  # El texto avanza solo con el paso del tiempo: horas, minutos y, a las
-  # 00:00, «mañana» pasa a «hoy».
+  # Return text 2
+  # The text advances on its own as time passes: hours, minutes and, at
+  # 00:00, «mañana» becomes «hoy».
   Scenario Outline: Return text 2
     Given Mostrar completadas is on
     And a relative recurring task every <every> <unit>
@@ -68,10 +68,10 @@ Feature: Return text
       | 8    | horas  | 2026-11-13T22:00:00 | 2026-11-14T05:00:00 | Vuelve hoy 06:00 · en 1 hora         |
       | 8    | horas  | 2026-11-13T22:00:00 | 2026-11-14T05:01:00 | Vuelve hoy 06:00 · en 59 minutos     |
 
-  # Texto de regreso 3
-  # Calendario sin horario: 00:00 de N, sin hora. «Mañana» no lleva distancia
-  # (fila 2: hasta un segundo antes de la medianoche); a 2 o más días,
-  # «en N días» (filas 3 y 4); otro mes (fila 5) y otro año (fila 6).
+  # Return text 3
+  # Calendar task without a schedule: 00:00 of N, no time. «Mañana» carries no distance
+  # (row 2: up to one second before midnight); at 2 or more days,
+  # «en N días» (rows 3 and 4); another month (row 5) and another year (row 6).
   Scenario Outline: Return text 3
     Given a weekly recurring task on <days> created on <created>
     When I query Pendientes on <now>
@@ -86,8 +86,8 @@ Feature: Return text
       | martes  | 2026-11-27T08:00:00 | 2026-11-27T10:00:00 | Vuelve el martes 1 de diciembre · en 4 días        |
       | lunes   | 2026-12-29T08:00:00 | 2026-12-30T10:00:00 | Vuelve el lunes 4 de enero de 2027 · en 5 días     |
 
-  # Texto de regreso 4
-  # Calendario mensual: 00:00 de N, sin hora.
+  # Return text 4
+  # Monthly calendar task: 00:00 of N, no time.
   Scenario Outline: Return text 4
     Given a monthly recurring task on days <days> created on <created>
     When I query Pendientes on <now>
@@ -98,9 +98,9 @@ Feature: Return text
       | 14   | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | Vuelve mañana                      |
       | 20   | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | Vuelve el viernes 20 · en 7 días   |
 
-  # Texto de regreso 5
-  # Puntual con horario, fuera de la ventana: en espera hasta el desde de la
-  # próxima; vuelve con hora. Fila 3: 22 horas y media es «en 23 horas».
+  # Return text 5
+  # One-off task with a schedule, outside the window: waiting until the from of the
+  # next one; it comes back with a time. Row 3: 22 and a half hours is «en 23 horas».
   Scenario Outline: Return text 5
     Given a one-off task without a due date created on <created>
     And the task can be completed from <from> to <to>
@@ -113,10 +113,10 @@ Feature: Return text
       | 2026-11-13T06:00:00 | 08:00 | 11:00 | 2026-11-13T07:00:00 | Vuelve hoy 08:00 · en 1 hora      |
       | 2026-11-13T12:00:00 | 10:30 | 11:00 | 2026-11-13T12:00:00 | Vuelve mañana 10:30 · en 23 horas |
 
-  # Texto de regreso 6
-  # Relativa con horario completada: A, no V. Fila 1: V (el 14 a las 12:00)
-  # cae fuera de la ventana y vuelve cuando abre (el 15 a las 08:00). Fila 3: V
-  # cae dentro de la ventana y A = V.
+  # Return text 6
+  # Completed relative task with a schedule: A, not V. Row 1: V (the 14th at 12:00)
+  # falls outside the window and it comes back when it opens (the 15th at 08:00). Row 3: V
+  # falls inside the window and A = V.
   Scenario Outline: Return text 6
     Given Mostrar completadas is on
     And a relative recurring task every <every> <unit>
@@ -131,8 +131,8 @@ Feature: Return text
       | 12   | horas  | 2026-11-13T10:00:00 | 08:00 | 10:30 | 2026-11-13T10:00:00 | Vuelve mañana 08:00 · en 22 horas      |
       | 1    | dias   | 2026-11-13T10:00:00 | 08:00 | 11:00 | 2026-11-13T10:00:00 | Vuelve mañana 10:00 · en 24 horas      |
 
-  # Texto de regreso 7
-  # Calendario con horario: A (el inicio de N), con hora.
+  # Return text 7
+  # Calendar task with a schedule: A (the start of N), with a time.
   Scenario Outline: Return text 7
     Given a weekly recurring task on <days> created on <created>
     And the task can be completed from <from> to <to>
@@ -144,10 +144,10 @@ Feature: Return text
       | sábado | 2026-11-13T08:00:00 | 09:00 | 12:00 | 2026-11-13T10:00:00 | Vuelve mañana 09:00 · en 23 horas     |
       | jueves | 2026-11-13T08:00:00 | 09:00 | 12:00 | 2026-11-13T10:00:00 | Vuelve el jueves 19 09:00 · en 6 días |
 
-  # Texto de regreso 8
-  # Calendario con varios horarios completado: A, el inicio de N. Fila 1:
-  # cubrió la ocurrencia de la mañana y vuelve a las 18:00. Fila 2: cubrió la de
-  # la tarde y vuelve el viernes siguiente a las 07:00.
+  # Return text 8
+  # Completed calendar task with several schedules: A, the start of N. Row 1:
+  # it covered the morning occurrence and comes back at 18:00. Row 2: it covered the
+  # afternoon one and comes back the following Friday at 07:00.
   Scenario Outline: Return text 8
     Given Mostrar completadas is on
     And a weekly recurring task on <days>
@@ -161,9 +161,9 @@ Feature: Return text
       | viernes | 2026-11-13T08:00:00 | 2026-11-13T07:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-11-13T10:00:00 | Vuelve hoy 18:00 · en 8 horas          |
       | viernes | 2026-11-13T19:00:00 | 2026-11-13T18:00:00 | 07:00 | 10:00 | 18:00  | 21:00  | 2026-11-13T20:00:00 | Vuelve el viernes 20 07:00 · en 7 días |
 
-  # Texto de regreso 9
-  # Pospuesta: pospuesta.hasta, con hora, sin nombrar la posposición. «Hasta
-  # mañana» es las 07:00 del día siguiente (fila 3).
+  # Return text 9
+  # Postponed: pospuesta.hasta, with a time, without naming the postponement. «Hasta
+  # mañana» is 07:00 of the next day (row 3).
   Scenario Outline: Return text 9
     Given a one-off task without a due date
     And the task was postponed with option <option> on <postponed>
@@ -177,8 +177,8 @@ Feature: Return text
       | hasta mañana | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve mañana 07:00 · en 21 horas  |
       | 1 hora       | 2026-11-13T10:00:00 | 2026-11-13T10:20:00 | Vuelve hoy 11:00 · en 40 minutos   |
 
-  # Texto de regreso 10
-  # Una atrasada pospuesta está en espera: dice «Vuelve», no «Tocaba».
+  # Return text 10
+  # An overdue postponed task is waiting: it says «Vuelve», not «Tocaba».
   Scenario Outline: Return text 10
     Given a one-off task with due date <due_date>
     And the task was postponed with option <option> on <postponed>
@@ -190,12 +190,12 @@ Feature: Return text
       | 2026-11-10 | 3 horas      | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve hoy 13:00 · en 3 horas     |
       | 2026-11-10 | hasta mañana | 2026-11-13T10:00:00 | 2026-11-13T10:00:00 | Vuelve mañana 07:00 · en 21 horas |
 
-  # Texto de regreso 11
-  # Dos causas: una relativa pospuesta a las 10:00 (hasta las 13:00) y
-  # completada a las 10:30 está en espera por el intervalo y por la posposición;
-  # vuelve cuando deja de estarlo, el más tarde de los dos. Fila 1: gana la
-  # posposición (V = 11:30). Fila 2: lo mismo, ya vencido el intervalo y en
-  # espera solo por la posposición. Fila 3: gana el intervalo (V = 18:30).
+  # Return text 11
+  # Two causes: a relative task postponed at 10:00 (until 13:00) and
+  # completed at 10:30 is waiting because of the interval and the postponement;
+  # it comes back when it stops being so, the later of the two. Row 1: the
+  # postponement wins (V = 11:30). Row 2: the same, with the interval already expired and
+  # waiting only because of the postponement. Row 3: the interval wins (V = 18:30).
   Scenario Outline: Return text 11
     Given Mostrar completadas is on
     And a relative recurring task every <every> <unit>

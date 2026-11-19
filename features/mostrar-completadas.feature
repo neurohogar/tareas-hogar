@@ -3,35 +3,35 @@
 # {"version":1,"tested_at":"2026-11-17T20:59:32.841131029Z","feature_name":"Mostrar completadas","feature_path":"features/mostrar-completadas.feature","background_hash":"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b","implementation_hash":"sha256:b8420b8180ddf2806ed874f9beab64a285ace78a983ecd2564335536500383c0","scenarios":[{"index":0,"name":"Mostrar completadas 1","scenario_hash":"d35ca2a6b85477766511a209053b2f8a47381f3cfaff9e605d334712fe762d71","mutation_count":20,"result":{"Total":20,"Killed":20,"Survived":0,"Errors":0},"tested_at":"2026-11-17T20:59:32.841131029Z"},{"index":1,"name":"Mostrar completadas 2","scenario_hash":"a4f564147db49eb954c0139951a9f3d81fa49cb088647709e9cc72cf035faa80","mutation_count":34,"result":{"Total":34,"Killed":34,"Survived":0,"Errors":0},"tested_at":"2026-11-17T20:59:32.841131029Z"},{"index":2,"name":"Mostrar completadas 3","scenario_hash":"6cf302900170cfa16f17433caa258af822e31dd05d0db2328f1952b701032238","mutation_count":8,"result":{"Total":8,"Killed":8,"Survived":0,"Errors":0},"tested_at":"2026-11-17T20:59:32.841131029Z"},{"index":3,"name":"Mostrar completadas 4","scenario_hash":"46121f1cb6e17b9d6b9ce7a32b3bd9dd8ce3e23d21fe5854ffba75cafdcf5766","mutation_count":25,"result":{"Total":25,"Killed":25,"Survived":0,"Errors":0},"tested_at":"2026-11-17T20:59:32.841131029Z"},{"index":4,"name":"Mostrar completadas 6","scenario_hash":"36fec9b64ba3ebd4932b52741915ed1495a199bb1456792b212dcd7ba014adb0","mutation_count":3,"result":{"Total":3,"Killed":3,"Survived":0,"Errors":0},"tested_at":"2026-11-17T20:59:32.841131029Z"},{"index":5,"name":"Mostrar completadas 7","scenario_hash":"7060b719419bdcdfa13dd04885f9f4abae53debe470e2f59ebfcf6b94533b2fc","mutation_count":4,"result":{"Total":4,"Killed":4,"Survived":0,"Errors":0},"tested_at":"2026-11-17T20:59:32.841131029Z"}]}
 # acceptance-mutation-manifest-end
 
-# Spec §6.1 (Mostrar completadas), con §5.1–§5.3. Una tarea está completada
-# si es puntual con al menos un completado, o periódica en espera con al
-# menos un completado. Una periódica de calendario en espera sin completados
-# (antes de su primera ocurrencia) no está completada; una periódica
-# pendiente o atrasada tampoco, aunque tenga completados.
-#   Apagado (valor inicial): Pendientes muestra solo las no completadas.
-#   Encendido: después de las no completadas (en el orden por urgencia) van
-#     las completadas, de completadoEn más reciente a más antiguo; si
-#     empatan, creadaEn más antigua primero, después título en orden
-#     alfabético en español, después id (no observable).
-# Que el valor se guarde en el dispositivo y sobreviva a recargar, y el
-# contraste (negrita contra tachado y atenuado), se verifican en la suite QA.
-# Cada tarea se nombra por su título (una palabra). "Pendientes muestra en
-# orden" da los títulos de arriba hacia abajo y la lista no tiene otras
-# filas. "Pendientes muestra como completadas" da, en orden, los títulos de
-# las filas que se ven completadas; las demás filas se ven no completadas.
-# Cuando el paso no da creadaEn, la tarea se creó antes de cualquier otra
-# fecha del escenario; las que no dan creadaEn se crearon en el orden
-# declarado. Sin el paso "Mostrar completadas está encendido", el check está
-# en su valor inicial.
-# Semana de referencia: lunes 2026-07-13 a domingo 2026-07-19.
+# Spec §6.1 (Mostrar completadas), with §5.1–§5.3. A task is completed
+# if it is one-off with at least one completion, or recurring and waiting with at
+# least one completion. A recurring calendar task waiting without completions
+# (before its first occurrence) is not completed; a recurring
+# pending or overdue one is not either, even if it has completions.
+#   Off (initial value): Pendientes shows only the non-completed ones.
+#   On: after the non-completed ones (in urgency order) come
+#     the completed ones, from most recent completadoEn to oldest; if
+#     tied, oldest creadaEn first, then title in
+#     alphabetical order in Spanish, then id (not observable).
+# That the value is stored on the device and survives a reload, and the
+# contrast (bold against struck-through and dimmed), are verified in the QA suite.
+# Each task is named by its title (one word). "Pendientes shows in
+# order" gives the titles from top to bottom and the list has no other
+# rows. "Pendientes shows as completed" gives, in order, the titles of
+# the rows that look completed; the other rows look non-completed.
+# When the step does not give creadaEn, the task was created before any other
+# date of the scenario; those that do not give creadaEn were created in the declared
+# order. Without the step "Mostrar completadas is on", the check is
+# at its initial value.
+# Reference week: Monday 2026-07-13 to Sunday 2026-07-19.
 Feature: Mostrar completadas
 
   # Mostrar completadas 1
-  # Apagado (valor inicial): no se ven la puntual completada ni las
-  # periódicas en espera con completados (fila 1, también con un completado
-  # "del futuro" en la fila 3). Sí se ven las periódicas pendientes o
-  # atrasadas con completados (filas 2 y 3) y la semanal en espera que
-  # todavía no tuvo su primera ocurrencia (fila 1).
+  # Off (initial value): the completed one-off and the recurring
+  # tasks waiting with completions are not shown (row 1, also with a completion
+  # "from the future" in row 3). The pending or overdue recurring tasks with
+  # completions (rows 2 and 3) and the weekly one waiting that
+  # has not yet had its first occurrence (row 1) are shown.
   Scenario Outline: Mostrar completadas 1
     Given a one-off task Pagar without a due date
     And the task Pagar has a completion
@@ -50,11 +50,11 @@ Feature: Mostrar completadas
       | 4    | horas  | 2026-07-15T21:00:00 | lunes          | 2026-07-06 | miércoles    | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Basura, Sábanas        |
 
   # Mostrar completadas 2
-  # Encendido: primero las no completadas en su orden por urgencia; después
-  # las completadas, de completadoEn más reciente a más antiguo, sin importar
-  # el tipo. Fila 3: Regar tiene un completado pero está pendiente, así que
-  # va con las no completadas. Fila 4: un completado "del futuro" (relojes
-  # desfasados) es el más reciente.
+  # On: first the non-completed ones in their urgency order; then
+  # the completed ones, from most recent completadoEn to oldest, regardless of
+  # kind. Row 3: Regar has a completion but is pending, so it
+  # goes with the non-completed ones. Row 4: a completion "from the future" (skewed clocks)
+  # is the most recent.
   Scenario Outline: Mostrar completadas 2
     Given Mostrar completadas is on
     And a one-off task Foco without a due date
@@ -76,10 +76,10 @@ Feature: Mostrar completadas
       | 2026-07-15T11:30:00 | 4    | horas  | 2026-07-15T21:00:00 | martes, jueves | 2026-07-15T11:00:00 | 2026-07-16 | 2026-07-15T12:00:00 | Foco, Regar, Pagar, Basura  | Regar, Pagar, Basura        |
 
   # Mostrar completadas 3
-  # Encendido: una semanal en espera sin completados (antes de su primera
-  # ocurrencia) no está completada; va con las no completadas, en el grupo en
-  # espera, antes de las completadas (fila 1). Creada en un día de
-  # ocurrencia, está pendiente (fila 2).
+  # On: a weekly one waiting without completions (before its first
+  # occurrence) is not completed; it goes with the non-completed ones, in the waiting
+  # group, before the completed ones (row 1). Created on an
+  # occurrence day, it is pending (row 2).
   Scenario Outline: Mostrar completadas 3
     Given Mostrar completadas is on
     And a one-off task Foco without a due date
@@ -96,9 +96,9 @@ Feature: Mostrar completadas
       | miércoles    | 2026-07-15T08:00:00 | 2026-07-15T12:00:00 | Sábanas, Foco, Pagar | Pagar       |
 
   # Mostrar completadas 4
-  # Encendido, completadas con el mismo completadoEn: primero la de creadaEn
-  # más antigua (filas 1 y 2); con la misma creadaEn, por título en orden
-  # alfabético en español (fila 3).
+  # On, completed ones with the same completadoEn: first the one with the oldest creadaEn
+  # (rows 1 and 2); with the same creadaEn, by title in alphabetical
+  # order in Spanish (row 3).
   Scenario Outline: Mostrar completadas 4
     Given Mostrar completadas is on
     And a one-off task Planchar without a due date created on <created_iron>
@@ -115,7 +115,7 @@ Feature: Mostrar completadas
       | 2026-07-10T08:00:00 | 2026-07-15T08:00:00 | 2026-07-10T08:00:00 | 2026-07-15T08:00:00 | Barrer, Planchar |
 
   # Mostrar completadas 6
-  # Apagado: al completar una tarea, su fila desaparece de Pendientes.
+  # Off: when completing a task, its row disappears from Pendientes.
   Scenario Outline: Mostrar completadas 6
     Given a one-off task Foco without a due date
     And a relative recurring task Regar never completed
@@ -128,7 +128,7 @@ Feature: Mostrar completadas
       | 2026-07-15T08:00:00 | 2026-07-15T08:00:01 | Foco  |
 
   # Mostrar completadas 7
-  # Encendido: al completar una tarea, pasa a las completadas, al final.
+  # On: when completing a task, it moves to the completed ones, at the end.
   Scenario Outline: Mostrar completadas 7
     Given Mostrar completadas is on
     And a one-off task Foco without a due date

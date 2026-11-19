@@ -26,7 +26,7 @@ export interface World extends Saved {
 	text?: string;
 	/** Rejection of the last creation or edit. */
 	errors?: CreationErrors;
-	/** What was stored just before my last change: what another device "sin ver ese cambio" sees. */
+	/** What was stored just before my last change: what another device "without seeing that change" sees. */
 	beforeMyChange?: Saved;
 	completionsPrevious?: Completion[];
 	newCompletion?: Completion;
@@ -46,7 +46,7 @@ export interface World extends Saved {
 	noticeOfUndoOpen?: boolean;
 	/** Back was already tapped with the panel open (§6.2). */
 	tapBack?: boolean;
-	/** The checkbox was already tapped: "la tarea tiene N completados" verifies instead of declaring. */
+	/** The checkbox was already tapped: "the task has N completions" verifies instead of declaring. */
 	checkboxTouched?: boolean;
 	/** What was deleted (tasks and completions), to name it after deletion. */
 	deleted: Saved;
@@ -60,7 +60,7 @@ export interface World extends Saved {
 	lastTime?: string;
 	/** The recent emojis of the picker on this device; without them, they have not been declared yet. */
 	recent?: string[];
-	/** There was already an action on the recents: the steps "los emojis recientes son" and "hay N" verify instead of declaring. */
+	/** There was already an action on the recents: the steps "the recent emojis are" and "there are N" verify instead of declaring. */
 	wasActionOnRecent?: boolean;
 	/** The emoji that was chosen without naming it in the step, and the oldest of the previous recents. */
 	emojiChosen?: string;
@@ -74,7 +74,7 @@ export interface World extends Saved {
 	screenCurrent?: CurrentScreen;
 	/** The edit panel opened from the Annotate view (§5.10): its task, if any, and what it had when opened. */
 	annotatePanel?: { taskId?: string; changes: PanelChanges; docsOnOpen: TaskDocument[] };
-	/** The last declared annotation: the steps "la anotación ..." describe it. */
+	/** The last declared annotation: the steps "the annotation ..." describe it. */
 	lastAnnotationId?: string;
 	/** The Annotations screen at the last queried moment. */
 	annotationsQueried?: AnnotationsGroup[];

@@ -1,5 +1,5 @@
 // Recent emojis of the picker (spec §6.2): the list the device remembers.
-// "los emojis recientes son ..." and "hay N emojis recientes" are both Given and
+// "the recent emojis are ..." and "there are N recent emojis" are both Given and
 // Then (the dispatcher does not see the keyword). They are told apart by whether there was already an
 // action in the scenario (world.wasActionOnRecent): before it they declare the
 // list; afterwards they verify it. The actions that depend on a declared list

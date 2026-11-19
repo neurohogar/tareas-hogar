@@ -1,5 +1,5 @@
 // Schedule of the task (spec §4.1, §6.1, §6.2) and its conflicts between devices (§7).
-// "la tarea se puede completar de D a H [y de D2 a H2]" is an already saved schedule.
+// "the task can be completed from D to H [and from D2 to H2]" is an already saved schedule.
 import { expect } from 'vitest';
 import { createFromData, taskData, type TaskData } from '../../src/lib/core/task-data';
 import { scheduleText, type TypedSchedule } from '../../src/lib/core/schedule';
@@ -10,7 +10,7 @@ import { daysOf } from './recurring-calendar';
 import { P, TITLE, numeric, unit } from './values';
 import { OTHER, theTask, theTaskTitled, type StepDefinition, type World } from './world';
 
-/** One or two windows: "de D a H" or "de D a H y de D2 a H2". */
+/** One or two windows: "from D to H" or "from D to H and from D2 to H2". */
 const SCHEDULE = `from ${P} to ${P}(?: and from ${P} to ${P})?`;
 
 /** The windows of the step; the second, if the step names it. */

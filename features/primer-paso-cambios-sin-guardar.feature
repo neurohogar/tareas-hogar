@@ -5,9 +5,9 @@
 
 Feature: First step and unsaved changes
 
-  # Primer paso y cambios sin guardar 1
-  # Al editar, el campo Primer paso con otro valor es un cambio; con el mismo
-  # valor, no.
+  # First step and unsaved changes 1
+  # When editing, the Primer paso field with another value is a change; with the same
+  # value, it is not.
   Scenario Outline: First step and unsaved changes 1
     Given I open the panel to edit the task <title> with first step <first_step>
     When I type <value> in the field <field>
@@ -19,9 +19,9 @@ Feature: First step and unsaved changes
       | Lavar  | Separar la ropa blanca | Primer paso | Juntar las llaves      | el panel con el aviso de cierre |
       | Lavar  | Separar la ropa blanca | Primer paso | Separar la ropa blanca | nada                            |
 
-  # Primer paso y cambios sin guardar 2
-  # Escribir y volver al valor original no cuenta como cambio; volver a otro
-  # valor sí.
+  # First step and unsaved changes 2
+  # Typing and going back to the original value does not count as a change; going back to another
+  # value does.
   Scenario Outline: First step and unsaved changes 2
     Given I open the panel to edit the task <title> with first step <first_step>
     When I type <first> in the field <field>
@@ -34,9 +34,9 @@ Feature: First step and unsaved changes
       | Lavar  | Separar la ropa blanca | Primer paso | Juntar las llaves | Separar la ropa blanca | nada                            |
       | Lavar  | Separar la ropa blanca | Primer paso | Juntar las llaves | Buscar el detergente   | el panel con el aviso de cierre |
 
-  # Primer paso y cambios sin guardar 3
-  # Los espacios que Guardar recorta no cuentan: el mismo valor con espacios
-  # alrededor no es un cambio (fila 1); otro valor sí (fila 2).
+  # First step and unsaved changes 3
+  # The spaces that Guardar trims do not count: the same value with spaces
+  # around it is not a change (row 1); another value is (row 2).
   Scenario Outline: First step and unsaved changes 3
     Given I open the panel to edit the task <title> with first step <first_step>
     When I type <value> with spaces around it in the field <field>
@@ -48,8 +48,8 @@ Feature: First step and unsaved changes
       | Lavar  | Separar la ropa blanca | Primer paso | Separar la ropa blanca | nada                            |
       | Lavar  | Separar la ropa blanca | Primer paso | Juntar las llaves      | el panel con el aviso de cierre |
 
-  # Primer paso y cambios sin guardar 4
-  # Vaciar un primer paso existente cuenta como cambio.
+  # First step and unsaved changes 4
+  # Emptying an existing first step counts as a change.
   Scenario Outline: First step and unsaved changes 4
     Given I open the panel to edit the task <title> with first step <first_step>
     When I clear the field <field>
@@ -60,8 +60,8 @@ Feature: First step and unsaved changes
       | title  | first_step             | field       | open                            |
       | Lavar  | Separar la ropa blanca | Primer paso | el panel con el aviso de cierre |
 
-  # Primer paso y cambios sin guardar 5
-  # Solo espacios en un primer paso existente es vaciarlo: cuenta como cambio.
+  # First step and unsaved changes 5
+  # Only spaces in an existing first step is emptying it: it counts as a change.
   Scenario Outline: First step and unsaved changes 5
     Given I open the panel to edit the task <title> with first step <first_step>
     When I type only spaces in the field <field>
@@ -72,8 +72,8 @@ Feature: First step and unsaved changes
       | title  | first_step             | field       | open                            |
       | Lavar  | Separar la ropa blanca | Primer paso | el panel con el aviso de cierre |
 
-  # Primer paso y cambios sin guardar 6
-  # En una tarea sin primer paso, escribir uno es un cambio.
+  # First step and unsaved changes 6
+  # On a task without a first step, typing one is a change.
   Scenario Outline: First step and unsaved changes 6
     Given I open the panel to edit the task <title> with note <note>
     When I type <value> in the field <field>
@@ -84,8 +84,8 @@ Feature: First step and unsaved changes
       | title  | note | field       | value                  | open                            |
       | Lavar  | Luz  | Primer paso | Separar la ropa blanca | el panel con el aviso de cierre |
 
-  # Primer paso y cambios sin guardar 7
-  # Sin primer paso, solo espacios no cuenta.
+  # First step and unsaved changes 7
+  # Without a first step, only spaces does not count.
   Scenario Outline: First step and unsaved changes 7
     Given I open the panel to edit the task <title> with note <note>
     When I type only spaces in the field <field>
@@ -96,8 +96,8 @@ Feature: First step and unsaved changes
       | title  | note | field       | open    |
       | Lavar  | Luz  | Primer paso | nada    |
 
-  # Primer paso y cambios sin guardar 8
-  # Al crear, el campo arranca vacío: escribir algo es cargar algo.
+  # First step and unsaved changes 8
+  # When creating, the field starts empty: typing something is loading something.
   Scenario Outline: First step and unsaved changes 8
     Given I open the panel to create a task
     When I type <value> in the field <field>
@@ -108,8 +108,8 @@ Feature: First step and unsaved changes
       | field       | value                  | open                            |
       | Primer paso | Separar la ropa blanca | el panel con el aviso de cierre |
 
-  # Primer paso y cambios sin guardar 9
-  # Al crear, solo espacios cierra directo.
+  # First step and unsaved changes 9
+  # When creating, only spaces closes directly.
   Scenario Outline: First step and unsaved changes 9
     Given I open the panel to create a task
     When I type only spaces in the field <field>

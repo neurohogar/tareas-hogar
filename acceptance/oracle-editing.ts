@@ -94,7 +94,7 @@ interface Completion {
 	/** §4.4: the covered occurrence without a time (a day) or, with a schedule, its start. */
 	covered?: Date;
 	startCovered?: number;
-	/** The id the scenario fixes for it ("con id c1"); used to break ties in History. */
+	/** The id the scenario fixes for it ("with id c1"); used to break ties in History. */
 	ident?: string;
 	/** §4.4: the step the task was on when completed; only on tasks with two or more steps. */
 	step?: number;
@@ -799,7 +799,7 @@ const CREATIONS: Step[] = [
 	]
 ];
 
-/** "la tarea tiene un completado ..." already stored: its moment is the start of the covered day if the step does not give it. */
+/** "the task has a completion ..." already stored: its moment is the start of the covered day if the step does not give it. */
 function saveCompletion(m: OracleWorld, task: Doc, at: number, covered: Date): void {
 	m.completions = [...m.completions, { id: m.next++, taskId: task.id, at, covered }];
 }

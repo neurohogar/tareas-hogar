@@ -1,5 +1,5 @@
 // Edit and delete tasks (spec §6.2) and conflicts between devices (§7).
-// "otro dispositivo, sin ver ese cambio, ..." acts on what was stored before
+// "another device, without seeing that change, ..." acts on what was stored before
 // my last change, and its change arrives after mine.
 import { expect } from 'vitest';
 import { deletion, orphanCompletions } from '../../src/lib/core/deletion';
