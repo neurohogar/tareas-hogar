@@ -73,8 +73,7 @@ Igual que `qa/editar-borrar.md`:
    **Pendientes**, sin pantalla de login y sin error de red, y muestra la fila
    **Regar**.
 3. Abrir `/historial` por URL directa y recargar, aún sin conexión: se ve el
-   Historial (vacío: "Todavía no completaste nada"). Lo mismo con `/anotaciones`
-   y sus textos.
+   Historial (vacío: "Todavía no completaste nada").
 4. Cerrar la página, abrir una pestaña nueva en la raíz, todavía sin conexión:
    abre directo en **Pendientes** con **Regar**.
 5. Reconectar: no aparece pantalla de login ni cambia nada visible.

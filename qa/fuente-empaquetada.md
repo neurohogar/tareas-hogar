@@ -43,7 +43,7 @@ Fuera de alcance: el teclado del celular y los calendarios y listas nativas de u
 
 1. Crear la tarea «Regar» con emoji 🌱 y nota «Año 2026 ✈».
 2. En **Pendientes**, la fila de «Regar» y la pestaña **Pendientes** se ven con Atkinson; el 🌱 con Noto.
-3. Ir a **Historial** y **Anotaciones**: los títulos, los botones, los campos y la barra de pestañas se ven con Atkinson.
+3. Ir a **Historial**: los títulos, los botones, los campos y la barra de pestañas se ven con Atkinson.
 4. Abrir el panel de «Regar»: título, nota, botones (**Guardar**, **Pausar** o **Posponer** según corresponda), las pestañas y los campos se ven con Atkinson; el ✈ de la nota se ve con Noto.
 5. Abrir el selector de emoji: sus Recientes y todos los emoji que muestra se ven con Noto; los títulos y botones del selector, con Atkinson.
 6. Tocar el checkbox de «Regar»: el aviso de deshacer («Completaste «🌱 Regar»») se ve con Atkinson y el 🌱 con Noto.
@@ -66,7 +66,7 @@ Fuera de alcance: el teclado del celular y los calendarios y listas nativas de u
 
 ## Flujo 4: sin conexión y sin servicios externos
 
-1. Bloquear servicios externos, abrir la app y recorrer las tres pantallas, el panel y el selector: ningún pedido fue a otro origen que el de la app, Firebase Auth o Firestore.
+1. Bloquear servicios externos, abrir la app y recorrer Pendientes, Historial, el panel y el selector: ningún pedido fue a otro origen que el de la app, Firebase Auth o Firestore.
 2. Esperar a que baje todo, ponerse **Sin conexión** y recargar: la app abre con Atkinson y Noto.
 3. Sin conexión, abrir el selector y buscar un emoji que no se usó en ese dispositivo (por ejemplo 🪼): se ve con Noto.
 4. Sin conexión, escribir 🪼 en el título de una tarea nueva: se ve con Noto.
@@ -128,7 +128,7 @@ Qué se ve:
 
 Cuándo aparece:
 
-5. Aparece al abrir, al recargar y al abrir con una versión nueva, y en las tres pantallas de destino (`/`, `/historial`, `/anotaciones`).
+5. Aparece al abrir, al recargar y al abrir con una versión nueva, y en las dos pantallas de destino (`/`, `/historial`).
 6. Con la app abierta, pasarla a segundo plano y volver (abrir otra pestaña y volver, con `visibilitychange`): no aparece.
 7. Sin sesión, tocar **Entrar con Google** y completar la entrada: se pasa de la pantalla de entrada a la app sin que aparezca.
 

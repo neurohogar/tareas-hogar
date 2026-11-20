@@ -52,14 +52,14 @@ puede tardar algunas aperturas").
 1. Abrir la app en **Celular vertical** y esperar a que el service worker esté
    activo.
 2. Verificar el contrato de **Manifest**.
-3. Abrir el mismo manifest desde `/historial` y `/anotaciones`, y desde la
+3. Abrir el mismo manifest desde `/historial`, y desde la
    pantalla de entrada sin sesión: es el mismo documento, con la misma
    `orientation`.
 
 ## Flujo 2: ninguna pantalla fija la orientación por su cuenta
 
 1. Con el **Espía de orientación**, en **Celular vertical**, recorrer:
-   la pantalla de carga al abrir, Pendientes, Historial, Anotaciones, el panel
+   la pantalla de carga al abrir, Pendientes, Historial, el panel
    de una tarea nueva y el de una existente (las tres pestañas), un aviso del
    panel (cerrar con cambios sin guardar) y, sin sesión, la pantalla de
    entrada.
@@ -75,14 +75,14 @@ Precondición: crear `Regar` con **Intervalo** cada `2` **días**.
    orientación (`screen.orientation.type` empieza con `landscape` y el ancho
    visible es 740 px), el panel de `Regar` muestra el **Diseño ancho**, y no
    aparece ningún aviso ni pedido de girar el teléfono.
-3. Cerrar el panel y abrir Historial y Anotaciones en **Celular horizontal**: se
-   ven enteras, sin girar ni recortar.
+3. Cerrar el panel y abrir Historial en **Celular horizontal**: se
+   ve entero, sin girar ni recortar.
 4. Volver a **Celular vertical**: el panel vuelve al diseño de celular.
 5. Verificar **Sin bloqueo propio** durante todo el flujo.
 
 ## Flujo 4: en la compu no cambia nada
 
-1. En **Compu**, abrir Pendientes, Historial, Anotaciones y el panel de `Regar`:
+1. En **Compu**, abrir Pendientes, Historial y el panel de `Regar`:
    se ven como hoy, con el **Diseño ancho** en el panel.
 2. Verificar **Sin bloqueo propio** y que no aparece ningún aviso sobre la
    orientación.

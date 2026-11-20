@@ -7,7 +7,7 @@ Verifica, solo por la interfaz:
 - que las filas `en espera` (completadas, pospuestas, por su horario o de calendario antes de su ocurrencia), las completadas y las pausadas no muestran el primer paso, y que la línea desaparece y vuelve sola con el estado de cada momento (completar, deshacer, posponer, pausar, reanudar, el paso del tiempo);
 - que el primer paso no tiene estado: completar, posponer, pausar, reanudar, deshacer y cambiar de tipo o de modo no lo borran ni lo cambian, una periódica que vuelve muestra el mismo, y no hay forma de marcarlo como hecho ni indicador de avance;
 - que no cambia el estado, el orden de la lista, y que el nombre de la tarea sigue siendo emoji y título;
-- que no se ve en el Historial, en el aviso de deshacer, en **Anotaciones** ni en el texto copiado;
+- que no se ve en el Historial ni en el aviso de deshacer;
 - **Cambios sin guardar** con el campo y el caso de dos dispositivos.
 
 Cubre spec §4.1 (`primerPaso`, **Primer paso**), §6.1 (fila), §6.2 (campo **Primer paso**, orden de las secciones, **Cambios sin guardar**) y §7 (conflictos por campo).
@@ -33,7 +33,7 @@ Semana de referencia: lunes 2026-11-09, martes 10, miércoles 11, jueves 12, vie
 - **Línea de la fila**: dentro de la fila de la tarea, un texto que empieza con `Primer paso: ` y sigue con el texto guardado, en su propia línea debajo del título. "La fila dice P" significa que ese texto es exactamente `Primer paso: P`. Una fila sin primer paso, o que no lo muestra, no contiene `Primer paso`.
 - **Estilo de la línea**: el mismo `color` y el mismo `font-size` computados que el texto de horario de la misma fila o de otra; `font-weight` normal, sin subrayado ni color propio; la fila no cambia de fondo. No tiene recorte (sin `text-overflow: ellipsis`, sin `overflow: hidden` ni `max-height` que corten): el texto completo es visible, en varias líneas si hace falta.
 - **Sin controles propios**: la línea no tiene botón, checkbox ni campo; el único checkbox de la fila es el de la tarea. Tocar la línea es tocar la fila: abre el panel **Editar tarea**.
-- **Aviso, Historial, Anotaciones, texto copiado**: los de `qa/historial-deshacer.md`, `qa/anotacion.md` y `qa/reintento-y-aviso-de-copia.md`; ninguno contiene `Primer paso` ni el texto del primer paso.
+- **Aviso, Historial**: los de `qa/historial-deshacer.md`; ninguno contiene `Primer paso` ni el texto del primer paso.
 - **Lista**: "La lista es A, B, C" significa exactamente esas filas, de arriba hacia abajo.
 
 ## Flujo 1: el campo en el panel y crear con primer paso
@@ -109,7 +109,6 @@ Precondición: lista vacía, reloj detenido en `2026-11-13T10:00:00`.
 2. Escribir en `Lavar` el **Primer paso** `Separar la ropa blanca` y guardar. El orden de la lista es el mismo que anotó; las filas de **Barrer** y **Planchar** son idénticas a antes. Repetir poniendo el primer paso en `Barrer` y quitándoselo a `Lavar`: el orden de la lista sigue siendo el mismo.
 3. Poner a `Lavar` el emoji `🧺` con el selector: el título de la fila dice `🧺 Lavar` y la línea de primer paso sigue en su propia línea debajo. El título no incluye el primer paso.
 4. Tocar el checkbox de **Lavar**: el aviso dice `Completaste «🧺 Lavar»`, sin `Primer paso`. Ir a **Historial**: la entrada dice `🧺 Lavar` con su hora, sin `Primer paso`.
-5. Tocar **Anotar**, escribir `salió bien`, **Me sirvió**, con `Lavar` en la lista. Ir a **Anotaciones**: la anotación muestra el nombre de la tarea (`🧺 Lavar`) y el texto `salió bien`, sin `Primer paso`. Con el portapapeles funcionando (`qa/reintento-y-aviso-de-copia.md`), tocar **Copiar**: el texto copiado no contiene `Primer paso` ni `Separar la ropa blanca`.
 
 ## Flujo 8: cambios sin guardar con el campo
 

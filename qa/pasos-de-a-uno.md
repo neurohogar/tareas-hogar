@@ -7,7 +7,7 @@ Verifica, solo por la interfaz:
 - **Hecho** y **Paso anterior**: mueven el paso de a uno, no abren el panel, no pasan por **Cambios sin guardar** y no abren aviso; **Hecho** en el último paso completa la tarea como el checkbox (mismo aviso con **Deshacer**, deshabilitado igual que el checkbox) y la tarea vuelve al paso 1;
 - que deshacer (aviso, Historial o checkbox) devuelve el paso en que iba la tarea;
 - que la línea y los botones desaparecen y vuelven solos con el estado de cada momento, y que los pasos y su avance no cambian con ninguna otra acción, ni el estado ni el orden;
-- que no se ven en el Historial, en el aviso de deshacer, en **Anotaciones** ni en el texto copiado;
+- que no se ven en el Historial ni en el aviso de deshacer;
 - **Cambios sin guardar** con los pasos y el caso de dos dispositivos.
 
 Cubre spec §4.1 (**Pasos**, `pasos`, `pasoActual`), §4.4 (`pasoAlCompletar`), §5.4 (deshacer), §6.1 (fila y botones), §6.2 (campos de pasos, orden de la sección, **Cambios sin guardar**) y §7 (conflictos por campo).
@@ -34,7 +34,7 @@ Semana de referencia: lunes 2026-11-09, martes 10, miércoles 11, jueves 12, vie
 - **Botones de la fila**: dentro de esa misma línea, solo si la tarea tiene dos pasos o más: **Paso anterior** (no se ve en el paso 1) y **Hecho**, en ese orden, ambos botones de texto chicos (rol `button`). Una tarea de un solo paso no tiene ninguno.
 - **Estilo**: la línea tiene el mismo `color` y `font-size` computados que el texto de horario; `font-weight` normal, sin subrayado ni color propio en el texto ni en los botones; la fila no cambia de fondo. Sin recorte (sin `text-overflow: ellipsis`, sin `-webkit-line-clamp`, sin `max-height`): un texto largo se ve completo en varias líneas.
 - **Tocar**: tocar el texto del paso (fuera de los botones) es tocar la fila: abre **Editar tarea**. Tocar **Hecho** o **Paso anterior** no abre el panel, no abre **Cambios sin guardar** y no abre aviso, salvo **Hecho** en el último paso (aviso de completar).
-- **Aviso, Historial, Anotaciones, texto copiado**: los de `qa/historial-deshacer.md`, `qa/anotacion.md` y `qa/reintento-y-aviso-de-copia.md`; ninguno contiene el texto de un paso, `Primer paso` ni `Paso:`.
+- **Aviso, Historial**: los de `qa/historial-deshacer.md`; ninguno contiene el texto de un paso, `Primer paso` ni `Paso:`.
 - **Lista**: "La lista es A, B, C" significa exactamente esas filas, de arriba hacia abajo.
 
 ## Flujo 1: los campos de pasos en el panel y crear
@@ -120,14 +120,13 @@ Precondición: lista vacía, reloj detenido en `2026-11-13T10:00:00`.
 2. Escribir en `Lavar` un **Primer paso** y dos pasos más y guardar; tocar **Hecho** en la fila. El orden de la lista es el mismo que anotó; las filas de **Barrer** y **Planchar** son idénticas a antes. Repetir con `Barrer` y quitárselos a `Lavar`: el orden no cambia.
 3. Poner a `Lavar` el emoji `🧺`: el título dice `🧺 Lavar` y la línea de paso va en su propia línea debajo. El título no incluye ningún paso.
 4. Tocar **Hecho** hasta completar `Lavar`: el aviso dice `Completaste «🧺 Lavar»` sin ningún paso. En **Historial** la entrada dice `🧺 Lavar` con su hora, sin ningún paso.
-5. Tocar **Anotar**, `salió bien`, **Me sirvió**, con `Lavar` en la lista. En **Anotaciones**: el nombre `🧺 Lavar` y `salió bien`, sin pasos. Con el portapapeles funcionando (`qa/reintento-y-aviso-de-copia.md`), **Copiar**: el texto copiado no contiene ningún paso.
-6. **Cambios sin guardar**: encender **Mostrar completadas**, abrir `Lavar` (completada) y quitarle **Paso 3** para que quede con **Primer paso** y **Paso 2**; guardar (`Lavar` con **Primer paso** `Separar la ropa blanca` y **Paso 2** `Poner el lavarropas`): abrir, cambiar **Paso 2** a `Juntar las llaves` y tocar la X: aparece el aviso «Tenés cambios sin guardar»; **Descartar**: la fila no cambió.
-7. Abrir, cambiar **Paso 2** y volver a escribir `Poner el lavarropas`, y tocar la X: cierra directo. Escribirlo con espacios al inicio y al final: cierra directo.
-8. Abrir, vaciar **Paso 2**: aviso; **Descartar**. Repetir con solo espacios: aviso; **Descartar**.
-9. Abrir, tocar **Agregar paso** y tocar la X sin escribir: cierra directo. Repetir escribiendo `Tender la ropa`: aviso; **Descartar**. Repetir escribiendo solo espacios: cierra directo.
-10. Abrir, tocar **Quitar** en **Paso 2**: aviso; **Descartar**. Tocar **Agregar paso** y **Quitar** del campo recién agregado: cierra directo.
-11. Tocar **+**, tocar **Agregar paso** y la X: cierra directo. Tocar **+**, **Agregar paso**, escribir `Poner el lavarropas` y la X: aviso; **Descartar**.
-12. Desmarcar el checkbox de `Lavar` (vuelve `pendiente` en el último paso). Con el panel de `Lavar` cerrado, tocar **Hecho** y **Paso anterior** en la fila: no aparece **Cambios sin guardar** ni se abre el panel.
+5. **Cambios sin guardar**: encender **Mostrar completadas**, abrir `Lavar` (completada) y quitarle **Paso 3** para que quede con **Primer paso** y **Paso 2**; guardar (`Lavar` con **Primer paso** `Separar la ropa blanca` y **Paso 2** `Poner el lavarropas`): abrir, cambiar **Paso 2** a `Juntar las llaves` y tocar la X: aparece el aviso «Tenés cambios sin guardar»; **Descartar**: la fila no cambió.
+6. Abrir, cambiar **Paso 2** y volver a escribir `Poner el lavarropas`, y tocar la X: cierra directo. Escribirlo con espacios al inicio y al final: cierra directo.
+7. Abrir, vaciar **Paso 2**: aviso; **Descartar**. Repetir con solo espacios: aviso; **Descartar**.
+8. Abrir, tocar **Agregar paso** y tocar la X sin escribir: cierra directo. Repetir escribiendo `Tender la ropa`: aviso; **Descartar**. Repetir escribiendo solo espacios: cierra directo.
+9. Abrir, tocar **Quitar** en **Paso 2**: aviso; **Descartar**. Tocar **Agregar paso** y **Quitar** del campo recién agregado: cierra directo.
+10. Tocar **+**, tocar **Agregar paso** y la X: cierra directo. Tocar **+**, **Agregar paso**, escribir `Poner el lavarropas` y la X: aviso; **Descartar**.
+11. Desmarcar el checkbox de `Lavar` (vuelve `pendiente` en el último paso). Con el panel de `Lavar` cerrado, tocar **Hecho** y **Paso anterior** en la fila: no aparece **Cambios sin guardar** ni se abre el panel.
 
 ## Flujo 8: dos dispositivos
 

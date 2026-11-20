@@ -7,7 +7,7 @@ Verifica, solo por la interfaz:
 - que la línea y el botón desaparecen y vuelven solos con el estado de cada momento (`en espera`, pospuesta, completada, pausada) y que el botón está deshabilitado como el checkbox;
 - **Hice la mínima**: completa la tarea como el checkbox (mismo estado, mismo orden), con el aviso `Completaste «…» · mínima`, **Deshacer** y «Vuelve …» si es periódica; la palabra «Mínima» en el Historial y en el diálogo de **Borrar**, nunca el texto de la mínima; borrar el completado de la mínima (aviso, Historial, checkbox) como cualquier otro;
 - que con pasos, **Hice la mínima** funciona en cualquier paso, la tarea vuelve al paso 1 y deshacer devuelve el paso en que iba;
-- que la mínima no cambia el orden ni el nombre de la tarea, y que no se ve en **Anotaciones** ni en el texto copiado; que editar o vaciar la versión mínima no toca los completados que ya fueron la mínima;
+- que la mínima no cambia el orden ni el nombre de la tarea, y que el aviso de deshacer no muestra su texto; que editar o vaciar la versión mínima no toca los completados que ya fueron la mínima;
 - **Cambios sin guardar** con el campo y el caso de dos dispositivos.
 
 Cubre spec §4.1 (**Versión mínima**, **Pasos**), §4.4 (`fueMinima`), §5.4 (aviso y deshacer), §5.5 (ventana), §6.1 (fila y botón), §6.2 (campo, orden de la sección, **Cambios sin guardar**), §6.3 (Historial y **Borrar**) y §7 (conflictos por campo, completados de dos dispositivos).
@@ -118,7 +118,7 @@ Precondición: lista vacía, reloj detenido en `2026-11-13T10:00:00`, **Mostrar 
 1. Crear `Barrer`, `Lavar` y `Planchar`, todas con **No se repite** y sin fecha límite. Anotar el orden y el texto de cada fila.
 2. Escribir en `Lavar` una **Versión mínima** (`Solo el inodoro`) y guardar: el orden de la lista es el mismo; las filas de `Barrer` y `Planchar` son idénticas a antes. Escribir también una en `Barrer` y guardar: el orden no cambia.
 3. Poner a `Lavar` el emoji `🧺`: el título dice `🧺 Lavar`, la línea `Mínima: …` va en su propia línea debajo. El título no incluye la versión mínima.
-4. Tocar **Hice la mínima** en `Lavar`: el aviso dice `Completaste «🧺 Lavar» · mínima`, sin el texto de la mínima. Esperar el aviso. Tocar **Anotar**, `salió bien`, **Me sirvió**, con `Lavar` en la lista. En **Anotaciones**: el nombre `🧺 Lavar` y `salió bien`, sin el texto de la versión mínima. Con el portapapeles funcionando (`qa/reintento-y-aviso-de-copia.md`), **Copiar**: el texto copiado no contiene la versión mínima ni la palabra `Mínima`.
+4. Tocar **Hice la mínima** en `Lavar`: el aviso dice `Completaste «🧺 Lavar» · mínima`, sin el texto de la mínima.
 5. Tocar el texto `Mínima: …` de una fila (fuera del botón): abre el panel de esa tarea.
 
 ## Flujo 7: Cambios sin guardar
