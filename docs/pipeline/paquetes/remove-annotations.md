@@ -4,6 +4,26 @@ Annotations leave the project. There is no **Anotar** button or box anywhere, no
 
 ## Specs
 
+Deleted from the spec (not S#): the §2 annotations bullet; the §3 glossary row **Anotación**; the body of §4.5, §5.10 and §6.7 (headings kept as «(eliminada)» so every other number and reference stays); in §7 the `anotaciones` path, the Anotaciones bullet of **Conflictos** and **Anotaciones de una tarea borrada**; in §6.2 the **Anotar** item of **Atrás** and its sentence.
+
+- **S1** (§4.1, Primer paso): «No se ve en el Historial ni en el aviso de deshacer.»
+- **S2** (§4.1, Pasos): «y no se ven en el Historial ni en el aviso de deshacer (la palabra «Mínima» del Historial y del aviso, §6.3 y §5.4, no muestra pasos).»
+- **S3** (§4.1, Versión mínima): «El Historial y el aviso de deshacer solo muestran la palabra «Mínima», nunca su texto.»
+- **S4** (§4.5): «### 4.5 (eliminada)»
+- **S5** (§5.10): «### 5.10 (eliminada)»
+- **S6** (§6.7): «### 6.7 (eliminada)»
+- **S7** (§6, Navegación): «una barra fija con dos pestañas, en este orden: **Pendientes** (ruta `/`) y **Historial** (ruta `/historial`). La pestaña de la pantalla actual se ve elegida.»
+- **S8** (§6, Navegación): «Las rutas `/etiquetas` y `/anotaciones` ya no existen: abrir una de ellas (un favorito, el historial del navegador o recargar una pestaña que estaba ahí cuando llegó la versión nueva) abre Pendientes, reemplazando esa entrada del historial del navegador y sin aviso, así que **Atrás** no vuelve a ella.»
+- **S9** (§6, fuente y emoji empaquetados, Alcance): «(Pendientes, Historial, el panel y sus avisos, el selector de emoji con sus Recientes, el aviso de deshacer y la pantalla de entrada)»
+- **S10** (§6, Orientación, Alcance): «(Pendientes, Historial, el panel y sus avisos, la pantalla de entrada y la pantalla de carga, §6.6)»
+- **S11** (§6.2, Atrás): «  - el selector de emoji se cierra sin elegir.»
+- **S12** (§6.2, Atrás): «Los diálogos de Historial (§6.3) no cambian con esta feature.»
+- **S13** (§6.2, Borrar tarea): «Al borrar una tarea **se borran también todos sus completados** (y solo los suyos), así que desaparecen del historial.»
+- **S14** (§7, Borrado de tareas): «la tarea y sus completados (solo ellos) se borran en un solo `writeBatch`.»
+- **S15** (§7, Limpiezas y reintentos): «la limpieza de completados huérfanos se reintenta si un intento falla o no hay conexión»
+- **S16** (§7, Limpiezas y reintentos): «Ejemplo: con tres completados huérfanos y la limpieza del segundo fallando, se limpian el primero y el tercero, y el segundo se vuelve a intentar al volver la conexión o al cambiar los datos.»
+- **S17** (§7, Datos que ya no se usan): «Lo mismo vale para la colección `users/{uid}/anotaciones`, que pudo existir cuando había anotaciones: puede seguir existiendo hasta que un script aparte la borre, y la app no la lee, no la muestra, no la escribe ni la borra; borrar una tarea no la toca.»
+
 ## Decisions
 
 - D1 (2026-11-20, user, via orchestrator): «la anotaciones no sirvieron para nada, me da paja usar eso y es muy ambiguo» → answer to the orchestrator's question: «Sacarlas del proyecto». The annotations concept (the `/anotaciones` screen, the «Anotar» button and box, the annotation core modules, adapters, features, QA procedures, spec sections and e2e scripts) leaves the project, as labels and effort did.
@@ -32,6 +52,7 @@ Annotations leave the project. There is no **Anotar** button or box anywhere, no
   - **E2E**: deleted `e2e/annotation.spec.ts`; edited `e2e/retry-and-copy-notice.spec.ts`, `e2e/first-step.spec.ts`, `e2e/one-step-at-a-time.spec.ts`, `e2e/minimal-version.spec.ts`, `e2e/bundled-font.spec.ts`, `e2e/bundled-font-screen.spec.ts`, `e2e/pwa-offline.spec.ts`, `e2e/portrait-orientation.spec.ts` (the `/anotaciones` paths and the Anotaciones tab; its `annotations` variables are orientation-event logs and stay), `e2e/support.ts` (`Tab` loses «Anotaciones»).
   - **Docs**: `docs/spec.md` (D9), `docs/v3/plan.md` (D8, P1).
   - `docs/pipeline/pendientes.txt` gets no entry for the deleted features.
+- D11 (2026-11-20, user, via orchestrator; plan only, resolves P1): question «Sin anotaciones, el plan pierde su forma de juzgar cada épica … ¿Cómo se juzga una épica ahora?» → answer «Lo que vos contás + datos guardados (Recomendada)». Affects only `docs/v3/plan.md` (option a of P1); the orchestrator edits it. The app spec does not change.
 
 ## Open questions
 
