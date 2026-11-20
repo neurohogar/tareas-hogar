@@ -57,10 +57,10 @@ export function editsOther(world: World, data: DataNew): void {
 	editAndSave(world, theTask(thatSawOther(world)), data);
 }
 
-/** Deletes the task and its completions and annotations known to whoever deletes (§6.2, §7). */
+/** Deletes the task and its completions known to whoever deletes (§6.2, §7). */
 function remove(world: World, task: Task, completionsKnown: Saved['completions']): void {
-	const { taskId, completionIds, annotationIds } = deletion(task.id, completionsKnown, world.annotations);
-	deleteSaved(world, [taskId], completionIds, annotationIds);
+	const { taskId, completionIds } = deletion(task.id, completionsKnown);
+	deleteSaved(world, [taskId], completionIds);
 }
 
 const EDITORS: Editor[] = [

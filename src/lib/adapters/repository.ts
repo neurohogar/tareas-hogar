@@ -1,6 +1,6 @@
 // Translates between the core model and Firestore (spec §7):
-// users/{uid}/tareas/{tareaId} and users/{uid}/completados/{completadoId} (annotations are
-// in annotations.ts). The old `etiquetas` and `esfuerzo` fields of a task and the `etiquetas`
+// users/{uid}/tareas/{tareaId} and users/{uid}/completados/{completadoId} (the app does not touch
+// `anotaciones`, S17). The old `etiquetas` and `esfuerzo` fields of a task and the `etiquetas`
 // collection are no longer read, written or deleted (S36): they stay as they are.
 // The documents have their own shape: no Firestore type leaves this file.
 import {
@@ -237,12 +237,11 @@ export async function saveChange(uid: string, taskId: string, change: TaskChange
 	await exceptDeleted(updateDoc(taskRef(uid, taskId), fields));
 }
 
-/** Spec §7: the task, its completions and its annotations are deleted in a single writeBatch. */
-export async function deleteTask(uid: string, { taskId, completionIds, annotationIds }: Deletion): Promise<void> {
+/** Spec §7: the task and its completions are deleted in a single writeBatch. */
+export async function deleteTask(uid: string, { taskId, completionIds }: Deletion): Promise<void> {
 	const batch = writeBatch(db);
 	batch.delete(taskRef(uid, taskId));
 	for (const completionId of completionIds) batch.delete(completionRef(uid, completionId));
-	for (const annotationId of annotationIds) batch.delete(doc(db, 'users', uid, 'anotaciones', annotationId));
 	await batch.commit();
 }
 

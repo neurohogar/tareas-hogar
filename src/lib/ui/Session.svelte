@@ -1,13 +1,5 @@
 <script lang="ts">
 	import { onMount, type Snippet } from 'svelte';
-	import { page } from '$app/state';
-	import {
-		deleteAnnotation,
-		changeAnnotationText,
-		saveAnnotation,
-		cleanOrphanAnnotations,
-		observeAnnotations
-	} from '#lib/adapters/annotations.ts';
 	import { newId } from '#lib/adapters/ids.ts';
 	import { now as currentTime, observeClock } from '#lib/adapters/clock.ts';
 	import {
@@ -21,8 +13,7 @@
 		observeTasks
 	} from '#lib/adapters/repository.ts';
 	import { noticeOnComplete, visibleNotice, completionToUndo, msUntilDue, noticeReturn, noticeText, type Notice } from '#lib/core/notice.ts';
-	import { annotate, editText, type Annotation, type CurrentScreen, type Sense } from '#lib/core/annotation.ts';
-	import { orphanAnnotations, deletion, orphanCompletions, taskExists } from '#lib/core/deletion.ts';
+	import { deletion, orphanCompletions, taskExists } from '#lib/core/deletion.ts';
 	import { checkboxAction } from '#lib/core/checkbox.ts';
 	import { complete } from '#lib/core/completions.ts';
 	import { doTheMinimal as doTheMinimalFromCore } from '#lib/core/minimal-version.ts';
@@ -39,7 +30,6 @@
 	import { onlineState } from './online.svelte.ts';
 	import UndoNotice from './UndoNotice.svelte';
 	import NoConnectionStrip from './NoConnectionStrip.svelte';
-	import Annotate from './Annotate.svelte';
 	import Navigation from './Navigation.svelte';
 	import TaskPanel from './TaskPanel.svelte';
 	import type { CollectionsResponded } from './LoadingScreen.svelte';
@@ -53,12 +43,6 @@
 
 	let tasks = $state<Task[]>([]);
 	let completions = $state<Completion[]>([]);
-	let annotations = $state<Annotation[]>([]);
-	let annotationsLoaded = $state(false);
-	/** The Anotar box (§5.10) and the open edit panel, if any (with its task when editing). */
-	let annotating = $state(false);
-	let panel = $state.raw<{ taskId?: string } | undefined>(undefined);
-	const annotationsBeingCleaned = new Set<string>();
 	/** Until the collections have answered, a missing task does not mean it was deleted. */
 	let tasksLoaded = $state(false);
 	let completionsLoaded = $state(false);
@@ -85,10 +69,6 @@
 			observeCompletions(uid, (currentItems) => {
 				completions = currentItems;
 				completionsLoaded = true;
-			}),
-			observeAnnotations(uid, (currentItems) => {
-				annotations = currentItems;
-				annotationsLoaded = true;
 			}),
 			observeClock((current) => (now = current))
 		];
@@ -134,13 +114,6 @@
 		if (!tasksLoaded || !completionsLoaded) return;
 		void [connection.value, reevaluate];
 		cleanUp(orphanCompletions(tasks, completions), ({ id }) => id, orphansBeingCleaned, (batch) => cleanOrphanCompletions(uid, batch));
-	});
-
-	// Spec §7: orphan annotations are ignored and cleaned up.
-	$effect(() => {
-		if (!tasksLoaded || !annotationsLoaded) return;
-		void [connection.value, reevaluate];
-		cleanUp(orphanAnnotations(tasks, annotations), ({ id }) => id, annotationsBeingCleaned, (batch) => cleanOrphanAnnotations(uid, batch));
 	});
 
 	// The notice disappears exactly at 5 seconds, without waiting for the next clock tick.
@@ -216,50 +189,10 @@
 
 	function deleteEdited(task: Task) {
 		edited = undefined;
-		void deleteTask(uid, deletion(task.id, completions, annotations));
-	}
-
-	const SCREENS: Record<string, CurrentScreen> = { '/historial': 'Historial', '/anotaciones': 'Anotaciones' };
-
-	/** Second tap (§5.10): the core takes the context of the screen, the panel and the notice. */
-	function annotateNow(sense: Sense, text: string) {
-		now = currentTime();
-		const screen = SCREENS[page.url.pathname] ?? 'Pendientes';
-		const annotation = annotate(newId(), sense, now, { screen, ...(panel && { panel: { ...(panel.taskId !== undefined && { taskId: panel.taskId }) } }), ...(notice && { notice }) }, text);
-		annotating = false;
-		void saveAnnotation(uid, annotation);
-	}
-
-	/** Edit text (§6.7): the core decides how the text ends up; an annotation that is gone is not revived. */
-	function editAnnotationText(annotation: Annotation, text: string) {
-		const edited = editText(annotations, annotation.id, text).find(({ id }) => id === annotation.id);
-		if (edited) void changeAnnotationText(uid, edited.id, edited.text);
-	}
-
-	function panelOpened(taskId: string | undefined) {
-		const thisPanel = taskId === undefined ? {} : { taskId };
-		panel = thisPanel;
-		return () => {
-			if (panel === thisPanel) panel = undefined;
-		};
+		void deleteTask(uid, deletion(task.id, completions));
 	}
 
 	shareSession({
-		get annotations() {
-			return annotations;
-		},
-		get hasPanel() {
-			return panel !== undefined;
-		},
-		get annotating() {
-			return annotating;
-		},
-		openAnnotate: () => (annotating = true),
-		closeAnnotate: () => (annotating = false),
-		annotate: annotateNow,
-		panelOpened,
-		editAnnotationText,
-		deleteAnnotation: (annotation) => void deleteAnnotation(uid, annotation.id),
 		get tasks() {
 			return tasks;
 		},
@@ -281,7 +214,6 @@
 
 <NoConnectionStrip />
 <Navigation />
-<Annotate />
 
 {@render children()}
 

@@ -1,7 +1,5 @@
 import type { PanelAction } from '../../src/lib/core/panel-action';
 import type { OnTop } from '../../src/lib/core/panel-back';
-import type { Annotation, CurrentScreen } from '../../src/lib/core/annotation';
-import type { AnnotationsGroup } from '../../src/lib/core/annotations';
 import type { Notice } from '../../src/lib/core/notice';
 import type { PanelForm } from '../../src/lib/core/unsaved-changes';
 import type { CreationErrors } from '../../src/lib/core/creation';
@@ -68,19 +66,6 @@ export interface World extends Saved {
 	recentBefore?: string[];
 	/** When each thing arrives in this opening of the app (§6.6). */
 	opening?: AppOpening;
-	/** The saved annotations (§4.5, §7) and those that were deleted, to name them afterwards. */
-	annotations: Annotation[];
-	annotationsDeleted: Annotation[];
-	/** The screen where the person is (§5.10). */
-	screenCurrent?: CurrentScreen;
-	/** The edit panel opened from the Annotate view (§5.10): its task, if any, and what it had when opened. */
-	annotatePanel?: { taskId?: string; changes: PanelChanges; docsOnOpen: TaskDocument[] };
-	/** The last declared annotation: the steps "the annotation ..." describe it. */
-	lastAnnotationId?: string;
-	/** The Annotations screen at the last queried moment. */
-	annotationsQueried?: AnnotationsGroup[];
-	/** Copy was already done: the text (or nothing to copy). */
-	copied?: { text: string | undefined };
 }
 
 /** A font at opening: at which second it becomes ready or fails, and whether it could come from the device offline. */
@@ -161,8 +146,6 @@ export function createWorld(): World {
 		docs: [],
 		completions: [],
 		nextId: 1,
-		annotations: [],
-		annotationsDeleted: [],
 		statuses: [],
 		statusMoments: [],
 		pendingQueries: [],
@@ -228,10 +211,8 @@ export function otherRecord(world: World, apply: (saved: Saved) => Saved): void 
 	if (world.beforeMyChange) world.beforeMyChange = apply(world.beforeMyChange);
 }
 
-/** Removes from storage the documents, completions and annotations with those ids, and remembers what was deleted. */
-export function deleteSaved(world: World, docIds: readonly string[], completionIds: readonly string[], annotationIds: readonly string[] = []): void {
-	world.annotationsDeleted = [...world.annotationsDeleted, ...world.annotations.filter(({ id }) => annotationIds.includes(id))];
-	world.annotations = world.annotations.filter(({ id }) => !annotationIds.includes(id));
+/** Removes from storage the documents and completions with those ids, and remembers what was deleted. */
+export function deleteSaved(world: World, docIds: readonly string[], completionIds: readonly string[]): void {
 	const deletes = ({ id }: { id: string }, ids: readonly string[]) => ids.includes(id);
 	world.deleted = {
 		docs: [...world.deleted.docs, ...world.docs.filter((d) => deletes(d, docIds))],

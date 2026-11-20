@@ -5,8 +5,6 @@ import { expect } from 'vitest';
 import { itemsToAttempt, retriesWith, attemptResult, type AppEvent } from '../../src/lib/core/cleanups';
 import type { StepDefinition, World } from './world';
 
-const CLEANUPS = ['completados huérfanos', 'anotaciones huérfanas'];
-
 interface Cleanup {
 	original: string[];
 	byClean: string[];
@@ -50,9 +48,8 @@ const EVENTS: Record<string, AppEvent> = { 'vuelve la conexión': 'connectionBac
 
 export const cleanupsSteps: StepDefinition[] = [
 	{
-		pattern: /^(.+) of (.+) are left to clean$/,
-		run: (world, elements, cleanup) => {
-			if (!CLEANUPS.includes(cleanup)) throw new Error(`Unknown cleanup: "${cleanup}"`);
+		pattern: /^(.+) of orphan completions are left to clean$/,
+		run: (world, elements) => {
 			statuses.set(world, { original: ids(elements), byClean: ids(elements), fail: new Set(), cleaned: [] });
 		}
 	},

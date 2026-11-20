@@ -256,7 +256,6 @@
 	}
 
 	function whatIsOnTop(): OnTop {
-		if (session.annotating) return 'annotateBox';
 		if (closeNoticeOpen) return 'closeNotice';
 		if (openAction) return 'actionNotice';
 		if (confirmingDelete) return 'deleteConfirmation';
@@ -267,7 +266,6 @@
 	function onBackTap(): boolean {
 		const effect = whatBackDoes({ top: whatIsOnTop(), hasChanges: hasChangesNow(), keyboardOpen: keyboard.open });
 		if (effect === 'closesKeyboard') (document.activeElement as HTMLElement | null)?.blur();
-		else if (effect === 'closesTopLayer' && session.annotating) session.closeAnnotate();
 		else if (effect === 'closesTopLayer') {
 			closeNoticeOpen = false;
 			openAction = undefined;
@@ -284,9 +282,7 @@
 	onMount(() => {
 		const layer = takeBack(onBackTap);
 		const stopConfirming = confirmOnLeave(hasChangesNow);
-		const releasePanel = session.panelOpened(task?.id);
 		return () => {
-			releasePanel();
 			layer.release();
 			stopConfirming();
 		};

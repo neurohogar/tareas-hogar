@@ -1,4 +1,3 @@
-import { annotationSteps } from './annotation';
 import { unsavedChangesSteps } from './unsaved-changes';
 import { checkboxSteps } from './checkbox';
 import { createSteps } from './create';
@@ -28,4 +27,4 @@ import type { StepDefinition } from './world';
 
 export { createWorld, type StepDefinition, type World } from './world';
 
-export const steps: StepDefinition[] = [...createSteps, ...recurringRelativeSteps, ...recurringCalendarSteps, ...oneOffSteps, ...pendingSteps, ...editingSteps, ...historySteps, ...undoSteps, ...emojiAndNoteSteps, ...recentEmojisSteps, ...checkboxSteps, ...scheduleSteps, ...lastTimeSteps, ...pauseSteps, ...postponeSteps, ...panelTabsSteps, ...unsavedChangesSteps, ...fontSteps, ...loadingScreenSteps, ...portraitOrientationSteps, ...annotationSteps, ...cleanupsSteps, ...rowTextSteps, ...firstStepSteps, ...taskStepsSteps, ...minimalVersionSteps];
+export const steps: StepDefinition[] = [...createSteps, ...recurringRelativeSteps, ...recurringCalendarSteps, ...oneOffSteps, ...pendingSteps, ...editingSteps, ...historySteps, ...undoSteps, ...emojiAndNoteSteps, ...recentEmojisSteps, ...checkboxSteps, ...scheduleSteps, ...lastTimeSteps, ...pauseSteps, ...postponeSteps, ...panelTabsSteps, ...unsavedChangesSteps, ...fontSteps, ...loadingScreenSteps, ...portraitOrientationSteps, ...cleanupsSteps, ...rowTextSteps, ...firstStepSteps, ...taskStepsSteps, ...minimalVersionSteps];

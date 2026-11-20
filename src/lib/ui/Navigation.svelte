@@ -3,8 +3,7 @@
 
 	const TABS = [
 		{ path: '/', name: 'Pendientes' },
-		{ path: '/historial', name: 'Historial' },
-		{ path: '/anotaciones', name: 'Anotaciones' }
+		{ path: '/historial', name: 'Historial' }
 	];
 </script>
 

@@ -13,7 +13,7 @@
 import type { Feature, Scenario } from './ir';
 import { classifyRow, elements, isChronologyImpossible, isScenarioOfFont, observeFont, pendingOrder, type RowOracle, type StepOracle, type PendingView } from './oracle';
 import { isScenarioOfChanges, isScenarioOfPanel, observeChanges, observePanel } from './oracle-panel';
-import { isScenarioOfAnnotations, isScenarioOfCleanups, observeAnnotations, observeCleanups } from './oracle-annotations';
+import { isScenarioOfCleanups, observeCleanups } from './oracle-cleanups';
 import { isScenarioOfEditing, observeEditing } from './oracle-editing';
 import { isScenarioOfTextOfDate, observeTextOfDate } from './oracle-date-text';
 import { isScenarioOfScreenOfLoading, observeScreenOfLoading } from './oracle-loading-screen';
@@ -144,7 +144,7 @@ function isEquivalentOfEditing(feature: Feature, scenario: Scenario, candidate: 
 type Observer = (entries: StepOracle[], thens: StepOracle[], row: RowOracle) => { observed: string[]; asserted: string[] } | undefined;
 
 /**
- * Scenario for annotations (§4.5, §5.10, §6.7), the tabbed panel (§6.2), which font draws each character (§6) or the loading screen (§6.6): a mutation
+ * Scenario for the tabbed panel (§6.2), which font draws each character (§6) or the loading screen (§6.6): a mutation
  * is equivalent when no Then names the column, the oracle reproduces what the scenario asserts with the
  * original row (online audit) and, with the mutated value, deduces the same as each Then observes.
  */
@@ -161,7 +161,7 @@ function isEquivalentPer(observe: Observer, feature: Feature, scenario: Scenario
 }
 
 /**
- * Scenario for annotations (§4.5, §5.10, §6.7) or unsaved changes, their notices or Back (§6.2, §7): a mutation is equivalent when the oracle
+ * Scenario for cleanups (§7) or unsaved changes, their notices or Back (§6.2, §7): a mutation is equivalent when the oracle
  * reproduces what the scenario asserts with the original row and also with the mutated value. A column that a Then
  * names and an input step also gives arrives mutated on both sides: what is typed and a Then repeats, or the name
  * of a task that another device deleted (§7, deletion wins), decide nothing. If only the Then names it, what it
@@ -184,9 +184,6 @@ export function isEquivalent(feature: Feature, candidate: Candidate): boolean {
 	const scenario = feature.scenarios[candidate.scenario];
 	if (isScenarioOfCleanups(stepsOf(feature, scenario).map(({ step }) => step.text))) {
 		return isEquivalentWhetherStaysFulfilling(observeCleanups, feature, scenario, candidate);
-	}
-	if (isScenarioOfAnnotations(stepsOf(feature, scenario).map(({ step }) => step.text))) {
-		return isEquivalentWhetherStaysFulfilling(observeAnnotations, feature, scenario, candidate);
 	}
 	if (isScenarioOfFont(stepsOf(feature, scenario).map(({ step }) => step.text))) {
 		return isEquivalentPer(observeFont, feature, scenario, candidate);

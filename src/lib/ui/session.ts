@@ -2,7 +2,6 @@
 // observes and the actions on it. The screens ask the core what to
 // show with that data.
 import { getContext, setContext } from 'svelte';
-import type { Annotation, Sense } from '#lib/core/annotation.ts';
 import type { CreationErrors } from '#lib/core/creation.ts';
 import type { PanelForm } from '#lib/core/unsaved-changes.ts';
 import type { Completion, Task } from '#lib/core/task.ts';
@@ -10,21 +9,6 @@ import type { Completion, Task } from '#lib/core/task.ts';
 export interface Session {
 	readonly tasks: Task[];
 	readonly completions: Completion[];
-	readonly annotations: Annotation[];
-	/** The Anotar box (§5.10) is open. */
-	readonly annotating: boolean;
-	/** An edit panel is open (when creating or editing). */
-	readonly hasPanel: boolean;
-	openAnnotate(): void;
-	closeAnnotate(): void;
-	/** Second tap of Anotar: saves the annotation with the context the core takes. */
-	annotate(sense: Sense, text: string): void;
-	/** An edit panel opens (with the task, when editing); returns how to report that it closed. */
-	panelOpened(taskId: string | undefined): () => void;
-	/** Edit the text of an annotation (§6.7). */
-	editAnnotationText(annotation: Annotation, text: string): void;
-	/** Deletes an annotation, already confirmed. */
-	deleteAnnotation(annotation: Annotation): void;
 	/** The current time; updates itself. */
 	readonly now: Date;
 	/** Tapping the row checkbox (§6.1): completes the task (with the notice) or deletes its last completion. */

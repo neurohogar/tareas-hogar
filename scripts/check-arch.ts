@@ -46,7 +46,7 @@ function layerOf(file: string): Layer | null {
 	if (path.startsWith('src/lib/adapters/')) return 'adapters';
 	if (path === 'src/service-worker.ts') return 'service-worker';
 	if (path.startsWith('src/lib/ui/') || path.startsWith('src/routes/')) return 'ui';
-	if (['acceptance/oracle.ts', 'acceptance/oracle-editing.ts', 'acceptance/oracle-history.ts', 'acceptance/oracle-annotations.ts', 'acceptance/oracle-panel.ts', 'acceptance/oracle-loading-screen.ts', 'acceptance/oracle-date-text.ts', 'acceptance/equivalence.ts'].includes(path)) return 'acceptance-oracle';
+	if (['acceptance/oracle.ts', 'acceptance/oracle-editing.ts', 'acceptance/oracle-history.ts', 'acceptance/oracle-cleanups.ts', 'acceptance/oracle-panel.ts', 'acceptance/oracle-loading-screen.ts', 'acceptance/oracle-date-text.ts', 'acceptance/equivalence.ts'].includes(path)) return 'acceptance-oracle';
 	if (path === 'acceptance/ir.ts') return 'acceptance-ir';
 	if (path.startsWith('acceptance/') && !path.startsWith('acceptance/generated/')) return 'acceptance';
 	return null;
