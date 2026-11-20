@@ -799,28 +799,6 @@ test('Flujo 6: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await did(page, '🧺 Lavar').click();
 	await expect(notice(page)).toContainText('Completaste «🧺 Lavar» · mínima');
 	await expect(notice(page)).not.toContainText('Solo el inodoro');
-	// With the notice in view, Anotar takes that task (§5.10).
-	await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-	await button(page, 'Anotar').click();
-	const box = page.getByRole('dialog', { name: 'Anotar', exact: true });
-	await box.getByRole('textbox', { name: 'Texto' }).fill('salió bien');
-	await box.getByRole('button', { name: 'Me sirvió' }).click();
-	await expect(box).toHaveCount(0);
-	await page.getByRole('navigation').getByRole('link', { name: 'Anotaciones', exact: true }).click();
-	await page.clock.runFor(100);
-	await expect(page.getByRole('heading', { name: 'Anotaciones', level: 1 })).toBeVisible();
-	const entry = page.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'Editar texto' }) });
-	await expect(entry).toHaveCount(1);
-	await expect(entry).toContainText('🧺 Lavar');
-	await expect(entry).toContainText('salió bien');
-	await expect(entry).not.toContainText(/Solo el inodoro|Mínima/);
-	await button(page, 'Copiar').click();
-	await expect(page.getByRole('status').filter({ hasText: 'Anotaciones copiadas' })).toBeVisible();
-	const copied = await page.evaluate(() => navigator.clipboard.readText());
-	expect(copied).toContain('salió bien');
-	expect(copied).not.toContain('Solo el inodoro');
-	expect(copied).not.toContain('Mínima');
-	await goA(page, 'Pendientes');
 
 	// 5
 	const c = (await line(page, 'Barrer').boundingBox())!;

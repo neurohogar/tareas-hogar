@@ -119,12 +119,10 @@ test('Flujo 1: el manifest declara la orientación vertical', async ({ browser }
 	const { ctx, page } = await session(browser);
 	const same = await verifyManifest(page);
 
-	// From Historial and Anotaciones: it is the same document.
-	for (const path of ['/historial', '/anotaciones']) {
-		await page.goto(path);
-		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-		expect(await verifyManifest(page)).toEqual(same);
-	}
+	// From Historial: it is the same document.
+	await page.goto('/historial');
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	expect(await verifyManifest(page)).toEqual(same);
 
 	// Without a session, on the login screen.
 	const withoutSession = await browser.newContext({ baseURL: 'http://127.0.0.1:4173', locale: 'es-AR' });
@@ -153,11 +151,9 @@ test('Flujo 2: ninguna pantalla fija la orientación por su cuenta', async ({ br
 	await expect(pending(page)).toBeVisible();
 	await page.clock.resume();
 
-	// Pendientes, Historial, Anotaciones.
+	// Pendientes, Historial.
 	await withoutLockOwn(page, annotations);
 	await goA(page, 'Historial');
-	await withoutLockOwn(page, annotations);
-	await goA(page, 'Anotaciones');
 	await withoutLockOwn(page, annotations);
 	await goA(page, 'Pendientes');
 
@@ -222,9 +218,9 @@ test('Flujo 3: en una pestaña del navegador sigue girando con el diseño ancho 
 	expect(ys[1]).toBeLessThan(ys[2]);
 	await withoutRequestOfRotate(page);
 
-	// 3: without the panel, Historial and Anotaciones are seen whole.
+	// 3: without the panel, Historial is seen whole.
 	await close(page);
-	for (const tab of ['Pendientes', 'Historial', 'Anotaciones'] as const) {
+	for (const tab of ['Pendientes', 'Historial'] as const) {
 		await goA(page, tab);
 		await expect(page.getByRole('navigation')).toBeVisible();
 		await withoutOverflowHorizontal(page);
@@ -254,8 +250,6 @@ test('Flujo 4: en la compu no cambia nada', async ({ browser }) => {
 	await withoutRequestOfRotate(page);
 
 	await goA(page, 'Historial');
-	await withoutRequestOfRotate(page);
-	await goA(page, 'Anotaciones');
 	await withoutRequestOfRotate(page);
 	await goA(page, 'Pendientes');
 

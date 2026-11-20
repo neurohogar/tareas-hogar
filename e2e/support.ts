@@ -499,7 +499,7 @@ export async function createAndView(
   await expect(row(page, d.title)).toBeVisible();
 }
 
-export type Tab = "Pendientes" | "Historial" | "Anotaciones";
+export type Tab = "Pendientes" | "Historial";
 
 /** Taps a tab; the SvelteKit router needs the simulated clock to run (100 ms). */
 export async function goA(page: Page, tab: Tab) {

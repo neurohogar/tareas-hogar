@@ -939,33 +939,9 @@ test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', as
 	for (const p of [P1, P2, P3]) await expect(page.locator('body')).not.toContainText(p);
 	await goA(page, 'Pendientes');
 
-	// 5
+	// 5 onward: Mostrar completadas on; Lavar with Primer paso and Paso 2 (Paso 3 is removed).
 	await turnOnCompleted(page);
 	await expect(f(page, '🧺 Lavar')).toBeVisible();
-	await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-	await button(page, 'Anotar').click();
-	const box = page.getByRole('dialog', { name: 'Anotar', exact: true });
-	await box.getByRole('textbox', { name: 'Texto' }).fill('salió bien');
-	await box.getByRole('button', { name: 'Me sirvió' }).click();
-	await expect(box).toHaveCount(0);
-	await page.getByRole('navigation').getByRole('link', { name: 'Anotaciones', exact: true }).click();
-	await page.clock.runFor(100);
-	await expect(page.getByRole('heading', { name: 'Anotaciones', level: 1 })).toBeVisible();
-	const entry = page.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'Editar texto' }) });
-	await expect(entry).toHaveCount(1);
-	await expect(entry).toContainText('🧺 Lavar');
-	await expect(entry).toContainText('salió bien');
-	await expect(entry).not.toContainText(/Primer paso|Paso:/);
-	for (const p of [P1, P2, P3]) await expect(entry).not.toContainText(p);
-	await button(page, 'Copiar').click();
-	await expect(page.getByRole('status').filter({ hasText: 'Anotaciones copiadas' })).toBeVisible();
-	const copied = await page.evaluate(() => navigator.clipboard.readText());
-	expect(copied).toContain('salió bien');
-	expect(copied).not.toMatch(/Primer paso|Paso:/);
-	for (const p of [P1, P2, P3]) expect(copied).not.toContain(p);
-	await goA(page, 'Pendientes');
-
-	// 6 onward: Lavar with Primer paso and Paso 2 (Paso 3 is removed).
 	const L = '🧺 Lavar';
 	await openRow(page, L);
 	await remove(page, 3).click();
@@ -986,14 +962,14 @@ test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', as
 	await page.getByRole('navigation').getByRole('link', { name: 'Pendientes' }).waitFor();
 	const rowText = await f(page, L).innerText();
 
-	// 6
+	// 5
 	await openRow(page, L);
 	await step(page, 2).fill('Juntar las llaves');
 	await asksNoticeAndDiscards();
 	expect(await f(page, L).innerText()).toBe(rowText);
 	await panelHas(page, L, P1, [P2]);
 
-	// 7
+	// 6
 	await openRow(page, L);
 	await step(page, 2).fill('Juntar las llaves');
 	await step(page, 2).fill(P2);
@@ -1002,7 +978,7 @@ test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', as
 	await step(page, 2).fill(`   ${P2}   `);
 	await closesDirect();
 
-	// 8
+	// 7
 	await openRow(page, L);
 	await step(page, 2).fill('');
 	await asksNoticeAndDiscards();
@@ -1010,7 +986,7 @@ test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', as
 	await step(page, 2).fill('   ');
 	await asksNoticeAndDiscards();
 
-	// 9
+	// 8
 	await openRow(page, L);
 	await button(page, 'Agregar paso').click();
 	await closesDirect();
@@ -1021,7 +997,7 @@ test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', as
 	await addStep(page, 3, '   ');
 	await closesDirect();
 
-	// 10
+	// 9
 	await openRow(page, L);
 	await remove(page, 2).click();
 	await asksNoticeAndDiscards();
@@ -1031,7 +1007,7 @@ test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', as
 	await closesDirect();
 	await panelHas(page, L, P1, [P2]);
 
-	// 11
+	// 10
 	await button(page, '+').click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
 	await button(page, 'Agregar paso').click();
@@ -1041,7 +1017,7 @@ test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', as
 	await addStep(page, 2, P2);
 	await asksNoticeAndDiscards();
 
-	// 12: Lavar is unchecked to get its buttons; Hecho and Paso anterior open nothing.
+	// 11: Lavar is unchecked to get its buttons; Hecho and Paso anterior open nothing.
 	await f(page, L).getByRole('checkbox').click();
 	await expect(done(page, L)).toBeVisible();
 	if ((await previous(page, L).count()) > 0) await previous(page, L).click();

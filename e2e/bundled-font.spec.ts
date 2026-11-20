@@ -175,18 +175,13 @@ for (const c of combinations) {
       page.getByRole("heading", { name: "Pendientes", level: 1 }),
     );
 
-    // Step 3: Historial and Anotaciones (History and Annotations).
+    // Step 3: Historial (History).
     await goA(page, "Historial");
     await withAtkinson(
       page,
       page.getByRole("heading", { name: "Historial", level: 1 }),
     );
     await withAtkinson(page, bar(page));
-    await goA(page, "Anotaciones");
-    await withAtkinson(
-      page,
-      page.getByRole("heading", { name: "Anotaciones", level: 1 }),
-    );
     await goA(page, "Pendientes");
 
     // Step 4: the panel.
@@ -502,7 +497,6 @@ test("Flujo 4: ningún pedido a un servicio externo", async ({ page }) => {
     emoji: "🌱",
   });
   await goA(page, "Historial");
-  await goA(page, "Anotaciones");
   await goA(page, "Pendientes");
   await openTask(page, "Regar");
   await openSelector(page);

@@ -23,7 +23,6 @@ test.use({ serviceWorkers: 'allow' });
 
 const HOUR = '2026-07-15T08:00:00';
 const EMPTY_HISTORY = 'Todavía no completaste nada';
-const EMPTY_ANNOTATIONS = 'Todavía no hay anotaciones';
 
 test.beforeEach(async () => {
 	await cleanEmulators();
@@ -133,10 +132,6 @@ test('Flujo 2: abrir sin conexión tras el primer login', async ({ browser }) =>
 	await expect(page.getByText(EMPTY_HISTORY)).toBeVisible();
 	await page.reload();
 	await expect(page.getByText(EMPTY_HISTORY)).toBeVisible();
-	await page.goto('/anotaciones');
-	await expect(page.getByRole('heading', { name: 'Anotaciones', level: 1 })).toBeVisible();
-	await page.reload();
-	await expect(page.getByText(EMPTY_ANNOTATIONS)).toBeVisible();
 
 	await page.close();
 	const fresh = await ctx.newPage();
@@ -420,11 +415,11 @@ test('Flujo 10: versión nueva del service worker', async ({ browser }) => {
 		}
 		await other.close();
 
-		// With the previous one open and the new one installed: offline, the three tabs can be navigated.
+		// With the previous one open and the new one installed: offline, the two tabs can be navigated.
 		await ctx.setOffline(true);
 		await page.reload();
 		await expect(pending(page)).toBeVisible();
-		for (const tab of ['Historial', 'Anotaciones', 'Pendientes'] as const) {
+		for (const tab of ['Historial', 'Pendientes'] as const) {
 			await goA(page, tab);
 			await page.reload();
 			await expect(page.getByRole('heading', { name: tab, level: 1 })).toBeVisible();
