@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dayHeader, dateAndTimeInText, timeInText } from './dates-in-text';
+import { dayHeader, timeInText } from './dates-in-text';
 
 const now = new Date(2026, 6, 15, 12, 0, 0);
 
@@ -58,13 +58,5 @@ describe('timeInText', () => {
 		expect(timeInText(new Date(2026, 6, 15, 8, 5, 0))).toBe('08:05');
 		expect(timeInText(new Date(2026, 6, 14, 23, 59, 59))).toBe('23:59');
 		expect(timeInText(new Date(2026, 6, 15, 0, 0, 0))).toBe('00:00');
-	});
-});
-
-describe('dateAndTimeInText', () => {
-	it('is the local date and time, YYYY-MM-DD HH:MM, with leading zeros and without seconds', () => {
-		expect(dateAndTimeInText(new Date(2026, 6, 15, 8, 5, 0))).toBe('2026-07-15 08:05');
-		expect(dateAndTimeInText(new Date(2026, 6, 5, 0, 9, 59))).toBe('2026-07-05 00:09');
-		expect(dateAndTimeInText(new Date(2025, 11, 31, 23, 59, 59))).toBe('2025-12-31 23:59');
 	});
 });

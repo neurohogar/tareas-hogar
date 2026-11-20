@@ -21,7 +21,7 @@ describe('deletion (properties)', () => {
 	it('deletes all the completions of the task and only those', () => {
 		fc.assert(
 			fc.property(taskId, completions, (id, cs) => {
-				const { taskId: deleted, completionIds } = deletion(id, cs, []);
+				const { taskId: deleted, completionIds } = deletion(id, cs);
 				expect(deleted).toBe(id);
 				expect(completionIds).toEqual(ids(cs.filter((c) => c.taskId === id)));
 			})
@@ -33,7 +33,7 @@ describe('deletion (properties)', () => {
 			fc.property(tasks, completions, (ts, cs) => {
 				fc.pre(ts.length > 0);
 				const [deleted, ...remaining] = ts;
-				const { completionIds } = deletion(deleted.id, cs, []);
+				const { completionIds } = deletion(deleted.id, cs);
 				const before = ids(orphanCompletions(ts, cs));
 				const after = ids(orphanCompletions(remaining, cs));
 				expect(completionIds.filter((id) => before.includes(id))).toEqual([]);
@@ -47,7 +47,7 @@ describe('deletion (properties)', () => {
 			fc.property(tasks, completions, (ts, cs) => {
 				fc.pre(ts.length > 0);
 				const [deleted, ...remaining] = ts;
-				const { completionIds } = deletion(deleted.id, cs, []);
+				const { completionIds } = deletion(deleted.id, cs);
 				const remain = cs.filter(({ id }) => !completionIds.includes(id));
 				expect(orphanCompletions(remaining, remain)).toStrictEqual(orphanCompletions(ts, cs));
 			})

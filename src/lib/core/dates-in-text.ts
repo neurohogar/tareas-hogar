@@ -1,6 +1,6 @@
 // Spec §6.3: how the days and hours of the Historial are named. Own tables
 // in Spanish: it does not depend on the system locale.
-import { yearOf, weekday, dayOfMonth, isoDay, twoDigits, hourAndMinute, startOfDay, monthOf, addDays } from './days';
+import { yearOf, weekday, dayOfMonth, twoDigits, hourAndMinute, startOfDay, monthOf, addDays } from './days';
 
 const MONTHS = [
 	'enero',
@@ -37,9 +37,4 @@ export function dayHeader(day: Date, now: Date): string {
 export function timeInText(moment: Date): string {
 	const { hour, minute } = hourAndMinute(moment);
 	return `${twoDigits(hour)}:${twoDigits(minute)}`;
-}
-
-/** Spec §6.7 (Copiar): the local date and time, "YYYY-MM-DD HH:MM". */
-export function dateAndTimeInText(moment: Date): string {
-	return `${isoDay(moment)} ${timeInText(moment)}`;
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { whatBackDoes, type OnTop } from './panel-back';
 
-const LAYERS: OnTop[] = ['closeNotice', 'actionNotice', 'deleteConfirmation', 'emojiPicker', 'annotateBox'];
+const LAYERS: OnTop[] = ['closeNotice', 'actionNotice', 'deleteConfirmation', 'emojiPicker'];
 const NO_LAYER: OnTop[] = ['nothing', 'undoNotice'];
 
 describe('whatBackDoes (spec §6.2)', () => {

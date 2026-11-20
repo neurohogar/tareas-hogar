@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { whatBackDoes, type OnTop } from './panel-back';
 import { onClosePanel } from './unsaved-changes-notice';
 
-const top = fc.constantFrom<OnTop>('nothing', 'closeNotice', 'actionNotice', 'deleteConfirmation', 'emojiPicker', 'annotateBox', 'undoNotice');
-const LAYERS: readonly OnTop[] = ['closeNotice', 'actionNotice', 'deleteConfirmation', 'emojiPicker', 'annotateBox'];
+const top = fc.constantFrom<OnTop>('nothing', 'closeNotice', 'actionNotice', 'deleteConfirmation', 'emojiPicker', 'undoNotice');
+const LAYERS: readonly OnTop[] = ['closeNotice', 'actionNotice', 'deleteConfirmation', 'emojiPicker'];
 
 describe('whatBackDoes: properties (spec §6.2)', () => {
 	it('with the keyboard open only the system closes it, whatever happens', () => {

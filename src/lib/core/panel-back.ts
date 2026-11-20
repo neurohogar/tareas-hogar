@@ -2,9 +2,9 @@
 import { onClosePanel, type CloseEffect } from './unsaved-changes-notice';
 
 /**
- * What can be open on top of the panel; the undo notice does not count. The Annotate box (§5.10) closes without annotating.
+ * What can be open on top of the panel; the undo notice does not count.
  */
-export type OnTop = 'nothing' | 'closeNotice' | 'actionNotice' | 'deleteConfirmation' | 'emojiPicker' | 'annotateBox' | 'undoNotice';
+export type OnTop = 'nothing' | 'closeNotice' | 'actionNotice' | 'deleteConfirmation' | 'emojiPicker' | 'undoNotice';
 
 export type BackEffect = 'closesKeyboard' | 'closesTopLayer' | CloseEffect;
 

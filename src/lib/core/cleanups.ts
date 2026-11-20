@@ -1,4 +1,4 @@
-// Spec §7 (Cleanups and retries): the two cleanups are attempted item by item and retried.
+// Spec §7 (Cleanups and retries): the cleanup of orphan completions is attempted item by item and retried.
 
 /** What ended up clean and what is left to retry after an attempt; only ids, nothing to show. */
 export interface AttemptResult {
