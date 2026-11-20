@@ -22,11 +22,11 @@ Lo que la investigación pide evitar es parte del diseño. Estas reglas valen si
 
 ## Cómo se valida cada épica
 
-La anotación de la E1 es el instrumento. Cada nota guarda el sentido (me sirvió / me molestó), el contexto y la fecha.
+Las anotaciones se retiraron del proyecto (no se usaban y eran ambiguas). Cada épica se juzga con lo que la persona cuenta y con los datos que la función ya guarda en la cuenta.
 
 - **Cuándo se lee.** No antes de cuatro semanas de uso de cada feature: el efecto de novedad cae alrededor de la cuarta semana (`tdah §1.3E` y `§2.5`, débil a moderada). Juzgar antes mide el entusiasmo, no la utilidad.
-- **Cómo se lee.** Dos personas no dan estadística: se lee cada nota. La misma molestia anotada dos veces, o por las dos personas, alcanza para cambiar o retirar una feature.
-- **El silencio no aprueba.** Se completa con el dato que la función ya guarda en la cuenta (cuántas tareas tienen primer paso, cuántos completados fueron versión mínima), leído a mano y sin enviarlo a ningún lado.
+- **Cómo se lee.** Dos personas no dan estadística: se lee cada comentario. La misma molestia contada dos veces, o por las dos personas, alcanza para cambiar o retirar una feature.
+- **El silencio no aprueba.** Se complementa con el dato que la función ya guarda en la cuenta (cuántas tareas tienen primer paso, cuántos completados fueron versión mínima), leído a mano y sin enviarlo a ningún lado.
 - **Qué se decide.** Mantener, cambiar o retirar. Después de cada épica se vuelve a decidir el orden de las que quedan.
 
 ## Decisión sobre los avisos
@@ -43,9 +43,9 @@ El disparador externo sí hace falta (`tea §1`; `tdah §2.3`, débil a moderada
 
 Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la rama `chore/sveltekit-3`, se integra antes de la E1.
 
-### E1. Anotación «me sirvió / me molestó»
+### E1. Anotación «me sirvió / me molestó» (retirada)
 
-- **Estado.** Implementada (features `anotacion` y `reintento-y-aviso-de-copia`, rama `v3`).
+- **Estado.** Retirada: se implementó y la persona la descartó por no servirle y ser ambigua (feature `remove-annotations`, rama `v3`). El texto de abajo queda como registro.
 
 - **Problema y persona.** Todas. El plan descansa en inferencias; sin un registro barato de qué funciona, se evalúa de memoria.
 - **Evidencia.** `aacc H1` (fuerte en que la base es escasa); `aacc H12` (moderada: la tecnología para TDAH se diseña sin sus usuarios); `tea`, pregunta abierta 7.
@@ -61,7 +61,7 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 - **Problema y persona.** TDAH, TEA y altas capacidades. Antes de empezar hay que mirar la lista, y hoy la fila dice «Atrasada» en un color rojizo y pone primero lo que lleva más tiempo sin hacerse (spec §6.1). Eso sube el umbral emocional de inicio.
 - **Evidencia.** `aacc H6` (fuerte: el lenguaje controlador aumenta la motivación basada en culpa); `aacc H5` (fuerte: perfeccionismo y procrastinación); `tdah §1.2c` (moderada); `tea §2` (moderada); `tdah §2.2` (moderada, resultados mixtos); `tea §5` y `§9` (débil).
 - **Qué propone.** Redactar el atraso como un hecho con fecha («desde el martes 10»), sin color de alarma. Distancia relativa junto a la fecha exacta, también para el regreso de las tareas en espera. Un «por qué está aquí» consultable por tarea. Al completar, un cierre informativo breve con la próxima fecha.
-- **Hipótesis y validación.** Una lista que describe sin juzgar se abre con menos resistencia. Señal: notas «me sirvió» sobre la lista. La refuta que la redacción neutra se lea como vaga.
+- **Hipótesis y validación.** Una lista que describe sin juzgar se abre con menos resistencia. Señal: lo que se cuente, «me sirvió», sobre la lista. La refuta que la redacción neutra se lea como vaga.
 - **Evitar.** Eufemismos que escondan el dato. Felicitaciones al completar. Cambiar las reglas de estado: esta épica toca solo la presentación.
 - **Depende de · Tamaño · Riesgos.** E1 · S a M · Muchos textos de la interfaz figuran en escenarios y scripts de QA.
 
@@ -72,7 +72,7 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 - **Problema y persona.** TDAH y TEA. El título de una tarea es abstracto («Ropa»); decidir por dónde empezar es parte del costo de empezar.
 - **Evidencia.** `tdah §1.3A` (moderada e indirecta: ningún ensayo aísla el primer paso); `tea §1` (moderada: no saber cuál es el primer paso paraliza); `tdah §1.2b` (débil: falla formar el plan, no recordarlo); `tdah §2.1` (anecdótica a moderada).
 - **Qué propone.** Un campo opcional «primer paso» que se ve en la fila. Pasos opcionales para tareas largas, mostrados de a uno.
-- **Hipótesis y validación.** Ver el primer movimiento concreto cuesta menos que leer el título. Señal: notas sobre tareas con primer paso, y el campo se sigue llenando después de cuatro semanas. La refuta que escribirlo cueste más de lo que ahorra.
+- **Hipótesis y validación.** Ver el primer movimiento concreto cuesta menos que leer el título. Señal: lo que se cuente sobre las tareas con primer paso, y el campo se sigue llenando después de cuatro semanas. La refuta que escribirlo cueste más de lo que ahorra.
 - **Evitar.** Mostrar la descomposición entera; exigir pasos para crear una tarea; tratar como fallo una tarea con pasos a medio hacer. Demasiadas partes también paralizan (`tea §1`).
 - **Depende de · Tamaño · Riesgos.** Nada · M · La fila gana densidad (la E9 lo compensa).
 
@@ -83,7 +83,7 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 - **Problema y persona.** Altas capacidades y TEA, sobre todo. El todo o nada: si no se puede hacer la tarea entera, no se empieza.
 - **Evidencia.** `aacc H5` (fuerte para el problema; el crédito parcial como remedio es una inferencia); `tdah §1.2a` (fuerte en población general: aversión y baja autoeficacia); `tea §4` (moderada); `tea §3`, `tea §9` y `hogar A4` (débil).
 - **Qué propone.** Un campo opcional «versión mínima» («solo el inodoro»). Completarla cuenta como hecha y queda en el historial como lo que fue. Un campo opcional «cuenta como hecha cuando…».
-- **Hipótesis y validación.** Tener permitida una versión chica hace más probable empezar. Señal: notas «me sirvió» al completar una mínima. La refuta que marcarla se viva como derrota.
+- **Hipótesis y validación.** Tener permitida una versión chica hace más probable empezar. Señal: lo que se cuente, «me sirvió», al completar una mínima. La refuta que marcarla se viva como derrota.
 - **Evitar.** Presentar la mínima como «parcial» o con un indicador que baje. Que la app la sugiera sola.
 - **Depende de · Tamaño · Riesgos.** Nada · M · Agrega un dato al completado y toca las reglas de completar (spec §4.4 y §5).
 
@@ -101,7 +101,7 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 - **Problema y persona.** TEA y TDAH. Hay días, o semanas, en que casi nada es posible; al volver, la lista acumulada es el agobio previo en su peor forma.
 - **Evidencia.** `tea §4` (moderada para el fenómeno, débil para qué ayuda); `hogar B2` (fuerte en general: el abandono es la norma y hay que diseñar el regreso); `aacc H5` (fuerte); `aacc H3` (moderada); `aacc H8` (débil). **Hipótesis** en el mecanismo.
 - **Qué propone.** Una marca «esencial» por tarea, definida en un momento de calma. Un modo mínimo que se enciende a mano y deja a la vista solo lo esencial; el resto queda como pausado, apoyado en la pausa que ya existe (spec §5.8). Una reprogramación en bloque, con vista previa, para volver después de una ausencia.
-- **Hipótesis y validación.** Poder achicar la casa a lo esencial sin generar deuda evita el abandono. Señal: notas al entrar y al salir del modo. La refuta una salida que se viva como deuda.
+- **Hipótesis y validación.** Poder achicar la casa a lo esencial sin generar deuda evita el abandono. Señal: lo que se cuente al entrar y al salir del modo. La refuta una salida que se viva como deuda.
 - **Evitar.** Que la app encienda el modo o infiera el estado de la persona; preguntas de ánimo (`tea §6`); un resumen de «lo acumulado» al salir.
 - **Depende de · Tamaño · Riesgos.** Nada · M a L · Son acciones sobre muchas tareas a la vez: la vista previa y el deshacer son parte del alcance.
 
@@ -110,7 +110,7 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 - **Problema y persona.** TDAH y TEA. Hoy una tarea está hecha o no; no existe «la empecé». Y una vez en marcha cuesta parar.
 - **Evidencia.** `tdah §1.3A` (moderada, indirecta); `hogar A8` (moderada); `tdah §2.6` y `tea §1` (moderada: hiperfoco y ayuda para parar); `tdah §2.2` (moderada, mixta); `tea §8` (débil a moderada).
 - **Qué propone.** «Empezar» deja la tarea en curso sin obligar a terminarla; soltarla la devuelve a su estado sin dejar rastro. Una vista «haciendo ahora» con una tarea, su paso actual y el tiempo transcurrido, calculado desde marcas de tiempo (`hogar` Parte B, Routinery). Un cierre anticipado opcional, visible con la app abierta.
-- **Hipótesis y validación.** Comprometerse solo a empezar baja el umbral. Señal: las tareas en curso se terminan o se sueltan sin notas «me molestó». La refuta que queden en curso para siempre y pesen.
+- **Hipótesis y validación.** Comprometerse solo a empezar baja el umbral. Señal: las tareas en curso se terminan o se sueltan sin quejas. La refuta que queden en curso para siempre y pesen.
 - **Evitar.** Cuenta regresiva con alarma; registrar sesiones cortadas; interrupciones bruscas (`tea §1`).
 - **Depende de · Tamaño · Riesgos.** E3 · L · Es el mayor cambio de dominio de la etapa: un estado nuevo cruza las reglas de la §5 y el orden de la §6.1. Con la pantalla apagada, ninguna señal llega.
 
@@ -119,9 +119,9 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 - **Problema y persona.** TDAH. Lo que más falla es decidir cuándo y cómo, y recordar por hora.
 - **Evidencia.** `tdah §1.3B` (fuerte en población general; débil en adultos con TDAH, con estimaciones corregidas mucho menores); `tdah §2.3` (débil a moderada); `tdah §1.3F` y `tea §1` (moderada: las rutinas reducen decisiones). **Hipótesis.**
 - **Qué propone.** Un «momento» opcional por tarea («después de cenar»), redactado como plan. Una vista por momento con sus tareas en orden fijo. Es el reemplazo de la alarma.
-- **Hipótesis y validación.** Atar la tarea a un evento concreto la arranca más que una hora. Señal: notas en la vista del momento. La refuta que nadie abra la app en ese momento.
+- **Hipótesis y validación.** Atar la tarea a un evento concreto la arranca más que una hora. Señal: lo que se cuente de la vista del momento. La refuta que nadie abra la app en ese momento.
 - **Evitar.** Planes abstractos («esta semana»); que un plan no cumplido deje un estado; duplicar los horarios que ya existen.
-- **Depende de · Tamaño · Riesgos.** Nada · M · Se solapa con los horarios; el análisis define si se construye sobre ellos. Sube en el orden si las notas dicen «me olvido de abrir la app».
+- **Depende de · Tamaño · Riesgos.** Nada · M · Se solapa con los horarios; el análisis define si se construye sobre ellos. Sube en el orden si se cuenta «me olvido de abrir la app».
 
 ### E9. Ajustes sensoriales y densidad
 
@@ -139,7 +139,7 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 - **Problema y persona.** Hogar compartido. La carga invisible está en anticipar y vigilar, no en ejecutar; si una persona asigna y recuerda a la otra, la app se vuelve un canal de reproche.
 - **Evidencia.** `hogar A1` (moderada); `A2` (moderada a fuerte: pesa la justicia percibida); `A3` (moderada); `A10` y `A4` (débil); `B5` y `B6` (anecdótica).
 - **Qué propone.** Dos cuentas forman un hogar. Tres tipos de tarea: personal (invisible para la otra persona), del hogar con dueño de punta a punta y del hogar compartida («la toma quien pueda»). La misma capacidad de edición para ambas personas. Se empieza con una tarea, pasando las personales de a una.
-- **Hipótesis y validación.** Un pool común con dueños explícitos reparte la anticipación sin crear un gerente. Señal: las dos personas crean y completan tareas del hogar, y ninguna nota describe vigilancia.
+- **Hipótesis y validación.** Un pool común con dueños explícitos reparte la anticipación sin crear un gerente. Señal: las dos personas crean y completan tareas del hogar, y nadie cuenta algo que describa vigilancia.
 - **Evitar.** Roles de administrador; que una persona asigne a la otra; un reparto completo obligatorio antes de usarla.
 - **Depende de · Tamaño · Riesgos.** E2 · L · El riesgo más alto del plan: reglas de seguridad (quién lee qué), cambio del modelo de datos guardado y edición de dos personas sin conexión. Levanta la exclusión «Uso compartido» del spec §2.
 
@@ -148,7 +148,7 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 - **Problema y persona.** Hogar compartido, con peso en TEA. Los acuerdos implícitos y los cambios silenciosos generan conflicto.
 - **Evidencia.** `hogar A7` (moderada); `A2` (moderada a fuerte); `A6` (moderada a débil); `A4` y `tea §9` (débil).
 - **Qué propone.** «Cuenta como hecha cuando…» acordado en las tareas del hogar. Los cambios a una tarea del hogar quedan visibles para ambas personas, con quién cambió qué. Un historial del hogar que muestra el trabajo de las dos, sin totales.
-- **Hipótesis y validación.** Ver el trabajo y los acuerdos ajusta la percepción sin convertirla en marcador. Señal: notas «me sirvió» en el historial del hogar. La refuta la primera nota que hable de sentirse medido.
+- **Hipótesis y validación.** Ver el trabajo y los acuerdos ajusta la percepción sin convertirla en marcador. Señal: lo que se cuente, «me sirvió», en el historial del hogar. La refuta el primer comentario que hable de sentirse medido.
 - **Evitar.** Porcentajes y conteos por persona; color de alarma junto a un nombre; avisos por cada acción ajena (`hogar B3`); mostrar a una persona lo que la otra no hizo (`tdah §2.7`).
 - **Depende de · Tamaño · Riesgos.** E10 · M · La evidencia no dice dónde termina la visibilidad y empieza llevar la cuenta (`hogar`, pregunta 3).
 
@@ -157,7 +157,7 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 - **Problema y persona.** Hogar compartido. La inercia a veces solo cede con un estímulo externo, y pedirlo no tiene que ser un reproche ni una orden.
 - **Evidencia.** `hogar A8` y `tea §1` (moderada: el «compañero de atasco»); `hogar A9` y `tdah §1.3G` (débil: sin ensayos controlados y con un resultado nulo publicado); `hogar A5` (moderada). **Hipótesis**, tratada como experimento barato.
 - **Qué propone.** Un pase de mano («¿puedes tomar esta?») que la otra persona acepta o rechaza sin dar motivos. Ver que la otra persona empezó algo y sumarse con una tarea propia.
-- **Hipótesis y validación.** El estímulo externo sirve cuando lo pide quien lo necesita. Señal: los pases se usan y se aceptan. La refuta una sola nota que describa presión o vigilancia.
+- **Hipótesis y validación.** El estímulo externo sirve cuando lo pide quien lo necesita. Señal: los pases se usan y se aceptan. La refuta un solo comentario que describa presión o vigilancia.
 - **Evitar.** Un botón para recordarle algo a la otra persona; invitaciones que la app genera sola; comparaciones.
 - **Depende de · Tamaño · Riesgos.** E10 y E7 · M · Sin avisos, un pedido se ve recién cuando la otra persona abre la app.
 
@@ -165,7 +165,7 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 
 | # | Épica | Tamaño | Respaldo |
 |---|---|---|---|
-| E1 | Anotación | S | Decisión tomada |
+| E1 | Anotación (retirada) | S | Descartada por el uso |
 | E2 | Estado sin culpa y reglas a la vista | S a M | Fuerte a moderado |
 | E3 | Primer paso a la vista | M | Moderado, indirecto |
 | E4 | Versión mínima | M | Fuerte el problema, inferido el remedio |
@@ -178,12 +178,12 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 | E11 | Acuerdos y cambios a la vista | M | Moderado |
 | E12 | Pedir una mano y hacer juntos | M | Hipótesis |
 
-1. **E1 primero**, por decisión tomada: sin ella nada de lo demás se puede juzgar.
+1. **E1 retirada**: no sirvió; las épicas se juzgan con lo que se cuenta y con los datos guardados.
 2. **E2 segunda**: es barata, tiene el mejor respaldo del plan, no toca reglas de dominio y fija la redacción que usan las épicas siguientes.
 3. **E3 a E5** son el núcleo de «empezar»: qué hacer primero, cuánto alcanza y cuál elegir. Van de la más directa a la que más rinde con las anteriores ya hechas.
 4. **E6 antes que E7**: reutiliza la pausa existente y ataca el peor caso del agobio previo. La E7 es el cambio de dominio más riesgoso de la etapa y, además, habilita la E12.
 5. **E8 y E9 al final de la etapa**, por ser las más débiles en evidencia. Las dos tienen escrita una condición para adelantarse.
-6. **Entre etapas, una pausa de lectura**: se revisan todas las notas y se ajusta la etapa 2 antes de empezarla.
+6. **Entre etapas, una pausa de lectura**: se revisa lo que se contó y se ajusta la etapa 2 antes de empezarla.
 7. **E10 a E12** siguen sus dependencias: primero el hogar, después lo que se ve y al final lo que se pide.
 
 Cada épica rinde desde su primera feature: un solo campo o una sola vista ya sirve en producción.
