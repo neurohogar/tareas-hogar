@@ -98,6 +98,21 @@ Decisions taken after layer D (2026-11-18): internal string-union values that th
 - The step handlers that read Gherkin text (`cleanups`, `font`, `panel-tabs`, `unsaved-changes`, `create`, `loading-screen`) map the unchanged step text to the new values; the oracle keeps its own vocabulary, which mirrors the step text.
 - Kept Spanish on purpose: `Status` kinds (`'pendiente'`, `'atrasada'`, `'en espera'`, `'completada'`, `'pausada'`, shown as status text and compared by tests), `Unit`, `PostponeOption`, `PanelAction` and the `'borrar tarea'` action name (names on visible buttons), `RepetitionOption` and `kind`/`mode` task values (stored), `Sense`, `CurrentScreen`, `AnnotationScreen`, `DateVerb`, `PanelSection` and `FieldWithError` (visible names or text), `DAYS_ERRORS` keys such as `faltan` (not touched here).
 
+## Phase 4 rules (2026-11-20): prose documents
+
+Applies to `docs/spec.md`, `qa/*.md`, `docs/pipeline/paquetes/*.md`, `.claude/agents/*.md`, `CLAUDE.md`, `README.md` and `docs/pipeline/*.md`. `docs/research/` and `docs/v3/` are the author's working notes and stay as they are (to be decided later).
+
+- **Renames done.** Features, QA procedures and packages already have English file names (commit `1717af2`); every `features/…`, `qa/…` and `paquetes/…` path reference was updated mechanically. Prose still has to name them by the new names.
+- **Keep what the person sees, in Spanish and exactly as is.** Button, tab, screen, field and section names, notices, placeholders, error messages and any other text rendered by the app stay in Spanish, inside quotes or `«»`, character for character (`«Pendientes»`, `«Mostrar completadas»`, `«Pausar»`). Write the sentence around them in English (`the «Pendientes» screen`, `the «Deshacer» button`). The in-app text is found in `src/` and `e2e/`: when unsure, grep it there.
+- **Keep stored values and names.** Firestore collection, field and stored-value names (`tareas`, `completados`, `periodica`, `rapida`, `'en espera'`, ...) stay as they are, in code font.
+- **Terminology.** Use the glossary above, one term per concept. Status names that the person sees (`pendiente`, `atrasada`, `en espera`, `completada`, `pausada`) stay Spanish in quotes when they are the visible text; in running prose use `pending`, `overdue`, `waiting`, `completed`, `paused`.
+- **Structure does not change.** Same headings in the same order (translated), same numbering (`§4.1`, `S1`, `D3`, `Flow 2`), same lists and tables. Do not add, drop, merge or reword rules; this is a translation, not an edit. Section references such as `§5.3` keep working because numbers do not move.
+- **Pipeline markers.** In packages use the English markers `## Specs`, `## Decisions`, `## Artifacts`, `## Log`, `**Allowed edits**` (the tool accepts both; see `src/marcadores.ts` in `bdd-pipeline`). `L1` stays `L1`. Role names and the `By <role>.` commit line do not change.
+- **Verbatim user words.** Entries that quote what the user said (`L1`, decisions marked as the user's) keep the user's original Spanish inside `«»`, followed by ` (translation: «…»)`.
+- **QA procedures.** `Flujo N` is `Flow N`. The e2e spec for each procedure (same base name under `e2e/`) renames its `Flujo N` titles to `Flow N` in the same pass; titles inside `describe`/`test` that mention the procedure follow. Nothing else in the e2e specs changes.
+- **Spec quotes in packages.** Every `S#` in a package quotes `docs/spec.md` verbatim between `«»`. Packages are translated after the spec and copy the quote from the translated spec, never retranslate it.
+- **Neutral English.** No slang, no Rioplatense forms, plain short sentences. Keep the author's meaning, including hedges and "out of scope" lists.
+
 ## Adapter and UI file names
 
 Adapters: `anotaciones` annotations, `atras` back, `conexion` connection, `confirmacion-al-salir` confirm-on-leave, `fuentes` fonts, `mostrar-completadas` show-completed, `mostrar-pausadas` show-paused, `pantalla-de-carga` loading-screen, `portapapeles` clipboard, `recientes` recents, `reloj` clock, `repositorio` repository, `teclado` keyboard (`auth`, `firebase` and `ids` keep their names).
