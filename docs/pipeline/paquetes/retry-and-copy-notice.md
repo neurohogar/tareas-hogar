@@ -1,65 +1,67 @@
-# Paquete: reintento-y-aviso-de-copia
+# Package: retry-and-copy-notice
 
-Dos arreglos a la feature `anotacion` ya terminada: la app reintenta las cuatro limpiezas de §7 (completados huérfanos, anotaciones huérfanas, referencias a etiquetas borradas y etiquetas duplicadas) cuando un intento falla o no hay conexión, y avisa con un texto breve y neutro cuando el portapapeles rechaza **Copiar**.
+Two fixes to the already finished `annotation` feature: the app retries the four cleanups of §7 (orphan completions, orphan annotations, references to deleted labels and duplicate labels) when an attempt fails or there is no connection, and shows a brief, neutral text when the clipboard rejects **Copiar**.
 
 ## Specs
 
-- **S1** (§7, D1, D8): «las cuatro limpiezas de esta sección (completados huérfanos, anotaciones huérfanas, referencias a etiquetas borradas y etiquetas duplicadas) se reintentan si un intento falla o no hay conexión; no quedan sin limpiar hasta recargar la app.»
-- **S2** (§7, D9): «Se reintenta al volver la conexión y cuando cambian los datos, sin temporizadores.»
-- **S3** (§7, D3, D8): «Cada elemento se intenta por separado: que uno falle (o que no haya conexión) no impide intentar los demás del lote.»
-- **S4** (§7, D4, D9): «Los reintentos son silenciosos: sin aviso, contador ni indicador de pendientes.»
-- **S5** (§6.7, D2, D6): «Si el portapapeles rechaza la copia, el mismo tipo de texto con «No se pudo copiar», sin más palabras»
-- **S6** (§6.7, D5): «sin botones, se va solo, no tapa el aviso de deshacer (§5.4), y solo se ve un texto a la vez (el último reemplaza al anterior).»
-- **S7** (§6.7, D7): «No se copia nada y no cambia nada más; la app no hace otra cosa sola y la persona puede volver a tocar **Copiar**.»
+- **S1** (§7, D1, D8): «the four cleanups of this section (orphan completions, orphan annotations, references to deleted labels and duplicate labels) are retried if an attempt fails or there is no connection; they do not stay uncleaned until the app is reloaded.»
+- **S2** (§7, D9): «It is retried when the connection returns and when the data changes, without timers.»
+- **S3** (§7, D3, D8): «Each element is attempted separately: one failing (or there being no connection) does not prevent attempting the others of the batch.»
+- **S4** (§7, D4, D9): «The retries are silent: no notice, counter or pending indicator.»
+- **S5** (§6.7, D2, D6): «If the clipboard rejects the copy, the same kind of text with «No se pudo copiar», without more words»
+- **S6** (§6.7, D5): «without buttons, it goes away by itself, it does not cover the undo notice (§5.4), and only one text is seen at a time (the last one replaces the previous one).»
+- **S7** (§6.7, D7): «Nothing is copied and nothing else changes; the app does nothing else by itself and the person can tap **Copiar** again.»
 
-## Decisiones
+## Decisions
 
-- D1 (2026-11-13, usuario): «Reintentar en anotaciones y completados»: un único arreglo para ambos que reintente la limpieza de huérfanas, de modo que siga valiendo «como un completado huérfano» (§7).
-- D2 (2026-11-13, usuario): «Mostrar un aviso breve» cuando el portapapeles rechaza la escritura al tocar **Copiar** en Anotaciones: un texto informativo y neutro, por ejemplo «No se pudo copiar», sin culpa ni alarma.
-- D3 (2026-11-13, analyst): cada huérfana se intenta por separado: que una falle (o que no haya conexión) no impide intentar las demás del lote. Porque hoy la de anotaciones corta todo el lote al primer fallo, y una huérfana mala dejaría sin limpiar a las buenas.
-- D4 (2026-11-13, analyst): la limpieza y sus reintentos son silenciosos: sin aviso, contador ni indicador de pendientes. Porque §7 («Aviso de conexión») prohíbe indicadores de cambios pendientes y D6 de `anotacion` prohíbe contadores.
-- D5 (2026-11-13, analyst): el aviso de «no se pudo copiar» es como el de «Anotaciones copiadas» (§6.7): sin botones, se va solo, y un solo texto a la vez (el último reemplaza al anterior). No tapa el aviso de deshacer (§5.4). Porque es el mismo tipo de texto breve e informativo y debe comportarse igual.
-- D6 (2026-11-13, analyst): el texto exacto es «No se pudo copiar», el ejemplo del usuario en D2, sin más palabras. Porque la regla global es sin culpa y sin alarma, y ese texto lo cumple.
-- D7 (2026-11-13, analyst): si el portapapeles rechaza la copia no se copia nada y no se cambia nada más (la app no hace otra cosa sola); la persona puede volver a tocar **Copiar**. Porque la app no cambia nada sola (docs/v3/plan.md).
-- D8 (2026-11-13, usuario, alcance del reintento): «Sí, las cuatro limpiezas (Recomendada)». El reintento alcanza también a las referencias a etiquetas borradas y a la fusión de etiquetas duplicadas (§7). Reconciliado con D3 y D4: lo de D3 (cada elemento se intenta por separado, una falla no corta el lote) y lo de D4 (silencioso) rigen para las cuatro limpiezas, no solo para completados y anotaciones.
-- D9 (2026-11-13, usuario, cuándo se reintenta): «Al volver la conexión y al cambiar los datos (Recomendada)». Sin temporizadores. Reconciliado con D4: tampoco se avisa ni se cuenta cuándo se reintenta.
+- D1 (2026-11-13, user): «Reintentar en anotaciones y completados» (translation: «Retry in annotations and completions»): a single fix for both that retries the cleanup of orphans, so that «como un completado huérfano» (translation: «like an orphan completion») (§7) keeps holding.
+- D2 (2026-11-13, user): «Mostrar un aviso breve» (translation: «Show a brief notice») when the clipboard rejects the write on tapping **Copiar** in Anotaciones: an informative, neutral text, for example «No se pudo copiar», without guilt or alarm.
+- D3 (2026-11-13, analyst): each orphan is attempted separately: one failing (or there being no connection) does not prevent attempting the others of the batch. Because today the annotations one stops the whole batch at the first failure, and one bad orphan would leave the good ones uncleaned.
+- D4 (2026-11-13, analyst): the cleanup and its retries are silent: no notice, counter or pending indicator. Because §7 («Aviso de conexión» (translation: «Connection notice»)) forbids indicators of pending changes and D6 of `anotacion` forbids counters.
+- D5 (2026-11-13, analyst): the «no se pudo copiar» notice is like the «Anotaciones copiadas» one (§6.7): without buttons, it goes away by itself, and only one text at a time (the last one replaces the previous one). It does not cover the undo notice (§5.4). Because it is the same kind of brief, informative text and has to behave the same.
+- D6 (2026-11-13, analyst): the exact text is «No se pudo copiar», the user's example in D2, without more words. Because the global rule is no guilt and no alarm, and that text meets it.
+- D7 (2026-11-13, analyst): if the clipboard rejects the copy nothing is copied and nothing else changes (the app does nothing else by itself); the person can tap **Copiar** again. Because the app changes nothing by itself (docs/v3/plan.md).
+- D8 (2026-11-13, user, scope of the retry): «Sí, las cuatro limpiezas (Recomendada)» (translation: «Yes, the four cleanups (Recommended)»). The retry also reaches the references to deleted labels and the merge of duplicate labels (§7). Reconciled with D3 and D4: what D3 says (each element is attempted separately, one failure does not stop the batch) and what D4 says (silent) hold for the four cleanups, not only for completions and annotations.
+- D9 (2026-11-13, user, when it is retried): «Al volver la conexión y al cambiar los datos (Recomendada)» (translation: «When the connection returns and when the data changes (Recommended)»). Without timers. Reconciled with D4: it is not announced or counted when it is retried either.
 
-## Artefactos
+## Artifacts
 
-- Gherkin: `features/cleanups-retry.feature` (S1, S2, S3, S4, S5, S6, S7); QA-only (en el feature lo anota su cabecera): S4, S5, S6, S7
+- Gherkin: `features/cleanups-retry.feature` (S1, S2, S3, S4, S5, S6, S7); QA-only (in the feature its header says so): S4, S5, S6, S7
 - QA: `qa/retry-and-copy-notice.md`
 
 ## core
 
-- **Puede editar**: `src/lib/core/limpiezas*.ts` (archivos nuevos: qué elementos de una limpieza se intentan, cuáles quedaron por reintentar y cuándo se reintenta), `src/lib/core/*.test.ts` (todos los tests del core)
-- **Reglas**: S1, S2, S3 (S4: el core no devuelve nada que la UI pueda mostrar como aviso o contador de pendientes)
-- **Reusa**: `completadosHuerfanos` y `anotacionesHuerfanas` (`borrado.ts`), `referenciasRotas` (`borrado-de-etiqueta.ts`) y `fusionDeDuplicadas` (`fusion-de-etiquetas.ts`) siguen siendo quienes detectan los elementos por limpiar; no se modifican sus firmas.
+- **Allowed edits**: `src/lib/core/limpiezas*.ts` (new files: which elements of a cleanup are attempted, which were left to retry and when it is retried), `src/lib/core/*.test.ts` (all core tests)
+- **Rules**: S1, S2, S3 (S4: the core returns nothing that the UI could show as a notice or a counter of pending items)
+- **Reuses**: `completadosHuerfanos` and `anotacionesHuerfanas` (`borrado.ts`), `referenciasRotas` (`borrado-de-etiqueta.ts`) and `fusionDeDuplicadas` (`fusion-de-etiquetas.ts`) are still the ones that detect the elements to clean; their signatures are not modified.
 - **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate core`
 
 ## acceptance
 
-- **Puede editar**: `acceptance/steps/limpiezas*.ts` (archivos nuevos), `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `scripts/check-arch.ts` (la lista manual de oráculos, si se agrega uno), `docs/pipeline/pendientes.txt`
-- **Features a conectar**: `features/cleanups-retry.feature`
-- **Pasos nuevos**:
-  - `hay por limpiar <elementos> de <limpieza>` (`<limpieza>`: completados huérfanos, anotaciones huérfanas, referencias a etiquetas borradas o etiquetas duplicadas; `<elementos>`: ids separados por ", ")
-  - `falla el intento de limpiar <fallan>` y `deja de fallar el intento de limpiar <fallan>` (`<fallan>`: ids separados por ", "; todos los ids es "no hay conexión")
-  - `la app intenta las limpiezas` y `la app intentó las limpiezas`
-  - `sucede que <suceso>` (`vuelve la conexión` o `cambian los datos`) y `pasan <minutos> minutos sin que suceda nada más`
-  - `quedan limpios <limpios>` y `quedan por limpiar <pendientes>` (`ninguno` es la lista vacía)
-- **Notas**: el oráculo de `Then quedan limpios/quedan por limpiar` se escribe desde §7: se limpia todo elemento cuyo intento no falla, quedan por limpiar solo los que fallaron, y sin conexión nueva ni cambio de datos no hay nuevo intento (el tiempo no cuenta). Los pasos de las cuatro limpiezas comparten handler: la limpieza solo nombra de qué elementos se trata.
+- **Allowed edits**: `acceptance/steps/limpiezas*.ts` (new files), `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `scripts/check-arch.ts` (the manual list of oracles, if one is added), `docs/pipeline/pendientes.txt`
+- **Features to connect**: `features/cleanups-retry.feature`
+- **New steps**:
+  - `hay por limpiar <elementos> de <limpieza>` (`<limpieza>`: completados huérfanos, anotaciones huérfanas, referencias a etiquetas borradas or etiquetas duplicadas; `<elementos>`: ids separated by ", ")
+  - `falla el intento de limpiar <fallan>` and `deja de fallar el intento de limpiar <fallan>` (`<fallan>`: ids separated by ", "; all the ids means "no connection")
+  - `la app intenta las limpiezas` and `la app intentó las limpiezas`
+  - `sucede que <suceso>` (`vuelve la conexión` or `cambian los datos`) and `pasan <minutos> minutos sin que suceda nada más`
+  - `quedan limpios <limpios>` and `quedan por limpiar <pendientes>` (`ninguno` is the empty list)
+- **Notes**: the oracle of `Then quedan limpios/quedan por limpiar` is written from §7: every element whose attempt does not fail is cleaned, only those that failed are left to clean, and without a new connection or a data change there is no new attempt (time does not count). The steps of the four cleanups share a handler: the cleanup only names which elements are involved.
 - **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate acceptance`
 
 ## ui
 
-- **Puede editar**: `src/lib/ui/Sesion.svelte`, `src/lib/ui/Anotaciones.svelte`, `src/lib/ui/AnotarConfirmacion.svelte`, `src/lib/ui/en-linea.svelte.ts`, `src/lib/adapters/repositorio.ts`, `src/lib/adapters/anotaciones.ts`, `src/lib/adapters/conexion.ts`, `src/lib/adapters/portapapeles.ts`
-- **Comportamiento visible**: `qa/retry-and-copy-notice.md`
-- **Notas**: hoy `Sesion.svelte` agrega los ids a `huerfanosEnLimpieza`, `anotacionesEnLimpieza`, `referenciasEnLimpieza` y `etiquetasEnFusion` y no los saca nunca, y los adapters `limpiarHuerfanos`, `limpiarAnotacionesHuerfanas` y `limpiarReferencias` cortan el lote (`return`) al primer fallo; `copiar()` en `Anotaciones.svelte` vuelve sin mostrar nada si `copiarAlPortapapeles` devuelve `false`. «No se pudo copiar» y «Anotaciones copiadas» comparten el mismo componente de aviso (un solo texto a la vez).
+- **Allowed edits**: `src/lib/ui/Sesion.svelte`, `src/lib/ui/Anotaciones.svelte`, `src/lib/ui/AnotarConfirmacion.svelte`, `src/lib/ui/en-linea.svelte.ts`, `src/lib/adapters/repositorio.ts`, `src/lib/adapters/anotaciones.ts`, `src/lib/adapters/conexion.ts`, `src/lib/adapters/portapapeles.ts`
+- **Visible behavior**: `qa/retry-and-copy-notice.md`
+- **Notes**: today `Sesion.svelte` adds the ids to `huerfanosEnLimpieza`, `anotacionesEnLimpieza`, `referenciasEnLimpieza` and `etiquetasEnFusion` and never removes them, and the adapters `limpiarHuerfanos`, `limpiarAnotacionesHuerfanas` and `limpiarReferencias` cut the batch (`return`) at the first failure; `copiar()` in `Anotaciones.svelte` returns without showing anything if `copiarAlPortapapeles` returns `false`. «No se pudo copiar» and «Anotaciones copiadas» share the same notice component (a single text at a time).
 - **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate ui`
 
 ## cleaner · architect · hardener · qa
 
-Trabajan sobre todo lo que cambió la feature (`git diff <base de la feature>`, anotada en `tmp/base-de-feature`); no necesitan sección propia salvo que el gherkin-writer anote algo para ellos acá.
+They work on everything the feature changed (`git diff <feature base>`, recorded in `tmp/base-de-feature`); they need no section of their own unless the gherkin-writer leaves a note for them here.
 
 ## Log
 
-- L1 (2026-11-13): «1) «Reintentar en anotaciones y completados»: la limpieza de huérfanas (src/lib/ui/Sesion.svelte, efectos de `completadosHuerfanos` y `anotacionesHuerfanas`; adapters `limpiarHuerfanos` y `limpiarAnotacionesHuerfanas`) agrega los ids a un Set `…EnLimpieza` antes de limpiar y nunca los saca; si el intento falla o está sin conexión (el adapter hace `catch { return }`, y en el de anotaciones corta todo el lote al primer fallo) esas huérfanas no se reintentan hasta recargar la app. El usuario quiere un único arreglo para ambos que reintente, de modo que siga valiendo «como un completado huérfano» (§7 de docs/spec.md). 2) «Mostrar un aviso breve» cuando el portapapeles rechaza la escritura al tocar Copiar en Anotaciones (hoy `copiar()` en src/lib/ui/Anotaciones.svelte vuelve sin mostrar nada): un texto informativo y neutro, por ejemplo «No se pudo copiar», sin culpa ni alarma, como el resto de los avisos de la app (reglas globales de docs/v3/plan.md: sin culpa, la app no cambia nada sola).»
+- L1 (2026-11-13): the user's original request, verbatim (the original words are in Spanish; below it, its translation): «1) «Reintentar en anotaciones y completados»: la limpieza de huérfanas (src/lib/ui/Sesion.svelte, efectos de `completadosHuerfanos` y `anotacionesHuerfanas`; adapters `limpiarHuerfanos` y `limpiarAnotacionesHuerfanas`) agrega los ids a un Set `…EnLimpieza` antes de limpiar y nunca los saca; si el intento falla o está sin conexión (el adapter hace `catch { return }`, y en el de anotaciones corta todo el lote al primer fallo) esas huérfanas no se reintentan hasta recargar la app. El usuario quiere un único arreglo para ambos que reintente, de modo que siga valiendo «como un completado huérfano» (§7 de docs/spec.md). 2) «Mostrar un aviso breve» cuando el portapapeles rechaza la escritura al tocar Copiar en Anotaciones (hoy `copiar()` en src/lib/ui/Anotaciones.svelte vuelve sin mostrar nada): un texto informativo y neutro, por ejemplo «No se pudo copiar», sin culpa ni alarma, como el resto de los avisos de la app (reglas globales de docs/v3/plan.md: sin culpa, la app no cambia nada sola).»
+
+  (translation: «1) «Retry in annotations and completions»: the cleanup of orphans (src/lib/ui/Sesion.svelte, effects of `completadosHuerfanos` and `anotacionesHuerfanas`; adapters `limpiarHuerfanos` and `limpiarAnotacionesHuerfanas`) adds the ids to a Set `…EnLimpieza` before cleaning and never removes them; if the attempt fails or there is no connection (the adapter does `catch { return }`, and the annotations one cuts the whole batch at the first failure) those orphans are not retried until the app is reloaded. The user wants a single fix for both that retries, so that «like an orphan completion» (§7 of docs/spec.md) keeps holding. 2) «Show a brief notice» when the clipboard rejects the write on tapping Copiar in Anotaciones (today `copiar()` in src/lib/ui/Anotaciones.svelte returns without showing anything): an informative, neutral text, for example «No se pudo copiar», without guilt or alarm, like the rest of the notices of the app (global rules of docs/v3/plan.md: no guilt, the app changes nothing by itself).»)

@@ -1,124 +1,124 @@
-# Paquete: cambios-sin-guardar
+# Package: unsaved-changes
 
-Cerrar el panel o usar una acción con cambios sin guardar pide confirmación en lugar de perderlos, y el botón Atrás de Android cierra el panel en lugar de salir de la pantalla.
+Closing the panel or using an action with unsaved changes asks for confirmation instead of losing them, and the Android Back button closes the panel instead of leaving the screen.
 
 ## Specs
 
-- **S1** (§6.2): «**Cerrar** (la **X**, o **Atrás** en Android) con cambios sin guardar pide confirmación en lugar de descartarlos (**Cambios sin guardar**, abajo); sin cambios cierra directo.»
-- **S2** (§6.2): «**Hay cambios** cuando **Guardar** cambiaría algo respecto de los valores con que se abrió el panel.»
-- **S3** (§6.2): «Única excepción: el texto sin confirmar del campo Etiquetas cuenta como cambio (salvo que sean solo espacios) aunque **Guardar** no cambie nada por él;»
-- **S4** (§6.2): «**Se mide contra los valores al abrir el panel**, no contra lo que otro dispositivo escribió después: un cambio remoto no hace aparecer el aviso.»
-- **S5** (§6.2): «**Al crear**, "sin cambios" significa que el formulario sigue como se abrió.»
-- **S6** (§6.2): «**Aviso de cierre**: cerrar con la **X** (o **Atrás**, ver **Atrás**) con cambios abre el aviso "Tenés cambios sin guardar" con tres botones:»
-- **S7** (§6.2): «**Descartar** no quita de **Recientes** un emoji elegido en el panel:»
-- **S8** (§6.2): «**Aviso de acción**: **Pausar**, **Reanudar**, **Posponer** (**1 hora**, **3 horas**, **Hasta mañana**) y **Quitar posponer** con cambios abren el aviso "Tenés cambios sin guardar" con tres botones:»
-- **S9** (§6.2): «"Ahora" de §5.8 y §5.9 es el momento de tocar el botón del aviso, no el de elegir la acción.»
-- **S10** (§6.2): «Entonces el aviso dice "Con estos cambios la tarea ya no se puede <acción>" y ofrece solo **Seguir editando** y **Descartar y <acción>**, sin **Guardar y <acción>**.»
-- **S11** (§6.2): «**El aviso de acción se mantiene al día** mientras está abierto, con la tarea y el ahora del momento, como las acciones a la vista:»
-- **S12** (§6.2): «**Si Guardar falla** (desde el aviso de cierre o el de una acción) por validación (reglas de arriba y §4.1–§4.2): no se ejecuta nada, ni la acción ni el cierre.»
-- **S13** (§6.2): «**Los avisos se abren sobre el panel** con las reglas de **Sobre el panel**:»
-- **S14** (§6.2): «**Si otro dispositivo borra la tarea** con un aviso abierto, se cierran el aviso y el panel sin pedir nada (§7, gana el borrado).»
-- **S15** (§6.2): «**Borrar tarea** no suma este aviso: mantiene solo su confirmación.»
-- **S16** (§6.2): «**Atrás** (botón Atrás de Android, o el gesto equivalente del navegador), con el panel abierto, cierra el panel y no sale de la pantalla donde está»
-- **S17** (§6.2): «Un nuevo **Atrás** cierra el panel; si el panel queda con cambios, abre el aviso de cierre, y sin cambios cierra directo.»
-- **S18** (§6.2): «Con el teclado en pantalla abierto, el primer **Atrás** lo cierra el sistema y el panel sigue igual; el siguiente aplica estas reglas.»
-- **S19** (§6.2): «Con el panel cerrado, **Atrás** hace lo de hoy:»
-- **S20** (§6.2): «**Recargar o cerrar la app** con cambios sin guardar muestra la confirmación del navegador.»
-- **S21** (§6.2): «y solo **Cerrar** (confirmado con **Descartar**, si hay cambios) o **Descartar y <acción>** descartan los cambios.»
-- **S22** (§7): «se cierra, también con un aviso de **Cambios sin guardar** abierto y sin pedir nada (§6.2).»
-- **S23** (§6.2): «Al crear una tarea, la opción de **Se repite** que viene elegida es **No se repite**.»
+- **S1** (§6.2): «**Close** (the **X**, or **Back** on Android) with unsaved changes asks for confirmation instead of discarding them (**Unsaved changes**, below); without changes it closes directly.»
+- **S2** (§6.2): «There **are changes** when **Guardar** would change something compared to the values the panel was opened with.»
+- **S3** (§6.2): «Only exception: the unconfirmed text of the Etiquetas field counts as a change (unless it is only spaces) even if **Guardar** does not change anything because of it;»
+- **S4** (§6.2): «It **is measured against the values when the panel was opened**, not against what another device wrote afterwards: a remote change does not make the notice appear.»
+- **S5** (§6.2): «**When creating**, "no changes" means the form is still as it was opened.»
+- **S6** (§6.2): «**Close notice**: closing with the **X** (or **Back**, see **Back**) with changes opens the notice "Tenés cambios sin guardar" with three buttons:»
+- **S7** (§6.2): «**Descartar** does not remove from **Recientes** an emoji chosen in the panel:»
+- **S8** (§6.2): «**Action notice**: **Pausar**, **Reanudar**, **Posponer** (**1 hora**, **3 horas**, **Hasta mañana**) and **Quitar posponer** with changes open the notice "Tenés cambios sin guardar" with three buttons:»
+- **S9** (§6.2): «"Now" of §5.8 and §5.9 is the moment of tapping the button of the notice, not that of choosing the action.»
+- **S10** (§6.2): «Then the notice says "Con estos cambios la tarea ya no se puede <acción>" and offers only **Seguir editando** and **Descartar y <acción>**, without **Guardar y <acción>**.»
+- **S11** (§6.2): «**The action notice is kept up to date** while it is open, with the task and the now of the moment, like the actions in view:»
+- **S12** (§6.2): «**If Guardar fails** (from the close notice or that of an action) by validation (rules above and §4.1–§4.2): nothing is executed, neither the action nor the closing.»
+- **S13** (§6.2): «**The notices open over the panel** with the rules of **Over the panel**:»
+- **S14** (§6.2): «**If another device deletes the task** with a notice open, the notice and the panel close without asking for anything (§7, the deletion wins).»
+- **S15** (§6.2): «**Borrar tarea** does not add this notice: it keeps only its confirmation.»
+- **S16** (§6.2): «**Back** (the Android Back button, or the equivalent browser gesture), with the panel open, closes the panel and does not leave the screen where it is»
+- **S17** (§6.2): «A new **Back** closes the panel; if the panel has changes, it opens the close notice, and without changes it closes directly.»
+- **S18** (§6.2): «With the on-screen keyboard open, the first **Back** is closed by the system and the panel stays the same; the next one applies these rules.»
+- **S19** (§6.2): «With the panel closed, **Back** does what it does today:»
+- **S20** (§6.2): «**Reloading or closing the app** with unsaved changes shows the browser confirmation.»
+- **S21** (§6.2): «and only **Cerrar** (confirmed with **Descartar**, if there are changes) or **Descartar y <acción>** discard the changes.»
+- **S22** (§7): «it closes, also with an **Unsaved changes** notice open and without asking for anything (§6.2).»
+- **S23** (§6.2): «When creating a task, the option of **Se repite** that comes selected is **No se repite**.»
 
-## Decisiones
+## Decisions
 
-- D1 (2026-11-03, usuario): «Pedir confirmación» al cerrar con la X o con Atrás cuando hay cambios sin guardar. Sin cambios, cierra directo. Esto cambia la regla de §6.2 «Cerrar sin guardar descarta los cambios».
-- D2 (2026-11-03, usuario): el aviso de cierre ofrece Seguir editando, Descartar y Guardar («También Guardar»).
-- D3 (2026-11-03, usuario): al crear vale lo mismo: «Sí, igual que al editar». Si cargaste algo pide confirmación; si está vacío, cierra directo.
-- D4 (2026-11-03, usuario): Posponer, Pausar, Reanudar y Quitar posponer, con cambios sin guardar, muestran un aviso para guardar y actuar, o descartar y actuar. Sin cambios, actúan en el momento.
-- D5 (2026-11-03, usuario): Borrar tarea no suma este aviso: mantiene solo su confirmación.
-- D6 (2026-11-03, usuario): si el guardado desde un aviso falla por validación, «No se ejecuta»: ni la acción ni el cierre; el panel sigue abierto y salta a la pestaña con el error, con las reglas de §6.2. Vale también para Guardar en el aviso de cierre.
-- D7 (2026-11-03, usuario): Atrás cierra el panel, sin salir de la pantalla, y «Solo lo de arriba»: si hay un selector de emoji, una confirmación o un aviso abiertos, cierra solo eso y deja el panel como estaba; otro Atrás cierra el panel.
-- D8 (2026-11-03, orquestador): fuera de alcance: orientación vertical, que es la feature siguiente.
-- D9 (2026-11-03, analyst): hay cambios cuando **Guardar** cambiaría algo respecto de los valores con que se abrió el panel: escribir y volver al valor original no cuenta, ni los espacios que **Guardar** recorta, ni el orden de ventanas que **Guardar** ordena; un campo vaciado o una fila de horario vacía sí cuentan, aunque sean inválidos. Porque §6.2 ya dice «Guardar sin cambios no cambia nada» y un aviso sin nada que perder es ruido.
-- D10 (2026-11-03, analyst): al crear, «si está vacío» significa que el formulario sigue como se abrió; tocar cualquier campo con otro valor (por ejemplo, **Se repite** o el esfuerzo) es «cargar algo», y un título de solo espacios no. Es D9 aplicada a crear.
-- D11 (2026-11-03, analyst): los cambios se miden contra los valores al abrir el panel, no contra lo que otro dispositivo escribió después: un cambio remoto no hace aparecer el aviso. Porque el aviso protege lo que hizo esta persona en este panel.
-- D12 (2026-11-03, analyst): el aviso de las acciones también ofrece **Seguir editando**, con los botones **Seguir editando**, **Descartar y <acción>** y **Guardar y <acción>** (pausar, reanudar, posponer, quitar posponer). Porque D7 ya permite salir de ese aviso sin actuar, D2 y **Borrar tarea** ofrecen esa salida a la vista, y un toque equivocado en una acción tiene que poder deshacerse también sin Atrás.
-- D13 (2026-11-03, analyst): los dos avisos se abren sobre el panel con las reglas de «Sobre el panel»: bloquean lo de abajo y, al cerrarlos, se vuelve a la misma pestaña sin perder nada. Porque son lo mismo que la confirmación de **Borrar tarea**.
-- D14 (2026-11-03, analyst): al actuar desde el aviso, «ahora» es el momento de tocar el botón del aviso, no el de elegir la acción. Porque recién ahí se ejecuta, y §5.8 y §5.9 usan ahora.
-- D15 (2026-11-03, analyst): si otro dispositivo borra la tarea con un aviso abierto, se cierran el aviso y el panel (§7, «gana el borrado»), sin pedir nada. Si otro dispositivo hace que la acción ya no corresponda (por ejemplo, la pausa), el aviso de esa acción se cierra y queda el panel con lo escrito. Porque §6.2 ya actualiza las acciones a la vista y «Nada se pierde».
-- D16 (2026-11-03, analyst): **Descartar** no quita de **Recientes** un emoji elegido en el panel. Porque §6.2 los actualiza al elegir, en ese dispositivo, sin depender de guardar.
-- D17 (2026-11-03, analyst): Atrás cierra lo que tenga arriba como si se tocara su salida: el aviso equivale a **Seguir editando**, la confirmación de **Borrar tarea** a cancelar y el selector de emoji a cerrarlo sin elegir. Si queda el panel con cambios, Atrás abre el aviso de cierre (D1). El «aviso» de D7 son los de esta feature: el aviso de deshacer de §5.4 no se abre encima de nada, Atrás lo ignora y sigue sus 5 segundos. Las sugerencias de Etiquetas tampoco cuentan como algo abierto.
-- D18 (2026-11-03, analyst): con el teclado en pantalla abierto, el primer Atrás lo cierra el sistema y el panel sigue igual; el siguiente aplica D7. Porque ese toque no le llega a la app.
-- D19 (2026-11-03, analyst): Atrás hace lo mismo en cualquier navegador y ancho, y en el panel abierto desde Historial (queda en Historial). Con el panel cerrado, Atrás hace lo de hoy: cerrar el panel con la X, con Guardar o con una acción no deja un Atrás de más que no haga nada, y Adelante no reabre un panel. Fuera del panel, los diálogos de Historial y Etiquetas no cambian con esta feature, porque D7 habla del panel abierto.
-- D20 (2026-11-03, usuario): guardar y actuar cuando lo guardado deja la acción sin sentido: «Sin la opción de guardar».
-- D21 (2026-11-03, usuario): texto sin confirmar en Etiquetas, si es lo único que cambió y se cierra el panel: «Cuenta, salvo solo espacios».
-- D22 (2026-11-03, usuario): recargar o cerrar la app con cambios sin guardar: «Confirmación del navegador».
-- D23 (2026-11-03, analyst): D21 es la única excepción a D9: el texto sin confirmar en Etiquetas (salvo solo espacios) cuenta como cambio aunque **Guardar** no cambie nada por él. Hay una sola definición de «hay cambios»: vale igual para cerrar con la X o Atrás, para crear (D3), para las acciones (D4) y para la confirmación del navegador (D22). **Guardar** en un aviso sigue sin crear esa etiqueta, como eligió el usuario en D21; si el texto es un nombre que hace fallar **Guardar**, aplica D6.
-- D24 (2026-11-03, analyst): para D20, una acción «queda sin sentido» si no cumple las condiciones con que §5.8, §5.9 y §6.2 la muestran, evaluadas sobre la tarea como quedaría guardada. Las acciones a la vista se siguen decidiendo con la tarea de ahora, no con lo escrito. Incluye **Reanudar** con un cambio a **No se repite** (guardar ya la reanuda, §5.8). El aviso dice "Con estos cambios la tarea ya no se puede <acción>" y ofrece solo **Seguir editando** y **Descartar y <acción>**. Si lo escrito es inválido no hay cómo evaluarlo: se ofrece **Guardar y <acción>** y falla según D6. Es lo que describía la opción elegida.
-- D25 (2026-11-03, analyst): el aviso de una acción se evalúa con la tarea y el ahora del momento y se actualiza mientras está abierto, como las acciones a la vista (§6.2): si otro dispositivo cambia la tarea o pasa el tiempo, **Guardar y <acción>** puede aparecer o desaparecer. Al tocarlo, se vuelve a evaluar; si ya no corresponde, no se guarda ni se actúa y el aviso queda actualizado. Complementa D15.
-- D26 (2026-11-03, analyst): la confirmación del navegador (D22) aparece solo si hay cambios (D23), con un aviso abierto o sin él, y nunca por Atrás con el panel abierto, que sigue D7. Su texto es el del navegador y, donde el sistema no la ofrece, se pierde lo escrito, como ya aceptó el usuario al elegirla. Al recargar, el panel no se reabre. D19 no cubre el Atrás que siga a una recarga: puede volver a la misma pantalla sin efecto visible.
-- D27 (2026-11-03, usuario): al crear una tarea, la opción de **Se repite** que viene elegida: «No se repite». Hoy la app abre en Intervalo y el spec no lo definía; cambia la app.
+- D1 (2026-11-03, user): «Pedir confirmación» (translation: «Ask for confirmation») when closing with the X or with Back while there are unsaved changes. Without changes, it closes directly. This changes the rule of §6.2 «Cerrar sin guardar descarta los cambios» (translation: «Closing without saving discards the changes»).
+- D2 (2026-11-03, user): the close notice offers Seguir editando, Descartar and Guardar («También Guardar» (translation: «Also Guardar»)).
+- D3 (2026-11-03, user): the same applies when creating: «Sí, igual que al editar» (translation: «Yes, same as when editing»). If something was entered, it asks for confirmation; if it is empty, it closes directly.
+- D4 (2026-11-03, user): Posponer, Pausar, Reanudar and Quitar posponer, with unsaved changes, show a notice to save and act, or to discard and act. Without changes, they act at that moment.
+- D5 (2026-11-03, user): Borrar tarea does not add this notice: it keeps only its confirmation.
+- D6 (2026-11-03, user): if saving from a notice fails by validation, «No se ejecuta» (translation: «It is not executed»): neither the action nor the closing; the panel stays open and jumps to the tab with the error, with the rules of §6.2. It also holds for Guardar in the close notice.
+- D7 (2026-11-03, user): Back closes the panel, without leaving the screen, and «Solo lo de arriba» (translation: «Only what is on top»): if an emoji picker, a confirmation or a notice is open, it closes only that and leaves the panel as it was; another Back closes the panel.
+- D8 (2026-11-03, orchestrator): out of scope: portrait orientation, which is the next feature.
+- D9 (2026-11-03, analyst): there are changes when **Guardar** would change something compared to the values the panel was opened with: typing and going back to the original value does not count, nor do the spaces that **Guardar** trims, nor the order of the windows that **Guardar** sorts; an emptied field or an empty schedule row do count, even if they are invalid. Because §6.2 already says «Guardar sin cambios no cambia nada» (translation: «Saving without changes changes nothing») and a notice with nothing to lose is noise.
+- D10 (2026-11-03, analyst): when creating, "if it is empty" means the form is still as it was opened; touching any field with another value (for example, **Se repite** or the effort) is "entering something", and a title of only spaces is not. It is D9 applied to creating.
+- D11 (2026-11-03, analyst): the changes are measured against the values when the panel was opened, not against what another device wrote afterwards: a remote change does not make the notice appear. Because the notice protects what this person did in this panel.
+- D12 (2026-11-03, analyst): the action notice also offers **Seguir editando**, with the buttons **Seguir editando**, **Descartar y <acción>** and **Guardar y <acción>** (pause, resume, postpone, remove the postponement). Because D7 already allows leaving that notice without acting, D2 and **Borrar tarea** offer that exit in view, and a wrong tap on an action has to be reversible without Back too.
+- D13 (2026-11-03, analyst): the two notices open over the panel with the rules of «Sobre el panel» (translation: «Over the panel»): they block what is below and, on closing them, it returns to the same tab without losing anything. Because they are the same as the confirmation of **Borrar tarea**.
+- D14 (2026-11-03, analyst): when acting from the notice, "now" is the moment of tapping the button of the notice, not that of choosing the action. Because that is when it is executed, and §5.8 and §5.9 use now.
+- D15 (2026-11-03, analyst): if another device deletes the task with a notice open, the notice and the panel close (§7, «gana el borrado» (translation: «the deletion wins»)), without asking for anything. If another device makes the action no longer apply (for example, the pause), the notice of that action closes and the panel stays with what was written. Because §6.2 already updates the actions in view and «Nada se pierde» (translation: «Nothing is lost»).
+- D16 (2026-11-03, analyst): **Descartar** does not remove from **Recientes** an emoji chosen in the panel. Because §6.2 updates them on choosing, on that device, without depending on saving.
+- D17 (2026-11-03, analyst): Back closes whatever is on top as if its exit were tapped: the notice is equivalent to **Seguir editando**, the confirmation of **Borrar tarea** to cancel and the emoji picker to closing it without choosing. If the panel is left with changes, Back opens the close notice (D1). The «notice» of D7 means those of this feature: the undo notice of §5.4 does not open over anything, Back ignores it and its 5 seconds continue. The suggestions of Etiquetas do not count as something open either.
+- D18 (2026-11-03, analyst): with the on-screen keyboard open, the first Back is closed by the system and the panel stays the same; the next one applies D7. Because that tap does not reach the app.
+- D19 (2026-11-03, analyst): Back does the same in any browser and width, and in the panel opened from Historial (it stays in Historial). With the panel closed, Back does what it does today: closing the panel with the X, with Guardar or with an action does not leave an extra Back that does nothing, and Forward does not reopen a panel. Outside the panel, the dialogs of Historial and Etiquetas do not change with this feature, because D7 speaks of the open panel.
+- D20 (2026-11-03, user): save and act when what is saved leaves the action meaningless: «Sin la opción de guardar» (translation: «Without the option to save»).
+- D21 (2026-11-03, user): unconfirmed text in Etiquetas, if it is the only thing that changed and the panel is closed: «Cuenta, salvo solo espacios» (translation: «It counts, except only spaces»).
+- D22 (2026-11-03, user): reloading or closing the app with unsaved changes: «Confirmación del navegador» (translation: «Browser confirmation»).
+- D23 (2026-11-03, analyst): D21 is the only exception to D9: the unconfirmed text in Etiquetas (except only spaces) counts as a change even if **Guardar** does not change anything because of it. There is a single definition of "there are changes": it holds the same for closing with the X or Back, for creating (D3), for the actions (D4) and for the browser confirmation (D22). **Guardar** in a notice still does not create that label, as the user chose in D21; if the text is a name that makes **Guardar** fail, D6 applies.
+- D24 (2026-11-03, analyst): for D20, an action "becomes meaningless" if it does not meet the conditions with which §5.8, §5.9 and §6.2 show it, evaluated on the task as it would be saved. The actions in view are still decided with the task as of now, not with what was written. It includes **Reanudar** with a change to **No se repite** (saving already resumes it, §5.8). The notice says "Con estos cambios la tarea ya no se puede <acción>" and offers only **Seguir editando** and **Descartar y <acción>**. If what was written is invalid there is no way to evaluate it: **Guardar y <acción>** is offered and it fails according to D6. It is what the chosen option described.
+- D25 (2026-11-03, analyst): the notice of an action is evaluated with the task and the now of the moment and is updated while it is open, like the actions in view (§6.2): if another device changes the task or time passes, **Guardar y <acción>** can appear or disappear. On tapping it, it is evaluated again; if it no longer applies, nothing is saved or acted on and the notice is left updated. It complements D15.
+- D26 (2026-11-03, analyst): the browser confirmation (D22) appears only if there are changes (D23), with a notice open or without one, and never by Back with the panel open, which follows D7. Its text is the browser's and, where the system does not offer it, what was written is lost, as the user already accepted on choosing it. On reload, the panel is not reopened. D19 does not cover the Back that follows a reload: it can return to the same screen without a visible effect.
+- D27 (2026-11-03, user): when creating a task, the option of **Se repite** that comes selected: «No se repite» (translation: «It does not repeat»). Today the app opens on Intervalo and the spec did not define it; this changes the app.
 
-## Artefactos
+## Artifacts
 
 - Gherkin: `features/unsaved-changes.feature` (S1, S2, S3, S4, S5, S20, S23), `features/close-notice.feature` (S1, S6, S7, S12, S13, S14, S21, S22), `features/action-notice.feature` (S8, S9, S10, S11, S12, S14, S15, S21), `features/panel-back.feature` (S16, S17, S18, S19)
-- QA: `qa/unsaved-changes.md` (todo, y en especial lo que el Gherkin no cubre: S13 qué se ve sobre el panel, S19 el panel cerrado y la pantalla de origen, S20 el diálogo del navegador, S16 no salir de la pantalla). También ajusté los flujos de otros `qa/*.md` donde "Cerrar sin guardar" ahora pasa por el aviso (**Descartar**). S23 (al crear, **Se repite** abre en **No se repite**): `Cambios sin guardar 12` y `20` del feature (elegir Intervalo es cargar algo; volver a No se repite deja el formulario como se abrió) y los pasos 1 y 4 del flujo 3 de `qa/unsaved-changes.md`; corregí los flujos que suponían Intervalo al crear en `qa/panel-mobile.md` (flujos 1 y 2), `qa/one-off.md` (flujos 1 y 7 y el contrato), `qa/recurring-calendar.md` (contrato) y `qa/recurring-relative.md` (entorno y flujos 2 y 3).
+- QA: `qa/unsaved-changes.md` (everything, and especially what the Gherkin does not cover: S13 what is seen over the panel, S19 the closed panel and the screen of origin, S20 the browser dialog, S16 not leaving the screen). I also adjusted the flows of other `qa/*.md` where "Cerrar sin guardar" now goes through the notice (**Descartar**). S23 (when creating, **Se repite** opens on **No se repite**): `Cambios sin guardar 12` and `20` of the feature (choosing Intervalo is entering something; going back to No se repite leaves the form as it was opened) and steps 1 and 4 of flow 3 of `qa/unsaved-changes.md`; I corrected the flows that assumed Intervalo when creating in `qa/panel-mobile.md` (flows 1 and 2), `qa/one-off.md` (flows 1 and 7 and the contract), `qa/recurring-calendar.md` (contract) and `qa/recurring-relative.md` (environment and flows 2 and 3).
 
 ## core
 
-- **Puede editar**: `src/lib/core/cambios-sin-guardar*.ts`, `src/lib/core/aviso-de-accion*.ts`, `src/lib/core/atras-del-panel*.ts`, `src/lib/core/panel-en-pestanas.ts`, `src/lib/core/datos-de-tarea.ts`, `src/lib/core/horario.ts`, `src/lib/core/pausa.ts`, `src/lib/core/posposicion*.ts`, `src/lib/core/*.test.ts` (todos los tests del core: un cambio de tipo exportado puede tocarlos)
-- **Reglas**: S23 (al crear, `Se repite` abre en `No se repite`; ese valor es la referencia de S5), S2, S3, S4, S5 (qué cuenta como "hay cambios", al editar y al crear, medido contra los valores al abrir), S1 y S6 (con cambios la X abre el aviso de cierre con sus tres botones; sin cambios cierra directo), S8, S9, S10, S11 (qué ofrece el aviso de cada acción, con la tarea y el ahora del momento, y el texto "Con estos cambios la tarea ya no se puede <acción>"), S12 (si Guardar falla no se ejecuta nada), S15, S16, S17, S18 (qué cierra Atrás según lo que hay arriba, el teclado en pantalla y el aviso de deshacer), S20 (cuándo la confirmación del navegador)
-- **Reusa**:
-  - `datosDeTarea` (`datos-de-tarea.ts`) da los valores con que se abre el panel; "hay cambios" es lo que **Guardar** cambiaría respecto de eso, así que se apoya en las mismas normalizaciones de Guardar (`editarConEtiquetas` / `crearConEtiquetas` en `guardar-con-etiquetas.ts`, `camposDeTexto` en `campos-de-texto.ts` para recortar nota y emoji, y el orden de ventanas de `horario.ts`), sin reimplementarlas.
-  - `accionDePausa`, `cambioDePausa` (`pausa.ts`) y `OPCIONES_DE_POSPONER`, `posponer`, `quitarPosponer` (`posposicion.ts`, `posposicion-en-panel.ts`) para decidir si una acción corresponde: "queda sin sentido" es no cumplir las condiciones con que §5.8, §5.9 y §6.2 la muestran, evaluadas sobre la tarea como quedaría guardada; las acciones a la vista siguen decidiéndose con la tarea de ahora.
-  - `PESTANA_AL_ABRIR` y `destinoAlFallarGuardar` (`panel-en-pestanas.ts`): cuando Guardar falla desde un aviso, el destino es el de siempre.
-  - El texto sin confirmar de Etiquetas es un cambio aunque no se guarde (excepción de S3): `etiquetas-escritas.ts` define qué cuenta como texto (solo espacios no).
-- **Notas**: "ahora" de §5.8 y §5.9 es el momento de tocar el botón del aviso (S9): las funciones reciben el ahora como parámetro (el core nunca lee el reloj). Los nombres de los botones (`Descartar y posponer 1 hora`, etc.) y los mensajes salen del core, no de la UI.
+- **Allowed edits**: `src/lib/core/cambios-sin-guardar*.ts`, `src/lib/core/aviso-de-accion*.ts`, `src/lib/core/atras-del-panel*.ts`, `src/lib/core/panel-en-pestanas.ts`, `src/lib/core/datos-de-tarea.ts`, `src/lib/core/horario.ts`, `src/lib/core/pausa.ts`, `src/lib/core/posposicion*.ts`, `src/lib/core/*.test.ts` (all core tests: a change to an exported type can touch them)
+- **Rules**: S23 (when creating, `Se repite` opens on `No se repite`; that value is the reference of S5), S2, S3, S4, S5 (what counts as "there are changes", when editing and when creating, measured against the values at opening), S1 and S6 (with changes the X opens the close notice with its three buttons; without changes it closes directly), S8, S9, S10, S11 (what the notice of each action offers, with the task and the now of the moment, and the text "Con estos cambios la tarea ya no se puede <acción>"), S12 (if Guardar fails nothing is executed), S15, S16, S17, S18 (what Back closes according to what is on top, the on-screen keyboard and the undo notice), S20 (when the browser confirmation appears)
+- **Reuses**:
+  - `datosDeTarea` (`datos-de-tarea.ts`) gives the values the panel is opened with; "there are changes" is what **Guardar** would change compared to that, so it relies on the same normalizations as Guardar (`editarConEtiquetas` / `crearConEtiquetas` in `guardar-con-etiquetas.ts`, `camposDeTexto` in `campos-de-texto.ts` to trim the note and the emoji, and the window order of `horario.ts`), without reimplementing them.
+  - `accionDePausa`, `cambioDePausa` (`pausa.ts`) and `OPCIONES_DE_POSPONER`, `posponer`, `quitarPosponer` (`posposicion.ts`, `posposicion-en-panel.ts`) to decide whether an action applies: "becomes meaningless" is not meeting the conditions with which §5.8, §5.9 and §6.2 show it, evaluated on the task as it would be saved; the actions in view are still decided with the task as of now.
+  - `PESTANA_AL_ABRIR` and `destinoAlFallarGuardar` (`panel-en-pestanas.ts`): when Guardar fails from a notice, the destination is the usual one.
+  - The unconfirmed text of Etiquetas is a change even if it is not saved (exception of S3): `etiquetas-escritas.ts` defines what counts as text (only spaces does not).
+- **Notes**: "now" of §5.8 and §5.9 is the moment of tapping the button of the notice (S9): the functions receive now as a parameter (the core never reads the clock). The names of the buttons (`Descartar y posponer 1 hora`, etc.) and the messages come from the core, not from the UI.
 - **Gate**: `node scripts/gate.ts core`
 
 ## acceptance
 
-- **Puede editar**: `acceptance/steps/cambios-sin-guardar.ts`, `acceptance/steps/edicion.ts`, `acceptance/steps/pausar.ts`, `acceptance/steps/posponer.ts`, `acceptance/steps/emojis-recientes.ts`, `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `docs/pipeline/pendientes.txt`
-- **Features a conectar**: `features/unsaved-changes.feature`, `features/close-notice.feature`, `features/action-notice.feature`, `features/panel-back.feature`
-- **Pasos que ya existen y se reusan**: `abro la tarea en el panel de edición el <ahora>`, `la tarea tiene título <titulo>`, `la tarea está pausada` / `no está pausada`, `la tarea está pospuesta desde <desde> hasta <hasta>`, `la tarea es periódica`, `no queda ninguna tarea`, `se crea una tarea puntual con título <titulo>`, `no existe la tarea <titulo>`, `una tarea periódica relativa Regar cada <cada> <unidad>`, `una tarea puntual sin fecha límite`, `la tarea Regar fue pausada`, `la tarea fue pospuesta con la opción <opcion> el <momento>`, `otro dispositivo, sin ver ese cambio, edita el título a <t>` / `pausa la tarea` / `borra la tarea`, `que no hay emojis recientes`, `elijo un emoji que no estaba entre los recientes`, `el primero es el que elegí`.
-- **Pasos nuevos**:
-  - `abro el panel para editar la tarea <titulo> con nota <nota>` (puntual, sin fecha límite, sin esfuerzo, sin etiquetas, sin horario)
-  - `abro el panel para editar la tarea <titulo> con los horarios <primero> y <segundo>` (ventanas `HH:MM-HH:MM`)
+- **Allowed edits**: `acceptance/steps/cambios-sin-guardar.ts`, `acceptance/steps/edicion.ts`, `acceptance/steps/pausar.ts`, `acceptance/steps/posponer.ts`, `acceptance/steps/emojis-recientes.ts`, `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `docs/pipeline/pendientes.txt`
+- **Features to connect**: `features/unsaved-changes.feature`, `features/close-notice.feature`, `features/action-notice.feature`, `features/panel-back.feature`
+- **Existing steps reused**: `abro la tarea en el panel de edición el <ahora>`, `la tarea tiene título <titulo>`, `la tarea está pausada` / `no está pausada`, `la tarea está pospuesta desde <desde> hasta <hasta>`, `la tarea es periódica`, `no queda ninguna tarea`, `se crea una tarea puntual con título <titulo>`, `no existe la tarea <titulo>`, `una tarea periódica relativa Regar cada <cada> <unidad>`, `una tarea puntual sin fecha límite`, `la tarea Regar fue pausada`, `la tarea fue pospuesta con la opción <opcion> el <momento>`, `otro dispositivo, sin ver ese cambio, edita el título a <t>` / `pausa la tarea` / `borra la tarea`, `que no hay emojis recientes`, `elijo un emoji que no estaba entre los recientes`, `el primero es el que elegí`.
+- **New steps**:
+  - `abro el panel para editar la tarea <titulo> con nota <nota>` (one-off, without due date, without effort, without labels, without schedule)
+  - `abro el panel para editar la tarea <titulo> con los horarios <primero> y <segundo>` (windows `HH:MM-HH:MM`)
   - `abro el panel para crear una tarea`
-  - `el panel está abierto <cambios>` (con cambios sin guardar | sin cambios)
-  - `encima del panel hay <encima>` (nada, el aviso de cierre, el aviso de acción, la confirmación de Borrar tarea, el selector de emoji, las sugerencias de Etiquetas)
-  - `el aviso de deshacer está abierto` y `el aviso de deshacer sigue abierto`
+  - `el panel está abierto <cambios>` (with unsaved changes | without changes)
+  - `encima del panel hay <encima>` (nothing, the close notice, the action notice, the confirmation of Borrar tarea, the emoji picker, the suggestions of Etiquetas)
+  - `el aviso de deshacer está abierto` and `el aviso de deshacer sigue abierto`
   - `el teclado en pantalla está abierto`
-  - `escribo <valor> en el campo <campo>` (Título, Nota, Etiquetas sin confirmar)
+  - `escribo <valor> en el campo <campo>` (Título, Nota, unconfirmed Etiquetas)
   - `escribo <valor> con espacios alrededor en el campo <campo>`
   - `escribo solo espacios en el campo <campo>`
   - `vacío el campo <campo>`
   - `elijo <valor> en <selector>` (Se repite, Esfuerzo)
   - `cambio los horarios a <nuevo_primero> y <nuevo_segundo>`
   - `agrego una fila de horario vacía`
-  - `agrego la etiqueta <etiqueta>` y `quito la etiqueta <etiqueta>`
+  - `agrego la etiqueta <etiqueta>` and `quito la etiqueta <etiqueta>`
   - `toco la X del panel`
   - `toco Atrás`
-  - `toco <boton> en el aviso` y `toco <boton> en el aviso el <ahora>`
+  - `toco <boton> en el aviso` and `toco <boton> en el aviso el <ahora>`
   - `elijo la acción <accion> el <ahora>` (Pausar, Reanudar, Posponer 1 hora, Posponer 3 horas, Posponer hasta mañana, Quitar posponer, Borrar tarea)
   - `pasa el tiempo hasta <ahora>`
-  - `queda abierto <abierto>` (nada, el panel, el panel con el aviso de cierre, el panel con el aviso de acción, el panel con la confirmación de Borrar tarea)
-  - `el aviso dice <mensaje>` y `el aviso ofrece <botones>` (lista de botones separada por comas, en orden)
+  - `queda abierto <abierto>` (nothing, the panel, the panel with the close notice, the panel with the action notice, the panel with the confirmation of Borrar tarea)
+  - `el aviso dice <mensaje>` and `el aviso ofrece <botones>` (comma-separated list of buttons, in order)
   - `el campo <campo> sigue con <valor>`
-  - `al recargar la app el navegador <respuesta>` y `el navegador <respuesta>` (pide confirmación | no pregunta)
-- **Notas**: los pasos de panel de `edicion.ts`/`pausar.ts`/`posponer.ts` ya declaran una tarea abierta en el panel; los nuevos deben compartir ese modelo y no inventar otro. En `Then queda abierto`, `el aviso dice` y `el aviso ofrece` el oráculo de `acceptance/` se reescribe desde `docs/spec.md` §6.2 (Cambios sin guardar, Atrás), nunca desde el core; cada filtrado de equivalentes se justifica con la regla del spec.
+  - `al recargar la app el navegador <respuesta>` and `el navegador <respuesta>` (asks for confirmation | does not ask)
+- **Notes**: the panel steps of `edicion.ts`/`pausar.ts`/`posponer.ts` already declare a task open in the panel; the new ones must share that model and not invent another. In `Then queda abierto`, `el aviso dice` and `el aviso ofrece` the oracle of `acceptance/` is rewritten from `docs/spec.md` §6.2 (Unsaved changes, Back), never from the core; each filtering of equivalents is justified with the spec rule.
 - **Gate**: `node scripts/gate.ts acceptance`
 
 ## ui
 
-- **Puede editar**: `src/lib/ui/PanelTarea.svelte`, `src/lib/ui/Sesion.svelte`, `src/lib/ui/SeccionAcciones.svelte`, `src/lib/ui/SeccionTarea.svelte`, `src/lib/ui/SeccionCuando.svelte`, `src/lib/ui/CampoEtiquetas.svelte`, `src/lib/ui/SelectorEmoji.svelte`, `src/lib/ui/Pendientes.svelte`, `src/lib/ui/Historial.svelte`, `src/lib/ui/AvisoDeCambios*.svelte`, `src/lib/adapters/teclado.ts`, `src/lib/adapters/atras*.ts`, `src/lib/adapters/confirmacion-al-salir*.ts`
-- **Comportamiento visible**: `qa/unsaved-changes.md` (y los ajustes de los flujos de `qa/edit-delete.md`, `qa/schedule.md`, `qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/esfuerzo.md`, `qa/etiquetas.md`, `qa/emoji-and-note.md` y `qa/panel-mobile.md` donde cerrar con cambios ahora pasa por el aviso; y los flujos de `qa/one-off.md`, `qa/recurring-calendar.md` y `qa/recurring-relative.md` donde crear abre con **No se repite**)
-- **Notas**: **cambia el valor inicial de Se repite al crear**: hoy la UI (`PanelTarea.svelte`, y `SeccionCuando.svelte` si lo decide ahí) abre en Intervalo; pasa a **No se repite** (S23, D27), que es el valor contra el que se mide "hay cambios" al crear. Al editar sigue abriendo con la opción de la tarea. El aviso es un `alertdialog` con nombre accesible "Tenés cambios sin guardar" y los botones del Contrato observable de `qa/unsaved-changes.md`. Atrás se apoya en el historial del navegador (`popstate`); abrir el panel agrega una entrada y cerrarlo con la X, **Guardar** o una acción la consume sin dejar un Atrás de más. La confirmación del navegador es `beforeunload`, solo con cambios (S20). Todo lo que decide el core (hay cambios, qué botones, qué cierra Atrás) lo pregunta al core.
+- **Allowed edits**: `src/lib/ui/PanelTarea.svelte`, `src/lib/ui/Sesion.svelte`, `src/lib/ui/SeccionAcciones.svelte`, `src/lib/ui/SeccionTarea.svelte`, `src/lib/ui/SeccionCuando.svelte`, `src/lib/ui/CampoEtiquetas.svelte`, `src/lib/ui/SelectorEmoji.svelte`, `src/lib/ui/Pendientes.svelte`, `src/lib/ui/Historial.svelte`, `src/lib/ui/AvisoDeCambios*.svelte`, `src/lib/adapters/teclado.ts`, `src/lib/adapters/atras*.ts`, `src/lib/adapters/confirmacion-al-salir*.ts`
+- **Visible behavior**: `qa/unsaved-changes.md` (and the adjustments to the flows of `qa/edit-delete.md`, `qa/schedule.md`, `qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/esfuerzo.md`, `qa/etiquetas.md`, `qa/emoji-and-note.md` and `qa/panel-mobile.md` where closing with changes now goes through the notice; and the flows of `qa/one-off.md`, `qa/recurring-calendar.md` and `qa/recurring-relative.md` where creating opens with **No se repite**)
+- **Notes**: **the initial value of Se repite when creating changes**: today the UI (`PanelTarea.svelte`, and `SeccionCuando.svelte` if it is decided there) opens on Intervalo; it becomes **No se repite** (S23, D27), which is the value "there are changes" is measured against when creating. When editing it still opens with the option of the task. The notice is an `alertdialog` with the accessible name "Tenés cambios sin guardar" and the buttons of the observable Contract of `qa/unsaved-changes.md`. Back relies on the browser history (`popstate`); opening the panel adds an entry and closing it with the X, **Guardar** or an action consumes it without leaving an extra Back. The browser confirmation is `beforeunload`, only with changes (S20). Everything the core decides (there are changes, which buttons, what Back closes) is asked of the core.
 - **Gate**: `node scripts/gate.ts ui`
 
 ## cleaner · architect · hardener · qa
 
-Trabajan sobre todo lo que cambió la feature (`git diff <base de la feature>`, anotada en `tmp/base-de-feature`); no necesitan sección propia salvo que el gherkin-writer anote algo para ellos acá.
+They work on everything the feature changed (`git diff <feature base>`, recorded in `tmp/base-de-feature`); they need no section of their own unless the gherkin-writer leaves a note for them here.
 
 ## Log
 
-- L1 (2026-11-03): al cerrar el panel con la X o con Atrás, con cambios sin guardar, «Pedir confirmación»; y el botón Atrás de Android con el panel abierto: «Cierra el panel».
+- L1 (2026-11-03): when closing the panel with the X or with Back, with unsaved changes, «Pedir confirmación» (translation: «Ask for confirmation»); and the Android Back button with the panel open: «Cierra el panel» (translation: «Closes the panel»).

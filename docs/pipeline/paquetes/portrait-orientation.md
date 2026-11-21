@@ -1,63 +1,63 @@
-# Paquete: orientacion-vertical
+# Package: portrait-orientation
 
-La app instalada se usa en orientación vertical en el celular: abierta desde su ícono, girar el teléfono no la pasa a horizontal (D5).
+The installed app is used in portrait orientation on the phone: opened from its icon, turning the phone does not put it in landscape (D5).
 
 ## Specs
 
-- **S1** (§6): «la app instalada se usa en vertical. Abierta desde su ícono en el celular, no gira nunca: girar el teléfono no la pasa a horizontal.»
-- **S2** (§6): «rige en todas las pantallas de la app instalada (Pendientes, Historial, Etiquetas, el panel y sus avisos, la pantalla de entrada y la pantalla de carga, §6.6), sin excepciones.»
-- **S3** (§6): «cualquiera de los dos sentidos verticales que el sistema permita; la app no fija uno.»
-- **S4** (§6): «abierta en una pestaña del navegador sigue girando como hoy y, en horizontal, se ve el diseño ancho de siempre (§6.2, Pantallas anchas). En la compu no cambia nada: en una pantalla de escritorio la orientación no la elige la app, tampoco instalada.»
-- **S5** (§6): «quien ya tiene la app instalada recibe el cambio solo, sin reinstalar, preguntar ni avisar, como toda versión nueva (§8); el sistema puede tardar algunas aperturas en aplicarlo.»
-- **S6** (§8): «Manifest: `name` "Tareas Hogar", `short_name` "Tareas"; ícono y colores con la paleta de la app; orientación vertical (§6).»
+- **S1** (§6): «the installed app is used in portrait. Opened from its icon on the phone, it never rotates: turning the phone does not put it in landscape.»
+- **S2** (§6): «it applies to all the screens of the installed app (**Pendientes**, **Historial**, the panel and its notices, the sign-in screen and the loading screen, §6.6), without exceptions.»
+- **S3** (§6): «either of the two portrait directions that the system allows; the app does not fix one.»
+- **S4** (§6): «opened in a browser tab it keeps rotating as today and, in landscape, the usual wide layout is shown (§6.2, Wide screens). On the computer nothing changes: on a desktop screen the orientation is not chosen by the app, not even when installed.»
+- **S5** (§6): «whoever already has the app installed receives the change by itself, without reinstalling, asking or notifying, like any new version (§8); the system may take a few openings to apply it.»
+- **S6** (§8): «Manifest: `name` "Tareas Hogar", `short_name` "Tareas"; icon and colors with the palette of the app; portrait orientation (§6).»
 
-## Decisiones
+## Decisions
 
-- D1 (2026-11-05, analyst): en la app instalada (D5), rige en todas sus pantallas (Pendientes, Historial, Etiquetas, el panel, la pantalla de entrada y la de carga), sin excepciones: el pedido no nombra ninguna y la §6 trata las reglas de presentación como globales.
-- D2 (2026-11-05, analyst): en la compu no cambia nada: la §1 la ubica en el celular "en el momento, por la casa", y en una pantalla de escritorio la orientación no la elige la app, tampoco instalada.
-- D3 (2026-11-05, analyst): "vertical" es cualquiera de los dos sentidos verticales que el sistema permita; no se pide fijar uno.
-- D4 (2026-11-05, analyst): quien ya tiene la app instalada recibe el cambio solo, sin reinstalar, preguntar ni avisar, como toda versión nueva (§8), aunque el sistema puede tardar algunas aperturas en aplicarlo.
-- D5 (2026-11-05, usuario): «Fijar vertical en la app instalada: abierta desde su ícono no gira nunca. En una pestaña del navegador sigue girando como hoy y, en horizontal, se ve el diseño ancho de siempre.»
+- D1 (2026-11-05, analyst): in the installed app (D5), it applies to all its screens (Pendientes, Historial, Etiquetas, the panel, the sign-in screen and the loading screen), without exceptions: the request does not name any, and §6 treats presentation rules as global.
+- D2 (2026-11-05, analyst): on the computer nothing changes: §1 places the phone use "in the moment, around the house", and on a desktop screen the orientation is not chosen by the app, not even when installed.
+- D3 (2026-11-05, analyst): "portrait" is either of the two portrait directions that the system allows; fixing one is not requested.
+- D4 (2026-11-05, analyst): whoever already has the app installed receives the change by itself, without reinstalling, asking or notifying, like any new version (§8), although the system may take a few openings to apply it.
+- D5 (2026-11-05, user): «Fijar vertical en la app instalada: abierta desde su ícono no gira nunca. En una pestaña del navegador sigue girando como hoy y, en horizontal, se ve el diseño ancho de siempre.» (translation: «Lock portrait in the installed app: opened from its icon it never rotates. In a browser tab it keeps rotating as today and, in landscape, the usual wide layout is shown.»)
 
-## Artefactos
+## Artifacts
 
-- Gherkin: `features/portrait-orientation.feature` (S1, S2, S3, S4, S5, S6; el Gherkin verifica lo que declara el manifest publicado (S1, S3, S6, y el `display` que hace que la orientación rija solo en la app instalada, S4); S2, S4, S5 los verifica `qa/portrait-orientation.md`)
+- Gherkin: `features/portrait-orientation.feature` (S1, S2, S3, S4, S5, S6; the Gherkin verifies what the published manifest declares (S1, S3, S6, and the `display` that makes the orientation apply only in the installed app, S4); S2, S4, S5 are verified by `qa/portrait-orientation.md`)
 - QA: `qa/portrait-orientation.md` (S1–S6)
 
 ## core
 
-- **Puede editar**: nada. La feature no tiene reglas de dominio: la orientación la declara el manifest y la aplica el sistema.
-- **Reglas**: ninguna.
-- **Reusa**: nada.
-- **Notas**: el commit `By core.` va vacío (`git commit --allow-empty`).
+- **Allowed edits**: nothing. The feature has no domain rules: the orientation is declared by the manifest and applied by the system.
+- **Rules**: none.
+- **Reuses**: nothing.
+- **Notes**: the `By core.` commit is empty (`git commit --allow-empty`).
 - **Gate**: `node scripts/gate.ts core`
 
 ## acceptance
 
-- **Puede editar**: `acceptance/steps/orientacion-vertical.ts`, `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `static/manifest.webmanifest`, `docs/pipeline/pendientes.txt`
-- **Features a conectar**: `features/portrait-orientation.feature`
-- **Pasos nuevos** (todos en `features/portrait-orientation.feature`):
+- **Allowed edits**: `acceptance/steps/orientacion-vertical.ts`, `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `static/manifest.webmanifest`, `docs/pipeline/pendientes.txt`
+- **Features to connect**: `features/portrait-orientation.feature`
+- **New steps** (all in `features/portrait-orientation.feature`):
   - `el manifest que publica la app`
   - `el campo <campo> del manifest es <valor>`
-- **Notas**:
-  - Los pasos leen `static/manifest.webmanifest`, el archivo que la app enlaza (`src/app.html`, `<link rel="manifest">`) y que el service worker precachea; no hay core que preguntar. `acceptance` puede importar `node:` (`scripts/check-arch.ts`).
-  - El cambio de la feature es una línea del manifest, `"orientation": "portrait"` (no `portrait-primary`: S3), y va en este rol porque es lo que deja la aceptación en verde. Ver el escenario en rojo antes de agregarla.
-  - El Then compara un campo con un literal: no pasa por ninguna regla del oráculo ni necesita filtro de equivalentes.
+- **Notes**:
+  - The steps read `static/manifest.webmanifest`, the file that the app links (`src/app.html`, `<link rel="manifest">`) and that the service worker precaches; there is no core to ask. `acceptance` may import `node:` (`scripts/check-arch.ts`).
+  - The change of the feature is one line of the manifest, `"orientation": "portrait"` (not `portrait-primary`: S3), and it belongs to this role because it is what turns the acceptance green. See the scenario red before adding it.
+  - The Then compares a field with a literal: it does not go through any oracle rule or need an equivalents filter.
 - **Gate**: `node scripts/gate.ts acceptance`
 
 ## ui
 
-- **Puede editar**: nada. El manifest ya lo cambió acceptance, y ninguna pantalla fija la orientación por su cuenta: así en una pestaña del navegador sigue girando (S2, S4).
-- **Comportamiento visible**: `qa/portrait-orientation.md`
-- **Notas**: verificar que nada en `src/` llama a `screen.orientation` ni gira el contenido en horizontal; si algo lo hace, `STATUS: BLOCKED`. El commit `By ui.` va vacío (`git commit --allow-empty`).
+- **Allowed edits**: nothing. The manifest was already changed by acceptance, and no screen fixes the orientation on its own: that way, in a browser tab it keeps rotating (S2, S4).
+- **Visible behavior**: `qa/portrait-orientation.md`
+- **Notes**: check that nothing in `src/` calls `screen.orientation` or rotates the content in landscape; if something does, `STATUS: BLOCKED`. The `By ui.` commit is empty (`git commit --allow-empty`).
 - **Gate**: `node scripts/gate.ts ui`
 
 ## cleaner · architect · hardener · qa
 
-Trabajan sobre todo lo que cambió la feature (`git diff <base de la feature>`, anotada en `tmp/base-de-feature`); no necesitan sección propia salvo que el gherkin-writer anote algo para ellos acá.
+They work on everything the feature changed (`git diff <feature base>`, noted in `tmp/base-de-feature`); they need no section of their own unless the gherkin-writer leaves a note for them here.
 
-- **qa**: `e2e/pwa-sin-conexion.spec.ts` ya verifica el manifest (`name`, `short_name`, `display`): sumar `orientation` ahí o en el spec nuevo, sin duplicar. El navegador de pruebas no instala la app ni gira la pantalla: el giro en pestaña se simula cambiando el viewport (Flujo 3).
+- **qa**: `e2e/pwa-sin-conexion.spec.ts` already verifies the manifest (`name`, `short_name`, `display`): add `orientation` there or in the new spec, without duplicating. The test browser neither installs the app nor rotates the screen: the rotation in a tab is simulated by changing the viewport (Flow 3).
 
 ## Log
 
-- L1 (2026-11-05): orientacion vertical
+- L1 (2026-11-05): «orientacion vertical» (translation: «portrait orientation»)
