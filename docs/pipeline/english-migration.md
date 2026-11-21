@@ -113,7 +113,10 @@ Applies to `docs/spec.md`, `qa/*.md`, `docs/pipeline/paquetes/*.md`, `.claude/ag
 - **Spec quotes in packages.** Every `S#` in a package quotes `docs/spec.md` verbatim between `«»`. Packages are translated after the spec and copy the quote from the translated spec, never retranslate it.
 - **Neutral English.** No slang, no Rioplatense forms, plain short sentences. Keep the author's meaning, including hedges and "out of scope" lists.
 
-## Adapter and UI file names
+## Phase 4 outcome (2026-11-20)
+
+Done: features, QA procedures and packages renamed; spec, QA procedures, packages, agent prompts, `CLAUDE.md`, `README.md` and process documents translated; `Flujo N` is `Flow N` in QA and e2e titles. Left as is on purpose: the machine-read `Allowed edits` lists of old packages (they keep the Spanish paths that existed then), Gherkin step text quoted in packages, user quotes in Spanish with their translation, the Spanish text the `bdd-pipeline` tool prints (`Rol:`, `Paquete:`, `SALTEAR:`), and `docs/research/` and `docs/v3/`. Public routes (D4) stay in Spanish.
+
 
 Adapters: `anotaciones` annotations, `atras` back, `conexion` connection, `confirmacion-al-salir` confirm-on-leave, `fuentes` fonts, `mostrar-completadas` show-completed, `mostrar-pausadas` show-paused, `pantalla-de-carga` loading-screen, `portapapeles` clipboard, `recientes` recents, `reloj` clock, `repositorio` repository, `teclado` keyboard (`auth`, `firebase` and `ids` keep their names).
 
