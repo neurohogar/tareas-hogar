@@ -57,7 +57,7 @@ El panel de edición entra en la pantalla del celular: se organiza en pestañas 
 
 ## Artefactos
 
-- Gherkin: `features/panel-pestanas.feature` (S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19)
+- Gherkin: `features/panel-tabs.feature` (S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19)
 - QA: `qa/panel-mobile.md`
 
 Solo van a Gherkin las reglas que deciden qué se muestra (corte de 40rem, pestañas de crear y editar, marca de error por sección, destino al fallar Guardar, barra de Guardar con el teclado). Disposición, orden de campos, iconos, barras fijas, pantalla completa, "nada se pierde", S1/S2/S4-S8/S10/S11/S14/S18/S19 y el resto de la presentación se verifican en `qa/panel-mobile.md`; no hay Gherkin posible sin inventar reglas.
@@ -73,7 +73,7 @@ Solo van a Gherkin las reglas que deciden qué se muestra (corte de 40rem, pesta
 ## acceptance
 
 - **Puede editar**: `acceptance/steps/panel-pestanas.ts`, `acceptance/steps/index.ts`, `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `docs/pipeline/pendientes.txt`
-- **Features a conectar**: `features/panel-pestanas.feature`
+- **Features a conectar**: `features/panel-tabs.feature`
 - **Pasos nuevos**:
   - `una pantalla de <ancho> rem de ancho`
   - `el panel se presenta <presentacion>`

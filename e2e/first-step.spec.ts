@@ -22,7 +22,7 @@ import {
 	type Definition
 } from './support';
 
-// qa/primer-paso.md: the panel's Primer paso field, its line in the row, when it is shown and unsaved changes.
+// qa/first-step.md: the panel's Primer paso field, its line in the row, when it is shown and unsaved changes.
 
 test.beforeEach(async () => {
 	await cleanEmulators();

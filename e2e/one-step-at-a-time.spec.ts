@@ -22,7 +22,7 @@ import {
 	type Definition
 } from './support';
 
-// qa/pasos-de-a-uno.md: the panel's step fields, the row's line and buttons, Hecho on the last step,
+// qa/one-step-at-a-time.md: the panel's step fields, the row's line and buttons, Hecho on the last step,
 // when it is shown, what does not change, Cambios sin guardar and two devices.
 
 test.beforeEach(async () => {

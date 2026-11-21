@@ -7,7 +7,7 @@ import {
   type Route,
 } from "@playwright/test";
 
-// Helpers for the qa/fuente-empaquetada.md procedure (loading screen, Flows 5, 8 and 9).
+// Helpers for the qa/bundled-font.md procedure (loading screen, Flows 5, 8 and 9).
 
 export const ATKINSON_FILES = /\/fuentes\/atkinson-.*\.woff2/;
 export const ATKINSON_FILE =

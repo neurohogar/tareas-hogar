@@ -32,7 +32,7 @@ import {
 } from "./screen-support";
 import { ORIGIN_VERSIONS, serve, versionWithOtherSet } from "./versions-support";
 
-// Flow 9 of qa/fuente-empaquetada.md. What needs the service worker or an installed version
+// Flow 9 of qa/bundled-font.md. What needs the service worker or an installed version
 // (steps 5, 15, 16 and 24) is in bundled-font-offline.spec.ts.
 
 const HOUR = "2026-07-15T08:00:00";
@@ -261,7 +261,7 @@ test("Flujo 9 paso 10: con los datos demorados 3 s, sigue hasta los 3 s y se va 
   await sessionWithTask(page);
   const b = await otherDeviceWithSession(browser, page);
   // The collections go in a single request, which is what the network can delay: the wait
-  // for each one separately is decided by features/pantalla-de-carga.feature.
+  // for each one separately is decided by features/loading-screen.feature.
   const data = await retain(b.page, DATA);
   const a = await openStopped(b.page, HOUR);
   await a.staysA(2.9);

@@ -17,7 +17,7 @@ import {
 	type Definition
 } from './support';
 
-// qa/version-minima.md: the panel field, the line and the «Hice la mínima» button of the row, completing with the minimal version,
+// qa/minimal-version.md: the panel field, the line and the «Hice la mínima» button of the row, completing with the minimal version,
 // with steps, Historial and Borrar, what does not change and what does not show it, Cambios sin guardar and two devices.
 
 test.beforeEach(async () => {

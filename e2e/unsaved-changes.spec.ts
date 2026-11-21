@@ -19,7 +19,7 @@ import {
 	sessionWithClock
 } from './support';
 
-// qa/cambios-sin-guardar.md: close and action notices, Back button, reload and two devices.
+// qa/unsaved-changes.md: close and action notices, Back button, reload and two devices.
 test.use({ viewport: { width: 360, height: 640 }, hasTouch: true });
 
 test.beforeEach(async () => {

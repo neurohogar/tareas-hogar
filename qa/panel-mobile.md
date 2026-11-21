@@ -13,12 +13,12 @@ Verifica, solo por la interfaz, el panel **Nueva tarea** / **Editar tarea** en e
 
 Cubre spec §6.2 (Presentación del panel) y las reglas de campos y acciones de §6.2, §5.8, §5.9, §5.4 y §7 en cuanto a dónde se ven.
 
-Fuera de alcance: las reglas de cada campo y acción (`qa/puntual.md`, `qa/periodica-relativa.md`, `qa/periodica-calendario.md`, `qa/horario.md`, `qa/emoji-y-nota.md`, `qa/posponer.md`, `qa/pausar.md`, `qa/editar-borrar.md`), el aviso de cambios sin guardar y el botón Atrás de Android (`qa/cambios-sin-guardar.md`), y la orientación vertical.
+Fuera de alcance: las reglas de cada campo y acción (`qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/schedule.md`, `qa/emoji-and-note.md`, `qa/postpone.md`, `qa/pause.md`, `qa/edit-delete.md`), el aviso de cambios sin guardar y el botón Atrás de Android (`qa/unsaved-changes.md`), y la orientación vertical.
 
 ## Entorno
 
 - Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de cada flujo.
-- Cada flujo parte de un contexto de navegador nuevo, con sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de `qa/periodica-relativa.md`).
+- Cada flujo parte de un contexto de navegador nuevo, con sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de `qa/recurring-relative.md`).
 - Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la app, detenido (`page.clock.pauseAt`), en la zona `America/Argentina/Buenos_Aires`. "Avanzar el reloj a X" lo adelanta hasta X y espera a que la pantalla se actualice sola.
 - **Celular**: viewport de 360x640 px (22.5rem) con emulación táctil. **Ancho**: 1024x768 px (64rem). Los cortes de 40rem son 640 px (celular) y 641 px (ancho); la fuente raíz es de 16 px.
 - **Teclado en pantalla abierto**: se emula reduciendo el alto del viewport visual (por ejemplo, a 640x300 px tras tocar un campo de texto en el celular); "cerrarlo" es volver al alto original. Es la única manera de verlo en el navegador de pruebas.
@@ -42,7 +42,7 @@ Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16, vie
 - **Pantallas anchas**: sin `tablist`; las tres secciones seguidas, cada una con su nombre (**Tarea**, **Cuándo**, **Acciones**) como título sin icono; **Acciones** solo al editar. El panel mide lo de siempre (no ocupa todo el viewport).
 - **Sin icono**: **Guardar**, **Agregar horario**, **Quitar**, **Quitar emoji**, los títulos de sección de pantallas anchas y los diálogos.
 - **Visible** es dentro del viewport, sin quedar tapado por otro elemento.
-- **Aviso** e **Historial**: los de `qa/historial-deshacer.md`. **Franja "Sin conexión"**: la de `qa/pwa-sin-conexion.md`.
+- **Aviso** e **Historial**: los de `qa/history-undo.md`. **Franja "Sin conexión"**: la de `qa/pwa-offline.md`.
 
 ## Flujo 1: crear en el celular
 

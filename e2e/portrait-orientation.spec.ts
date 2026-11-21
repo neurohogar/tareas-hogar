@@ -15,7 +15,7 @@ import {
 import { openStopped, screenName, withoutNotices, textVisible } from './screen-support';
 import { cachesOf, hasVersionWaiting, ORIGIN_VERSIONS, serve, versionWithSameFonts, versionOf } from './versions-support';
 
-// qa/orientacion-vertical.md. This suite exercises the service worker (Flow 5) and the PWA, so it allows it
+// qa/portrait-orientation.md. This suite exercises the service worker (Flow 5) and the PWA, so it allows it
 // (the others block it). Celular: 360x640 with touch emulation.
 test.use({ serviceWorkers: 'allow', viewport: { width: 360, height: 640 }, hasTouch: true });
 

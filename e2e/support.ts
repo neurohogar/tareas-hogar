@@ -112,7 +112,7 @@ export async function dimmed(f: Locator): Promise<boolean> {
   });
 }
 
-/** Contrast (qa/mostrar-completadas.md): bold without strikethrough, or struck through, normal weight and dimmed. */
+/** Contrast (qa/show-completed.md): bold without strikethrough, or struck through, normal weight and dimmed. */
 async function verifyContrast(f: Locator, completed: boolean) {
   const t = rowTitle(f);
   const weight = Number(await t.evaluate((e) => getComputedStyle(e).fontWeight));
