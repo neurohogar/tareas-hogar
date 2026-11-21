@@ -1,165 +1,165 @@
-# QA: fuente y emoji empaquetados, y pantalla de carga
+# QA: bundled font and emoji, and the loading screen
 
-Verifica, solo por la interfaz, que la app se ve con la fuente **Atkinson Hyperlegible Next** y los emoji de **Noto Color Emoji** que viajan con ella, y que al iniciar muestra la pantalla de carga mientras los espera:
+Verifies, through the interface only, that the app is drawn with the **Atkinson Hyperlegible Next** font and the **Noto Color Emoji** emoji that ship with it, and that on start it shows the loading screen while it waits for them:
 
-- que rigen en todas las pantallas, en campos y botones, y en los dos temas;
-- qué fuente dibuja cada tipo de carácter (la tabla de la §6);
-- que tamaños, pesos y jerarquía no cambian, salvo el campo Título del panel, que mide 20px, y que las horas siguen con cifras de ancho fijo;
-- que no se pide nada a un servicio externo y que todo funciona sin conexión, también un emoji que nunca se vio en ese dispositivo;
-- qué se ve mientras la fuente o el juego de emoji no están disponibles, y que cambian solos, también cuando la descarga del juego se aborta por una falla de red;
-- que la app se instala y queda disponible sin conexión aunque un archivo de fuente falle al bajar, y que ese archivo se vuelve a bajar;
-- qué ofrece el selector de emoji;
-- cuándo aparece la pantalla de carga, qué se ve en ella y qué espera (lo que decide cuándo se va, con todos sus tiempos, está también en `features/loading-screen.feature`);
-- que un emoji que el juego no tiene se guarda y se muestra igual.
+- that they apply on every screen, in fields and buttons, and in both themes;
+- which font draws each kind of character (the table in §6);
+- that sizes, weights and hierarchy do not change, except for the panel's Title field, which is 20px, and that times keep fixed-width digits;
+- that nothing is requested from an external service and that everything works offline, including an emoji that was never seen on that device;
+- what is shown while the font or the emoji set is not available, and that they switch by themselves, also when the download of the set is aborted by a network failure;
+- that the app installs and is available offline even if a font file fails to download, and that the file is downloaded again;
+- what the emoji picker offers;
+- when the loading screen appears, what is seen on it and what it waits for (what decides when it goes away, with all its times, is also in `features/loading-screen.feature`);
+- that an emoji the set does not have is saved and shown anyway.
 
-Cubre spec §6 (Fuente y emoji empaquetados), §6.2 (el campo Título y lo que ofrece el selector), §6.6 (Pantalla de carga), §7 (qué guarda la app para funcionar sin conexión y qué vive solo en el dispositivo) y §8 (la versión nueva llega sola; la instalación no depende de las fuentes).
+Covers spec §6 (Bundled font and emoji), §6.2 (the Title field and what the picker offers), §6.6 (Loading screen), §7 (what the app stores to work offline and what lives only on the device) and §8 (the new version arrives by itself; the installation does not depend on the fonts).
 
-Fuera de alcance: el teclado del celular y los calendarios y listas nativas de un campo (los dibuja el sistema), y la clasificación carácter por carácter y el rechazo de un tono de piel suelto (`features/bundled-font.feature`; la interfaz no puede producirlo).
+Out of scope: the phone keyboard and the native calendars and lists of a field (the system draws them), and the character-by-character classification and the rejection of a lone skin tone (`features/bundled-font.feature`; the interface cannot produce it).
 
-## Entorno
+## Environment
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de cada flujo; sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de `qa/recurring-relative.md`).
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la app, detenido, en la zona `America/Argentina/Buenos_Aires`.
-- **Celular**: 360x640 px con emulación táctil. **Ancho**: 1024x768 px. **Tema claro** y **Tema oscuro**: `page.emulateMedia({ colorScheme })`.
-- **Sin conexión**: `browserContext.setOffline(true)` después de que la app terminó de cargar y de bajar la fuente y el juego de emoji.
-- **Bloquear la fuente / el juego de emoji**: `page.route` aborta los pedidos de los archivos de la fuente o del juego de emoji. **Bloquear servicios externos**: `page.route` registra todo pedido a un origen distinto del de la app (salvo Firebase Auth y Firestore).
-- **Pedido demorado**: el pedido del juego de emoji queda retenido, sin respuesta, hasta que se lo libera.
-- **Falla de red en un archivo**: el pedido del archivo se corta con un error de red, lo haga la página o el service worker, así que el corte tiene que alcanzar también a los pedidos del service worker (`page.route` no los ve). Lo elige QA: `browserContext.route` si los intercepta, o el servidor de versiones de `e2e/versiones-apoyo.ts` cerrando la conexión. Un archivo de fuente es uno cualquiera de Atkinson (por ejemplo `atkinson-hyperlegible-next-latin-400-normal.woff2`).
-- **App instalada**: el service worker está activo y controla la página (`navigator.serviceWorker.controller`). Es la única espera que mira adentro; lo que se verifica después se ve en la interfaz.
-- **Abrir la app**: toda apertura pasa por la pantalla de carga. Con el reloj detenido no se va sola: abrir incluye avanzar el reloj hasta que se fue, salvo en los pasos que miden ese tiempo. Los flujos 1 a 8 empiezan a verificar cuando ya se fue.
-- **Tiempo de la pantalla**: los segundos cuentan desde que la app arranca y se miden con el reloj simulado (`page.clock.runFor`): antes del momento esperado sigue abierta y al llegar se va.
-- **Demorar datos**: el pedido a Firestore (o a Auth) queda retenido hasta que se lo libera.
-- Crear una tarea: tocar **+**, escribir el título (y elegir el emoji con el selector si el paso lo indica), guardar.
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of each flow; session started with the account `qa@example.com` of the Auth Emulator (Flow 1 of `qa/recurring-relative.md`).
+- Simulated browser clock (`page.clock`) installed **before** opening the app, stopped, in the `America/Argentina/Buenos_Aires` zone.
+- **Phone**: 360x640 px with touch emulation. **Wide**: 1024x768 px. **Light theme** and **Dark theme**: `page.emulateMedia({ colorScheme })`.
+- **Offline**: `browserContext.setOffline(true)` after the app finished loading and downloading the font and the emoji set.
+- **Block the font / the emoji set**: `page.route` aborts the requests for the font files or the emoji set files. **Block external services**: `page.route` records every request to an origin other than the app's (except Firebase Auth and Firestore).
+- **Delayed request**: the request for the emoji set is held, without a response, until it is released.
+- **Network failure on a file**: the request for the file is cut with a network error, whether the page or the service worker makes it, so the cut must also reach the service worker's requests (`page.route` does not see them). QA chooses how: `browserContext.route` if it intercepts them, or the version server of `e2e/versions-support.ts` closing the connection. A font file is any one of the Atkinson files (for example `atkinson-hyperlegible-next-latin-400-normal.woff2`).
+- **Installed app**: the service worker is active and controls the page (`navigator.serviceWorker.controller`). It is the only wait that looks inside; what is verified afterwards is seen in the interface.
+- **Open the app**: every opening goes through the loading screen. With the clock stopped it does not go away by itself: opening includes advancing the clock until it is gone, except in the steps that measure that time. Flows 1 to 8 start verifying once it is gone.
+- **Screen time**: the seconds count from when the app starts and are measured with the simulated clock (`page.clock.runFor`): before the expected moment it stays open and on reaching it, it goes away.
+- **Delay data**: the request to Firestore (or to Auth) is held until it is released.
+- Create a task: tap **+**, type the title (and choose the emoji with the picker if the step says so), save.
 
-## Contrato observable
+## Observable contract
 
-- **Fuente que dibuja un texto**: la que informa el navegador para el nodo (CDP `CSS.getPlatformFontsForNode`, nombre de familia). Atkinson es "Atkinson Hyperlegible Next"; el juego de emoji, "Noto Color Emoji"; "la fuente del sistema" y "el emoji del dispositivo" son cualquier otra.
-- **Pedidos de red**: los que registra Playwright (`page.on("request")`).
-- **Tamaño y peso**: el alto y el ancho de la caja del elemento (`boundingBox`) y su `font-size` y `font-weight` calculados.
-- **Pantalla de carga**: el elemento con nombre accesible «Cargando» (`getByRole('img', { name: 'Cargando' })`). **Pulso**: `element.getAnimations()` del ícono tiene una animación en curso; **quieto**: no tiene ninguna.
-- **Textos de referencia**: título «Ñandú: camión 12:30», nota «Año 2026 ✈», título con otro alfabeto «日本語».
+- **Font that draws a text**: the one the browser reports for the node (CDP `CSS.getPlatformFontsForNode`, family name). Atkinson is "Atkinson Hyperlegible Next"; the emoji set, "Noto Color Emoji"; "the system font" and "the device emoji" are any other.
+- **Network requests**: those recorded by Playwright (`page.on("request")`).
+- **Size and weight**: the height and width of the element's box (`boundingBox`) and its computed `font-size` and `font-weight`.
+- **Loading screen**: the element with accessible name «Cargando» (`getByRole('img', { name: 'Cargando' })`). **Pulse**: the icon's `element.getAnimations()` has an animation running; **still**: it has none.
+- **Reference texts**: title «Ñandú: camión 12:30», note «Año 2026 ✈», title with another alphabet «日本語».
 
-## Flujo 1: toda la app con la fuente
+## Flow 1: the whole app with the font
 
-1. Crear la tarea «Regar» con emoji 🌱 y nota «Año 2026 ✈».
-2. En **Pendientes**, la fila de «Regar» y la pestaña **Pendientes** se ven con Atkinson; el 🌱 con Noto.
-3. Ir a **Historial**: los títulos, los botones, los campos y la barra de pestañas se ven con Atkinson.
-4. Abrir el panel de «Regar»: título, nota, botones (**Guardar**, **Pausar** o **Posponer** según corresponda), las pestañas y los campos se ven con Atkinson; el ✈ de la nota se ve con Noto.
-5. Abrir el selector de emoji: sus Recientes y todos los emoji que muestra se ven con Noto; los títulos y botones del selector, con Atkinson.
-6. Tocar el checkbox de «Regar»: el aviso de deshacer («Completaste «🌱 Regar»») se ve con Atkinson y el 🌱 con Noto.
-7. Cerrar el panel con cambios sin guardar: el aviso «Tenés cambios sin guardar» y sus botones se ven con Atkinson.
-8. Cerrar sesión: la pantalla de entrada se ve con Atkinson.
-9. Repetir 2 a 8 en **Celular** y en **Ancho**, y en **Tema claro** y en **Tema oscuro**: mismo resultado.
+1. Create the task «Regar» with emoji 🌱 and note «Año 2026 ✈».
+2. On **Pendientes**, the «Regar» row and the **Pendientes** tab are drawn with Atkinson; the 🌱 with Noto.
+3. Go to **Historial**: the titles, the buttons, the fields and the tab bar are drawn with Atkinson.
+4. Open the «Regar» panel: title, note, buttons (**Guardar**, **Pausar** or **Posponer** as applicable), the tabs and the fields are drawn with Atkinson; the ✈ in the note is drawn with Noto.
+5. Open the emoji picker: its Recientes and all the emoji it shows are drawn with Noto; the picker's titles and buttons, with Atkinson.
+6. Tap the «Regar» checkbox: the undo notice («Completaste «🌱 Regar»») is drawn with Atkinson and the 🌱 with Noto.
+7. Close the panel with unsaved changes: the notice «Tenés cambios sin guardar» and its buttons are drawn with Atkinson.
+8. Sign out: the sign-in screen is drawn with Atkinson.
+9. Repeat 2 to 8 on **Phone** and on **Wide**, and in **Light theme** and in **Dark theme**: same result.
 
-## Flujo 2: qué fuente dibuja cada carácter
+## Flow 2: which font draws each character
 
-1. Crear la tarea con título «Ñandú: camión ❤ 日本語 🌱», nota «☀ ☎ © ™ #».
-2. En la fila y en el panel: «Ñandú: camión» se ve con Atkinson; «❤» con Noto; «日本語» con la fuente del sistema; «🌱» con Noto.
-3. En la nota: «☀» y «☎» con Noto; «©», «™» y «#» con Atkinson.
-4. Pegar en el título un emoji con ZWJ (👨‍👩‍👧), uno con tono (👍🏽) y una bandera (🇦🇷): los tres se ven con Noto, cada uno como un solo dibujo.
+1. Create the task with title «Ñandú: camión ❤ 日本語 🌱», note «☀ ☎ © ™ #».
+2. In the row and in the panel: «Ñandú: camión» is drawn with Atkinson; «❤» with Noto; «日本語» with the system font; «🌱» with Noto.
+3. In the note: «☀» and «☎» with Noto; «©», «™» and «#» with Atkinson.
+4. Paste into the title an emoji with ZWJ (👨‍👩‍👧), one with a tone (👍🏽) and a flag (🇦🇷): all three are drawn with Noto, each as a single image.
 
-## Flujo 3: sin cambios de diseño y horas
+## Flow 3: no design changes, and times
 
-1. Con la fuente bloqueada (Flujo 5, paso 1) anotar tamaño de caja, `font-size` y `font-weight` del título de una fila, de un botón y de una pestaña. Recargar sin bloquear y compararlos.
-2. `font-size` y `font-weight` son iguales; la jerarquía visual se mantiene: el título de la fila se distingue de la nota por el peso (el tamaño es el mismo), el encabezado del panel es más grande que la nota y la pestaña elegida se ve resaltada. Al crear y al editar una tarea, en **Celular** y en **Ancho**, el campo **Título** del panel mide 20px de `font-size` y la **Nota** 16px, con la fuente disponible y con la fuente bloqueada.
-3. Completar una tarea para que el Historial muestre dos entradas «08:05» y «11:11»: las dos horas ocupan el mismo ancho y las cifras quedan alineadas en columna.
+1. With the font blocked (Flow 5, step 1) note the box size, `font-size` and `font-weight` of a row title, a button and a tab. Reload without blocking and compare them.
+2. `font-size` and `font-weight` are equal; the visual hierarchy is kept: the row title is told apart from the note by weight (the size is the same), the panel heading is larger than the note and the chosen tab is highlighted. When creating and when editing a task, on **Phone** and on **Wide**, the panel's **Título** field is 20px of `font-size` and the **Nota** 16px, with the font available and with the font blocked.
+3. Complete a task so that the Historial shows two entries «08:05» and «11:11»: both times take the same width and the digits are aligned in a column.
 
-## Flujo 4: sin conexión y sin servicios externos
+## Flow 4: offline and without external services
 
-1. Bloquear servicios externos, abrir la app y recorrer Pendientes, Historial, el panel y el selector: ningún pedido fue a otro origen que el de la app, Firebase Auth o Firestore.
-2. Esperar a que baje todo, ponerse **Sin conexión** y recargar: la app abre con Atkinson y Noto.
-3. Sin conexión, abrir el selector y buscar un emoji que no se usó en ese dispositivo (por ejemplo 🪼): se ve con Noto.
-4. Sin conexión, escribir 🪼 en el título de una tarea nueva: se ve con Noto.
+1. Block external services, open the app and go through Pendientes, Historial, the panel and the picker: no request went to an origin other than the app's, Firebase Auth or Firestore.
+2. Wait for everything to download, go **Offline** and reload: the app opens with Atkinson and Noto.
+3. Offline, open the picker and look for an emoji that was not used on that device (for example 🪼): it is drawn with Noto.
+4. Offline, type 🪼 in the title of a new task: it is drawn with Noto.
 
-## Flujo 5: mientras no están disponibles
+## Flow 5: while they are not available
 
-1. Bloquear los archivos de la fuente y abrir la app: la pantalla de carga se muestra, sin ningún texto de respaldo a la vista, y no espera los archivos que fallaron. Al irse, todo el texto se ve con la fuente del sistema, ninguno desaparece, no hay aviso ni mensaje.
-2. Quitar el bloqueo y recargar: el texto pasa a Atkinson sin tocar nada más.
-3. Bloquear el juego de emoji y abrir la app: la pantalla de carga no espera el juego que falló. Al irse, los emoji se ven con los del dispositivo, ninguno en blanco, sin aviso.
-4. Quitar el bloqueo y recargar: pasan a Noto.
-5. **Pedido demorado**: abrir la app con el pedido del juego demorado: la pantalla de carga sigue abierta hasta el tope de 10 s, sin que se vea ningún emoji de respaldo. Al irse, los emoji se ven con los del dispositivo, ninguno en blanco, sin aviso. Liberar el pedido: los emoji pasan a Noto sin recargar ni aviso, y no hubo un segundo pedido.
-6. **Descarga abortada**: abrir la app con **Falla de red** en el juego de emoji: la pantalla de carga no espera hasta el tope. Al irse, los emoji se ven con los del dispositivo, ninguno en blanco, sin aviso. Ponerse **Sin conexión**, quitar la falla y volver a tener conexión, sin recargar: la app pide el juego otra vez (hay un pedido nuevo registrado) y los emoji pasan a Noto, sin aviso.
+1. Block the font files and open the app: the loading screen is shown, with no fallback text in view, and it does not wait for the files that failed. When it goes away, all the text is drawn with the system font, none disappears, there is no notice or message.
+2. Remove the block and reload: the text switches to Atkinson without touching anything else.
+3. Block the emoji set and open the app: the loading screen does not wait for the set that failed. When it goes away, the emoji are drawn with the device ones, none blank, with no notice.
+4. Remove the block and reload: they switch to Noto.
+5. **Delayed request**: open the app with the set request delayed: the loading screen stays open until the 10 s cap, with no fallback emoji in view. When it goes away, the emoji are drawn with the device ones, none blank, with no notice. Release the request: the emoji switch to Noto without reloading or notice, and there was no second request.
+6. **Aborted download**: open the app with **Network failure on a file** on the emoji set: the loading screen does not wait until the cap. When it goes away, the emoji are drawn with the device ones, none blank, with no notice. Go **Offline**, remove the failure and get the connection back, without reloading: the app requests the set again (a new request is recorded) and the emoji switch to Noto, with no notice.
 
-## Flujo 6: emoji que el juego no tiene
+## Flow 6: emoji the set does not have
 
-Cada apertura empieza con la pantalla de carga (ver **Abrir la app**); cuando el juego está bloqueado, la pantalla no lo espera.
+Each opening starts with the loading screen (see **Open the app**); when the set is blocked, the screen does not wait for it.
 
-1. Crear una tarea con título «Prueba» y el emoji que Noto no tiene (el carácter U+1FAFF, sin dibujo asignado hoy, escrito en el título).
-2. Guardar: la tarea se guarda; la fila muestra el carácter con el emoji del dispositivo, no en blanco, sin error ni aviso.
-3. Abrir otra vez la tarea en el panel: el título conserva el carácter.
-4. En otro dispositivo B con la misma cuenta, la fila muestra el mismo carácter.
-5. El selector de emoji, con el juego y sin él, ofrece lo mismo: 1914 emoji base agrupados por categoría, con navegación entre categorías, y cada uno con sus variantes de un tono de piel. No ofrece los 9 emoji del grupo de componentes (los 5 tonos de piel y los 4 tipos de cabello sueltos) ni las variantes de dos tonos de piel. Buscar «planta», «escoba» o «perro» da resultados, y elegir uno lo asigna a la tarea y cierra el selector.
-6. Poner en el Firestore Emulator, como llegados por otra vía, una tarea por cada cabello suelto (🦰, 🦱, 🦳, 🦲) y otra con 🧑🏻‍🤝‍🧑🏿 (dos tonos): las filas los muestran; al abrir cada tarea en el panel, cambiar la nota y guardar, se guarda y conserva su emoji, sin error.
+1. Create a task with title «Prueba» and the emoji that Noto does not have (the character U+1FAFF, with no image assigned today, typed in the title).
+2. Save: the task is saved; the row shows the character with the device emoji, not blank, with no error or notice.
+3. Open the task again in the panel: the title keeps the character.
+4. On another device B with the same account, the row shows the same character.
+5. The emoji picker, with the set and without it, offers the same: 1914 base emoji grouped by category, with navigation between categories, and each with its variants of one skin tone. It does not offer the 9 emoji of the components group (the 5 skin tones and the 4 hair types alone) or the variants of two skin tones. Searching «planta», «escoba» or «perro» gives results, and choosing one assigns it to the task and closes the picker.
+6. Put in the Firestore Emulator, as if they arrived by another route, one task for each lone hair type (🦰, 🦱, 🦳, 🦲) and another with 🧑🏻‍🤝‍🧑🏿 (two tones): the rows show them; when opening each task in the panel, changing the note and saving, it is saved and keeps its emoji, with no error.
 
-## Flujo 7: versión nueva
+## Flow 7: new version
 
-1. Con la app abierta con una versión anterior, publicar la versión con la fuente y el juego de emoji.
-2. Cerrar la app y abrirla de nuevo: se ve con Atkinson y Noto, sin que haya aparecido pregunta ni aviso en ningún momento.
+1. With the app open on an earlier version, publish the version with the font and the emoji set.
+2. Close the app and open it again: it is drawn with Atkinson and Noto, with no question or notice having appeared at any moment.
 
-## Flujo 8: la instalación no depende de la fuente ni del juego
+## Flow 8: the installation does not depend on the font or the set
 
-En todos los casos la pantalla de carga se muestra al abrir y no espera lo que falló: se va antes del tope de 10 s, y nunca impide instalar ni usar la app.
+In every case the loading screen is shown on opening and does not wait for what failed: it goes away before the 10 s cap, and never prevents installing or using the app.
 
-Primera instalación (cada caso en un contexto de navegador nuevo, sin nada guardado):
+First installation (each case in a new browser context, with nothing stored):
 
-1. Con **Falla de red** en el juego de emoji, abrir la app, entrar y crear la tarea «Regar» con emoji 🌱. Esperar **App instalada**.
-2. Ponerse **Sin conexión** y recargar: la app abre, «Regar» se ve con Atkinson y el 🌱 con el emoji del dispositivo, no en blanco, sin aviso ni mensaje sobre la fuente.
-3. Quitar la falla, volver a tener conexión y, si hace falta, cerrar la app y abrirla de nuevo una vez: el 🌱 pasa a Noto sin aviso. Ponerse **Sin conexión** y recargar: el 🌱 sigue con Noto, y también uno que nunca se vio en ese dispositivo (🪼, escrito en un título).
-4. En otro contexto nuevo, con **Falla de red** en un archivo de fuente, abrir la app, entrar y crear la tarea. Esperar **App instalada**.
-5. Ponerse **Sin conexión** y recargar: la app abre, sin aviso; el texto que usa ese archivo se ve con la fuente del sistema, nunca invisible. El 🌱 se ve con Noto.
-6. Quitar la falla, volver a tener conexión y, si hace falta, cerrar la app y abrirla de nuevo una vez. Ponerse **Sin conexión** y recargar: el texto se ve con Atkinson.
-7. En otro contexto nuevo, hacer que falle solo el primer pedido de cada archivo de fuente y del juego; los siguientes responden. Abrir la app (la pantalla de carga deja de esperarlos en cuanto fallan, aunque los reintentos sigan), entrar y, si hace falta, cerrarla y abrirla de nuevo una vez: hay más de un pedido registrado de esos archivos. Ponerse **Sin conexión** y recargar: Atkinson y Noto.
+1. With **Network failure on a file** on the emoji set, open the app, sign in and create the task «Regar» with emoji 🌱. Wait for **Installed app**.
+2. Go **Offline** and reload: the app opens, «Regar» is drawn with Atkinson and the 🌱 with the device emoji, not blank, with no notice or message about the font.
+3. Remove the failure, get the connection back and, if needed, close the app and open it again once: the 🌱 switches to Noto with no notice. Go **Offline** and reload: the 🌱 stays with Noto, and so does one that was never seen on that device (🪼, typed in a title).
+4. In another new context, with **Network failure on a file** on a font file, open the app, sign in and create the task. Wait for **Installed app**.
+5. Go **Offline** and reload: the app opens, with no notice; the text that uses that file is drawn with the system font, never invisible. The 🌱 is drawn with Noto.
+6. Remove the failure, get the connection back and, if needed, close the app and open it again once. Go **Offline** and reload: the text is drawn with Atkinson.
+7. In another new context, make only the first request of each font file and of the set fail; the following ones respond. Open the app (the loading screen stops waiting for them as soon as they fail, even if the retries continue), sign in and, if needed, close it and open it again once: more than one request for those files is recorded. Go **Offline** and reload: Atkinson and Noto.
 
-Actualización (la versión anterior, sin la fuente ni el juego, como en el Flujo 7):
+Update (the earlier version, without the font or the set, as in Flow 7):
 
-8. Con la versión anterior instalada, publicar la versión nueva con **Falla de red** en el juego de emoji. Cerrar la app y abrirla de nuevo: se aplica la versión nueva, el texto se ve con Atkinson y los emoji con los del dispositivo, sin pregunta ni aviso en ningún momento.
-9. Ponerse **Sin conexión** y recargar: la app abre igual, con Atkinson y el emoji del dispositivo.
-10. Quitar la falla y volver a tener conexión: repetir el paso 3 (pasan a Noto y quedan disponibles sin conexión).
-11. Repetir 8 a 10 con **Falla de red** en un archivo de fuente en vez del juego: se aplica la versión nueva (los emoji se ven con Noto), el texto que usa ese archivo se ve con la fuente del sistema, y al quitar la falla queda con Atkinson también sin conexión.
+8. With the earlier version installed, publish the new version with **Network failure on a file** on the emoji set. Close the app and open it again: the new version is applied, the text is drawn with Atkinson and the emoji with the device ones, with no question or notice at any moment.
+9. Go **Offline** and reload: the app opens just the same, with Atkinson and the device emoji.
+10. Remove the failure and get the connection back: repeat step 3 (they switch to Noto and stay available offline).
+11. Repeat 8 to 10 with **Network failure on a file** on a font file instead of the set: the new version is applied (the emoji are drawn with Noto), the text that uses that file is drawn with the system font, and when the failure is removed it ends up with Atkinson also offline.
 
-## Flujo 9: pantalla de carga
+## Flow 9: loading screen
 
-Qué se ve:
+What is seen:
 
-1. Con el código de la app demorado, abrir la app: desde lo primero que dibuja se ve la pantalla de carga, sin página en blanco ni contenido vacío antes.
-2. Se ve el ícono de la app con pulso, con el nombre accesible «Cargando», y ningún texto visible, indicador de progreso ni giro. Tocarla no hace nada.
-3. Con movimiento reducido (`page.emulateMedia({ reducedMotion: 'reduce' })`): el ícono se ve quieto; lo demás es igual.
-4. En **Tema claro** y en **Tema oscuro**, y en **Celular** y en **Ancho**: sigue el tema del sistema, sin destello de otro color al irse.
+1. With the app code delayed, open the app: from the first thing it draws the loading screen is seen, with no blank page or empty content before.
+2. The app icon is seen with a pulse, with the accessible name «Cargando», and no visible text, progress indicator or spinner. Tapping it does nothing.
+3. With reduced motion (`page.emulateMedia({ reducedMotion: 'reduce' })`): the icon is seen still; everything else is the same.
+4. In **Light theme** and in **Dark theme**, and on **Phone** and on **Wide**: it follows the system theme, with no flash of another color when it goes away.
 
-Cuándo aparece:
+When it appears:
 
-5. Aparece al abrir, al recargar y al abrir con una versión nueva, y en las dos pantallas de destino (`/`, `/historial`).
-6. Con la app abierta, pasarla a segundo plano y volver (abrir otra pestaña y volver, con `visibilitychange`): no aparece.
-7. Sin sesión, tocar **Entrar con Google** y completar la entrada: se pasa de la pantalla de entrada a la app sin que aparezca.
+5. It appears on opening, on reloading and on opening with a new version, and on both destination screens (`/`, `/historial`).
+6. With the app open, send it to the background and come back (open another tab and come back, with `visibilitychange`): it does not appear.
+7. Without a session, tap **Entrar con Google** and complete the sign-in: the app goes from the sign-in screen to the app without it appearing.
 
-Qué espera con sesión:
+What it waits for with a session:
 
-8. Con la app guardada y todo disponible, recargar: a los 0,4 s sigue abierta, a los 0,5 s se va, y se ve la lista completa.
-9. Con Auth demorado, más allá de los 10 s: sigue abierta hasta que Auth responde, y entonces se va.
-10. Con cada una de las colecciones (tareas, completados) demorada por turno, 3 s: sigue abierta hasta los 3 s y se va cuando responde.
-11. En un contexto nuevo, con Atkinson demorada y después con Noto demorado, 6 s: sigue abierta hasta los 6 s; al irse, el texto y los emoji ya se ven con Atkinson y con Noto, sin haber mostrado un respaldo.
-12. Con los datos demorados más de 10 s: se va a los 10 s, sin aviso, y la lista se completa sola al liberarlos.
+8. With the app stored and everything available, reload: at 0.4 s it is still open, at 0.5 s it goes away, and the full list is seen.
+9. With Auth delayed, beyond 10 s: it stays open until Auth responds, and then it goes away.
+10. With each of the collections (tareas, completados) delayed in turn, 3 s: it stays open until 3 s and goes away when it responds.
+11. In a new context, with Atkinson delayed and then with Noto delayed, 6 s: it stays open until 6 s; when it goes away, the text and the emoji are already drawn with Atkinson and with Noto, without having shown a fallback.
+12. With the data delayed more than 10 s: it goes away at 10 s, with no notice, and the list completes by itself when they are released.
 
-Sin sesión:
+Without a session:
 
-13. Con Atkinson demorada: sigue abierta hasta que llega y da paso a la pantalla de entrada, que no cambió.
-14. Con Noto demorado y Atkinson disponible: no lo espera, da paso a la pantalla de entrada a los 0,5 s, y Noto sigue bajando. Si se entra antes de que llegue, los emoji se ven con los del dispositivo y cambian solos al liberarlo.
-15. **Sin conexión**, sin Atkinson guardada: se va a los 0,5 s y da paso a la pantalla de entrada, con su mensaje de siempre.
+13. With Atkinson delayed: it stays open until it arrives and then gives way to the sign-in screen, which did not change.
+14. With Noto delayed and Atkinson available: it does not wait for it, gives way to the sign-in screen at 0.5 s, and Noto keeps downloading. If the user signs in before it arrives, the emoji are drawn with the device ones and switch by themselves when it is released.
+15. **Offline**, without Atkinson stored: it goes away at 0.5 s and gives way to the sign-in screen, with its usual message.
 
-Lo que no va a llegar:
+What will not arrive:
 
-16. Con sesión, **Sin conexión**, y sin el juego guardado: recargar se va a los 0,5 s, sin llegar al tope. La franja "Sin conexión" se ve recién al entrar; en la pantalla de carga no aparece ningún aviso.
-17. Con Noto demorado y la pantalla abierta, ponerse **Sin conexión** a los 2 s: se va en ese momento, no a los 10 s.
-18. Con **Falla de red** en Noto a los 2 s y los datos demorados 5 s: se va a los 5 s, cuando responden.
-19. Con **Falla de red** en Noto y todo lo demás listo: el mínimo vale igual: se va a los 0,5 s, no antes.
+16. With a session, **Offline**, and without the set stored: reloading goes away at 0.5 s, without reaching the cap. The «Sin conexión» strip is seen only on entering; no notice appears on the loading screen.
+17. With Noto delayed and the screen open, go **Offline** at 2 s: it goes away at that moment, not at 10 s.
+18. With **Network failure on a file** on Noto at 2 s and the data delayed 5 s: it goes away at 5 s, when they respond.
+19. With **Network failure on a file** on Noto and everything else ready: the minimum still applies: it goes away at 0.5 s, not before.
 
-Tope de Noto recordado por dispositivo:
+Noto cap remembered per device:
 
-20. Con sesión y Noto demorado, llegar al tope de 10 s y entrar a la app con el emoji del dispositivo. Sin que Noto haya llegado, recargar: con los datos listos se va a los 0,5 s, sin esperarlo, y Noto se sigue pidiendo detrás.
-21. En un dispositivo B con la misma cuenta, con Noto demorado: sí lo espera hasta el tope (lo recordado no se sincroniza). En el Firestore Emulator no hay ningún documento nuevo con ese dato.
-22. Volviendo al primer dispositivo, liberar Noto hasta que quede guardado. Publicar una versión que cambia el juego y demorarlo: la próxima apertura vuelve a esperarlo, hasta el tope. Si llega al tope, la siguiente ya no lo espera.
-23. En un contexto nuevo, sin sesión y con Noto demorado, dejar pasar más de 10 s; entrar y recargar: esa apertura con sesión sí espera a Noto, porque el tiempo sin sesión no cuenta.
+20. With a session and Noto delayed, reach the 10 s cap and enter the app with the device emoji. Without Noto having arrived, reload: with the data ready it goes away at 0.5 s, without waiting for it, and Noto keeps being requested behind.
+21. On a device B with the same account, with Noto delayed: it does wait for it until the cap (what is remembered is not synced). In the Firestore Emulator there is no new document with that data.
+22. Back on the first device, release Noto until it is stored. Publish a version that changes the set and delay it: the next opening waits for it again, until the cap. If it reaches the cap, the following one no longer waits for it.
+23. In a new context, without a session and with Noto delayed, let more than 10 s pass; sign in and reload: that opening with a session does wait for Noto, because the time without a session does not count.
 
-Versión nueva:
+New version:
 
-24. Con Atkinson y Noto guardados, publicar una versión que no los cambia y abrirla: no hay ningún pedido nuevo a esos archivos y la pantalla se va a los 0,5 s, con Atkinson y Noto.
+24. With Atkinson and Noto stored, publish a version that does not change them and open it: there is no new request for those files and the screen goes away at 0.5 s, with Atkinson and Noto.

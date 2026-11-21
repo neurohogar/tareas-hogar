@@ -1,150 +1,150 @@
-# QA: cambios sin guardar y botón Atrás
+# QA: unsaved changes and the Back button
 
-Verifica, solo por la interfaz, que cerrar el panel o usar una acción con cambios sin guardar pide confirmación en lugar de perderlos, y que el botón Atrás cierra el panel en lugar de salir de la pantalla:
+Verifies, through the interface only, that closing the panel or using an action with unsaved changes asks for confirmation instead of losing them, and that the Back button closes the panel instead of leaving the screen:
 
-- qué cuenta como "hay cambios" y qué no (al editar y al crear);
-- el aviso de cierre (**Seguir editando**, **Descartar**, **Guardar**) al tocar la **X** o **Atrás**;
-- el aviso de acción para **Pausar**, **Reanudar**, **Posponer** y **Quitar posponer**, con la hora del toque, la acción sin sentido y el guardado que falla;
-- que **Borrar tarea** conserva solo su confirmación;
-- los avisos sobre el panel, y que vuelven a la misma pestaña;
-- el botón Atrás: qué cierra cada capa, el teclado en pantalla, el aviso de deshacer, el panel cerrado y las dos pantallas de origen del panel;
-- la confirmación del navegador al recargar o cerrar la app;
-- los otros dispositivos: un cambio remoto no hace aparecer el aviso, un borrado remoto cierra todo, y el aviso de acción se mantiene al día;
-- que **Descartar** no quita un emoji de **Recientes**.
+- what counts as "there are changes" and what does not (when editing and when creating);
+- the close notice (**Seguir editando**, **Descartar**, **Guardar**) on tapping the **X** or **Back**;
+- the action notice for **Pausar**, **Reanudar**, **Posponer** and **Quitar posponer**, with the time of the tap, the meaningless action and the save that fails;
+- that **Borrar tarea** keeps only its confirmation;
+- the notices over the panel, and that they go back to the same tab;
+- the Back button: what each layer closes, the on-screen keyboard, the undo notice, the closed panel and the panel's two origin screens;
+- the browser confirmation on reloading or closing the app;
+- the other devices: a remote change does not make the notice appear, a remote deletion closes everything, and the action notice is kept up to date;
+- that **Descartar** does not remove an emoji from **Recientes**.
 
-Cubre spec §6.2 (Cambios sin guardar, Atrás) y §7 (gana el borrado).
+Covers spec §6.2 (Unsaved changes, Back) and §7 (deletion wins).
 
-Fuera de alcance: la orientación vertical y las reglas de cada campo y acción (`qa/panel-mobile.md` y los demás).
+Out of scope: portrait orientation and the rules of each field and action (`qa/panel-mobile.md` and the others).
 
-## Entorno
+## Environment
 
-El de `qa/panel-mobile.md` (Firebase Emulator Suite, sesión `qa@example.com`, reloj simulado detenido en `America/Argentina/Buenos_Aires`, **Celular** de 360x640 px con emulación táctil, **Ancho** de 1024x768 px, **Teclado en pantalla abierto** emulado reduciendo el alto del viewport visual, dos dispositivos A y B con la misma cuenta y el mismo reloj, **Mostrar completadas** y **Mostrar pausadas** apagados).
+That of `qa/panel-mobile.md` (Firebase Emulator Suite, session `qa@example.com`, simulated clock stopped in `America/Argentina/Buenos_Aires`, **Phone** of 360x640 px with touch emulation, **Wide** of 1024x768 px, **On-screen keyboard open** emulated by reducing the height of the visual viewport, two devices A and B with the same account and the same clock, **Mostrar completadas** and **Mostrar pausadas** off).
 
-- **Atrás**: `page.goBack()`, que es lo que hace el botón Atrás de Android. "Adelante" es `page.goForward()`.
-- **Confirmación del navegador**: el diálogo `beforeunload` de Playwright (`page.on("dialog")`, tipo `beforeunload`); se dispara al recargar con `page.reload()` o cerrar la página con `page.close({ runBeforeUnload: true })`, después de haber tocado la página. "Aceptarla" es continuar (recargar o cerrar); "cancelarla" es quedarse.
+- **Back**: `page.goBack()`, which is what the Android Back button does. "Forward" is `page.goForward()`.
+- **Browser confirmation**: Playwright's `beforeunload` dialog (`page.on("dialog")`, type `beforeunload`); it fires on reloading with `page.reload()` or closing the page with `page.close({ runBeforeUnload: true })`, after having touched the page. "Accepting it" is continuing (reloading or closing); "cancelling it" is staying.
 
-## Contrato observable
+## Observable contract
 
-- **Aviso**: un diálogo (`alertdialog`) con nombre accesible **Tenés cambios sin guardar**, sobre el panel. Tiene tres botones, en este orden. En el aviso de cierre: **Seguir editando**, **Descartar**, **Guardar**. En el de una acción: **Seguir editando**, **Descartar y <acción>**, **Guardar y <acción>**, con `<acción>` en minúsculas: pausar, reanudar, posponer 1 hora, posponer 3 horas, posponer hasta mañana o quitar posponer.
-- **Aviso de acción sin sentido**: el mismo diálogo con el texto "Con estos cambios la tarea ya no se puede <acción>" y solo **Seguir editando** y **Descartar y <acción>**.
-- **Sobre el panel**: mientras hay un aviso abierto no se puede tocar nada de lo que está debajo (el panel, las pestañas, la lista). Al cerrarlo, el panel está en la misma pestaña, con lo mismo escrito.
-- **Confirmación de Borrar tarea**: la de `qa/edit-delete.md` (`alertdialog`, botones **Borrar** y **Cancelar**).
-- **Selector de emoji** y **aviso de deshacer**: los de `qa/emoji-and-note.md` y `qa/history-undo.md`.
-- **Panel cerrado** es que no hay ningún diálogo **Nueva tarea** ni **Editar tarea**.
-- Panel de referencia al editar: `Regar` con **Intervalo** cada `2` **días**, nota `Las del balcón`, sin horario, creada a las `2026-07-13T08:00:00` (a las 08:00 del 15 está pendiente).
+- **Notice**: a dialog (`alertdialog`) with accessible name **Tenés cambios sin guardar**, over the panel. It has three buttons, in this order. In the close notice: **Seguir editando**, **Descartar**, **Guardar**. In an action notice: **Seguir editando**, **Descartar y <acción>**, **Guardar y <acción>**, with `<acción>` in lowercase: pausar, reanudar, posponer 1 hora, posponer 3 horas, posponer hasta mañana or quitar posponer.
+- **Meaningless action notice**: the same dialog with the text "Con estos cambios la tarea ya no se puede <acción>" and only **Seguir editando** and **Descartar y <acción>**.
+- **Over the panel**: while a notice is open nothing below it can be touched (the panel, the tabs, the list). When it closes, the panel is on the same tab, with the same content typed.
+- **Borrar tarea confirmation**: the one of `qa/edit-delete.md` (`alertdialog`, buttons **Borrar** and **Cancelar**).
+- **Emoji picker** and **undo notice**: those of `qa/emoji-and-note.md` and `qa/history-undo.md`.
+- **Closed panel** means there is no **Nueva tarea** or **Editar tarea** dialog.
+- Reference panel when editing: `Regar` with **Intervalo** every `2` **días**, note `Las del balcón`, no schedule, created at `2026-07-13T08:00:00` (at 08:00 on the 15th it is pending).
 
-## Flujo 1: cerrar con cambios al editar
+## Flow 1: close with changes when editing
 
-Precondición: lista vacía, reloj en `2026-07-15T08:00:00`, celular. Crear `Regar` como en el panel de referencia.
+Precondition: empty list, clock at `2026-07-15T08:00:00`, phone. Create `Regar` as in the reference panel.
 
-1. Abrir `Regar` y tocar **Cerrar** (la **X**) sin tocar nada: el panel se cierra, sin aviso.
-2. Abrir `Regar`, cambiar el título a `Regar plantas` y tocar **Cerrar**: se abre el aviso **Tenés cambios sin guardar** con **Seguir editando**, **Descartar** y **Guardar**. El panel sigue detrás.
-3. Tocar **Seguir editando**: el aviso se cierra y el panel sigue abierto con el título `Regar plantas`, en la misma pestaña. La lista todavía dice `Regar`.
-4. Con la pestaña **Cuándo** abierta, tocar **Cerrar** y luego **Seguir editando**: el panel sigue en **Cuándo**.
-5. Tocar **Cerrar** y **Descartar**: el panel se cierra y la lista dice `Regar`. Abrir `Regar`: el título es `Regar`.
-6. Cambiar el título a `Regar plantas`, tocar **Cerrar** y **Guardar**: el panel se cierra y la lista dice `Regar plantas`. Recargar: sigue `Regar plantas`.
-7. Abrir `Regar plantas`, vaciar el título, tocar **Cerrar** (se abre el aviso) y **Guardar**: el aviso se cierra, el panel sigue abierto con el título vacío, salta a la pestaña **Tarea** y se ve el error de Título; la lista sigue diciendo `Regar plantas`. Tocar **Cerrar** y **Descartar**.
-8. En ancho (1024 px) repetir los pasos 2, 3 y 5: el comportamiento es el mismo.
+1. Open `Regar` and tap **Cerrar** (the **X**) without touching anything: the panel closes, with no notice.
+2. Open `Regar`, change the title to `Regar plantas` and tap **Cerrar**: the **Tenés cambios sin guardar** notice opens with **Seguir editando**, **Descartar** and **Guardar**. The panel stays behind.
+3. Tap **Seguir editando**: the notice closes and the panel stays open with the title `Regar plantas`, on the same tab. The list still says `Regar`.
+4. With the **Cuándo** tab open, tap **Cerrar** and then **Seguir editando**: the panel stays on **Cuándo**.
+5. Tap **Cerrar** and **Descartar**: the panel closes and the list says `Regar`. Open `Regar`: the title is `Regar`.
+6. Change the title to `Regar plantas`, tap **Cerrar** and **Guardar**: the panel closes and the list says `Regar plantas`. Reload: it still says `Regar plantas`.
+7. Open `Regar plantas`, empty the title, tap **Cerrar** (the notice opens) and **Guardar**: the notice closes, the panel stays open with the title empty, jumps to the **Tarea** tab and the Título error is seen; the list still says `Regar plantas`. Tap **Cerrar** and **Descartar**.
+8. On wide (1024 px) repeat steps 2, 3 and 5: the behavior is the same.
 
-## Flujo 2: qué cuenta como cambio
+## Flow 2: what counts as a change
 
-Precondición: lista vacía, reloj en `2026-07-15T08:00:00`, celular. Crear `Regar` como en el panel de referencia, con horario `08:00` a `10:00` y una segunda ventana `12:00` a `14:00`. Cada paso parte de `Regar` recién abierto; "cierra directo" es que **Cerrar** cierra el panel sin aviso, y "pide confirmación" es que abre el aviso (entonces tocar **Descartar**).
+Precondition: empty list, clock at `2026-07-15T08:00:00`, phone. Create `Regar` as in the reference panel, with schedule `08:00` to `10:00` and a second window `12:00` to `14:00`. Each step starts from `Regar` just opened; "closes directly" means **Cerrar** closes the panel with no notice, and "asks for confirmation" means it opens the notice (then tap **Descartar**).
 
-1. Escribir `Z` en el título y borrarlo (vuelve a `Regar`): cierra directo.
-2. Escribir espacios al final del título: cierra directo. Lo mismo con espacios al inicio y al final de la nota `Las del balcón`.
-3. Cambiar el título a `Regar plantas`: pide confirmación.
-4. Vaciar la nota: pide confirmación. Escribir solo espacios en la nota: pide confirmación (queda sin nota).
-5. Vaciar el título: pide confirmación (aunque no se pueda guardar).
-6. En **Cuándo**, cambiar **Se repite** a **Días de la semana** y volver a **Intervalo** con **Cada** `2` **días**: cierra directo. Dejarlo en **Días de la semana**: pide confirmación.
-7. En **Cuándo**, intercambiar los valores de las dos ventanas (la primera pasa a `12:00`-`14:00` y la segunda a `08:00`-`10:00`): cierra directo. Cambiar `14:00` a `15:00` en una: pide confirmación.
-8. En **Cuándo**, tocar **Agregar horario** (queda una fila vacía): pide confirmación.
-9. Elegir un emoji en el botón de emoji: pide confirmación; tocar **Quitar emoji** y volver a no tener emoji: cierra directo.
-10. Crear `Pagar` con **No se repite**. Con el reloj en `2026-07-15T08:00:00`, otro dispositivo (B) cambia el título de `Pagar` a `Pagar luz` mientras A tiene su panel abierto sin tocar nada: en A, **Cerrar** cierra directo (un cambio remoto no hace aparecer el aviso).
+1. Type `Z` in the title and delete it (back to `Regar`): closes directly.
+2. Type spaces at the end of the title: closes directly. The same with spaces at the start and at the end of the note `Las del balcón`.
+3. Change the title to `Regar plantas`: asks for confirmation.
+4. Empty the note: asks for confirmation. Type only spaces in the note: asks for confirmation (it ends up with no note).
+5. Empty the title: asks for confirmation (even though it cannot be saved).
+6. In **Cuándo**, change **Se repite** to **Días de la semana** and go back to **Intervalo** with **Cada** `2` **días**: closes directly. Leave it on **Días de la semana**: asks for confirmation.
+7. In **Cuándo**, swap the values of the two windows (the first becomes `12:00`-`14:00` and the second `08:00`-`10:00`): closes directly. Change `14:00` to `15:00` in one: asks for confirmation.
+8. In **Cuándo**, tap **Agregar horario** (an empty row is left): asks for confirmation.
+9. Choose an emoji with the emoji button: asks for confirmation; tap **Quitar emoji** and go back to having no emoji: closes directly.
+10. Create `Pagar` with **No se repite**. With the clock at `2026-07-15T08:00:00`, another device (B) changes the title of `Pagar` to `Pagar luz` while A has its panel open without touching anything: on A, **Cerrar** closes directly (a remote change does not make the notice appear).
 
-## Flujo 3: crear con cambios sin guardar
+## Flow 3: create with unsaved changes
 
-Precondición: lista vacía, celular.
+Precondition: empty list, phone.
 
-1. Tocar **+**: en **Cuándo**, **Se repite** viene con **No se repite** elegida. **Cerrar** sin tocar nada: cierra directo (esa opción inicial no cuenta como cambio).
-2. Tocar **+**, escribir solo espacios en el título y **Cerrar**: cierra directo.
-3. Tocar **+**, escribir `Pagar` en el título y **Cerrar**: se abre el aviso con **Seguir editando**, **Descartar** y **Guardar**. **Seguir editando**: el panel sigue con `Pagar`. **Cerrar** y **Descartar**: la lista sigue vacía.
-4. Tocar **+**, elegir **Intervalo** en **Se repite** (sin escribir nada más) y **Cerrar**: pide confirmación. **Descartar**. Tocar **+**, elegir **Intervalo** y volver a **No se repite**, y **Cerrar**: cierra directo.
-5. Tocar **+**, escribir `Pagar` y borrarlo, y **Cerrar**: cierra directo.
-6. Tocar **+**, escribir `Pagar` y **Cerrar**, y **Guardar**: se crea `Pagar` y el panel se cierra.
+1. Tap **+**: in **Cuándo**, **Se repite** comes with **No se repite** chosen. **Cerrar** without touching anything: closes directly (that initial option does not count as a change).
+2. Tap **+**, type only spaces in the title and **Cerrar**: closes directly.
+3. Tap **+**, type `Pagar` in the title and **Cerrar**: the notice opens with **Seguir editando**, **Descartar** and **Guardar**. **Seguir editando**: the panel stays with `Pagar`. **Cerrar** and **Descartar**: the list stays empty.
+4. Tap **+**, choose **Intervalo** in **Se repite** (without typing anything else) and **Cerrar**: asks for confirmation. **Descartar**. Tap **+**, choose **Intervalo** and go back to **No se repite**, and **Cerrar**: closes directly.
+5. Tap **+**, type `Pagar` and delete it, and **Cerrar**: closes directly.
+6. Tap **+**, type `Pagar` and **Cerrar**, and **Guardar**: `Pagar` is created and the panel closes.
 
-## Flujo 4: acciones con cambios
+## Flow 4: actions with changes
 
-Precondición: lista vacía, reloj en `2026-07-15T08:00:00`, celular. Crear `Regar` como en el panel de referencia.
+Precondition: empty list, clock at `2026-07-15T08:00:00`, phone. Create `Regar` as in the reference panel.
 
-1. Abrir `Regar` y tocar **Pausar** en **Acciones** sin cambios: el panel se cierra y `Regar` queda pausada (con **Mostrar pausadas** apagado sale de la lista). Con **Mostrar pausadas** encendido, abrirla y tocar **Reanudar**: actúa en el momento y la tarea deja de estar pausada.
-2. Abrir `Regar`, cambiar el título a `Regar plantas` y tocar **Pausar**: se abre el aviso con **Seguir editando**, **Descartar y pausar** y **Guardar y pausar**. El panel sigue en **Acciones**.
-3. Tocar **Seguir editando**: el aviso se cierra, el panel sigue en **Acciones** con el título `Regar plantas` escrito, y la tarea no está pausada.
-4. Tocar **Pausar** y **Descartar y pausar**: el panel se cierra, `Regar` está pausada y el título es `Regar` (con **Mostrar pausadas** encendido). Reanudarla desde el panel.
-5. Cambiar el título a `Regar plantas`, tocar **Pausar** y **Guardar y pausar**: el panel se cierra, la tarea está pausada y se llama `Regar plantas`.
-6. Con la tarea pausada, abrirla, cambiar la nota y tocar **Reanudar**: el aviso tiene **Seguir editando**, **Descartar y reanudar** y **Guardar y reanudar**. **Guardar y reanudar**: la tarea se reanuda y se guarda la nota.
-7. Abrir `Regar plantas`, cambiar la nota y tocar **1 hora** en **Acciones**: el aviso ofrece **Descartar y posponer 1 hora** y **Guardar y posponer 1 hora**. Repetir con **3 horas** y **Hasta mañana**: los botones nombran la opción tocada. **Seguir editando**.
-8. Ahora (hora de elegir) `2026-07-15T08:00:00`: tocar **1 hora**, dejar el aviso abierto, avanzar el reloj a `2026-07-15T08:03:00` y tocar **Guardar y posponer 1 hora**. Abrir la tarea: dice "Pospuesta hasta 09:03". Con **Descartar y posponer 3 horas** a las `08:03` (otra tarea): "Pospuesta hasta 11:03".
-9. Con la tarea pospuesta, abrirla, cambiar la nota y tocar **Quitar posponer**: el aviso ofrece **Descartar y quitar posponer** y **Guardar y quitar posponer**.
-10. En `Regar` (periódica, sin pausar) cambiar **Se repite** a **No se repite** y tocar **Pausar**: el aviso dice "Con estos cambios la tarea ya no se puede pausar" y tiene solo **Seguir editando** y **Descartar y pausar** (no **Guardar y pausar**). **Descartar y pausar**: la tarea se pausa como periódica.
-11. Con `Regar` pausada, abrirla, cambiar **Se repite** a **No se repite** y tocar **Reanudar**: el aviso dice "Con estos cambios la tarea ya no se puede reanudar" y no ofrece **Guardar y reanudar**.
-12. En `Regar`, vaciar el título y tocar **Pausar**: como lo escrito es inválido, el aviso ofrece **Guardar y pausar**. Tocarlo: no se pausa, el aviso se cierra, el panel sigue abierto con el título vacío y salta a **Tarea** con el error de Título.
-13. Abrir `Regar`, cambiar la nota y tocar **Borrar tarea**: aparece solo la confirmación de borrado (no el aviso **Tenés cambios sin guardar**). **Cancelar**: el panel sigue abierto con la nota escrita, en **Acciones**.
+1. Open `Regar` and tap **Pausar** in **Acciones** without changes: the panel closes and `Regar` is paused (with **Mostrar pausadas** off it leaves the list). With **Mostrar pausadas** on, open it and tap **Reanudar**: it acts at once and the task is no longer paused.
+2. Open `Regar`, change the title to `Regar plantas` and tap **Pausar**: the notice opens with **Seguir editando**, **Descartar y pausar** and **Guardar y pausar**. The panel stays on **Acciones**.
+3. Tap **Seguir editando**: the notice closes, the panel stays on **Acciones** with the title `Regar plantas` typed, and the task is not paused.
+4. Tap **Pausar** and **Descartar y pausar**: the panel closes, `Regar` is paused and the title is `Regar` (with **Mostrar pausadas** on). Resume it from the panel.
+5. Change the title to `Regar plantas`, tap **Pausar** and **Guardar y pausar**: the panel closes, the task is paused and named `Regar plantas`.
+6. With the task paused, open it, change the note and tap **Reanudar**: the notice has **Seguir editando**, **Descartar y reanudar** and **Guardar y reanudar**. **Guardar y reanudar**: the task is resumed and the note is saved.
+7. Open `Regar plantas`, change the note and tap **1 hora** in **Acciones**: the notice offers **Descartar y posponer 1 hora** and **Guardar y posponer 1 hora**. Repeat with **3 horas** and **Hasta mañana**: the buttons name the tapped option. **Seguir editando**.
+8. Now (time of choosing) `2026-07-15T08:00:00`: tap **1 hora**, leave the notice open, advance the clock to `2026-07-15T08:03:00` and tap **Guardar y posponer 1 hora**. Open the task: it says "Pospuesta hasta 09:03". With **Descartar y posponer 3 horas** at `08:03` (another task): "Pospuesta hasta 11:03".
+9. With the task postponed, open it, change the note and tap **Quitar posponer**: the notice offers **Descartar y quitar posponer** and **Guardar y quitar posponer**.
+10. On `Regar` (recurring, not paused) change **Se repite** to **No se repite** and tap **Pausar**: the notice says "Con estos cambios la tarea ya no se puede pausar" and has only **Seguir editando** and **Descartar y pausar** (not **Guardar y pausar**). **Descartar y pausar**: the task is paused as recurring.
+11. With `Regar` paused, open it, change **Se repite** to **No se repite** and tap **Reanudar**: the notice says "Con estos cambios la tarea ya no se puede reanudar" and does not offer **Guardar y reanudar**.
+12. On `Regar`, empty the title and tap **Pausar**: since what is typed is invalid, the notice offers **Guardar y pausar**. Tap it: it is not paused, the notice closes, the panel stays open with the title empty and jumps to **Tarea** with the Título error.
+13. Open `Regar`, change the note and tap **Borrar tarea**: only the deletion confirmation appears (not the **Tenés cambios sin guardar** notice). **Cancelar**: the panel stays open with the note typed, on **Acciones**.
 
-## Flujo 5: los avisos sobre el panel
+## Flow 5: the notices over the panel
 
-Precondición: lista con `Regar` como en el panel de referencia, reloj en `2026-07-15T08:00:00`, celular.
+Precondition: list with `Regar` as in the reference panel, clock at `2026-07-15T08:00:00`, phone.
 
-1. Abrir `Regar`, ir a **Cuándo**, cambiar **Cada** a `3`, tocar **Cerrar**: el aviso está sobre el panel; con el aviso abierto, tocar **Tarea** en la barra de pestañas no hace nada (el aviso bloquea lo de abajo).
-2. **Seguir editando**: el panel está en **Cuándo** con `3` en **Cada**.
-3. Tocar **Acciones** y **Pausar**: aviso de acción; **Seguir editando**: el panel sigue en **Acciones**; ir a **Cuándo**: **Cada** sigue en `3`.
-4. En ancho (1024 px), repetir 1 y 2: el aviso cubre el panel completo, sin tapar el encabezado fijo del panel; **Seguir editando** vuelve al mismo estado.
-5. Con el navegador sin conexión (`setOffline(true)`), tocar **Cerrar**: el aviso se abre y la franja "Sin conexión" sigue a la vista. Volver a tener conexión.
+1. Open `Regar`, go to **Cuándo**, change **Cada** to `3`, tap **Cerrar**: the notice is over the panel; with the notice open, tapping **Tarea** in the tab bar does nothing (the notice blocks what is below).
+2. **Seguir editando**: the panel is on **Cuándo** with `3` in **Cada**.
+3. Tap **Acciones** and **Pausar**: action notice; **Seguir editando**: the panel stays on **Acciones**; go to **Cuándo**: **Cada** is still `3`.
+4. On wide (1024 px), repeat 1 and 2: the notice covers the whole panel, without covering the panel's fixed header; **Seguir editando** goes back to the same state.
+5. With the browser offline (`setOffline(true)`), tap **Cerrar**: the notice opens and the "Sin conexión" strip is still in view. Get the connection back.
 
-## Flujo 6: botón Atrás
+## Flow 6: Back button
 
-Precondición: lista vacía, celular. Crear `Regar` (panel de referencia) y completarla a las `2026-07-15T08:00:00` para que tenga Historial (reloj en `2026-07-15T10:00:00`).
+Precondition: empty list, phone. Create `Regar` (reference panel) and complete it at `2026-07-15T08:00:00` so that it has Historial (clock at `2026-07-15T10:00:00`).
 
-1. En **Pendientes**, abrir `Regar` y tocar Atrás (`page.goBack()`): el panel se cierra y la pantalla sigue en **Pendientes** (no sale de la pantalla).
-2. Ir al **Historial**, tocar el título de la entrada `Regar`: se abre el panel **Editar tarea**. Tocar Atrás: el panel se cierra y la pantalla sigue en el **Historial**.
-3. Abrir `Regar`, cambiar el título a `Regar plantas` y tocar Atrás: se abre el aviso de cierre y el panel sigue detrás. Tocar Atrás de nuevo: el aviso se cierra (equivale a **Seguir editando**) y el panel sigue con `Regar plantas`. Tocar Atrás otra vez: se abre el aviso de cierre. **Descartar**.
-4. Abrir `Regar`, tocar **Borrar tarea** y luego Atrás: la confirmación se cierra (equivale a **Cancelar**) y el panel sigue abierto, en **Acciones**. Tocar Atrás: el panel se cierra (no hay cambios).
-5. Abrir `Regar` en la pestaña **Tarea**, tocar el botón de emoji y luego Atrás: el selector se cierra sin elegir emoji y el panel sigue. Tocar Atrás de nuevo: el panel se cierra.
-6. Abrir `Regar`, cambiar el título, tocar **Pausar** (aviso de acción) y Atrás: el aviso se cierra sin actuar y el panel sigue con el título escrito; la tarea no está pausada. Tocar Atrás: se abre el aviso de cierre. **Seguir editando**.
-7. Con el aviso de deshacer a la vista (completar `Regar` desde la lista, a las `2026-07-15T10:00:00`), abrir otra tarea sin cambios y tocar Atrás: el panel se cierra y el aviso de deshacer sigue a la vista sus 5 segundos (Atrás no lo toca).
-8. Abrir `Regar` (sin cambios), tocar el título (teclado en pantalla abierto, viewport achicado) y tocar Atrás: el primer Atrás solo cierra el teclado (viewport al alto original) y el panel sigue exactamente igual; el segundo Atrás cierra el panel. Repetir con el título cambiado: el primer Atrás solo cierra el teclado y el segundo abre el aviso de cierre.
-9. Con el panel cerrado: abrir `Regar` y tocar **Cerrar**; tocar Atrás: sale de la pantalla (igual que antes de esta feature), sin un Atrás de más que no haga nada. Hacer lo mismo cerrando con **Guardar** y con una acción (**1 hora**). Después de cerrar el panel, tocar Adelante (`page.goForward()`): no reabre el panel.
-10. En ancho (1024 px), repetir 1, 3 y 4: Atrás hace lo mismo.
-11. Con cambios sin guardar, tocar Atrás: el navegador no muestra su confirmación (ningún diálogo `beforeunload`).
+1. On **Pendientes**, open `Regar` and tap Back (`page.goBack()`): the panel closes and the screen stays on **Pendientes** (it does not leave the screen).
+2. Go to **Historial**, tap the title of the `Regar` entry: the **Editar tarea** panel opens. Tap Back: the panel closes and the screen stays on **Historial**.
+3. Open `Regar`, change the title to `Regar plantas` and tap Back: the close notice opens and the panel stays behind. Tap Back again: the notice closes (equivalent to **Seguir editando**) and the panel stays with `Regar plantas`. Tap Back once more: the close notice opens. **Descartar**.
+4. Open `Regar`, tap **Borrar tarea** and then Back: the confirmation closes (equivalent to **Cancelar**) and the panel stays open, on **Acciones**. Tap Back: the panel closes (there are no changes).
+5. Open `Regar` on the **Tarea** tab, tap the emoji button and then Back: the picker closes without choosing an emoji and the panel stays. Tap Back again: the panel closes.
+6. Open `Regar`, change the title, tap **Pausar** (action notice) and Back: the notice closes without acting and the panel stays with the title typed; the task is not paused. Tap Back: the close notice opens. **Seguir editando**.
+7. With the undo notice in view (complete `Regar` from the list, at `2026-07-15T10:00:00`), open another task without changes and tap Back: the panel closes and the undo notice stays in view for its 5 seconds (Back does not touch it).
+8. Open `Regar` (without changes), tap the title (on-screen keyboard open, viewport shrunk) and tap Back: the first Back only closes the keyboard (viewport at the original height) and the panel stays exactly the same; the second Back closes the panel. Repeat with the title changed: the first Back only closes the keyboard and the second opens the close notice.
+9. With the panel closed: open `Regar` and tap **Cerrar**; tap Back: it leaves the screen (same as before this feature), without an extra Back that does nothing. Do the same closing with **Guardar** and with an action (**1 hora**). After closing the panel, tap Forward (`page.goForward()`): it does not reopen the panel.
+10. On wide (1024 px), repeat 1, 3 and 4: Back does the same.
+11. With unsaved changes, tap Back: the browser does not show its confirmation (no `beforeunload` dialog).
 
-## Flujo 7: recargar o cerrar la app
+## Flow 7: reload or close the app
 
-Precondición: lista con `Regar`, celular.
+Precondition: list with `Regar`, phone.
 
-1. Abrir `Regar`, cambiar el título y recargar (`page.reload()`): el navegador muestra su confirmación. Cancelarla: el panel sigue abierto con el cambio. Aceptarla: la app recarga, el panel no se reabre y la lista dice `Regar`.
-2. Abrir `Regar` sin tocar nada y recargar: no hay confirmación.
-3. Abrir `Regar`, cambiar el título y tocar **Cerrar** (aviso de cierre abierto) y cerrar la página con `page.close({ runBeforeUnload: true })`: hay confirmación.
-4. Abrir `Regar`, cambiar el título, tocar **Pausar** (aviso de acción abierto) y recargar: hay confirmación.
-5. Abrir `Regar`, cambiar el título y **Descartar** desde el aviso, y recargar: no hay confirmación.
-6. Tocar **+** y recargar sin tocar nada: no hay confirmación; escribir `Pagar` y recargar: hay.
-7. Abrir `Regar`, cambiar el título y tocar Atrás: no hay confirmación del navegador (solo el aviso de la app).
+1. Open `Regar`, change the title and reload (`page.reload()`): the browser shows its confirmation. Cancel it: the panel stays open with the change. Accept it: the app reloads, the panel does not reopen and the list says `Regar`.
+2. Open `Regar` without touching anything and reload: there is no confirmation.
+3. Open `Regar`, change the title and tap **Cerrar** (close notice open) and close the page with `page.close({ runBeforeUnload: true })`: there is a confirmation.
+4. Open `Regar`, change the title, tap **Pausar** (action notice open) and reload: there is a confirmation.
+5. Open `Regar`, change the title and **Descartar** from the notice, and reload: there is no confirmation.
+6. Tap **+** and reload without touching anything: there is no confirmation; type `Pagar` and reload: there is.
+7. Open `Regar`, change the title and tap Back: there is no browser confirmation (only the app's notice).
 
-## Flujo 8: dos dispositivos con el panel abierto
+## Flow 8: two devices with the panel open
 
-Precondición: reloj en `2026-07-15T08:00:00` en A y B; A en celular. `Regar` como en el panel de referencia en A.
+Precondition: clock at `2026-07-15T08:00:00` on A and B; A on phone. `Regar` as in the reference panel on A.
 
-1. En A, abrir `Regar` y cambiar la nota a `Las del patio`. En B, cambiar el título a `Regar plantas`. En A, sin cerrar: el título de A no cambia por lo escrito. Tocar **Cerrar** en A: se abre el aviso por la nota (el cambio remoto no suma ni quita). **Descartar**.
-2. En A, abrir `Regar plantas` sin tocar nada. En B, cambiar el título a `Regar flores`. En A, **Cerrar**: cierra directo, sin aviso.
-3. En A, abrir `Regar flores`, cambiar la nota y tocar **Cerrar** (aviso de cierre abierto). En B, borrar `Regar flores`: en A se cierran el aviso y el panel sin pedir nada, y la lista no tiene la tarea.
-4. En A, abrir otra tarea `Pagar`, cambiar la nota y tocar **Cerrar** (aviso abierto). En B, borrarla: en A se cierran el aviso y el panel; la lista no tiene `Pagar`.
-5. En A, abrir `Regar`, cambiar la nota y tocar **Pausar** (aviso de acción abierto). En B, pausar `Regar`: en A el aviso se cierra y queda el panel con la nota escrita, en **Acciones**, que ahora ofrece **Reanudar**.
-6. Con `Regar` pausada, en A abrir, cambiar la nota y tocar **Reanudar** (aviso de acción). En B, reanudarla: en A el aviso se cierra y el panel sigue con la nota.
-7. En A, con `Regar` pospuesta 1 hora a las `08:00`, abrir a las `08:30`, cambiar la nota y tocar **Quitar posponer** (aviso). Avanzar el reloj a `2026-07-15T09:00:00`: el aviso se cierra solo y el panel sigue con la nota escrita.
-8. En A, abrir `Regar`, cambiar la nota y tocar **Pausar** con el aviso abierto; en B, borrarla: en A se cierran el aviso y el panel.
+1. On A, open `Regar` and change the note to `Las del patio`. On B, change the title to `Regar plantas`. On A, without closing: A's title does not change because of what was typed. Tap **Cerrar** on A: the notice opens because of the note (the remote change neither adds nor removes). **Descartar**.
+2. On A, open `Regar plantas` without touching anything. On B, change the title to `Regar flores`. On A, **Cerrar**: closes directly, with no notice.
+3. On A, open `Regar flores`, change the note and tap **Cerrar** (close notice open). On B, delete `Regar flores`: on A the notice and the panel close without asking anything, and the list does not have the task.
+4. On A, open another task `Pagar`, change the note and tap **Cerrar** (notice open). On B, delete it: on A the notice and the panel close; the list does not have `Pagar`.
+5. On A, open `Regar`, change the note and tap **Pausar** (action notice open). On B, pause `Regar`: on A the notice closes and the panel stays with the note typed, on **Acciones**, which now offers **Reanudar**.
+6. With `Regar` paused, on A open, change the note and tap **Reanudar** (action notice). On B, resume it: on A the notice closes and the panel stays with the note.
+7. On A, with `Regar` postponed 1 hour at `08:00`, open at `08:30`, change the note and tap **Quitar posponer** (notice). Advance the clock to `2026-07-15T09:00:00`: the notice closes by itself and the panel stays with the note typed.
+8. On A, open `Regar`, change the note and tap **Pausar** with the notice open; on B, delete it: on A the notice and the panel close.
 
-## Flujo 9: Recientes
+## Flow 9: Recientes
 
-Precondición: lista vacía, celular, ningún emoji reciente (contexto nuevo).
+Precondition: empty list, phone, no recent emoji (new context).
 
-1. Tocar **+**, tocar el botón de emoji y elegir 🌱: el selector se cierra y el panel muestra 🌱.
-2. Tocar **Cerrar** y **Descartar**: el panel se cierra y la lista sigue vacía.
-3. Tocar **+** y el botón de emoji: **Recientes** muestra 🌱 primero (descartar no lo quitó).
+1. Tap **+**, tap the emoji button and choose 🌱: the picker closes and the panel shows 🌱.
+2. Tap **Cerrar** and **Descartar**: the panel closes and the list stays empty.
+3. Tap **+** and the emoji button: **Recientes** shows 🌱 first (discarding did not remove it).

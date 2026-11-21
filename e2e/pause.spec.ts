@@ -84,7 +84,7 @@ async function historyEntries(page: Page, title: string, hour: string, count: nu
 	await goA(page, 'Pendientes');
 }
 
-test('Flujo 1: pausar y reanudar una relativa', async ({ page }) => {
+test('Flow 1: pausar y reanudar una relativa', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-14T09:00:00');
 	await create(page, { title: 'Cambiar foco', kind: 'No se repite' });
 	await page.getByRole('button', { name: '+' }).click();
@@ -152,7 +152,7 @@ test('Flujo 1: pausar y reanudar una relativa', async ({ page }) => {
 	await waitStatus(page, 'Regar', 'en espera', 0, true);
 });
 
-test('Flujo 2: reanudar una de calendario', async ({ page }) => {
+test('Flow 2: reanudar una de calendario', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-07T09:00:00');
 	await create(page, { title: 'Sacar la basura', kind: 'Días de la semana', days: ['martes', 'jueves'] });
 	await advance(page, '2026-07-07T09:01:00');
@@ -194,7 +194,7 @@ test('Flujo 2: reanudar una de calendario', async ({ page }) => {
 	await waitStatus(page, 'Sacar la basura', 'en espera');
 });
 
-test('Flujo 3: completar después de reanudar cubre la próxima ocurrencia', async ({ page }) => {
+test('Flow 3: completar después de reanudar cubre la próxima ocurrencia', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-07T09:00:00');
 	await turnOnCompleted(page);
 	await togglePaused(page, true);
@@ -218,7 +218,7 @@ test('Flujo 3: completar después de reanudar cubre la próxima ocurrencia', asy
 	await waitStatus(page, 'Sacar la basura', 'pendiente', undefined, false);
 });
 
-test('Flujo 4: reanudar con horario', async ({ page }) => {
+test('Flow 4: reanudar con horario', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-10T09:00:00');
 	await turnOnCompleted(page);
 	await togglePaused(page, true);
@@ -252,7 +252,7 @@ test('Flujo 4: reanudar con horario', async ({ page }) => {
 	await waitStatus(page, 'Ventilar', 'atrasada', undefined, false, false);
 });
 
-test('Flujo 5: Mostrar pausadas y orden', async ({ page }) => {
+test('Flow 5: Mostrar pausadas y orden', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T08:00:00');
 	await create(page, { title: 'Ñandú', kind: 'Intervalo', every: '1', unit: 'días' });
 	await create(page, { title: 'Nube', kind: 'Intervalo', every: '1', unit: 'días' });
@@ -294,7 +294,7 @@ test('Flujo 5: Mostrar pausadas y orden', async ({ page }) => {
 	await listIs(page, ['Cambiar foco']);
 });
 
-test('Flujo 6: pasar una periódica pausada a puntual', async ({ page }) => {
+test('Flow 6: pasar una periódica pausada a puntual', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-10T09:00:00');
 	await turnOnCompleted(page);
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
@@ -319,7 +319,7 @@ test('Flujo 6: pasar una periódica pausada a puntual', async ({ page }) => {
 	await close(page);
 });
 
-test('Flujo 7: dos dispositivos', async ({ browser }) => {
+test('Flow 7: dos dispositivos', async ({ browser }) => {
 	const { a, b, ctxB, close: end } = await twoDevices(browser, '2026-07-14T08:00:00');
 	await togglePaused(a, true);
 	await togglePaused(b, true);

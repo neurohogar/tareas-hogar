@@ -168,7 +168,7 @@ async function historyDelete(page: Page, t: string) {
 	await expect(dialog).toHaveCount(0);
 }
 
-test('Flujo 1: el campo en el panel, crear y editar', async ({ page }) => {
+test('Flow 1: el campo en el panel, crear y editar', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	const y = async (l: Locator) => (await l.boundingBox())!.y;
 	const ascending = (ys: number[]) => {
@@ -295,7 +295,7 @@ test('Flujo 1: el campo en el panel, crear y editar', async ({ page }) => {
 	expect(e10.clamp === '' || e10.clamp === 'none').toBe(true);
 });
 
-test('Flujo 2: la línea y el botón en la fila', async ({ page }) => {
+test('Flow 2: la línea y el botón en la fila', async ({ page }) => {
 	await session(page, FRIDAY, false);
 	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '', firstStep: 'Separar la ropa blanca', minimalVersion: 'Solo el inodoro' });
 	await create(page, { title: 'Barrer', kind: DOES_NOT_REPEAT, date: '', minimalVersion: 'Solo el pasillo' });
@@ -461,7 +461,7 @@ test('Flujo 2: la línea y el botón en la fila', async ({ page }) => {
 	await expect(f(page, 'Regar').getByRole('button')).toHaveText(['Regar', 'Hice la mínima']);
 });
 
-test('Flujo 3: hacer la mínima, aviso, regreso y deshacer', async ({ page, browser }) => {
+test('Flow 3: hacer la mínima, aviso, regreso y deshacer', async ({ page, browser }) => {
 	await session(page, '2026-11-13T09:00:00', true);
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '8', unit: 'horas', emoji: '🌱', minimalVersion: 'Solo los helechos' });
 	await create(page, { title: 'Limpiar', kind: DOES_NOT_REPEAT, date: '', minimalVersion: 'Solo el inodoro' });
@@ -580,7 +580,7 @@ test('Flujo 3: hacer la mínima, aviso, regreso y deshacer', async ({ page, brow
 	await d.ctx.close();
 });
 
-test('Flujo 4: con pasos, en cualquier paso', async ({ page }) => {
+test('Flow 4: con pasos, en cualquier paso', async ({ page }) => {
 	await session(page, FRIDAY, true);
 	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '', firstStep: P1, steps: [P2, P3], minimalVersion: 'Solo lo blanco' });
 	const step = (t: string) => expect(stepLine(page, 'Lavar')).toHaveText(t);
@@ -681,7 +681,7 @@ test('Flujo 4: con pasos, en cualquier paso', async ({ page }) => {
 	await expect(previous(page, 'Barrer')).toHaveCount(0);
 });
 
-test('Flujo 5: Historial y Borrar', async ({ page }) => {
+test('Flow 5: Historial y Borrar', async ({ page }) => {
 	await session(page, '2026-11-13T08:05:00', false);
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días', minimalVersion: 'Solo los helechos' });
 	await create(page, { title: 'Pagar', kind: DOES_NOT_REPEAT, date: '' });
@@ -762,7 +762,7 @@ test('Flujo 5: Historial y Borrar', async ({ page }) => {
 	await expect(entry('Pagar')).toHaveText(/^Pagar\s*10:\d\d\s*Borrar$/);
 });
 
-test('Flujo 6: lo que no cambia y lo que no lo muestra', async ({ page }) => {
+test('Flow 6: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await session(page, FRIDAY, true);
 	const texts = async (t: string[]) => Promise.all(t.map((x) => f(page, x).innerText()));
 
@@ -808,7 +808,7 @@ test('Flujo 6: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await close(page);
 });
 
-test('Flujo 7: Cambios sin guardar', async ({ page }) => {
+test('Flow 7: Cambios sin guardar', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '', minimalVersion: 'Solo el inodoro' });
 	await create(page, { title: 'Planchar', kind: DOES_NOT_REPEAT, date: '' });
@@ -885,7 +885,7 @@ async function devices(browser: Browser) {
 	return d;
 }
 
-test('Flujo 8: dos dispositivos', async ({ browser }) => {
+test('Flow 8: dos dispositivos', async ({ browser }) => {
 	test.setTimeout(400_000);
 	const { a, b, ctxB, close: end } = await devices(browser);
 	const both = [a, b];

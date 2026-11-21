@@ -1,92 +1,94 @@
-# Orquestación del pipeline
+# Pipeline orchestration
 
-Lo ejecuta el orquestador: el agente `orchestrator` de `.claude/agents/`, en Sonnet. Los roles están en la misma carpeta; la constitución en `CLAUDE.md`.
+It is run by the orchestrator: the `orchestrator` agent in `.claude/agents/`, on Sonnet. The roles are in the same folder; the constitution is in `CLAUDE.md`.
 
-Para orquestar, abrir la sesión con `claude --agent orchestrator`: así la conversación entera corre en el modelo del orquestador. Desde una sesión abierta con otro modelo, lanzar al `orchestrator` como subagente; en ese caso no puede hablar con el usuario y devuelve cada pregunta como `STATUS: QUESTION`.
+To orchestrate, open the session with `claude --agent orchestrator`: this way the whole conversation runs on the orchestrator's model. From a session opened with another model, launch the `orchestrator` as a subagent; in that case it cannot talk to the user and returns each question as `STATUS: QUESTION`.
 
-Los roles no cargan el `CLAUDE.md` global ni el del proyecto (`omitClaudeMd`): cada uno lee el del proyecto al empezar. Tienen solo las herramientas que lista su archivo.
+The roles do not load the global `CLAUDE.md` or the project's (`omitClaudeMd`): each one reads the project's at the start. They have only the tools their file lists.
 
-## Topología
+## Topology
 
-| Rol | Dónde trabaja | Rama |
+| Role | Where it works | Branch |
 |---|---|---|
-| analyst, spec-writer, gherkin-writer | checkout principal (`~/Work/tareas-hogar`) | `v3` |
-| core, acceptance, ui, cleaner, architect, hardener, qa | worktree compartido `~/Work/tareas-hogar-worktrees/pipeline` | `wt/pipeline` |
+| analyst, spec-writer, gherkin-writer | main checkout (`~/Work/tareas-hogar`) | `v3` |
+| core, acceptance, ui, cleaner, architect, hardener, qa | shared worktree `~/Work/tareas-hogar-worktrees/pipeline` | `wt/pipeline` |
 
-Los siete roles de implementación se suceden en el mismo worktree: cada uno empieza donde dejó el commit del anterior, sin merges entre roles. El specifier queda aparte para poder especificar la próxima feature mientras corre la cadena de la actual.
+The seven implementation roles run one after another in the same worktree: each starts where the previous one's commit left off, with no merges between roles. The specifier stays apart so the next feature can be specified while the current feature's chain runs.
 
-## Preparación (una vez)
+## Setup (once)
 
 1. `git worktree add ~/Work/tareas-hogar-worktrees/pipeline -b wt/pipeline v3`.
-2. `gentle-ai codegraph init --cwd ~/Work/tareas-hogar-worktrees/pipeline` (índice propio).
+2. `gentle-ai codegraph init --cwd ~/Work/tareas-hogar-worktrees/pipeline` (its own index).
 
-Listo cuando `git worktree list` muestra el worktree `pipeline` en `wt/pipeline`.
+Done when `git worktree list` shows the `pipeline` worktree on `wt/pipeline`.
 
-## Una feature
+## One feature
 
-1. **analyst** — escribir la ruta del paquete (`docs/pipeline/paquetes/<feature>.md`) en `tmp/paquete-actual` del checkout principal, con el árbol limpio (el gate de los roles de especificación exige commit propio y árbol limpio), y lanzarlo con el pedido del usuario textual. Si reporta `QUESTION`, hacerle al usuario cada pregunta de `NOTES`, **de a una**, con la interfaz de selección y las opciones tal cual; anotar cada respuesta textual en `## Decisiones` del paquete (`Dn (fecha, usuario): «…»`) y relanzar al analyst. Repetir hasta `DONE`.
-2. **spec-writer** — lanzarlo con el paquete. Si reporta `QUESTION`, igual que arriba y relanzarlo.
-3. **gherkin-writer** — lanzarlo con el paquete. Si reporta `QUESTION`, igual que arriba; si la respuesta cambia una regla, vuelve al spec-writer.
-4. **Aprobación** — mostrar al usuario los `.feature` y el procedimiento QA nuevos (rutas + resumen de escenarios). Si pide cambios en reglas, vuelve al spec-writer; si solo en escenarios, al gherkin-writer. Continuar solo con aprobación explícita.
+1. **analyst** — write the package path (`docs/pipeline/paquetes/<feature>.md`) in `tmp/paquete-actual` of the main checkout, with a clean tree (the gate of the specification roles requires its own commit and a clean tree), and launch it with the user's request verbatim. If it reports `QUESTION`, ask the user each question in `NOTES`, **one at a time**, with the selection interface and the options as they are; write each answer verbatim in `## Decisions` of the package (`Dn (date, user): «…»`) and relaunch the analyst. Repeat until `DONE`.
+2. **spec-writer** — launch it with the package. If it reports `QUESTION`, same as above and relaunch it.
+3. **gherkin-writer** — launch it with the package. If it reports `QUESTION`, same as above; if the answer changes a rule, it goes back to the spec-writer.
+4. **Approval** — show the user the new `.feature` files and the QA procedure (paths + scenario summary). If they ask for changes to rules, it goes back to the spec-writer; if only to scenarios, to the gherkin-writer. Continue only with explicit approval.
 
-Features distintas pueden especificarse en paralelo si sus spec-writers tocan secciones distintas de `docs/spec.md` (el orquestador lo verifica con las secciones que nombra cada paquete); si se pisan, van en secuencia.
+Different features can be specified in parallel if their spec-writers touch different sections of `docs/spec.md` (the orchestrator checks this with the sections each package names); if they overlap, they go in sequence.
 
-5. **core → acceptance → ui → cleaner → architect → hardener → qa** — el rol siguiente y su prompt los da `node scripts/pipeline.ts` (lanzarlo con ese prompt tal cual, más la sección de aprendizajes de la plantilla y sin otro contexto); antes de lanzar al core, escribir la ruta del paquete en `~/Work/tareas-hogar-worktrees/pipeline/tmp/paquete-actual` (el gate la usa para verificar la superficie de cada rol); `node scripts/pipeline.ts` anota en `tmp/base-de-feature` del worktree el `v3` del que parte la feature (un retrabajo adelanta `v3` sin mover esa base); el core empieza con `git merge --no-edit v3` en el worktree compartido; los demás, sin merge; lanzar cada uno en secuencia con la plantilla y el procedimiento de abajo, esperando su reporte antes del siguiente. Si `node scripts/pipeline.ts` imprime una línea `SALTEAR: <rol>`, correr el comando que trae en lugar de lanzar al rol: si da 0, el rol quedó hecho con un commit vacío `By <rol>.` y se pide el siguiente; si da 1, lanzar al rol como siempre. Solo se saltean `core` y `ui` (cuando su sección del paquete no lista archivos) y `cleaner` y `architect` (cuando la feature no tocó `src/lib/core/` y su gate pasa); `acceptance`, `hardener` y `qa` corren siempre. Avanzar solo con `STATUS: DONE` **verificado**: el commit del reporte es `HEAD` del worktree compartido y `node scripts/gate.ts <rol>` da `OK` (el hook `SubagentStop` ya lo corrió; el orquestador lo vuelve a correr solo si el hook no lo hizo o el reporte no coincide). Un `DONE` cuyo gate falla es un `BLOCKED`.
-6. **Sync** — al `DONE` de qa:
-   - En el checkout principal: `git merge --ff-only wt/pipeline` (si `v3` avanzó con otros commits, `git merge --no-edit wt/pipeline`).
-   - En el worktree compartido: `git merge --ff-only v3`.
-7. **Cierre** — reportar al usuario: escenarios cubiertos, gates finales (del reporte de qa y hardener), commits. Preguntar por la próxima feature.
+5. **core → acceptance → ui → cleaner → architect → hardener → qa** — the next role and its prompt are given by `node scripts/pipeline.ts` (launch it with that prompt as is, plus the learnings section of the template and no other context); before launching core, write the package path in `~/Work/tareas-hogar-worktrees/pipeline/tmp/paquete-actual` (the gate uses it to verify each role's surface); `node scripts/pipeline.ts` records in `tmp/base-de-feature` of the worktree the `v3` the feature starts from (a rework advances `v3` without moving that base); core starts with `git merge --no-edit v3` in the shared worktree; the others, with no merge; launch each one in sequence with the template and the procedure below, waiting for its report before the next. If `node scripts/pipeline.ts` prints a line `SALTEAR: <role>`, run the command it carries instead of launching the role: if it returns 0, the role is done with an empty commit `By <role>.` and the next one is requested; if it returns 1, launch the role as usual. Only `core` and `ui` (when their section of the package lists no files) and `cleaner` and `architect` (when the feature did not touch `src/lib/core/` and their gate passes) are skipped; `acceptance`, `hardener` and `qa` always run. Move on only with a **verified** `STATUS: DONE`: the report's commit is `HEAD` of the shared worktree and `node scripts/gate.ts <role>` gives `OK` (the `SubagentStop` hook already ran it; the orchestrator runs it again only if the hook did not or the report does not match). A `DONE` whose gate fails is a `BLOCKED`.
+6. **Sync** — at qa's `DONE`:
+   - In the main checkout: `git merge --ff-only wt/pipeline` (if `v3` advanced with other commits, `git merge --no-edit wt/pipeline`).
+   - In the shared worktree: `git merge --ff-only v3`.
+7. **Close** — report to the user: scenarios covered, final gates (from the qa and hardener reports), commits. Ask about the next feature.
 
-Una feature está terminada cuando `v3` contiene el commit de qa y el worktree compartido está en el mismo commit que `v3`.
+A feature is finished when `v3` contains qa's commit and the shared worktree is at the same commit as `v3`.
 
-## Plantilla de lanzamiento
+## Launch template
 
 ```
-Rol: <rol>. Feature: <nombre>.
+Rol: <role>. Feature: <name>.
 Worktree: ~/Work/tareas-hogar-worktrees/pipeline. Antes de empezar: cd a esa ruta<; solo core: y `git merge --no-edit v3`>.
-<Para analyst: el pedido del usuario, textual, y el nombre de la feature (el paquete se llama así).>
-<Para los demás: Paquete: docs/pipeline/paquetes/<feature>.md. Nada más: todo lo que el rol necesita está en el paquete.>
-<En reintentos: feedback del intento anterior, textual.>
+<For analyst: the user's request, verbatim, and the feature name (the package is named after it).>
+<For the others: Paquete: docs/pipeline/paquetes/<feature>.md. Nada más: todo lo que el rol necesita está en el paquete.>
+<On retries: feedback from the previous attempt, verbatim.>
 
 Aprendizajes del rol (leelos antes de empezar):
-<la lista completa de la memoria del rol>
+<the complete list from the role's memory>
 ```
 
-Los aprendizajes van siempre en el prompt, en todos los roles y reintentos: dejarlos a cargo del rol no funciona, porque varios no los buscan. Para obtenerlos: `mem_search` con `query: "Aprendizajes del rol <rol>"`, `project: "tareas-hogar"`, `type: "learning"`, `limit: 20`; elegir el resultado cuyo `topic_key` es `pipeline/aprendizajes/<rol>` (el primero puede ser de otro rol) y leerlo entero con `mem_get_observation`. Si Engram no responde, lanzar igual y decir en el prompt que no hay aprendizajes.
+The template lines above are the Spanish text that `bdd-pipeline` prints; they are quoted as is, and the translations in `<...>` stand for the content the orchestrator fills in.
 
-## Lanzar y seguir un rol
+The learnings always go in the prompt, in every role and retry: leaving it to the role does not work, because several do not look for them. To get them: `mem_search` with `query: "Aprendizajes del rol <role>"`, `project: "tareas-hogar"`, `type: "learning"`, `limit: 20`; pick the result whose `topic_key` is `pipeline/aprendizajes/<role>` (the first may belong to another role) and read it whole with `mem_get_observation`. If Engram does not respond, launch anyway and say in the prompt that there are no learnings.
 
-El usuario tiene que ver el progreso sin preguntar. Mientras un rol corre en primer plano, el orquestador no puede escribir en el chat: por eso todo rol se lanza en segundo plano.
+## Launching and following a role
 
-1. **Anunciar** en una línea el rol, su número en la cadena y el `ESTIMADO:` de `node scripts/pipeline.ts`.
-2. **Seguir**: lanzar un `Monitor` con la línea `SEGUIR:` de `pipeline.ts` y `timeout_ms: 1800000`. Si expira, rearmarlo con la misma línea más `--continuar`, que conserva el tiempo del rol y lo anotado mientras tanto.
-3. **Lanzar** el rol con `Agent` y `run_in_background: true` (o `delegate_task` si corre en un provider distinto al del orquestador en T3 Code). El hook `SubagentStop` funciona igual: le devuelve al rol los errores del gate.
-4. **Avisar**: por cada evento del `Monitor`, una línea corta al usuario con la fase y el tiempo respecto del estimado. Si un resumen dice que no hay novedades hace 15 minutos o más, investigar (procesos y `tmp/progreso.log`) y decirlo.
-5. **Cerrar**: cuando llega la notificación del rol, parar el `Monitor` con `TaskStop`, verificar el `DONE` y decir cuánto tardó contra el estimado.
+The user must see progress without asking. While a role runs in the foreground, the orchestrator cannot write in the chat: that is why every role is launched in the background.
 
-El analyst no sale de `pipeline.ts`: su `SEGUIR` es `node scripts/progreso.ts analyst`, y su prompt lleva la línea `Progreso:` con `~/Work/tareas-hogar/tmp/progreso.log`.
+1. **Announce** in one line the role, its number in the chain and the `ESTIMADO:` from `node scripts/pipeline.ts`.
+2. **Follow**: launch a `Monitor` with the `SEGUIR:` line from `pipeline.ts` and `timeout_ms: 1800000`. If it expires, re-arm it with the same line plus `--continuar`, which keeps the role's time and what was noted meanwhile.
+3. **Launch** the role with `Agent` and `run_in_background: true` (or `delegate_task` if it runs on a different provider from the orchestrator's in T3 Code). The `SubagentStop` hook works the same: it returns the gate errors to the role.
+4. **Notify**: for each `Monitor` event, one short line to the user with the phase and the time against the estimate. If a summary says there has been no news for 15 minutes or more, investigate (processes and `tmp/progreso.log`) and say so.
+5. **Close**: when the role's notification arrives, stop the `Monitor` with `TaskStop`, verify the `DONE` and say how long it took against the estimate.
 
-Mientras tanto, el orquestador termina su turno y no espera con `sleep`: lo despiertan los eventos.
+The analyst does not go through `pipeline.ts`: its `SEGUIR` is `node scripts/progreso.ts analyst`, and its prompt carries the line `Progreso:` with `~/Work/tareas-hogar/tmp/progreso.log`.
 
-Si el rol se interrumpe antes de que llegue su reporte, leer `tmp/reporte-<rol>.txt` de donde trabaja. Vale solo si su `COMMIT` es el `HEAD`; recién ahí correr el gate.
+Meanwhile, the orchestrator ends its turn and does not wait with `sleep`: events wake it up.
 
-## Retrabajo de specs a mitad de la cadena
+If the role is interrupted before its report arrives, read `tmp/reporte-<role>.txt` from where it works. It counts only if its `COMMIT` is `HEAD`; only then run the gate.
 
-Cuando un rol posterior necesita un cambio en `features/` o `qa/` (son del gherkin-writer; si cambia una regla, del spec-writer):
+## Spec rework in the middle of the chain
 
-1. En el checkout principal: `git merge --ff-only wt/pipeline`. Así el gherkin-writer edita sobre los manifests de mutación y los cambios de ese rol, sin conflictos.
-2. Lanzar (o continuar) al gherkin-writer (o al spec-writer, si cambia una regla) con el cambio, textual.
-3. Si el cambio solo toca `features/`/`qa/` y los step handlers existentes lo cubren, relanzar el rol que lo pidió con `git merge --no-edit v3`. Si exige cambiar step handlers o código, el trabajo vuelve a entrar por el core (o por acceptance, si solo cambian handlers) y recorre la cadena desde ahí.
+When a later role needs a change in `features/` or `qa/` (they belong to the gherkin-writer; if a rule changes, to the spec-writer):
 
-## Fallas
+1. In the main checkout: `git merge --ff-only wt/pipeline`. This way the gherkin-writer edits on top of the mutation manifests and that role's changes, without conflicts.
+2. Launch (or continue) the gherkin-writer (or the spec-writer, if a rule changes) with the change, verbatim.
+3. If the change only touches `features/`/`qa/` and the existing step handlers cover it, relaunch the role that asked for it with `git merge --no-edit v3`. If it requires changing step handlers or code, the work re-enters through core (or through acceptance, if only handlers change) and goes through the chain from there.
 
-- `BLOCKED` o gate que no pasa — relanzar el mismo rol con el `NOTES` (o la salida del gate) como feedback. El primer reintento usa el modelo del rol con un nivel más de `effort` en el lanzamiento (`low` → `medium` → `high`); el segundo, `model: opus` en el lanzamiento, aunque el rol sea más barato, con el prompt de `node scripts/pipeline.ts --opus` (firma con Opus). Tras 2 reintentos sin `DONE`, frenar y presentar el bloqueo al usuario.
-- Duda de diseño que no es de producto y que ni el paquete ni el spec resuelven — lanzar al agente `consultor` (Fable) con la pregunta cerrada, las opciones y las rutas a leer. Es el único uso de Fable en el pipeline.
-- `LEARNINGS` en un reporte — agregar cada línea a la memoria del rol que la pisaría (`mem_save` con `topic_key: pipeline/aprendizajes/<rol>`, reescribiendo la lista completa), si no está ya. Una línea por trampa, sin historia.
-- `QUESTION` de un rol de implementación (un hueco del spec) — hacerle al usuario la pregunta de `NOTES`, tal cual, y anotar la respuesta textual en `## Decisiones` del paquete. Si cambia o agrega una regla: spec-writer → gherkin-writer (con sus gates), y después relanzar el rol que preguntó. Si solo aclara, relanzarlo directo.
-- qa reporta contradicción entre la suite QA y el Gherkin o los unit tests — siempre al usuario; la respuesta vuelve al spec-writer o al gherkin-writer.
-- Falla de entorno (herramienta ausente, dependencia rota) repetida 2 veces — frenar y pedir intervención al usuario; no reparar el sistema operativo.
+## Failures
 
-## Estado en Engram
+- `BLOCKED` or a gate that does not pass — relaunch the same role with the `NOTES` (or the gate output) as feedback. The first retry uses the role's model with one more level of `effort` in the launch (`low` → `medium` → `high`); the second, `model: opus` in the launch, even if the role is a cheaper one, with the prompt from `node scripts/pipeline.ts --opus` (signed as Opus). After 2 retries without `DONE`, stop and present the blocker to the user.
+- A design doubt that is not a product matter and that neither the package nor the spec resolves — launch the `consultor` agent (Fable) with the closed question, the options and the paths to read. It is the only use of Fable in the pipeline.
+- `LEARNINGS` in a report — add each line to the memory of the role that would step on it (`mem_save` with `topic_key: pipeline/aprendizajes/<role>`, rewriting the complete list), if it is not there already. One line per trap, no history.
+- `QUESTION` from an implementation role (a gap in the spec) — ask the user the question in `NOTES`, as is, and write the answer verbatim in `## Decisions` of the package. If it changes or adds a rule: spec-writer → gherkin-writer (with their gates), and then relaunch the role that asked. If it only clarifies, relaunch it directly.
+- qa reports a contradiction between the QA suite and the Gherkin or the unit tests — always to the user; the answer goes back to the spec-writer or the gherkin-writer.
+- An environment failure (missing tool, broken dependency) repeated 2 times — stop and ask the user to step in; do not repair the operating system.
 
-El orquestador mantiene `pipeline/estado` (proyecto `tareas-hogar`): qué feature está en qué fase, el paquete actual y lo que espera una decisión del usuario. Lo reescribe en cada cambio de fase y al cerrar una feature. Al empezar una sesión, o después de una compactación, lo lee primero (`mem_search` «Estado del pipeline», luego `mem_get_observation`) y lo concilia con `git log` y `git worktree list` antes de seguir.
+## State in Engram
+
+The orchestrator maintains `pipeline/estado` (project `tareas-hogar`): which feature is in which phase, the current package and what is waiting for a user decision. It rewrites it at every phase change and when closing a feature. At the start of a session, or after a compaction, it reads it first (`mem_search` «Estado del pipeline», then `mem_get_observation`) and reconciles it with `git log` and `git worktree list` before continuing.

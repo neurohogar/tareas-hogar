@@ -1,552 +1,551 @@
-# Tareas Hogar v2 — Especificación
+# Tareas Hogar v2 — Specification
 
-Estado: borrador v1 · 2026-10-26
+Status: draft v1 · 2026-10-26
 
-## 1. Propósito
+## 1. Purpose
 
-Lista personal de tareas del hogar pensada para personas con TDAH. Resuelve dos problemas, en este orden:
+A personal household task list designed for people with ADHD. It solves two problems, in this order:
 
-1. **Que no se olviden las tareas recurrentes** ("¿cuándo limpié el baño por última vez?").
-2. **Bajar la carga visual**: la lista muestra primero lo que hay que hacer ahora, sin ruido.
+1. **Recurring tasks must not be forgotten** ("when did I last clean the bathroom?").
+2. **Lower the visual load**: the list shows first what has to be done now, without noise.
 
-Un solo usuario, que la usa desde el celular (en el momento, por la casa) y desde la compu (Linux).
+A single user, who uses it from the phone (in the moment, around the house) and from the computer (Linux).
 
-## 2. Alcance del MVP
+## 2. MVP scope
 
-**Incluye**
+**Includes**
 
-- Tareas puntuales y periódicas (modo relativo y modo calendario).
-- Historial de todo lo completado, con deshacer.
-- Funcionamiento sin conexión y sincronización entre dispositivos.
-- Login con Google.
-- Fuente y emoji empaquetados con la app (§6).
-- Pantalla de carga al iniciar la app (§6.6).
+- One-off and recurring tasks (relative mode and calendar mode).
+- History of everything completed, with undo.
+- Offline operation and sync between devices.
+- Google sign-in.
+- Font and emoji bundled with the app (§6).
+- Loading screen when the app starts (§6.6).
 
-**No incluye**
+**Does not include**
 
-- Notificaciones o recordatorios.
-- Uso compartido o multiusuario.
-- Subcategorías o secciones jerárquicas.
-- Orden manual (arrastrar).
-- Estadísticas o rachas.
-- Apps nativas (solo PWA).
+- Notifications or reminders.
+- Shared or multi-user use.
+- Subcategories or hierarchical sections.
+- Manual order (dragging).
+- Statistics or streaks.
+- Native apps (PWA only).
 
-## 3. Glosario
+## 3. Glossary
 
-| Término | Significado |
+| Term | Meaning |
 |---|---|
-| **Tarea puntual** | Se hace una sola vez. Al completarla sale de la lista y queda en el historial. |
-| **Tarea periódica** | Vuelve a estar pendiente según su recurrencia. |
-| **Modo relativo** | Recurrencia "cada N horas" o "cada N días", contada desde el último completado. |
-| **Modo calendario** | Recurrencia anclada a fechas: días de la semana o días del mes. |
-| **Ocurrencia** | En modo calendario, cada día en que la tarea "toca" (ej. cada martes). |
-| **Completado** | Registro inmutable de que una tarea se hizo, con fecha y hora. |
-| **Estado** | `pendiente`, `atrasada` o `en espera`. Se calcula; nunca se guarda. |
+| **One-off task** | Done a single time. Once completed it leaves the list and stays in the history. |
+| **Recurring task** | Becomes pending again according to its recurrence. |
+| **Relative mode** | Recurrence "every N hours" or "every N days", counted from the last completion. |
+| **Calendar mode** | Recurrence anchored to dates: days of the week or days of the month. |
+| **Occurrence** | In calendar mode, each day on which the task "is due" (e.g. every Tuesday). |
+| **Completion** | Immutable record that a task was done, with date and time. |
+| **Status** | `pending`, `overdue` or `waiting`. It is computed; never stored. |
 
-## 4. Modelo de dominio
+## 4. Domain model
 
-### 4.1 Tarea
+### 4.1 Task
 
-| Campo | Tipo | Obligatorio | Notas |
+| Field | Type | Required | Notes |
 |---|---|---|---|
-| `id` | string | sí | |
-| `titulo` | string | sí | No vacío. |
-| `emoji` | string | no | Un solo emoji (ver más abajo). |
-| `nota` | string | no | Texto libre (ver más abajo). |
-| `primerPaso` | string | no | Una línea con el primer movimiento concreto (ver más abajo). Cualquier tipo de tarea. |
-| `pasos` | string[] | no | Los pasos 2 en adelante, en orden (ver **Pasos**, más abajo). Cualquier tipo de tarea. |
-| `pasoActual` | entero ≥ 1 | no | Número del paso en que va la tarea (ver **Pasos**). Sin el campo, va en el paso 1. |
-| `versionMinima` | string | no | Una línea con la versión chica de la tarea (ver **Versión mínima**, más abajo). Cualquier tipo de tarea. |
-| `tipo` | `puntual` \| `periodica` | sí | |
-| `fechaLimite` | fecha (sin hora) | no | Solo para puntuales. |
-| `recurrencia` | ver 4.2 | si es periódica | |
-| `horario` | `{ desde: "HH:MM", hasta: "HH:MM" }` o lista de esas ventanas | no | Ventanas diarias en las que se puede completar (§5.5). Cualquier tipo de tarea, con una o más ventanas (§5.6, §5.7). |
-| `creadaEn` | timestamp | sí | |
-| `pausada` | booleano | no | Solo periódicas (§5.8). Sin el campo, no está pausada. |
-| `reanudadaEn` | timestamp | no | Última vez que se reanudó (§5.8). |
-| `pospuesta` | `{ desde: timestamp, hasta: timestamp }` | no | Posponer (§5.9). |
+| `id` | string | yes | |
+| `titulo` | string | yes | Not empty. |
+| `emoji` | string | no | A single emoji (see below). |
+| `nota` | string | no | Free text (see below). |
+| `primerPaso` | string | no | One line with the first concrete move (see below). Any kind of task. |
+| `pasos` | string[] | no | Steps 2 onward, in order (see **Steps**, below). Any kind of task. |
+| `pasoActual` | integer ≥ 1 | no | Number of the step the task is on (see **Steps**). Without the field, it is on step 1. |
+| `versionMinima` | string | no | One line with the small version of the task (see **Minimal version**, below). Any kind of task. |
+| `tipo` | `puntual` \| `periodica` | yes | |
+| `fechaLimite` | date (no time) | no | One-off tasks only. |
+| `recurrencia` | see 4.2 | if recurring | |
+| `horario` | `{ desde: "HH:MM", hasta: "HH:MM" }` or a list of such windows | no | Daily windows in which the task can be completed (§5.5). Any kind of task, with one or more windows (§5.6, §5.7). |
+| `creadaEn` | timestamp | yes | |
+| `pausada` | boolean | no | Recurring only (§5.8). Without the field, it is not paused. |
+| `reanudadaEn` | timestamp | no | Last time it was resumed (§5.8). |
+| `pospuesta` | `{ desde: timestamp, hasta: timestamp }` | no | Postpone (§5.9). |
 
-**Horario**: `desde` y `hasta` son horas locales en formato 24 h, con `desde` < `hasta` (la ventana no cruza la medianoche). La ventana de un día es [`desde`, `hasta`): se puede completar desde `desde` inclusive hasta `hasta` exclusive. Sin el campo, la tarea se puede completar a cualquier hora. Un horario con una sola de las dos horas, o con `desde` ≥ `hasta`, es inválido y rechaza la creación o la edición entera.
+**Schedule**: `desde` and `hasta` are local times in 24 h format, with `desde` < `hasta` (the window does not cross midnight). The window of a day is [`desde`, `hasta`): the task can be completed from `desde` inclusive until `hasta` exclusive. Without the field, the task can be completed at any hour. A schedule with only one of the two times, or with `desde` ≥ `hasta`, is invalid and rejects the whole creation or edit.
 
-**Varios horarios** (§5.6, §5.7): cualquier tarea puede tener **una o más ventanas**, ordenadas por `desde` y sin superponerse (dos ventanas se superponen si una empieza antes de que termine la otra; que una empiece justo cuando termina la otra, ej. 08:00–10:00 y 10:00–12:00, es válido). Una relativa con más de una ventana tiene que tener el intervalo en días. Ventanas superpuestas, o más de una ventana en una relativa en horas, son inválidas y rechazan la creación o la edición entera. Un documento guardado con una sola ventana (el formato anterior) se lee como una lista de una.
+**Several schedules** (§5.6, §5.7): any task can have **one or more windows**, sorted by `desde` and not overlapping (two windows overlap if one starts before the other ends; one starting exactly when the other ends, e.g. 08:00–10:00 and 10:00–12:00, is valid). A relative task with more than one window must have its interval in days. Overlapping windows, or more than one window in a relative task in hours, are invalid and reject the whole creation or edit. A document saved with a single window (the previous format) is read as a list of one.
 
-**Emoji**: un solo emoji, es decir, un único grafema emoji: una secuencia con ZWJ (👨‍👩‍👧), con tono de piel (👍🏽), con selector de variación (❤️) o una bandera (🇦🇷) cuenta como uno. Texto vacío o solo espacios significa **sin emoji** (el campo no se guarda). Dos o más emojis, o cualquier texto que no sea exactamente un emoji (letras, números, un emoji con texto), es inválido: la creación o edición se rechaza entera, igual que un título vacío. La UI no puede producir un valor inválido (el emoji se elige de un selector, §6.2), pero la regla del dato se conserva en el core como validación al guardar: un valor inválido que llegue por otra vía (por ejemplo un documento con datos inválidos) se rechaza igual.
+**Emoji**: a single emoji, that is, a single emoji grapheme: a ZWJ sequence (👨‍👩‍👧), one with a skin tone (👍🏽), one with a variation selector (❤️) or a flag (🇦🇷) counts as one. Empty text or only spaces means **no emoji** (the field is not saved). Two or more emojis, or any text that is not exactly one emoji (letters, numbers, an emoji with text), is invalid: the creation or edit is rejected entirely, just like an empty title. The UI cannot produce an invalid value (the emoji is chosen from a picker, §6.2), but the data rule is kept in the core as validation on save: an invalid value that arrives some other way (for example a document with invalid data) is rejected all the same.
 
-**Nota**: texto libre sin largo máximo. Al guardar se recortan los espacios y saltos de línea del inicio y del final; los saltos de línea internos se conservan. Vacía o solo espacios significa **sin nota** (el campo no se guarda). Una nota nunca es inválida.
+**Note**: free text with no maximum length. On save, spaces and line breaks at the start and at the end are trimmed; inner line breaks are kept. Empty or only spaces means **no note** (the field is not saved). A note is never invalid.
 
-**Primer paso**: una sola línea, sin saltos de línea y sin largo máximo. Al guardar se recortan los espacios del inicio y del final. Vacío o solo espacios significa **sin primer paso** (el campo no se guarda). Un primer paso nunca es inválido: nunca rechaza la creación ni la edición. El primer paso es el paso 1 de la lista de **Pasos** (abajo). En una tarea de un solo paso no tiene estado: completar la tarea, posponerla, pausarla, reanudarla, deshacer y cambiar de tipo o de modo no lo borran ni lo cambian, y una periódica que vuelve muestra el mismo primer paso. En una tarea de un solo paso no hay forma de marcarlo como hecho ni indicador de avance; en una de dos pasos o más sí (ver **Pasos**). Una tarea guardada sin el campo no tiene primer paso (no hay migración). No cambia el estado (§5) ni el orden de la lista, y el nombre de la tarea (abajo) sigue siendo emoji y título. No se ve en el Historial ni en el aviso de deshacer.
+**First step**: a single line, with no line breaks and no maximum length. On save, spaces at the start and at the end are trimmed. Empty or only spaces means **no first step** (the field is not saved). A first step is never invalid: it never rejects the creation or the edit. The first step is step 1 of the **Steps** list (below). In a one-step task it has no state: completing the task, postponing it, pausing it, resuming it, undoing and changing the kind or the mode do not erase it or change it, and a recurring task that comes back shows the same first step. In a one-step task there is no way to mark it as done and no progress indicator; in a task of two steps or more there is (see **Steps**). A task saved without the field has no first step (there is no migration). It does not change the status (§5) or the order of the list, and the task name (below) is still emoji and title. It is not shown in the **Historial** or in the undo notice.
 
-**Pasos**: una tarea puede tener, además del primer paso, más pasos, opcionales y para cualquier tipo de tarea. El primer paso es el paso 1 y `pasos` guarda los pasos 2, 3… en el orden escrito; una tarea guardada sin `pasos` no tiene más pasos (no hay migración). Una tarea tiene **un solo paso** si tiene primer paso y no tiene `pasos`, y **dos pasos o más** si tiene primer paso y al menos un paso en `pasos`.
-- **Texto**: cada paso sigue la regla del primer paso: una sola línea, sin saltos de línea y sin largo máximo, se recortan los espacios del inicio y del final al guardar, y un paso vacío o de solo espacios se descarta al guardar, sin error. Los pasos de abajo suben: si el primer paso queda vacío y el paso 2 no, el paso 2 pasa a ser el primer paso. Un paso nunca es inválido ni rechaza la creación ni la edición, y no hay máximo de pasos.
-- **Avance**: `pasoActual` es el número del paso en que va la tarea. «Hecho» (§6.1) lo lleva al paso siguiente y «Paso anterior» (§6.1) al anterior; ninguno pasa del primero ni del último. Editar los pasos no cambia ese número: si quedan menos pasos que `pasoActual`, la tarea va en el último; si queda un solo paso, es una tarea de un solo paso. La app no cambia el avance sola.
-- **Completar**: tocar «Hecho» en el último paso de una tarea de dos pasos o más hace exactamente lo que hace tocar el checkbox de esa tarea no completada (agrega el mismo completado, abre el mismo aviso de §5.4 y, si el checkbox está deshabilitado por su ventana, §5.5, el «Hecho» del último paso también lo está; el de los otros pasos no). Completar la tarea, por el checkbox, por «Hecho» o por «Hice la mínima» (en cualquier paso, §6.1), vuelve `pasoActual` al paso 1, así una periódica que vuelve arranca del principio. El completado guarda en `pasoAlCompletar` el número del paso en que iba la tarea, también cuando se completó con «Hice la mínima».
-- **Deshacer**: borrar el completado más reciente de la tarea (aviso, Historial o checkbox, §5.4) devuelve `pasoActual` al valor de su `pasoAlCompletar`, con el tope del último paso; para una tarea completada con «Hecho» en el último paso, queda en el último paso; para una completada con «Hice la mínima», vuelve al paso en que iba. No hay aviso de deshacer para «Hecho» en un paso que no es el último: se corrige con «Paso anterior».
-- **Sin otros efectos**: posponer, quitar posponer, pausar, reanudar y cambiar de tipo o de modo no borran ni cambian los pasos ni `pasoActual`. Los pasos y su avance no cambian el estado (§5) ni el orden de la lista, y no se ven en el Historial ni en el aviso de deshacer (la palabra «Mínima» del Historial y del aviso, §6.3 y §5.4, no muestra pasos). La fila nunca muestra la lista entera (§6.1).
+**Steps**: a task can have, besides the first step, more steps, optional and for any kind of task. The first step is step 1 and `pasos` stores steps 2, 3… in the written order; a task saved without `pasos` has no more steps (there is no migration). A task has **a single step** if it has a first step and no `pasos`, and **two steps or more** if it has a first step and at least one step in `pasos`.
+- **Text**: each step follows the first step rule: a single line, with no line breaks and no maximum length, spaces at the start and at the end are trimmed on save, and an empty step or one with only spaces is discarded on save, without error. The steps below move up: if the first step is left empty and step 2 is not, step 2 becomes the first step. A step is never invalid and never rejects the creation or the edit, and there is no maximum number of steps.
+- **Progress**: `pasoActual` is the number of the step the task is on. «Hecho» (§6.1) takes it to the next step and «Paso anterior» (§6.1) to the previous one; neither goes past the first or the last. Editing the steps does not change that number: if fewer steps remain than `pasoActual`, the task is on the last one; if a single step remains, it is a one-step task. The app does not change the progress by itself.
+- **Complete**: tapping «Hecho» on the last step of a task of two steps or more does exactly what tapping the checkbox of that uncompleted task does (it adds the same completion, opens the same notice of §5.4 and, if the checkbox is disabled by its window, §5.5, the «Hecho» of the last step is also disabled; that of the other steps is not). Completing the task, by the checkbox, by «Hecho» or by «Hice la mínima» (on any step, §6.1), returns `pasoActual` to step 1, so a recurring task that comes back starts from the beginning. The completion stores in `pasoAlCompletar` the number of the step the task was on, also when it was completed with «Hice la mínima».
+- **Undo**: deleting the most recent completion of the task (notice, **Historial** or checkbox, §5.4) returns `pasoActual` to the value of its `pasoAlCompletar`, capped at the last step; for a task completed with «Hecho» on the last step, it stays on the last step; for one completed with «Hice la mínima», it returns to the step it was on. There is no undo notice for «Hecho» on a step that is not the last: it is corrected with «Paso anterior».
+- **No other effects**: postponing, removing the postponement, pausing, resuming and changing the kind or the mode do not erase or change the steps or `pasoActual`. The steps and their progress do not change the status (§5) or the order of the list, and are not shown in the **Historial** or in the undo notice (the word «Mínima» of the **Historial** and of the notice, §6.3 and §5.4, does not show steps). The row never shows the whole list (§6.1).
 
-**Versión mínima**: una sola línea, sin saltos de línea y sin largo máximo, para cualquier tipo de tarea («Solo el inodoro»). Al guardar se recortan los espacios del inicio y del final. Vacío o solo espacios significa **sin versión mínima** (el campo no se guarda). Una versión mínima nunca es inválida: nunca rechaza la creación ni la edición. Una tarea guardada sin el campo no tiene versión mínima (no hay migración). Hacerla («Hice la mínima», §6.1) completa la tarea: es un completado como cualquier otro, que además guarda `fueMinima` (§4.4). La mínima no cambia el estado (§5) ni el orden de la lista, y el nombre de la tarea (abajo) sigue siendo emoji y título. La app no la sugiere ni la cuenta: se ofrece igual siempre que corresponde (§6.1), sin depender del atraso ni de cuántas veces se hizo. El Historial y el aviso de deshacer solo muestran la palabra «Mínima», nunca su texto. Editar o vaciar la versión mínima no toca los completados que ya fueron la mínima.
+**Minimal version**: a single line, with no line breaks and no maximum length, for any kind of task («Solo el inodoro»). On save, spaces at the start and at the end are trimmed. Empty or only spaces means **no minimal version** (the field is not saved). A minimal version is never invalid: it never rejects the creation or the edit. A task saved without the field has no minimal version (there is no migration). Doing it («Hice la mínima», §6.1) completes the task: it is a completion like any other, which also stores `fueMinima` (§4.4). The minimal version does not change the status (§5) or the order of the list, and the task name (below) is still emoji and title. The app does not suggest it or count it: it is offered the same way whenever it applies (§6.1), regardless of how overdue the task is or how many times it was done. The **Historial** and the undo notice only show the word «Mínima», never its text. Editing or emptying the minimal version does not touch the completions that were already the minimal one.
 
-**Cómo se muestra una tarea**: con emoji, «emoji título» (un espacio entre los dos); sin emoji, solo el título, sin hueco. Es el nombre que usan la fila de Pendientes, el Historial y el aviso de deshacer.
+**How a task is shown**: with an emoji, «emoji título» (one space between the two); without an emoji, only the title, with no gap. It is the name used by the row in **Pendientes**, the **Historial** and the undo notice.
 
-### 4.2 Recurrencia (solo periódicas)
+### 4.2 Recurrence (recurring tasks only)
 
-Una sola de estas tres formas:
+Exactly one of these three forms:
 
-- **Relativa**: `{ modo: "relativo", cada: N, unidad: "horas" | "dias" }`, con N entero ≥ 1.
-- **Semanal**: `{ modo: "calendario", diasSemana: [lun..dom] }`, con al menos un día.
-- **Mensual**: `{ modo: "calendario", diasMes: [1..31] }`, con al menos un día. Un día que no existe en un mes (ej. 31 en abril) cae en el **último día de ese mes**.
+- **Relative**: `{ modo: "relativo", cada: N, unidad: "horas" | "dias" }`, with N an integer ≥ 1.
+- **Weekly**: `{ modo: "calendario", diasSemana: [lun..dom] }`, with at least one day.
+- **Monthly**: `{ modo: "calendario", diasMes: [1..31] }`, with at least one day. A day that does not exist in a month (e.g. 31 in April) falls on the **last day of that month**.
 
-Una recurrencia de calendario es semanal **o** mensual; no se combinan.
+A calendar recurrence is weekly **or** monthly; they are not combined.
 
-### 4.3 (eliminada)
+### 4.3 (removed)
 
-Esta sección ya no existe; la numeración de las demás no se corre para no romper las referencias.
+This section no longer exists; the numbering of the others is not shifted so that references do not break.
 
-### 4.4 Completado
+### 4.4 Completion
 
-| Campo | Tipo | Notas |
+| Field | Type | Notes |
 |---|---|---|
-| `id` | string | Único por dispositivo, generado en el cliente. |
+| `id` | string | Unique per device, generated on the client. |
 | `tareaId` | id | |
 | `completadoEn` | timestamp | |
-| `pasoAlCompletar` | entero ≥ 1 | no | Paso en que iba la tarea al completarla (**Pasos**, §4.1). Solo en tareas de dos pasos o más. |
-| `fueMinima` | booleano | no | `true` si el completado fue «Hice la mínima» (**Versión mínima**, §4.1). Sin el campo, el completado fue entero (no hay migración). Se fija al completar. |
-| `ocurrenciaCubierta` | fecha (`2026-07-14`), o fecha y hora (`2026-07-14T07:00`): formatos distintos, para que una ventana que empieza a las 00:00 no se confunda con una fecha | En modo calendario (5.3, 5.6) y en relativas con varias ventanas (5.7). Sin horario, un día a las 00:00; con horario, el día a la hora `desde` de la ventana que cubre. |
+| `pasoAlCompletar` | integer ≥ 1 | no | Step the task was on when it was completed (**Steps**, §4.1). Only in tasks of two steps or more. |
+| `fueMinima` | boolean | no | `true` if the completion was «Hice la mínima» (**Minimal version**, §4.1). Without the field, the completion was the whole task (there is no migration). It is set on completion. |
+| `ocurrenciaCubierta` | date (`2026-07-14`), or date and time (`2026-07-14T07:00`): different formats, so that a window that starts at 00:00 is not confused with a date | In calendar mode (5.3, 5.6) and in relative tasks with several windows (5.7). Without a schedule, a day at 00:00; with a schedule, the day at the `desde` time of the window it covers. |
 
-Los completados **solo se agregan**: nunca se modifican. La única operación destructiva es borrar uno explícitamente (deshacer). Que un completado fue la mínima (`fueMinima`) se fija al completar y no se cambia después: no se puede pasar un completado entero a mínimo ni al revés; se corrige deshaciendo y completando de nuevo. Un completado de la mínima cuenta como cualquier otro para las reglas de estado y de lista (§5, §6.1, §6.2).
+Completions are **append-only**: they are never modified. The only destructive operation is deleting one explicitly (undo). That a completion was the minimal one (`fueMinima`) is set on completion and not changed afterwards: a whole completion cannot be turned into a minimal one or the other way around; it is corrected by undoing and completing again. A completion of the minimal version counts like any other for the status and list rules (§5, §6.1, §6.2).
 
-### 4.5 (eliminada)
+### 4.5 (removed)
 
-Esta sección ya no existe; la numeración de las demás no se corre para no romper las referencias.
+This section no longer exists; the numbering of the others is not shifted so that references do not break.
 
-## 5. Reglas de estado
+## 5. Status rules
 
-Todas las fechas y horas son de la **zona horaria local del dispositivo**. El día empieza a las **00:00**.
+All dates and times are in the **local time zone of the device**. The day starts at **00:00**.
 
-El estado de cada tarea se **deriva** de su definición y de sus completados. Nunca se guarda un flag de "completada".
+The status of each task is **derived** from its definition and its completions. A "completed" flag is never stored.
 
-### 5.1 Tarea puntual
+### 5.1 One-off task
 
-| Situación | Estado |
+| Situation | Status |
 |---|---|
-| Tiene al menos un completado | Completada: sale de la lista (con **Mostrar completadas**, §6.1, se ve tachada al final) y se ve en el historial. |
-| Sin completado, sin fecha límite | `pendiente` |
-| Sin completado, hoy ≤ `fechaLimite` | `pendiente` |
-| Sin completado, hoy > `fechaLimite` | `atrasada` |
+| Has at least one completion | Completed: it leaves the list (with **Mostrar completadas**, §6.1, it is shown struck through at the end) and is shown in the history. |
+| No completion, no due date | `pending` |
+| No completion, today ≤ `fechaLimite` | `pending` |
+| No completion, today > `fechaLimite` | `overdue` |
 
-Deshacer su completado (borrarlo) la devuelve a la lista con el estado que corresponda.
+Undoing its completion (deleting it) returns it to the list with the status that applies.
 
-### 5.2 Periódica en modo relativo
+### 5.2 Recurring task in relative mode
 
-Sea `U` el `completadoEn` más reciente y `V = U + intervalo` (el vencimiento).
+Let `U` be the most recent `completadoEn` and `V = U + interval` (the due time).
 
-| Situación | Estado |
+| Situation | Status |
 |---|---|
-| Nunca completada | `pendiente` |
-| ahora < `U` (relojes desfasados) | `en espera`; progreso = 0 |
-| `U` ≤ ahora < `V` | `en espera`; progreso = (ahora − U) / intervalo |
-| `V` ≤ ahora < `V + intervalo` | `pendiente` |
-| ahora ≥ `V + intervalo` (se perdió un ciclo completo) | `atrasada` |
+| Never completed | `pending` |
+| now < `U` (clocks out of sync) | `waiting`; progress = 0 |
+| `U` ≤ now < `V` | `waiting`; progress = (now − U) / interval |
+| `V` ≤ now < `V + interval` | `pending` |
+| now ≥ `V + interval` (a whole cycle was missed) | `overdue` |
 
-`U` puede quedar después de ahora cuando los relojes de dos dispositivos están desfasados y se sincroniza un completado "del futuro". En ese caso la tarea queda `en espera` con progreso 0 hasta que ahora alcance a `U`.
+`U` can end up after now when the clocks of two devices are out of sync and a completion "from the future" is synced. In that case the task stays `waiting` with progress 0 until now reaches `U`.
 
-Completarla en cualquier momento, incluso en espera, reinicia el intervalo desde ese momento.
+Completing it at any moment, even while waiting, restarts the interval from that moment.
 
-### 5.3 Periódica en modo calendario
+### 5.3 Recurring task in calendar mode
 
-Sea `P` la **última ocurrencia cubierta**: la mayor `ocurrenciaCubierta` entre sus completados. Si nunca se completó, `P` = el día anterior a `creadaEn`. Así, una tarea recién creada queda `en espera` hasta su primera ocurrencia, o `pendiente` si se crea en un día de ocurrencia.
+Let `P` be the **last covered occurrence**: the greatest `ocurrenciaCubierta` among its completions. If it was never completed, `P` = the day before `creadaEn`. Thus, a newly created task stays `waiting` until its first occurrence, or `pending` if it is created on an occurrence day.
 
-Un completado sin `ocurrenciaCubierta` (se hizo cuando la tarea era relativa o puntual, antes de pasarla a calendario) aporta a `P` el **día de su `completadoEn`**. En general, `P` = la mayor entre las `ocurrenciaCubierta` y los días de `completadoEn` de los completados sin `ocurrenciaCubierta`; sin completados, el día anterior a `creadaEn`.
+A completion without `ocurrenciaCubierta` (made when the task was relative or one-off, before it was changed to calendar) contributes to `P` the **day of its `completadoEn`**. In general, `P` = the greatest among the `ocurrenciaCubierta` values and the days of `completadoEn` of the completions without `ocurrenciaCubierta`; without completions, the day before `creadaEn`.
 
-Sea `N` la primera ocurrencia posterior a `P`.
+Let `N` be the first occurrence after `P`.
 
-| Situación | Estado |
+| Situation | Status |
 |---|---|
-| hoy < `N` | `en espera`; progreso = (ahora − inicio de espera) / (inicio de `N` − inicio de espera) |
-| hoy = `N` | `pendiente` |
-| hoy > `N` | `atrasada` (una sola instancia; las ocurrencias perdidas no se acumulan) |
+| today < `N` | `waiting`; progress = (now − wait start) / (start of `N` − wait start) |
+| today = `N` | `pending` |
+| today > `N` | `overdue` (a single instance; missed occurrences do not accumulate) |
 
-El "inicio de espera" es el `completadoEn` más reciente o, si no hay ninguno, `creadaEn`.
+The "wait start" is the most recent `completadoEn` or, if there is none, `creadaEn`.
 
-Si el inicio de espera es un `completadoEn` posterior a ahora (relojes desfasados entre dispositivos: se sincronizó un completado "del futuro"), la tarea queda `en espera` con progreso 0 hasta que ahora alcance a ese completado. Al guardarse, ese completado dejó `P` en la última ocurrencia de su propio día o anterior, o en una posterior; así que `N` queda después de su día y, por lo tanto, hoy < `N`.
+If the wait start is a `completadoEn` later than now (clocks out of sync between devices: a completion "from the future" was synced), the task stays `waiting` with progress 0 until now reaches that completion. When it was saved, that completion left `P` at the last occurrence of its own day or earlier, or at a later one; so `N` ends up after its day and, therefore, today < `N`.
 
-**Qué ocurrencia cubre un completado nuevo** (se calcula y se guarda al completar):
+**Which occurrence a new completion covers** (computed and stored on completion):
 
-- Si hay ocurrencias sin cubrir en el intervalo (`P`, hoy], cubre **la más reciente** de ellas. Las anteriores se descartan.
-- Si no hay ninguna, cubre **`N`, la primera ocurrencia posterior a `P`** (la próxima todavía no cubierta): completar antes de tiempo cuenta como la próxima, y cada completado extra avanza una ocurrencia.
+- If there are uncovered occurrences in the interval (`P`, today], it covers **the most recent** of them. The earlier ones are discarded.
+- If there is none, it covers **`N`, the first occurrence after `P`** (the next one not yet covered): completing ahead of time counts as the next one, and each extra completion advances one occurrence.
 
-Ejemplos con "martes y jueves":
+Examples with "Tuesday and Thursday":
 
-| Completo el… | Cubre | Vuelve a pendiente |
+| I complete on… | Covers | Becomes pending again |
 |---|---|---|
-| martes | martes | jueves |
-| lunes (antes de tiempo) | martes | jueves |
-| miércoles (martes atrasado) | martes | jueves |
-| viernes (se perdieron martes y jueves) | jueves | martes siguiente |
-| lunes, otra vez el lunes | jueves (el primero cubrió el martes) | martes siguiente |
+| Tuesday | Tuesday | Thursday |
+| Monday (ahead of time) | Tuesday | Thursday |
+| Wednesday (Tuesday overdue) | Tuesday | Thursday |
+| Friday (Tuesday and Thursday were missed) | Thursday | next Tuesday |
+| Monday, again on Monday | Thursday (the first one covered Tuesday) | next Tuesday |
 
-Cambiar la recurrencia de una tarea no borra sus completados. El estado se recalcula con la regla nueva, usando el `P` guardado (aunque `P` ya no sea una ocurrencia de la regla nueva, `N` es la primera ocurrencia de la regla nueva posterior a `P`).
+Changing the recurrence of a task does not delete its completions. The status is recomputed with the new rule, using the stored `P` (even if `P` is no longer an occurrence of the new rule, `N` is the first occurrence of the new rule after `P`).
 
-### 5.4 Deshacer
+### 5.4 Undo
 
-- Al completar una tarea aparece un **aviso** que nombra la tarea (emoji y título, §4.1: `Completaste «🌱 Regar»`, o `Completaste «Regar»` sin emoji) y tiene **Deshacer**. Si el completado fue la mínima (`fueMinima`, §4.4), el texto suma « · mínima»: `Completaste «🌱 Regar» · mínima`; el resto del aviso no cambia. Dura **5 segundos**: se ve mientras `completadoEn` ≤ ahora < `completadoEn` + 5 s; después desaparece solo.
-- Si la tarea completada vuelve (periódica), debajo de «Completaste …» el aviso dice cuándo: «Vuelve el jueves 19 · en 6 días», con el instante de regreso calculado después del completado y el formato de **Fecha y distancia** (§6.1), el mismo texto que mostrará su fila `en espera`. Una puntual (que no vuelve) muestra solo «Completaste …». No hay otro cierre ni felicitaciones.
-- Hay un solo aviso a la vez: completar otra tarea (o la misma) con el aviso abierto lo **reemplaza** por el del completado nuevo. El completado anterior queda sin aviso y se puede borrar desde el Historial.
-- **Deshacer** en el aviso borra el completado que nombra el aviso (solo ese) y cierra el aviso.
-- El aviso sigue visible al cambiar de pantalla, hasta que expira.
-- Desde el **Historial** se puede borrar cualquier completado (§6.3), no solo el más reciente.
-- En todos los casos el completado se borra y el estado de la tarea se recalcula según las reglas anteriores con los completados que quedan: `U` pasa a ser el `completadoEn` más reciente que queda y `P` la mayor ocurrencia que queda (§5.2, §5.3); sin completados, la tarea vuelve a "nunca completada". Un completado nuevo después de deshacer cubre la ocurrencia que corresponde a ese `P` recalculado.
-- Un completado de la mínima se borra como cualquier otro (aviso, Historial o checkbox de la completada) y el estado se recalcula con los que quedan. El checkbox de una completada borra el completado más reciente, sea entero o mínimo; el de una periódica completada un día anterior la completa de nuevo, entera.
-- Si el completado borrado es el más reciente de una tarea de dos pasos o más, `pasoActual` vuelve al `pasoAlCompletar` de ese completado (§4.1, **Pasos**).
-- Borrar un completado que ya no existe (otro dispositivo ya lo borró, o borró su tarea) no hace nada: no cambia ningún otro completado ni revive la tarea.
+- When a task is completed a **notice** appears that names the task (emoji and title, §4.1: `Completaste «🌱 Regar»`, or `Completaste «Regar»` without emoji) and has **Deshacer**. If the completion was the minimal one (`fueMinima`, §4.4), the text adds « · mínima»: `Completaste «🌱 Regar» · mínima`; the rest of the notice does not change. It lasts **5 seconds**: it is shown while `completadoEn` ≤ now < `completadoEn` + 5 s; after that it disappears by itself.
+- If the completed task comes back (recurring), below «Completaste …» the notice says when: «Vuelve el jueves 19 · en 6 días», with the return instant computed after the completion and the format of **Date and distance** (§6.1), the same text its `waiting` row will show. A one-off task (which does not come back) shows only «Completaste …». There is no other closing and no congratulations.
+- There is only one notice at a time: completing another task (or the same one) with the notice open **replaces** it with the one for the new completion. The previous completion is left without a notice and can be deleted from the **Historial**.
+- **Deshacer** in the notice deletes the completion that the notice names (only that one) and closes the notice.
+- The notice stays visible when changing screens, until it expires.
+- From the **Historial** any completion can be deleted (§6.3), not only the most recent one.
+- In all cases the completion is deleted and the status of the task is recomputed according to the rules above with the completions that remain: `U` becomes the most recent `completadoEn` that remains and `P` the greatest occurrence that remains (§5.2, §5.3); without completions, the task returns to "never completed". A new completion after undoing covers the occurrence that corresponds to that recomputed `P`.
+- A completion of the minimal version is deleted like any other (notice, **Historial** or the checkbox of the completed task) and the status is recomputed with those that remain. The checkbox of a completed task deletes the most recent completion, whether whole or minimal; that of a recurring task completed on an earlier day completes it again, as a whole.
+- If the deleted completion is the most recent one of a task of two steps or more, `pasoActual` returns to the `pasoAlCompletar` of that completion (§4.1, **Steps**).
+- Deleting a completion that no longer exists (another device already deleted it, or deleted its task) does nothing: it does not change any other completion or revive the task.
 
-### 5.5 Horario
+### 5.5 Schedule
 
-Una tarea con `horario` (§4.1) solo se puede completar **dentro de la ventana** de algún día. Las reglas de §5.1–§5.3 se aplican igual y el horario solo corre los momentos en que la tarea pasa a `pendiente` y a `atrasada`:
+A task with `horario` (§4.1) can only be completed **inside the window** of some day. The rules of §5.1–§5.3 apply the same and the schedule only shifts the moments at which the task becomes `pending` and `overdue`:
 
-- Sea `T` el instante en que la tarea pasaría a `pendiente` sin horario: puntual, `creadaEn`; relativa, `V` (nunca completada, `creadaEn`); calendario, 00:00 de `N`.
-- Sea `A` (**disponible**) el primer instante ≥ `T` que cae dentro de una ventana: `T` mismo si está dentro de la ventana de su día; si no, el `desde` de la próxima ventana. Sea `C` (**cierre**) el `hasta` de esa ventana.
+- Let `T` be the instant at which the task would become `pending` without a schedule: one-off, `creadaEn`; relative, `V` (never completed, `creadaEn`); calendar, 00:00 of `N`.
+- Let `A` (**available**) be the first instant ≥ `T` that falls inside a window: `T` itself if it is inside the window of its day; if not, the `desde` of the next window. Let `C` (**close**) be the `hasta` of that window.
 
-| Situación (con horario) | Estado |
+| Situation (with schedule) | Status |
 |---|---|
-| ahora < `A` y ahora < atraso | `en espera`; progreso = (ahora − inicio de espera) / (`A` − inicio de espera), con el inicio de espera de §5.2/§5.3 (puntual: `creadaEn`) |
-| `A` ≤ ahora < `C` | `pendiente` |
-| ahora ≥ `C`, periódica | `atrasada` (también si el atraso sin horario de §5.2 llegara antes: vale el primero de los dos) |
-| ahora ≥ `C`, puntual sin fecha límite | fuera de una ventana, `en espera` hasta el `desde` de la próxima (progreso desde el `hasta` de la anterior); dentro, `pendiente`. Nunca `atrasada`. |
-| ahora ≥ `C`, puntual con fecha límite | como la puntual sin fecha límite hasta el `hasta` de la ventana del día `fechaLimite`; desde ahí, `atrasada` |
+| now < `A` and now < overdue time | `waiting`; progress = (now − wait start) / (`A` − wait start), with the wait start of §5.2/§5.3 (one-off: `creadaEn`) |
+| `A` ≤ now < `C` | `pending` |
+| now ≥ `C`, recurring | `overdue` (also if the overdue time without a schedule of §5.2 would arrive earlier: the first of the two applies) |
+| now ≥ `C`, one-off without due date | outside a window, `waiting` until the `desde` of the next one (progress from the `hasta` of the previous one); inside, `pending`. Never `overdue`. |
+| now ≥ `C`, one-off with due date | like the one-off without due date until the `hasta` of the window of the day `fechaLimite`; from then on, `overdue` |
 
-- **Atraso**: el primero entre `C` y el atraso sin horario (relativa: `V + intervalo`; puntual con fecha límite: el `hasta` de la ventana del día `fechaLimite`). Gana sobre todo lo demás, también antes de `A`: una tarea con el atraso ya cumplido está `atrasada` aunque su ventana todavía no haya abierto (con el checkbox deshabilitado hasta que abra).
-- Una vez `atrasada`, sigue `atrasada` también fuera de las ventanas, pero solo se puede completar dentro de una.
-- Una `en espera` por horario que tiene completados está completada (§6.1): con **Mostrar completadas** apagado aparece recién cuando abre la ventana.
-- **Completar** fuera de la ventana no es posible: el checkbox que completaría está deshabilitado (§6.1), y también «Hice la mínima» (§6.1). Borrar un completado (checkbox de una completada, aviso, Historial) se puede a cualquier hora.
-- El completado se rige por §5.2/§5.3 como siempre (en calendario, la ocurrencia que cubre se calcula igual).
-- El orden de §6.1 usa `C` como inicio de `atrasada` (o el atraso sin horario, si es anterior), `A` como inicio de `pendiente` de una periódica (una puntual `pendiente` conserva la clave de §6.1: `fechaLimite`, o al final por `creadaEn`) y `A` como el momento en que vuelve una `en espera`.
+- **Overdue time**: the first between `C` and the overdue time without a schedule (relative: `V + interval`; one-off with due date: the `hasta` of the window of the day `fechaLimite`). It wins over everything else, also before `A`: a task whose overdue time has already passed is `overdue` even if its window has not opened yet (with the checkbox disabled until it opens).
+- Once `overdue`, it stays `overdue` also outside the windows, but it can only be completed inside one.
+- A task `waiting` because of its schedule that has completions is completed (§6.1): with **Mostrar completadas** off it appears only when the window opens.
+- **Completing** outside the window is not possible: the checkbox that would complete is disabled (§6.1), and so is «Hice la mínima» (§6.1). Deleting a completion (checkbox of a completed task, notice, **Historial**) is possible at any hour.
+- The completion is governed by §5.2/§5.3 as always (in calendar mode, the occurrence it covers is computed the same way).
+- The order of §6.1 uses `C` as the start of `overdue` (or the overdue time without a schedule, if it is earlier), `A` as the start of `pending` of a recurring task (a `pending` one-off task keeps the key of §6.1: `fechaLimite`, or at the end by `creadaEn`) and `A` as the moment at which a `waiting` task comes back.
 
-### 5.6 Varios horarios (calendario)
+### 5.6 Several schedules (calendar)
 
-En una tarea de calendario con horario, una **ocurrencia** es un par (día de ocurrencia, ventana): con "todos los días" y ventanas 07:00–10:00 y 18:00–21:00, cada día tiene dos ocurrencias. Cada ocurrencia se identifica por su **inicio**: el día a la hora `desde` de su ventana. Con una sola ventana, cada día de ocurrencia tiene una sola ocurrencia, así que todo sigue igual que en §5.5.
+In a calendar task with a schedule, an **occurrence** is a pair (occurrence day, window): with "every day" and windows 07:00–10:00 and 18:00–21:00, each day has two occurrences. Each occurrence is identified by its **start**: the day at the `desde` time of its window. With a single window, each occurrence day has a single occurrence, so everything stays the same as in §5.5.
 
-Las reglas de §5.3 y §5.5 se aplican sobre ocurrencias en lugar de días:
+The rules of §5.3 and §5.5 apply over occurrences instead of days:
 
-- `P` es la mayor `ocurrenciaCubierta`. Solo una `ocurrenciaCubierta` con hora es un instante (el inicio que cubrió). Los valores sin hora **cubren el día entero** y dejan `P` al final de su día: una `ocurrenciaCubierta` guardada solo como fecha (sin horario, o de antes de esta feature), el día del `completadoEn` de un completado sin `ocurrenciaCubierta` y, sin completados, el día anterior a `creadaEn`. Así, con una sola ventana se mantienen §5.3 y §5.5 tal cual.
-- `N` es la primera ocurrencia con inicio posterior a `P`. Para §5.5: `A` = inicio de `N` y `C` = el `hasta` de su ventana ese día.
-- Estados: ahora < `A`, `en espera` (progreso hacia `A`); `A` ≤ ahora < `C`, `pendiente`; ahora ≥ `C`, `atrasada` (una sola instancia; las ocurrencias perdidas no se acumulan).
-- **Qué ocurrencia cubre un completado nuevo**: si hay ocurrencias sin cubrir con inicio en (`P`, ahora], la **más reciente** (las anteriores se descartan); si no, `N`.
-- Ejemplo (todos los días, 07:00–10:00 y 18:00–21:00): completo a las 08:00 → cubre la de las 07:00 y queda `en espera` hasta las 18:00. Si no completo a la mañana, a las 10:00 queda `atrasada` (checkbox deshabilitado hasta las 18:00); a las 18:00 completo → cubre la de las 18:00, la de la mañana se descarta, y queda `en espera` hasta las 07:00 del día siguiente.
-- Cambiar los horarios no borra completados: el estado se recalcula con las ventanas nuevas y el `P` guardado. Excepción a "con una sola ventana nada cambia": como `P` con hora es un instante, mover una ventana más tarde el mismo día puede volver a abrir la ocurrencia ya hecha (completo a las 08:30 con 08:00–11:00, cambio a 09:00–12:00: a las 09:00 vuelve a estar `pendiente`), igual que al cambiar la recurrencia (§5.3).
+- `P` is the greatest `ocurrenciaCubierta`. Only an `ocurrenciaCubierta` with a time is an instant (the start it covered). Values without a time **cover the whole day** and leave `P` at the end of their day: an `ocurrenciaCubierta` stored only as a date (without a schedule, or from before this feature), the day of the `completadoEn` of a completion without `ocurrenciaCubierta` and, without completions, the day before `creadaEn`. Thus, with a single window §5.3 and §5.5 hold as they are.
+- `N` is the first occurrence with a start after `P`. For §5.5: `A` = start of `N` and `C` = the `hasta` of its window that day.
+- Statuses: now < `A`, `waiting` (progress toward `A`); `A` ≤ now < `C`, `pending`; now ≥ `C`, `overdue` (a single instance; missed occurrences do not accumulate).
+- **Which occurrence a new completion covers**: if there are uncovered occurrences with a start in (`P`, now], the **most recent** one (the earlier ones are discarded); if not, `N`.
+- Example (every day, 07:00–10:00 and 18:00–21:00): I complete at 08:00 → it covers the 07:00 one and stays `waiting` until 18:00. If I do not complete in the morning, at 10:00 it becomes `overdue` (checkbox disabled until 18:00); at 18:00 I complete → it covers the 18:00 one, the morning one is discarded, and it stays `waiting` until 07:00 of the next day.
+- Changing the schedules does not delete completions: the status is recomputed with the new windows and the stored `P`. Exception to "with a single window nothing changes": since `P` with a time is an instant, moving a window later the same day can reopen the occurrence already done (I complete at 08:30 with 08:00–11:00, I change to 09:00–12:00: at 09:00 it is `pending` again), just like when changing the recurrence (§5.3).
 
-### 5.7 Varios horarios en puntuales y relativas
+### 5.7 Several schedules in one-off and relative tasks
 
-**Puntual**: se completa una sola vez, en cualquiera de sus ventanas. §5.5 se aplica tomando como ventanas todas las del día: `A` es el primer instante ≥ `creadaEn` dentro de alguna ventana y `C` el `hasta` de esa ventana; entre ventanas, `en espera` hasta el `desde` de la próxima. Con fecha límite, el atraso es el `hasta` de la **última** ventana del día `fechaLimite`.
+**One-off**: it is completed a single time, in any of its windows. §5.5 applies taking as windows all those of the day: `A` is the first instant ≥ `creadaEn` inside some window and `C` the `hasta` of that window; between windows, `waiting` until the `desde` of the next one. With a due date, the overdue time is the `hasta` of the **last** window of the day `fechaLimite`.
 
-**Relativa con varias ventanas** (intervalo en días): hay que completarla **una vez por ventana** los días que le toca. Cada ventana de esos días es una ocurrencia, identificada por su inicio, y se aplican las reglas de §5.6 (`P`, `N`, `A`, `C`, estados, qué ocurrencia cubre un completado) con esta secuencia de ocurrencias:
+**Relative with several windows** (interval in days): it has to be completed **once per window** on the days it is due. Each window of those days is an occurrence, identified by its start, and the rules of §5.6 apply (`P`, `N`, `A`, `C`, statuses, which occurrence a completion covers) with this sequence of occurrences:
 
-- Nunca completada: todas las ventanas de todos los días, a partir de la primera cuyo `hasta` es posterior a `creadaEn`.
-- Con `P`: primero las ventanas del día de `P` posteriores a `P` (la ronda del día sigue); después, todas las ventanas del día de `P` + `cada` días; y así sucesivamente cada `cada` días.
-- Si está `atrasada` (se perdió `N`), un completado cubre la ventana con el inicio más reciente ≤ ahora, de cualquier día, y la secuencia sigue desde ahí.
-- El atraso sin horario de §5.2 (`V + intervalo`) no se aplica: el atraso es `C`.
-- Ejemplo (cada 2 días, 07:00–10:00 y 18:00–21:00): el lunes completo a las 08:00 (cubre lunes 07:00) y a las 19:00 (cubre lunes 18:00); queda `en espera` hasta el miércoles a las 07:00.
+- Never completed: all the windows of all the days, starting from the first one whose `hasta` is after `creadaEn`.
+- With `P`: first the windows of the day of `P` after `P` (the round of the day continues); then, all the windows of the day of `P` + `cada` days; and so on every `cada` days.
+- If it is `overdue` (`N` was missed), a completion covers the window with the most recent start ≤ now, of any day, and the sequence continues from there.
+- The overdue time without a schedule of §5.2 (`V + interval`) does not apply: the overdue time is `C`.
+- Example (every 2 days, 07:00–10:00 and 18:00–21:00): on Monday I complete at 08:00 (it covers Monday 07:00) and at 19:00 (it covers Monday 18:00); it stays `waiting` until Wednesday at 07:00.
 
-Con una sola ventana, la relativa sigue §5.2 y §5.5 sin cambios.
+With a single window, the relative task follows §5.2 and §5.5 unchanged.
 
-### 5.8 Pausar
+### 5.8 Pause
 
-Solo las tareas **periódicas** se pueden pausar.
+Only **recurring** tasks can be paused.
 
-- **Pausada**: no tiene estado (no es `pendiente`, `atrasada` ni `en espera`), no se atrasa y no está completada (§6.1). No aparece en Pendientes salvo con **Mostrar pausadas** (§6.1). Su checkbox está deshabilitado.
-- **Reanudar** guarda `reanudadaEn` = ahora y quita `pausada`. Desde ahí la tarea se evalúa **como recién creada en `reanudadaEn`**: con `creadaEn` = `reanudadaEn` y sin los completados con `completadoEn` anterior a `reanudadaEn` (que siguen en el Historial y en "Última vez"). Así:
-  - Relativa: queda `pendiente` al reanudar (nunca completada, §5.2).
-  - Calendario: `pendiente` si hoy es día de ocurrencia; si no, `en espera` hasta la próxima (§5.3).
-  - Con horario, §5.5–§5.7 con ese `creadaEn`.
-  - Lo que pasó durante la pausa no cuenta como atraso.
-- `reanudadaEn` solo vale para las periódicas: una puntual lo ignora (una periódica pausada con completados que pasa a puntual queda completada, §6.2). El filtro por `reanudadaEn` es permanente: sigue valiendo después de cambios de tipo o de modo, hasta la próxima reanudación.
-- Con horario, una ocurrencia cuya ventana cerró antes de `reanudadaEn` no cuenta como perdida: el día de la reanudación, si la ventana ya cerró, la tarea queda `en espera` hasta la próxima ocurrencia (no `atrasada`).
-- `creadaEn` real no cambia: el desempate del orden (§6.1) sigue usando el `creadaEn` real.
-- Los completados se siguen pudiendo borrar (Historial, aviso) con la tarea pausada.
-- Cambiar una periódica pausada a puntual la reanuda (quita `pausada` y guarda `reanudadaEn`).
+- **Paused**: it has no status (it is not `pending`, `overdue` or `waiting`), it does not become overdue and it is not completed (§6.1). It does not appear in **Pendientes** except with **Mostrar pausadas** (§6.1). Its checkbox is disabled.
+- **Resume** (**Reanudar**) stores `reanudadaEn` = now and removes `pausada`. From then on the task is evaluated **as newly created at `reanudadaEn`**: with `creadaEn` = `reanudadaEn` and without the completions with `completadoEn` before `reanudadaEn` (which stay in the **Historial** and in "Última vez"). Thus:
+  - Relative: it is `pending` on resume (never completed, §5.2).
+  - Calendar: `pending` if today is an occurrence day; if not, `waiting` until the next one (§5.3).
+  - With a schedule, §5.5–§5.7 with that `creadaEn`.
+  - What happened during the pause does not count as overdue.
+- `reanudadaEn` only applies to recurring tasks: a one-off task ignores it (a paused recurring task with completions that becomes one-off stays completed, §6.2). The filter by `reanudadaEn` is permanent: it keeps applying after changes of kind or mode, until the next resume.
+- With a schedule, an occurrence whose window closed before `reanudadaEn` does not count as missed: on the day of the resume, if the window has already closed, the task stays `waiting` until the next occurrence (not `overdue`).
+- The real `creadaEn` does not change: the tie-break of the order (§6.1) still uses the real `creadaEn`.
+- Completions can still be deleted (**Historial**, notice) while the task is paused.
+- Changing a paused recurring task to one-off resumes it (removes `pausada` and stores `reanudadaEn`).
 
-### 5.9 Posponer
+### 5.9 Postpone
 
-Posponer saca una tarea `pendiente` o `atrasada` de la urgencia por un rato, sin completarla.
+Postponing takes a `pending` or `overdue` task out of urgency for a while, without completing it.
 
-- Opciones: **1 hora**, **3 horas** y **Hasta mañana** (07:00 del día local siguiente). Guarda `pospuesta = { desde: ahora, hasta }`.
-- Mientras ahora < `pospuesta.hasta`, una tarea que según §5.1–§5.8 estaría `pendiente` o `atrasada` está **`en espera`**, con progreso = (ahora − `desde`) / (`hasta` − `desde`); vuelve en `hasta` (clave de orden de §6.1). Si estaría `en espera` por su propia regla, la posposición no cambia nada.
-- Si ahora < `pospuesta.desde` (relojes de dos dispositivos desfasados), la tarea sigue **`en espera`** con progreso 0 (barra vacía) hasta que el reloj alcance `desde`. Ejemplo: `pospuesta = { desde: 2026-07-15T08:05:00, hasta: 2026-07-15T09:05:00 }` y ahora = `2026-07-15T08:00:00`: `en espera`, progreso 0; a las `08:05:00` empieza a avanzar.
-- Desde `pospuesta.hasta`, el estado vuelve a ser el de §5.1–§5.8 (puede ser `atrasada` en el acto si su atraso ya llegó). La posposición no mueve vencimientos ni fechas límite.
-- Una tarea pospuesta no está completada (§6.1): se ve con **Mostrar completadas** apagado.
-- Se puede completar mientras está pospuesta (salvo que el horario lo impida, §5.5): el checkbox está habilitado.
-- **Quitar posponer** borra `pospuesta`. Completar, deshacer o editar no la borran; vence sola.
-- Una tarea pausada (§5.8) no se puede posponer.
+- Options: **1 hora**, **3 horas** and **Hasta mañana** (07:00 of the next local day). It stores `pospuesta = { desde: now, hasta }`.
+- While now < `pospuesta.hasta`, a task that according to §5.1–§5.8 would be `pending` or `overdue` is **`waiting`**, with progress = (now − `desde`) / (`hasta` − `desde`); it comes back at `hasta` (order key of §6.1). If it would be `waiting` by its own rule, the postponement changes nothing.
+- If now < `pospuesta.desde` (clocks of two devices out of sync), the task stays **`waiting`** with progress 0 (empty bar) until the clock reaches `desde`. Example: `pospuesta = { desde: 2026-07-15T08:05:00, hasta: 2026-07-15T09:05:00 }` and now = `2026-07-15T08:00:00`: `waiting`, progress 0; at `08:05:00` it starts to advance.
+- From `pospuesta.hasta`, the status goes back to that of §5.1–§5.8 (it can be `overdue` right away if its overdue time has already arrived). The postponement does not move due times or due dates.
+- A postponed task is not completed (§6.1): it is shown with **Mostrar completadas** off.
+- It can be completed while postponed (unless the schedule prevents it, §5.5): the checkbox is enabled.
+- **Quitar posponer** deletes `pospuesta`. Completing, undoing or editing do not delete it; it expires by itself.
+- A paused task (§5.8) cannot be postponed.
 
-### 5.10 (eliminada)
+### 5.10 (removed)
 
-Esta sección ya no existe; la numeración de las demás no se corre para no romper las referencias.
+This section no longer exists; the numbering of the others is not shifted so that references do not break.
 
-## 6. Pantallas
+## 6. Screens
 
-La interfaz está en **español** y el tema claro u oscuro sigue al sistema.
+The interface is in **Spanish** and the light or dark theme follows the system.
 
-**Navegación**: una barra fija con dos pestañas, en este orden: **Pendientes** (ruta `/`) y **Historial** (ruta `/historial`). La pestaña de la pantalla actual se ve elegida. Las rutas `/etiquetas` y `/anotaciones` ya no existen: abrir una de ellas (un favorito, el historial del navegador o recargar una pestaña que estaba ahí cuando llegó la versión nueva) abre Pendientes, reemplazando esa entrada del historial del navegador y sin aviso, así que **Atrás** no vuelve a ella.
+**Navigation**: a fixed bar with two tabs, in this order: **Pendientes** (route `/`) and **Historial** (route `/historial`). The tab of the current screen is shown as selected. The routes `/etiquetas` and `/anotaciones` no longer exist: opening one of them (a bookmark, the browser history or reloading a tab that was there when the new version arrived) opens **Pendientes**, replacing that entry of the browser history and without a notice, so **Back** does not return to it.
 
-**Fuente y emoji empaquetados**: la app se ve igual en todas las máquinas. Todo el texto usa la fuente **Atkinson Hyperlegible Next** y todo emoji se dibuja con **Noto Color Emoji**; ambas viajan con la app (§2, §7) y no hay opción para cambiarlas.
+**Bundled font and emoji**: the app looks the same on all machines. All the text uses the **Atkinson Hyperlegible Next** font and every emoji is drawn with **Noto Color Emoji**; both travel with the app (§2, §7) and there is no option to change them.
 
-- **Alcance**: las dos rigen en todo texto y todo emoji de todas las pantallas (Pendientes, Historial, el panel y sus avisos, el selector de emoji con sus Recientes, el aviso de deshacer y la pantalla de entrada), también en campos y botones, y en los dos temas. Incluye un emoji pegado o tecleado en un título o una nota. Quedan fuera solo los elementos que dibuja el sistema y la app no controla (el teclado del celular, los calendarios y listas nativas de un campo).
-- **Sin cambios de diseño**: tamaños, pesos y jerarquía visual no cambian, y las horas (`HH:MM`) siguen con cifras de ancho fijo. **Única excepción**: el campo **Título** del panel (§6.2) pasa a **20px (1.25rem)**, más grande que la **Nota**, que sigue en 16px. Las demás reglas de presentación de este capítulo valen igual con la fuente nueva.
-- **Sin conexión y sin servicios externos**: la fuente y el juego de emoji completo (unos 5,8 MB comprimidos) viajan con la app, sin pedirse a un servicio externo, y funcionan sin conexión, también para un emoji que nunca se vio en ese dispositivo. Cada dispositivo los baja sin preguntar ni avisar, aparte de la instalación de la app: mientras la pantalla de carga (§6.6) está abierta, la app espera la descarga, y si llega el tope de esa pantalla la descarga sigue en segundo plano; la app se instala siempre, aunque la fuente o el juego de emoji no se puedan bajar, y las fuentes se bajan con reintentos. Si el juego de emoji (Noto) falla, la app igual queda disponible sin conexión, con el emoji del dispositivo. Quien ya tiene la app los recibe con la próxima versión, sin preguntar ni avisar (§8).
-- **Mientras no están disponibles**: desde que se va la pantalla de carga (§6.6), si la fuente o el juego de emoji todavía no se bajaron, o no se pueden cargar, o el navegador no puede dibujar el juego, el texto se ve con la fuente del sistema y el emoji con el del dispositivo, sin aviso, y cambian solos cuando están disponibles. Mientras la pantalla de carga está abierta no se ve ningún respaldo: se espera lo que falte (§6.6). El texto nunca queda invisible y un emoji nunca se ve en blanco. Si la descarga del juego de emoji se aborta por una falla de red, la app lo vuelve a pedir al recuperar la conexión, sin recargar, y el emoji cambia solo cuando llega.
-- **Qué se dibuja con qué**:
+- **Scope**: both apply to all text and every emoji on all screens (**Pendientes**, **Historial**, the panel and its notices, the emoji picker with its Recientes, the undo notice and the sign-in screen), also in fields and buttons, and in both themes. This includes an emoji pasted or typed in a title or a note. Only the elements drawn by the system that the app does not control are left out (the phone keyboard, the native calendars and lists of a field).
+- **No design changes**: sizes, weights and visual hierarchy do not change, and times (`HH:MM`) keep fixed-width digits. **Only exception**: the **Título** field of the panel (§6.2) becomes **20px (1.25rem)**, larger than the **Nota**, which stays at 16px. The other presentation rules of this chapter hold the same with the new font.
+- **Offline and no external services**: the font and the complete emoji set (about 5.8 MB compressed) travel with the app, without being requested from an external service, and work offline, also for an emoji that was never seen on that device. Each device downloads them without asking or notifying, separately from the installation of the app: while the loading screen (§6.6) is open, the app waits for the download, and if the cap of that screen is reached the download continues in the background; the app is always installed, even if the font or the emoji set cannot be downloaded, and the fonts are downloaded with retries. If the emoji set (Noto) fails, the app is still available offline, with the device emoji. Whoever already has the app receives them with the next version, without asking or notifying (§8).
+- **While they are not available**: from the moment the loading screen (§6.6) goes away, if the font or the emoji set have not been downloaded yet, or cannot be loaded, or the browser cannot draw the set, the text is shown with the system font and the emoji with the device one, without a notice, and they change by themselves when they are available. While the loading screen is open no fallback is shown: it waits for what is missing (§6.6). The text is never invisible and an emoji is never shown blank. If the download of the emoji set is aborted by a network failure, the app requests it again when the connection recovers, without reloading, and the emoji changes by itself when it arrives.
+- **What is drawn with what**:
 
-| Carácter | Se ve con |
+| Character | Drawn with |
 |---|---|
-| Letras y signos que tiene Atkinson (español incluido), cifras, `#`, `*`, `©`, `®`, `™` sin marca de emoji | Atkinson Hyperlegible Next |
-| Carácter de texto que Atkinson no tiene (otro alfabeto en un título, por ejemplo) | la fuente del sistema |
-| Carácter con versión de texto y de emoji, sin marca de emoji, que Atkinson no tiene (`❤`, `☀`, `☎`, `✈`) | Noto Color Emoji |
-| Emoji (con o sin marca de emoji, `❤️`, `#️⃣`; ZWJ, tono, bandera), si Noto lo tiene | Noto Color Emoji |
-| Emoji que Noto no tiene (de una versión de Unicode más nueva, llegado por otro dispositivo) | el emoji del dispositivo |
+| Letters and signs that Atkinson has (Spanish included), digits, `#`, `*`, `©`, `®`, `™` without an emoji mark | Atkinson Hyperlegible Next |
+| Text character that Atkinson does not have (another alphabet in a title, for example) | the system font |
+| Character with a text and an emoji version, without an emoji mark, that Atkinson does not have (`❤`, `☀`, `☎`, `✈`) | Noto Color Emoji |
+| Emoji (with or without an emoji mark, `❤️`, `#️⃣`; ZWJ, skin tone, flag), if Noto has it | Noto Color Emoji |
+| Emoji that Noto does not have (from a newer Unicode version, arrived from another device) | the device emoji |
 
-- **El dato no cambia**: empaquetar no cambia qué emoji son válidos (§4.1) ni cuáles ofrece el selector (§6.2); un emoji que el juego no tiene se guarda y se muestra igual. Hoy Noto dibuja como un solo glifo cada uno de los emoji que ofrece el selector (incluidas las variantes de un tono), así que el selector no pierde ninguno.
+- **The data does not change**: bundling does not change which emoji are valid (§4.1) or which ones the picker offers (§6.2); an emoji that the set does not have is stored and shown all the same. Today Noto draws as a single glyph each of the emoji that the picker offers (including the single-skin-tone variants), so the picker does not lose any.
 
-**Orientación**: la app instalada se usa en vertical. Abierta desde su ícono en el celular, no gira nunca: girar el teléfono no la pasa a horizontal.
+**Orientation**: the installed app is used in portrait. Opened from its icon on the phone, it never rotates: turning the phone does not put it in landscape.
 
-- **Alcance**: rige en todas las pantallas de la app instalada (Pendientes, Historial, el panel y sus avisos, la pantalla de entrada y la pantalla de carga, §6.6), sin excepciones.
-- **Qué sentido**: cualquiera de los dos sentidos verticales que el sistema permita; la app no fija uno.
-- **Solo la app instalada**: abierta en una pestaña del navegador sigue girando como hoy y, en horizontal, se ve el diseño ancho de siempre (§6.2, Pantallas anchas). En la compu no cambia nada: en una pantalla de escritorio la orientación no la elige la app, tampoco instalada.
-- **Versión nueva**: quien ya tiene la app instalada recibe el cambio solo, sin reinstalar, preguntar ni avisar, como toda versión nueva (§8); el sistema puede tardar algunas aperturas en aplicarlo.
+- **Scope**: it applies to all the screens of the installed app (**Pendientes**, **Historial**, the panel and its notices, the sign-in screen and the loading screen, §6.6), without exceptions.
+- **Which direction**: either of the two portrait directions that the system allows; the app does not fix one.
+- **Installed app only**: opened in a browser tab it keeps rotating as today and, in landscape, the usual wide layout is shown (§6.2, Wide screens). On the computer nothing changes: on a desktop screen the orientation is not chosen by the app, not even when installed.
+- **New version**: whoever already has the app installed receives the change by itself, without reinstalling, asking or notifying, like any new version (§8); the system may take a few openings to apply it.
 
-### 6.1 Pendientes (principal)
+### 6.1 Pending (main)
 
-- Una sola lista, **ordenada automáticamente por urgencia**:
-  1. `atrasada`: la que lleva más tiempo atrasada, primero.
-  2. `pendiente`: las que tienen vencimiento o fecha límite más antiguos van primero; las puntuales sin fecha límite van al final, por fecha de creación.
-  3. `en espera`: las que vuelven antes van primero.
+- A single list, **sorted automatically by urgency**:
+  1. `overdue`: the one that has been overdue the longest, first.
+  2. `pending`: those with the oldest due time or due date go first; one-off tasks without a due date go last, by creation date.
+  3. `waiting`: those that come back sooner go first.
 
-  Cada grupo compara un instante (hora local), del más antiguo al más reciente:
+  Each group compares an instant (local time), from the oldest to the most recent:
 
-  | Grupo | Puntual | Relativa | Calendario |
+  | Group | One-off | Relative | Calendar |
   |---|---|---|---|
-  | `atrasada`: desde que está atrasada | 00:00 del día siguiente a `fechaLimite` | `V + intervalo` | 00:00 del día siguiente a `N` |
-  | `pendiente`: desde que está pendiente | 00:00 de `fechaLimite`; sin fecha límite, al final del grupo, por `creadaEn` | `V`; nunca completada, `creadaEn` | 00:00 de `N` |
-  | `en espera`: cuándo vuelve a pendiente | — | `V` | 00:00 de `N` |
+  | `overdue`: since it has been overdue | 00:00 of the day after `fechaLimite` | `V + interval` | 00:00 of the day after `N` |
+  | `pending`: since it has been pending | 00:00 of `fechaLimite`; without a due date, at the end of the group, by `creadaEn` | `V`; never completed, `creadaEn` | 00:00 of `N` |
+  | `waiting`: when it becomes pending again | — | `V` | 00:00 of `N` |
 
-  Horas y días se comparan en el mismo eje de tiempo. Si dos tareas empatan, va primero la de `creadaEn` más antigua; si también empatan, por título en orden alfabético en español (sin distinguir mayúsculas ni acentos, con la ñ después de la n); y si siguen empatadas, por `id`.
-- **Mostrar pausadas**: un check junto a "Completadas", con el texto "Pausadas". Apagado (el valor inicial), las pausadas (§5.8) no se ven. Encendido, van al final de la lista (después de las completadas, si se muestran), por título en el orden alfabético de arriba; cada fila atenuada, con el texto "Pausada" en lugar del texto de atraso o de regreso y el checkbox deshabilitado. El valor se guarda en ese dispositivo, como "Mostrar completadas".
-- **Mostrar completadas**: un check arriba de la lista, con el texto "Completadas".
-  - Una tarea está **completada** si es puntual con al menos un completado (§5.1), o periódica `en espera` con al menos un completado (§5.2, §5.3). Una periódica `en espera` sin completados (de calendario, antes de su primera ocurrencia) no está completada.
-  - Apagado (el valor inicial): la lista muestra solo las tareas no completadas. Al completar una tarea, su fila desaparece de la lista.
-  - Encendido: después de las no completadas (en el orden de arriba) van las completadas, de la de `completadoEn` más reciente a la más antigua; si empatan, se aplican los mismos desempates de arriba.
-  - El valor se guarda **en ese dispositivo** (no se sincroniza, no está en Firestore) y sobrevive a recargar la app.
-- **Contraste**: el título de una tarea no completada se ve en **negrita**; el de una completada, tachado, en peso normal y atenuado, con el checkbox marcado. Las no completadas resaltan sobre las completadas a simple vista.
-- Cada fila muestra:
-  - Checkbox a la izquierda, con área táctil de al menos 48×48.
-  - Emoji y título (§4.1: sin emoji, solo el título). La nota no se ve en la fila.
-  - Si la tarea está `pendiente` o `atrasada` y tiene primer paso (§4.1), en su propia línea debajo del título, el paso en que va la tarea: «Primer paso: » seguido del texto si va en el paso 1 (por ejemplo «Primer paso: Separar la ropa blanca»), o «Paso: » seguido del texto si va en otro (por ejemplo «Paso: Poner el lavarropas»), sin número ni total; nunca muestra la lista entera. Se ve completo, en varias líneas si hace falta, sin cortar, en el mismo tamaño y color de texto secundario que el horario, sin énfasis ni color propio. No se ve en las filas `en espera` (tampoco las pospuestas ni las completadas) ni en las pausadas. Se decide con el estado de cada momento: la línea desaparece cuando la tarea pasa a `en espera` (al completarla, posponerla o por su horario) o se pausa, y vuelve sola cuando vuelve a `pendiente` o `atrasada`. Una `atrasada` con el checkbox deshabilitado hasta que abra su ventana (§5.5) la muestra. Tocar el texto del paso es tocar la fila (abre el panel); en una tarea de un solo paso la línea no se edita desde la fila y no tiene botones.
-  - En una tarea de dos pasos o más (§4.1, **Pasos**), en la línea del paso, y por lo tanto solo cuando la línea se ve, dos botones de texto chicos, sin color propio: **Paso anterior** (antes de **Hecho**; no se ve en el paso 1) y **Hecho**. **Hecho** pasa al paso siguiente; en el último paso completa la tarea como el checkbox (§5.4: mismo completado, mismo aviso «Completaste «…»» con **Deshacer**, y `pasoActual` vuelve al paso 1), y está deshabilitado si el checkbox lo está (§5.5). **Paso anterior** vuelve al paso de antes. Tocarlos no abre el panel, no pasa por **Cambios sin guardar** y no abre aviso de deshacer, salvo el «Hecho» del último paso. **Hice la mínima** no es uno de ellos: sí abre el aviso de deshacer (abajo).
-  - Si la tarea está `pendiente` o `atrasada` y tiene versión mínima (§4.1), en su propia línea debajo del título (debajo de la línea del paso, si la hay), «Mínima: » seguido del texto (por ejemplo «Mínima: Solo el inodoro»), y junto a ella el botón **Hice la mínima**. La línea se ve completa, en varias líneas si hace falta, sin cortar, en el mismo tamaño y color de texto secundario que la línea del paso, sin énfasis ni color propio, y se ve aunque la tarea no tenga primer paso. **Hice la mínima** es un botón de texto chico, sin color propio, como **Hecho** y **Paso anterior**; completa la tarea como el checkbox (§5.4: agrega el completado con `fueMinima`, §4.4, y abre el aviso «Completaste «…» · mínima» con **Deshacer**, y con «Vuelve …» debajo si es periódica), en cualquier paso: en una tarea de dos pasos o más guarda `pasoAlCompletar` y `pasoActual` vuelve al paso 1 (§4.1, **Pasos**). Está deshabilitado si el checkbox que completaría lo está (§5.5). Tocarlo no abre el panel ni pasa por **Cambios sin guardar**; tocar el texto de la línea fuera del botón es tocar la fila (abre el panel). No se ve en las filas `en espera` (tampoco las pospuestas ni las completadas) ni en las pausadas; se decide con el estado de cada momento, y una `atrasada` con el checkbox deshabilitado hasta que abra su ventana (§5.5) la muestra, con el botón deshabilitado. Una pospuesta se sigue pudiendo completar entera con el checkbox (§5.9), no con la mínima. Sin textos que la propongan, contadores ni marcas.
-  - Si la tarea está `atrasada`, el texto de atraso «Tocaba …» (**Fecha y distancia**, abajo), que reemplaza a «Atrasada» como indicador de atraso. No lleva color de alarma: se ve en el mismo color y el mismo tamaño de texto secundario que el horario, sin rojo ni énfasis. No se ve en una pausada.
-  - Si la tarea tiene horario, el horario en texto chico: "08:00–11:00"; con varios, en orden y separados por " · ": "07:00–10:00 · 18:00–21:00".
-  - En las tareas `en espera`: estilo atenuado, una barra de progreso fina con el tiempo hasta que vuelven y el texto de regreso «Vuelve …» (**Fecha y distancia**, abajo). Vale también para las periódicas completadas que se ven con **Mostrar completadas** y para las pospuestas, sin nombrar la posposición en la fila.
-  - Las filas `pendiente`, las pausadas y las puntuales completadas no muestran texto de fecha ni de distancia.
-**Fecha y distancia** (texto de atraso y de regreso de la fila, y cierre del aviso de completar, §5.4): una sola regla arma el texto de las tres. Las tareas que no son `atrasada` ni `en espera` no lo llevan.
+  Hours and days are compared on the same time axis. If two tasks tie, the one with the oldest `creadaEn` goes first; if they also tie, by title in Spanish alphabetical order (ignoring case and accents, with the ñ after the n); and if they are still tied, by `id`.
+- **Mostrar pausadas**: a check next to "Completadas", with the text "Pausadas". Off (the initial value), the paused tasks (§5.8) are not shown. On, they go at the end of the list (after the completed ones, if those are shown), by title in the alphabetical order above; each row dimmed, with the text "Pausada" instead of the overdue or return text and the checkbox disabled. The value is saved on that device, like "Mostrar completadas".
+- **Mostrar completadas**: a check above the list, with the text "Completadas".
+  - A task is **completed** if it is one-off with at least one completion (§5.1), or recurring `waiting` with at least one completion (§5.2, §5.3). A recurring `waiting` task without completions (calendar, before its first occurrence) is not completed.
+  - Off (the initial value): the list shows only the uncompleted tasks. When a task is completed, its row disappears from the list.
+  - On: after the uncompleted ones (in the order above) come the completed ones, from the one with the most recent `completadoEn` to the oldest; if they tie, the same tie-breaks as above apply.
+  - The value is saved **on that device** (it is not synced, it is not in Firestore) and survives reloading the app.
+- **Contrast**: the title of an uncompleted task is shown in **bold**; that of a completed one, struck through, in normal weight and dimmed, with the checkbox checked. The uncompleted ones stand out from the completed ones at a glance.
+- Each row shows:
+  - Checkbox on the left, with a touch area of at least 48×48.
+  - Emoji and title (§4.1: without an emoji, only the title). The note is not shown in the row.
+  - If the task is `pending` or `overdue` and has a first step (§4.1), on its own line below the title, the step the task is on: «Primer paso: » followed by the text if it is on step 1 (for example «Primer paso: Separar la ropa blanca»), or «Paso: » followed by the text if it is on another one (for example «Paso: Poner el lavarropas»), without number or total; it never shows the whole list. It is shown in full, on several lines if needed, without cutting, in the same size and secondary text color as the schedule, without emphasis or its own color. It is not shown in `waiting` rows (nor the postponed or completed ones) or in the paused ones. It is decided with the status of each moment: the line disappears when the task becomes `waiting` (on completing it, postponing it or because of its schedule) or is paused, and comes back by itself when it becomes `pending` or `overdue` again. An `overdue` task with the checkbox disabled until its window opens (§5.5) shows it. Tapping the step text is tapping the row (it opens the panel); in a one-step task the line is not edited from the row and has no buttons.
+  - In a task of two steps or more (§4.1, **Steps**), on the step line, and therefore only when the line is shown, two small text buttons, without their own color: **Paso anterior** (before **Hecho**; not shown on step 1) and **Hecho**. **Hecho** moves to the next step; on the last step it completes the task like the checkbox (§5.4: same completion, same notice «Completaste «…»» with **Deshacer**, and `pasoActual` returns to step 1), and it is disabled if the checkbox is (§5.5). **Paso anterior** returns to the previous step. Tapping them does not open the panel, does not go through **Unsaved changes** and does not open an undo notice, except the «Hecho» of the last step. **Hice la mínima** is not one of them: it does open the undo notice (below).
+  - If the task is `pending` or `overdue` and has a minimal version (§4.1), on its own line below the title (below the step line, if there is one), «Mínima: » followed by the text (for example «Mínima: Solo el inodoro»), and next to it the **Hice la mínima** button. The line is shown in full, on several lines if needed, without cutting, in the same size and secondary text color as the step line, without emphasis or its own color, and it is shown even if the task has no first step. **Hice la mínima** is a small text button, without its own color, like **Hecho** and **Paso anterior**; it completes the task like the checkbox (§5.4: it adds the completion with `fueMinima`, §4.4, and opens the notice «Completaste «…» · mínima» with **Deshacer**, and with «Vuelve …» below if it is recurring), on any step: in a task of two steps or more it stores `pasoAlCompletar` and `pasoActual` returns to step 1 (§4.1, **Steps**). It is disabled if the checkbox that would complete is (§5.5). Tapping it does not open the panel or go through **Unsaved changes**; tapping the text of the line outside the button is tapping the row (it opens the panel). It is not shown in `waiting` rows (nor the postponed or completed ones) or in the paused ones; it is decided with the status of each moment, and an `overdue` task with the checkbox disabled until its window opens (§5.5) shows it, with the button disabled. A postponed task can still be completed whole with the checkbox (§5.9), not with the minimal version. No texts that propose it, no counters or marks.
+  - If the task is `overdue`, the overdue text «Tocaba …» (**Date and distance**, below), which replaces «Atrasada» as the overdue indicator. It carries no alarm color: it is shown in the same color and the same secondary text size as the schedule, without red or emphasis. It is not shown in a paused task.
+  - If the task has a schedule, the schedule in small text: "08:00–11:00"; with several, in order and separated by " · ": "07:00–10:00 · 18:00–21:00".
+  - In `waiting` tasks: dimmed style, a thin progress bar with the time until they come back and the return text «Vuelve …» (**Date and distance**, below). It also applies to the completed recurring tasks that are shown with **Mostrar completadas** and to the postponed ones, without naming the postponement in the row.
+  - `pending` rows, the paused ones and the completed one-off tasks do not show date or distance text.
+**Date and distance** (overdue text and return text of the row, and closing of the completion notice, §5.4): a single rule builds the text of the three. Tasks that are neither `overdue` nor `waiting` do not carry it.
 
-- **Frase**: «Tocaba <fecha>[ · <distancia>]» en una `atrasada` y «Vuelve <fecha>[ · <distancia>]» en una `en espera`. «el» va solo delante de la fecha con día de la semana; con «hoy», «ayer» o «mañana» no. Ejemplos (ahora = viernes 13 de noviembre de 2026, 10:00): «Tocaba el martes 10 · hace 3 días», «Tocaba ayer», «Tocaba hoy 09:00 · hace 1 hora», «Tocaba hoy 10:00 · ahora», «Vuelve mañana», «Vuelve hoy 18:00 · en 8 horas», «Vuelve hoy 10:40 · en 40 minutos», «Vuelve el jueves 19 · en 6 días». Sin felicitaciones ni otras palabras.
-- **Instante de «Tocaba»** (desde cuándo toca la tarea; nunca es un instante futuro):
+- **Phrase**: «Tocaba <fecha>[ · <distancia>]» in an `overdue` task and «Vuelve <fecha>[ · <distancia>]» in a `waiting` one. «el» goes only before the date with a day of the week; with «hoy», «ayer» or «mañana» it does not. Examples (now = Friday 13 November 2026, 10:00): «Tocaba el martes 10 · hace 3 días», «Tocaba ayer», «Tocaba hoy 09:00 · hace 1 hora», «Tocaba hoy 10:00 · ahora», «Vuelve mañana», «Vuelve hoy 18:00 · en 8 horas», «Vuelve hoy 10:40 · en 40 minutos», «Vuelve el jueves 19 · en 6 días». No congratulations or other words.
+- **Instant of «Tocaba»** (since when the task is due; it is never a future instant):
 
-| Tipo | Instante |
+| Kind | Instant |
 |---|---|
-| Puntual con fecha límite | el día `fechaLimite`, sin hora, tenga o no horario |
-| Relativa | `V` (con hora) |
-| Calendario | el día de `N`, sin hora |
-| Periódica con horario (§5.5) | `A`; con varios horarios (§5.6, §5.7), el inicio de `N` |
+| One-off with due date | the day `fechaLimite`, without a time, whether or not it has a schedule |
+| Relative | `V` (with a time) |
+| Calendar | the day of `N`, without a time |
+| Recurring with a schedule (§5.5) | `A`; with several schedules (§5.6, §5.7), the start of `N` |
 
-  Si `A` todavía no llegó (la tarea se atrasó por el atraso sin horario de §5.5 antes de que abriera su ventana), se usa el instante sin horario: `V`, o 00:00 de `N`. Una puntual sin fecha límite nunca está `atrasada`, así que no lleva «Tocaba».
-- **Instante de «Vuelve»**: el mismo con el que esta sección ordena las `en espera` (cuándo vuelve a pendiente): relativa, `V`; calendario, 00:00 de `N`; con horario, `A` (§5.5; una puntual fuera de ventana, el `desde` de la próxima); pospuesta, `pospuesta.hasta` (§5.9). Si dos causas la tienen `en espera`, el instante en que deja de estarlo (el más tarde de los dos).
-- **Fecha**: «hoy», «ayer» o «mañana» si el instante cae en esos días locales (el día empieza a las 00:00); si no, el día de la semana y el número («martes 10»), con « de <mes>» en minúsculas si el mes no es el de ahora («martes 28 de octubre») y « de <año>» si el año no es el de ahora («miércoles 31 de diciembre de 2025»). Lleva la hora `HH:MM` en 24 h (cifras de ancho fijo) cuando el instante no es las 00:00 (horario, relativas, posposición): «hoy 18:00», «martes 10 19:30». Es el formato de **Última vez** (§6.2) y del Historial (§6.3).
-- **Distancia**, después de la fecha, separada por « · »:
-  - A 2 o más días locales: «hace N días» / «en N días» (diferencia en días locales, como **Última vez**), con o sin hora en la fecha.
-  - Con la fecha «hoy», «ayer» o «mañana» y con hora: en horas («hace 3 horas», «en 1 hora») o, a menos de una hora, en minutos («hace 40 minutos», «en 40 minutos»). Lo pasado se redondea hacia abajo y lo futuro hacia arriba, nunca «en 0 minutos». Se cuenta desde ahora, aunque cruce la medianoche («Tocaba ayer 23:00 · hace 2 horas» a la 01:00).
-  - Con la fecha «hoy», «ayer» o «mañana» y con hora, si el instante cae a menos de un minuto en el pasado, la distancia es «ahora», no «hace 0 minutos» («Tocaba hoy 10:00 · ahora» a las 10:00:30). Lo futuro sigue hacia arriba: nunca «en 0 minutos».
-  - Con la fecha «hoy», «ayer» o «mañana» y sin hora: no hay distancia, la palabra ya lo es («Tocaba ayer», «Vuelve mañana»).
-- **Se actualiza solo** con el paso del tiempo (al pasar la medianoche, la hora o el minuto que corresponda), como **Última vez** con el panel abierto. No cambia el estado ni el orden de la lista.
-- Solo son textos y color: los estados de §5 y el orden de esta sección no cambian.
+  If `A` has not arrived yet (the task became overdue by the overdue time without a schedule of §5.5 before its window opened), the instant without a schedule is used: `V`, or 00:00 of `N`. A one-off task without a due date is never `overdue`, so it carries no «Tocaba».
+- **Instant of «Vuelve»**: the same one with which this section sorts the `waiting` tasks (when it becomes pending again): relative, `V`; calendar, 00:00 of `N`; with a schedule, `A` (§5.5; a one-off task outside a window, the `desde` of the next one); postponed, `pospuesta.hasta` (§5.9). If two causes have it `waiting`, the instant at which it stops being so (the later of the two).
+- **Date**: «hoy», «ayer» or «mañana» if the instant falls on those local days (the day starts at 00:00); if not, the day of the week and the number («martes 10»), with « de <mes>» in lowercase if the month is not the current one («martes 28 de octubre») and « de <año>» if the year is not the current one («miércoles 31 de diciembre de 2025»). It carries the time `HH:MM` in 24 h (fixed-width digits) when the instant is not 00:00 (schedule, relative tasks, postponement): «hoy 18:00», «martes 10 19:30». It is the format of **Última vez** (§6.2) and of the **Historial** (§6.3).
+- **Distance**, after the date, separated by « · »:
+  - At 2 or more local days: «hace N días» / «en N días» (difference in local days, like **Última vez**), with or without a time in the date.
+  - With the date «hoy», «ayer» or «mañana» and with a time: in hours («hace 3 horas», «en 1 hora») or, at less than an hour, in minutes («hace 40 minutos», «en 40 minutos»). The past is rounded down and the future up, never «en 0 minutos». It is counted from now, even if it crosses midnight («Tocaba ayer 23:00 · hace 2 horas» at 01:00).
+  - With the date «hoy», «ayer» or «mañana» and with a time, if the instant falls less than a minute in the past, the distance is «ahora», not «hace 0 minutos» («Tocaba hoy 10:00 · ahora» at 10:00:30). The future still rounds up: never «en 0 minutos».
+  - With the date «hoy», «ayer» or «mañana» and without a time: there is no distance, the word already is one («Tocaba ayer», «Vuelve mañana»).
+- **It updates by itself** as time passes (at midnight, at the hour or at the minute that applies), like **Última vez** with the panel open. It does not change the status or the order of the list.
+- They are only texts and color: the statuses of §5 and the order of this section do not change.
 
-- Si tocar el checkbox completaría la tarea y ahora está fuera de su ventana (§5.5), el checkbox está deshabilitado. Si lo borraría, siempre está habilitado.
-- Tocar el checkbox de una tarea no completada la completa. Tocar el checkbox de una completada:
-  - Puntual: borra su completado más reciente (como Deshacer, §5.4) y la tarea vuelve al estado que corresponda.
-  - Periódica cuyo completado más reciente es de hoy o posterior (día local de `completadoEn`; posterior solo con relojes desfasados, §5.2): lo borra, igual que una puntual.
-  - Periódica cuyo completado más reciente es de un día anterior: la completa de nuevo (agrega un completado; §5.2 reinicia el intervalo, §5.3 cubre la próxima ocurrencia).
-- Tocar la fila abre el **panel de edición**.
-- Un botón **+** crea una tarea nueva con el mismo panel.
+- If tapping the checkbox would complete the task and now is outside its window (§5.5), the checkbox is disabled. If it would delete, it is always enabled.
+- Tapping the checkbox of an uncompleted task completes it. Tapping the checkbox of a completed task:
+  - One-off: deletes its most recent completion (like **Deshacer**, §5.4) and the task returns to the status that applies.
+  - Recurring whose most recent completion is from today or later (local day of `completadoEn`; later only with clocks out of sync, §5.2): it deletes it, like a one-off task.
+  - Recurring whose most recent completion is from an earlier day: it completes it again (adds a completion; §5.2 restarts the interval, §5.3 covers the next occurrence).
+- Tapping the row opens the **edit panel**.
+- A **+** button creates a new task with the same panel.
 
-### 6.2 Panel de edición
+### 6.2 Edit panel
 
-Campos:
+Fields:
 
-- Título, emoji y nota. El campo **Título** se ve en 20px (1.25rem), más grande que la **Nota** (16px; §6, Sin cambios de diseño).
-- **Emoji**: no hay campo de texto; se elige con un **selector propio**.
-  - El panel muestra el emoji elegido (con un botón para cambiarlo) o, si no hay, un botón **Elegir emoji**. Con emoji hay además un botón **Quitar emoji** que deja la tarea sin emoji. Como no se puede escribir, no existe el error "Ingresá un solo emoji".
-  - El selector ofrece **1914 emoji base** con sus **variantes de un tono de piel**, agrupados por categoría (con navegación entre categorías), y una **búsqueda en español** (por ejemplo "planta", "escoba", "perro"). Elegir un emoji lo asigna a la tarea y cierra el selector. No ofrece los 9 emoji del grupo de componentes (los 5 tonos de piel y los 4 tipos de cabello sueltos) ni las variantes de dos tonos de piel. Lo que llegue por otra vía se rige por §4.1: un tono de piel suelto es inválido y se rechaza; un cabello suelto (🦰, 🦱, 🦳, 🦲) y una variante de dos tonos (🧑🏻‍🤝‍🧑🏿) son un emoji válido, se guardan y se muestran igual.
-  - El selector **funciona sin conexión**: el catálogo y los textos de búsqueda viajan empaquetados con la app, sin pedirse a un servicio externo.
-  - **Recientes**: el selector muestra primero los últimos emojis elegidos, del más reciente al más viejo. Reglas: al elegir un emoji pasa al primer lugar; si ya estaba en la lista no se repite (se mueve al primer lugar); la lista guarda como máximo **16** emojis y al agregar uno nuevo con la lista llena se descarta el más viejo. Quitar el emoji no modifica la lista. Los recientes se guardan **en ese dispositivo** (no se sincronizan, no están en Firestore) y sobreviven a recargar la app.
-- **Primer paso**: campo de una línea con la etiqueta «Primer paso», sin texto de ejemplo, justo debajo del título (con su emoji) y antes de la nota. Enter en ese campo guarda, como en todo campo de una línea (**Teclado en pantalla**, abajo). Al crear arranca vacío; al editar, con el valor actual. Vacío deja la tarea sin primer paso, y cuenta para **Cambios sin guardar** como cualquier campo (escribir y volver al valor original no cuenta; vaciar un primer paso existente sí).
-- **Más pasos**: debajo del primer paso, cada paso más es un campo de una línea con la etiqueta «Paso 2», «Paso 3»…, con un botón **Quitar** cada uno, y al final un botón **Agregar paso** que suma un campo vacío, como **Agregar horario**. Enter en esos campos guarda. Los pasos van en el orden escrito, sin reordenar; al guardar, los vacíos se descartan y los de abajo suben (§4.1, **Pasos**). Agregar, quitar o cambiar un paso cuenta para **Cambios sin guardar**; escribir y volver al valor original no cuenta, ni los espacios que **Guardar** recorta ni un paso vacío que **Guardar** descarta. El panel no muestra ni elige el paso en que va la tarea: eso se corrige desde la fila.
-- **Versión mínima**: campo de una línea con la etiqueta «Versión mínima», sin texto de ejemplo, debajo de los pasos (después de **Agregar paso**) y antes de la nota. Enter en ese campo guarda, como en todo campo de una línea (**Teclado en pantalla**, abajo). Al crear arranca vacío; al editar, con el valor actual. Vacío deja la tarea sin versión mínima (§4.1, **Versión mínima**). Cuenta para **Cambios sin guardar** como cualquier campo: escribir y volver al valor original no cuenta, ni los espacios que **Guardar** recorta; vaciar una versión mínima existente sí.
-- **Nota**: campo de texto de varias líneas. Se ve y se edita solo en el panel; vacía deja la tarea sin nota.
-- **Horario** (opcional, cualquier tipo): un check "Solo en un horario" que, encendido, muestra dos campos de hora, **Desde** y **Hasta**. Apagado, la tarea no tiene horario. Con `desde` ≥ `hasta` se ve el error "La hora de fin tiene que ser posterior a la de inicio"; con el check encendido y una de las dos horas vacía, "Completá las dos horas". En los dos casos no se guarda.
-  - Debajo de las ventanas hay un botón **Agregar horario** que agrega otra fila Desde/Hasta vacía, y cada fila (si hay más de una) tiene un botón **Quitar**. Al guardar, las ventanas quedan ordenadas por `desde`. Ventanas superpuestas muestran el error "Los horarios no se pueden superponer" y no se guarda.
-  - Una relativa en horas con más de una ventana muestra el error "Con varios horarios, el intervalo tiene que ser en días" y no se guarda.
-- **Posponer** (solo al editar una tarea `pendiente` o `atrasada` no pausada): las opciones **1 hora**, **3 horas** y **Hasta mañana** se ven directamente en el panel, sin un botón **Posponer** intermedio (§6.2, Presentación); elegir una actúa en el momento y cierra el panel (con cambios sin guardar, primero abre el aviso de acción de **Cambios sin guardar**). Si la tarea está pospuesta, el panel muestra "Pospuesta hasta HH:MM" (o "hasta mañana HH:MM") y un botón **Quitar posponer**, que también actúa en el momento (con la misma excepción).
-- **Pausar / Reanudar** (solo al editar una periódica): un botón **Pausar**; si la tarea está pausada, el panel lo indica ("Pausada") y el botón es **Reanudar**. El botón actúa en el momento (guarda y cierra el panel), sin pasar por **Guardar**; con cambios sin guardar, primero abre el aviso de acción de **Cambios sin guardar**.
-- Tipo, elegido en **Se repite** con cuatro opciones: **No se repite** (puntual: fecha límite opcional), **Intervalo** (periódica en modo relativo: N + horas/días), **Días de la semana** y **Días del mes** (periódica en modo calendario). Al crear una tarea, la opción de **Se repite** que viene elegida es **No se repite**.
+- Title, emoji and note. The **Título** field is shown at 20px (1.25rem), larger than the **Nota** (16px; §6, No design changes).
+- **Emoji**: there is no text field; it is chosen with a **custom picker**.
+  - The panel shows the chosen emoji (with a button to change it) or, if there is none, an **Elegir emoji** button. With an emoji there is also a **Quitar emoji** button that leaves the task without an emoji. Since it cannot be typed, the error "Ingresá un solo emoji" does not exist.
+  - The picker offers **1914 base emoji** with their **single-skin-tone variants**, grouped by category (with navigation between categories), and a **search in Spanish** (for example "planta", "escoba", "perro"). Choosing an emoji assigns it to the task and closes the picker. It does not offer the 9 emoji of the components group (the 5 skin tones and the 4 hair types alone) or the two-skin-tone variants. What arrives some other way is governed by §4.1: a lone skin tone is invalid and is rejected; a lone hair type (🦰, 🦱, 🦳, 🦲) and a two-tone variant (🧑🏻‍🤝‍🧑🏿) are a valid emoji, are stored and are shown all the same.
+  - The picker **works offline**: the catalog and the search texts travel bundled with the app, without being requested from an external service.
+  - **Recientes**: the picker first shows the last emojis chosen, from the most recent to the oldest. Rules: when an emoji is chosen it goes to the first place; if it was already in the list it is not repeated (it moves to the first place); the list stores at most **16** emojis and when a new one is added to a full list the oldest is discarded. Removing the emoji does not modify the list. The recents are stored **on that device** (they are not synced, they are not in Firestore) and survive reloading the app.
+- **First step**: a one-line field with the label «Primer paso», without example text, right below the title (with its emoji) and before the note. Enter in that field saves, as in every one-line field (**On-screen keyboard**, below). On create it starts empty; on edit, with the current value. Empty leaves the task without a first step, and counts for **Unsaved changes** like any field (typing and going back to the original value does not count; emptying an existing first step does).
+- **More steps**: below the first step, each more step is a one-line field with the label «Paso 2», «Paso 3»…, with a **Quitar** button each, and at the end an **Agregar paso** button that adds an empty field, like **Agregar horario**. Enter in those fields saves. The steps go in the written order, without reordering; on save, the empty ones are discarded and the ones below move up (§4.1, **Steps**). Adding, removing or changing a step counts for **Unsaved changes**; typing and going back to the original value does not count, nor do the spaces that **Guardar** trims or an empty step that **Guardar** discards. The panel does not show or choose the step the task is on: that is corrected from the row.
+- **Minimal version**: a one-line field with the label «Versión mínima», without example text, below the steps (after **Agregar paso**) and before the note. Enter in that field saves, as in every one-line field (**On-screen keyboard**, below). On create it starts empty; on edit, with the current value. Empty leaves the task without a minimal version (§4.1, **Minimal version**). It counts for **Unsaved changes** like any field: typing and going back to the original value does not count, nor do the spaces that **Guardar** trims; emptying an existing minimal version does.
+- **Note**: a multi-line text field. It is shown and edited only in the panel; empty leaves the task without a note.
+- **Schedule** (optional, any kind): a check "Solo en un horario" that, when on, shows two time fields, **Desde** and **Hasta**. Off, the task has no schedule. With `desde` ≥ `hasta` the error "La hora de fin tiene que ser posterior a la de inicio" is shown; with the check on and one of the two times empty, "Completá las dos horas". In both cases it is not saved.
+  - Below the windows there is an **Agregar horario** button that adds another empty Desde/Hasta row, and each row (if there is more than one) has a **Quitar** button. On save, the windows are sorted by `desde`. Overlapping windows show the error "Los horarios no se pueden superponer" and it is not saved.
+  - A relative task in hours with more than one window shows the error "Con varios horarios, el intervalo tiene que ser en días" and it is not saved.
+- **Postpone** (only when editing a `pending` or `overdue` task that is not paused): the options **1 hora**, **3 horas** and **Hasta mañana** are shown directly in the panel, without an intermediate **Posponer** button (§6.2, Presentation); choosing one acts at that moment and closes the panel (with unsaved changes, it first opens the action notice of **Unsaved changes**). If the task is postponed, the panel shows "Pospuesta hasta HH:MM" (or "hasta mañana HH:MM") and a **Quitar posponer** button, which also acts at that moment (with the same exception).
+- **Pause / Resume** (only when editing a recurring task): a **Pausar** button; if the task is paused, the panel indicates it ("Pausada") and the button is **Reanudar**. The button acts at that moment (saves and closes the panel), without going through **Guardar**; with unsaved changes, it first opens the action notice of **Unsaved changes**.
+- Kind, chosen in **Se repite** with four options: **No se repite** (one-off: optional due date), **Intervalo** (recurring in relative mode: N + hours/days), **Días de la semana** and **Días del mes** (recurring in calendar mode). When creating a task, the option of **Se repite** that comes selected is **No se repite**.
 
-El mismo panel sirve para crear (botón **+**) y para editar (tocar la fila). Al editar se abre con los valores actuales de la tarea.
+The same panel serves to create (**+** button) and to edit (tapping the row). When editing it opens with the current values of the task.
 
-**Última vez** (solo al editar): debajo del título del panel se ve cuándo se completó la tarea por última vez, según su `completadoEn` más reciente y el **día local** (el día empieza a las 00:00):
+**Última vez** (only when editing): below the title of the panel it is shown when the task was last completed, according to its most recent `completadoEn` and the **local day** (the day starts at 00:00):
 
-- Del día de ahora: "Última vez: hoy 08:05" (hora en 24 h, `HH:MM`).
-- Del día anterior: "Última vez: ayer 19:30".
-- De N ≥ 2 días antes: "Última vez: hace N días" (diferencia en días locales, sin hora).
-- De un día posterior a hoy (relojes desfasados, §5.2): con la fecha, como en el Historial (§6.3): "Última vez: jueves 16 de julio 08:05".
-- Sin completados: "Última vez: nunca".
-- Se actualiza mientras el panel está abierto (al pasar la medianoche, al completar o borrar desde otro dispositivo).
+- From the day of now: "Última vez: hoy 08:05" (24 h time, `HH:MM`).
+- From the previous day: "Última vez: ayer 19:30".
+- From N ≥ 2 days before: "Última vez: hace N días" (difference in local days, without a time).
+- From a day after today (clocks out of sync, §5.2): with the date, as in the **Historial** (§6.3): "Última vez: jueves 16 de julio 08:05".
+- Without completions: "Última vez: nunca".
+- It updates while the panel is open (at midnight, when completing or deleting from another device).
 
-**Editar**:
+**Edit**:
 
-- Valen las mismas validaciones que al crear (§4.1–§4.2). Si algún campo es inválido, la edición se rechaza entera: no se guarda ningún campo, el panel sigue abierto y muestra el error en el campo.
-- **Cerrar** (la **X**, o **Atrás** en Android) con cambios sin guardar pide confirmación en lugar de descartarlos (**Cambios sin guardar**, abajo); sin cambios cierra directo. Guardar sin cambios no cambia nada.
-- Editar nunca cambia `id` ni `creadaEn` y nunca toca los completados. El estado se recalcula con la definición nueva (§5): editar puede cambiar el estado y la posición en la lista.
-- Se puede cambiar el tipo (puntual ↔ periódica) y el modo (relativo ↔ calendario, semanal ↔ mensual). Los completados se conservan y siguen contando:
-  - Una periódica con completados que pasa a puntual queda completada (§5.1: tiene al menos un completado): con **Mostrar completadas** apagado **sale de Pendientes**; encendido, se ve tachada con las completadas (§6.1).
-  - Una tarea con completados que pasa a calendario toma `P` según §5.3 (los completados sin `ocurrenciaCubierta` aportan el día de su `completadoEn`).
-  - Una puntual completada no tiene fila en Pendientes con **Mostrar completadas** apagado (encendido, se ve tachada al final, §6.1); si se edita (por ejemplo, desde el historial) y pasa a periódica, se rige por las reglas de periódica con esos completados.
+- The same validations as when creating apply (§4.1–§4.2). If any field is invalid, the edit is rejected entirely: no field is saved, the panel stays open and shows the error in the field.
+- **Close** (the **X**, or **Back** on Android) with unsaved changes asks for confirmation instead of discarding them (**Unsaved changes**, below); without changes it closes directly. Saving without changes changes nothing.
+- Editing never changes `id` or `creadaEn` and never touches the completions. The status is recomputed with the new definition (§5): editing can change the status and the position in the list.
+- The kind (one-off ↔ recurring) and the mode (relative ↔ calendar, weekly ↔ monthly) can be changed. The completions are kept and keep counting:
+  - A recurring task with completions that becomes one-off is completed (§5.1: it has at least one completion): with **Mostrar completadas** off it **leaves Pendientes**; on, it is shown struck through with the completed ones (§6.1).
+  - A task with completions that becomes calendar takes `P` according to §5.3 (the completions without `ocurrenciaCubierta` contribute the day of their `completadoEn`).
+  - A completed one-off task has no row in **Pendientes** with **Mostrar completadas** off (on, it is shown struck through at the end, §6.1); if it is edited (for example, from the history) and becomes recurring, it is governed by the recurring rules with those completions.
 
-**Cambios sin guardar** (al crear y al editar):
+**Unsaved changes** (when creating and when editing):
 
-- **Hay cambios** cuando **Guardar** cambiaría algo respecto de los valores con que se abrió el panel. Escribir y volver al valor original no cuenta; tampoco los espacios que **Guardar** recorta ni el orden de las ventanas de horario, que **Guardar** ordena. Un campo vaciado o una fila de horario vacía sí cuentan, aunque sean inválidos. Esta es la única definición de "hay cambios": vale para cerrar, para crear, para las acciones y para la confirmación del navegador.
-- **Se mide contra los valores al abrir el panel**, no contra lo que otro dispositivo escribió después: un cambio remoto no hace aparecer el aviso.
-- **Al crear**, "sin cambios" significa que el formulario sigue como se abrió. Tocar cualquier campo con otro valor (por ejemplo **Se repite**) es cargar algo; un título de solo espacios no. Si está vacío, cierra directo; si cargaste algo, pide confirmación.
-- **Aviso de cierre**: cerrar con la **X** (o **Atrás**, ver **Atrás**) con cambios abre el aviso "Tenés cambios sin guardar" con tres botones: **Seguir editando** (cierra el aviso y deja el panel como estaba, en la misma pestaña), **Descartar** (cierra el panel sin guardar) y **Guardar** (guarda como **Guardar** y, si guarda, cierra el panel). **Descartar** no quita de **Recientes** un emoji elegido en el panel: los recientes se actualizan al elegir, sin depender de guardar.
-- **Aviso de acción**: **Pausar**, **Reanudar**, **Posponer** (**1 hora**, **3 horas**, **Hasta mañana**) y **Quitar posponer** con cambios abren el aviso "Tenés cambios sin guardar" con tres botones: **Seguir editando** (cierra el aviso sin actuar), **Descartar y <acción>** (descarta los cambios, actúa sobre la tarea tal como estaba guardada y cierra el panel) y **Guardar y <acción>** (guarda como **Guardar**, actúa sobre la tarea guardada y cierra el panel), con `<acción>` = pausar, reanudar, posponer o quitar posponer (para posponer, con la opción tocada: "Descartar y posponer 1 hora"). Sin cambios, la acción actúa en el momento, como siempre. "Ahora" de §5.8 y §5.9 es el momento de tocar el botón del aviso, no el de elegir la acción. Ejemplo: se elige **1 hora** a las `2026-07-15T08:00:00`, el aviso queda abierto y se toca **Guardar y posponer 1 hora** a las `2026-07-15T08:03:00`: `pospuesta = { desde: 2026-07-15T08:03:00, hasta: 2026-07-15T09:03:00 }`.
-- **Si lo guardado deja la acción sin sentido**: una acción "queda sin sentido" si la tarea, como quedaría guardada, no cumple las condiciones con que §5.8, §5.9 y este apartado la muestran (por ejemplo, se cambió a **No se repite** y se tocó **Pausar**; se cambió a **No se repite** una periódica pausada y se tocó **Reanudar**, porque guardar ya la reanuda, §5.8). Entonces el aviso dice "Con estos cambios la tarea ya no se puede <acción>" y ofrece solo **Seguir editando** y **Descartar y <acción>**, sin **Guardar y <acción>**. Si lo escrito es inválido no hay cómo evaluarlo: se ofrece **Guardar y <acción>** y, al tocarlo, falla según **Si Guardar falla**. Las acciones a la vista del panel se siguen decidiendo con la tarea de ahora, no con lo escrito.
-- **El aviso de acción se mantiene al día** mientras está abierto, con la tarea y el ahora del momento, como las acciones a la vista: si otro dispositivo cambia la tarea o pasa el tiempo, **Guardar y <acción>** puede aparecer o desaparecer. Al tocarlo se vuelve a evaluar; si ya no corresponde, no se guarda ni se actúa y el aviso queda actualizado. Si otro dispositivo hace que la acción ya no corresponda (por ejemplo, pausa la tarea con el aviso de **Pausar** abierto), el aviso se cierra y queda el panel con lo escrito.
-- **Si Guardar falla** (desde el aviso de cierre o el de una acción) por validación (reglas de arriba y §4.1–§4.2): no se ejecuta nada, ni la acción ni el cierre. El aviso se cierra, el panel sigue abierto con lo escrito y salta a la primera pestaña con error, con las reglas de **Errores**.
-- **Los avisos se abren sobre el panel** con las reglas de **Sobre el panel**: bloquean lo de abajo y, al cerrarlos, se vuelve a la misma pestaña sin perder nada.
-- **Si otro dispositivo borra la tarea** con un aviso abierto, se cierran el aviso y el panel sin pedir nada (§7, gana el borrado).
-- **Borrar tarea** no suma este aviso: mantiene solo su confirmación.
-- **Atrás** (botón Atrás de Android, o el gesto equivalente del navegador), con el panel abierto, cierra el panel y no sale de la pantalla donde está (Pendientes, o Historial si el panel se abrió desde ahí), en cualquier navegador y ancho. Cierra solo lo que esté más arriba, como si se tocara su salida, y deja el panel como estaba:
-  - el aviso de cierre o de acción equivale a **Seguir editando**;
-  - la confirmación de **Borrar tarea** equivale a cancelar;
-  - el selector de emoji se cierra sin elegir.
+- There **are changes** when **Guardar** would change something compared to the values the panel was opened with. Typing and going back to the original value does not count; neither do the spaces that **Guardar** trims or the order of the schedule windows, which **Guardar** sorts. An emptied field or an empty schedule row do count, even if they are invalid. This is the only definition of "there are changes": it applies to closing, to creating, to the actions and to the browser confirmation.
+- It **is measured against the values when the panel was opened**, not against what another device wrote afterwards: a remote change does not make the notice appear.
+- **When creating**, "no changes" means the form is still as it was opened. Touching any field with another value (for example **Se repite**) is entering something; a title of only spaces is not. If it is empty, it closes directly; if something was entered, it asks for confirmation.
+- **Close notice**: closing with the **X** (or **Back**, see **Back**) with changes opens the notice "Tenés cambios sin guardar" with three buttons: **Seguir editando** (closes the notice and leaves the panel as it was, on the same tab), **Descartar** (closes the panel without saving) and **Guardar** (saves like **Guardar** and, if it saves, closes the panel). **Descartar** does not remove from **Recientes** an emoji chosen in the panel: the recents are updated on choosing, regardless of saving.
+- **Action notice**: **Pausar**, **Reanudar**, **Posponer** (**1 hora**, **3 horas**, **Hasta mañana**) and **Quitar posponer** with changes open the notice "Tenés cambios sin guardar" with three buttons: **Seguir editando** (closes the notice without acting), **Descartar y <acción>** (discards the changes, acts on the task as it was saved and closes the panel) and **Guardar y <acción>** (saves like **Guardar**, acts on the saved task and closes the panel), with `<acción>` = pausar, reanudar, posponer or quitar posponer (for postponing, with the option tapped: "Descartar y posponer 1 hora"). Without changes, the action acts at that moment, as always. "Now" of §5.8 and §5.9 is the moment of tapping the button of the notice, not that of choosing the action. Example: **1 hora** is chosen at `2026-07-15T08:00:00`, the notice stays open and **Guardar y posponer 1 hora** is tapped at `2026-07-15T08:03:00`: `pospuesta = { desde: 2026-07-15T08:03:00, hasta: 2026-07-15T09:03:00 }`.
+- **If what is saved leaves the action meaningless**: an action "becomes meaningless" if the task, as it would be saved, does not meet the conditions with which §5.8, §5.9 and this section show it (for example, it was changed to **No se repite** and **Pausar** was tapped; a paused recurring task was changed to **No se repite** and **Reanudar** was tapped, because saving already resumes it, §5.8). Then the notice says "Con estos cambios la tarea ya no se puede <acción>" and offers only **Seguir editando** and **Descartar y <acción>**, without **Guardar y <acción>**. If what was written is invalid there is no way to evaluate it: **Guardar y <acción>** is offered and, on tapping it, it fails according to **If Guardar fails**. The actions in view of the panel are still decided with the task as of now, not with what was written.
+- **The action notice is kept up to date** while it is open, with the task and the now of the moment, like the actions in view: if another device changes the task or time passes, **Guardar y <acción>** can appear or disappear. On tapping it, it is evaluated again; if it no longer applies, nothing is saved or acted on and the notice is left updated. If another device makes the action no longer apply (for example, it pauses the task with the **Pausar** notice open), the notice closes and the panel stays with what was written.
+- **If Guardar fails** (from the close notice or that of an action) by validation (rules above and §4.1–§4.2): nothing is executed, neither the action nor the closing. The notice closes, the panel stays open with what was written and jumps to the first tab with an error, with the rules of **Errors**.
+- **The notices open over the panel** with the rules of **Over the panel**: they block what is below and, on closing them, it returns to the same tab without losing anything.
+- **If another device deletes the task** with a notice open, the notice and the panel close without asking for anything (§7, the deletion wins).
+- **Borrar tarea** does not add this notice: it keeps only its confirmation.
+- **Back** (the Android Back button, or the equivalent browser gesture), with the panel open, closes the panel and does not leave the screen where it is (**Pendientes**, or **Historial** if the panel was opened from there), in any browser and width. It closes only what is on top, as if its exit were tapped, and leaves the panel as it was:
+  - the close or action notice is equivalent to **Seguir editando**;
+  - the confirmation of **Borrar tarea** is equivalent to cancel;
+  - the emoji picker closes without choosing.
 
-  Un nuevo **Atrás** cierra el panel; si el panel queda con cambios, abre el aviso de cierre, y sin cambios cierra directo. El aviso de deshacer (§5.4) no cuenta: no se abre encima de nada, **Atrás** lo ignora y sigue sus 5 segundos. Con el teclado en pantalla abierto, el primer **Atrás** lo cierra el sistema y el panel sigue igual; el siguiente aplica estas reglas.
-  - Con el panel cerrado, **Atrás** hace lo de hoy: cerrar el panel con la **X**, con **Guardar** o con una acción no deja un **Atrás** de más que no haga nada, y **Adelante** no reabre un panel. Los diálogos de Historial (§6.3) no cambian con esta feature.
-- **Recargar o cerrar la app** con cambios sin guardar muestra la confirmación del navegador. Aparece solo si hay cambios, con un aviso abierto o sin él, y nunca por **Atrás** con el panel abierto. Su texto es el del navegador y, donde el sistema no la ofrece, se pierde lo escrito. Al recargar, el panel no se reabre. Un **Atrás** posterior a una recarga puede volver a la misma pantalla sin efecto visible.
+  A new **Back** closes the panel; if the panel has changes, it opens the close notice, and without changes it closes directly. The undo notice (§5.4) does not count: it does not open over anything, **Back** ignores it and its 5 seconds continue. With the on-screen keyboard open, the first **Back** is closed by the system and the panel stays the same; the next one applies these rules.
+  - With the panel closed, **Back** does what it does today: closing the panel with the **X**, with **Guardar** or with an action does not leave an extra **Back** that does nothing, and **Forward** does not reopen a panel. The dialogs of the **Historial** (§6.3) do not change with this feature.
+- **Reloading or closing the app** with unsaved changes shows the browser confirmation. It appears only if there are changes, with a notice open or without one, and never by **Back** with the panel open. Its text is the browser's and, where the system does not offer it, what was written is lost. On reload, the panel is not reopened. A **Back** after a reload can return to the same screen without a visible effect.
 
-**Borrar tarea**: acción disponible solo al editar. Pide confirmación; si se cancela, no cambia nada. No suma el aviso de **Cambios sin guardar**.
+**Borrar tarea**: an action available only when editing. It asks for confirmation; if canceled, nothing changes. It does not add the **Unsaved changes** notice.
 
-Al borrar una tarea **se borran también todos sus completados** (y solo los suyos), así que desaparecen del historial.
+When a task is deleted **all its completions are also deleted** (and only its own), so they disappear from the history.
 
-**Presentación del panel**: el contenido de los campos y acciones de arriba se organiza en tres secciones, **Tarea**, **Cuándo** y **Acciones**. "Celular" significa una pantalla de hasta **40rem** de ancho (inclusive); por encima, pantallas anchas. Las reglas de cada campo no cambian, solo dónde se ven.
+**Panel presentation**: the content of the fields and actions above is organized into three sections, **Tarea**, **Cuándo** and **Acciones**. "Phone" means a screen up to **40rem** wide (inclusive); above that, wide screens. The rules of each field do not change, only where they are shown.
 
-- **Contenido y orden de las secciones** (igual en celular y en pantallas anchas):
-  - **Tarea**: arriba, "Pausada" (si corresponde), "Pospuesta hasta HH:MM" (o "hasta mañana HH:MM") y **Última vez**; después el título con el emoji al lado (el botón de emoji junto al campo Título, con **Quitar emoji** debajo); el primer paso y los pasos más; la versión mínima; la nota.
-  - **Cuándo**: primero **Se repite**, con sus cuatro opciones en una grilla de 2x2 y los campos de la opción elegida (fecha límite, Cada, días); después **Solo en un horario** con sus ventanas (**Agregar horario**, **Quitar**).
-  - **Acciones**: **Posponer** (las opciones **1 hora**, **3 horas**, **Hasta mañana** a la vista) o **Quitar posponer**; **Pausar** o **Reanudar**; y al final, separado del resto y en el color de error, **Borrar tarea**. Cada acción aparece con las condiciones de la §5.8, la §5.9 y de este apartado, y se actualiza si otro dispositivo cambia la tarea con el panel abierto.
-- **Celular** (hasta 40rem):
-  - El panel ocupa **toda la pantalla**.
-  - Las secciones son **pestañas** con una barra de pestañas: Tarea, Cuándo y Acciones. Siempre abre en **Tarea**, al crear y al editar. Se cambia de pestaña solo tocándola, sin deslizar.
-  - El encabezado (con el título del panel y la **X** para cerrar) y la barra de pestañas quedan fijos; solo se desplaza el contenido, y cada pestaña se abre desde arriba.
-  - **Guardar** está en una barra fija abajo, visible en todas las pestañas. **Cerrar** es la **X** del encabezado.
-  - Al crear una tarea la pestaña **Acciones** no aparece (no hay acciones disponibles). Al editar aparece siempre, porque **Borrar tarea** está disponible en toda edición.
-- **Pantallas anchas** (más de 40rem): el panel tiene el ancho y la ubicación de siempre, sin barra de pestañas; las tres secciones se ven seguidas, cada una con su nombre como título (**Tarea**, **Cuándo**, **Acciones**) y las acciones como una sección más antes del pie, que lleva **Guardar** (barra fija abajo) y la **X** de **Cerrar** en el encabezado fijo.
-- **Nada se pierde**: cambiar de pestaña o de ancho no pierde nada de lo escrito. **Guardar** considera todas las secciones (es un solo formulario) y solo **Cerrar** (confirmado con **Descartar**, si hay cambios) o **Descartar y <acción>** descartan los cambios.
-- **Errores**: una pestaña se marca mientras alguno de sus campos muestra un error, sea cual sea su origen (al guardar); la marca dura lo que dura el mensaje y se distingue del icono de la pestaña. Los errores de Título son de **Tarea**; los de fecha límite, Cada, días y horario, de **Cuándo**.
-  - Si **Guardar** falla, el panel salta a la primera pestaña con error (**Tarea** antes que **Cuándo**) y el contenido se desplaza hasta el primer campo con error. Lo mismo vale en pantallas anchas, donde no hay pestañas: solo se desplaza hasta el primer campo con error.
-- **Teclado en pantalla**: abrir el panel no enfoca ningún campo, así el teclado del celular no aparece hasta que se toca uno. La barra de **Guardar** se oculta **solo mientras el teclado en pantalla está abierto** (en cualquier pestaña y ancho) y vuelve al cerrarse, aunque el campo siga enfocado; un campo enfocado sin teclado en pantalla (en la compu, o en los selectores de fecha y hora) no la oculta. El encabezado y las pestañas siguen fijos. El teclado no cambia cómo se envía el formulario: Enter en un campo de una línea guarda y Enter en Nota agrega una línea; si ese guardado falla, valen las reglas de Errores.
-- **Iconos**: llevan icono, siempre junto a su texto, las pestañas **Tarea**, **Cuándo** y **Acciones** y las acciones **1 hora**/**3 horas**/**Hasta mañana** (Posponer), **Quitar posponer**, **Pausar**/**Reanudar** y **Borrar tarea**, en todos los anchos. Solo la **X** de cerrar y el botón de elegir emoji cuando no hay emoji llevan icono sin texto visible, y conservan los nombres accesibles «Cerrar» y «Elegir emoji». **Guardar**, **Agregar horario**, **Agregar paso**, **Quitar**, **Quitar emoji**, los títulos de sección de pantallas anchas y los diálogos quedan solo con texto. Los iconos viajan con la app (§2, §7): funcionan sin conexión.
-- **Sobre el panel**: el selector de emoji, la confirmación de **Borrar tarea** y los avisos de **Cambios sin guardar** se abren sobre el panel, como siempre; al cerrarlos se vuelve a la misma pestaña. En pantalla completa siguen visibles sin tapar el encabezado, las pestañas ni **Guardar** la franja "Sin conexión" (§7) y el aviso de deshacer (§5.4, sobre la barra de **Guardar**; con la barra oculta por el teclado, sobre el teclado). El aviso puede pasar por encima del contenido durante sus 5 segundos.
+- **Content and order of the sections** (the same on phone and on wide screens):
+  - **Tarea**: at the top, "Pausada" (if applicable), "Pospuesta hasta HH:MM" (or "hasta mañana HH:MM") and **Última vez**; then the title with the emoji beside it (the emoji button next to the Título field, with **Quitar emoji** below); the first step and the more steps; the minimal version; the note.
+  - **Cuándo**: first **Se repite**, with its four options in a 2x2 grid and the fields of the chosen option (due date, Cada, days); then **Solo en un horario** with its windows (**Agregar horario**, **Quitar**).
+  - **Acciones**: **Posponer** (the options **1 hora**, **3 horas**, **Hasta mañana** in view) or **Quitar posponer**; **Pausar** or **Reanudar**; and at the end, separated from the rest and in the error color, **Borrar tarea**. Each action appears with the conditions of §5.8, §5.9 and this section, and is updated if another device changes the task with the panel open.
+- **Phone** (up to 40rem):
+  - The panel takes the **whole screen**.
+  - The sections are **tabs** with a tab bar: Tarea, Cuándo and Acciones. It always opens on **Tarea**, when creating and when editing. Tabs are changed only by tapping them, without swiping.
+  - The header (with the title of the panel and the **X** to close) and the tab bar stay fixed; only the content scrolls, and each tab opens from the top.
+  - **Guardar** is in a fixed bar at the bottom, visible on all tabs. **Cerrar** is the **X** of the header.
+  - When creating a task the **Acciones** tab does not appear (there are no actions available). When editing it always appears, because **Borrar tarea** is available in every edit.
+- **Wide screens** (more than 40rem): the panel has the usual width and location, without a tab bar; the three sections are shown one after the other, each with its name as a title (**Tarea**, **Cuándo**, **Acciones**) and the actions as one more section before the footer, which carries **Guardar** (fixed bar at the bottom) and the **X** of **Cerrar** in the fixed header.
+- **Nothing is lost**: changing tabs or width does not lose anything of what was written. **Guardar** considers all the sections (it is a single form) and only **Cerrar** (confirmed with **Descartar**, if there are changes) or **Descartar y <acción>** discard the changes.
+- **Errors**: a tab is marked while any of its fields shows an error, whatever its origin (on saving); the mark lasts as long as the message and is distinguished from the icon of the tab. The Título errors belong to **Tarea**; those of due date, Cada, days and schedule, to **Cuándo**.
+  - If **Guardar** fails, the panel jumps to the first tab with an error (**Tarea** before **Cuándo**) and the content scrolls to the first field with an error. The same holds on wide screens, where there are no tabs: it only scrolls to the first field with an error.
+- **On-screen keyboard**: opening the panel does not focus any field, so the phone keyboard does not appear until one is tapped. The **Guardar** bar is hidden **only while the on-screen keyboard is open** (on any tab and width) and comes back when it closes, even if the field stays focused; a focused field without an on-screen keyboard (on the computer, or in the date and time pickers) does not hide it. The header and the tabs stay fixed. The keyboard does not change how the form is submitted: Enter in a one-line field saves and Enter in Nota adds a line; if that save fails, the rules of Errors apply.
+- **Icons**: the tabs **Tarea**, **Cuándo** and **Acciones** and the actions **1 hora**/**3 horas**/**Hasta mañana** (Postpone), **Quitar posponer**, **Pausar**/**Reanudar** and **Borrar tarea** carry an icon, always next to their text, at all widths. Only the **X** to close and the button to choose an emoji when there is no emoji carry an icon without visible text, and keep the accessible names «Cerrar» and «Elegir emoji». **Guardar**, **Agregar horario**, **Agregar paso**, **Quitar**, **Quitar emoji**, the section titles of wide screens and the dialogs are left with text only. The icons travel with the app (§2, §7): they work offline.
+- **Over the panel**: the emoji picker, the confirmation of **Borrar tarea** and the notices of **Unsaved changes** open over the panel, as always; on closing them it returns to the same tab. In full screen, the "Sin conexión" strip (§7) and the undo notice (§5.4, above the **Guardar** bar; with the bar hidden by the keyboard, above the keyboard) stay visible without covering the header, the tabs or **Guardar**. The notice can pass over the content during its 5 seconds.
 
-### 6.3 Historial
+### 6.3 History
 
-- Lista de todos los completados, puntuales y periódicos, sin límite ni paginación, ordenados del más reciente al más antiguo por `completadoEn`. Si dos tienen el mismo `completadoEn`, va primero el de `id` menor.
-- Agrupados por **día local** de `completadoEn` (el día empieza a las 00:00). Cada grupo tiene un encabezado:
-  - **Hoy** si es el día de ahora; **Ayer** si es el día anterior.
-  - Si no, el día de la semana, el número y el mes en minúsculas: "martes 14 de julio"; si el año no es el de ahora, se agrega: "miércoles 31 de diciembre de 2025".
-  - Un completado "del futuro" (relojes desfasados, §5.2) se agrupa por su propia fecha con el mismo formato: un día posterior a hoy se muestra con la fecha, nunca como "Mañana".
-- Cada entrada muestra el **nombre actual** de la tarea (emoji y título, §4.1) (el completado no guarda título ni emoji: si la tarea se renombró o cambió de emoji, todas sus entradas muestran el nombre nuevo) y la **hora** de `completadoEn` en 24 h, `HH:MM` ("08:05"). Si el completado fue la mínima (`fueMinima`, §4.4), la palabra «Mínima» después de la hora ("08:05 Mínima"), en el mismo texto secundario, sin color ni icono; nunca muestra el texto de la versión mínima (el completado tampoco lo guarda).
-- Cada entrada tiene la acción **Borrar** (deshacer). Pide confirmación en un diálogo que nombra la tarea y la fecha y hora del completado (y la palabra «Mínima» si fue la mínima), con **Borrar** y **Cancelar**; Cancelar no cambia nada. Borrar sigue la §5.4.
-- Tocar una entrada fuera de **Borrar** abre el panel **Editar tarea** de esa tarea (§6.2), también para una puntual completada, que con **Mostrar completadas** apagado no tiene fila en Pendientes.
-- No muestra los completados huérfanos (§7) ni los de tareas borradas (§6.2).
-- Sin completados, muestra el texto "Todavía no completaste nada".
+- List of all the completions, one-off and recurring, with no limit or pagination, sorted from the most recent to the oldest by `completadoEn`. If two have the same `completadoEn`, the one with the smaller `id` goes first.
+- Grouped by **local day** of `completadoEn` (the day starts at 00:00). Each group has a header:
+  - **Hoy** if it is the day of now; **Ayer** if it is the previous day.
+  - If not, the day of the week, the number and the month in lowercase: "martes 14 de julio"; if the year is not the current one, it is added: "miércoles 31 de diciembre de 2025".
+  - A completion "from the future" (clocks out of sync, §5.2) is grouped by its own date with the same format: a day after today is shown with the date, never as "Mañana".
+- Each entry shows the **current name** of the task (emoji and title, §4.1) (the completion does not store title or emoji: if the task was renamed or changed emoji, all its entries show the new name) and the **time** of `completadoEn` in 24 h, `HH:MM` ("08:05"). If the completion was the minimal one (`fueMinima`, §4.4), the word «Mínima» after the time ("08:05 Mínima"), in the same secondary text, without color or icon; it never shows the text of the minimal version (the completion does not store it either).
+- Each entry has the **Borrar** action (undo). It asks for confirmation in a dialog that names the task and the date and time of the completion (and the word «Mínima» if it was the minimal one), with **Borrar** and **Cancelar**; Cancelar changes nothing. Borrar follows §5.4.
+- Tapping an entry outside **Borrar** opens the **Editar tarea** panel of that task (§6.2), also for a completed one-off task, which with **Mostrar completadas** off has no row in **Pendientes**.
+- It does not show the orphan completions (§7) or those of deleted tasks (§6.2).
+- Without completions, it shows the text "Todavía no completaste nada".
 
-### 6.4 (eliminada)
+### 6.4 (removed)
 
-Esta sección ya no existe; la numeración de las demás no se corre para no romper las referencias.
+This section no longer exists; the numbering of the others is not shifted so that references do not break.
 
-### 6.5 Inicio de sesión
+### 6.5 Sign-in
 
-- Botón "Entrar con Google".
-- Después del primer login, la app abre directo, también sin conexión.
-- Abrir sin conexión sin haber iniciado sesión nunca muestra la pantalla de entrada con el mensaje "Necesitás conexión para entrar la primera vez" y el botón "Entrar con Google" deshabilitado.
+- Button "Entrar con Google".
+- After the first login, the app opens directly, also offline.
+- Opening offline without ever having signed in shows the sign-in screen with the message "Necesitás conexión para entrar la primera vez" and the "Entrar con Google" button disabled.
 
-### 6.6 Pantalla de carga
+### 6.6 Loading screen
 
-Al iniciar, la app muestra una **pantalla de carga** en lugar de la página en blanco y del contenido vacío de hoy.
+On start, the app shows a **loading screen** instead of the blank page and the empty content of today.
 
-- **Cuándo aparece**: cada vez que la app **arranca** (abrir, recargar, abrir con una versión nueva) y en cualquier pantalla de destino, desde lo primero que la app dibuja. No aparece al volver de segundo plano si la app sigue viva, ni después de tocar **Entrar con Google** (§6.5). La pantalla que dibuja el sistema al abrir una PWA instalada queda fuera (como en §6, Alcance).
-- **Qué se ve**: el ícono de la app con un **pulso lento y suave**, sin parpadeo, giro ni indicador de progreso, y **sin texto visible**. El ícono tiene el nombre accesible «Cargando». Con la preferencia de movimiento reducido del sistema (`prefers-reduced-motion`) el ícono se ve quieto; lo demás no cambia. Sigue el tema claro u oscuro del sistema (§6).
-- **Se va sola**: no se toca nada en ella y no avisa nada técnico (ni fuentes, ni descargas, ni sincronización). La franja "Sin conexión" (§7) se ve recién al entrar a la app.
-- **Qué espera con sesión**: la respuesta de Auth y la **primera respuesta** de tareas y de completados (del caché local o de la red), y también la fuente **Atkinson Hyperlegible Next** y **Noto Color Emoji**, aunque haya que bajarlas. Se va cuando todo eso está listo, con un **mínimo de 0,5 segundos** aunque esté todo listo enseguida.
-- **Sin sesión**: no espera datos, porque no hay. Espera la respuesta de Auth y **solo Atkinson**; Noto sigue bajando detrás. Da paso a la pantalla de entrada (§6.5), que no cambia, también sin conexión. Si Noto no llegó al entrar, los emoji se ven un rato con los del dispositivo y cambian solos.
-- **Tope de 10 segundos**: es uno solo para los datos y las fuentes y cuenta desde que la app arranca; la espera de Auth no entra en el tope. Al llegar, la app entra con lo que haya, como hoy, y la lista se completa sola, sin aviso; lo que falte de la fuente o del juego se ve con el respaldo (§6). La descarga no empieza de nuevo y cada cosa cambia sola cuando llega; si la descarga se aborta por una falla de red vale lo de §6 (se vuelve a pedir al recuperar la conexión).
-- **No espera lo que no va a llegar**: sin conexión no espera nada que solo pueda venir por red: se va cuando respondió el caché local y están listas las fuentes ya guardadas. Una fuente que falló, o un juego que el navegador no puede dibujar, se deja de esperar en ese momento, aunque los reintentos sigan; lo demás pendiente se sigue esperando hasta el tope. Perder la conexión con la pantalla abierta cuenta igual. El mínimo de 0,5 s vale en todos los casos.
-- **Versión nueva**: una versión nueva que no cambia la fuente ni el juego no los vuelve a bajar, y abrirla no los espera de nuevo.
-- **Después de un tope con Noto sin bajar**: las próximas aperturas con sesión **no esperan a Noto** hasta que quede guardado, y se sigue bajando detrás. Solo cuenta un tope alcanzado con Noto sin bajar en una apertura que lo esperaba; una apertura sin sesión no lo espera, así que no cuenta. El dispositivo lo recuerda: vale solo en ese dispositivo (no se sincroniza, no está en Firestore, §7), no se ve, y se olvida cuando Noto queda guardado. Una versión nueva que cambia el juego lo trata como no guardado y vuelve a esperarlo una vez.
+- **When it appears**: every time the app **starts** (open, reload, open with a new version) and on any destination screen, from the first thing the app draws. It does not appear when returning from the background if the app is still alive, nor after tapping **Entrar con Google** (§6.5). The screen that the system draws when opening an installed PWA is left out (as in §6, Scope).
+- **What is seen**: the app icon with a **slow, soft pulse**, without flicker, spin or progress indicator, and **without visible text**. The icon has the accessible name «Cargando». With the system's reduced-motion preference (`prefers-reduced-motion`) the icon is shown still; the rest does not change. It follows the light or dark theme of the system (§6).
+- **It goes away by itself**: nothing is tapped on it and it does not announce anything technical (neither fonts, nor downloads, nor sync). The "Sin conexión" strip (§7) is seen only on entering the app.
+- **What it waits for with a session**: the response of Auth and the **first response** of tasks and of completions (from the local cache or from the network), and also the **Atkinson Hyperlegible Next** font and **Noto Color Emoji**, even if they have to be downloaded. It goes away when all that is ready, with a **minimum of 0.5 seconds** even if everything is ready right away.
+- **Without a session**: it does not wait for data, because there is none. It waits for the response of Auth and **only Atkinson**; Noto keeps downloading behind. It gives way to the sign-in screen (§6.5), which does not change, also offline. If Noto did not arrive on entering, the emoji are shown for a while with the device ones and change by themselves.
+- **10-second cap**: it is a single one for the data and the fonts and it counts from when the app starts; the wait for Auth does not count toward the cap. When it is reached, the app enters with what there is, as today, and the list is completed by itself, without a notice; what is missing of the font or of the set is shown with the fallback (§6). The download does not start again and each thing changes by itself when it arrives; if the download is aborted by a network failure, what §6 says applies (it is requested again when the connection recovers).
+- **It does not wait for what is not going to arrive**: offline it waits for nothing that can only come over the network: it goes away when the local cache has responded and the already stored fonts are ready. A font that failed, or a set that the browser cannot draw, stops being waited for at that moment, even if the retries continue; whatever else is pending is still waited for until the cap. Losing the connection with the screen open counts the same. The 0.5 s minimum applies in all cases.
+- **New version**: a new version that does not change the font or the set does not download them again, and opening it does not wait for them again.
+- **After a cap with Noto not downloaded**: the next openings with a session **do not wait for Noto** until it is stored, and it keeps downloading behind. Only a cap reached with Noto not downloaded in an opening that waited for it counts; an opening without a session does not wait for it, so it does not count. The device remembers it: it applies only on that device (it is not synced, it is not in Firestore, §7), it is not seen, and it is forgotten when Noto is stored. A new version that changes the set treats it as not stored and waits for it once again.
 
-Ejemplos (con sesión): todo listo a los 0,2 s: se va a los 0,5 s. Los datos llegan a los 3 s y Noto a los 6 s: se va a los 6 s. Noto no llegó a los 10 s: entra a los 10 s con el emoji del dispositivo y las próximas aperturas no esperan a Noto hasta que quede guardado.
+Examples (with a session): everything ready at 0.2 s: it goes away at 0.5 s. The data arrives at 3 s and Noto at 6 s: it goes away at 6 s. Noto did not arrive by 10 s: it enters at 10 s with the device emoji and the next openings do not wait for Noto until it is stored.
 
-### 6.7 (eliminada)
+### 6.7 (removed)
 
-Esta sección ya no existe; la numeración de las demás no se corre para no romper las referencias.
+This section no longer exists; the numbering of the others is not shifted so that references do not break.
 
-## 7. Datos, sincronización y offline
+## 7. Data, sync and offline
 
-- **Firestore** con caché persistente local (`persistentLocalCache`, multi-pestaña). La app funciona sin conexión y sincroniza sola al reconectar.
-- **Aviso de conexión**: mientras no hay red se ve un aviso chico y discreto (una franja) con el texto "Sin conexión"; desaparece al reconectar. No hay contador ni indicador de cambios pendientes.
-- Estructura, toda bajo el usuario:
+- **Firestore** with a persistent local cache (`persistentLocalCache`, multi-tab). The app works offline and syncs by itself on reconnecting.
+- **Connection notice**: while there is no network a small, discreet notice (a strip) is shown with the text "Sin conexión"; it disappears on reconnecting. There is no counter or indicator of pending changes.
+- Structure, all under the user:
   - `users/{uid}/tareas/{tareaId}`
   - `users/{uid}/completados/{completadoId}`
-- **Conflictos**:
-  - Tareas: **gana el último cambio, por campo** (`emoji`, `nota`, `primerPaso` y `versionMinima` son campos independientes, como `titulo`; `horario` es un solo campo: sus ventanas, con `desde` y `hasta`, se escriben juntas; pausar y reanudar escriben `pausada` y `reanudadaEn` juntos; `pospuesta` es un solo campo; `pasos` es un solo campo que se reemplaza entero, y `pasoActual` es otro campo independiente: un «Hecho» en la fila no pierde lo que otro dispositivo editó en el panel; dos «Hecho» sin conexión en el mismo paso dejan la tarea en el paso siguiente, no dos más adelante). Las ediciones son actualizaciones parciales (`update` / `set` con `merge`), nunca reemplazos del documento entero. Una edición escribe solo los campos que cambiaron.
-  - La unidad de conflicto es cada campo de la §4.1. `recurrencia` se reemplaza **entera**, nunca se mezcla por subcampo (así no puede quedar una recurrencia que combine modos). Un campo que no corresponde al tipo de la tarea (`fechaLimite` en una periódica, `recurrencia` en una puntual) se ignora al derivar el estado; al cambiar de tipo, la tarea queda solo con los campos de tipo que muestra el panel: la edición quita el campo que deja de corresponder y escribe el del tipo nuevo aunque quede vacío (una puntual sin fecha límite), así un valor residual que dejó una edición concurrente en ese campo no sobrevive.
-  - **Edición contra borrado: gana el borrado.** Una edición de una tarea que ya no existe (porque otro dispositivo la borró, por ejemplo sin conexión) no la revive: se descarta. Si el panel de edición de esa tarea estaba abierto, se cierra, también con un aviso de **Cambios sin guardar** abierto y sin pedir nada (§6.2).
-  - Completados: son documentos independientes con id generado en el cliente, así que **un completado nunca se pierde**. Si dos dispositivos completan la misma tarea sin conexión, quedan las dos entradas en el historial, y el estado usa el más reciente / la mayor `ocurrenciaCubierta`. El dato `fueMinima` viaja dentro del completado: dos dispositivos que completan sin conexión, uno entera y otro con «Hice la mínima», dejan las dos entradas, cada una con lo suyo.
-- **Borrado de tareas**: la tarea y sus completados (solo ellos) se borran en un solo `writeBatch`. Puede pasar que otro dispositivo, sin conexión, complete una tarea que ya se borró. En ese caso queda un completado huérfano: el historial ignora los completados cuya tarea no existe, y la app los limpia al detectarlos.
-- **Limpiezas y reintentos**: la limpieza de completados huérfanos se reintenta si un intento falla o no hay conexión; no quedan sin limpiar hasta recargar la app. Se reintenta al volver la conexión y cuando cambian los datos, sin temporizadores. Cada elemento se intenta por separado: que uno falle (o que no haya conexión) no impide intentar los demás del lote. Los reintentos son silenciosos: sin aviso, contador ni indicador de pendientes. Ejemplo: con tres completados huérfanos y la limpieza del segundo fallando, se limpian el primero y el tercero, y el segundo se vuelve a intentar al volver la conexión o al cambiar los datos.
-- **Preferencias locales**: los emojis recientes del selector (§6.2) y el recuerdo de un tope de la pantalla de carga con Noto sin bajar (§6.6) viven solo en el dispositivo (almacenamiento local del navegador); no se escriben en Firestore ni se sincronizan.
-- **Fuente y emoji**: la fuente y el juego de emoji empaquetados (§6) forman parte de lo que la app guarda para funcionar sin conexión; se bajan aparte de la instalación de la app y con reintentos (§8): mientras la pantalla de carga está abierta se espera la descarga, y si llega el tope sigue en segundo plano (§6.6). Desde que se va la pantalla y hasta que están valen los del sistema y el dispositivo (§6). Si no se pueden bajar, la app igual se instala y queda disponible sin conexión.
-- **Datos que ya no se usan**: los documentos de tareas pueden seguir teniendo `etiquetas` y `esfuerzo`, y la colección `etiquetas` puede seguir existiendo, hasta que una migración aparte los borre. La app no los lee, no los muestra, no los escribe ni los borra: una edición escribe solo los campos que cambiaron, así que esos campos quedan intactos, y un cambio de tipo quita solo los campos de tipo. Lo mismo vale para la colección `users/{uid}/anotaciones`, que pudo existir cuando había anotaciones: puede seguir existiendo hasta que un script aparte la borre, y la app no la lee, no la muestra, no la escribe ni la borra; borrar una tarea no la toca.
-- **Reglas de seguridad**: cada usuario lee y escribe solo bajo `users/{su uid}`.
+- **Conflicts**:
+  - Tasks: **the last change wins, per field** (`emoji`, `nota`, `primerPaso` and `versionMinima` are independent fields, like `titulo`; `horario` is a single field: its windows, with `desde` and `hasta`, are written together; pausing and resuming write `pausada` and `reanudadaEn` together; `pospuesta` is a single field; `pasos` is a single field that is replaced whole, and `pasoActual` is another independent field: a «Hecho» in the row does not lose what another device edited in the panel; two «Hecho» offline on the same step leave the task on the next step, not two further along). Edits are partial updates (`update` / `set` with `merge`), never replacements of the whole document. An edit writes only the fields that changed.
+  - The unit of conflict is each field of §4.1. `recurrencia` is replaced **whole**, never merged by subfield (so a recurrence that combines modes cannot result). A field that does not correspond to the kind of the task (`fechaLimite` in a recurring task, `recurrencia` in a one-off task) is ignored when deriving the status; when changing kind, the task is left with only the kind fields that the panel shows: the edit removes the field that no longer applies and writes that of the new kind even if it is empty (a one-off task without a due date), so a residual value left by a concurrent edit in that field does not survive.
+  - **Edit versus deletion: the deletion wins.** An edit of a task that no longer exists (because another device deleted it, for example offline) does not revive it: it is discarded. If the edit panel of that task was open, it closes, also with an **Unsaved changes** notice open and without asking for anything (§6.2).
+  - Completions: they are independent documents with an id generated on the client, so **a completion is never lost**. If two devices complete the same task offline, both entries remain in the history, and the status uses the most recent one / the greatest `ocurrenciaCubierta`. The `fueMinima` data travels inside the completion: two devices that complete offline, one whole and the other with «Hice la mínima», leave both entries, each with its own.
+- **Deleting tasks**: the task and its completions (only those) are deleted in a single `writeBatch`. It can happen that another device, offline, completes a task that was already deleted. In that case an orphan completion remains: the history ignores the completions whose task does not exist, and the app cleans them up when it detects them.
+- **Cleanups and retries**: the cleanup of orphan completions is retried if an attempt fails or there is no connection; they do not stay uncleaned until the app is reloaded. It is retried when the connection returns and when the data changes, without timers. Each element is attempted separately: one failing (or there being no connection) does not prevent attempting the others of the batch. The retries are silent: no notice, counter or pending indicator. Example: with three orphan completions and the cleanup of the second failing, the first and the third are cleaned, and the second is retried when the connection returns or when the data changes.
+- **Local preferences**: the recent emojis of the picker (§6.2) and the memory of a loading-screen cap with Noto not downloaded (§6.6) live only on the device (local browser storage); they are not written to Firestore or synced.
+- **Font and emoji**: the bundled font and emoji set (§6) are part of what the app stores to work offline; they are downloaded separately from the installation of the app and with retries (§8): while the loading screen is open the download is waited for, and if the cap is reached it continues in the background (§6.6). From when the screen goes away until they are available, those of the system and the device apply (§6). If they cannot be downloaded, the app is still installed and available offline.
+- **Data no longer used**: the task documents may still have `etiquetas` and `esfuerzo`, and the `etiquetas` collection may still exist, until a separate migration deletes them. The app does not read them, does not show them, does not write them and does not delete them: an edit writes only the fields that changed, so those fields stay intact, and a change of kind removes only the kind fields. The same holds for the `users/{uid}/anotaciones` collection, which may have existed when there were annotations: it may still exist until a separate script deletes it, and the app does not read it, does not show it, does not write it and does not delete it; deleting a task does not touch it.
+- **Security rules**: each user reads and writes only under `users/{their uid}`.
 
-## 8. Arquitectura y stack
+## 8. Architecture and stack
 
-- **Frontend**: SvelteKit + TypeScript, compilado como sitio estático (`adapter-static`), con PWA instalable (manifest + service worker). Manifest: `name` "Tareas Hogar", `short_name` "Tareas"; ícono y colores con la paleta de la app; orientación vertical (§6). Una versión nueva del service worker se aplica sola la próxima vez que se abre la app, sin preguntar ni avisar. Eso incluye la fuente y el juego de emoji (§6). La instalación de la app (lo que guarda para funcionar sin conexión) no depende de la fuente ni del juego de emoji: si un archivo de fuente falla al bajarse, la app se instala igual y las fuentes se bajan aparte, con reintentos; la falla de Noto deja la app disponible sin conexión, con el emoji del dispositivo (§6). La espera de la pantalla de carga (§6.6) tiene tope y nunca impide instalar ni usar la app.
-- **Backend**: Firebase: Authentication (Google), Firestore y Hosting.
-- **Dominio** (`src/lib/core/`): módulo de TypeScript puro, sin Firebase ni Svelte, que implementa las reglas de la §5 recibiendo el "ahora" como parámetro. La UI y la capa de datos dependen de él, no al revés.
+- **Frontend**: SvelteKit + TypeScript, built as a static site (`adapter-static`), with an installable PWA (manifest + service worker). Manifest: `name` "Tareas Hogar", `short_name` "Tareas"; icon and colors with the palette of the app; portrait orientation (§6). A new version of the service worker is applied by itself the next time the app is opened, without asking or notifying. That includes the font and the emoji set (§6). The installation of the app (what it stores to work offline) does not depend on the font or on the emoji set: if a font file fails to download, the app is installed anyway and the fonts are downloaded separately, with retries; the failure of Noto leaves the app available offline, with the device emoji (§6). The wait of the loading screen (§6.6) has a cap and never prevents installing or using the app.
+- **Backend**: Firebase: Authentication (Google), Firestore and Hosting.
+- **Domain** (`src/lib/core/`): a pure TypeScript module, without Firebase or Svelte, that implements the rules of §5 receiving "now" as a parameter. The UI and the data layer depend on it, not the other way around.
 
-## 9. Estrategia de tests
+## 9. Test strategy
 
-El proceso sigue el workflow de Robert C. Martin (ver `docs/research/uncle-bob-workflow.md`); las herramientas y los gates exactos están en `CLAUDE.md`.
+The process follows the workflow of Robert C. Martin (see `docs/research/uncle-bob-workflow.md`); the exact tools and gates are in `CLAUDE.md`.
 
-- **Aceptación (Gherkin, formato APS)**: escenarios en `features/*.feature` que corren **contra el dominio** (`src/lib/core/`) mediante step handlers, sin navegador. El "ahora" es un parámetro de cada escenario, así los vencimientos, atrasos y ocurrencias son deterministas. Cada regla de la §5 (incluidas las filas de los ejemplos) tiene al menos un escenario.
-- **Mutación de Gherkin**: los valores de las tablas `Examples` se mutan (fechas ±, números ±, etc.) y cada mutación tiene que hacer fallar su escenario.
-- **Unit tests con TDD** (Vitest), **mutación del código** (`mutator`), **CRAP ≤ 10** (`crapper`), **DRY** (`dryer`) y **property tests** (fast-check) sobre el core.
-- **Suite QA end-to-end**: procedimientos en `qa/*.md` convertidos en scripts **Playwright** que operan solo por la UI, contra el **Firebase Emulator Suite** (Auth + Firestore), con datos limpios en cada escenario y el tiempo controlado con `page.clock`.
+- **Acceptance (Gherkin, APS format)**: scenarios in `features/*.feature` that run **against the domain** (`src/lib/core/`) through step handlers, without a browser. "Now" is a parameter of each scenario, so due times, overdue times and occurrences are deterministic. Each rule of §5 (including the rows of the examples) has at least one scenario.
+- **Gherkin mutation**: the values of the `Examples` tables are mutated (dates ±, numbers ±, etc.) and each mutation has to make its scenario fail.
+- **Unit tests with TDD** (Vitest), **code mutation** (`mutator`), **CRAP ≤ 10** (`crapper`), **DRY** (`dryer`) and **property tests** (fast-check) on the core.
+- **End-to-end QA suite**: procedures in `qa/*.md` converted into **Playwright** scripts that operate only through the UI, against the **Firebase Emulator Suite** (Auth + Firestore), with clean data in each scenario and time controlled with `page.clock`.
 
-## 10. Criterios de aceptación del MVP
+## 10. MVP acceptance criteria
 
-1. Puedo entrar con Google en el celular y en la compu y veo las mismas tareas.
-2. Puedo crear, editar y borrar tareas puntuales y periódicas (de los tres tipos de recurrencia).
-3. Los estados y el orden de la lista cumplen la §5 y la §6.1 (lo verifican los `.feature`).
-4. Completo una tarea sin conexión en el celular y, al reconectar, el completado aparece en la compu.
-5. Puedo deshacer un completado desde el aviso o desde el historial.
-6. La app se instala como PWA en Android y abre sin conexión.
-
+1. I can sign in with Google on the phone and on the computer and see the same tasks.
+2. I can create, edit and delete one-off and recurring tasks (of the three kinds of recurrence).
+3. The statuses and the order of the list meet §5 and §6.1 (verified by the `.feature` files).
+4. I complete a task offline on the phone and, on reconnecting, the completion appears on the computer.
+5. I can undo a completion from the notice or from the history.
+6. The app installs as a PWA on Android and opens offline.

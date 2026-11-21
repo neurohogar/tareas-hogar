@@ -28,7 +28,7 @@ async function create(page: Page, title: string, kind: Kind) {
 const withoutDate: Kind = { oneOff: null };
 const complete = (page: Page, title: string) => row(page, title).getByRole('checkbox').click();
 
-test('Flujo 1: tres grupos y orden en vivo', async ({ page }) => {
+test('Flow 1: tres grupos y orden en vivo', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-13T08:00:00');
 	await create(page, 'Regar plantas', { every: '4', unit: 'horas' });
 	await advance(page, '2026-07-13T08:01:00');
@@ -68,7 +68,7 @@ test('Flujo 1: tres grupos y orden en vivo', async ({ page }) => {
 	await waitStatus(page, 'Cambiar foco', 'pendiente');
 });
 
-test('Flujo 2: atrasadas por el tiempo que llevan atrasadas', async ({ page }) => {
+test('Flow 2: atrasadas por el tiempo que llevan atrasadas', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-13T08:00:00');
 	await create(page, 'Regar plantas', { every: '1', unit: 'días' });
 	await complete(page, 'Regar plantas');
@@ -83,7 +83,7 @@ test('Flujo 2: atrasadas por el tiempo que llevan atrasadas', async ({ page }) =
 	await listIs(page, ['Sacar la basura', 'Pagar la luz', 'Regar plantas']);
 });
 
-test('Flujo 3: pendientes por el momento desde el que están pendientes', async ({ page }) => {
+test('Flow 3: pendientes por el momento desde el que están pendientes', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T08:00:00');
 	await create(page, 'Cambiar foco', withoutDate);
 	await advance(page, '2026-07-15T08:01:00');
@@ -107,7 +107,7 @@ test('Flujo 3: pendientes por el momento desde el que están pendientes', async 
 	await listIs(page, ['Pagar la luz', 'Ventilar', 'Comprar regalo', 'Cambiar foco', 'Llamar plomero']);
 });
 
-test('Flujo 4: en espera por cuándo vuelven', async ({ page }) => {
+test('Flow 4: en espera por cuándo vuelven', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T08:00:00');
 	await create(page, 'Cambiar sábanas', { days: ['sábado'] });
 	await advance(page, '2026-07-15T08:01:00');
@@ -131,7 +131,7 @@ test('Flujo 4: en espera por cuándo vuelven', async ({ page }) => {
 	await listIs(page, ['Cambiar foco', 'Limpiar heladera', 'Cambiar sábanas']);
 });
 
-test('Flujo 5: desempate por título', async ({ page }) => {
+test('Flow 5: desempate por título', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T08:00:00');
 	await page.clock.setFixedTime(new Date('2026-07-15T08:00:00'));
 	for (const t of ['Zapallo', 'Ñoquis', 'Barrer', 'Nueces', 'Árbol', 'acelga']) await create(page, t, withoutDate);

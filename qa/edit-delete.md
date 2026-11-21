@@ -1,314 +1,325 @@
-# QA: editar y borrar tareas
+# QA: edit and delete tasks
 
-Verifica, solo por la interfaz, que tocar una fila de Pendientes abre el panel
-de edición con los valores de la tarea, que se pueden editar el título, el
-tipo, la fecha límite y la recurrencia con las mismas validaciones que al
-crear, que cerrar con cambios sin guardar pide confirmación (y **Descartar** los descarta), que el estado y el orden
-se recalculan con la definición nueva (con el reloj simulado), que **Borrar
-tarea** pide confirmación y saca la tarea, y los conflictos entre dos
-dispositivos. Cubre spec §4.1–§4.2, §5.1–§5.3, §6.1 (tocar la fila), §6.2 y
-§7 (ediciones parciales, borrado, edición contra borrado, completados
-huérfanos).
+Verifies, through the interface only, that tapping a Pendientes row opens the
+edit panel with the task's values, that the title, the kind, the due date and
+the recurrence can be edited with the same validations as when creating, that
+closing with unsaved changes asks for confirmation (and **Descartar** discards
+them), that the status and the order are recalculated with the new definition
+(with the simulated clock), that **Borrar tarea** asks for confirmation and
+removes the task, and the conflicts between two devices. Covers spec
+§4.1–§4.2, §5.1–§5.3, §6.1 (tapping the row), §6.2 and §7 (partial edits,
+deletion, edit against deletion, orphan completions).
 
-Fuera de alcance: emoji, nota, historial y deshacer, PWA y
-funcionamiento offline más allá de los flujos de dos dispositivos. Que el
-borrado se lleve también los completados solo se ve en el Historial, que
-todavía no existe; lo cubre `features/delete-task.feature`.
+Out of scope: emoji, note, history and undo, PWA and offline operation beyond
+the two-device flows. That the deletion also takes the completions with it is
+only seen in the Historial, which does not exist yet; it is covered by
+`features/delete-task.feature`.
 
-## Entorno
+## Environment
 
-Igual que `qa/one-off.md`:
+Same as `qa/one-off.md`:
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de
-  cada flujo.
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la
-  app, en la hora local que indica cada flujo (zona
-  `America/Argentina/Buenos_Aires`). "A las X" significa adelantar el reloj
-  simulado hasta X antes del paso. "Avanzar el reloj a X" significa
-  adelantarlo hasta X y esperar a que la pantalla se actualice sola (sin
-  recargar), salvo que el paso diga "recargar".
-- Sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de
-  `qa/recurring-relative.md`).
-- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se
-  repite** que indica el paso y guardar, con los controles de `qa/one-off.md`
-  y `qa/recurring-calendar.md`.
-- **Dos dispositivos** (Flujos 10 a 14): dos contextos de navegador
-  independientes, A y B, con la misma cuenta y el mismo reloj simulado. "B
-  sin conexión" significa poner el contexto B offline
-  (`browserContext.setOffline(true)`), y "B vuelve a tener conexión",
-  volverlo online y esperar a que las dos pantallas se actualicen solas.
-- Al empezar cada flujo, tocar el check **Mostrar completadas** para
-  encenderlo (en A y en B en los flujos de dos dispositivos): las completadas
-  se ven tachadas al final de la lista (`qa/show-completed.md`).
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of
+  each flow.
+- Simulated browser clock (`page.clock`) installed **before** opening the
+  app, at the local time each flow indicates (zone
+  `America/Argentina/Buenos_Aires`). "At X" means advancing the simulated
+  clock to X before the step. "Advance the clock to X" means advancing it to X
+  and waiting for the screen to update by itself (without reloading), unless
+  the step says "reload".
+- Session started with the account `qa@example.com` of the Auth Emulator
+  (Flow 1 of `qa/recurring-relative.md`).
+- Create a task: tap **+**, type the title, choose the **Se repite** option
+  the step indicates and save, with the controls of `qa/one-off.md` and
+  `qa/recurring-calendar.md`.
+- **Two devices** (Flows 10 to 14): two independent browser contexts, A and B,
+  with the same account and the same simulated clock. "B offline" means
+  putting context B offline (`browserContext.setOffline(true)`), and "B gets
+  the connection back", putting it online again and waiting for the two
+  screens to update by themselves.
+- At the start of each flow, tap the **Mostrar completadas** check to turn it
+  on (on A and on B in the two-device flows): the completed tasks are seen
+  struck through at the end of the list (`qa/show-completed.md`).
 
-Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16,
-viernes 17, sábado 18, domingo 19, lunes 20.
+Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16,
+Friday 17, Saturday 18, Sunday 19, Monday 20.
 
-## Contrato observable
+## Observable contract
 
-- **Fila**: el contrato de `qa/recurring-relative.md` (checkbox, título,
-  "Atrasada", atenuado y barra en espera). La barra de una calendario es la
-  de `qa/recurring-calendar.md`.
-- **Abrir la edición**: tocar la fila fuera del checkbox (por ejemplo, sobre
-  el título) abre el panel de edición. Tocar el checkbox completa la tarea o,
-  si está completada, actúa según `qa/show-completed.md` (borra el
-  completado de hoy o, en una periódica completada en un día anterior, la
-  completa de nuevo); en ningún caso abre el panel.
-- **Panel de edición**: el mismo panel de creación (`qa/one-off.md`,
-  `qa/recurring-calendar.md`), con estas diferencias:
-  - Encabezado **Editar tarea** (al crear es **Nueva tarea**).
-  - Abre con los valores actuales: **Título** con el título, la opción de
-    **Se repite** que corresponde elegida y sus controles cargados:
-    - **No se repite**: **Fecha límite** con la fecha, o vacía si no tiene.
-    - **Intervalo**: **Cada** con N y la unidad elegida.
-    - **Días de la semana** / **Días del mes**: los días de la tarea con
-      `aria-pressed=true` y el resto `false`.
-  - Al elegir otra opción de **Se repite**, sus controles empiezan como al
-    crear (sin días elegidos; Fecha límite vacía).
-  - Botones **Cerrar**, **Guardar** y **Borrar tarea**. El panel de creación
-    (**+**) no tiene **Borrar tarea**.
-- **Guardar** con datos válidos cierra el panel y la fila refleja la tarea
-  editada. Con datos inválidos, el panel sigue abierto, se ve el error
-  asociado al campo (los mismos mensajes que al crear) y la tarea no cambia.
-- **Cerrar** con cambios abre el aviso "Tenés cambios sin guardar" (`qa/unsaved-changes.md`); **Descartar** los descarta y sin cambios cierra directo.
-- **Confirmación de borrado**: **Borrar tarea** abre un diálogo de
-  confirmación (rol `alertdialog`) que nombra la tarea por su título, con los
-  botones **Borrar** y **Cancelar**.
+- **Row**: the contract of `qa/recurring-relative.md` (checkbox, title,
+  "Atrasada", dimmed and waiting bar). The bar of a calendar task is the one
+  of `qa/recurring-calendar.md`.
+- **Opening the edit**: tapping the row outside the checkbox (for example, on
+  the title) opens the edit panel. Tapping the checkbox completes the task or,
+  if it is completed, acts according to `qa/show-completed.md` (deletes
+  today's completion or, on a recurring task completed on an earlier day,
+  completes it again); in no case does it open the panel.
+- **Edit panel**: the same panel as creation (`qa/one-off.md`,
+  `qa/recurring-calendar.md`), with these differences:
+  - Heading **Editar tarea** (when creating it is **Nueva tarea**).
+  - It opens with the current values: **Título** with the title, the
+    corresponding **Se repite** option chosen and its controls loaded:
+    - **No se repite**: **Fecha límite** with the date, or empty if it has
+      none.
+    - **Intervalo**: **Cada** with N and the chosen unit.
+    - **Días de la semana** / **Días del mes**: the task's days with
+      `aria-pressed=true` and the rest `false`.
+  - When choosing another **Se repite** option, its controls start as when
+    creating (no days chosen; Fecha límite empty).
+  - Buttons **Cerrar**, **Guardar** and **Borrar tarea**. The creation panel
+    (**+**) does not have **Borrar tarea**.
+- **Guardar** with valid data closes the panel and the row reflects the edited
+  task. With invalid data, the panel stays open, the error associated with the
+  field is seen (the same messages as when creating) and the task does not
+  change.
+- **Cerrar** with changes opens the notice "Tenés cambios sin guardar"
+  (`qa/unsaved-changes.md`); **Descartar** discards them and without changes
+  it closes directly.
+- **Deletion confirmation**: **Borrar tarea** opens a confirmation dialog
+  (role `alertdialog`) that names the task by its title, with the buttons
+  **Borrar** and **Cancelar**.
 
-## Flujo 1: abrir el panel de edición con los valores de la tarea
+## Flow 1: open the edit panel with the task's values
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Tocar **+**: el panel dice **Nueva tarea** y no tiene **Borrar tarea**.
-   Cerrarlo.
-2. Crear `Pagar la luz` (**No se repite**, Fecha límite `2026-07-15`),
-   `Cambiar foco` (**No se repite**, sin fecha límite), `Regar plantas`
+1. Tap **+**: the panel says **Nueva tarea** and does not have **Borrar
+   tarea**. Close it.
+2. Create `Pagar la luz` (**No se repite**, Fecha límite `2026-07-15`),
+   `Cambiar foco` (**No se repite**, no due date), `Regar plantas`
    (**Intervalo**, Cada `2` **días**), `Sacar la basura` (**Días de la
-   semana** `martes` y `jueves`) y `Pagar expensas` (**Días del mes** `10` y
-   `31`).
-3. Tocar la fila **Pagar la luz**: se abre el panel **Editar tarea** con
-   Título `Pagar la luz`, **No se repite** elegida y Fecha límite
-   `2026-07-15`; se ven **Cerrar**, **Guardar** y **Borrar tarea**. Cerrar.
-4. Tocar **Cambiar foco**: **No se repite**, Fecha límite vacía. Cerrar.
-5. Tocar **Regar plantas**: **Intervalo**, Cada `2`, unidad **días**. Cerrar.
-6. Tocar **Sacar la basura**: **Días de la semana**, `martes` y `jueves` con
-   `aria-pressed=true`, los otros cinco en `false`. Cerrar.
-7. Tocar **Pagar expensas**: **Días del mes**, `10` y `31` con
-   `aria-pressed=true`, los otros en `false`. Cerrar.
-8. Tocar el checkbox de **Regar plantas**: pasa a `en espera` y no se abre
-   ningún panel.
-9. Ninguna tarea cambió: las cinco filas siguen con sus títulos y estados.
+   semana** `martes` and `jueves`) and `Pagar expensas` (**Días del mes** `10`
+   and `31`).
+3. Tap the **Pagar la luz** row: the **Editar tarea** panel opens with Título
+   `Pagar la luz`, **No se repite** chosen and Fecha límite `2026-07-15`;
+   **Cerrar**, **Guardar** and **Borrar tarea** are seen. Close.
+4. Tap **Cambiar foco**: **No se repite**, Fecha límite empty. Close.
+5. Tap **Regar plantas**: **Intervalo**, Cada `2`, unit **días**. Close.
+6. Tap **Sacar la basura**: **Días de la semana**, `martes` and `jueves` with
+   `aria-pressed=true`, the other five `false`. Close.
+7. Tap **Pagar expensas**: **Días del mes**, `10` and `31` with
+   `aria-pressed=true`, the others `false`. Close.
+8. Tap the **Regar plantas** checkbox: it becomes `en espera` and no panel
+   opens.
+9. No task changed: the five rows still have their titles and statuses.
 
-## Flujo 2: editar el título y cerrar sin guardar
+## Flow 2: edit the title and close without saving
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00`.
+Precondition: empty list, clock at `2026-07-13T08:00:00`.
 
-1. Crear `Regar` con **Intervalo** cada `2` **días**.
-2. Tocar la fila **Regar**, cambiar el título a `Regar plantas` y guardar: el
-   panel se cierra y la fila dice **Regar plantas**, `pendiente`.
-3. Recargar la página: sigue **Regar plantas** (se guardó en Firestore).
-4. Tocar la fila, cambiar el título a `Otra cosa`, poner Cada `5` y tocar
-   **Cerrar** y **Descartar** en el aviso: la fila sigue diciendo **Regar plantas**.
-5. Tocar la fila de nuevo: Título `Regar plantas` y Cada `2` (los cambios se
-   descartaron). Tocar **Guardar** sin cambiar nada: la fila sigue igual.
+1. Create `Regar` with **Intervalo** every `2` **días**.
+2. Tap the **Regar** row, change the title to `Regar plantas` and save: the
+   panel closes and the row says **Regar plantas**, `pendiente`.
+3. Reload the page: it still says **Regar plantas** (it was saved in
+   Firestore).
+4. Tap the row, change the title to `Otra cosa`, put Cada `5` and tap
+   **Cerrar** and **Descartar** in the notice: the row still says **Regar
+   plantas**.
+5. Tap the row again: Título `Regar plantas` and Cada `2` (the changes were
+   discarded). Tap **Guardar** without changing anything: the row stays the
+   same.
 
-## Flujo 3: validación al editar
+## Flow 3: validation when editing
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00`.
+Precondition: empty list, clock at `2026-07-13T08:00:00`.
 
-1. Crear `Sacar la basura` con **Días de la semana** `martes` y `jueves`.
-2. Tocar la fila, borrar el título y guardar: error asociado al campo Título,
-   el panel sigue abierto.
-3. Escribir título `   ` (solo espacios) y guardar: mismo resultado.
-4. Escribir `Basura`, destocar `martes` y `jueves` (ningún día elegido) y
-   guardar: error de días; el panel sigue abierto.
-5. Elegir **Intervalo**, poner Cada `0` y guardar: error asociado al campo
-   Cada.
-6. Elegir **No se repite**, dejar en Fecha límite una fecha incompleta
-   ingresada por teclado (solo día y mes) y guardar: error asociado al campo
-   Fecha límite.
-7. Tocar **Cerrar** y **Descartar** en el aviso: la fila sigue **Sacar la basura**, `en espera`. Al
-   abrirla, sigue con **Días de la semana** `martes` y `jueves`: ningún
-   cambio de los pasos anteriores se guardó, ni el título válido del paso 4.
+1. Create `Sacar la basura` with **Días de la semana** `martes` and `jueves`.
+2. Tap the row, delete the title and save: error associated with the Título
+   field, the panel stays open.
+3. Type title `   ` (only spaces) and save: same result.
+4. Type `Basura`, untoggle `martes` and `jueves` (no day chosen) and save:
+   days error; the panel stays open.
+5. Choose **Intervalo**, put Cada `0` and save: error associated with the Cada
+   field.
+6. Choose **No se repite**, leave in Fecha límite an incomplete date typed by
+   keyboard (only day and month) and save: error associated with the Fecha
+   límite field.
+7. Tap **Cerrar** and **Descartar** in the notice: the row is still **Sacar la
+   basura**, `en espera`. When opening it, it still has **Días de la semana**
+   `martes` and `jueves`: no change from the previous steps was saved, not
+   even the valid title of step 4.
 
-## Flujo 4: editar la fecha límite de una puntual
+## Flow 4: edit the due date of a one-off task
 
-Precondición: lista vacía, reloj en `2026-07-15T10:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T10:00:00` (Wednesday).
 
-1. Crear `Pagar la luz` con **No se repite** y Fecha límite `2026-07-14`:
+1. Create `Pagar la luz` with **No se repite** and Fecha límite `2026-07-14`:
    `atrasada`.
-2. Editarla con Fecha límite `2026-07-20`: pasa a `pendiente`, sin "Atrasada".
-3. Editarla con Fecha límite vacía (sin fecha límite): sigue `pendiente`.
-4. Editarla con Fecha límite `2026-07-15` (hoy): `pendiente`.
-5. Avanzar el reloj a `2026-07-16T00:00:00`: pasa a `atrasada`.
-6. Recargar: sigue `atrasada` (se guardó la última fecha).
+2. Edit it with Fecha límite `2026-07-20`: it becomes `pendiente`, without
+   "Atrasada".
+3. Edit it with Fecha límite empty (no due date): it stays `pendiente`.
+4. Edit it with Fecha límite `2026-07-15` (today): `pendiente`.
+5. Advance the clock to `2026-07-16T00:00:00`: it becomes `atrasada`.
+6. Reload: it stays `atrasada` (the last date was saved).
 
-## Flujo 5: editar el intervalo de una relativa completada
+## Flow 5: edit the interval of a completed relative task
 
-Precondición: lista vacía, reloj en `2026-07-15T08:00:00`.
+Precondition: empty list, clock at `2026-07-15T08:00:00`.
 
-1. Crear `Ventilar` con **Intervalo** cada `4` **horas** y tocar su
-   checkbox: `en espera`, barra en 0.
-2. Avanzar el reloj a `2026-07-15T20:00:00`: `atrasada` (pasaron 12 horas).
-3. Editarla a cada `2` **días**: pasa a `en espera`, barra en 25 (12 de 48
-   horas desde el completado, que se conservó).
-4. Editarla a cada `12` **horas**: pasa a `pendiente`.
-5. Editarla a cada `4` **horas**: vuelve a `atrasada`.
+1. Create `Ventilar` with **Intervalo** every `4` **horas** and tap its
+   checkbox: `en espera`, bar at 0.
+2. Advance the clock to `2026-07-15T20:00:00`: `atrasada` (12 hours passed).
+3. Edit it to every `2` **días**: it becomes `en espera`, bar at 25 (12 of 48
+   hours since the completion, which was kept).
+4. Edit it to every `12` **horas**: it becomes `pendiente`.
+5. Edit it to every `4` **horas**: it goes back to `atrasada`.
 
-## Flujo 6: cambiar los días de una semanal completada
+## Flow 6: change the days of a completed weekly task
 
-Precondición: lista vacía, reloj en `2026-07-14T08:00:00` (martes).
+Precondition: empty list, clock at `2026-07-14T08:00:00` (Tuesday).
 
-1. Crear `Sacar la basura` con **Días de la semana** `martes` y `jueves`:
-   `pendiente` (creada en un día de ocurrencia).
-2. A las `2026-07-14T12:00:00`, tocar su checkbox: `en espera`, barra en 0
-   (cubrió el martes).
-3. Avanzar el reloj a `2026-07-16T06:00:00` (jueves): `pendiente`.
-4. Editarla a **Días de la semana** `sábado`: pasa a `en espera`, barra en 50
-   (42 de 84 horas desde el completado hasta el sábado).
-5. Editarla a **Días de la semana** `miércoles`: pasa a `atrasada` (la
-   primera ocurrencia nueva después del martes cubierto fue el miércoles 15).
-6. Editarla a **Días del mes** `16`: pasa a `pendiente`.
-7. Recargar: sigue `pendiente`, y al abrirla muestra **Días del mes** `16`.
+1. Create `Sacar la basura` with **Días de la semana** `martes` and `jueves`:
+   `pendiente` (created on an occurrence day).
+2. At `2026-07-14T12:00:00`, tap its checkbox: `en espera`, bar at 0 (it
+   covered Tuesday).
+3. Advance the clock to `2026-07-16T06:00:00` (Thursday): `pendiente`.
+4. Edit it to **Días de la semana** `sábado`: it becomes `en espera`, bar at 50
+   (42 of 84 hours from the completion to Saturday).
+5. Edit it to **Días de la semana** `miércoles`: it becomes `atrasada` (the
+   first new occurrence after the covered Tuesday was Wednesday the 15th).
+6. Edit it to **Días del mes** `16`: it becomes `pendiente`.
+7. Reload: it stays `pendiente`, and when opened it shows **Días del mes**
+   `16`.
 
-## Flujo 7: cambiar de tipo y de modo
+## Flow 7: change the kind and the mode
 
-Precondición: lista vacía, reloj en `2026-07-13T10:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T10:00:00` (Monday).
 
-1. Crear `Regar` con **Intervalo** cada `1` **días** y tocar su checkbox:
+1. Create `Regar` with **Intervalo** every `1` **días** and tap its checkbox:
    `en espera`.
-2. Crear `Renovar DNI` con **No se repite** y Fecha límite `2026-07-10`:
+2. Create `Renovar DNI` with **No se repite** and Fecha límite `2026-07-10`:
    `atrasada`.
-3. Crear `Limpiar horno` con **Intervalo** cada `3` **días** (nunca
-   completada): `pendiente`.
-4. Crear `Barrer` con **Intervalo** cada `2` **días** y tocar su checkbox:
+3. Create `Limpiar horno` with **Intervalo** every `3` **días** (never
+   completed): `pendiente`.
+4. Create `Barrer` with **Intervalo** every `2` **días** and tap its checkbox:
    `en espera`.
-5. Avanzar el reloj a `2026-07-14T09:00:00` (martes): **Regar** sigue
+5. Advance the clock to `2026-07-14T09:00:00` (Tuesday): **Regar** is still
    `en espera`.
-6. Editar **Regar** a **Días de la semana** `martes` y `jueves`: pasa a
-   `pendiente` (el completado del lunes cuenta como cubierto hasta ese día;
-   toca el martes).
-7. Tocar el checkbox de **Regar**: `en espera` hasta el jueves.
-8. Editar **Renovar DNI** a **Intervalo** cada `2` **días**: pasa a
-   `pendiente` (periódica nunca completada).
-9. Editar **Limpiar horno** a **No se repite** con Fecha límite `2026-07-13`:
-   pasa a `atrasada`.
-10. Editar **Barrer** a **No se repite** sin fecha límite: **Barrer** pasa a
-    completada (ya tenía un completado), tachada, al final de la lista.
-11. Recargar: la lista es **Limpiar horno** (`atrasada`), **Renovar DNI**
-    (`pendiente`), **Regar** (`en espera`, completada) y **Barrer**
-    (completada): las completadas al final, de la completada más
-    recientemente a la más antigua.
-12. Apagar el check **Mostrar completadas**: la lista es **Limpiar horno**,
+6. Edit **Regar** to **Días de la semana** `martes` and `jueves`: it becomes
+   `pendiente` (Monday's completion counts as covered until that day; it is
+   Tuesday's turn).
+7. Tap the **Regar** checkbox: `en espera` until Thursday.
+8. Edit **Renovar DNI** to **Intervalo** every `2` **días**: it becomes
+   `pendiente` (recurring task never completed).
+9. Edit **Limpiar horno** to **No se repite** with Fecha límite `2026-07-13`:
+   it becomes `atrasada`.
+10. Edit **Barrer** to **No se repite** with no due date: **Barrer** becomes
+    completed (it already had a completion), struck through, at the end of the
+    list.
+11. Reload: the list is **Limpiar horno** (`atrasada`), **Renovar DNI**
+    (`pendiente`), **Regar** (`en espera`, completed) and **Barrer**
+    (completed): the completed ones at the end, from the most recently
+    completed to the oldest.
+12. Turn off the **Mostrar completadas** check: the list is **Limpiar horno**,
     **Renovar DNI**.
 
-## Flujo 8: editar cambia el orden
+## Flow 8: editing changes the order
 
-Precondición: lista vacía, reloj en `2026-07-15T06:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T06:00:00` (Wednesday).
 
-1. Crear `Regar` con **Intervalo** cada `4` **horas** y tocar su checkbox.
-2. A las `2026-07-15T06:01:00`, crear `Pagar` con **No se repite** y Fecha
+1. Create `Regar` with **Intervalo** every `4` **horas** and tap its checkbox.
+2. At `2026-07-15T06:01:00`, create `Pagar` with **No se repite** and Fecha
    límite `2026-07-14`.
-3. Avanzar el reloj a `2026-07-15T12:00:00`: la lista es **Pagar**
+3. Advance the clock to `2026-07-15T12:00:00`: the list is **Pagar**
    (`atrasada`), **Regar** (`pendiente`).
-4. Editar **Pagar** con Fecha límite `2026-07-20`: la lista es **Regar**,
-   **Pagar**, las dos `pendiente`.
-5. Editar **Pagar** con Fecha límite `2026-07-14`: la lista vuelve a ser
+4. Edit **Pagar** with Fecha límite `2026-07-20`: the list is **Regar**,
+   **Pagar**, both `pendiente`.
+5. Edit **Pagar** with Fecha límite `2026-07-14`: the list goes back to
    **Pagar**, **Regar**.
 
-## Flujo 9: borrar una tarea
+## Flow 9: delete a task
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00`.
+Precondition: empty list, clock at `2026-07-13T08:00:00`.
 
-1. Crear `Regar` (**Intervalo** cada `2` **días**) y tocar su checkbox;
-   crear `Pagar la luz` (**No se repite**, sin fecha límite).
-2. Tocar la fila **Regar** y tocar **Borrar tarea**: aparece el diálogo de
-   confirmación con el título `Regar` y los botones **Borrar** y
+1. Create `Regar` (**Intervalo** every `2` **días**) and tap its checkbox;
+   create `Pagar la luz` (**No se repite**, no due date).
+2. Tap the **Regar** row and tap **Borrar tarea**: the confirmation dialog
+   appears with the title `Regar` and the buttons **Borrar** and
    **Cancelar**.
-3. Tocar **Cancelar**: el diálogo se cierra, el panel de edición sigue
-   abierto con los datos de **Regar**. Cerrar el panel: **Regar** sigue en la
-   lista, `en espera`.
-4. Tocar la fila **Regar**, **Borrar tarea** y **Borrar**: el diálogo y el
-   panel se cierran y la fila **Regar** desaparece. **Pagar la luz** sigue
+3. Tap **Cancelar**: the dialog closes, the edit panel stays open with
+   **Regar**'s data. Close the panel: **Regar** is still in the list,
+   `en espera`.
+4. Tap the **Regar** row, **Borrar tarea** and **Borrar**: the dialog and the
+   panel close and the **Regar** row disappears. **Pagar la luz** is still
    `pendiente`.
-5. Recargar: solo se ve **Pagar la luz**.
-6. Borrar **Pagar la luz** de la misma manera: la lista queda vacía. Recargar:
-   sigue vacía.
+5. Reload: only **Pagar la luz** is seen.
+6. Delete **Pagar la luz** the same way: the list is left empty. Reload: it is
+   still empty.
 
-## Flujo 10: dos dispositivos editan campos distintos
+## Flow 10: two devices edit different fields
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` en A y en B.
+Precondition: empty list, clock at `2026-07-13T08:00:00` on A and on B.
 
-1. En A, crear `Regar` con **Intervalo** cada `2` **días**. B la ve aparecer.
-2. B sin conexión. En B, editar **Regar** a **Días de la semana** `martes` y
+1. On A, create `Regar` with **Intervalo** every `2` **días**. B sees it
+   appear.
+2. B offline. On B, edit **Regar** to **Días de la semana** `martes` and
    `jueves`.
-3. En A, editar el título a `Regar plantas`.
-4. B vuelve a tener conexión.
-5. En A y en B, la fila se llama **Regar plantas** y está `en espera` (semanal
-   martes y jueves, creada el lunes). Al abrirla en A: **Días de la semana**
-   `martes` y `jueves`.
+3. On A, edit the title to `Regar plantas`.
+4. B gets the connection back.
+5. On A and on B, the row is named **Regar plantas** and is `en espera`
+   (weekly Tuesday and Thursday, created on Monday). When opened on A:
+   **Días de la semana** `martes` and `jueves`.
 
-## Flujo 11: el mismo campo, gana el último en llegar
+## Flow 11: the same field, the last to arrive wins
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` en A y en B.
+Precondition: empty list, clock at `2026-07-13T08:00:00` on A and on B.
 
-1. En A, crear `Pagar` con **No se repite** y sin fecha límite.
-2. B sin conexión. En B, editar el título a `Pagar el gas`.
-3. En A, editar el título a `Pagar la luz`.
-4. B vuelve a tener conexión: en A y en B la fila se llama **Pagar el gas**
-   (el cambio de B llegó último).
+1. On A, create `Pagar` with **No se repite** and no due date.
+2. B offline. On B, edit the title to `Pagar el gas`.
+3. On A, edit the title to `Pagar la luz`.
+4. B gets the connection back: on A and on B the row is named **Pagar el gas**
+   (B's change arrived last).
 
-## Flujo 12: gana el borrado
+## Flow 12: deletion wins
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` en A y en B.
+Precondition: empty list, clock at `2026-07-13T08:00:00` on A and on B.
 
-1. En A, crear `Regar` con **Intervalo** cada `2` **días** y `Barrer` con
-   **Intervalo** cada `1` **días**.
-2. B sin conexión. En B, editar el título de **Regar** a `Regar plantas` y
-   tocar el checkbox de **Barrer**.
-3. En A, borrar **Regar** y **Barrer** (con confirmación).
-4. B vuelve a tener conexión: en A y en B la lista queda vacía; no reaparece
-   **Regar plantas** ni **Barrer**.
-5. Recargar A y B: la lista sigue vacía.
+1. On A, create `Regar` with **Intervalo** every `2` **días** and `Barrer`
+   with **Intervalo** every `1` **días**.
+2. B offline. On B, edit the title of **Regar** to `Regar plantas` and tap the
+   **Barrer** checkbox.
+3. On A, delete **Regar** and **Barrer** (with confirmation).
+4. B gets the connection back: on A and on B the list is left empty;
+   **Regar plantas** and **Barrer** do not reappear.
+5. Reload A and B: the list is still empty.
 
-## Flujo 13: la tarea se borra mientras está abierta en el otro dispositivo
+## Flow 13: the task is deleted while open on the other device
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` en A y en B.
+Precondition: empty list, clock at `2026-07-13T08:00:00` on A and on B.
 
-1. En A, crear `Regar` con **Intervalo** cada `2` **días**.
-2. En B, tocar la fila **Regar**: el panel de edición está abierto.
-3. En A, borrar **Regar** (con confirmación).
-4. En B, el panel de edición se cierra solo y la fila **Regar** desaparece.
+1. On A, create `Regar` with **Intervalo** every `2` **días**.
+2. On B, tap the **Regar** row: the edit panel is open.
+3. On A, delete **Regar** (with confirmation).
+4. On B, the edit panel closes by itself and the **Regar** row disappears.
 
-## Flujo 14: cambiar de tipo no deja un valor residual de otro dispositivo
+## Flow 14: changing the kind leaves no residual value from another device
 
-Spec §7: al cambiar de tipo, la tarea queda solo con los campos de tipo que
-muestra el panel.
+Spec §7: when the kind changes, the task keeps only the fields of the kind the
+panel shows.
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` en A y en B.
+Precondition: empty list, clock at `2026-07-13T08:00:00` on A and on B.
 
-1. En A, crear `Renovar DNI` con **No se repite** y Fecha límite
-   `2026-07-20`: `pendiente`. B la ve aparecer.
-2. B sin conexión. En B, editar **Renovar DNI** cambiando solo la Fecha
-   límite a `2026-07-10`.
-3. En A, editar **Renovar DNI** a **Intervalo** cada `2` **días**.
-4. B vuelve a tener conexión: en A y en B, **Renovar DNI** está `pendiente`
-   (periódica nunca completada; la fecha límite que dejó B no cuenta).
-5. En A, editar **Renovar DNI** a **No se repite** dejando **Fecha límite**
-   vacía y guardar.
-6. En A y en B, **Renovar DNI** está `pendiente`, no `atrasada` (no reapareció
-   la fecha `2026-07-10`). Al abrirla en A, **No se repite** con **Fecha
-   límite** vacía. Cerrar.
-7. Recargar A y B: lo mismo que en el paso 6.
+1. On A, create `Renovar DNI` with **No se repite** and Fecha límite
+   `2026-07-20`: `pendiente`. B sees it appear.
+2. B offline. On B, edit **Renovar DNI** changing only the Fecha límite to
+   `2026-07-10`.
+3. On A, edit **Renovar DNI** to **Intervalo** every `2` **días**.
+4. B gets the connection back: on A and on B, **Renovar DNI** is `pendiente`
+   (recurring task never completed; the due date B left does not count).
+5. On A, edit **Renovar DNI** to **No se repite** leaving **Fecha límite**
+   empty and save.
+6. On A and on B, **Renovar DNI** is `pendiente`, not `atrasada` (the date
+   `2026-07-10` did not reappear). When opened on A, **No se repite** with
+   **Fecha límite** empty. Close.
+7. Reload A and B: the same as in step 6.
 
-Espejo, con lista vacía y el mismo reloj:
+Mirror, with an empty list and the same clock:
 
-8. En A, crear `Regar` con **Intervalo** cada `2` **días**.
-9. B sin conexión. En B, editar **Regar** cambiando solo **Cada** a `6`
-   **horas**.
-10. En A, editar **Regar** a **No se repite** con Fecha límite `2026-07-20`.
-11. B vuelve a tener conexión: en A y en B, **Regar** está `pendiente`.
-12. En A, editar **Regar** a **Días de la semana** `martes` y `jueves`.
-13. Recargar A y B. Al abrir **Regar** en B: **Días de la semana** con
-    `martes` y `jueves` en `aria-pressed=true` y el resto en `false` (no
-    **Intervalo** cada `6` **horas**).
+8. On A, create `Regar` with **Intervalo** every `2` **días**.
+9. B offline. On B, edit **Regar** changing only **Cada** to `6` **horas**.
+10. On A, edit **Regar** to **No se repite** with Fecha límite `2026-07-20`.
+11. B gets the connection back: on A and on B, **Regar** is `pendiente`.
+12. On A, edit **Regar** to **Días de la semana** `martes` and `jueves`.
+13. Reload A and B. When opening **Regar** on B: **Días de la semana** with
+    `martes` and `jueves` at `aria-pressed=true` and the rest at `false` (not
+    **Intervalo** every `6` **horas**).

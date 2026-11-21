@@ -18,7 +18,7 @@ async function createOneOff(page: Page, title: string, date?: string) {
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
-test('Flujo 1: selector de tipo en el panel', async ({ page }) => {
+test('Flow 1: selector de tipo en el panel', async ({ page }) => {
 	await sessionWithClock(page, MONDAY);
 	await page.getByRole('button', { name: '+' }).click();
 	const group = page.getByRole('group', { name: 'Se repite' });
@@ -53,7 +53,7 @@ test('Flujo 1: selector de tipo en el panel', async ({ page }) => {
 	await expect(page.getByRole('listitem')).toHaveCount(0);
 });
 
-test('Flujo 2: crear con y sin fecha límite', async ({ page }) => {
+test('Flow 2: crear con y sin fecha límite', async ({ page }) => {
 	await sessionWithClock(page, MONDAY);
 	await createOneOff(page, LIGHT, '2026-07-15');
 	await waitStatus(page, LIGHT, 'pendiente');
@@ -71,7 +71,7 @@ test('Flujo 2: crear con y sin fecha límite', async ({ page }) => {
 	await waitStatus(page, 'Renovar DNI', 'atrasada');
 });
 
-test('Flujo 3: validación del panel', async ({ page }) => {
+test('Flow 3: validación del panel', async ({ page }) => {
 	await sessionWithClock(page, MONDAY);
 	const panel = page.getByRole('dialog');
 	const title = page.getByLabel('Título');
@@ -108,7 +108,7 @@ test('Flujo 3: validación del panel', async ({ page }) => {
 	await expect(page.getByRole('listitem')).toHaveCount(0);
 });
 
-test('Flujo 4: de pendiente a atrasada al terminar el día límite', async ({ page }) => {
+test('Flow 4: de pendiente a atrasada al terminar el día límite', async ({ page }) => {
 	await sessionWithClock(page, MONDAY);
 	await createOneOff(page, LIGHT, '2026-07-15');
 	await waitStatus(page, LIGHT, 'pendiente');
@@ -127,7 +127,7 @@ test('Flujo 4: de pendiente a atrasada al terminar el día límite', async ({ pa
 	await waitStatus(page, FOCUS, 'pendiente');
 });
 
-test('Flujo 5: completar saca la tarea de Pendientes', async ({ page }) => {
+test('Flow 5: completar saca la tarea de Pendientes', async ({ page }) => {
 	await sessionWithClock(page, MONDAY);
 	await createOneOff(page, LIGHT, '2026-07-15');
 	await createOneOff(page, FOCUS);
@@ -147,7 +147,7 @@ test('Flujo 5: completar saca la tarea de Pendientes', async ({ page }) => {
 	await expect(page.getByRole('listitem')).toHaveCount(0);
 });
 
-test('Flujo 6: persistencia entre sesiones', async ({ browser }) => {
+test('Flow 6: persistencia entre sesiones', async ({ browser }) => {
 	const context = await browser.newContext();
 	const page = await context.newPage();
 	await sessionWithClock(page, MONDAY);
@@ -178,7 +178,7 @@ test('Flujo 6: persistencia entre sesiones', async ({ browser }) => {
 	await context.close();
 });
 
-test('Flujo 7: las periódicas se siguen creando con el nuevo selector', async ({ page }) => {
+test('Flow 7: las periódicas se siguen creando con el nuevo selector', async ({ page }) => {
 	await sessionWithClock(page, MONDAY);
 	await createTask(page, 'Ventilar', '4', 'horas');
 	await waitStatus(page, 'Ventilar', 'pendiente');

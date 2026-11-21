@@ -84,7 +84,7 @@ async function errorInPanel(page: Page, text: string) {
   await expect(page.getByRole("dialog")).toBeVisible();
 }
 
-test("Flujo 1: crear, cambiar y quitar el horario", async ({ page }) => {
+test("Flow 1: crear, cambiar y quitar el horario", async ({ page }) => {
   await sessionWithClock(page, "2026-07-15T06:00:00");
   await page.getByRole("button", { name: "+" }).click();
   await expect(onlyInSchedule(page)).not.toBeChecked();
@@ -146,7 +146,7 @@ test("Flujo 1: crear, cambiar y quitar el horario", async ({ page }) => {
   await withoutSchedule(page, "Barrer");
 });
 
-test("Flujo 2: errores del campo Horario", async ({ page }) => {
+test("Flow 2: errores del campo Horario", async ({ page }) => {
   await sessionWithClock(page, "2026-07-15T06:00:00");
   await create(page, {
     title: "Regar",
@@ -196,7 +196,7 @@ test("Flujo 2: errores del campo Horario", async ({ page }) => {
   await viewSchedule(page, "Regar", "08:00–11:00");
 });
 
-test("Flujo 3: puntual con horario, checkbox y Deshacer", async ({ page }) => {
+test("Flow 3: puntual con horario, checkbox y Deshacer", async ({ page }) => {
   await sessionWithClock(page, "2026-07-15T06:00:00");
   await createAndView(page, {
     title: "Regar",
@@ -249,7 +249,7 @@ test("Flujo 3: puntual con horario, checkbox y Deshacer", async ({ page }) => {
   );
 });
 
-test("Flujo 4: puntual con fecha límite", async ({ page }) => {
+test("Flow 4: puntual con fecha límite", async ({ page }) => {
   await sessionWithClock(page, "2026-07-15T06:00:00");
   await createAndView(page, {
     title: "Pagar la luz",
@@ -309,7 +309,7 @@ test("Flujo 4: puntual con fecha límite", async ({ page }) => {
   );
 });
 
-test("Flujo 5: relativa con horario", async ({ page }) => {
+test("Flow 5: relativa con horario", async ({ page }) => {
   await sessionBefore(page, "2026-07-15T09:00:00");
   await turnOnCompleted(page);
   await createAndView(page, {
@@ -363,7 +363,7 @@ test("Flujo 5: relativa con horario", async ({ page }) => {
   );
 });
 
-test("Flujo 6: atraso antes de que abra la ventana", async ({ page }) => {
+test("Flow 6: atraso antes de que abra la ventana", async ({ page }) => {
   await sessionBefore(page, "2026-07-15T10:00:00");
   await createAndView(page, {
     title: "Remedio",
@@ -393,7 +393,7 @@ test("Flujo 6: atraso antes de que abra la ventana", async ({ page }) => {
   );
 });
 
-test("Flujo 7: calendario y Mostrar completadas", async ({ page }) => {
+test("Flow 7: calendario y Mostrar completadas", async ({ page }) => {
   await sessionBefore(page, "2026-07-14T07:00:00");
   await createAndView(page, {
     title: "Sacar la basura",
@@ -463,7 +463,7 @@ test("Flujo 7: calendario y Mostrar completadas", async ({ page }) => {
   );
 });
 
-test("Flujo 8: orden con horario", async ({ page }) => {
+test("Flow 8: orden con horario", async ({ page }) => {
   await sessionWithClock(page, "2026-07-15T08:00:00");
   await createAndView(page, {
     title: "Cambiar sábanas",
@@ -560,7 +560,7 @@ test("Flujo 8: orden con horario", async ({ page }) => {
   ]);
 });
 
-test("Flujo 9: dos dispositivos", async ({ browser }) => {
+test("Flow 9: dos dispositivos", async ({ browser }) => {
   const {
     a,
     b,
@@ -592,7 +592,7 @@ test("Flujo 9: dos dispositivos", async ({ browser }) => {
   await end();
 });
 
-test("Flujo 10: sin horario, todo sigue igual", async ({ page }) => {
+test("Flow 10: sin horario, todo sigue igual", async ({ page }) => {
   await sessionWithClock(page, "2026-07-15T02:50:00");
   await createAndView(page, { title: "Barrer", kind: "No se repite" });
   await advance(page, "2026-07-15T03:00:00");
@@ -638,7 +638,7 @@ async function inHour(
   );
 }
 
-test("Flujo 11: Agregar horario y Quitar", async ({ page }) => {
+test("Flow 11: Agregar horario y Quitar", async ({ page }) => {
   await sessionWithClock(page, "2026-07-15T06:00:00");
   const T = "Alimentar a los perros";
   await page.getByRole("button", { name: "+" }).click();
@@ -705,7 +705,7 @@ test("Flujo 11: Agregar horario y Quitar", async ({ page }) => {
   await viewSchedule(page, "Remedio", "08:00–20:00");
 });
 
-test("Flujo 12: errores de varios horarios", async ({ page }) => {
+test("Flow 12: errores de varios horarios", async ({ page }) => {
   await sessionWithClock(page, "2026-07-15T06:00:00");
   await create(page, {
     title: "Regar",
@@ -799,7 +799,7 @@ test("Flujo 12: errores de varios horarios", async ({ page }) => {
   await close(page);
 });
 
-test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
+test("Flow 13: calendario con dos ventanas", async ({ page }) => {
   // The bar counts from creation: it is created seconds before 06:00 so that 06:30 reads 50.
   await sessionWithClock(page, "2026-07-15T05:59:40");
   await createAndView(page, {
@@ -923,7 +923,7 @@ test("Flujo 13: calendario con dos ventanas", async ({ page }) => {
   );
 });
 
-test("Flujo 14: puntual con dos ventanas", async ({ page }) => {
+test("Flow 14: puntual con dos ventanas", async ({ page }) => {
   await sessionBefore(page, "2026-07-15T06:00:00");
   await createAndView(page, {
     title: "Comprar pan",
@@ -980,7 +980,7 @@ test("Flujo 14: puntual con dos ventanas", async ({ page }) => {
   );
 });
 
-test("Flujo 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
+test("Flow 15: relativa cada 2 días con dos ventanas", async ({ page }) => {
   await sessionBefore(page, "2026-07-13T06:00:00");
   await turnOnCompleted(page);
   await createAndView(page, {

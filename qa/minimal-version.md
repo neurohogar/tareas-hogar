@@ -1,146 +1,146 @@
-# QA: versión mínima
+# QA: minimal version
 
-Verifica, solo por la interfaz:
+Verifies, through the interface only:
 
-- el campo **Versión mínima** del panel (**Nueva tarea** y **Editar tarea**): una línea, con la etiqueta «Versión mínima», sin texto de ejemplo, debajo de los pasos (después de **Agregar paso**) y antes de la **Nota**; Enter guarda; se recortan los espacios; vacío o solo espacios deja la tarea sin versión mínima, sin error; sin largo máximo; el orden de la sección **Tarea**;
-- que la fila de una tarea `pendiente` o `atrasada` con versión mínima muestra en su propia línea `Mínima: ` seguido del texto, completo, con el botón de texto **Hice la mínima**, también sin primer paso y debajo de la línea del paso si la hay, con el estilo de la línea del paso; que tocar el texto de la línea abre el panel y que tocar el botón no lo abre ni pasa por **Cambios sin guardar**;
-- que la línea y el botón desaparecen y vuelven solos con el estado de cada momento (`en espera`, pospuesta, completada, pausada) y que el botón está deshabilitado como el checkbox;
-- **Hice la mínima**: completa la tarea como el checkbox (mismo estado, mismo orden), con el aviso `Completaste «…» · mínima`, **Deshacer** y «Vuelve …» si es periódica; la palabra «Mínima» en el Historial y en el diálogo de **Borrar**, nunca el texto de la mínima; borrar el completado de la mínima (aviso, Historial, checkbox) como cualquier otro;
-- que con pasos, **Hice la mínima** funciona en cualquier paso, la tarea vuelve al paso 1 y deshacer devuelve el paso en que iba;
-- que la mínima no cambia el orden ni el nombre de la tarea, y que el aviso de deshacer no muestra su texto; que editar o vaciar la versión mínima no toca los completados que ya fueron la mínima;
-- **Cambios sin guardar** con el campo y el caso de dos dispositivos.
+- the **Versión mínima** field of the panel (**Nueva tarea** and **Editar tarea**): one line, with the label «Versión mínima», without example text, below the steps (after **Agregar paso**) and before the **Nota**; Enter saves; spaces are trimmed; empty or only spaces leaves the task without a minimal version, without an error; no maximum length; the order of the **Tarea** section;
+- that the row of a `pending` or `overdue` task with a minimal version shows on its own line `Mínima: ` followed by the text, in full, with the text button **Hice la mínima**, also without a first step and below the step line if there is one, with the style of the step line; that tapping the text of the line opens the panel and that tapping the button does not open it nor go through **Cambios sin guardar**;
+- that the line and the button disappear and come back by themselves with the status of each moment (`waiting`, postponed, completed, paused) and that the button is disabled like the checkbox;
+- **Hice la mínima**: completes the task like the checkbox (same status, same order), with the notice `Completaste «…» · mínima`, **Deshacer** and «Vuelve …» if it is recurring; the word «Mínima» in the Historial and in the **Borrar** dialog, never the text of the minimal version; deleting the completion of the minimal version (notice, Historial, checkbox) like any other;
+- that with steps, **Hice la mínima** works at any step, the task goes back to step 1 and undo gives back the step it was on;
+- that the minimal version does not change the order or the name of the task, and that the undo notice does not show its text; that editing or emptying the minimal version does not touch the completions that were already the minimal version;
+- **Cambios sin guardar** with the field and the two-devices case.
 
-Cubre spec §4.1 (**Versión mínima**, **Pasos**), §4.4 (`fueMinima`), §5.4 (aviso y deshacer), §5.5 (ventana), §6.1 (fila y botón), §6.2 (campo, orden de la sección, **Cambios sin guardar**), §6.3 (Historial y **Borrar**) y §7 (conflictos por campo, completados de dos dispositivos).
+Covers spec §4.1 (**Versión mínima**, **Pasos**), §4.4 (`fueMinima`), §5.4 (notice and undo), §5.5 (window), §6.1 (row and button), §6.2 (field, section order, **Cambios sin guardar**), §6.3 (Historial and **Borrar**) and §7 (conflicts by field, completions from two devices).
 
-Fuera de alcance: las reglas de estado y de orden en sí (`qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/schedule.md`, `qa/pending-order.md`), el primer paso y los pasos solos (`qa/first-step.md`, `qa/one-step-at-a-time.md`) y el campo «cuenta como hecha cuando…» de la E4, que es otra feature.
+Out of scope: the status and order rules themselves (`qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/schedule.md`, `qa/pending-order.md`), the first step and the steps alone (`qa/first-step.md`, `qa/one-step-at-a-time.md`) and the «cuenta como hecha cuando…» field of E4, which is another feature.
 
-## Entorno
+## Environment
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de cada flujo.
-- Cada flujo parte de un contexto de navegador nuevo, con sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de `qa/recurring-relative.md`).
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la app, en la hora local que indica cada flujo (zona `America/Argentina/Buenos_Aires`), detenido (`page.clock.pauseAt`).
-  - "A las X" y "Avanzar el reloj a X" significan adelantarlo hasta X (`page.clock.runFor` o `fastForward`) y esperar a que la pantalla se actualice sola, sin recargar.
-  - "Fijar la hora a X" significa llevar el reloj a X justo antes del paso: con el reloj pausado el tiempo corre unos ms por aserción, y los avances de reloj van con holgura (varios segundos de más, nunca justo en el borde).
-- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite** que indica el paso (controles de `qa/one-off.md`, `qa/recurring-relative.md` y `qa/recurring-calendar.md`), horario como en `qa/schedule.md`, escribir **Primer paso**, los pasos y **Versión mínima** que el paso indica y guardar.
-- "Posponer X con la opción O": tocar la fila X y elegir O entre las opciones de **Posponer** (`qa/postpone.md`). "Pausar X" y "Reanudar X": tocar la fila X y el botón **Pausar** o **Reanudar** del panel (`qa/pause.md`); solo las periódicas se pausan.
-- **Mostrar completadas** y **Mostrar pausadas** quedan apagados salvo que el flujo diga encenderlos.
-- **Dos dispositivos** (Flujo 8): dos contextos A y B con la misma cuenta y el mismo reloj simulado. "B sin conexión" es `browserContext.setOffline(true)`; "B vuelve a tener conexión", volverlo online y esperar a que las dos pantallas se actualicen solas, y además ~10 s quietos antes de mirar.
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of each flow.
+- Each flow starts from a new browser context, signed in with the `qa@example.com` account of the Auth Emulator (Flow 1 of `qa/recurring-relative.md`).
+- Simulated browser clock (`page.clock`) installed **before** opening the app, at the local time that each flow indicates (zone `America/Argentina/Buenos_Aires`), stopped (`page.clock.pauseAt`).
+  - "At X" and "Advance the clock to X" mean advancing it to X (`page.clock.runFor` or `fastForward`) and waiting for the screen to update by itself, without reloading.
+  - "Set the time to X" means moving the clock to X right before the step: with the clock paused, time runs a few ms per assertion, and clock advances are done with slack (several seconds extra, never right at the edge).
+- Creating a task: tap **+**, type the title, choose the **Se repite** option that the step indicates (controls of `qa/one-off.md`, `qa/recurring-relative.md` and `qa/recurring-calendar.md`), schedule as in `qa/schedule.md`, type the **Primer paso**, the steps and the **Versión mínima** that the step indicates and save.
+- "Postpone X with option O": tap row X and choose O among the **Posponer** options (`qa/postpone.md`). "Pause X" and "Resume X": tap row X and the **Pausar** or **Reanudar** button of the panel (`qa/pause.md`); only recurring tasks are paused.
+- **Mostrar completadas** and **Mostrar pausadas** stay off unless the flow says to turn them on.
+- **Two devices** (Flow 8): two contexts A and B with the same account and the same simulated clock. "B offline" is `browserContext.setOffline(true)`; "B is back online" means setting it online again and waiting for both screens to update by themselves, and in addition ~10 s idle before looking.
 
-Semana de referencia: lunes 2026-11-09, martes 10, miércoles 11, jueves 12, viernes 13, sábado 14, domingo 15.
+Reference week: Monday 2026-11-09, Tuesday 10, Wednesday 11, Thursday 12, Friday 13, Saturday 14, Sunday 15.
 
-## Contrato observable
+## Observable contract
 
-- **Campo del panel**: en la sección **Tarea** (**Nueva tarea** y **Editar tarea**), un campo de texto de una línea (rol `textbox`, etiqueta **Versión mínima**, sin `placeholder`), después de **Agregar paso** y antes de la **Nota**. Arranca vacío al crear y con el valor guardado al editar.
-- **Línea de la fila**: un texto en su propia línea debajo del título (y debajo de la línea del paso, si la hay): `Mínima: ` seguido del texto. "La fila dice la mínima M" significa que ese texto es exactamente `Mínima: M`. Una fila sin versión mínima, o que no la muestra, no contiene `Mínima`.
-- **Botón de la fila**: **Hice la mínima**, un botón de texto chico (rol `button`) junto a esa línea. Está habilitado o deshabilitado igual que el checkbox de la fila.
-- **Estilo**: la línea tiene el mismo `color` y `font-size` computados que la línea del paso; `font-weight` normal, sin subrayado ni color propio en el texto ni en el botón; la fila no cambia de fondo. Sin recorte (sin `text-overflow: ellipsis`, sin `-webkit-line-clamp`, sin `max-height`): un texto largo se ve completo en varias líneas.
-- **Tocar**: tocar el texto de la línea (fuera del botón) es tocar la fila: abre **Editar tarea**. Tocar **Hice la mínima** no abre el panel ni **Cambios sin guardar**, y sí abre el aviso de completar.
-- **Aviso**: el de `qa/history-undo.md`; con **Hice la mínima**, su texto es `Completaste «Regar» · mínima` (con emoji, `Completaste «🌱 Regar» · mínima`); con el checkbox o **Hecho**, sin ` · mínima`. Nunca contiene el texto de la versión mínima.
-- **Historial**: cada entrada de un completado de la mínima muestra, después de la hora, la palabra `Mínima` en el mismo texto secundario, sin color ni icono (`08:05 Mínima`); la de un completado entero, solo la hora. Nunca muestra el texto de la versión mínima. El diálogo de **Borrar** de ese completado nombra la tarea, el momento y la palabra `Mínima`.
-- **Lista**: "La lista es A, B, C" significa exactamente esas filas, de arriba hacia abajo.
+- **Panel field**: in the **Tarea** section (**Nueva tarea** and **Editar tarea**), a one-line text field (role `textbox`, label **Versión mínima**, without `placeholder`), after **Agregar paso** and before the **Nota**. It starts empty when creating and with the saved value when editing.
+- **Row line**: a text on its own line below the title (and below the step line, if there is one): `Mínima: ` followed by the text. "The row says the minimal version M" means that this text is exactly `Mínima: M`. A row without a minimal version, or that does not show it, does not contain `Mínima`.
+- **Row button**: **Hice la mínima**, a small text button (role `button`) next to that line. It is enabled or disabled the same as the row checkbox.
+- **Style**: the line has the same computed `color` and `font-size` as the step line; normal `font-weight`, no underline or own color on the text or on the button; the row does not change its background. No truncation (no `text-overflow: ellipsis`, no `-webkit-line-clamp`, no `max-height`): a long text is shown in full on several lines.
+- **Tap**: tapping the text of the line (outside the button) is tapping the row: it opens **Editar tarea**. Tapping **Hice la mínima** does not open the panel nor **Cambios sin guardar**, and it does open the completion notice.
+- **Notice**: the one of `qa/history-undo.md`; with **Hice la mínima**, its text is `Completaste «Regar» · mínima` (with emoji, `Completaste «🌱 Regar» · mínima`); with the checkbox or **Hecho**, without ` · mínima`. It never contains the text of the minimal version.
+- **Historial**: each entry of a completion of the minimal version shows, after the time, the word `Mínima` in the same secondary text, without color or icon (`08:05 Mínima`); that of a whole completion, only the time. It never shows the text of the minimal version. The **Borrar** dialog of that completion names the task, the moment and the word `Mínima`.
+- **List**: "The list is A, B, C" means exactly those rows, from top to bottom.
 
-## Flujo 1: el campo en el panel, crear y editar
+## Flow 1: the field in the panel, create and edit
 
-Precondición: lista vacía, reloj en `2026-11-13T10:00:00` (viernes).
+Precondition: empty list, clock at `2026-11-13T10:00:00` (Friday).
 
-1. Tocar **+**. En **Nueva tarea** hay **Versión mínima**, vacío y sin texto de ejemplo. El orden vertical de la sección es: **Título** (con el botón de emoji), **Primer paso**, **Agregar paso**, **Versión mínima**, **Nota**. Tocar **Agregar paso**: el campo **Paso 2** aparece antes de **Versión mínima**.
-2. Escribir `Limpiar baño` en **Título** y `Solo el inodoro` en **Versión mínima**. Con el foco en **Versión mínima**, apretar Enter: el panel guarda y se cierra. La fila de `Limpiar baño` dice la mínima `Solo el inodoro` y tiene **Hice la mínima**.
-3. Tocar la fila: **Editar tarea** muestra **Versión mínima** `Solo el inodoro`. Recargar: sigue igual.
-4. Escribir en **Versión mínima** `  Solo el lavabo  ` (con espacios al inicio y al final) y guardar. Reabrir: tiene exactamente `Solo el lavabo`.
-5. Pegar un texto de dos líneas (`uno`, salto de línea, `dos`): el campo queda en una sola línea y Enter guarda en lugar de escribir un salto. Guardar y reabrir: el texto no tiene salto de línea.
-6. Vaciar **Versión mínima** y guardar: la fila ya no contiene `Mínima` ni **Hice la mínima**; reabrir muestra el campo vacío. Escribir `Solo el inodoro` y guardar. Escribir solo espacios y guardar: no hay error ni mensaje de rechazo; la fila no tiene línea y reabrir muestra el campo vacío.
-7. Pegar en **Versión mínima** un texto de 5000 caracteres y guardar: se acepta sin error ni advertencia. Reabrir: tiene los 5000.
-8. Crear `Barrer` con **No se repite**, sin fecha límite, con solo espacios en **Versión mínima**: se crea sin error y sin línea. Crear `Planchar` sin tocar **Versión mínima**: la fila se ve como antes, sin `Mínima` ni botón.
-9. Crear con **Versión mínima** una periódica (`Regar`, **Intervalo** cada `2` **días**, `Solo los helechos`), una de calendario (`Basura`, **Días de la semana** y **martes**, `Solo la de la cocina`): se aceptan; reabrir muestra el valor en cada una. Cambiar de tipo en `Regar` (**No se repite** y de nuevo **Intervalo**), guardando: reabrir conserva `Solo los helechos`.
-10. Escribir en **Versión mínima** el texto de unos 160 caracteres `Abrir el cajón de abajo y sacar toda la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla con nada de color oscuro ni delicado` y, en un celular (390 × 844), mirar la fila: la línea se ve completa, en varias líneas, sin cortar ni scroll horizontal.
+1. Tap **+**. In **Nueva tarea** there is **Versión mínima**, empty and without example text. The vertical order of the section is: **Título** (with the emoji button), **Primer paso**, **Agregar paso**, **Versión mínima**, **Nota**. Tap **Agregar paso**: the **Paso 2** field appears before **Versión mínima**.
+2. Type `Limpiar baño` in **Título** and `Solo el inodoro` in **Versión mínima**. With the focus in **Versión mínima**, press Enter: the panel saves and closes. The row of `Limpiar baño` says the minimal version `Solo el inodoro` and has **Hice la mínima**.
+3. Tap the row: **Editar tarea** shows **Versión mínima** `Solo el inodoro`. Reload: it stays the same.
+4. Type in **Versión mínima** `  Solo el lavabo  ` (with spaces at the start and at the end) and save. Reopen: it has exactly `Solo el lavabo`.
+5. Paste a two-line text (`uno`, line break, `dos`): the field stays on a single line and Enter saves instead of typing a line break. Save and reopen: the text has no line break.
+6. Empty **Versión mínima** and save: the row no longer contains `Mínima` or **Hice la mínima**; reopening shows the empty field. Type `Solo el inodoro` and save. Type only spaces and save: there is no error or rejection message; the row has no line and reopening shows the empty field.
+7. Paste into **Versión mínima** a text of 5000 characters and save: it is accepted without an error or warning. Reopen: it has all 5000.
+8. Create `Barrer` with **No se repite**, without a due date, with only spaces in **Versión mínima**: it is created without an error and without a line. Create `Planchar` without touching **Versión mínima**: the row looks as before, without `Mínima` or a button.
+9. Create with **Versión mínima** a recurring task (`Regar`, **Intervalo** every `2` **días**, `Solo los helechos`), a calendar one (`Basura`, **Días de la semana** and **martes**, `Solo la de la cocina`): they are accepted; reopening shows the value in each. Change the kind on `Regar` (**No se repite** and again **Intervalo**), saving: reopening keeps `Solo los helechos`.
+10. Type in **Versión mínima** the text of about 160 characters `Abrir el cajón de abajo y sacar toda la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla con nada de color oscuro ni delicado` and, on a phone (390 × 844), look at the row: the line is shown in full, on several lines, without cutting or horizontal scroll.
 
-## Flujo 2: la línea y el botón en la fila
+## Flow 2: the line and the button on the row
 
-Precondición: lista vacía, reloj en `2026-11-13T10:00:00`. Crear `Lavar` (**No se repite**, sin fecha límite) con `Separar la ropa blanca` en **Primer paso** y `Solo el inodoro` en **Versión mínima**, y `Barrer` (**No se repite**, sin fecha límite) con `Solo el pasillo` en **Versión mínima**, sin primer paso.
+Precondition: empty list, clock at `2026-11-13T10:00:00`. Create `Lavar` (**No se repite**, without a due date) with `Separar la ropa blanca` in **Primer paso** and `Solo el inodoro` in **Versión mínima**, and `Barrer` (**No se repite**, without a due date) with `Solo el pasillo` in **Versión mínima**, without a first step.
 
-1. La fila de `Lavar` tiene dos líneas debajo del título, en este orden: `Primer paso: Separar la ropa blanca` y `Mínima: Solo el inodoro` (con **Hice la mínima**). La fila de `Barrer` tiene la línea `Mínima: Solo el pasillo` y **Hice la mínima** aunque no tenga primer paso.
-2. **Estilo**: la línea de la mínima tiene el mismo `color` y `font-size` que la línea del paso; el botón no tiene color propio ni fondo destacado; la fila no cambia de fondo. La fila no tiene contadores, marcas ni textos que propongan hacer la mínima.
-3. Tocar el texto `Mínima: Solo el pasillo` (fuera del botón): se abre **Editar tarea** de `Barrer`. Cerrar con la X sin cambios: cierra directo.
-4. Con el panel cerrado, tocar **Hice la mínima** en `Barrer`: no se abre el panel ni aparece **Cambios sin guardar**; aparece el aviso de completar (Flujo 3).
-5. Con pasos: abrir `Lavar`, agregar `Poner el lavarropas` en **Paso 2** y `Tender la ropa` en **Paso 3** y guardar. En el paso 1 la fila dice `Primer paso: Separar la ropa blanca` y debajo `Mínima: Solo el inodoro`, con **Hecho** y **Hice la mínima**. Tocar **Hecho**: dice `Paso: Poner el lavarropas` y la mínima sigue igual, debajo de la línea del paso. Tocar **Hecho** otra vez: igual en el paso 3.
-6. **Dónde no se ve** (**Mostrar completadas** y **Mostrar pausadas** encendidos desde acá): crear `Cambiar foco` (**No se repite**, sin fecha límite) con `Solo la lámpara` en **Versión mínima**, `Pagar` (**No se repite**, fecha límite `2026-11-10`) con `Solo la luz`, `Regar` (**Intervalo** cada `8` **horas**) con `Solo los helechos`. `Pagar` está `atrasada` y la muestra con **Hice la mínima** habilitado; las otras también.
-7. Posponer `Cambiar foco` con la opción **3 horas**: pasa a `en espera` y la fila no contiene `Mínima` ni **Hice la mínima**; el checkbox sigue habilitado. Posponer `Pagar` con **Hasta mañana**: tampoco. Tocar el checkbox de `Regar`: `en espera`, sin línea ni botón.
-8. Avanzar el reloj a `2026-11-13T13:01:00`: `Cambiar foco` vuelve a `pendiente` con su línea y su botón. `Regar` sigue sin línea. A `2026-11-13T18:01:00`: `Regar` vuelve a `pendiente` y dice `Mínima: Solo los helechos` con **Hice la mínima**.
-9. Tocar la fila `Regar` y **Pausar**: `Regar` se ve pausada, sin línea ni botón. Abrir, **Reanudar**: vuelve con su línea y su botón.
-10. Tocar el checkbox de `Cambiar foco` (puntual): la fila completada (con **Mostrar completadas**) no tiene línea ni botón. Desmarcar el checkbox: vuelve a `pendiente` con su línea y su botón.
-11. Crear `Basura` con **Días de la semana** y **martes** y `Solo la de la cocina` en **Versión mínima**, con el reloj en el viernes: `en espera` hasta el martes, sin línea ni botón. Avanzar a `2026-11-17T09:00:00`: `pendiente`, con `Mínima: Solo la de la cocina` y **Hice la mínima**.
-12. Crear `Llamar` (**No se repite**, sin fecha límite, horario **Desde** `08:00` **Hasta** `09:00`) con `Solo a mamá` en **Versión mínima**, con el reloj en `2026-11-17T09:30:00`: fuera de su ventana, `en espera`, sin línea ni botón. Avanzar a `2026-11-18T08:30:00`: `pendiente`, con su línea y su botón habilitado.
-13. **Checkbox deshabilitado**: crear `Lavar la ropa` (**No se repite**, fecha límite `2026-11-10`, horario **Desde** `08:00` **Hasta** `11:00`) con `Solo lo blanco` en **Versión mínima**. Con el reloj en `2026-11-19T07:00:00`: `atrasada`, checkbox deshabilitado, la fila dice `Mínima: Solo lo blanco` y **Hice la mínima** está deshabilitado: tocarlo no completa nada ni abre aviso. Avanzar a `2026-11-19T08:30:00`: checkbox y **Hice la mínima** quedan habilitados.
-14. **Sin sugerencias**: una periódica que ya se completó dos veces con **Hice la mínima** (Flujo 3) y vuelve a `pendiente` o a `atrasada` muestra la misma línea y el mismo botón, sin ningún texto, contador ni marca adicional.
+1. The row of `Lavar` has two lines below the title, in this order: `Primer paso: Separar la ropa blanca` and `Mínima: Solo el inodoro` (with **Hice la mínima**). The row of `Barrer` has the line `Mínima: Solo el pasillo` and **Hice la mínima** even though it has no first step.
+2. **Style**: the line of the minimal version has the same `color` and `font-size` as the step line; the button has no own color or highlighted background; the row does not change its background. The row has no counters, marks or texts that suggest doing the minimal version.
+3. Tap the text `Mínima: Solo el pasillo` (outside the button): **Editar tarea** of `Barrer` opens. Close with the X without changes: it closes directly.
+4. With the panel closed, tap **Hice la mínima** on `Barrer`: the panel does not open and **Cambios sin guardar** does not appear; the completion notice appears (Flow 3).
+5. With steps: open `Lavar`, add `Poner el lavarropas` in **Paso 2** and `Tender la ropa` in **Paso 3** and save. At step 1 the row says `Primer paso: Separar la ropa blanca` and below `Mínima: Solo el inodoro`, with **Hecho** and **Hice la mínima**. Tap **Hecho**: it says `Paso: Poner el lavarropas` and the minimal version stays the same, below the step line. Tap **Hecho** again: the same at step 3.
+6. **Where it is not shown** (**Mostrar completadas** and **Mostrar pausadas** turned on from here): create `Cambiar foco` (**No se repite**, without a due date) with `Solo la lámpara` in **Versión mínima**, `Pagar` (**No se repite**, due date `2026-11-10`) with `Solo la luz`, `Regar` (**Intervalo** every `8` **horas**) with `Solo los helechos`. `Pagar` is `overdue` and shows it with **Hice la mínima** enabled; the others too.
+7. Postpone `Cambiar foco` with the option **3 horas**: it becomes `waiting` and the row does not contain `Mínima` or **Hice la mínima**; the checkbox stays enabled. Postpone `Pagar` with **Hasta mañana**: neither. Tap the checkbox of `Regar`: `waiting`, without a line or button.
+8. Advance the clock to `2026-11-13T13:01:00`: `Cambiar foco` goes back to `pending` with its line and its button. `Regar` still has no line. At `2026-11-13T18:01:00`: `Regar` goes back to `pending` and says `Mínima: Solo los helechos` with **Hice la mínima**.
+9. Tap the `Regar` row and **Pausar**: `Regar` is shown paused, without a line or button. Open, **Reanudar**: it comes back with its line and its button.
+10. Tap the checkbox of `Cambiar foco` (one-off): the completed row (with **Mostrar completadas**) has no line or button. Uncheck the checkbox: it goes back to `pending` with its line and its button.
+11. Create `Basura` with **Días de la semana** and **martes** and `Solo la de la cocina` in **Versión mínima**, with the clock on Friday: `waiting` until Tuesday, without a line or button. Advance to `2026-11-17T09:00:00`: `pending`, with `Mínima: Solo la de la cocina` and **Hice la mínima**.
+12. Create `Llamar` (**No se repite**, without a due date, schedule **Desde** `08:00` **Hasta** `09:00`) with `Solo a mamá` in **Versión mínima**, with the clock at `2026-11-17T09:30:00`: outside its window, `waiting`, without a line or button. Advance to `2026-11-18T08:30:00`: `pending`, with its line and its button enabled.
+13. **Disabled checkbox**: create `Lavar la ropa` (**No se repite**, due date `2026-11-10`, schedule **Desde** `08:00` **Hasta** `11:00`) with `Solo lo blanco` in **Versión mínima**. With the clock at `2026-11-19T07:00:00`: `overdue`, checkbox disabled, the row says `Mínima: Solo lo blanco` and **Hice la mínima** is disabled: tapping it completes nothing and opens no notice. Advance to `2026-11-19T08:30:00`: checkbox and **Hice la mínima** become enabled.
+14. **No suggestions**: a recurring task that was already completed twice with **Hice la mínima** (Flow 3) and goes back to `pending` or `overdue` shows the same line and the same button, without any additional text, counter or mark.
 
-## Flujo 3: hacer la mínima, aviso, regreso y deshacer
+## Flow 3: doing the minimal version, notice, return and undo
 
-Precondición: lista vacía, reloj en `2026-11-13T09:00:00`, **Mostrar completadas** encendido. Crear `Regar` con **Intervalo** cada `8` **horas**, emoji `🌱` y `Solo los helechos`; `Limpiar` (**No se repite**, sin fecha límite) con `Solo el inodoro`.
+Precondition: empty list, clock at `2026-11-13T09:00:00`, **Mostrar completadas** turned on. Create `Regar` with **Intervalo** every `8` **horas**, emoji `🌱` and `Solo los helechos`; `Limpiar` (**No se repite**, without a due date) with `Solo el inodoro`.
 
-1. Fijar la hora a `2026-11-13T09:00:00` y tocar **Hice la mínima** en `Regar`: aparece el aviso con el texto `Completaste «🌱 Regar» · mínima`, el botón **Deshacer** y debajo `Vuelve hoy 17:00 · en 8 horas`. El aviso no contiene `Solo los helechos`. La fila queda `en espera` (completada), sin línea ni botón, como si se hubiera tocado el checkbox.
-2. Tocar **Deshacer** dentro de los 5 segundos: el aviso se cierra y `Regar` vuelve a `pendiente`, con su línea y su botón.
-3. Fijar la hora a `2026-11-13T09:00:00` y tocar el checkbox de `Regar`: el aviso dice `Completaste «🌱 Regar»`, sin ` · mínima`, con la misma línea «Vuelve …». Deshacer.
-4. Tocar **Hice la mínima** en `Limpiar`: el aviso dice `Completaste «Limpiar» · mínima` y no tiene línea «Vuelve …» (no se repite). Esperar 5 s: el aviso desaparece solo. `Limpiar` se ve completada (tachada, con el checkbox marcado) al final de la lista.
-5. Con `Limpiar` completada con la mínima, tocar su checkbox: se desmarca y vuelve a `pendiente` (el checkbox borra el completado de la mínima como cualquier otro). Sin aviso.
-6. Fijar la hora a `2026-11-13T09:00:00`, tocar el checkbox de `Limpiar` (entero) y, con el aviso abierto, tocar **Hice la mínima** en `Regar`: el aviso es ahora el de `Regar` con ` · mínima` (reemplaza al anterior; hay un solo aviso).
-7. **Estado**: con `Regar` completada con la mínima el `2026-11-13T09:00:00`, avanzar a `2026-11-13T15:00:00`: sigue `en espera` y la barra de progreso avanzó; a `2026-11-13T17:01:00`: `pendiente`, con su línea y su botón. Es lo mismo que con un completado entero.
-8. **Lista**: fijar la hora a `2026-11-13T09:30:00` y tocar el checkbox de `Limpiar` (entero; antes, si está completada, desmarcarla). Con `Regar` completada con la mínima a las `09:00` y `Limpiar` completada a las `09:30`, las dos filas completadas van al final, tachadas, la de completado más reciente primero: `Limpiar`, `Regar`. Es el mismo orden que con dos completados enteros.
-9. **Última vez**: abrir `Regar`: **Última vez** dice `hoy 09:00` (hora del completado de la mínima).
-10. **Calendario**: en un contexto nuevo con el reloj en `2026-11-09T08:00:00` (lunes), crear `Basura` con **Días de la semana** y **martes** y `Solo la de la cocina`. Avanzar a `2026-11-10T09:00:00`: `pendiente`. Fijar la hora a `2026-11-10T09:00:00` y tocar **Hice la mínima**: aviso `Completaste «Basura» · mínima` y debajo `Vuelve el martes 17` (con su distancia); la fila queda `en espera`.
-11. **Completada de un día anterior**: con el reloj en `2026-11-13T09:30:00`, crear `Riego` (**Intervalo** cada `2` **días**) con `Solo las macetas`, tocar **Hice la mínima** y esperar el aviso. Avanzar a `2026-11-14T10:00:00`: `Riego` sigue `en espera` y completada. Tocar el checkbox de la fila: la completa de nuevo, entera (aviso `Completaste «Riego»` sin ` · mínima`). El mismo día del completado, el checkbox lo habría borrado.
+1. Set the time to `2026-11-13T09:00:00` and tap **Hice la mínima** on `Regar`: the notice appears with the text `Completaste «🌱 Regar» · mínima`, the **Deshacer** button and below `Vuelve hoy 17:00 · en 8 horas`. The notice does not contain `Solo los helechos`. The row becomes `waiting` (completed), without a line or button, as if the checkbox had been tapped.
+2. Tap **Deshacer** within the 5 seconds: the notice closes and `Regar` goes back to `pending`, with its line and its button.
+3. Set the time to `2026-11-13T09:00:00` and tap the checkbox of `Regar`: the notice says `Completaste «🌱 Regar»`, without ` · mínima`, with the same «Vuelve …» line. Undo.
+4. Tap **Hice la mínima** on `Limpiar`: the notice says `Completaste «Limpiar» · mínima` and has no «Vuelve …» line (it does not repeat). Wait 5 s: the notice disappears by itself. `Limpiar` is shown completed (struck through, with the checkbox checked) at the end of the list.
+5. With `Limpiar` completed with the minimal version, tap its checkbox: it is unchecked and goes back to `pending` (the checkbox deletes the completion of the minimal version like any other). No notice.
+6. Set the time to `2026-11-13T09:00:00`, tap the checkbox of `Limpiar` (whole) and, with the notice open, tap **Hice la mínima** on `Regar`: the notice is now that of `Regar` with ` · mínima` (it replaces the previous one; there is a single notice).
+7. **Status**: with `Regar` completed with the minimal version on `2026-11-13T09:00:00`, advance to `2026-11-13T15:00:00`: it is still `waiting` and the progress bar advanced; at `2026-11-13T17:01:00`: `pending`, with its line and its button. It is the same as with a whole completion.
+8. **List**: set the time to `2026-11-13T09:30:00` and tap the checkbox of `Limpiar` (whole; before that, if it is completed, uncheck it). With `Regar` completed with the minimal version at `09:00` and `Limpiar` completed at `09:30`, the two completed rows go at the end, struck through, the one with the most recent completion first: `Limpiar`, `Regar`. It is the same order as with two whole completions.
+9. **Last time**: open `Regar`: **Última vez** says `hoy 09:00` (time of the completion of the minimal version).
+10. **Calendar**: in a new context with the clock at `2026-11-09T08:00:00` (Monday), create `Basura` with **Días de la semana** and **martes** and `Solo la de la cocina`. Advance to `2026-11-10T09:00:00`: `pending`. Set the time to `2026-11-10T09:00:00` and tap **Hice la mínima**: notice `Completaste «Basura» · mínima` and below `Vuelve el martes 17` (with its distance); the row becomes `waiting`.
+11. **Completed on an earlier day**: with the clock at `2026-11-13T09:30:00`, create `Riego` (**Intervalo** every `2` **días**) with `Solo las macetas`, tap **Hice la mínima** and wait for the notice. Advance to `2026-11-14T10:00:00`: `Riego` is still `waiting` and completed. Tap the checkbox of the row: it completes it again, whole (notice `Completaste «Riego»` without ` · mínima`). On the same day as the completion, the checkbox would have deleted it.
 
-## Flujo 4: con pasos, en cualquier paso
+## Flow 4: with steps, at any step
 
-Precondición: lista vacía, reloj en `2026-11-13T10:00:00`, **Mostrar completadas** encendido. Crear `Lavar` (**No se repite**, sin fecha límite) con `Separar la ropa blanca`, `Poner el lavarropas`, `Tender la ropa` y `Solo lo blanco`.
+Precondition: empty list, clock at `2026-11-13T10:00:00`, **Mostrar completadas** turned on. Create `Lavar` (**No se repite**, without a due date) with `Separar la ropa blanca`, `Poner el lavarropas`, `Tender la ropa` and `Solo lo blanco`.
 
-1. En el paso 1 (`Primer paso: Separar la ropa blanca`), tocar **Hice la mínima**: aviso `Completaste «Lavar» · mínima`. La fila completada no tiene línea de paso ni de mínima ni botones. Tocar **Deshacer**: `Lavar` vuelve a `pendiente` en el paso 1.
-2. Tocar **Hecho** (paso 2): dice `Paso: Poner el lavarropas`. Fijar la hora a `2026-11-13T10:00:00` y tocar **Hice la mínima**: completa. Tocar **Deshacer**: `Lavar` vuelve a decir `Paso: Poner el lavarropas` (el paso en que iba).
-3. Tocar **Hice la mínima** otra vez (paso 2), esperar a que pase el aviso y desmarcar el checkbox de la fila completada: vuelve `pendiente` diciendo `Paso: Poner el lavarropas`.
-4. Tocar **Hecho** (paso 3, `Paso: Tender la ropa`), tocar **Hice la mínima** y **Deshacer**: dice `Paso: Tender la ropa`. Tocar **Hice la mínima** y, tras el aviso, ir al **Historial** y borrar esa entrada (confirmando): vuelve a `Paso: Tender la ropa`.
-5. Tocar **Hice la mínima** (paso 3) y no deshacer: con el completado de la mínima y **Mostrar completadas**, tocar el checkbox de la completada: `Lavar` vuelve a `pendiente` en el paso 3.
-6. Crear una periódica `Regar` cada `2` **días** de dos pasos (`Llenar la regadera`, `Regar los helechos`) y `Solo los helechos`, tocar **Hecho** (paso 2), fijar la hora a `2026-11-13T10:00:00`, tocar **Hice la mínima** y avanzar a `2026-11-15T10:30:00`: `Regar` vuelve `pendiente` y dice `Primer paso: ` con el primer paso (arranca del paso 1), con **Hecho** y sin **Paso anterior**.
-7. Con un solo paso (solo **Primer paso**), **Hice la mínima** y deshacer dejan la tarea como estaba (sin botones de paso).
+1. At step 1 (`Primer paso: Separar la ropa blanca`), tap **Hice la mínima**: notice `Completaste «Lavar» · mínima`. The completed row has no step line or minimal-version line or buttons. Tap **Deshacer**: `Lavar` goes back to `pending` at step 1.
+2. Tap **Hecho** (step 2): it says `Paso: Poner el lavarropas`. Set the time to `2026-11-13T10:00:00` and tap **Hice la mínima**: it completes. Tap **Deshacer**: `Lavar` goes back to saying `Paso: Poner el lavarropas` (the step it was on).
+3. Tap **Hice la mínima** again (step 2), wait for the notice to pass and uncheck the checkbox of the completed row: it comes back `pending` saying `Paso: Poner el lavarropas`.
+4. Tap **Hecho** (step 3, `Paso: Tender la ropa`), tap **Hice la mínima** and **Deshacer**: it says `Paso: Tender la ropa`. Tap **Hice la mínima** and, after the notice, go to the **Historial** and delete that entry (confirming): it goes back to `Paso: Tender la ropa`.
+5. Tap **Hice la mínima** (step 3) and do not undo: with the completion of the minimal version and **Mostrar completadas**, tap the checkbox of the completed row: `Lavar` goes back to `pending` at step 3.
+6. Create a recurring task `Regar` every `2` **días** with two steps (`Llenar la regadera`, `Regar los helechos`) and `Solo los helechos`, tap **Hecho** (step 2), set the time to `2026-11-13T10:00:00`, tap **Hice la mínima** and advance to `2026-11-15T10:30:00`: `Regar` goes back to `pending` and says `Primer paso: ` with the first step (it starts from step 1), with **Hecho** and without **Paso anterior**.
+7. With a single step (only **Primer paso**), **Hice la mínima** and undo leave the task as it was (without step buttons).
 
-## Flujo 5: Historial y Borrar
+## Flow 5: Historial and Borrar
 
-Precondición: lista vacía, reloj en `2026-11-13T08:05:00`. Crear `Regar` (**Intervalo** cada `2` **días**, `Solo los helechos`) y `Pagar` (**No se repite**, sin fecha límite, sin versión mínima).
+Precondition: empty list, clock at `2026-11-13T08:05:00`. Create `Regar` (**Intervalo** every `2` **días**, `Solo los helechos`) and `Pagar` (**No se repite**, without a due date, without a minimal version).
 
-1. Tocar **Hice la mínima** en `Regar`. Ir a **Historial**: grupo **Hoy**, entrada `Regar` `08:05` con la palabra `Mínima` después de la hora, en el mismo texto secundario que la hora, sin color ni icono. La entrada no contiene `Solo los helechos`.
-2. Avanzar el reloj a `2026-11-13T10:00:00`, tocar el checkbox de `Pagar` (entero): en el Historial, la entrada `Pagar` `10:00` no tiene `Mínima`; la de `Regar` `08:05` sí; `Pagar` arriba de `Regar` (más reciente primero).
-3. Tocar **Borrar** en la entrada de `Regar`: el diálogo nombra `Regar`, `Hoy, 08:05` y la palabra `Mínima`, con **Borrar** y **Cancelar**. **Cancelar**: sin cambios. **Borrar** y confirmar: la entrada desaparece y `Regar` vuelve a `pendiente` en Pendientes. El diálogo de la entrada de `Pagar` no dice `Mínima`.
-4. Tocar **Hice la mínima** en `Regar` otra vez, abrir el panel y cambiar **Versión mínima** a `Solo el brote`, guardar: en el Historial, la entrada de `Regar` sigue diciendo `Mínima` y no contiene ninguna de las dos versiones. Abrir, vaciar **Versión mínima** y guardar: la entrada sigue diciendo `Mínima`. Cambiar el título a `Plantas` y guardar: la entrada dice `Plantas` y `Mínima`.
-5. Escribir `Solo el brote` en **Versión mínima** de `Pagar` (que tiene un completado entero) y guardar: la entrada de `Pagar` sigue sin `Mínima` (no se puede pasar un completado entero a mínimo).
+1. Tap **Hice la mínima** on `Regar`. Go to **Historial**: group **Hoy**, entry `Regar` `08:05` with the word `Mínima` after the time, in the same secondary text as the time, without color or icon. The entry does not contain `Solo los helechos`.
+2. Advance the clock to `2026-11-13T10:00:00`, tap the checkbox of `Pagar` (whole): in the Historial, the `Pagar` `10:00` entry has no `Mínima`; the `Regar` `08:05` one does; `Pagar` above `Regar` (most recent first).
+3. Tap **Borrar** on the `Regar` entry: the dialog names `Regar`, `Hoy, 08:05` and the word `Mínima`, with **Borrar** and **Cancelar**. **Cancelar**: no changes. **Borrar** and confirm: the entry disappears and `Regar` goes back to `pending` in «Pendientes». The dialog of the `Pagar` entry does not say `Mínima`.
+4. Tap **Hice la mínima** on `Regar` again, open the panel and change **Versión mínima** to `Solo el brote`, save: in the Historial, the `Regar` entry still says `Mínima` and does not contain either of the two versions. Open, empty **Versión mínima** and save: the entry still says `Mínima`. Change the title to `Plantas` and save: the entry says `Plantas` and `Mínima`.
+5. Type `Solo el brote` in **Versión mínima** of `Pagar` (which has a whole completion) and save: the `Pagar` entry still has no `Mínima` (a whole completion cannot be turned into a minimal one).
 
-## Flujo 6: lo que no cambia y lo que no lo muestra
+## Flow 6: what does not change and what does not show it
 
-Precondición: lista vacía, reloj detenido en `2026-11-13T10:00:00`, **Mostrar completadas** encendido.
+Precondition: empty list, clock stopped at `2026-11-13T10:00:00`, **Mostrar completadas** turned on.
 
-1. Crear `Barrer`, `Lavar` y `Planchar`, todas con **No se repite** y sin fecha límite. Anotar el orden y el texto de cada fila.
-2. Escribir en `Lavar` una **Versión mínima** (`Solo el inodoro`) y guardar: el orden de la lista es el mismo; las filas de `Barrer` y `Planchar` son idénticas a antes. Escribir también una en `Barrer` y guardar: el orden no cambia.
-3. Poner a `Lavar` el emoji `🧺`: el título dice `🧺 Lavar`, la línea `Mínima: …` va en su propia línea debajo. El título no incluye la versión mínima.
-4. Tocar **Hice la mínima** en `Lavar`: el aviso dice `Completaste «🧺 Lavar» · mínima`, sin el texto de la mínima.
-5. Tocar el texto `Mínima: …` de una fila (fuera del botón): abre el panel de esa tarea.
+1. Create `Barrer`, `Lavar` and `Planchar`, all with **No se repite** and without a due date. Note the order and the text of each row.
+2. Type in `Lavar` a **Versión mínima** (`Solo el inodoro`) and save: the order of the list is the same; the rows of `Barrer` and `Planchar` are identical to before. Also type one in `Barrer` and save: the order does not change.
+3. Give `Lavar` the emoji `🧺`: the title says `🧺 Lavar`, the `Mínima: …` line goes on its own line below. The title does not include the minimal version.
+4. Tap **Hice la mínima** on `Lavar`: the notice says `Completaste «🧺 Lavar» · mínima`, without the text of the minimal version.
+5. Tap the `Mínima: …` text of a row (outside the button): it opens the panel of that task.
 
-## Flujo 7: Cambios sin guardar
+## Flow 7: Cambios sin guardar
 
-Precondición: lista vacía, reloj detenido en `2026-11-13T10:00:00`. `Lavar` (**No se repite**, sin fecha límite) con **Versión mínima** `Solo el inodoro` y `Planchar` (**No se repite**, sin fecha límite) sin versión mínima.
+Precondition: empty list, clock stopped at `2026-11-13T10:00:00`. `Lavar` (**No se repite**, without a due date) with **Versión mínima** `Solo el inodoro` and `Planchar` (**No se repite**, without a due date) without a minimal version.
 
-1. Abrir `Lavar`, cambiar **Versión mínima** a `Solo el lavabo` y tocar la X: aparece el aviso «Tenés cambios sin guardar»; **Descartar**: la fila sigue diciendo `Mínima: Solo el inodoro`.
-2. Abrir, cambiar a `Solo el lavabo` y volver a escribir `Solo el inodoro`, y tocar la X: cierra directo. Escribir `  Solo el inodoro  ` (con espacios al inicio y al final): cierra directo.
-3. Abrir, vaciar **Versión mínima**: aviso; **Descartar**. Repetir con solo espacios: aviso; **Descartar**.
-4. Abrir `Planchar` (sin versión mínima), escribir solo espacios en **Versión mínima** y tocar la X: cierra directo. Escribir `Solo el inodoro` y tocar la X: aviso; **Descartar**.
-5. Tocar **+**, escribir solo espacios en **Versión mínima** y la X: cierra directo. Escribir `Solo el inodoro` y la X: aviso; **Descartar**.
-6. Con el panel de `Lavar` cerrado, tocar **Hice la mínima** en la fila: no aparece **Cambios sin guardar** ni se abre el panel; aparece el aviso de completar.
+1. Open `Lavar`, change **Versión mínima** to `Solo el lavabo` and tap the X: the notice «Tenés cambios sin guardar» appears; **Descartar**: the row still says `Mínima: Solo el inodoro`.
+2. Open, change to `Solo el lavabo` and type `Solo el inodoro` again, and tap the X: it closes directly. Type `  Solo el inodoro  ` (with spaces at the start and at the end): it closes directly.
+3. Open, empty **Versión mínima**: notice; **Descartar**. Repeat with only spaces: notice; **Descartar**.
+4. Open `Planchar` (without a minimal version), type only spaces in **Versión mínima** and tap the X: it closes directly. Type `Solo el inodoro` and tap the X: notice; **Descartar**.
+5. Tap **+**, type only spaces in **Versión mínima** and the X: it closes directly. Type `Solo el inodoro` and the X: notice; **Descartar**.
+6. With the panel of `Lavar` closed, tap **Hice la mínima** on the row: **Cambios sin guardar** does not appear and the panel does not open; the completion notice appears.
 
-## Flujo 8: dos dispositivos
+## Flow 8: two devices
 
-Precondición: lista vacía, reloj en `2026-11-13T10:00:00` en A y en B.
+Precondition: empty list, clock at `2026-11-13T10:00:00` on A and on B.
 
-1. En A, crear `Regar` con **Intervalo** cada `2` **días** y **Versión mínima** `Solo los helechos`. B la ve aparecer con su línea.
-2. B sin conexión. En B, cambiar el título a `Regar plantas` y guardar. En A, cambiar **Versión mínima** a `Solo el brote` y guardar. B vuelve a tener conexión: en A y en B el título dice `Regar plantas` y la fila dice `Mínima: Solo el brote` (campos distintos, los dos cambios se conservaron).
-3. B sin conexión. En B, cambiar **Versión mínima** a `Solo los esquejes` y guardar. En A, cambiar la **Nota** a `Usar la regadera chica` y guardar. B vuelve a tener conexión: en A y en B la fila dice `Mínima: Solo los esquejes` y la nota es `Usar la regadera chica`.
-4. B sin conexión. En B, cambiar **Versión mínima** a `Solo la maceta` y guardar. En A, cambiar **Versión mínima** a `Solo la planta grande` y guardar. B vuelve a tener conexión: en A y en B dice `Mínima: Solo la maceta` (el último cambio en llegar es el de B).
-5. B sin conexión. En B, vaciar **Versión mínima** y guardar. En A, cambiar **Versión mínima** a `Solo el tronco` y guardar. B vuelve a tener conexión: en A y en B la fila no tiene línea ni botón (gana el último en llegar, el de B). Después, en A, escribir `Solo el tronco` y guardar.
-6. B sin conexión. En B, cambiar **Versión mínima** a `Solo la maceta` y guardar. En A, vaciar **Versión mínima** y guardar. B vuelve a tener conexión: en A y en B dice `Mínima: Solo la maceta` (gana el último en llegar, el de B).
-7. B sin conexión. En B, cambiar **Versión mínima** a `Solo el brote` y guardar. En A, abrir la fila y guardar sin cambiar nada. B vuelve a tener conexión: en A y en B dice `Mínima: Solo el brote` (guardar sin cambios no pisó el cambio de B).
-8. **Completados**: B sin conexión. En B, tocar el checkbox de `Regar plantas` (entero). En A, tocar **Hice la mínima**. B vuelve a tener conexión: en el **Historial** de A y de B hay dos entradas de `Regar plantas`, una con `Mínima` después de la hora y otra sin ella, cada una con lo suyo.
+1. On A, create `Regar` with **Intervalo** every `2` **días** and **Versión mínima** `Solo los helechos`. B sees it appear with its line.
+2. B offline. On B, change the title to `Regar plantas` and save. On A, change **Versión mínima** to `Solo el brote` and save. B is back online: on A and on B the title says `Regar plantas` and the row says `Mínima: Solo el brote` (different fields, both changes were kept).
+3. B offline. On B, change **Versión mínima** to `Solo los esquejes` and save. On A, change the **Nota** to `Usar la regadera chica` and save. B is back online: on A and on B the row says `Mínima: Solo los esquejes` and the note is `Usar la regadera chica`.
+4. B offline. On B, change **Versión mínima** to `Solo la maceta` and save. On A, change **Versión mínima** to `Solo la planta grande` and save. B is back online: on A and on B it says `Mínima: Solo la maceta` (the last change to arrive is that of B).
+5. B offline. On B, empty **Versión mínima** and save. On A, change **Versión mínima** to `Solo el tronco` and save. B is back online: on A and on B the row has no line or button (the last one to arrive wins, that of B). Then, on A, type `Solo el tronco` and save.
+6. B offline. On B, change **Versión mínima** to `Solo la maceta` and save. On A, empty **Versión mínima** and save. B is back online: on A and on B it says `Mínima: Solo la maceta` (the last one to arrive wins, that of B).
+7. B offline. On B, change **Versión mínima** to `Solo el brote` and save. On A, open the row and save without changing anything. B is back online: on A and on B it says `Mínima: Solo el brote` (saving without changes did not overwrite the change of B).
+8. **Completions**: B offline. On B, tap the checkbox of `Regar plantas` (whole). On A, tap **Hice la mínima**. B is back online: in the **Historial** of A and of B there are two entries of `Regar plantas`, one with `Mínima` after the time and another without it, each with its own.

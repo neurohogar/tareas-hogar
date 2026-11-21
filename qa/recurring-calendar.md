@@ -1,235 +1,235 @@
-# QA: tarea periódica en modo calendario (feature 2)
+# QA: recurring task in calendar mode (feature 2)
 
-Verifica, solo por la interfaz, crear periódicas de calendario (semanal y
-mensual), la validación del panel y el ciclo de estados con el reloj simulado:
-en espera hasta la primera ocurrencia, pendiente el día que toca, atrasada al
-día siguiente, completar cubre la ocurrencia y vuelve a en espera hasta la
-próxima. Cubre spec §4.2 (Semanal, Mensual), §4.4, §5.3, §6.1 (subconjunto),
-§6.2 (subconjunto) y §7.
+Verifies, through the interface only, creating calendar recurring tasks (weekly and
+monthly), the validation of the panel and the cycle of statuses with the simulated clock:
+waiting until the first occurrence, pending on the day it is due, overdue on the
+next day, completing covers the occurrence and goes back to waiting until the
+next one. Covers spec §4.2 (Semanal, Mensual), §4.4, §5.3, §6.1 (subset),
+§6.2 (subset) and §7.
 
-Fuera de alcance: orden entre tareas, edición de la recurrencia, historial,
-deshacer, emoji, nota y borrado.
+Out of scope: order between tasks, editing the recurrence, history,
+undo, emoji, note and deletion.
 
-## Entorno
+## Environment
 
-Igual que `qa/recurring-relative.md`:
+Same as `qa/recurring-relative.md`:
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de
-  cada flujo.
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la
-  app, en la hora local que indica cada flujo (zona
-  `America/Argentina/Buenos_Aires`). "Avanzar el reloj a X" significa
-  adelantar el reloj simulado hasta X y esperar a que la pantalla se actualice
-  sola (sin recargar), salvo que el paso diga "recargar".
-- Sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of
+  each flow.
+- Simulated browser clock (`page.clock`) installed **before** opening the
+  app, at the local time each flow gives (zone
+  `America/Argentina/Buenos_Aires`). "Advance the clock to X" means
+  advancing the simulated clock to X and waiting for the screen to update
+  by itself (without reloading), unless the step says "reload".
+- Signed in with the Auth Emulator account `qa@example.com` (Flow 1 of
   `qa/recurring-relative.md`).
-- Al empezar cada flujo, tocar el check **Mostrar completadas** para
-  encenderlo: una periódica en espera con completados está completada y solo
-  tiene fila con el check encendido (`qa/show-completed.md`).
+- At the start of each flow, tap the **Mostrar completadas** check to
+  turn it on: a waiting recurring task with completions is completed and only
+  has a row with the check on (`qa/show-completed.md`).
 
-Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16,
-viernes 17, sábado 18, domingo 19, lunes 20, martes 21.
+Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16,
+Friday 17, Saturday 18, Sunday 19, Monday 20, Tuesday 21.
 
-## Contrato observable de la fila de Pendientes
+## Observable contract of the Pendientes row
 
-El mismo de `qa/recurring-relative.md` (checkbox, título, "Atrasada",
-atenuado + barra en espera). Una calendario en espera sin completados (antes de
-su primera ocurrencia) no está completada: checkbox sin marcar y título en
-negrita; con completados, está completada: checkbox marcado y título tachado. La barra vale (ahora − inicio de espera) /
-(inicio de la próxima ocurrencia − inicio de espera) × 100, redondeado a
-entero; el inicio de espera es el último completado o, si no hay, el momento
-de creación.
+The same as `qa/recurring-relative.md` (checkbox, title, "Atrasada",
+dimmed + bar when waiting). A waiting calendar task without completions (before
+its first occurrence) is not completed: checkbox unchecked and bold title;
+with completions, it is completed: checkbox checked and struck-through title. The bar is (now − start of wait) /
+(start of the next occurrence − start of wait) × 100, rounded to an
+integer; the start of wait is the last completion or, if there is none, the moment
+of creation.
 
-## Contrato observable del panel
+## Observable contract of the panel
 
-Al tocar **+** se abre el panel con:
+Tapping **+** opens the panel with:
 
 - **Título**.
-- Grupo **Se repite** con cuatro opciones excluyentes (radio): **No se
-  repite** (tarea puntual, feature 3; ver `qa/one-off.md`), **Intervalo**
-  (modo relativo de la feature 1, con el campo numérico
-  **Cada** y la unidad), **Días de la semana** y **Días del mes**. El radio y
-  el campo numérico tienen nombres accesibles distintos. Al crear viene
-  elegida **No se repite**.
-- Con **Días de la semana**: siete botones de selección con nombre accesible
+- **Se repite** group with four mutually exclusive options (radio): **No se
+  repite** (one-off task, feature 3; see `qa/one-off.md`), **Intervalo**
+  (relative mode of feature 1, with the numeric field
+  **Cada** and the unit), **Días de la semana** and **Días del mes**. The radio and
+  the numeric field have distinct accessible names. When creating,
+  **No se repite** comes selected.
+- With **Días de la semana**: seven selection buttons with accessible name
   `lunes`, `martes`, `miércoles`, `jueves`, `viernes`, `sábado`, `domingo`
-  (`aria-pressed` refleja si está elegido). Se pueden elegir varios.
-- Con **Días del mes**: 31 botones de selección con nombre accesible `1` a
-  `31` (`aria-pressed`), y ningún otro. Se pueden elegir varios.
-- Solo se ven los controles de la opción elegida en **Se repite**.
-- Botones **Cerrar** y **Guardar**.
+  (`aria-pressed` reflects whether it is selected). Several can be selected.
+- With **Días del mes**: 31 selection buttons with accessible name `1` to
+  `31` (`aria-pressed`), and no other. Several can be selected.
+- Only the controls of the option selected in **Se repite** are visible.
+- **Cerrar** and **Guardar** buttons.
 
-## Flujo 1: crear una semanal y una mensual
+## Flow 1: create a weekly and a monthly task
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Tocar **+**, escribir título `Sacar la basura`, elegir **Días de la
-   semana**, tocar `martes` y `jueves` (quedan con `aria-pressed=true`) y
-   guardar.
-   - El panel se cierra.
-   - Aparece la fila **Sacar la basura** `en espera`: atenuada, barra en 0,
-     sin indicador de atraso.
-2. Tocar **+**, escribir `Pagar expensas`, elegir **Días del mes**, tocar `10`
-   y guardar: aparece la fila **Pagar expensas** `en espera`, barra en 0.
-3. Tocar **+**, escribir `Regar plantas`, elegir **Días de la semana**, tocar
-   `lunes` y guardar: aparece la fila **Regar plantas** `pendiente` (creada en
-   un día de ocurrencia): sin atenuar, sin barra, sin indicador de atraso.
-4. Recargar la página: siguen las tres filas con los mismos estados
-   (persistencia en Firestore).
+1. Tap **+**, type title `Sacar la basura`, choose **Días de la
+   semana**, tap `martes` and `jueves` (they get `aria-pressed=true`) and
+   save.
+   - The panel closes.
+   - The row **Sacar la basura** appears waiting: dimmed, bar at 0,
+     no overdue indicator.
+2. Tap **+**, type `Pagar expensas`, choose **Días del mes**, tap `10`
+   and save: the row **Pagar expensas** appears waiting, bar at 0.
+3. Tap **+**, type `Regar plantas`, choose **Días de la semana**, tap
+   `lunes` and save: the row **Regar plantas** appears pending (created on
+   an occurrence day): not dimmed, no bar, no overdue indicator.
+4. Reload the page: the three rows are still there with the same statuses
+   (persistence in Firestore).
 
-## Flujo 2: validación del panel
+## Flow 2: panel validation
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00`.
+Precondition: empty list, clock at `2026-07-13T08:00:00`.
 
-1. Tocar **+**, dejar el título vacío, elegir **Días de la semana**, tocar
-   `martes` y guardar.
-   - Se ve un mensaje de error asociado al campo Título.
-   - El panel sigue abierto; no aparece ninguna fila.
-2. Escribir título `   ` (solo espacios) y guardar: mismo resultado que el
-   paso 1.
-3. Escribir título `Sacar la basura`, destocar `martes` (ningún día elegido)
-   y guardar.
-   - Se ve un mensaje de error asociado al grupo de días.
-   - No aparece ninguna fila.
-4. Elegir **Días del mes** sin tocar ningún día y guardar: mismo resultado que
-   el paso 3.
-5. Verificar que la grilla de **Días del mes** ofrece exactamente los días `1`
-   a `31`.
-6. Cerrar el panel sin guardar (y **Descartar** en el aviso "Tenés cambios sin guardar"): la lista sigue vacía.
-7. Semanal y mensual no se combinan: tocar **+**, escribir `Combinada`, elegir
-   **Días de la semana**, tocar `martes`; cambiar a **Días del mes**, tocar
-   `15` y guardar.
-   - Aparece una sola fila **Combinada**, `en espera`.
-8. Avanzar el reloj a `2026-07-14T00:00:00` (martes): **Combinada** sigue
-   `en espera` (no se guardó el martes).
-9. Avanzar el reloj a `2026-07-15T00:00:00`: **Combinada** pasa a
-   `pendiente` (día 15).
+1. Tap **+**, leave the title empty, choose **Días de la semana**, tap
+   `martes` and save.
+   - An error message associated with the Título field is shown.
+   - The panel stays open; no row appears.
+2. Type title `   ` (only spaces) and save: same result as
+   step 1.
+3. Type title `Sacar la basura`, untap `martes` (no day selected)
+   and save.
+   - An error message associated with the days group is shown.
+   - No row appears.
+4. Choose **Días del mes** without tapping any day and save: same result as
+   step 3.
+5. Verify that the **Días del mes** grid offers exactly the days `1`
+   to `31`.
+6. Close the panel without saving (and **Descartar** in the notice "Tenés cambios sin guardar"): the list is still empty.
+7. Weekly and monthly are not combined: tap **+**, type `Combinada`, choose
+   **Días de la semana**, tap `martes`; switch to **Días del mes**, tap
+   `15` and save.
+   - A single row **Combinada** appears, waiting.
+8. Advance the clock to `2026-07-14T00:00:00` (Tuesday): **Combinada** is still
+   waiting (Tuesday was not saved).
+9. Advance the clock to `2026-07-15T00:00:00`: **Combinada** becomes
+   pending (day 15).
 
-## Flujo 3: ciclo de estados de una semanal
+## Flow 3: status cycle of a weekly task
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Crear `Sacar la basura` los `martes` y `jueves`: `en espera`, barra en 0
-   (la primera ocurrencia es el martes 14 a las 00:00).
-2. Avanzar el reloj a `2026-07-13T16:00:00`: sigue `en espera`, barra en 50.
-3. Avanzar el reloj a `2026-07-13T23:00:00`: sigue `en espera`, barra en 94.
-4. Avanzar el reloj a `2026-07-14T00:00:00` (martes): pasa a `pendiente`.
-5. Avanzar el reloj a `2026-07-14T23:59:59`: sigue `pendiente`.
-6. Avanzar el reloj a `2026-07-15T00:00:00` (miércoles): pasa a `atrasada`:
-   muestra "Atrasada", sin atenuar, sin barra.
-7. Recargar la página: sigue `atrasada`.
-8. Avanzar el reloj a `2026-07-15T08:00:00` y tocar el checkbox (cubre el
-   martes): pasa a `en espera`, barra en 0, sin indicador de atraso.
-9. Avanzar el reloj a `2026-07-15T16:00:00`: `en espera`, barra en 50.
-10. Avanzar el reloj a `2026-07-16T00:00:00` (jueves): `pendiente`.
-11. Avanzar el reloj a `2026-07-16T12:00:00` y tocar el checkbox (cubre el
-    jueves): `en espera`, barra en 0.
-12. Avanzar el reloj a `2026-07-18T18:00:00`: `en espera`, barra en 50.
-13. Avanzar el reloj a `2026-07-21T00:00:00` (martes siguiente): `pendiente`.
+1. Create `Sacar la basura` on `martes` and `jueves`: waiting, bar at 0
+   (the first occurrence is Tuesday 14 at 00:00).
+2. Advance the clock to `2026-07-13T16:00:00`: still waiting, bar at 50.
+3. Advance the clock to `2026-07-13T23:00:00`: still waiting, bar at 94.
+4. Advance the clock to `2026-07-14T00:00:00` (Tuesday): it becomes pending.
+5. Advance the clock to `2026-07-14T23:59:59`: still pending.
+6. Advance the clock to `2026-07-15T00:00:00` (Wednesday): it becomes overdue:
+   it shows "Atrasada", not dimmed, no bar.
+7. Reload the page: it is still overdue.
+8. Advance the clock to `2026-07-15T08:00:00` and tap the checkbox (it covers
+   Tuesday): it becomes waiting, bar at 0, no overdue indicator.
+9. Advance the clock to `2026-07-15T16:00:00`: waiting, bar at 50.
+10. Advance the clock to `2026-07-16T00:00:00` (Thursday): pending.
+11. Advance the clock to `2026-07-16T12:00:00` and tap the checkbox (it covers
+    Thursday): waiting, bar at 0.
+12. Advance the clock to `2026-07-18T18:00:00`: waiting, bar at 50.
+13. Advance the clock to `2026-07-21T00:00:00` (next Tuesday): pending.
 
-## Flujo 4: completar antes de tiempo y ocurrencias perdidas
+## Flow 4: complete early and missed occurrences
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Crear `Sacar la basura` los `martes` y `jueves`: `en espera`.
-2. Tocar el checkbox el lunes (antes de tiempo, cubre el martes): sigue
-   `en espera`, barra en 0 (ahora espera hasta el jueves 16 a las 00:00).
-3. Avanzar el reloj a `2026-07-14T00:00:00` (martes): sigue `en espera`,
-   barra en 25 (el martes ya está cubierto).
-4. Avanzar el reloj a `2026-07-14T16:00:00`: `en espera`, barra en 50.
-5. Avanzar el reloj a `2026-07-16T00:00:00` (jueves): `pendiente`.
-6. Avanzar el reloj a `2026-07-17T10:00:00` (viernes, se perdió el jueves):
-   `atrasada`, con un solo indicador "Atrasada" y una sola fila.
-7. Tocar el checkbox (cubre el jueves; no queda nada atrasado): `en espera`,
-   barra en 0, sin indicador de atraso.
-8. Avanzar el reloj a `2026-07-19T05:00:00`: `en espera`, barra en 50.
-9. Avanzar el reloj a `2026-07-21T00:00:00` (martes): `pendiente`.
+1. Create `Sacar la basura` on `martes` and `jueves`: waiting.
+2. Tap the checkbox on Monday (early, it covers Tuesday): it is still
+   waiting, bar at 0 (it now waits until Thursday 16 at 00:00).
+3. Advance the clock to `2026-07-14T00:00:00` (Tuesday): still waiting,
+   bar at 25 (Tuesday is already covered).
+4. Advance the clock to `2026-07-14T16:00:00`: waiting, bar at 50.
+5. Advance the clock to `2026-07-16T00:00:00` (Thursday): pending.
+6. Advance the clock to `2026-07-17T10:00:00` (Friday, Thursday was missed):
+   overdue, with a single "Atrasada" indicator and a single row.
+7. Tap the checkbox (it covers Thursday; nothing is left overdue): waiting,
+   bar at 0, no overdue indicator.
+8. Advance the clock to `2026-07-19T05:00:00`: waiting, bar at 50.
+9. Advance the clock to `2026-07-21T00:00:00` (Tuesday): pending.
 
-## Flujo 5: mensual con día 31 en un mes de 30 días
+## Flow 5: monthly with day 31 in a 30-day month
 
-Precondición: lista vacía, reloj en `2026-06-20T00:00:00`.
+Precondition: empty list, clock at `2026-06-20T00:00:00`.
 
-1. Crear `Revisar filtro` con **Días del mes** `31`: `en espera`, barra en 0
-   (junio tiene 30 días: la ocurrencia es el 30 de junio).
-2. Avanzar el reloj a `2026-06-25T00:00:00`: `en espera`, barra en 50.
-3. Avanzar el reloj a `2026-06-30T00:00:00`: `pendiente`.
-4. Avanzar el reloj a `2026-07-01T00:00:00`: `atrasada`.
-5. Avanzar el reloj a `2026-07-01T08:00:00` y tocar el checkbox (cubre el 30
-   de junio): `en espera`, barra en 0.
-6. Avanzar el reloj a `2026-07-15T04:00:00`: `en espera`, barra en 47
-   (332 h de 712 h: de 2026-07-01T08:00 a 2026-07-31T00:00).
-7. Avanzar el reloj a `2026-07-31T00:00:00`: `pendiente`.
+1. Create `Revisar filtro` with **Días del mes** `31`: waiting, bar at 0
+   (June has 30 days: the occurrence is June 30).
+2. Advance the clock to `2026-06-25T00:00:00`: waiting, bar at 50.
+3. Advance the clock to `2026-06-30T00:00:00`: pending.
+4. Advance the clock to `2026-07-01T00:00:00`: overdue.
+5. Advance the clock to `2026-07-01T08:00:00` and tap the checkbox (it covers
+   June 30): waiting, bar at 0.
+6. Advance the clock to `2026-07-15T04:00:00`: waiting, bar at 47
+   (332 h of 712 h: from 2026-07-01T08:00 to 2026-07-31T00:00).
+7. Advance the clock to `2026-07-31T00:00:00`: pending.
 
-## Flujo 6: el checkbox en espera borra el completado de hoy
+## Flow 6: the checkbox of a waiting task deletes today's completion
 
-Con un completado, una calendario en espera está completada: si ese
-completado es de hoy, tocar su checkbox lo borra (spec §6.1) en lugar de
-cubrir otra ocurrencia. Si es de un día anterior, la completa de nuevo
-(Flujo 9).
+With a completion, a waiting calendar task is completed: if that
+completion is from today, tapping its checkbox deletes it (spec §6.1) instead of
+covering another occurrence. If it is from an earlier day, it completes it again
+(Flow 9).
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Crear `Sacar la basura` los `martes` y `jueves`: `en espera`, no
-   completada (checkbox sin marcar), barra en 0.
-2. Tocar el checkbox (antes de tiempo, cubre el martes): `en espera`,
-   completada (checkbox marcado), barra en 0 (ahora espera hasta el jueves 16
-   a las 00:00).
-3. Avanzar el reloj a `2026-07-13T12:00:00` y tocar el checkbox otra vez: se
-   borra el completado. Vuelve a esperar el martes sin completados: `en
-   espera`, no completada, barra en 25 (4 de las 16 horas desde la creación
-   hasta el martes a las 00:00).
-4. Tocar el checkbox: completada otra vez, cubre el martes, barra en 0.
-5. Avanzar el reloj a `2026-07-16T00:00:00` (jueves): `pendiente`, no
-   completada (el martes está cubierto).
+1. Create `Sacar la basura` on `martes` and `jueves`: waiting, not
+   completed (checkbox unchecked), bar at 0.
+2. Tap the checkbox (early, it covers Tuesday): waiting,
+   completed (checkbox checked), bar at 0 (it now waits until Thursday 16
+   at 00:00).
+3. Advance the clock to `2026-07-13T12:00:00` and tap the checkbox again: the
+   completion is deleted. It waits for Tuesday again without completions:
+   waiting, not completed, bar at 25 (4 of the 16 hours from creation
+   until Tuesday at 00:00).
+4. Tap the checkbox: completed again, it covers Tuesday, bar at 0.
+5. Advance the clock to `2026-07-16T00:00:00` (Thursday): pending, not
+   completed (Tuesday is covered).
 
-## Flujo 7: persistencia entre sesiones
+## Flow 7: persistence between sessions
 
-Precondición: Flujo 4 hasta el paso 4 (fila en espera, barra en 50, con el
-martes cubierto por el completado del lunes).
+Precondition: Flow 4 up to step 4 (waiting row, bar at 50, with
+Tuesday covered by Monday's completion).
 
-1. Cerrar la pestaña y abrir la app de nuevo con el mismo reloj.
-2. Entra directo a **Pendientes** (sin login) y **Sacar la basura** sigue
-   `en espera` con barra en 50 (la ocurrencia cubierta se guardó).
-3. Avanzar el reloj a `2026-07-16T00:00:00`: `pendiente`.
+1. Close the tab and open the app again with the same clock.
+2. It goes straight to **Pendientes** (no login) and **Sacar la basura** is still
+   waiting with the bar at 50 (the covered occurrence was saved).
+3. Advance the clock to `2026-07-16T00:00:00`: pending.
 
-## Flujo 8: relojes desfasados (completado "del futuro")
+## Flow 8: clocks out of sync (completion "from the future")
 
-Simula un completado registrado por un dispositivo con el reloj adelantado,
-como en el Flujo 6 de `qa/recurring-relative.md`: "retroceder el reloj a X"
-significa fijar el reloj simulado en X (`page.clock.setSystemTime`) y esperar
-a que la pantalla se actualice sola. Cubre la regla de spec §5.3 sobre un
-inicio de espera posterior a ahora.
+Simulates a completion recorded by a device with the clock ahead,
+as in Flow 6 of `qa/recurring-relative.md`: "move the clock back to X"
+means setting the simulated clock to X (`page.clock.setSystemTime`) and waiting
+for the screen to update by itself. Covers the rule of spec §5.3 on a
+start of wait later than now.
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Crear `Sacar la basura` los `martes` y `jueves`: `en espera`.
-2. Avanzar el reloj a `2026-07-15T20:00:00` (miércoles): `atrasada`. Tocar el
-   checkbox (cubre el martes): `en espera`, barra en 0.
-3. Retroceder el reloj a `2026-07-15T10:00:00` (diez horas antes del
-   completado): sigue `en espera`, barra en 0, sin indicador de atraso.
-4. Recargar la página: sigue `en espera`, barra en 0.
-5. Avanzar el reloj a `2026-07-15T20:00:00` (el momento del completado):
-   `en espera`, barra en 0.
-6. Avanzar el reloj a `2026-07-15T22:00:00`: `en espera`, barra en 50 (2 de
-   las 4 horas hasta el jueves).
-7. Avanzar el reloj a `2026-07-16T00:00:00` (jueves): `pendiente`.
+1. Create `Sacar la basura` on `martes` and `jueves`: waiting.
+2. Advance the clock to `2026-07-15T20:00:00` (Wednesday): overdue. Tap the
+   checkbox (it covers Tuesday): waiting, bar at 0.
+3. Move the clock back to `2026-07-15T10:00:00` (ten hours before the
+   completion): still waiting, bar at 0, no overdue indicator.
+4. Reload the page: still waiting, bar at 0.
+5. Advance the clock to `2026-07-15T20:00:00` (the moment of the completion):
+   waiting, bar at 0.
+6. Advance the clock to `2026-07-15T22:00:00`: waiting, bar at 50 (2 of
+   the 4 hours until Thursday).
+7. Advance the clock to `2026-07-16T00:00:00` (Thursday): pending.
 
-## Flujo 9: completar dos veces antes de tiempo, en días distintos
+## Flow 9: complete twice early, on different days
 
-Si el completado más reciente es de un día anterior, tocar el checkbox de la
-calendario en espera la completa de nuevo y cubre la próxima ocurrencia
+If the most recent completion is from an earlier day, tapping the checkbox of the
+waiting calendar task completes it again and covers the next occurrence
 (spec §5.3, §6.1).
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Crear `Sacar la basura` los `martes` y `jueves` y tocar el checkbox (antes
-   de tiempo, cubre el martes): `en espera`, completada, barra en 0 (espera
-   hasta el jueves 16 a las 00:00).
-2. Avanzar el reloj a `2026-07-14T16:00:00` (martes, ya cubierto): sigue
-   `en espera`, barra en 50 (32 de 64 horas).
-3. Tocar el checkbox (el último completado es de ayer; cubre el jueves):
-   aparece el aviso `Completaste «Sacar la basura»`. Sigue `en espera`,
-   completada, barra en 0 (ahora espera hasta el martes 21 a las 00:00).
-4. Avanzar el reloj a `2026-07-16T00:00:00` (jueves): sigue `en espera`,
-   barra en 21 (32 de 152 horas: el jueves ya está cubierto).
-5. Avanzar el reloj a `2026-07-21T00:00:00` (martes siguiente): `pendiente`.
+1. Create `Sacar la basura` on `martes` and `jueves` and tap the checkbox (early,
+   it covers Tuesday): waiting, completed, bar at 0 (it waits
+   until Thursday 16 at 00:00).
+2. Advance the clock to `2026-07-14T16:00:00` (Tuesday, already covered): still
+   waiting, bar at 50 (32 of 64 hours).
+3. Tap the checkbox (the last completion is from yesterday; it covers Thursday):
+   the notice `Completaste «Sacar la basura»` appears. Still waiting,
+   completed, bar at 0 (it now waits until Tuesday 21 at 00:00).
+4. Advance the clock to `2026-07-16T00:00:00` (Thursday): still waiting,
+   bar at 21 (32 of 152 hours: Thursday is already covered).
+5. Advance the clock to `2026-07-21T00:00:00` (next Tuesday): pending.

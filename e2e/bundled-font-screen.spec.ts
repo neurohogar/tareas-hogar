@@ -77,7 +77,7 @@ async function withEmojiOfDevice(page: Page) {
 // What is shown
 // ---------------------------------------------------------------------------
 
-test("Flujo 9 pasos 1 y 2: desde lo primero que dibuja, el ícono con pulso y sin texto; tocarla no hace nada", async ({
+test("Flow 9 pasos 1 y 2: desde lo primero que dibuja, el ícono con pulso y sin texto; tocarla no hace nada", async ({
   page,
 }) => {
   const code = await retain(page, /\/_app\//);
@@ -123,7 +123,7 @@ test("Flujo 9 pasos 1 y 2: desde lo primero que dibuja, el ícono con pulso y si
   await expect(enterWithGoogle(page)).toBeVisible();
 });
 
-test("Flujo 9 paso 3: con movimiento reducido el ícono se ve quieto", async ({ page }) => {
+test("Flow 9 paso 3: con movimiento reducido el ícono se ve quieto", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   const a = await openStopped(page, HOUR);
   await expect(screenName(page)).toBeVisible();
@@ -141,7 +141,7 @@ const COMBINATIONS = [
 ] as const;
 
 for (const c of COMBINATIONS) {
-  test(`Flujo 9 paso 4: sigue el tema del sistema, sin destello al irse (${c.name})`, async ({
+  test(`Flow 9 paso 4: sigue el tema del sistema, sin destello al irse (${c.name})`, async ({
     browser,
   }) => {
     const ctx = await browser.newContext({
@@ -176,7 +176,7 @@ for (const c of COMBINATIONS) {
 // When it appears
 // ---------------------------------------------------------------------------
 
-test("Flujo 9 paso 5: al abrir y al recargar, en las dos pantallas de destino", async ({ page }) => {
+test("Flow 9 paso 5: al abrir y al recargar, en las dos pantallas de destino", async ({ page }) => {
   await sessionWithTask(page);
   const targets = [
     { path: "/", heading: "Pendientes" },
@@ -195,7 +195,7 @@ test("Flujo 9 paso 5: al abrir y al recargar, en las dos pantallas de destino", 
   }
 });
 
-test("Flujo 9 paso 6: volver de segundo plano no la muestra", async ({ page }) => {
+test("Flow 9 paso 6: volver de segundo plano no la muestra", async ({ page }) => {
   await sessionWithTask(page);
   const view = await watchScreen(page);
   const other = await page.context().newPage();
@@ -214,7 +214,7 @@ test("Flujo 9 paso 6: volver de segundo plano no la muestra", async ({ page }) =
   await expect(row(page, "Regar")).toBeVisible();
 });
 
-test("Flujo 9 paso 7: tocar Entrar con Google y completar la entrada no la muestra", async ({ page }) => {
+test("Flow 9 paso 7: tocar Entrar con Google y completar la entrada no la muestra", async ({ page }) => {
   await page.goto("/");
   await expect(enterWithGoogle(page)).toBeVisible();
   const view = await watchScreen(page);
@@ -227,7 +227,7 @@ test("Flujo 9 paso 7: tocar Entrar con Google y completar la entrada no la muest
 // What it waits for with a session
 // ---------------------------------------------------------------------------
 
-test("Flujo 9 paso 8: con todo disponible, a los 0,4 s sigue y a los 0,5 s se va, con la lista completa", async ({
+test("Flow 9 paso 8: con todo disponible, a los 0,4 s sigue y a los 0,5 s se va, con la lista completa", async ({
   page,
 }) => {
   await sessionWithTask(page);
@@ -241,7 +241,7 @@ test("Flujo 9 paso 8: con todo disponible, a los 0,4 s sigue y a los 0,5 s se va
   await inAtkinsonAndNoto(page);
 });
 
-test("Flujo 9 paso 9: con Auth demorado, más allá de los 10 s, sigue hasta que Auth responde", async ({
+test("Flow 9 paso 9: con Auth demorado, más allá de los 10 s, sigue hasta que Auth responde", async ({
   page,
 }) => {
   await sessionWithTask(page);
@@ -254,7 +254,7 @@ test("Flujo 9 paso 9: con Auth demorado, más allá de los 10 s, sigue hasta que
   await withClock(page, () => expect(row(page, "Regar")).toBeVisible());
 });
 
-test("Flujo 9 paso 10: con los datos demorados 3 s, sigue hasta los 3 s y se va cuando responden", async ({
+test("Flow 9 paso 10: con los datos demorados 3 s, sigue hasta los 3 s y se va cuando responden", async ({
   page,
   browser,
 }) => {
@@ -278,7 +278,7 @@ for (const { name, pattern } of [
   { name: "Atkinson", pattern: ATKINSON_FILES },
   { name: "Noto", pattern: NOTO_FILE },
 ]) {
-  test(`Flujo 9 paso 11: con ${name} demorado 6 s, sigue hasta los 6 s y entra sin haber mostrado un respaldo`, async ({
+  test(`Flow 9 paso 11: con ${name} demorado 6 s, sigue hasta los 6 s y entra sin haber mostrado un respaldo`, async ({
     page,
     browser,
   }) => {
@@ -301,7 +301,7 @@ for (const { name, pattern } of [
   });
 }
 
-test("Flujo 9 paso 12: con los datos demorados más de 10 s, se va a los 10 s, sin aviso, y la lista se completa sola", async ({
+test("Flow 9 paso 12: con los datos demorados más de 10 s, se va a los 10 s, sin aviso, y la lista se completa sola", async ({
   page,
   browser,
 }) => {
@@ -324,7 +324,7 @@ test("Flujo 9 paso 12: con los datos demorados más de 10 s, se va a los 10 s, s
 // Without a session
 // ---------------------------------------------------------------------------
 
-test("Flujo 9 paso 13: sin sesión, con Atkinson demorada, sigue hasta que llega y da paso a la entrada", async ({
+test("Flow 9 paso 13: sin sesión, con Atkinson demorada, sigue hasta que llega y da paso a la entrada", async ({
   page,
 }) => {
   const font = await retain(page, ATKINSON_FILES);
@@ -337,7 +337,7 @@ test("Flujo 9 paso 13: sin sesión, con Atkinson demorada, sigue hasta que llega
   await withAtkinson(page, enterWithGoogle(page));
 });
 
-test("Flujo 9 paso 14: sin sesión no espera a Noto, se va a los 0,5 s y Noto sigue bajando", async ({ page }) => {
+test("Flow 9 paso 14: sin sesión no espera a Noto, se va a los 0,5 s y Noto sigue bajando", async ({ page }) => {
   const noto = await retain(page, NOTO_FILE);
   const a = await openStopped(page, HOUR);
   await a.toMount(page.getByText("Entrar con Google"));
@@ -349,7 +349,7 @@ test("Flujo 9 paso 14: sin sesión no espera a Noto, se va a los 0,5 s y Noto si
   noto.release();
 });
 
-test("Flujo 9 paso 14: si se entra antes de que llegue Noto, emoji del dispositivo y cambian solos", async ({ page }) => {
+test("Flow 9 paso 14: si se entra antes de que llegue Noto, emoji del dispositivo y cambian solos", async ({ page }) => {
   const noto = await retain(page, NOTO_FILE);
   await enter(page);
   await createAndView(page, {
@@ -371,7 +371,7 @@ test("Flujo 9 paso 14: si se entra antes de que llegue Noto, emoji del dispositi
 // What will never arrive
 // ---------------------------------------------------------------------------
 
-test("Flujo 9 paso 17: con Noto demorado, perder la conexión a los 2 s la cierra en ese momento", async ({
+test("Flow 9 paso 17: con Noto demorado, perder la conexión a los 2 s la cierra en ese momento", async ({
   page,
 }) => {
   await sessionWithTask(page);
@@ -384,7 +384,7 @@ test("Flujo 9 paso 17: con Noto demorado, perder la conexión a los 2 s la cierr
   await page.context().setOffline(false);
 });
 
-test("Flujo 9 paso 18: con falla de Noto a los 2 s y los datos demorados 5 s, se va a los 5 s", async ({
+test("Flow 9 paso 18: con falla de Noto a los 2 s y los datos demorados 5 s, se va a los 5 s", async ({
   page,
   browser,
 }) => {
@@ -403,7 +403,7 @@ test("Flujo 9 paso 18: con falla de Noto a los 2 s y los datos demorados 5 s, se
   await b.ctx.close();
 });
 
-test("Flujo 9 paso 19: con falla de Noto y todo lo demás listo, el mínimo vale igual", async ({ page }) => {
+test("Flow 9 paso 19: con falla de Noto y todo lo demás listo, el mínimo vale igual", async ({ page }) => {
   await sessionWithTask(page);
   await forgetFonts(page);
   const noto = await networkFailure(page, NOTO_FILE);
@@ -422,7 +422,7 @@ test("Flujo 9 paso 19: con falla de Noto y todo lo demás listo, el mínimo vale
 // Noto cap remembered per device
 // ---------------------------------------------------------------------------
 
-test("Flujo 9 pasos 20 a 22: el tope con Noto sin bajar lo recuerda solo ese dispositivo, hasta que Noto queda guardado o cambia el juego", async ({
+test("Flow 9 pasos 20 a 22: el tope con Noto sin bajar lo recuerda solo ese dispositivo, hasta que Noto queda guardado o cambia el juego", async ({
   browser,
 }) => {
   test.setTimeout(240_000);
@@ -499,7 +499,7 @@ test("Flujo 9 pasos 20 a 22: el tope con Noto sin bajar lo recuerda solo ese dis
   }
 });
 
-test("Flujo 9 paso 23: el tiempo sin sesión no cuenta como tope con Noto", async ({ page }) => {
+test("Flow 9 paso 23: el tiempo sin sesión no cuenta como tope con Noto", async ({ page }) => {
   await retain(page, NOTO_FILE);
   await page.goto("/");
   await expect(enterWithGoogle(page)).toBeVisible();

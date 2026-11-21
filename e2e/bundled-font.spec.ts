@@ -123,7 +123,7 @@ const combinations = [
 ] as const;
 
 for (const c of combinations) {
-  test(`Flujo 1: toda la app con la fuente (${c.name})`, async ({
+  test(`Flow 1: toda la app con la fuente (${c.name})`, async ({
     browser,
   }) => {
     const ctx = await browser.newContext({
@@ -271,7 +271,7 @@ for (const c of combinations) {
 // Flow 2
 // ---------------------------------------------------------------------------
 
-test("Flujo 2: qué fuente dibuja cada carácter", async ({ page }) => {
+test("Flow 2: qué fuente dibuja cada carácter", async ({ page }) => {
   await sessionWithClock(page, HOUR);
   await createAndView(page, {
     title: "Ñandú: camión ❤ 日本語 🌱",
@@ -396,7 +396,7 @@ function hierarchyKeeps(j: Awaited<ReturnType<typeof hierarchy>>) {
   expect(j.other.mark).toBe("none");
 }
 
-test("Flujo 3: sin cambios de diseño y horas de ancho fijo", async ({
+test("Flow 3: sin cambios de diseño y horas de ancho fijo", async ({
   page,
 }) => {
   await blockFont(page);
@@ -486,7 +486,7 @@ test("Flujo 3: sin cambios de diseño y horas de ancho fijo", async ({
 // bundled-font-offline.spec.ts, which needs the service worker)
 // ---------------------------------------------------------------------------
 
-test("Flujo 4: ningún pedido a un servicio externo", async ({ page }) => {
+test("Flow 4: ningún pedido a un servicio externo", async ({ page }) => {
   const external = requestsExternal(page);
   await sessionWithClock(page, HOUR);
   await createAndView(page, {
@@ -545,7 +545,7 @@ async function withEmojiOfDevice(page: Page) {
 }
 
 /** What was saved works even if the network is blocked: for it to be missing, each step starts by forgetting it. */
-test("Flujo 5 pasos 1 y 2: sin la fuente, la pantalla no la espera, todo con la del sistema y sin aviso", async ({
+test("Flow 5 pasos 1 y 2: sin la fuente, la pantalla no la espera, todo con la del sistema y sin aviso", async ({
   page,
 }) => {
   await sessionWithClock(page, HOUR);
@@ -587,7 +587,7 @@ test("Flujo 5 pasos 1 y 2: sin la fuente, la pantalla no la espera, todo con la 
   await inAtkinsonAndNoto(page);
 });
 
-test("Flujo 5 pasos 3 y 4: sin el juego, la pantalla no lo espera y los emoji son los del dispositivo", async ({
+test("Flow 5 pasos 3 y 4: sin el juego, la pantalla no lo espera y los emoji son los del dispositivo", async ({
   page,
 }) => {
   await sessionWithClock(page, HOUR);
@@ -609,7 +609,7 @@ test("Flujo 5 pasos 3 y 4: sin el juego, la pantalla no lo espera y los emoji so
   await inAtkinsonAndNoto(page);
 });
 
-test("Flujo 5 paso 5: con el pedido demorado sigue hasta el tope; al liberarlo, Noto sin recargar ni segundo pedido", async ({
+test("Flow 5 paso 5: con el pedido demorado sigue hasta el tope; al liberarlo, Noto sin recargar ni segundo pedido", async ({
   page,
 }) => {
   await sessionWithClock(page, HOUR);
@@ -629,7 +629,7 @@ test("Flujo 5 paso 5: con el pedido demorado sigue hasta el tope; al liberarlo, 
   expect(fontSet.requests()).toBe(1);
 });
 
-test("Flujo 5 paso 6: con la descarga abortada no llega al tope; al volver la red se pide otra vez, sin recargar", async ({
+test("Flow 5 paso 6: con la descarga abortada no llega al tope; al volver la red se pide otra vez, sin recargar", async ({
   page,
 }) => {
   await sessionWithClock(page, HOUR);
@@ -660,7 +660,7 @@ test("Flujo 5 paso 6: con la descarga abortada no llega al tope; al volver la re
 // Flow 6
 // ---------------------------------------------------------------------------
 
-test("Flujo 6: un emoji que el juego no tiene se guarda y se muestra igual", async ({
+test("Flow 6: un emoji que el juego no tiene se guarda y se muestra igual", async ({
   browser,
 }) => {
   const { a, b, close: closeTwo } = await twoDevices(browser, HOUR);
@@ -754,7 +754,7 @@ function isSameCatalog(offered: string[], expected: string[]) {
   ).toEqual([]);
 }
 
-test("Flujo 6 paso 5: el selector ofrece los mismos emoji, ni falta ni sobra", async ({
+test("Flow 6 paso 5: el selector ofrece los mismos emoji, ni falta ni sobra", async ({
   page,
 }) => {
   test.setTimeout(240_000);
@@ -804,7 +804,7 @@ test("Flujo 6 paso 5: el selector ofrece los mismos emoji, ni falta ni sobra", a
   }
 });
 
-test("Flujo 6 paso 5: buscar da resultados y elegir uno lo asigna y cierra el selector", async ({
+test("Flow 6 paso 5: buscar da resultados y elegir uno lo asigna y cierra el selector", async ({
   page,
 }) => {
   await sessionWithClock(page, HOUR);
@@ -831,7 +831,7 @@ test("Flujo 6 paso 5: buscar da resultados y elegir uno lo asigna y cierra el se
   }
 });
 
-test("Flujo 6 paso 6: un cabello suelto o dos tonos llegados por otra vía se muestran y se conservan al guardar", async ({
+test("Flow 6 paso 6: un cabello suelto o dos tonos llegados por otra vía se muestran y se conservan al guardar", async ({
   page,
 }) => {
   await sessionWithClock(page, HOUR);

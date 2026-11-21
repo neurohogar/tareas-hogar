@@ -1,179 +1,179 @@
-# QA: emoji (selector) y nota de la tarea
+# QA: emoji (picker) and task note
 
-Verifica, solo por la interfaz, que el panel de edición tiene el selector de
-**Emoji** (sin campo de texto) y el campo **Nota**, que el selector ofrece todos
-los emojis por categoría, busca en español, recuerda los recientes en el
-dispositivo y funciona sin conexión, que el emoji se ve junto al título en
-Pendientes, en el Historial y en el aviso de deshacer, que la nota se ve solo
-en el panel y se normaliza, y los conflictos entre dos dispositivos. Cubre spec
-§4.1, §6.1, §6.2, §6.3, §5.4 y §7.
+Verifies, through the interface only, that the edit panel has the **Emoji**
+picker (without a text field) and the **Nota** field, that the picker offers all
+emojis by category, searches in Spanish, remembers recents on the
+device and works offline, that the emoji is shown next to the title in
+Pendientes, in the Historial and in the undo notice, that the note is shown only
+in the panel and is normalized, and the conflicts between two devices. Covers spec
+§4.1, §6.1, §6.2, §6.3, §5.4 and §7.
 
-Fuera de alcance: estados y orden (no dependen de estos campos);
-la regla de rechazo de un emoji inválido (§4.1), que la UI no puede producir y
-cubren los unit tests del core.
+Out of scope: statuses and order (they do not depend on these fields);
+the rule that rejects an invalid emoji (§4.1), which the UI cannot produce and
+the unit tests of the core cover.
 
-## Entorno
+## Environment
 
-Igual que `qa/edit-delete.md` (Emulator Suite, `page.clock` instalado antes
-de abrir la app, sesión `qa@example.com`, crear tareas y flujo de dos
-dispositivos A y B) y `qa/history-undo.md` (reloj detenido para el
-aviso). Para "sin conexión" se usa `browserContext.setOffline(true)` como en
-`qa/pwa-offline.md`, con la app como build de producción y el service
-worker activo. Los recientes se guardan por navegador: cada flujo parte de un
-contexto nuevo (sin recientes) salvo que diga lo contrario.
+Same as `qa/edit-delete.md` (Emulator Suite, `page.clock` installed before
+opening the app, session `qa@example.com`, creating tasks and the two-device
+flow A and B) and `qa/history-undo.md` (stopped clock for the
+notice). For "offline", `browserContext.setOffline(true)` is used as in
+`qa/pwa-offline.md`, with the app as a production build and the service
+worker active. Recents are saved per browser: each flow starts from a
+new context (no recents) unless it says otherwise.
 
-## Contrato observable
+## Observable contract
 
-- **Panel**: además de lo de `qa/edit-delete.md`, tiene la sección
-  **Emoji** y un campo de varias líneas **Nota**. No hay campo de texto para
-  el emoji. Sin emoji, la sección muestra un botón **Elegir emoji**; con emoji,
-  muestra ese emoji, un botón para cambiarlo y un botón **Quitar emoji**. Abre
-  con el emoji y la nota actuales (vacíos si no tiene).
-- **Selector**: se abre desde el panel. Muestra la lista de **Recientes**
-  primero (solo si hay), la navegación por categorías, la grilla de emojis y un
-  campo de búsqueda. Elegir un emoji lo asigna en el panel y cierra el
-  selector; el cambio se guarda al guardar el panel. No existe el mensaje
-  "Ingresá un solo emoji".
-- **Recientes**: del más reciente al más viejo, sin repetidos, máximo 16.
-  Quitar el emoji no los cambia. Son locales al dispositivo.
-- **Nombre de la tarea** (fila de Pendientes, entrada del Historial, aviso):
-  con emoji, `emoji título` (por ejemplo `🌱 Regar`); sin emoji, solo el
-  título y sin espacio inicial. La nota no aparece en ninguno de los tres.
+- **Panel**: in addition to what is in `qa/edit-delete.md`, it has the
+  **Emoji** section and a multi-line **Nota** field. There is no text field for
+  the emoji. Without an emoji, the section shows an **Elegir emoji** button; with an emoji,
+  it shows that emoji, a button to change it and a **Quitar emoji** button. It opens
+  with the current emoji and note (empty if it has none).
+- **Picker**: it opens from the panel. It shows the **Recientes** list
+  first (only if there are any), the category navigation, the emoji grid and a
+  search field. Choosing an emoji assigns it in the panel and closes the
+  picker; the change is saved when the panel is saved. The message
+  "Ingresá un solo emoji" does not exist.
+- **Recents**: from the most recent to the oldest, without repeats, at most 16.
+  Removing the emoji does not change them. They are local to the device.
+- **Task name** (Pendientes row, Historial entry, notice):
+  with an emoji, `emoji title` (for example `🌱 Regar`); without an emoji, only the
+  title and no leading space. The note does not appear in any of the three.
 
-## Flujo 1: elegir el emoji y verlo en la fila
+## Flow 1: choose the emoji and see it in the row
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00`.
+Precondition: empty list, clock at `2026-07-13T08:00:00`.
 
-1. Crear `Regar` con **Intervalo** cada `2` **días**. La fila dice `Regar`.
-2. Tocar la fila: no hay campo de texto de emoji; se ve el botón **Elegir
-   emoji** y la **Nota** vacía.
-3. Tocar **Elegir emoji**: se abre el selector. Buscar `planta` y elegir `🌱`:
-   el selector se cierra, el panel muestra `🌱` y los botones de cambiar y
-   **Quitar emoji**. Guardar: la fila dice `🌱 Regar`.
-4. Recargar: sigue diciendo `🌱 Regar`. Abrir la fila: el panel muestra `🌱`.
-5. Cambiar el emoji, desde el selector, a `👨‍👩‍👧` y guardar: la fila dice
-   `👨‍👩‍👧 Regar`. Repetir con `👍🏽`, `❤️` y `🇦🇷`: cada uno se ve como un solo
-   emoji en la fila.
-6. Crear con **+** `Barrer` (**Intervalo** cada `1` **día**, relativo a la
-   última vez que se hizo), elegir `🧹` en el selector y escribir en **Nota**
-   `Debajo de la mesa`: la fila dice `🧹 Barrer` y no muestra la nota.
-7. Al crear una tarea nueva, **Elegir emoji** y cerrar el selector sin elegir
-   (cerrar o Escape) deja el panel sin emoji.
+1. Create `Regar` with **Intervalo** every `2` **días**. The row says `Regar`.
+2. Tap the row: there is no emoji text field; the **Elegir
+   emoji** button is shown and the **Nota** is empty.
+3. Tap **Elegir emoji**: the picker opens. Search `planta` and choose `🌱`:
+   the picker closes, the panel shows `🌱` and the change and
+   **Quitar emoji** buttons. Save: the row says `🌱 Regar`.
+4. Reload: it still says `🌱 Regar`. Open the row: the panel shows `🌱`.
+5. Change the emoji, from the picker, to `👨‍👩‍👧` and save: the row says
+   `👨‍👩‍👧 Regar`. Repeat with `👍🏽`, `❤️` and `🇦🇷`: each is shown as a single
+   emoji in the row.
+6. Create with **+** `Barrer` (**Intervalo** every `1` **día**, relative to the
+   last time it was done), choose `🧹` in the picker and type in **Nota**
+   `Debajo de la mesa`: the row says `🧹 Barrer` and does not show the note.
+7. When creating a new task, **Elegir emoji** and closing the picker without choosing
+   (close or Escape) leaves the panel without an emoji.
 
-## Flujo 2: quitar el emoji
+## Flow 2: remove the emoji
 
-Precondición: `🌱 Regar` en la lista, reloj en `2026-07-13T08:00:00`.
+Precondition: `🌱 Regar` in the list, clock at `2026-07-13T08:00:00`.
 
-1. Abrir la fila, tocar **Quitar emoji**: el panel pasa a mostrar **Elegir
-   emoji**. Guardar: la fila dice `Regar` (sin emoji y sin espacio inicial).
-2. Reabrir: se ve **Elegir emoji**, no hay emoji. Recargar: la fila sigue
-   diciendo `Regar`.
-3. Abrir la fila, elegir `🔥`, tocar **Quitar emoji** y **Cerrar** sin guardar
-   (y **Descartar** en el aviso "Tenés cambios sin guardar"):
-   la fila sigue diciendo `Regar`.
+1. Open the row, tap **Quitar emoji**: the panel goes back to showing **Elegir
+   emoji**. Save: the row says `Regar` (no emoji and no leading space).
+2. Reopen: **Elegir emoji** is shown, there is no emoji. Reload: the row still
+   says `Regar`.
+3. Open the row, choose `🔥`, tap **Quitar emoji** and **Cerrar** without saving
+   (and **Descartar** in the notice "Tenés cambios sin guardar"):
+   the row still says `Regar`.
 
-## Flujo 3: catálogo, categorías y búsqueda en español
+## Flow 3: catalog, categories and search in Spanish
 
-Precondición: lista con una tarea `Regar`, reloj en `2026-07-13T08:00:00`.
+Precondition: list with one task `Regar`, clock at `2026-07-13T08:00:00`.
 
-1. Abrir la fila y **Elegir emoji**. El selector muestra una navegación por
-   categorías (al menos: caras, personas, animales y naturaleza, comida,
-   viajes, actividades, objetos, símbolos, banderas).
-2. Tocar cada categoría de la navegación: la grilla se desplaza a esa
-   categoría y se ven emojis propios de ella (por ejemplo `🐶` en animales,
-   `🇦🇷` en banderas).
-3. Buscar `planta`: aparece `🌱` entre los resultados. Buscar `escoba`:
-   aparece `🧹`. Buscar `perro`: aparece `🐶`. Buscar `PERRO` y `perró` (sin
-   distinguir mayúsculas): también aparece `🐶`.
-4. Buscar `zzzzqq`: no hay resultados y se ve un mensaje de que no se
-   encontró nada. Borrar la búsqueda: vuelve la grilla completa.
-5. Con la búsqueda `escoba`, elegir `🧹`: se cierra y el panel muestra `🧹`.
+1. Open the row and **Elegir emoji**. The picker shows a category
+   navigation (at least: faces, people, animals and nature, food,
+   travel, activities, objects, symbols, flags).
+2. Tap each category of the navigation: the grid scrolls to that
+   category and emojis that belong to it are visible (for example `🐶` in animals,
+   `🇦🇷` in flags).
+3. Search `planta`: `🌱` appears among the results. Search `escoba`:
+   `🧹` appears. Search `perro`: `🐶` appears. Search `PERRO` and `perró` (without
+   distinguishing case): `🐶` also appears.
+4. Search `zzzzqq`: there are no results and a message that nothing was
+   found is shown. Clear the search: the full grid comes back.
+5. With the search `escoba`, choose `🧹`: it closes and the panel shows `🧹`.
 
-## Flujo 4: recientes
+## Flow 4: recents
 
-Precondición: contexto nuevo (sin recientes), lista con una tarea `Regar`,
-reloj en `2026-07-13T08:00:00`.
+Precondition: new context (no recents), list with one task `Regar`,
+clock at `2026-07-13T08:00:00`.
 
-1. Abrir el selector: no hay sección **Recientes**. Elegir `🌱` y guardar.
-2. Abrir de nuevo el selector: **Recientes** muestra `🌱`. Elegir `🔥` y
-   guardar.
-3. Reabrir el selector: **Recientes** muestra `🔥`, `🌱` en ese orden.
-4. Elegir `🌱` otra vez: tras reabrir, **Recientes** muestra `🌱`, `🔥` (sin
-   repetir `🌱`).
-5. Tocar **Quitar emoji**, guardar y reabrir el selector: **Recientes** sigue
-   siendo `🌱`, `🔥`.
-6. Elegir 16 emojis distintos más, uno por uno: **Recientes** muestra
-   exactamente 16, el último elegido primero, y `🔥` y `🌱` ya no están.
-7. Recargar la página y abrir el selector: **Recientes** conserva los mismos
-   16 emojis en el mismo orden.
-8. Crear una tarea nueva con **+** y abrir el selector: los **Recientes** son
-   los mismos (son del dispositivo, no de la tarea).
-9. Abrir la app en un contexto nuevo (otro dispositivo B, misma cuenta):
-   el selector no tiene **Recientes**: no se sincronizan.
+1. Open the picker: there is no **Recientes** section. Choose `🌱` and save.
+2. Open the picker again: **Recientes** shows `🌱`. Choose `🔥` and
+   save.
+3. Reopen the picker: **Recientes** shows `🔥`, `🌱` in that order.
+4. Choose `🌱` again: after reopening, **Recientes** shows `🌱`, `🔥` (without
+   repeating `🌱`).
+5. Tap **Quitar emoji**, save and reopen the picker: **Recientes** is still
+   `🌱`, `🔥`.
+6. Choose 16 more different emojis, one by one: **Recientes** shows
+   exactly 16, the last chosen first, and `🔥` and `🌱` are no longer there.
+7. Reload the page and open the picker: **Recientes** keeps the same
+   16 emojis in the same order.
+8. Create a new task with **+** and open the picker: the **Recientes** are
+   the same (they belong to the device, not to the task).
+9. Open the app in a new context (another device B, same account):
+   the picker has no **Recientes**: they are not synced.
 
-## Flujo 5: el selector sin conexión
+## Flow 5: the picker offline
 
-Precondición: build de producción, sesión iniciada, service worker activo y
-controlando la página, lista con una tarea `Regar`.
+Precondition: production build, signed in, service worker active and
+controlling the page, list with one task `Regar`.
 
-1. Con conexión, abrir el selector una vez y cerrarlo (para que cualquier
-   dato diferido se haya cargado). Cortar la conexión y recargar.
-2. Abrir la fila y **Elegir emoji**: el selector abre con su grilla, sus
-   categorías y sus emojis visibles, sin errores.
-3. Buscar `planta`: aparece `🌱`, igual que con conexión. Elegirlo y guardar:
-   la fila dice `🌱 Regar`.
-4. Durante todo el flujo, el navegador no emitió ninguna petición de red a un
-   dominio que no sea el de la app o el emulador (el catálogo y los textos de
-   búsqueda no se piden a un servicio externo).
-5. Reconectar: la fila sigue diciendo `🌱 Regar`.
+1. With a connection, open the picker once and close it (so that any
+   deferred data has been loaded). Cut the connection and reload.
+2. Open the row and **Elegir emoji**: the picker opens with its grid, its
+   categories and its emojis visible, without errors.
+3. Search `planta`: `🌱` appears, the same as with a connection. Choose it and save:
+   the row says `🌱 Regar`.
+4. During the whole flow, the browser did not issue any network request to a
+   domain other than the app's or the emulator's (the catalog and the search
+   texts are not requested from an external service).
+5. Reconnect: the row still says `🌱 Regar`.
 
-## Flujo 6: la nota, solo en el panel
+## Flow 6: the note, only in the panel
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00`.
+Precondition: empty list, clock at `2026-07-13T08:00:00`.
 
-1. Crear `Regar` con **Intervalo** cada `2` **días**.
-2. Abrir la fila, escribir en **Nota** `  Usar guantes  ` (con espacios al
-   inicio y al final) y guardar. La fila no muestra la nota.
-3. Reabrir: **Nota** tiene exactamente `Usar guantes`, sin espacios en los
-   extremos.
-4. Escribir una nota de dos líneas (`Usar guantes`, salto de línea,
-   `Ventilar`) y guardar. Reabrir: se ven las dos líneas.
-5. Pegar una nota de 5000 caracteres y guardar: se acepta sin error; al
-   reabrir, tiene los 5000 caracteres.
-6. Escribir solo espacios en **Nota** y guardar. Reabrir: **Nota** está vacía.
-7. Recargar la página: la nota sigue vacía; la fila sigue sin mostrar nota.
+1. Create `Regar` with **Intervalo** every `2` **días**.
+2. Open the row, type in **Nota** `  Usar guantes  ` (with spaces at the
+   start and at the end) and save. The row does not show the note.
+3. Reopen: **Nota** has exactly `Usar guantes`, without spaces at the
+   ends.
+4. Type a two-line note (`Usar guantes`, line break,
+   `Ventilar`) and save. Reopen: both lines are shown.
+5. Paste a note of 5000 characters and save: it is accepted without error; on
+   reopening, it has the 5000 characters.
+6. Type only spaces in **Nota** and save. Reopen: **Nota** is empty.
+7. Reload the page: the note is still empty; the row still does not show a note.
 
-## Flujo 7: el emoji en Historial y en el aviso de deshacer
+## Flow 7: the emoji in the Historial and in the undo notice
 
-Precondición: lista vacía, reloj detenido en `2026-07-13T08:00:00`.
+Precondition: empty list, clock stopped at `2026-07-13T08:00:00`.
 
-1. Crear `Regar` con **Intervalo** cada `4` **horas** y el emoji `🌱` (elegido en el selector), y
-   `Barrer` con **Intervalo** cada `4` **horas** sin emoji.
-2. Tocar el checkbox de `🌱 Regar`: aparece el aviso `Completaste «🌱 Regar»`
-   con **Deshacer**. Dejarlo expirar (5 segundos).
-3. Tocar el checkbox de `Barrer`: el aviso dice `Completaste «Barrer»` (sin
-   hueco). Dejarlo expirar.
-4. Ir a **Historial**: hay dos entradas del día **Hoy**, `🌱 Regar` y
-   `Barrer`, cada una con su hora.
-5. Tocar la entrada `🌱 Regar`, elegir el emoji `🔥` en el selector y guardar: la entrada
-   dice `🔥 Regar`. Tocar **Quitar emoji** y guardar: dice `Regar`.
-6. Tocar **Borrar** en una entrada: el diálogo de confirmación nombra la
-   tarea con su nombre (emoji y título, o solo título).
+1. Create `Regar` with **Intervalo** every `4` **horas** and the emoji `🌱` (chosen in the picker), and
+   `Barrer` with **Intervalo** every `4` **horas** without an emoji.
+2. Tap the checkbox of `🌱 Regar`: the notice `Completaste «🌱 Regar»`
+   appears with **Deshacer**. Let it expire (5 seconds).
+3. Tap the checkbox of `Barrer`: the notice says `Completaste «Barrer»` (without a
+   gap). Let it expire.
+4. Go to **Historial**: there are two entries for the day **Hoy**, `🌱 Regar` and
+   `Barrer`, each with its time.
+5. Tap the entry `🌱 Regar`, choose the emoji `🔥` in the picker and save: the entry
+   says `🔥 Regar`. Tap **Quitar emoji** and save: it says `Regar`.
+6. Tap **Borrar** on an entry: the confirmation dialog names the
+   task by its name (emoji and title, or only the title).
 
-## Flujo 8: dos dispositivos, emoji y nota
+## Flow 8: two devices, emoji and note
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` en A y en B.
+Precondition: empty list, clock at `2026-07-13T08:00:00` on A and on B.
 
-1. En A, crear `Regar` con **No se repite**. B la ve aparecer.
-2. B sin conexión. En B, elegir `🌱` en el selector de emoji y guardar.
-3. En A, poner **Nota** `Usar guantes` y guardar.
-4. B vuelve a tener conexión: en A y en B la fila dice `🌱 Regar`, y al abrirla
-   en cada uno, el panel muestra `🌱` y **Nota** `Usar guantes` (los dos cambios se
-   conservaron).
-5. B sin conexión. En B, elegir el emoji `🔥` y cambiar **Nota** a `Ventilar`. En
-   A, elegir el emoji `🌿`.
-6. B vuelve a tener conexión: en A y en B la fila dice `🔥 Regar` (el cambio de
-   B llegó último), y la nota es `Ventilar` en los dos.
-7. B sin conexión. En B, tocar **Quitar emoji** y guardar. En A,
-   cambiar **Nota** a `Barrer abajo`. B vuelve a tener conexión: en A y en B la
-   fila dice `Regar` (sin emoji) y la nota es `Barrer abajo`.
+1. On A, create `Regar` with **No se repite**. B sees it appear.
+2. B offline. On B, choose `🌱` in the emoji picker and save.
+3. On A, set **Nota** `Usar guantes` and save.
+4. B comes back online: on A and on B the row says `🌱 Regar`, and when opening it
+   on each, the panel shows `🌱` and **Nota** `Usar guantes` (both changes were
+   kept).
+5. B offline. On B, choose the emoji `🔥` and change **Nota** to `Ventilar`. On
+   A, choose the emoji `🌿`.
+6. B comes back online: on A and on B the row says `🔥 Regar` (B's change
+   arrived last), and the note is `Ventilar` on both.
+7. B offline. On B, tap **Quitar emoji** and save. On A,
+   change **Nota** to `Barrer abajo`. B comes back online: on A and on B the
+   row says `Regar` (no emoji) and the note is `Barrer abajo`.

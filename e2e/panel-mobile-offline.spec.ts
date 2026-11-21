@@ -8,7 +8,7 @@ test.beforeEach(async () => {
 	await cleanEmulators();
 });
 
-test('Flujo 7 paso 4: los iconos se ven sin conexión', async ({ browser }) => {
+test('Flow 7 paso 4: los iconos se ven sin conexión', async ({ browser }) => {
 	const { ctx, page } = await device(browser, '2026-07-15T10:00:00', true);
 	await page.setViewportSize({ width: 360, height: 640 });
 	await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));

@@ -74,7 +74,7 @@ async function deleteEntry(page: Page, title: string, hour: string, heading: str
 	await expect(dialog).toHaveCount(0);
 }
 
-test('Flujo 1: crear no la muestra; sin completados, "nunca"', async ({ page }) => {
+test('Flow 1: crear no la muestra; sin completados, "nunca"', async ({ page }) => {
 	await session(page, '2026-07-15T08:00:00');
 	await page.getByRole('button', { name: '+' }).click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
@@ -90,7 +90,7 @@ test('Flujo 1: crear no la muestra; sin completados, "nunca"', async ({ page }) 
 	await expect(page.getByText('Última vez')).toHaveCount(0);
 });
 
-test('Flujo 2: hoy, ayer y hace N días, con el panel abierto al pasar la medianoche', async ({ page }) => {
+test('Flow 2: hoy, ayer y hace N días, con el panel abierto al pasar la medianoche', async ({ page }) => {
 	await session(page, '2026-07-13T08:00:00');
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '10', unit: 'días' });
 	await advance(page, '2026-07-13T08:05:30');
@@ -113,7 +113,7 @@ test('Flujo 2: hoy, ayer y hace N días, con el panel abierto al pasar la median
 	await says(page, 'hace 10 días');
 });
 
-test('Flujo 3: borrar completados la recalcula', async ({ page }) => {
+test('Flow 3: borrar completados la recalcula', async ({ page }) => {
 	await session(page, '2026-07-14T10:00:00');
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '1', unit: 'horas' });
 	await complete(page, 'Regar');
@@ -148,7 +148,7 @@ test('Flujo 3: borrar completados la recalcula', async ({ page }) => {
 	await says(page, 'nunca');
 });
 
-test('Flujo 4: una puntual completada, abierta desde el Historial', async ({ page }) => {
+test('Flow 4: una puntual completada, abierta desde el Historial', async ({ page }) => {
 	await session(page, '2026-07-15T08:00:00');
 	await create(page, { title: 'Pagar la luz', kind: 'No se repite' });
 	await advance(page, '2026-07-15T08:20:00');
@@ -167,7 +167,7 @@ test('Flujo 4: una puntual completada, abierta desde el Historial', async ({ pag
 	await says(page, 'hoy 08:20');
 });
 
-test('Flujo 5: otro dispositivo completa y borra con el panel abierto', async ({ browser }) => {
+test('Flow 5: otro dispositivo completa y borra con el panel abierto', async ({ browser }) => {
 	const { a, b, end } = await two(browser, '2026-07-15T08:00:00', '2026-07-15T08:00:00');
 	await create(a, { title: 'Regar', kind: 'Intervalo', every: '1', unit: 'horas' });
 	await complete(a, 'Regar');
@@ -190,7 +190,7 @@ test('Flujo 5: otro dispositivo completa y borra con el panel abierto', async ({
 	await end();
 });
 
-test('Flujo 6: completado "del futuro"', async ({ browser }) => {
+test('Flow 6: completado "del futuro"', async ({ browser }) => {
 	const { a, b, end } = await two(browser, '2026-12-31T20:00:00', '2027-01-01T08:00:00');
 	await create(a, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await expect(row(b, 'Regar')).toBeVisible();

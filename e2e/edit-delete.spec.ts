@@ -41,7 +41,7 @@ test.beforeEach(async () => {
 	await cleanEmulators();
 });
 
-test('Flujo 1: abrir el panel de edición con los valores de la tarea', async ({ page }) => {
+test('Flow 1: abrir el panel de edición con los valores de la tarea', async ({ page }) => {
 	await sessionWithClock(page, MONDAY);
 	await page.getByRole('button', { name: '+' }).click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
@@ -95,7 +95,7 @@ test('Flujo 1: abrir el panel de edición con los valores de la tarea', async ({
 	await waitStatus(page, 'Pagar expensas', 'en espera', undefined, false);
 });
 
-test('Flujo 2: editar el título y cerrar sin guardar', async ({ page }) => {
+test('Flow 2: editar el título y cerrar sin guardar', async ({ page }) => {
 	await sessionWithClock(page, MONDAY);
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await edit(page, 'Regar', { title: 'Regar plantas' });
@@ -117,7 +117,7 @@ test('Flujo 2: editar el título y cerrar sin guardar', async ({ page }) => {
 	await waitStatus(page, 'Regar plantas', 'pendiente');
 });
 
-test('Flujo 3: validación al editar', async ({ page }) => {
+test('Flow 3: validación al editar', async ({ page }) => {
 	await sessionWithClock(page, MONDAY);
 	await create(page, { title: 'Sacar la basura', kind: 'Días de la semana', days: ['martes', 'jueves'] });
 	await openTask(page, 'Sacar la basura');
@@ -164,7 +164,7 @@ test('Flujo 3: validación al editar', async ({ page }) => {
 	await verifyDays(page, 'Días de la semana', ['martes', 'jueves'], WEEK);
 });
 
-test('Flujo 4: editar la fecha límite de una puntual', async ({ page }) => {
+test('Flow 4: editar la fecha límite de una puntual', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T10:00:00');
 	await create(page, { title: 'Pagar la luz', kind: 'No se repite', date: '2026-07-14' });
 	await waitStatus(page, 'Pagar la luz', 'atrasada');
@@ -180,7 +180,7 @@ test('Flujo 4: editar la fecha límite de una puntual', async ({ page }) => {
 	await waitStatus(page, 'Pagar la luz', 'atrasada');
 });
 
-test('Flujo 5: editar el intervalo de una relativa completada', async ({ page }) => {
+test('Flow 5: editar el intervalo de una relativa completada', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T08:00:00');
 	await create(page, { title: 'Ventilar', kind: 'Intervalo', every: '4', unit: 'horas' });
 	await complete(page, 'Ventilar');
@@ -195,7 +195,7 @@ test('Flujo 5: editar el intervalo de una relativa completada', async ({ page })
 	await waitStatus(page, 'Ventilar', 'atrasada');
 });
 
-test('Flujo 6: cambiar los días de una semanal completada', async ({ page }) => {
+test('Flow 6: cambiar los días de una semanal completada', async ({ page }) => {
 	const B = 'Sacar la basura';
 	await sessionWithClock(page, '2026-07-14T08:00:00');
 	await create(page, { title: B, kind: 'Días de la semana', days: ['martes', 'jueves'] });
@@ -218,7 +218,7 @@ test('Flujo 6: cambiar los días de una semanal completada', async ({ page }) =>
 	await verifyDays(page, 'Días del mes', ['16'], Array.from({ length: 31 }, (_, i) => String(i + 1)));
 });
 
-test('Flujo 7: cambiar de tipo y de modo', async ({ page }) => {
+test('Flow 7: cambiar de tipo y de modo', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-13T10:00:00');
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '1', unit: 'días' });
 	await complete(page, 'Regar');
@@ -255,7 +255,7 @@ test('Flujo 7: cambiar de tipo y de modo', async ({ page }) => {
 	await listIs(page, ['Limpiar horno', 'Renovar DNI']);
 });
 
-test('Flujo 8: editar cambia el orden', async ({ page }) => {
+test('Flow 8: editar cambia el orden', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T06:00:00');
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '4', unit: 'horas' });
 	await complete(page, 'Regar');
@@ -274,7 +274,7 @@ test('Flujo 8: editar cambia el orden', async ({ page }) => {
 	await order(['Pagar', 'Regar']);
 });
 
-test('Flujo 9: borrar una tarea', async ({ page }) => {
+test('Flow 9: borrar una tarea', async ({ page }) => {
 	await sessionWithClock(page, MONDAY);
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await complete(page, 'Regar');
@@ -308,7 +308,7 @@ test('Flujo 9: borrar una tarea', async ({ page }) => {
 	await expect(page.getByRole('listitem')).toHaveCount(0);
 });
 
-test('Flujo 10: dos dispositivos editan campos distintos', async ({ browser }) => {
+test('Flow 10: dos dispositivos editan campos distintos', async ({ browser }) => {
 	const { a, b, ctxB, close: end } = await twoDevices(browser);
 	await create(a, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await waitStatus(b, 'Regar', 'pendiente');
@@ -324,7 +324,7 @@ test('Flujo 10: dos dispositivos editan campos distintos', async ({ browser }) =
 	await end();
 });
 
-test('Flujo 11: el mismo campo, gana el último en llegar', async ({ browser }) => {
+test('Flow 11: el mismo campo, gana el último en llegar', async ({ browser }) => {
 	const { a, b, ctxB, close: end } = await twoDevices(browser);
 	await create(a, { title: 'Pagar', kind: 'No se repite' });
 	await waitStatus(b, 'Pagar', 'pendiente');
@@ -340,7 +340,7 @@ test('Flujo 11: el mismo campo, gana el último en llegar', async ({ browser }) 
 	await end();
 });
 
-test('Flujo 12: gana el borrado', async ({ browser }) => {
+test('Flow 12: gana el borrado', async ({ browser }) => {
 	const { a, b, ctxB, close: end } = await twoDevices(browser);
 	await create(a, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await create(a, { title: 'Barrer', kind: 'Intervalo', every: '1', unit: 'días' });
@@ -363,7 +363,7 @@ test('Flujo 12: gana el borrado', async ({ browser }) => {
 	await end();
 });
 
-test('Flujo 13: la tarea se borra mientras está abierta en el otro dispositivo', async ({ browser }) => {
+test('Flow 13: la tarea se borra mientras está abierta en el otro dispositivo', async ({ browser }) => {
 	const { a, b, close: end } = await twoDevices(browser);
 	await create(a, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await waitStatus(b, 'Regar', 'pendiente');
@@ -374,7 +374,7 @@ test('Flujo 13: la tarea se borra mientras está abierta en el otro dispositivo'
 	await end();
 });
 
-test('Flujo 14: cambiar de tipo no deja un valor residual de otro dispositivo', async ({ browser }) => {
+test('Flow 14: cambiar de tipo no deja un valor residual de otro dispositivo', async ({ browser }) => {
 	const { a, b, ctxB, close: end } = await twoDevices(browser);
 	const DNI = 'Renovar DNI';
 	await create(a, { title: DNI, kind: 'No se repite', date: '2026-07-20' });

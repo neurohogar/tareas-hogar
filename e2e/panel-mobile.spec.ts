@@ -91,7 +91,7 @@ async function createWater(page: Page) {
 
 // ---------------------------------------------------------------------------------------------
 
-test('Flujo 1: crear en el celular', async ({ page }) => {
+test('Flow 1: crear en el celular', async ({ page }) => {
 	await sessionWithClock(page, HOUR);
 	await newTask(page);
 
@@ -157,7 +157,7 @@ test('Flujo 1: crear en el celular', async ({ page }) => {
 	await expect(page.getByRole('listitem').filter({ has: page.getByRole('checkbox') })).toHaveCount(1);
 });
 
-test('Flujo 2: editar y las tres pestañas', async ({ page }) => {
+test('Flow 2: editar y las tres pestañas', async ({ page }) => {
 	await sessionWithClock(page, HOUR);
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'horas', emoji: '🌱', note: 'Las del balcón' });
 	await expect(row(page, 'Regar')).toBeVisible();
@@ -271,7 +271,7 @@ test('Flujo 2: editar y las tres pestañas', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Borrar tarea' })).toBeVisible();
 });
 
-test('Flujo 3: pantalla completa y barras fijas', async ({ page }) => {
+test('Flow 3: pantalla completa y barras fijas', async ({ page }) => {
 	await sessionWithClock(page, HOUR);
 	await createWater(page);
 	await openTask(page, 'Regar');
@@ -359,7 +359,7 @@ test('Problema original: sin desborde lateral ni Guardar fuera de pantalla', asy
 	}
 });
 
-test('Flujo 4: nada se pierde', async ({ page }) => {
+test('Flow 4: nada se pierde', async ({ page }) => {
 	await sessionWithClock(page, HOUR);
 	await newTask(page);
 
@@ -424,7 +424,7 @@ test('Flujo 4: nada se pierde', async ({ page }) => {
 	await expect(row(page, 'Barrer')).toBeVisible();
 });
 
-test('Flujo 5: errores', async ({ page }) => {
+test('Flow 5: errores', async ({ page }) => {
 	await sessionWithClock(page, HOUR);
 	await newTask(page);
 
@@ -502,7 +502,7 @@ test('Flujo 5: errores', async ({ page }) => {
 	}).toBe(true);
 });
 
-test('Flujo 6: teclado en pantalla', async ({ page }) => {
+test('Flow 6: teclado en pantalla', async ({ page }) => {
 	await sessionWithClock(page, HOUR);
 	await newTask(page);
 
@@ -570,7 +570,7 @@ test('Flujo 6: teclado en pantalla', async ({ page }) => {
 	await expect(page.getByLabel('Nota')).toHaveValue('uno\ndos');
 });
 
-test('Flujo 7: iconos y nombres accesibles', async ({ page }) => {
+test('Flow 7: iconos y nombres accesibles', async ({ page }) => {
 	await sessionWithClock(page, HOUR);
 	await createWater(page);
 
@@ -620,7 +620,7 @@ test('Flujo 7: iconos y nombres accesibles', async ({ page }) => {
 	}
 });
 
-test('Flujo 8: dos dispositivos con el panel abierto', async ({ browser }) => {
+test('Flow 8: dos dispositivos con el panel abierto', async ({ browser }) => {
 	const { a, b, close: closeTwo } = await twoDevices(browser, HOUR);
 	await a.setViewportSize({ width: 360, height: 640 });
 	await createWater(a);
@@ -662,7 +662,7 @@ test('Flujo 8: dos dispositivos con el panel abierto', async ({ browser }) => {
 	await closeTwo();
 });
 
-test('Flujo 9: sobre el panel', async ({ page, context }) => {
+test('Flow 9: sobre el panel', async ({ page, context }) => {
 	await sessionWithClock(page, HOUR);
 	await createWater(page);
 	await openTask(page, 'Regar');
@@ -707,7 +707,7 @@ test('Flujo 9: sobre el panel', async ({ page, context }) => {
 	await close(page);
 });
 
-test('Flujo 9 (aviso): el aviso de deshacer sobre la barra de Guardar y sobre el teclado', async ({ browser }) => {
+test('Flow 9 (aviso): el aviso de deshacer sobre la barra de Guardar y sobre el teclado', async ({ browser }) => {
 	const { a, close: closeTwo } = await twoDevices(browser, HOUR);
 	await a.setViewportSize({ width: 360, height: 640 });
 	await createWater(a);
@@ -735,7 +735,7 @@ test('Flujo 9 (aviso): el aviso de deshacer sobre la barra de Guardar y sobre el
 	await closeTwo();
 });
 
-test('Flujo 10: el corte de 40rem y las pantallas anchas', async ({ page }) => {
+test('Flow 10: el corte de 40rem y las pantallas anchas', async ({ page }) => {
 	await sessionWithClock(page, HOUR);
 	await createWater(page);
 

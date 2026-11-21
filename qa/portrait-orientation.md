@@ -1,98 +1,99 @@
-# QA: orientación vertical de la app instalada
+# QA: portrait orientation of the installed app
 
-Verifica, solo por la interfaz y por lo que el navegador expone de la PWA, que
-la app instalada se usa en vertical en cualquiera de los dos sentidos, en todas
-sus pantallas, porque lo declara el manifest; que abierta en una pestaña del
-navegador sigue girando con el diseño ancho de siempre; que en la compu no
-cambia nada, y que quien ya la tiene instalada recibe el cambio con una versión
-nueva, sin aviso ni pregunta. Cubre spec §6 (Orientación) y §8 (Manifest).
+Verifies, through the interface only and through what the browser exposes of
+the PWA, that the installed app is used in portrait in either direction, on all
+its screens, because the manifest declares it; that opened in a browser tab it
+still rotates with the usual wide layout; that on the computer nothing changes,
+and that someone who already has it installed receives the change with a new
+version, without a notice or a question. Covers spec §6 (Orientation) and §8
+(Manifest).
 
-Fuera de alcance: el giro real de un teléfono con la app instalada (el
-navegador de pruebas no instala la app ni gira la pantalla: se verifica lo que
-la app declara y que no fija la orientación de ninguna otra manera); cuántas
-aperturas tarda el sistema en aplicar el manifest nuevo (spec §6: "el sistema
+Out of scope: the real rotation of a phone with the installed app (the test
+browser does not install the app or rotate the screen: what is verified is what
+the app declares and that it does not fix the orientation in any other way); how
+many openings the system takes to apply the new manifest (spec §6: "el sistema
 puede tardar algunas aperturas").
 
-## Entorno
+## Environment
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de
-  cada flujo.
-- La app se sirve como build de producción (`vite build` + preview), como en
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of
+  each flow.
+- The app is served as a production build (`vite build` + preview), as in
   `qa/pwa-offline.md`.
-- Reloj simulado (`page.clock`) instalado **antes** de abrir la app, en
-  `2026-07-15T08:00:00` (zona `America/Argentina/Buenos_Aires`); al abrir, se
-  avanza hasta que se va la pantalla de carga (`qa/bundled-font.md`,
-  Flujo 9).
-- Sesión iniciada con `qa@example.com` (Flujo 1 de `qa/recurring-relative.md`),
-  salvo donde se pide la pantalla de entrada.
-- **Celular vertical**: viewport de 360x640 px con emulación táctil.
-  **Celular horizontal**: el mismo contexto con viewport de 740x360 px (más de
-  40rem de ancho). **Compu**: 1280x800 px sin emulación táctil.
-- **Espía de orientación**: antes de abrir la app (`addInitScript`), envolver
-  `screen.orientation.lock` y `screen.orientation.unlock` para anotar cada
-  llamada, y registrar los listeners de `orientationchange` y de
-  `screen.orientation` `change`, sin cambiar lo que hacen.
+- Simulated clock (`page.clock`) installed **before** opening the app, at
+  `2026-07-15T08:00:00` (zone `America/Argentina/Buenos_Aires`); when opening,
+  it is advanced until the loading screen goes away (`qa/bundled-font.md`,
+  Flow 9).
+- Signed in with `qa@example.com` (Flow 1 of `qa/recurring-relative.md`),
+  except where the sign-in screen is requested.
+- **Portrait phone**: viewport of 360x640 px with touch emulation.
+  **Landscape phone**: the same context with a viewport of 740x360 px (more than
+  40rem wide). **Computer**: 1280x800 px without touch emulation.
+- **Orientation spy**: before opening the app (`addInitScript`), wrap
+  `screen.orientation.lock` and `screen.orientation.unlock` to record each
+  call, and register the `orientationchange` listeners and the
+  `screen.orientation` `change` listeners, without changing what they do.
 
-## Contrato observable
+## Observable contract
 
-- **Manifest**: el documento enlaza con `<link rel="manifest">` a un manifest
-  que se descarga y parsea como JSON con `name` = "Tareas Hogar",
-  `short_name` = "Tareas", `display` = `standalone` y `orientation` =
-  `portrait` (no `portrait-primary` ni `portrait-secondary`, que fijarían un
-  sentido; tampoco `landscape`, `any` ni ausente).
-- **Sin bloqueo propio**: el espía no anota ninguna llamada a
-  `screen.orientation.lock` ni a `unlock`, y ninguna regla de estilo gira el
-  contenido: `transform` de `html` y `body` es `none` en vertical y en
-  horizontal.
-- **Diseño ancho**: el de `qa/panel-mobile.md`, Flujo 10, paso 3 (sin barra de
-  pestañas; secciones **Tarea**, **Cuándo** y **Acciones** seguidas).
+- **Manifest**: the document links with `<link rel="manifest">` to a manifest
+  that is downloaded and parsed as JSON with `name` = "Tareas Hogar",
+  `short_name` = "Tareas", `display` = `standalone` and `orientation` =
+  `portrait` (not `portrait-primary` or `portrait-secondary`, which would fix a
+  direction; nor `landscape`, `any` or absent).
+- **No lock of its own**: the spy records no call to
+  `screen.orientation.lock` or `unlock`, and no style rule rotates the
+  content: `transform` of `html` and `body` is `none` in portrait and in
+  landscape.
+- **Wide layout**: that of `qa/panel-mobile.md`, Flow 10, step 3 (without a tab
+  bar; sections **Tarea**, **Cuándo** and **Acciones** one after another).
 
-## Flujo 1: el manifest declara la orientación vertical
+## Flow 1: the manifest declares portrait orientation
 
-1. Abrir la app en **Celular vertical** y esperar a que el service worker esté
-   activo.
-2. Verificar el contrato de **Manifest**.
-3. Abrir el mismo manifest desde `/historial`, y desde la
-   pantalla de entrada sin sesión: es el mismo documento, con la misma
+1. Open the app on **Portrait phone** and wait for the service worker to be
+   active.
+2. Verify the **Manifest** contract.
+3. Open the same manifest from `/historial`, and from the
+   sign-in screen without a session: it is the same document, with the same
    `orientation`.
 
-## Flujo 2: ninguna pantalla fija la orientación por su cuenta
+## Flow 2: no screen fixes the orientation on its own
 
-1. Con el **Espía de orientación**, en **Celular vertical**, recorrer:
-   la pantalla de carga al abrir, Pendientes, Historial, el panel
-   de una tarea nueva y el de una existente (las tres pestañas), un aviso del
-   panel (cerrar con cambios sin guardar) y, sin sesión, la pantalla de
-   entrada.
-2. En cada una, verificar **Sin bloqueo propio**.
+1. With the **Orientation spy**, on **Portrait phone**, go through:
+   the loading screen when opening, «Pendientes», «Historial», the panel
+   of a new task and that of an existing one (the three tabs), a panel
+   notice (closing with unsaved changes) and, without a session, the
+   sign-in screen.
+2. On each one, verify **No lock of its own**.
 
-## Flujo 3: en una pestaña del navegador sigue girando
+## Flow 3: in a browser tab it still rotates
 
-Precondición: crear `Regar` con **Intervalo** cada `2` **días**.
+Precondition: create `Regar` with **Intervalo** every `2` **días**.
 
-1. En **Celular vertical**, abrir Pendientes: se ve `Regar`; abrir `Regar`:
-   hay barra de pestañas (diseño de celular).
-2. Pasar a **Celular horizontal** sin recargar: la página sigue la nueva
-   orientación (`screen.orientation.type` empieza con `landscape` y el ancho
-   visible es 740 px), el panel de `Regar` muestra el **Diseño ancho**, y no
-   aparece ningún aviso ni pedido de girar el teléfono.
-3. Cerrar el panel y abrir Historial en **Celular horizontal**: se
-   ve entero, sin girar ni recortar.
-4. Volver a **Celular vertical**: el panel vuelve al diseño de celular.
-5. Verificar **Sin bloqueo propio** durante todo el flujo.
+1. On **Portrait phone**, open «Pendientes»: `Regar` is shown; open `Regar`:
+   there is a tab bar (phone layout).
+2. Switch to **Landscape phone** without reloading: the page follows the new
+   orientation (`screen.orientation.type` starts with `landscape` and the
+   visible width is 740 px), the `Regar` panel shows the **Wide layout**, and
+   no notice or request to rotate the phone appears.
+3. Close the panel and open «Historial» on **Landscape phone**: it is
+   shown whole, without rotating or cropping.
+4. Go back to **Portrait phone**: the panel goes back to the phone layout.
+5. Verify **No lock of its own** throughout the flow.
 
-## Flujo 4: en la compu no cambia nada
+## Flow 4: on the computer nothing changes
 
-1. En **Compu**, abrir Pendientes, Historial y el panel de `Regar`:
-   se ven como hoy, con el **Diseño ancho** en el panel.
-2. Verificar **Sin bloqueo propio** y que no aparece ningún aviso sobre la
-   orientación.
+1. On **Computer**, open «Pendientes», «Historial» and the `Regar` panel:
+   they look as today, with the **Wide layout** in the panel.
+2. Verify **No lock of its own** and that no notice about the
+   orientation appears.
 
-## Flujo 5: versión nueva
+## Flow 5: new version
 
-1. Con la app instalada y controlada por un build anterior, copia del actual
-   con el manifest sin `orientation` (dos builds en el mismo origen, como los
-   sirve `e2e/versiones-apoyo.ts`), publicar el build actual.
-2. Abrir la app de nuevo: no se ve ningún aviso ni pregunta.
-3. Tras cerrar y volver a abrir, la página queda controlada por el service
-   worker nuevo y el manifest que enlaza cumple el contrato de **Manifest**;
-   los datos y la sesión siguen intactos.
+1. With the app installed and controlled by an earlier build, a copy of the
+   current one with the manifest without `orientation` (two builds on the same
+   origin, as `e2e/versions-support.ts` serves them), publish the current build.
+2. Open the app again: no notice or question is shown.
+3. After closing and reopening, the page is controlled by the new service
+   worker and the manifest it links meets the **Manifest** contract;
+   the data and the session are still intact.

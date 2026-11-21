@@ -1,122 +1,122 @@
-# QA: pausar y reanudar tareas periódicas
+# QA: pause and resume recurring tasks
 
-Verifica, solo por la interfaz:
+Verifies, through the interface only:
 
-- el botón **Pausar** / **Reanudar** del panel: aparece solo al editar una periódica, actúa en el momento (guarda y cierra el panel sin **Guardar**) y, con la tarea pausada, el panel dice "Pausada";
-- que una pausada no se ve en Pendientes con **Mostrar pausadas** apagado, y que no se atrasa mientras está pausada;
-- el check **Mostrar pausadas**: las pausadas van al final (después de las completadas), por título, atenuadas, con "Pausada" en lugar del indicador de estado y el checkbox deshabilitado; el valor se guarda en el dispositivo y no se sincroniza;
-- reanudar: la relativa queda `pendiente`; la de calendario queda `pendiente` si hoy toca y, si no, `en espera` hasta la próxima ocurrencia; con horario, una ventana que ya cerró al reanudar no la deja `atrasada`;
-- que los completados de antes de la pausa siguen en el Historial y en "Última vez", pero no cuentan para el estado después de reanudar;
-- pasar una periódica pausada a puntual la reanuda;
-- la pausa con dos dispositivos.
+- the **Pausar** / **Reanudar** button in the panel: it appears only when editing a recurring task, acts immediately (saves and closes the panel without **Guardar**) and, with the task paused, the panel says "Pausada";
+- that a paused task is not shown in Pendientes with **Mostrar pausadas** off, and that it does not become overdue while paused;
+- the **Mostrar pausadas** check: paused tasks go last (after the completed ones), by title, dimmed, with "Pausada" in place of the status indicator and the checkbox disabled; the value is saved on the device and is not synced;
+- resuming: a relative task becomes pending; a calendar task becomes pending if today is one of its days and, if not, waiting until the next occurrence; with a schedule, a window that already closed when resuming does not leave it overdue;
+- that completions from before the pause stay in the Historial and in "Última vez", but do not count for the status after resuming;
+- changing a paused recurring task to one-off resumes it;
+- pause with two devices.
 
-Cubre spec §4.1 (`pausada`, `reanudadaEn`), §5.8, §6.1 (Mostrar pausadas), §6.2 (Pausar / Reanudar, Última vez) y §7 (conflictos).
+Covers spec §4.1 (`pausada`, `reanudadaEn`), §5.8, §6.1 (Mostrar pausadas), §6.2 (Pausar / Reanudar, Última vez) and §7 (conflicts).
 
-Fuera de alcance: el orden por urgencia de las no pausadas (`qa/pending-order.md`), los estados sin pausa (`qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/schedule.md`) y el formato de "Última vez" (`qa/last-time.md`).
+Out of scope: the urgency order of non-paused tasks (`qa/pending-order.md`), the statuses without pause (`qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/schedule.md`) and the format of "Última vez" (`qa/last-time.md`).
 
-## Entorno
+## Environment
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de cada flujo.
-- Cada flujo parte de un contexto de navegador nuevo (sin datos guardados en el dispositivo), con sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de `qa/recurring-relative.md`).
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la app, en la hora local que indica cada flujo (zona `America/Argentina/Buenos_Aires`).
-  - "A las X" significa adelantar el reloj simulado hasta X antes del paso.
-  - "Avanzar el reloj a X" significa adelantarlo hasta X y esperar a que la pantalla se actualice sola (sin recargar).
-  - Con "reloj detenido" (`page.clock.pauseAt`), el reloj se adelanta con `page.clock.runFor` o `fastForward` hasta la hora exacta, para que el tiempo no corra mientras QA actúa.
-- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite** que indica el paso, con los controles de `qa/one-off.md`, `qa/recurring-relative.md` y `qa/recurring-calendar.md`; si el paso da un horario, cargarlo como en `qa/schedule.md`; guardar.
-- **Mostrar completadas** y **Mostrar pausadas** quedan apagados salvo que el flujo diga encenderlos.
-- **Dos dispositivos** (Flujo 7): dos contextos de navegador independientes, A y B, con la misma cuenta y el mismo reloj simulado. "B sin conexión" significa `browserContext.setOffline(true)` en B; "B vuelve a tener conexión", volverlo online y esperar a que las dos pantallas se actualicen solas.
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of each flow.
+- Each flow starts from a new browser context (no data saved on the device), signed in with the Auth Emulator account `qa@example.com` (Flow 1 of `qa/recurring-relative.md`).
+- Simulated browser clock (`page.clock`) installed **before** opening the app, at the local time each flow gives (zone `America/Argentina/Buenos_Aires`).
+  - "At X" means advancing the simulated clock to X before the step.
+  - "Advance the clock to X" means advancing it to X and waiting for the screen to update by itself (without reloading).
+  - With a "stopped clock" (`page.clock.pauseAt`), the clock is advanced with `page.clock.runFor` or `fastForward` to the exact time, so that time does not run while QA acts.
+- Create a task: tap **+**, type the title, choose the **Se repite** option the step gives, with the controls of `qa/one-off.md`, `qa/recurring-relative.md` and `qa/recurring-calendar.md`; if the step gives a schedule, enter it as in `qa/schedule.md`; save.
+- **Mostrar completadas** and **Mostrar pausadas** stay off unless the flow says to turn them on.
+- **Two devices** (Flow 7): two independent browser contexts, A and B, with the same account and the same simulated clock. "B offline" means `browserContext.setOffline(true)` on B; "B comes back online" means putting it back online and waiting for both screens to update by themselves.
 
-Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16, viernes 17, sábado 18, domingo 19.
+Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17, Saturday 18, Sunday 19.
 
-## Contrato observable
+## Observable contract
 
-- **Botón de pausa del panel**: en el panel **Editar tarea** de una periódica, un botón con nombre accesible **Pausar** o, si la tarea está pausada, **Reanudar**; con **Reanudar**, el panel muestra el texto "Pausada". Tocarlo cierra el panel y el cambio queda guardado: al volver a abrir la tarea, o al recargar, se mantiene. El panel **Nueva tarea** y el de una puntual no tienen ninguno de los dos botones.
-- **Check Mostrar pausadas**: un control con rol `checkbox` y nombre accesible "Mostrar pausadas", junto a "Mostrar completadas". Marcado = encendido.
-- **Fila pausada** (solo con el check encendido): el checkbox de la fila deshabilitado (`disabled` o `aria-disabled="true"`, y tocarlo no cambia nada: no hay aviso ni entrada nueva en el Historial); la fila atenuada (opacidad efectiva menor que 1 y menor que la de una fila `pendiente`); el texto "Pausada" dentro de la fila; sin el indicador "Atrasada" y sin barra de progreso.
-- **Fila**: para las no pausadas, el contrato de `qa/recurring-relative.md` (checkbox, título, estilo atenuado, barra de progreso con `aria-valuenow`, indicador "Atrasada") y el de `qa/show-completed.md`.
-- **Lista**: "La lista es A, B, C" significa exactamente esas filas, de arriba hacia abajo.
-- **Última vez** e **Historial**: los de `qa/last-time.md` y `qa/history-undo.md`.
+- **Pause button of the panel**: in the **Editar tarea** panel of a recurring task, a button with accessible name **Pausar** or, if the task is paused, **Reanudar**; with **Reanudar**, the panel shows the text "Pausada". Tapping it closes the panel and the change is saved: when the task is opened again, or on reload, it is kept. The **Nueva tarea** panel and the panel of a one-off task have neither button.
+- **Mostrar pausadas check**: a control with role `checkbox` and accessible name "Mostrar pausadas", next to "Mostrar completadas". Checked = on.
+- **Paused row** (only with the check on): the row checkbox disabled (`disabled` or `aria-disabled="true"`, and tapping it changes nothing: no notice and no new entry in the Historial); the row dimmed (effective opacity less than 1 and less than that of a pending row); the text "Pausada" inside the row; no "Atrasada" indicator and no progress bar.
+- **Row**: for non-paused tasks, the contract of `qa/recurring-relative.md` (checkbox, title, dimmed style, progress bar with `aria-valuenow`, "Atrasada" indicator) and that of `qa/show-completed.md`.
+- **List**: "The list is A, B, C" means exactly those rows, from top to bottom.
+- **Última vez** and **Historial**: those of `qa/last-time.md` and `qa/history-undo.md`.
 
-## Flujo 1: pausar y reanudar una relativa
+## Flow 1: pause and resume a relative task
 
-Precondición: lista vacía, reloj en `2026-07-14T09:00:00` (martes).
+Precondition: empty list, clock at `2026-07-14T09:00:00` (Tuesday).
 
-1. Crear `Cambiar foco` con **No se repite** y sin fecha límite. Tocar **+**: el panel **Nueva tarea** no tiene **Pausar**. Crear `Regar` con **Intervalo** cada `2` **días**.
-2. Tocar el checkbox de **Regar**: queda `en espera`, completada, y su fila desaparece. La lista es **Cambiar foco**.
-3. Tocar la fila **Cambiar foco**: el panel no tiene **Pausar** ni **Reanudar**. Cerrarlo.
-4. Encender **Mostrar completadas**. Tocar la fila **Regar**: el panel tiene **Pausar** y dice `Última vez: hoy 09:00`. Tocar **Pausar**, sin tocar **Guardar**: el panel se cierra. La lista es **Cambiar foco**: **Regar** ya no se ve, ni siquiera con las completadas.
-5. Tocar el check **Mostrar pausadas**: la lista es **Cambiar foco**, **Regar**. **Regar** se ve pausada: atenuada, con "Pausada", sin barra y con el checkbox deshabilitado. Tocar su checkbox: no pasa nada (no hay aviso; el Historial sigue con una sola entrada).
-6. Tocar la fila **Regar**: el panel dice "Pausada", tiene **Reanudar** y no tiene **Pausar**, y sigue diciendo `Última vez: hoy 09:00`. Cerrar el panel.
-7. Avanzar el reloj a `2026-07-20T10:00:00` (lunes; sin pausa, **Regar** estaría atrasada desde el 18): **Regar** sigue pausada, sin "Atrasada".
-8. Recargar: **Mostrar pausadas** y **Mostrar completadas** siguen marcados; **Regar** sigue pausada.
-9. Tocar la fila **Regar** y tocar **Reanudar**: el panel se cierra. **Regar** está `pendiente` (en negrita, checkbox habilitado y sin marcar, sin "Atrasada" ni "Pausada") y la lista es **Regar**, **Cambiar foco**.
-10. Tocar la fila **Regar**: el panel tiene **Pausar** y dice `Última vez: hace 6 días`. Cerrar el panel. El Historial tiene la entrada **Regar** `09:00` del martes 14 de julio.
-11. Avanzar el reloj a `2026-07-25T10:00:00`: **Regar** sigue `pendiente`, sin "Atrasada" (nunca completada desde que se reanudó).
-12. A las `2026-07-25T10:05:00`, tocar el checkbox de **Regar**: aparece el aviso `Completaste «Regar»` y queda `en espera`, completada, con la barra en 0.
+1. Create `Cambiar foco` with **No se repite** and no due date. Tap **+**: the **Nueva tarea** panel has no **Pausar**. Create `Regar` with **Intervalo** every `2` **días**.
+2. Tap the checkbox of **Regar**: it becomes waiting, completed, and its row disappears. The list is **Cambiar foco**.
+3. Tap the **Cambiar foco** row: the panel has neither **Pausar** nor **Reanudar**. Close it.
+4. Turn on **Mostrar completadas**. Tap the **Regar** row: the panel has **Pausar** and says `Última vez: hoy 09:00`. Tap **Pausar**, without tapping **Guardar**: the panel closes. The list is **Cambiar foco**: **Regar** is no longer visible, not even with the completed ones.
+5. Tap the **Mostrar pausadas** check: the list is **Cambiar foco**, **Regar**. **Regar** looks paused: dimmed, with "Pausada", without a bar and with the checkbox disabled. Tap its checkbox: nothing happens (no notice; the Historial still has a single entry).
+6. Tap the **Regar** row: the panel says "Pausada", has **Reanudar** and does not have **Pausar**, and still says `Última vez: hoy 09:00`. Close the panel.
+7. Advance the clock to `2026-07-20T10:00:00` (Monday; without the pause, **Regar** would be overdue since the 18th): **Regar** is still paused, without "Atrasada".
+8. Reload: **Mostrar pausadas** and **Mostrar completadas** are still checked; **Regar** is still paused.
+9. Tap the **Regar** row and tap **Reanudar**: the panel closes. **Regar** is pending (bold, checkbox enabled and unchecked, without "Atrasada" or "Pausada") and the list is **Regar**, **Cambiar foco**.
+10. Tap the **Regar** row: the panel has **Pausar** and says `Última vez: hace 6 días`. Close the panel. The Historial has the entry **Regar** `09:00` of Tuesday 14 July.
+11. Advance the clock to `2026-07-25T10:00:00`: **Regar** is still pending, without "Atrasada" (never completed since it was resumed).
+12. At `2026-07-25T10:05:00`, tap the checkbox of **Regar**: the notice `Completaste «Regar»` appears and it becomes waiting, completed, with the bar at 0.
 
-## Flujo 2: reanudar una de calendario
+## Flow 2: resume a calendar task
 
-Precondición: lista vacía, reloj detenido en `2026-07-07T09:00:00` (martes). **Mostrar completadas** encendido hasta pausar las dos (para poder abrirlas).
+Precondition: empty list, clock stopped at `2026-07-07T09:00:00` (Tuesday). **Mostrar completadas** on until both are paused (so they can be opened).
 
-1. A las `09:00:00`, crear `Sacar la basura` con **Días de la semana** `martes` y `jueves`; a las `09:01:00`, crear `Cambiar sábanas` con **Días de la semana** `jueves`. Tocar el checkbox de las dos: quedan `en espera`.
-2. Pausar las dos (fila, **Pausar**). Encender **Mostrar pausadas**: la lista es **Cambiar sábanas**, **Sacar la basura**, las dos pausadas.
-3. Avanzar el reloj a `2026-07-15T12:00:00` (miércoles). Reanudar **Sacar la basura**: queda `en espera` (no "Atrasada"), atenuada, con la barra en 0 y el checkbox sin marcar (no está completada).
-4. Avanzar el reloj a `2026-07-15T18:00:00`: la barra de **Sacar la basura** está en 50 (`aria-valuenow`).
-5. Avanzar el reloj a `2026-07-16T10:00:00` (jueves): **Sacar la basura** está `pendiente`. Reanudar **Cambiar sábanas** (hoy le toca): queda `pendiente`. La lista es **Sacar la basura**, **Cambiar sábanas**, sin pausadas: las dos están pendientes desde las 00:00 de hoy y desempata el `creadaEn` real, no la reanudación ni el título.
-6. Tocar el checkbox de **Sacar la basura**: queda `en espera`, completada, hasta el martes 21.
-7. Avanzar el reloj a `2026-07-17T00:00:00` (viernes): **Cambiar sábanas** está `atrasada` (perdió el jueves después de reanudarla); **Sacar la basura** sigue `en espera`.
+1. At `09:00:00`, create `Sacar la basura` with **Días de la semana** `martes` and `jueves`; at `09:01:00`, create `Cambiar sábanas` with **Días de la semana** `jueves`. Tap the checkbox of both: they become waiting.
+2. Pause both (row, **Pausar**). Turn on **Mostrar pausadas**: the list is **Cambiar sábanas**, **Sacar la basura**, both paused.
+3. Advance the clock to `2026-07-15T12:00:00` (Wednesday). Resume **Sacar la basura**: it becomes waiting (not "Atrasada"), dimmed, with the bar at 0 and the checkbox unchecked (it is not completed).
+4. Advance the clock to `2026-07-15T18:00:00`: the bar of **Sacar la basura** is at 50 (`aria-valuenow`).
+5. Advance the clock to `2026-07-16T10:00:00` (Thursday): **Sacar la basura** is pending. Resume **Cambiar sábanas** (today is its day): it becomes pending. The list is **Sacar la basura**, **Cambiar sábanas**, without paused ones: both have been pending since 00:00 today and the real `creadaEn` breaks the tie, not the resume or the title.
+6. Tap the checkbox of **Sacar la basura**: it becomes waiting, completed, until Tuesday 21.
+7. Advance the clock to `2026-07-17T00:00:00` (Friday): **Cambiar sábanas** is overdue (it missed Thursday after being resumed); **Sacar la basura** is still waiting.
 
-## Flujo 3: completar después de reanudar cubre la próxima ocurrencia
+## Flow 3: completing after resuming covers the next occurrence
 
-Precondición: lista vacía, reloj detenido en `2026-07-07T09:00:00` (martes). **Mostrar completadas** encendido.
+Precondition: empty list, clock stopped at `2026-07-07T09:00:00` (Tuesday). **Mostrar completadas** on.
 
-1. Crear `Sacar la basura` con **Días de la semana** `martes` y `jueves`. Completarla y pausarla.
-2. A las `2026-07-15T10:00:00` (miércoles), reanudarla: `en espera`, no completada.
-3. A las `2026-07-15T11:00:00`, tocar su checkbox: aparece el aviso y queda `en espera`, completada.
-4. Avanzar el reloj a `2026-07-16T10:00:00` (jueves): sigue `en espera`, completada (el completado cubrió el jueves, no el martes perdido durante la pausa).
-5. Avanzar el reloj a `2026-07-21T00:00:00` (martes): está `pendiente`.
+1. Create `Sacar la basura` with **Días de la semana** `martes` and `jueves`. Complete it and pause it.
+2. At `2026-07-15T10:00:00` (Wednesday), resume it: waiting, not completed.
+3. At `2026-07-15T11:00:00`, tap its checkbox: the notice appears and it becomes waiting, completed.
+4. Advance the clock to `2026-07-16T10:00:00` (Thursday): it is still waiting, completed (the completion covered Thursday, not the Tuesday missed during the pause).
+5. Advance the clock to `2026-07-21T00:00:00` (Tuesday): it is pending.
 
-## Flujo 4: reanudar con horario
+## Flow 4: resume with a schedule
 
-Precondición: lista vacía, reloj detenido en `2026-07-10T09:00:00` (viernes). **Mostrar completadas** y **Mostrar pausadas** encendidos (para abrir la tarea completada y la pausada).
+Precondition: empty list, clock stopped at `2026-07-10T09:00:00` (Friday). **Mostrar completadas** and **Mostrar pausadas** on (to open the completed task and the paused one).
 
-1. Crear `Ventilar` con **Días de la semana** `miércoles` y `viernes` y horario `08:00` a `11:00`. A las `09:00`, completarla. Pausarla.
-2. A las `2026-07-15T12:00:00` (miércoles, ya cerró la ventana de hoy), reanudarla: queda `en espera`, no "Atrasada", con la barra en 0 y el checkbox deshabilitado (fuera de la ventana).
-3. Avanzar el reloj a `2026-07-15T23:00:00`: sigue `en espera`, barra en 25.
-4. Avanzar el reloj a `2026-07-17T08:00:00` (viernes): `pendiente`, checkbox habilitado.
-5. Avanzar el reloj a `2026-07-17T11:00:00`: `atrasada` (con el checkbox deshabilitado: la ventana ya cerró).
-6. Pausarla. A las `2026-07-22T09:00:00` (miércoles, dentro de la ventana), reanudarla: `pendiente`, checkbox habilitado. Avanzar el reloj a `2026-07-22T11:00:00` sin completarla: `atrasada` (la ventana estaba abierta al reanudar).
+1. Create `Ventilar` with **Días de la semana** `miércoles` and `viernes` and schedule `08:00` to `11:00`. At `09:00`, complete it. Pause it.
+2. At `2026-07-15T12:00:00` (Wednesday, today's window already closed), resume it: it becomes waiting, not "Atrasada", with the bar at 0 and the checkbox disabled (outside the window).
+3. Advance the clock to `2026-07-15T23:00:00`: still waiting, bar at 25.
+4. Advance the clock to `2026-07-17T08:00:00` (Friday): pending, checkbox enabled.
+5. Advance the clock to `2026-07-17T11:00:00`: overdue (with the checkbox disabled: the window already closed).
+6. Pause it. At `2026-07-22T09:00:00` (Wednesday, inside the window), resume it: pending, checkbox enabled. Advance the clock to `2026-07-22T11:00:00` without completing it: overdue (the window was open when it was resumed).
 
-## Flujo 5: Mostrar pausadas y orden
+## Flow 5: Mostrar pausadas and order
 
-Precondición: lista vacía, reloj en `2026-07-15T08:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T08:00:00` (Wednesday).
 
-1. Crear, en este orden: `Ñandú` con **Intervalo** cada `1` **días**; `Nube` con **Intervalo** cada `1` **días**; `Árbol` con **Días de la semana** `lunes`; `Pagar la luz` con **No se repite** y sin fecha límite; `Cambiar foco` con **No se repite** y sin fecha límite.
-2. Completar **Pagar la luz**. Pausar **Ñandú**, **Nube** y **Árbol**. La lista es **Cambiar foco**.
-3. Encender **Mostrar pausadas**: la lista es **Cambiar foco**, **Árbol**, **Nube**, **Ñandú** (las pausadas al final, por título: la Á con la A, la ñ después de la n; no por cuándo se crearon).
-4. Encender **Mostrar completadas**: la lista es **Cambiar foco**, **Pagar la luz**, **Árbol**, **Nube**, **Ñandú**: las pausadas después de la completada. **Pagar la luz** se ve completada (tachada, checkbox marcado); las tres pausadas, con "Pausada" y el checkbox deshabilitado.
-5. Apagar **Mostrar completadas**: la lista es **Cambiar foco**, **Árbol**, **Nube**, **Ñandú**.
-6. Recargar: **Mostrar pausadas** sigue marcado y la lista es la misma. Cerrar la pestaña y abrir la app de nuevo en el mismo contexto: el check sigue marcado.
-7. Apagar **Mostrar pausadas**: la lista es **Cambiar foco**. Recargar: sigue sin marcar.
+1. Create, in this order: `Ñandú` with **Intervalo** every `1` **días**; `Nube` with **Intervalo** every `1` **días**; `Árbol` with **Días de la semana** `lunes`; `Pagar la luz` with **No se repite** and no due date; `Cambiar foco` with **No se repite** and no due date.
+2. Complete **Pagar la luz**. Pause **Ñandú**, **Nube** and **Árbol**. The list is **Cambiar foco**.
+3. Turn on **Mostrar pausadas**: the list is **Cambiar foco**, **Árbol**, **Nube**, **Ñandú** (paused ones last, by title: Á sorts with A, ñ after n; not by when they were created).
+4. Turn on **Mostrar completadas**: the list is **Cambiar foco**, **Pagar la luz**, **Árbol**, **Nube**, **Ñandú**: the paused ones after the completed one. **Pagar la luz** looks completed (struck through, checkbox checked); the three paused ones have "Pausada" and the checkbox disabled.
+5. Turn off **Mostrar completadas**: the list is **Cambiar foco**, **Árbol**, **Nube**, **Ñandú**.
+6. Reload: **Mostrar pausadas** is still checked and the list is the same. Close the tab and open the app again in the same context: the check is still checked.
+7. Turn off **Mostrar pausadas**: the list is **Cambiar foco**. Reload: it is still unchecked.
 
-## Flujo 6: pasar una periódica pausada a puntual
+## Flow 6: change a paused recurring task to one-off
 
-Precondición: lista vacía, reloj en `2026-07-10T09:00:00` (viernes). **Mostrar completadas** encendido.
+Precondition: empty list, clock at `2026-07-10T09:00:00` (Friday). **Mostrar completadas** on.
 
-1. Crear `Regar` con **Intervalo** cada `2` **días** y completarla. Pausarla: la lista está vacía.
-2. A las `2026-07-15T10:00:00`, encender **Mostrar pausadas**, tocar la fila **Regar**, cambiar **Se repite** a **No se repite** (sin fecha límite) y guardar.
-   - **Regar** se ve completada (tachada, checkbox marcado), sin "Pausada": tiene el completado del 10.
-   - Tocar su fila: el panel no tiene **Pausar** ni **Reanudar**.
-3. Cambiarla a **Intervalo** cada `2` **días** y guardar: **Regar** está `pendiente` (no "Atrasada"; el completado del 10 es de antes de la reanudación), y el panel tiene **Pausar**.
+1. Create `Regar` with **Intervalo** every `2` **días** and complete it. Pause it: the list is empty.
+2. At `2026-07-15T10:00:00`, turn on **Mostrar pausadas**, tap the **Regar** row, change **Se repite** to **No se repite** (no due date) and save.
+   - **Regar** looks completed (struck through, checkbox checked), without "Pausada": it has the completion of the 10th.
+   - Tap its row: the panel has neither **Pausar** nor **Reanudar**.
+3. Change it to **Intervalo** every `2` **días** and save: **Regar** is pending (not "Atrasada"; the completion of the 10th is from before the resume), and the panel has **Pausar**.
 
-## Flujo 7: dos dispositivos
+## Flow 7: two devices
 
-Precondición: lista vacía, reloj en `2026-07-14T08:00:00` (martes) en A y en B. En A y en B, encender **Mostrar pausadas**.
+Precondition: empty list, clock at `2026-07-14T08:00:00` (Tuesday) on A and on B. On A and on B, turn on **Mostrar pausadas**.
 
-1. En A, crear `Regar` con **Intervalo** cada `2` **días**. B la ve.
-2. B sin conexión. En A, pausar **Regar**. En B, a las `2026-07-14T09:00:00`, completar **Regar** (B no vio la pausa).
-3. B vuelve a tener conexión. En A y en B, **Regar** está pausada (con "Pausada" y el checkbox deshabilitado); el Historial de los dos tiene la entrada **Regar** `09:00`.
-4. B sin conexión. En A, a las `2026-07-15T10:00:00`, reanudar **Regar**: en A está `pendiente` (no cuenta el completado de B, que es de antes de reanudar). En B, que no vio la reanudación, cambiar el título a `Regar plantas` y guardar.
-5. B vuelve a tener conexión. En A y en B, la tarea se llama **Regar plantas**, está `pendiente` y no pausada.
-6. En A, apagar **Mostrar pausadas**: en B sigue marcado, también después de recargar B.
-7. B sin conexión. En A, pausar **Regar plantas**. En B, cambiar el título a `Regar` y guardar. B vuelve a tener conexión: en A y en B la tarea se llama **Regar** y está pausada (A no la muestra; B sí, con "Pausada").
+1. On A, create `Regar` with **Intervalo** every `2` **días**. B sees it.
+2. B offline. On A, pause **Regar**. On B, at `2026-07-14T09:00:00`, complete **Regar** (B did not see the pause).
+3. B comes back online. On A and on B, **Regar** is paused (with "Pausada" and the checkbox disabled); the Historial of both has the entry **Regar** `09:00`.
+4. B offline. On A, at `2026-07-15T10:00:00`, resume **Regar**: on A it is pending (B's completion does not count, it is from before the resume). On B, which did not see the resume, change the title to `Regar plantas` and save.
+5. B comes back online. On A and on B, the task is called **Regar plantas**, is pending and not paused.
+6. On A, turn off **Mostrar pausadas**: on B it is still checked, also after reloading B.
+7. B offline. On A, pause **Regar plantas**. On B, change the title to `Regar` and save. B comes back online: on A and on B the task is called **Regar** and is paused (A does not show it; B does, with "Pausada").

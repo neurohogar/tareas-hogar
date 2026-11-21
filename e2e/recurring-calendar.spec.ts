@@ -67,7 +67,7 @@ test('Contrato del panel', async ({ page }) => {
 	await expect(page.getByRole('button', { name: '20', exact: true })).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('Flujo 1: crear una semanal y una mensual', async ({ page }) => {
+test('Flow 1: crear una semanal y una mensual', async ({ page }) => {
 	await session(page, MONDAY);
 	await openPanel(page, JUNK);
 	await page.getByRole('radio', { name: 'Días de la semana' }).check();
@@ -91,7 +91,7 @@ test('Flujo 1: crear una semanal y una mensual', async ({ page }) => {
 	await waitStatus(page, 'Regar plantas', 'pendiente');
 });
 
-test('Flujo 2: validación del panel', async ({ page }) => {
+test('Flow 2: validación del panel', async ({ page }) => {
 	await session(page, MONDAY);
 	const panel = page.getByRole('dialog');
 	const save = page.getByRole('button', { name: 'Guardar' });
@@ -145,7 +145,7 @@ test('Flujo 2: validación del panel', async ({ page }) => {
 	await waitStatus(page, 'Combinada', 'pendiente');
 });
 
-test('Flujo 3: ciclo de estados de una semanal', async ({ page }) => {
+test('Flow 3: ciclo de estados de una semanal', async ({ page }) => {
 	await session(page, MONDAY);
 	await createJunk(page);
 	await waitStatus(page, JUNK, 'en espera', 0, false);
@@ -177,7 +177,7 @@ test('Flujo 3: ciclo de estados de una semanal', async ({ page }) => {
 	await waitStatus(page, JUNK, 'pendiente');
 });
 
-test('Flujo 4: completar antes de tiempo y ocurrencias perdidas', async ({ page }) => {
+test('Flow 4: completar antes de tiempo y ocurrencias perdidas', async ({ page }) => {
 	await session(page, MONDAY);
 	await createJunk(page);
 	await waitStatus(page, JUNK, 'en espera', 0, false);
@@ -201,7 +201,7 @@ test('Flujo 4: completar antes de tiempo y ocurrencias perdidas', async ({ page 
 	await waitStatus(page, JUNK, 'pendiente');
 });
 
-test('Flujo 5: mensual con día 31 en un mes de 30 días', async ({ page }) => {
+test('Flow 5: mensual con día 31 en un mes de 30 días', async ({ page }) => {
 	const T = 'Revisar filtro';
 	await session(page, '2026-06-20T00:00:00');
 	await createCalendar(page, T, 'Días del mes', ['31']);
@@ -221,7 +221,7 @@ test('Flujo 5: mensual con día 31 en un mes de 30 días', async ({ page }) => {
 	await waitStatus(page, T, 'pendiente');
 });
 
-test('Flujo 6: el checkbox en espera borra el completado de hoy', async ({ page }) => {
+test('Flow 6: el checkbox en espera borra el completado de hoy', async ({ page }) => {
 	await session(page, MONDAY);
 	await createJunk(page);
 	await waitStatus(page, JUNK, 'en espera', 0, false);
@@ -236,7 +236,7 @@ test('Flujo 6: el checkbox en espera borra el completado de hoy', async ({ page 
 	await waitStatus(page, JUNK, 'pendiente');
 });
 
-test('Flujo 7: persistencia entre sesiones', async ({ browser }) => {
+test('Flow 7: persistencia entre sesiones', async ({ browser }) => {
 	const context = await browser.newContext();
 	const page = await context.newPage();
 	await session(page, MONDAY);
@@ -257,7 +257,7 @@ test('Flujo 7: persistencia entre sesiones', async ({ browser }) => {
 	await context.close();
 });
 
-test('Flujo 8: relojes desfasados (completado del futuro)', async ({ page }) => {
+test('Flow 8: relojes desfasados (completado del futuro)', async ({ page }) => {
 	await session(page, MONDAY);
 	await createJunk(page);
 	await waitStatus(page, JUNK, 'en espera', 0, false);
@@ -277,7 +277,7 @@ test('Flujo 8: relojes desfasados (completado del futuro)', async ({ page }) => 
 	await waitStatus(page, JUNK, 'pendiente');
 });
 
-test('Flujo 9: completar dos veces antes de tiempo, en días distintos', async ({ page }) => {
+test('Flow 9: completar dos veces antes de tiempo, en días distintos', async ({ page }) => {
 	await session(page, MONDAY);
 	await createJunk(page);
 	await complete(page, JUNK);

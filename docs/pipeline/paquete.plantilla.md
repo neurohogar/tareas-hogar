@@ -1,49 +1,49 @@
-# Paquete: <feature>
+# Package: <feature>
 
-<Una o dos líneas: qué agrega la feature, desde el punto de vista del usuario.>
+<One or two lines: what the feature adds, from the user's point of view.>
 
 ## Specs
 
-Cada `S#` cita **textual** la regla de `docs/spec.md` (con su sección), sin resumir ni reescribir. Una regla por `S#`.
+Each `S#` quotes the rule of `docs/spec.md` **verbatim** (with its section), without summarizing or rewriting. One rule per `S#`.
 
-- **S1** (§x.y): «<texto exacto del spec>»
+- **S1** (§x.y): «<exact text of the spec>»
 - **S2** (§x.y): «…»
 
-## Decisiones
+## Decisions
 
-Respuestas del usuario y decisiones del orquestador que el spec ya refleja, **textuales**, con su fecha.
+Answers from the user and decisions from the orchestrator that the spec already reflects, **verbatim**, with their date. User words stay in their original language inside `«»`, followed by ` (translation: «…»)`.
 
-- D1 (<fecha>, usuario): «<respuesta literal>»
+- D1 (<date>, user): «<literal answer>»
 
-## Artefactos
+## Artifacts
 
 - Gherkin: `features/<a>.feature` (S1, S2), `features/<b>.feature` (S3)
 - QA: `qa/<feature>.md`
 
 ## core
 
-- **Puede editar**: `src/lib/core/<archivo>.ts`, `src/lib/core/*.test.ts` (todos los tests del core: un cambio de tipo exportado puede tocarlos) (archivos nuevos: con un glob estrecho como `src/lib/core/<tema>*.ts`, nunca el directorio entero)
-- **Reglas**: S1, S2, …
-- **Reusa**: <funciones existentes del core que la feature debe usar, si las hay; el gherkin-writer las nombra cuando el spec se apoya en reglas ya implementadas>
+- **Allowed edits**: `src/lib/core/<file>.ts`, `src/lib/core/*.test.ts` (all core tests: a change to an exported type can touch them) (new files: with a narrow glob such as `src/lib/core/<topic>*.ts`, never the whole directory)
+- **Rules**: S1, S2, …
+- **Reuses**: <existing core functions the feature must use, if any; the gherkin-writer names them when the spec relies on rules already implemented>
 - **Gate**: `node scripts/gate.ts core`
 
 ## acceptance
 
-- **Puede editar**: `acceptance/steps/<archivo>.ts`, `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `docs/pipeline/pendientes.txt`
-- **Features a conectar**: `features/<a>.feature`, `features/<b>.feature`
-- **Pasos nuevos**: <texto de cada forma de paso nueva>
+- **Allowed edits**: `acceptance/steps/<file>.ts`, `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `docs/pipeline/pendientes.txt`
+- **Features to connect**: `features/<a>.feature`, `features/<b>.feature`
+- **New steps**: <text of each new step form>
 - **Gate**: `node scripts/gate.ts acceptance`
 
 ## ui
 
-- **Puede editar**: `src/lib/ui/<Componente>.svelte`, `src/lib/adapters/<archivo>.ts`, `src/routes/…`
-- **Comportamiento visible**: `qa/<feature>.md`
+- **Allowed edits**: `src/lib/ui/<Component>.svelte`, `src/lib/adapters/<file>.ts`, `src/routes/…`
+- **Visible behavior**: `qa/<feature>.md`
 - **Gate**: `node scripts/gate.ts ui`
 
 ## cleaner · architect · hardener · qa
 
-Trabajan sobre todo lo que cambió la feature (`git diff <base de la feature>`, anotada en `tmp/base-de-feature`); no necesitan sección propia salvo que el gherkin-writer anote algo para ellos acá.
+They work on everything the feature changed (`git diff <feature base>`, recorded in `tmp/base-de-feature`); they need no section of their own unless the gherkin-writer leaves a note for them here.
 
 ## Log
 
-- L1 (<fecha>): pedido original del usuario, textual.
+- L1 (<date>): the user's original request, verbatim (original words inside `«»` followed by ` (translation: «…»)`).

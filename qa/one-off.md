@@ -1,184 +1,184 @@
-# QA: tarea puntual con fecha límite opcional (feature 3)
+# QA: one-off task with optional due date (feature 3)
 
-Verifica, solo por la interfaz, crear tareas puntuales con y sin fecha límite,
-la validación del panel, el paso de pendiente a atrasada al terminar el día
-límite (con el reloj simulado), que completar una puntual la saca de
-Pendientes, la persistencia, y que crear periódicas sigue funcionando con el
-nuevo selector. Cubre spec §4.1, §4.4, §5.1, §6.1 (subconjunto), §6.2
-(subconjunto) y §7.
+Verifies, through the interface only, creating one-off tasks with and without a due date,
+the validation of the panel, the change from pending to overdue at the end of the due
+day (with the simulated clock), that completing a one-off task removes it from
+Pendientes, persistence, and that creating recurring tasks still works with the
+new selector. Covers spec §4.1, §4.4, §5.1, §6.1 (subset), §6.2
+(subset) and §7.
 
-Fuera de alcance: orden entre tareas, historial, deshacer (aviso y desde el
-historial), volver a la lista, edición, borrado, emoji y nota.
+Out of scope: order between tasks, history, undo (notice and from the
+history), going back to the list, editing, deletion, emoji and note.
 
-## Entorno
+## Environment
 
-Igual que `qa/recurring-calendar.md`:
+Same as `qa/recurring-calendar.md`:
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de
-  cada flujo.
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la
-  app, en la hora local que indica cada flujo (zona
-  `America/Argentina/Buenos_Aires`). "Avanzar el reloj a X" significa
-  adelantar el reloj simulado hasta X y esperar a que la pantalla se actualice
-  sola (sin recargar), salvo que el paso diga "recargar".
-- Sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of
+  each flow.
+- Simulated browser clock (`page.clock`) installed **before** opening the
+  app, at the local time each flow gives (zone
+  `America/Argentina/Buenos_Aires`). "Advance the clock to X" means
+  advancing the simulated clock to X and waiting for the screen to update
+  by itself (without reloading), unless the step says "reload".
+- Signed in with the Auth Emulator account `qa@example.com` (Flow 1 of
   `qa/recurring-relative.md`).
-- **Mostrar completadas** queda apagado (su valor inicial) en todos los flujos.
+- **Mostrar completadas** stays off (its initial value) in all flows.
 
-Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16,
-viernes 17.
+Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16,
+Friday 17.
 
-## Contrato observable de la fila de Pendientes
+## Observable contract of the Pendientes row
 
-El mismo de `qa/recurring-relative.md`. Una puntual nunca está `en espera`:
+The same as `qa/recurring-relative.md`. A one-off task is never waiting:
 
-| Estado | Checkbox | Estilo atenuado | Barra de progreso | Indicador de atraso |
+| Status | Checkbox | Dimmed style | Progress bar | Overdue indicator |
 |---|---|---|---|---|
-| `pendiente` | visible, sin marcar | no | no | no |
-| `atrasada` | visible, sin marcar | no | no | sí ("Atrasada") |
-| completada | — la fila no está en Pendientes — | | | |
+| pending | visible, unchecked | no | no | no |
+| overdue | visible, unchecked | no | no | yes ("Atrasada") |
+| completed | — the row is not in Pendientes — | | | |
 
-En todo este documento **Mostrar completadas** queda apagado (su valor
-inicial); con el check encendido, la completada se ve tachada al final
+Throughout this document **Mostrar completadas** stays off (its initial
+value); with the check on, the completed task is shown struck through at the end
 (`qa/show-completed.md`).
 
-La fila de una puntual no muestra la fecha límite: QA la verifica por el
-estado que toma con el paso del tiempo.
+The row of a one-off task does not show the due date: QA verifies it through the
+status it takes as time passes.
 
-## Contrato observable del panel
+## Observable contract of the panel
 
-Al tocar **+** se abre el panel con:
+Tapping **+** opens the panel with:
 
 - **Título**.
-- Grupo **Se repite** con cuatro opciones excluyentes (radio): **No se
-  repite** (tarea puntual), **Intervalo** (como en las
-  features 1 y 2), **Días de la semana** y **Días del mes**. Los controles de
-  Intervalo, Días de la semana y Días del mes son los de
+- **Se repite** group with four mutually exclusive options (radio): **No se
+  repite** (one-off task), **Intervalo** (as in
+  features 1 and 2), **Días de la semana** and **Días del mes**. The controls of
+  Intervalo, Días de la semana and Días del mes are those of
   `qa/recurring-calendar.md`.
-- Con **No se repite**: un campo de fecha **Fecha límite** (fecha sin hora,
-  opcional, vacío por defecto), con ese nombre accesible, único en el panel.
-  No se ven **Cada**, la unidad ni las grillas de días.
-- El campo **Fecha límite** se ve solo con **No se repite**.
-- Botones **Cerrar** y **Guardar**.
+- With **No se repite**: a date field **Fecha límite** (date without time,
+  optional, empty by default), with that accessible name, unique in the panel.
+  **Cada**, the unit and the day grids are not shown.
+- The **Fecha límite** field is only shown with **No se repite**.
+- **Cerrar** and **Guardar** buttons.
 
-## Flujo 1: selector de tipo en el panel
+## Flow 1: kind selector in the panel
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Tocar **+**: el grupo **Se repite** ofrece **No se repite**, **Intervalo**,
-   **Días de la semana** y **Días del mes**; **No se repite** está elegida (la
-   opción con la que abre el panel al crear). Se ve **Fecha límite**, vacía; no
-   se ven **Cada**, la unidad ni las grillas de días.
-2. Elegir **Intervalo**: no se ve **Fecha límite**; se ven **Cada** y la
-   unidad.
-3. Elegir **Días de la semana**: no se ve **Fecha límite**; se ven los siete
-   días.
-4. Elegir **No se repite** otra vez: se ve **Fecha límite**.
-5. Cerrar el panel sin guardar: la lista sigue vacía.
+1. Tap **+**: the **Se repite** group offers **No se repite**, **Intervalo**,
+   **Días de la semana** and **Días del mes**; **No se repite** is selected (the
+   option the panel opens with when creating). **Fecha límite** is shown, empty;
+   **Cada**, the unit and the day grids are not shown.
+2. Choose **Intervalo**: **Fecha límite** is not shown; **Cada** and the
+   unit are shown.
+3. Choose **Días de la semana**: **Fecha límite** is not shown; the seven
+   days are shown.
+4. Choose **No se repite** again: **Fecha límite** is shown.
+5. Close the panel without saving: the list is still empty.
 
-## Flujo 2: crear con y sin fecha límite
+## Flow 2: create with and without a due date
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Tocar **+**, escribir título `Pagar la luz`, elegir **No se repite**,
-   ingresar Fecha límite `2026-07-15` y guardar.
-   - El panel se cierra.
-   - Aparece la fila **Pagar la luz** `pendiente`: sin atenuar, sin barra, sin
-     indicador de atraso.
-2. Tocar **+**, escribir `Cambiar foco`, elegir **No se repite**, dejar Fecha
-   límite vacía y guardar: aparece **Cambiar foco** `pendiente`.
-3. Tocar **+**, escribir `Devolver libro`, elegir **No se repite**, ingresar
-   Fecha límite `2026-07-13` (hoy) y guardar: aparece **Devolver libro**
-   `pendiente` (la fecha límite cuenta como el día completo).
-4. Tocar **+**, escribir `Renovar DNI`, elegir **No se repite**, ingresar
-   Fecha límite `2026-07-10` (en el pasado) y guardar: se acepta y aparece
-   **Renovar DNI** `atrasada` de entrada, con el indicador "Atrasada".
-5. Recargar la página: siguen las cuatro filas con los mismos estados
-   (persistencia en Firestore).
+1. Tap **+**, type title `Pagar la luz`, choose **No se repite**,
+   enter Fecha límite `2026-07-15` and save.
+   - The panel closes.
+   - The row **Pagar la luz** appears pending: not dimmed, no bar, no
+     overdue indicator.
+2. Tap **+**, type `Cambiar foco`, choose **No se repite**, leave Fecha
+   límite empty and save: **Cambiar foco** appears pending.
+3. Tap **+**, type `Devolver libro`, choose **No se repite**, enter
+   Fecha límite `2026-07-13` (today) and save: **Devolver libro** appears
+   pending (the due date counts as the whole day).
+4. Tap **+**, type `Renovar DNI`, choose **No se repite**, enter
+   Fecha límite `2026-07-10` (in the past) and save: it is accepted and
+   **Renovar DNI** appears overdue right away, with the "Atrasada" indicator.
+5. Reload the page: the four rows are still there with the same statuses
+   (persistence in Firestore).
 
-## Flujo 3: validación del panel
+## Flow 3: panel validation
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00`.
+Precondition: empty list, clock at `2026-07-13T08:00:00`.
 
-1. Tocar **+**, elegir **No se repite**, dejar el título vacío y Fecha límite
-   vacía, y guardar.
-   - Se ve un mensaje de error asociado al campo Título.
-   - El panel sigue abierto; no aparece ninguna fila.
-2. Escribir título `   ` (solo espacios) y guardar: mismo resultado que el
-   paso 1.
-3. Dejar el título vacío, ingresar Fecha límite `2026-07-15` y guardar: mismo
-   resultado que el paso 1.
-4. Escribir título `Pagar la luz` y dejar en Fecha límite una fecha
-   incompleta, ingresada por teclado (solo día y mes, sin año), y guardar.
-   - Se ve un mensaje de error asociado al campo Fecha límite.
-   - El panel sigue abierto; no aparece ninguna fila (una fecha incompleta no
-     se guarda como "sin fecha límite").
-5. Cerrar el panel sin guardar (y **Descartar** en el aviso): la lista sigue vacía.
+1. Tap **+**, choose **No se repite**, leave the title empty and Fecha límite
+   empty, and save.
+   - An error message associated with the Título field is shown.
+   - The panel stays open; no row appears.
+2. Type title `   ` (only spaces) and save: same result as
+   step 1.
+3. Leave the title empty, enter Fecha límite `2026-07-15` and save: same
+   result as step 1.
+4. Type title `Pagar la luz` and leave in Fecha límite an
+   incomplete date, entered by keyboard (only day and month, no year), and save.
+   - An error message associated with the Fecha límite field is shown.
+   - The panel stays open; no row appears (an incomplete date is not
+     saved as "no due date").
+5. Close the panel without saving (and **Descartar** in the notice): the list is still empty.
 
-## Flujo 4: de pendiente a atrasada al terminar el día límite
+## Flow 4: from pending to overdue at the end of the due day
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Crear `Pagar la luz` con **No se repite** y Fecha límite `2026-07-15`:
-   `pendiente`.
-2. Crear `Cambiar foco` con **No se repite** y sin fecha límite: `pendiente`.
-3. Avanzar el reloj a `2026-07-15T00:00:00` (día límite): **Pagar la luz**
-   sigue `pendiente`.
-4. Avanzar el reloj a `2026-07-15T23:59:59`: sigue `pendiente`.
-5. Avanzar el reloj a `2026-07-16T00:00:00`: **Pagar la luz** pasa a
-   `atrasada`: muestra "Atrasada", sin atenuar, sin barra.
-6. Recargar la página: **Pagar la luz** sigue `atrasada`.
-7. Avanzar el reloj a `2026-09-01T08:00:00`: **Pagar la luz** sigue
-   `atrasada`; **Cambiar foco** sigue `pendiente` en todo el flujo (sin fecha
-   límite nunca se atrasa).
+1. Create `Pagar la luz` with **No se repite** and Fecha límite `2026-07-15`:
+   pending.
+2. Create `Cambiar foco` with **No se repite** and no due date: pending.
+3. Advance the clock to `2026-07-15T00:00:00` (due day): **Pagar la luz**
+   is still pending.
+4. Advance the clock to `2026-07-15T23:59:59`: still pending.
+5. Advance the clock to `2026-07-16T00:00:00`: **Pagar la luz** becomes
+   overdue: it shows "Atrasada", not dimmed, no bar.
+6. Reload the page: **Pagar la luz** is still overdue.
+7. Advance the clock to `2026-09-01T08:00:00`: **Pagar la luz** is still
+   overdue; **Cambiar foco** is still pending throughout the flow (without a due
+   date it never becomes overdue).
 
-## Flujo 5: completar saca la tarea de Pendientes
+## Flow 5: completing removes the task from Pendientes
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Crear `Pagar la luz` con Fecha límite `2026-07-15` y `Cambiar foco` sin
-   fecha límite: las dos `pendiente`.
-2. Tocar el checkbox de **Cambiar foco** (pendiente): la fila **Cambiar foco**
-   desaparece de Pendientes. **Pagar la luz** sigue `pendiente`.
-3. Avanzar el reloj a `2026-07-16T10:00:00`: **Pagar la luz** pasa a
-   `atrasada`.
-4. Tocar el checkbox de **Pagar la luz** (atrasada): la fila desaparece. La
-   lista queda vacía.
-5. Recargar la página: la lista sigue vacía (el completado se guardó).
-6. Avanzar el reloj a `2026-08-01T00:00:00`: la lista sigue vacía.
+1. Create `Pagar la luz` with Fecha límite `2026-07-15` and `Cambiar foco` without a
+   due date: both pending.
+2. Tap the checkbox of **Cambiar foco** (pending): the row **Cambiar foco**
+   disappears from Pendientes. **Pagar la luz** is still pending.
+3. Advance the clock to `2026-07-16T10:00:00`: **Pagar la luz** becomes
+   overdue.
+4. Tap the checkbox of **Pagar la luz** (overdue): the row disappears. The
+   list is left empty.
+5. Reload the page: the list is still empty (the completion was saved).
+6. Advance the clock to `2026-08-01T00:00:00`: the list is still empty.
 
-## Flujo 6: persistencia entre sesiones
+## Flow 6: persistence between sessions
 
-Precondición: Flujo 4 hasta el paso 2 (dos filas `pendiente`, reloj en
+Precondition: Flow 4 up to step 2 (two pending rows, clock at
 `2026-07-13T08:00:00`).
 
-1. Cerrar la pestaña y abrir la app de nuevo con el reloj en
+1. Close the tab and open the app again with the clock at
    `2026-07-16T00:00:00`.
-2. Entra directo a **Pendientes** (sin login): **Pagar la luz** está
-   `atrasada` (la fecha límite se guardó) y **Cambiar foco** `pendiente`.
-3. Tocar el checkbox de **Pagar la luz**: la fila desaparece.
-4. Cerrar la pestaña y abrir la app de nuevo con el mismo reloj: solo se ve
-   **Cambiar foco**, `pendiente`.
+2. It goes straight to **Pendientes** (no login): **Pagar la luz** is
+   overdue (the due date was saved) and **Cambiar foco** pending.
+3. Tap the checkbox of **Pagar la luz**: the row disappears.
+4. Close the tab and open the app again with the same clock: only
+   **Cambiar foco** is shown, pending.
 
-## Flujo 7: las periódicas se siguen creando con el nuevo selector
+## Flow 7: recurring tasks can still be created with the new selector
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. Tocar **+**, escribir `Ventilar`, elegir **Intervalo** (el panel abre con
-   **No se repite**), poner Cada = `4`, unidad **horas**, y guardar: aparece
-   **Ventilar** `pendiente` (nunca completada).
-2. Tocar el checkbox de **Ventilar**: queda `en espera`, completada, y su
-   fila desaparece.
-3. Tocar **+**, escribir `Sacar la basura`, elegir **No se repite**, ingresar
-   Fecha límite `2026-07-14`, cambiar a **Días de la semana**, tocar `martes`
-   y `jueves` y guardar: aparece **Sacar la basura** `en espera`, barra en 0
-   (se guardó la periódica; la fecha límite no aplica).
-4. Avanzar el reloj a `2026-07-14T00:00:00` (martes): **Sacar la basura** pasa
-   a `pendiente`; **Ventilar** pasa a `pendiente` desde las
-   `2026-07-13T12:00:00` y a `atrasada` desde las `2026-07-13T16:00:00`, así
-   que ahora vuelve a la lista, `atrasada`.
-5. Avanzar el reloj a `2026-07-15T00:00:00`: **Sacar la basura** pasa a
-   `atrasada`, como cualquier semanal con el martes sin cubrir.
-6. Tocar **+**, escribir `Pagar expensas`, elegir **Días del mes**, tocar `20`
-   y guardar: aparece **Pagar expensas** `en espera`.
-7. Recargar la página: las tres filas siguen con los mismos estados.
+1. Tap **+**, type `Ventilar`, choose **Intervalo** (the panel opens with
+   **No se repite**), set Cada = `4`, unit **horas**, and save: **Ventilar**
+   appears pending (never completed).
+2. Tap the checkbox of **Ventilar**: it becomes waiting, completed, and its
+   row disappears.
+3. Tap **+**, type `Sacar la basura`, choose **No se repite**, enter
+   Fecha límite `2026-07-14`, switch to **Días de la semana**, tap `martes`
+   and `jueves` and save: **Sacar la basura** appears waiting, bar at 0
+   (the recurring task was saved; the due date does not apply).
+4. Advance the clock to `2026-07-14T00:00:00` (Tuesday): **Sacar la basura** becomes
+   pending; **Ventilar** becomes pending from
+   `2026-07-13T12:00:00` and overdue from `2026-07-13T16:00:00`, so
+   it now goes back to the list, overdue.
+5. Advance the clock to `2026-07-15T00:00:00`: **Sacar la basura** becomes
+   overdue, like any weekly task with Tuesday uncovered.
+6. Tap **+**, type `Pagar expensas`, choose **Días del mes**, tap `20`
+   and save: **Pagar expensas** appears waiting.
+7. Reload the page: the three rows are still there with the same statuses.

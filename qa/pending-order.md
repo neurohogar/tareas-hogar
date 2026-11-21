@@ -1,176 +1,174 @@
-# QA: orden por urgencia de Pendientes
+# QA: Pendientes urgency order
 
-Verifica, solo por la interfaz, que la lista de Pendientes se ordena sola por
-urgencia, en los tres grupos (atrasada, pendiente, en espera), con el criterio
-de cada grupo y el desempate, y que el orden se actualiza solo cuando pasa el
-tiempo o se completa una tarea. Cubre spec §5.1–§5.3, §6.1 (orden) y §10
-criterio 3.
+Verifies, through the interface only, that the Pendientes list sorts itself by
+urgency, in the three groups (overdue, pending, waiting), with the criterion
+of each group and the tie-break, and that the order updates by itself when time
+passes or a task is completed. Covers spec §5.1–§5.3, §6.1 (order) and §10
+criterion 3.
 
-Todos los flujos usan **Mostrar completadas** apagado (su valor inicial): las
-completadas (puntuales con un completado y periódicas en espera con un
-completado) no tienen fila. Así, el grupo en espera visible solo tiene
-periódicas de calendario que todavía no llegaron a su primera ocurrencia. El
-lugar de las completadas con el check encendido se verifica en
-`qa/show-completed.md`.
+All flows use **Mostrar completadas** off (its initial value): completed tasks
+(one-off tasks with a completion and waiting recurring tasks with a
+completion) have no row. So the visible waiting group only has calendar
+recurring tasks that have not reached their first occurrence yet. The place of
+completed tasks with the check on is verified in `qa/show-completed.md`.
 
-Fuera de alcance: edición, borrado, historial y
-deshacer.
+Out of scope: editing, deleting, history and undo.
 
-## Entorno
+## Environment
 
-Igual que `qa/one-off.md`:
+Same as `qa/one-off.md`:
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de
-  cada flujo.
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la
-  app, en la hora local que indica cada flujo (zona
-  `America/Argentina/Buenos_Aires`). "A las X" significa adelantar el reloj
-  simulado hasta X antes del paso. "Avanzar el reloj a X" significa adelantarlo
-  hasta X y esperar a que la pantalla se actualice sola (sin recargar), salvo
-  que el paso diga "recargar".
-- Salvo el Flujo 5, cada tarea se crea en un minuto distinto: la hora del
-  reloj al guardar es su `creadaEn`.
-- Sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of
+  each flow.
+- Simulated browser clock (`page.clock`) installed **before** opening the
+  app, at the local time each flow gives (zone
+  `America/Argentina/Buenos_Aires`). "At X" means advancing the simulated
+  clock to X before the step. "Advance the clock to X" means advancing it
+  to X and waiting for the screen to update by itself (without reloading),
+  unless the step says "reload".
+- Except for Flow 5, each task is created in a different minute: the clock
+  time when saving is its `creadaEn`.
+- Signed in with the Auth Emulator account `qa@example.com` (Flow 1 of
   `qa/recurring-relative.md`).
-- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se
-  repite** que indica el paso (**No se repite** con o sin Fecha límite;
-  **Intervalo** con Cada y unidad; **Días de la semana** o **Días del mes**
-  con sus días) y guardar, con los controles de `qa/one-off.md`.
-- **Mostrar completadas** queda apagado (su valor inicial) en todos los flujos.
+- Create a task: tap **+**, type the title, choose the **Se
+  repite** option the step gives (**No se repite** with or without Fecha límite;
+  **Intervalo** with Cada and unit; **Días de la semana** or **Días del mes**
+  with their days) and save, with the controls of `qa/one-off.md`.
+- **Mostrar completadas** stays off (its initial value) in all flows.
 
-Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16,
-viernes 17.
+Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16,
+Friday 17.
 
-## Contrato observable
+## Observable contract
 
-- **Orden**: el orden de las filas de arriba hacia abajo en Pendientes (el
-  orden en pantalla y el de los elementos de fila en el documento es el
-  mismo). "La lista es A, B, C" significa exactamente esas filas, en ese
-  orden.
-- El estado de cada fila (`pendiente`, `atrasada`, `en espera`) se ve con el
-  contrato de fila de `qa/recurring-relative.md`: el atraso por el indicador
-  "Atrasada", la espera por el estilo atenuado y la barra.
-- El orden no se puede cambiar a mano: no hay arrastre ni control de orden.
+- **Order**: the order of the rows from top to bottom in Pendientes (the
+  order on screen and that of the row elements in the document is the
+  same). "The list is A, B, C" means exactly those rows, in that
+  order.
+- The status of each row (pending, overdue, waiting) is seen with the row
+  contract of `qa/recurring-relative.md`: overdue by the "Atrasada"
+  indicator, waiting by the dimmed style and the bar.
+- The order cannot be changed by hand: there is no dragging or order control.
 
-## Flujo 1: tres grupos y orden en vivo
+## Flow 1: three groups and live order
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. A las `08:00`, crear `Regar plantas` con **Intervalo** cada `4` **horas**.
-2. A las `08:01`, crear `Pagar la luz` con **No se repite** y Fecha límite
+1. At `08:00`, create `Regar plantas` with **Intervalo** every `4` **horas**.
+2. At `08:01`, create `Pagar la luz` with **No se repite** and Fecha límite
    `2026-07-14`.
-3. A las `08:02`, crear `Sacar la basura` con **Días de la semana** `martes`
-   y `jueves`.
-4. A las `08:03`, crear `Cambiar foco` con **No se repite** y sin fecha límite.
-   - La lista es **Regar plantas**, **Pagar la luz**, **Cambiar foco**,
-     **Sacar la basura**: las tres primeras `pendiente` (Regar plantas,
-     nunca completada, está pendiente desde que se creó; Cambiar foco, sin
-     fecha límite, va al final del grupo) y Sacar la basura `en espera`.
-5. A las `08:04`, tocar el checkbox de **Regar plantas**: queda `en espera`
-   hasta las `12:04`, completada, y su fila desaparece.
-   - La lista es **Pagar la luz**, **Cambiar foco**, **Sacar la basura**.
-6. Avanzar el reloj a `2026-07-13T12:04:00`: **Regar plantas** vuelve a la
-   lista, `pendiente`, desde antes que la fecha límite de Pagar la luz.
-   - La lista es **Regar plantas**, **Pagar la luz**, **Cambiar foco**,
+3. At `08:02`, create `Sacar la basura` with **Días de la semana** `martes`
+   and `jueves`.
+4. At `08:03`, create `Cambiar foco` with **No se repite** and no due date.
+   - The list is **Regar plantas**, **Pagar la luz**, **Cambiar foco**,
+     **Sacar la basura**: the first three pending (Regar plantas,
+     never completed, has been pending since it was created; Cambiar foco, with no
+     due date, goes to the end of the group) and Sacar la basura waiting.
+5. At `08:04`, tap the checkbox of **Regar plantas**: it becomes waiting
+   until `12:04`, completed, and its row disappears.
+   - The list is **Pagar la luz**, **Cambiar foco**, **Sacar la basura**.
+6. Advance the clock to `2026-07-13T12:04:00`: **Regar plantas** goes back to the
+   list, pending, since before the due date of Pagar la luz.
+   - The list is **Regar plantas**, **Pagar la luz**, **Cambiar foco**,
      **Sacar la basura**.
-7. Avanzar el reloj a `2026-07-14T00:00:00` (martes): **Regar plantas** está
-   `atrasada` (desde las `16:04` del lunes); **Pagar la luz** y **Sacar la
-   basura** están `pendiente` desde el mismo instante (00:00 de hoy) y
-   desempata la creada antes.
-   - La lista es **Regar plantas**, **Pagar la luz**, **Sacar la basura**,
+7. Advance the clock to `2026-07-14T00:00:00` (Tuesday): **Regar plantas** is
+   overdue (since `16:04` on Monday); **Pagar la luz** and **Sacar la
+   basura** are pending since the same instant (00:00 today) and
+   the one created first breaks the tie.
+   - The list is **Regar plantas**, **Pagar la luz**, **Sacar la basura**,
      **Cambiar foco**.
-8. Avanzar el reloj a `2026-07-15T00:00:00` (miércoles): **Pagar la luz** y
-   **Sacar la basura** pasan a `atrasada`, las dos desde este instante; Regar
-   plantas lleva más tiempo atrasada.
-   - La lista es **Regar plantas**, **Pagar la luz**, **Sacar la basura**,
+8. Advance the clock to `2026-07-15T00:00:00` (Wednesday): **Pagar la luz** and
+   **Sacar la basura** become overdue, both from this instant; Regar
+   plantas has been overdue for longer.
+   - The list is **Regar plantas**, **Pagar la luz**, **Sacar la basura**,
      **Cambiar foco**.
-9. Recargar la página: la lista y los estados son los mismos.
+9. Reload the page: the list and the statuses are the same.
 
-## Flujo 2: atrasadas por el tiempo que llevan atrasadas
+## Flow 2: overdue by how long they have been overdue
 
-Precondición: lista vacía, reloj en `2026-07-13T08:00:00` (lunes).
+Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 
-1. A las `08:00`, crear `Regar plantas` con **Intervalo** cada `1` **días** y
-   tocar su checkbox: queda `en espera`, completada, y su fila desaparece
-   (vence el martes a las `08:00`, se atrasa el miércoles a las `08:00`).
-2. A las `08:01`, crear `Pagar la luz` con **No se repite** y Fecha límite
-   `2026-07-14` (se atrasa el miércoles a las `00:00`).
-3. A las `08:02`, crear `Sacar la basura` con **Días de la semana** `lunes`:
-   `pendiente` (se creó en un día de ocurrencia; se atrasa el martes a las
+1. At `08:00`, create `Regar plantas` with **Intervalo** every `1` **días** and
+   tap its checkbox: it becomes waiting, completed, and its row disappears
+   (it is due on Tuesday at `08:00`, it becomes overdue on Wednesday at `08:00`).
+2. At `08:01`, create `Pagar la luz` with **No se repite** and Fecha límite
+   `2026-07-14` (it becomes overdue on Wednesday at `00:00`).
+3. At `08:02`, create `Sacar la basura` with **Días de la semana** `lunes`:
+   pending (it was created on an occurrence day; it becomes overdue on Tuesday at
    `00:00`).
-4. Avanzar el reloj a `2026-07-16T12:00:00` (jueves): las tres están
-   `atrasada`.
-   - La lista es **Sacar la basura**, **Pagar la luz**, **Regar plantas**:
-     Regar plantas va última aunque su vencimiento (martes 08:00) sea el más
-     antiguo, porque recién se atrasó el miércoles a las 08:00.
-5. Recargar la página: la lista es la misma.
+4. Advance the clock to `2026-07-16T12:00:00` (Thursday): all three are
+   overdue.
+   - The list is **Sacar la basura**, **Pagar la luz**, **Regar plantas**:
+     Regar plantas goes last even though its due time (Tuesday 08:00) is the oldest,
+     because it only became overdue on Wednesday at 08:00.
+5. Reload the page: the list is the same.
 
-## Flujo 3: pendientes por el momento desde el que están pendientes
+## Flow 3: pending by the moment since which they are pending
 
-Precondición: lista vacía, reloj en `2026-07-15T08:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T08:00:00` (Wednesday).
 
-1. A las `08:00`, crear `Cambiar foco` con **No se repite** y sin fecha
-   límite.
-2. A las `08:01`, crear `Llamar plomero` con **No se repite** y sin fecha
-   límite.
-3. A las `08:02`, crear `Comprar regalo` con **No se repite** y Fecha límite
+1. At `08:00`, create `Cambiar foco` with **No se repite** and no due
+   date.
+2. At `08:01`, create `Llamar plomero` with **No se repite** and no due
+   date.
+3. At `08:02`, create `Comprar regalo` with **No se repite** and Fecha límite
    `2026-07-16`.
-4. A las `08:03`, crear `Ventilar` con **Intervalo** cada `4` **horas**.
-5. A las `08:04`, crear `Pagar la luz` con **No se repite** y Fecha límite
-   `2026-07-15` (hoy).
-   - Todas `pendiente`. La lista es **Pagar la luz** (desde las 00:00 de hoy),
-     **Ventilar** (nunca completada, desde las 08:03), **Comprar regalo**
-     (desde las 00:00 de mañana), **Cambiar foco**, **Llamar plomero** (sin
-     fecha límite, al final, la creada antes primero).
-6. A las `08:05`, tocar el checkbox de **Ventilar**: queda `en espera`,
-   completada, y su fila desaparece.
-   - La lista es **Pagar la luz**, **Comprar regalo**, **Cambiar foco**,
+4. At `08:03`, create `Ventilar` with **Intervalo** every `4` **horas**.
+5. At `08:04`, create `Pagar la luz` with **No se repite** and Fecha límite
+   `2026-07-15` (today).
+   - All pending. The list is **Pagar la luz** (since 00:00 today),
+     **Ventilar** (never completed, since 08:03), **Comprar regalo**
+     (since 00:00 tomorrow), **Cambiar foco**, **Llamar plomero** (no
+     due date, at the end, the one created first going first).
+6. At `08:05`, tap the checkbox of **Ventilar**: it becomes waiting,
+   completed, and its row disappears.
+   - The list is **Pagar la luz**, **Comprar regalo**, **Cambiar foco**,
      **Llamar plomero**.
-7. Avanzar el reloj a `2026-07-15T12:05:00`: **Ventilar** vuelve a la lista,
-   `pendiente`, desde un instante posterior a las 00:00 de hoy y anterior a
-   las de mañana.
-   - La lista es **Pagar la luz**, **Ventilar**, **Comprar regalo**,
+7. Advance the clock to `2026-07-15T12:05:00`: **Ventilar** goes back to the list,
+   pending, since an instant later than 00:00 today and earlier than
+   that of tomorrow.
+   - The list is **Pagar la luz**, **Ventilar**, **Comprar regalo**,
      **Cambiar foco**, **Llamar plomero**.
 
-## Flujo 4: en espera por cuándo vuelven
+## Flow 4: waiting by when they come back
 
-En espera sin completados solo puede estar una periódica de calendario antes
-de su primera ocurrencia.
+A waiting task without completions can only be a calendar recurring task before
+its first occurrence.
 
-Precondición: lista vacía, reloj en `2026-07-15T08:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T08:00:00` (Wednesday).
 
-1. A las `08:00`, crear `Cambiar sábanas` con **Días de la semana** `sábado`:
-   `en espera` (vuelve el sábado a las `00:00`).
-2. A las `08:01`, crear `Limpiar heladera` con **Días del mes** `17`:
-   `en espera` (vuelve el viernes 17 a las `00:00`).
-3. A las `08:02`, crear `Sacar la basura` con **Días de la semana** `martes`
-   y `jueves`: `en espera` (vuelve el jueves a las `00:00`).
-4. A las `08:03`, crear `Cambiar foco` con **No se repite** y sin fecha
-   límite: `pendiente`.
-   - Las tres periódicas atenuadas, con barra, y no completadas (en negrita,
-     con el checkbox sin marcar). La lista es **Cambiar foco**, **Sacar la
-     basura**, **Limpiar heladera**, **Cambiar sábanas**: la pendiente
-     primero y después las en espera por cuándo vuelven, no por cuándo se
-     crearon.
-5. Avanzar el reloj a `2026-07-16T00:00:00` (jueves): **Sacar la basura**
-   pasa a `pendiente` desde las 00:00 de hoy, antes que **Cambiar foco** (sin
-   fecha límite, al final del grupo).
-   - La lista es **Sacar la basura**, **Cambiar foco**, **Limpiar heladera**,
+1. At `08:00`, create `Cambiar sábanas` with **Días de la semana** `sábado`:
+   waiting (it comes back on Saturday at `00:00`).
+2. At `08:01`, create `Limpiar heladera` with **Días del mes** `17`:
+   waiting (it comes back on Friday 17 at `00:00`).
+3. At `08:02`, create `Sacar la basura` with **Días de la semana** `martes`
+   and `jueves`: waiting (it comes back on Thursday at `00:00`).
+4. At `08:03`, create `Cambiar foco` with **No se repite** and no due
+   date: pending.
+   - The three recurring tasks dimmed, with a bar, and not completed (bold,
+     with the checkbox unchecked). The list is **Cambiar foco**, **Sacar la
+     basura**, **Limpiar heladera**, **Cambiar sábanas**: the pending one
+     first and then the waiting ones by when they come back, not by when they
+     were created.
+5. Advance the clock to `2026-07-16T00:00:00` (Thursday): **Sacar la basura**
+   becomes pending since 00:00 today, before **Cambiar foco** (no
+   due date, at the end of the group).
+   - The list is **Sacar la basura**, **Cambiar foco**, **Limpiar heladera**,
      **Cambiar sábanas**.
-6. A las `2026-07-16T08:00:00`, tocar el checkbox de **Sacar la basura**
-   (cubre el jueves): queda `en espera`, completada, y su fila desaparece.
-   - La lista es **Cambiar foco**, **Limpiar heladera**, **Cambiar sábanas**.
-7. Recargar la página: la lista es la misma.
+6. At `2026-07-16T08:00:00`, tap the checkbox of **Sacar la basura**
+   (it covers Thursday): it becomes waiting, completed, and its row disappears.
+   - The list is **Cambiar foco**, **Limpiar heladera**, **Cambiar sábanas**.
+7. Reload the page: the list is the same.
 
-## Flujo 5: desempate por título
+## Flow 5: tie-break by title
 
-Precondición: lista vacía, reloj simulado **detenido** en
-`2026-07-15T08:00:00` (no avanza solo), así todas las tareas tienen la misma
+Precondition: empty list, simulated clock **stopped** at
+`2026-07-15T08:00:00` (it does not advance by itself), so all tasks have the same
 `creadaEn`.
 
-1. Crear, en este orden, con **No se repite** y sin fecha límite: `Zapallo`,
+1. Create, in this order, with **No se repite** and no due date: `Zapallo`,
    `Ñoquis`, `Barrer`, `Nueces`, `Árbol`, `acelga`.
-   - Todas `pendiente`. La lista es **acelga**, **Árbol**, **Barrer**,
-     **Nueces**, **Ñoquis**, **Zapallo**: orden alfabético en español, sin
-     distinguir mayúsculas ni acentos y con la ñ después de la n.
-2. Recargar la página: la lista es la misma.
+   - All pending. The list is **acelga**, **Árbol**, **Barrer**,
+     **Nueces**, **Ñoquis**, **Zapallo**: alphabetical order in Spanish, without
+     distinguishing case or accents and with ñ after n.
+2. Reload the page: the list is the same.

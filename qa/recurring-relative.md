@@ -1,179 +1,179 @@
-# QA: tarea periódica relativa (rebanada vertical 1)
+# QA: relative recurring task (vertical slice 1)
 
-Verifica, solo por la interfaz, el flujo de punta a punta: entrar con Google,
-crear una tarea periódica relativa, verla pendiente, completarla, verla en
-espera con su barra de progreso, avanzar el reloj y verla pendiente y luego
-atrasada. Cubre spec §4.2 (Relativa), §4.4, §5.2, §6.1 (subconjunto), §6.2
-(subconjunto), §6.5 y §7.
+Verifies, through the interface only, the end-to-end flow: sign in with Google,
+create a relative recurring task, see it pending, complete it, see it waiting
+with its progress bar, advance the clock and see it pending and then
+overdue. Covers spec §4.2 (Relativa), §4.4, §5.2, §6.1 (subset), §6.2
+(subset), §6.5 and §7.
 
-Fuera de alcance: orden entre tareas, emoji, nota,
-deshacer, historial, edición y borrado.
+Out of scope: order between tasks, emoji, note,
+undo, history, editing and deletion.
 
-## Entorno
+## Environment
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de
-  cada flujo.
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la
-  app, en hora local `2026-07-15T08:00:00`. "Avanzar el reloj X" significa
-  adelantar el reloj simulado X y esperar a que la pantalla se actualice sola
-  (sin recargar), salvo que el paso diga "recargar".
-- Cuenta del Auth Emulator: `qa@example.com`.
-- Crear una relativa: tocar **+**, escribir el título, elegir **Intervalo** en **Se repite** (el panel de creación abre con **No se repite**), poner **Cada** y la unidad, y guardar.
-- Desde el Flujo 2, al empezar cada flujo (después de entrar), tocar el check
-  **Mostrar completadas** para encenderlo: una periódica en espera con
-  completados está completada y solo tiene fila con el check encendido
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of
+  each flow.
+- Simulated browser clock (`page.clock`) installed **before** opening the
+  app, at local time `2026-07-15T08:00:00`. "Advance the clock X" means
+  advancing the simulated clock X and waiting for the screen to update by itself
+  (without reloading), unless the step says "reload".
+- Auth Emulator account: `qa@example.com`.
+- Create a relative task: tap **+**, type the title, choose **Intervalo** in **Se repite** (the creation panel opens with **No se repite**), set **Cada** and the unit, and save.
+- From Flow 2, at the start of each flow (after signing in), tap the
+  **Mostrar completadas** check to turn it on: a waiting recurring task with
+  completions is completed and only has a row with the check on
   (`qa/show-completed.md`).
 
-## Contrato observable de la fila de Pendientes
+## Observable contract of the Pendientes row
 
-Lo que QA mira en cada fila de tarea (identificada por su título):
+What QA looks at in each task row (identified by its title):
 
-| Estado | Checkbox | Título | Estilo atenuado | Barra de progreso | Indicador de atraso |
+| Status | Checkbox | Title | Dimmed style | Progress bar | Overdue indicator |
 |---|---|---|---|---|---|
-| `pendiente` | visible, sin marcar | negrita | no | no | no |
-| `en espera`, con completados (completada) | visible, marcado | tachado, peso normal | sí | sí | no |
-| `en espera`, sin completados (solo calendario) | visible, sin marcar | negrita | sí | sí | no |
-| `atrasada` | visible, sin marcar | negrita | no | no | sí |
+| pending | visible, unchecked | bold | no | no | no |
+| waiting, with completions (completed) | visible, checked | struck through, normal weight | yes | yes | no |
+| waiting, without completions (calendar only) | visible, unchecked | bold | yes | yes | no |
+| overdue | visible, unchecked | bold | no | no | yes |
 
-Una relativa en espera siempre tiene completados: está completada. Negrita,
-tachado y peso normal se miden como en `qa/show-completed.md`.
+A waiting relative task always has completions: it is completed. Bold,
+struck-through and normal weight are measured as in `qa/show-completed.md`.
 
-- Checkbox: control accesible con rol `checkbox` y nombre que incluye el
-  título; área táctil de al menos 48×48 px.
-- Barra de progreso: rol `progressbar` con `aria-valuemin=0`,
-  `aria-valuemax=100` y `aria-valuenow` = progreso × 100 (redondeado a entero).
-- Estilo atenuado: la fila en espera tiene opacidad computada menor que 1 y
-  menor que la de una fila pendiente; su checkbox sigue habilitado.
-- Indicador de atraso: texto accesible "Atrasada" dentro de la fila. **Reemplazado** por el texto «Tocaba …» (`qa/guilt-free-status.md`): donde un procedimiento anterior espera "Atrasada", se espera ese texto.
+- Checkbox: accessible control with role `checkbox` and a name that includes the
+  title; touch area of at least 48×48 px.
+- Progress bar: role `progressbar` with `aria-valuemin=0`,
+  `aria-valuemax=100` and `aria-valuenow` = progress × 100 (rounded to an integer).
+- Dimmed style: the waiting row has computed opacity less than 1 and
+  less than that of a pending row; its checkbox is still enabled.
+- Overdue indicator: accessible text "Atrasada" inside the row. **Replaced** by the text «Tocaba …» (`qa/guilt-free-status.md`): where an earlier procedure expects "Atrasada", that text is expected.
 
-## Flujo 1: entrar con Google
+## Flow 1: sign in with Google
 
-1. Abrir la app sin sesión.
-2. Ver la pantalla de inicio de sesión con el botón **Entrar con Google**.
-   No se ve la lista de Pendientes ni el botón **+**.
-3. Tocar **Entrar con Google** y elegir la cuenta `qa@example.com` en el
+1. Open the app without a session.
+2. See the sign-in screen with the **Entrar con Google** button.
+   The Pendientes list and the **+** button are not visible.
+3. Tap **Entrar con Google** and choose the account `qa@example.com` in the
    Auth Emulator.
-4. Ver la pantalla **Pendientes**, vacía, con el botón **+** visible.
-5. Recargar la página: sigue en **Pendientes** sin pedir login.
+4. See the **Pendientes** screen, empty, with the **+** button visible.
+5. Reload the page: it is still on **Pendientes** without asking for login.
 
-## Flujo 2: validación al crear
+## Flow 2: validation when creating
 
-Precondición: sesión iniciada (Flujo 1), lista vacía.
+Precondition: signed in (Flow 1), empty list.
 
-1. Tocar **+**. Se abre el panel con el campo **Título** y el grupo **Se repite**
-   con **No se repite** elegida. Elegir **Intervalo**: se ven **Cada** (número)
-   y unidad (**horas** / **días**).
-2. Dejar el título vacío, poner Cada = `2`, unidad **días**, y guardar.
-   - Se ve un mensaje de error asociado al campo Título.
-   - El panel sigue abierto; no aparece ninguna fila en Pendientes.
-3. Escribir título `   ` (solo espacios) y guardar: mismo resultado que el
-   paso 2.
-4. Escribir título `Regar plantas`, poner Cada = `0` y guardar.
-   - Se ve un mensaje de error asociado al campo Cada.
-   - No aparece ninguna fila.
-5. Poner Cada = `1.5` y guardar: mismo resultado que el paso 4.
-6. Cerrar el panel sin guardar (y **Descartar** en el aviso "Tenés cambios sin guardar"): la lista sigue vacía.
+1. Tap **+**. The panel opens with the **Título** field and the **Se repite** group
+   with **No se repite** selected. Choose **Intervalo**: **Cada** (number)
+   and unit (**horas** / **días**) are shown.
+2. Leave the title empty, set Cada = `2`, unit **días**, and save.
+   - An error message associated with the Título field is shown.
+   - The panel stays open; no row appears in Pendientes.
+3. Type title `   ` (only spaces) and save: same result as
+   step 2.
+4. Type title `Regar plantas`, set Cada = `0` and save.
+   - An error message associated with the Cada field is shown.
+   - No row appears.
+5. Set Cada = `1.5` and save: same result as step 4.
+6. Close the panel without saving (and **Descartar** in the notice "Tenés cambios sin guardar"): the list is still empty.
 
-## Flujo 3: ciclo de estados de "Regar plantas" cada 2 días
+## Flow 3: status cycle of "Regar plantas" every 2 days
 
-Precondición: sesión iniciada, lista vacía, reloj en `2026-07-15T08:00:00`.
+Precondition: signed in, empty list, clock at `2026-07-15T08:00:00`.
 
-1. Tocar **+**, escribir título `Regar plantas`, elegir **Intervalo**, Cada = `2`,
-   unidad **días**, y guardar.
-   - El panel se cierra.
-   - Aparece la fila **Regar plantas** en estado `pendiente` (nunca
-     completada): sin atenuar, sin barra, sin indicador de atraso.
-2. Avanzar el reloj 3 días (`2026-07-18T08:00:00`): la fila sigue `pendiente`
-   (una tarea nunca completada no se atrasa).
-3. Volver el contexto al punto de partida: limpiar datos, reinstalar el reloj
-   en `2026-07-15T08:00:00`, entrar y crear de nuevo `Regar plantas` cada 2
-   días (paso 1).
-4. Tocar el checkbox de **Regar plantas** a las `2026-07-15T08:00:00`.
-   - La fila pasa a `en espera`: atenuada, con barra de progreso en 0, sin
-     indicador de atraso. Está completada: el checkbox queda marcado y
-     habilitado, y el título tachado.
-5. Avanzar el reloj 1 día (`2026-07-16T08:00:00`): sigue `en espera`, barra
-   en 50.
-6. Avanzar el reloj 23 horas (`2026-07-17T07:00:00`): sigue `en espera`,
-   barra en 98 (47/48).
-7. Avanzar el reloj 1 hora (`2026-07-17T08:00:00`, vencimiento): la fila
-   pasa a `pendiente`: sin atenuar, sin barra, sin indicador de atraso.
-8. Avanzar el reloj 1 día 23 horas (`2026-07-19T07:00:00`): sigue
-   `pendiente`.
-9. Avanzar el reloj 1 hora (`2026-07-19T08:00:00`, se perdió un ciclo
-   completo): la fila pasa a `atrasada`: muestra el indicador "Atrasada",
-   sin atenuar, sin barra.
-10. Recargar la página: la fila **Regar plantas** sigue `atrasada`
-    (persistencia en Firestore).
-11. Tocar el checkbox a las `2026-07-19T08:00:00`: la fila pasa a
-    `en espera` con barra en 0 (completar reinicia el intervalo).
-12. Avanzar el reloj 1 día (`2026-07-20T08:00:00`): `en espera`, barra en 50.
-13. Avanzar el reloj 1 día (`2026-07-21T08:00:00`): `pendiente`.
+1. Tap **+**, type title `Regar plantas`, choose **Intervalo**, Cada = `2`,
+   unit **días**, and save.
+   - The panel closes.
+   - The row **Regar plantas** appears in pending status (never
+     completed): not dimmed, no bar, no overdue indicator.
+2. Advance the clock 3 days (`2026-07-18T08:00:00`): the row is still pending
+   (a task never completed does not become overdue).
+3. Return the context to the starting point: clear data, reinstall the clock
+   at `2026-07-15T08:00:00`, sign in and create `Regar plantas` every 2
+   days again (step 1).
+4. Tap the checkbox of **Regar plantas** at `2026-07-15T08:00:00`.
+   - The row becomes waiting: dimmed, with the progress bar at 0, no
+     overdue indicator. It is completed: the checkbox is checked and
+     enabled, and the title struck through.
+5. Advance the clock 1 day (`2026-07-16T08:00:00`): still waiting, bar
+   at 50.
+6. Advance the clock 23 hours (`2026-07-17T07:00:00`): still waiting,
+   bar at 98 (47/48).
+7. Advance the clock 1 hour (`2026-07-17T08:00:00`, due time): the row
+   becomes pending: not dimmed, no bar, no overdue indicator.
+8. Advance the clock 1 day 23 hours (`2026-07-19T07:00:00`): still
+   pending.
+9. Advance the clock 1 hour (`2026-07-19T08:00:00`, a whole cycle was
+   missed): the row becomes overdue: it shows the "Atrasada" indicator,
+   not dimmed, no bar.
+10. Reload the page: the row **Regar plantas** is still overdue
+    (persistence in Firestore).
+11. Tap the checkbox at `2026-07-19T08:00:00`: the row becomes
+    waiting with the bar at 0 (completing restarts the interval).
+12. Advance the clock 1 day (`2026-07-20T08:00:00`): waiting, bar at 50.
+13. Advance the clock 1 day (`2026-07-21T08:00:00`): pending.
 
-## Flujo 4: el checkbox en espera borra el completado de hoy; completar de nuevo reinicia el intervalo (horas)
+## Flow 4: the checkbox of a waiting task deletes today's completion; completing again restarts the interval (hours)
 
-Una relativa en espera está completada: si su completado más reciente es de
-hoy, tocar su checkbox lo borra (spec §6.1) en lugar de completarla otra vez.
-Si es de un día anterior, la completa de nuevo (Flujo 7).
+A waiting relative task is completed: if its most recent completion is from
+today, tapping its checkbox deletes it (spec §6.1) instead of completing it again.
+If it is from an earlier day, it completes it again (Flow 7).
 
-Precondición: sesión iniciada, lista vacía, reloj en `2026-07-15T08:00:00`.
+Precondition: signed in, empty list, clock at `2026-07-15T08:00:00`.
 
-1. Crear `Ventilar` cada `4` **horas**: fila `pendiente`.
-2. Tocar el checkbox: `en espera`, barra en 0, checkbox marcado.
-3. Avanzar el reloj 1 hora (`2026-07-15T09:00:00`): barra en 25.
-4. Tocar el checkbox otra vez: se borra el completado y la fila vuelve a
-   `pendiente` (nunca completada): sin atenuar, sin barra, checkbox sin
-   marcar.
-5. Tocar el checkbox: `en espera`, barra en 0 (el intervalo empieza a las
+1. Create `Ventilar` every `4` **horas**: pending row.
+2. Tap the checkbox: waiting, bar at 0, checkbox checked.
+3. Advance the clock 1 hour (`2026-07-15T09:00:00`): bar at 25.
+4. Tap the checkbox again: the completion is deleted and the row goes back to
+   pending (never completed): not dimmed, no bar, checkbox
+   unchecked.
+5. Tap the checkbox: waiting, bar at 0 (the interval starts at
    `09:00`).
-6. Avanzar el reloj 3 horas (`2026-07-15T12:00:00`, cuando vencía el primer
-   completado): sigue `en espera`, barra en 75.
-7. Avanzar el reloj 1 hora (`2026-07-15T13:00:00`): `pendiente`.
-8. Avanzar el reloj 4 horas (`2026-07-15T17:00:00`): `atrasada`.
+6. Advance the clock 3 hours (`2026-07-15T12:00:00`, when the first
+   completion was due): still waiting, bar at 75.
+7. Advance the clock 1 hour (`2026-07-15T13:00:00`): pending.
+8. Advance the clock 4 hours (`2026-07-15T17:00:00`): overdue.
 
-## Flujo 5: persistencia entre sesiones
+## Flow 5: persistence between sessions
 
-Precondición: Flujo 3 hasta el paso 5 (fila en espera, barra en 50).
+Precondition: Flow 3 up to step 5 (waiting row, bar at 50).
 
-1. Cerrar la pestaña y abrir la app de nuevo con el mismo reloj.
-2. Entra directo a **Pendientes** (sin login) y **Regar plantas** sigue
-   `en espera` con barra en 50.
+1. Close the tab and open the app again with the same clock.
+2. It goes straight to **Pendientes** (no login) and **Regar plantas** is still
+   waiting with the bar at 50.
 
-## Flujo 6: relojes desfasados (completado "del futuro")
+## Flow 6: clocks out of sync (completion "from the future")
 
-Simula un completado registrado por un dispositivo con el reloj adelantado:
-se completa con el reloj simulado en un momento y después se lo retrocede.
-"Retroceder el reloj a X" significa fijar el reloj simulado en X
-(`page.clock.setSystemTime`) y esperar a que la pantalla se actualice sola,
-sin recargar. Cubre la fila "ahora < U" de spec §5.2.
+Simulates a completion recorded by a device with the clock ahead:
+it is completed with the simulated clock at one moment and then the clock is moved back.
+"Move the clock back to X" means setting the simulated clock to X
+(`page.clock.setSystemTime`) and waiting for the screen to update by itself,
+without reloading. Covers the row "now < U" of spec §5.2.
 
-Precondición: sesión iniciada, lista vacía, reloj en `2026-07-15T08:00:00`.
+Precondition: signed in, empty list, clock at `2026-07-15T08:00:00`.
 
-1. Crear `Ventilar` cada `4` **horas** y tocar su checkbox: `en espera`,
-   barra en 0.
-2. Retroceder el reloj a `2026-07-15T07:00:00` (una hora antes del
-   completado): sigue `en espera`, barra en 0, sin indicador de atraso.
-3. Recargar la página: sigue `en espera`, barra en 0.
-4. Avanzar el reloj a `2026-07-15T08:00:00` (el momento del completado):
-   `en espera`, barra en 0.
-5. Avanzar el reloj a `2026-07-15T09:00:00`: `en espera`, barra en 25.
-6. Avanzar el reloj a `2026-07-15T12:00:00`: `pendiente`.
+1. Create `Ventilar` every `4` **horas** and tap its checkbox: waiting,
+   bar at 0.
+2. Move the clock back to `2026-07-15T07:00:00` (one hour before the
+   completion): still waiting, bar at 0, no overdue indicator.
+3. Reload the page: still waiting, bar at 0.
+4. Advance the clock to `2026-07-15T08:00:00` (the moment of the completion):
+   waiting, bar at 0.
+5. Advance the clock to `2026-07-15T09:00:00`: waiting, bar at 25.
+6. Advance the clock to `2026-07-15T12:00:00`: pending.
 
-## Flujo 7: completar en espera, con el último completado de ayer, reinicia el intervalo
+## Flow 7: completing while waiting, with the last completion from yesterday, restarts the interval
 
-Si el completado más reciente es de un día anterior, tocar el checkbox de la
-relativa en espera la completa de nuevo (spec §5.2, §6.1).
+If the most recent completion is from an earlier day, tapping the checkbox of the
+waiting relative task completes it again (spec §5.2, §6.1).
 
-Precondición: sesión iniciada, lista vacía, reloj en `2026-07-15T20:00:00`.
+Precondition: signed in, empty list, clock at `2026-07-15T20:00:00`.
 
-1. Crear `Regar plantas` cada `2` **días** y tocar su checkbox: `en espera`,
-   barra en 0, checkbox marcado. Aparece el aviso `Completaste «Regar plantas»`.
-2. Avanzar el reloj a `2026-07-16T00:00:00` (el día siguiente): sigue
-   `en espera`, barra en 8 (4 de 48 horas).
-3. Tocar el checkbox: aparece el aviso `Completaste «Regar plantas»`. Sigue
-   `en espera`, completada, con barra en 0 (el intervalo empieza ahora).
-4. En el Historial hay dos entradas de **Regar plantas**: **Hoy** `00:00` y
+1. Create `Regar plantas` every `2` **días** and tap its checkbox: waiting,
+   bar at 0, checkbox checked. The notice `Completaste «Regar plantas»` appears.
+2. Advance the clock to `2026-07-16T00:00:00` (the next day): still
+   waiting, bar at 8 (4 of 48 hours).
+3. Tap the checkbox: the notice `Completaste «Regar plantas»` appears. Still
+   waiting, completed, with the bar at 0 (the interval starts now).
+4. In the Historial there are two entries of **Regar plantas**: **Hoy** `00:00` and
    **Ayer** `20:00`.
-5. Avanzar el reloj a `2026-07-17T20:00:00` (cuando vencía el primer
-   completado): sigue `en espera`, barra en 92 (44 de 48 horas).
-6. Avanzar el reloj a `2026-07-18T00:00:00`: `pendiente`.
+5. Advance the clock to `2026-07-17T20:00:00` (when the first
+   completion was due): still waiting, bar at 92 (44 of 48 hours).
+6. Advance the clock to `2026-07-18T00:00:00`: pending.

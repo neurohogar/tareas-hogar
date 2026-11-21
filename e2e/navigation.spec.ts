@@ -57,7 +57,7 @@ async function nothingOfAnnotations(page: Page) {
 	).toHaveCount(0);
 }
 
-test('Flujo 1: two tabs', async ({ page }) => {
+test('Flow 1: two tabs', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
 	for (const size of [PHONE, WIDE]) {
 		await page.setViewportSize(size);
@@ -80,8 +80,8 @@ test('Flujo 1: two tabs', async ({ page }) => {
 });
 
 for (const [flow, removed] of [
-	['Flujo 2', '/anotaciones'],
-	['Flujo 3', '/etiquetas'],
+	['Flow 2', '/anotaciones'],
+	['Flow 3', '/etiquetas'],
 ] as const) {
 	test(`${flow}: ${removed} opens Pendientes`, async ({ page }) => {
 		await sessionWithClock(page, TODAY);
@@ -111,7 +111,7 @@ for (const [name, size] of [
 	['phone', PHONE],
 	['wide screen', WIDE],
 ] as const) {
-	test(`Flujo 4: nothing of annotations is left (${name})`, async ({ browser, page }) => {
+	test(`Flow 4: nothing of annotations is left (${name})`, async ({ browser, page }) => {
 		// Step 1: without a session, and while the loading screen is shown.
 		const entry = await browser.newContext({ baseURL: 'http://127.0.0.1:4173', locale: 'es-AR', viewport: size });
 		const visitor = await entry.newPage();

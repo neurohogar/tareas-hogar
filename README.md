@@ -1,63 +1,63 @@
 # Tareas Hogar
 
-App web instalable (PWA) de tareas del hogar pensada para adultos con TDAH, TEA y altas capacidades, incluidos quienes comparten casa.
+Installable web app (PWA) for household tasks, designed for adults with ADHD, autism and high abilities, including people who share a home.
 
-La idea es simple: que no se olviden las tareas recurrentes y que la lista muestre primero lo que hay que hacer ahora, sin ruido ni culpa.
+The idea is simple: recurring tasks should not be forgotten, and the list should show first what needs doing now, with no noise and no guilt.
 
-## Qué hace hoy
+## What it does today
 
-- Tareas puntuales y periódicas: cada N días u horas, o ciertos días de la semana o del mes.
-- Estados claros: pendiente, atrasada y en espera, con una barra que muestra cuánto falta para que vuelva.
-- Horarios en los que una tarea tiene sentido, posponer y pausar.
-- Historial de todo lo completado, con deshacer.
-- Funciona sin conexión y sincroniza entre dispositivos. Se entra con Google.
-- Fuente Atkinson Hyperlegible y emoji empaquetados, para que se vea igual en todos lados.
+- One-off and recurring tasks: every N days or hours, or on certain days of the week or month.
+- Clear statuses: pending, overdue and waiting, with a bar that shows how long until it comes back.
+- Schedules in which a task makes sense, postponing and pausing.
+- History of everything completed, with undo.
+- Works offline and syncs across devices. Sign-in is with Google.
+- Atkinson Hyperlegible font and emoji are bundled, so everything looks the same everywhere.
 
-Qué construye la app y por qué: [`docs/spec.md`](docs/spec.md).
+What the app builds and why: [`docs/spec.md`](docs/spec.md).
 
-## Diseño basado en evidencia
+## Evidence-based design
 
-La versión 3 se diseña a partir de investigación publicada, no de intuiciones. La base está en [`docs/research/v3/`](docs/research/v3/): cuatro documentos sobre TDAH, TEA, altas capacidades y doble excepcionalidad, y hogares compartidos y apps existentes. Cada hallazgo indica la fuerza de su evidencia y sus fuentes. El [`README`](docs/research/v3/README.md) de esa carpeta explica el método y cómo ampliarla.
+Version 3 is designed from published research, not from hunches. The base is in [`docs/research/v3/`](docs/research/v3/): four documents on ADHD, autism, high abilities and twice-exceptionality, and shared households and existing apps. Each finding states the strength of its evidence and its sources. The [`README`](docs/research/v3/README.md) of that folder explains the method and how to extend it.
 
-Algunos principios que salieron de ahí:
+Some principles that came out of it:
 
-- **Bajar el costo de arrancar:** un primer paso concreto, una sola tarea por vez.
-- **Cero culpa:** sin rachas que se rompen ni contadores de atrasadas que crecen.
-- **Invitar, no ordenar:** la persona decide qué se le avisa y cuándo.
-- **Tono adulto:** sin puntos, medallas ni mascotas.
+- **Lower the cost of starting:** a concrete first step, one task at a time.
+- **Zero guilt:** no streaks that break and no overdue counters that grow.
+- **Invite, do not order:** the person decides what they are notified about and when.
+- **Adult tone:** no points, badges or mascots.
 
-## Correrla en tu compu
+## Run it on your computer
 
-Requisitos: Node.js 26 y [Firebase CLI](https://firebase.google.com/docs/cli).
+Requirements: Node.js 26 and the [Firebase CLI](https://firebase.google.com/docs/cli).
 
 ```sh
 npm ci
-npm run emulators   # Auth y Firestore locales, en otra terminal
+npm run emulators   # local Auth and Firestore, in another terminal
 npm run dev
 ```
 
-La app de desarrollo usa los emuladores de Firebase, así que no hace falta ninguna cuenta.
+The development app uses the Firebase emulators, so no account is needed.
 
-## Publicar tu propia copia
+## Publish your own copy
 
-1. Creá un proyecto en la [consola de Firebase](https://console.firebase.google.com/) con Authentication (Google), Firestore y Hosting.
-2. Copiá `.env.production.example` a `.env.production` y completalo con la configuración web de tu proyecto.
-3. Copiá `.firebaserc.example` a `.firebaserc` y poné el ID de tu proyecto en `prod`.
-4. `npm run deploy` publica la app y las reglas de Firestore.
+1. Create a project in the [Firebase console](https://console.firebase.google.com/) with Authentication (Google), Firestore and Hosting.
+2. Copy `.env.production.example` to `.env.production` and fill it in with your project's web configuration.
+3. Copy `.firebaserc.example` to `.firebaserc` and put your project ID in `prod`.
+4. `npm run deploy` publishes the app and the Firestore rules.
 
-## Cómo se desarrolla
+## How it is developed
 
-Cada funcionalidad pasa por un pipeline de diez roles (análisis, especificación, Gherkin, implementación, limpieza, arquitectura, endurecimiento y QA), con gates deterministas de cobertura, complejidad (CRAP), duplicación y mutación. El detalle está en [`CLAUDE.md`](CLAUDE.md) y [`docs/pipeline/`](docs/pipeline/).
+Each feature goes through a pipeline of ten roles (analysis, specification, Gherkin, implementation, cleanup, architecture, hardening and QA), with deterministic gates for coverage, complexity (CRAP), duplication and mutation. The detail is in [`CLAUDE.md`](CLAUDE.md) and [`docs/pipeline/`](docs/pipeline/).
 
-| Comando | Qué hace |
+| Command | Does |
 |---|---|
-| `npm test` | Tests unitarios y de aceptación generados desde `features/*.feature` |
+| `npm test` | Unit tests and acceptance tests generated from `features/*.feature` |
 | `npm run test:props` | Property tests |
-| `npm run check:arch` | Reglas de dependencias entre capas |
-| `npm run qa` | Suite Playwright contra los emuladores de Firebase |
+| `npm run check:arch` | Dependency rules between layers |
+| `npm run qa` | Playwright suite against the Firebase emulators |
 
-Las herramientas de calidad vienen de [Acceptance Pipeline Specification](https://github.com/unclebob/Acceptance-Pipeline-Specification), [crapper](https://github.com/unclebob/crapper), [dryer](https://github.com/unclebob/dryer) y [mutator](https://github.com/unclebob/mutator). El orquestador del pipeline (`bdd-pipeline`) todavía no está publicado, así que por ahora los gates no se pueden correr fuera del entorno original. Los tests y la suite QA sí.
+The quality tools come from [Acceptance Pipeline Specification](https://github.com/unclebob/Acceptance-Pipeline-Specification), [crapper](https://github.com/unclebob/crapper), [dryer](https://github.com/unclebob/dryer) and [mutator](https://github.com/unclebob/mutator). The pipeline orchestrator (`bdd-pipeline`) is not published yet, so for now the gates cannot be run outside the original environment. The tests and the QA suite can.
 
-## Licencia
+## License
 
-[AGPL-3.0](LICENSE). Podés usarla, modificarla y alojarla. Si publicás una versión modificada, también como servicio web, tenés que compartir su código con la misma licencia.
+[AGPL-3.0](LICENSE). You can use it, modify it and host it. If you publish a modified version, also as a web service, you must share its source code under the same license.

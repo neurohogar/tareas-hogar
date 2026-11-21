@@ -67,7 +67,7 @@ async function session(browser: Browser) {
 const titleOf = (page: Page, t: string) =>
   row(page, t).getByRole("button").first();
 
-test("Flujo 4 pasos 2 a 4: sin conexión, con Atkinson y Noto, también un emoji nunca visto", async ({
+test("Flow 4 pasos 2 a 4: sin conexión, con Atkinson y Noto, también un emoji nunca visto", async ({
   browser,
 }) => {
   const { ctx, page } = await session(browser);
@@ -211,7 +211,7 @@ async function reopenWithVersion(ctx: BrowserContext, page: Page, dir: string) {
   return reopened;
 }
 
-test("Flujo 7: la versión con la fuente llega sola a quien tenía la anterior, sin preguntas ni avisos", async ({
+test("Flow 7: la versión con la fuente llega sola a quien tenía la anterior, sin preguntas ni avisos", async ({
   browser,
 }) => {
   test.setTimeout(180_000);
@@ -309,7 +309,7 @@ async function installWithFailure(browser: Browser, pattern: RegExp) {
   return { ctx: d, page, failure };
 }
 
-test("Flujo 8 pasos 1 a 3: se instala con falla en el juego y, al quitarla, Noto queda también sin conexión", async ({
+test("Flow 8 pasos 1 a 3: se instala con falla en el juego y, al quitarla, Noto queda también sin conexión", async ({
   browser,
 }) => {
   const { ctx, page, failure } = await installWithFailure(browser, NOTO_FILE);
@@ -334,7 +334,7 @@ test("Flujo 8 pasos 1 a 3: se instala con falla en el juego y, al quitarla, Noto
   await ctx.close();
 });
 
-test("Flujo 8 pasos 4 a 6: se instala con falla en un archivo de fuente y, al quitarla, Atkinson queda también sin conexión", async ({
+test("Flow 8 pasos 4 a 6: se instala con falla en un archivo de fuente y, al quitarla, Atkinson queda también sin conexión", async ({
   browser,
 }) => {
   const { ctx, page, failure } = await installWithFailure(browser, ATKINSON_FILE);
@@ -355,7 +355,7 @@ test("Flujo 8 pasos 4 a 6: se instala con falla en un archivo de fuente y, al qu
   await ctx.close();
 });
 
-test("Flujo 8 paso 7: si solo falla el primer pedido de cada archivo, se reintentan y quedan guardados", async ({
+test("Flow 8 paso 7: si solo falla el primer pedido de cada archivo, se reintentan y quedan guardados", async ({
   browser,
 }) => {
   const ctx = await browser.newContext({
@@ -401,7 +401,7 @@ for (const testCase of [
     withFailure: WATER_SYSTEM_NOTO,
   },
 ]) {
-  test(`Flujo 8 ${testCase.steps}: la versión nueva se aplica con falla en ${testCase.name}`, async ({
+  test(`Flow 8 ${testCase.steps}: la versión nueva se aplica con falla en ${testCase.name}`, async ({
     browser,
   }) => {
     test.setTimeout(180_000);
@@ -454,7 +454,7 @@ for (const testCase of [
 // Flow 9: what the service worker needs
 // ---------------------------------------------------------------------------
 
-test("Flujo 9 paso 15: sin conexión y sin Atkinson guardada, se va a los 0,5 s y da paso a la entrada con su mensaje", async ({
+test("Flow 9 paso 15: sin conexión y sin Atkinson guardada, se va a los 0,5 s y da paso a la entrada con su mensaje", async ({
   page,
 }) => {
   await page.clock.install({ time: new Date(HOUR) });
@@ -473,7 +473,7 @@ test("Flujo 9 paso 15: sin conexión y sin Atkinson guardada, se va a los 0,5 s 
   await expect(page.getByText("Necesitás conexión para entrar la primera vez")).toBeVisible();
 });
 
-test("Flujo 9 paso 16: con sesión, sin conexión y sin el juego guardado, se va a los 0,5 s; la franja se ve recién al entrar", async ({
+test("Flow 9 paso 16: con sesión, sin conexión y sin el juego guardado, se va a los 0,5 s; la franja se ve recién al entrar", async ({
   browser,
 }) => {
   const { ctx, page } = await session(browser);
@@ -493,7 +493,7 @@ test("Flujo 9 paso 16: con sesión, sin conexión y sin el juego guardado, se va
   await ctx.close();
 });
 
-test("Flujo 9 pasos 5 y 24: al abrir una versión nueva que no cambia las fuentes, aparece, no las vuelve a pedir y se va a los 0,5 s", async ({
+test("Flow 9 pasos 5 y 24: al abrir una versión nueva que no cambia las fuentes, aparece, no las vuelve a pedir y se va a los 0,5 s", async ({
   browser,
 }) => {
   test.setTimeout(180_000);

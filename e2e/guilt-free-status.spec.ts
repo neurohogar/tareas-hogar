@@ -88,7 +88,7 @@ async function postpone(page: Page, title: string, option: '3 horas' | 'Hasta ma
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
-test('Flujo 1: atraso con fecha y distancia, sin color de alarma', async ({ page }) => {
+test('Flow 1: atraso con fecha y distancia, sin color de alarma', async ({ page }) => {
 	await session(page, '2026-11-13T10:00:00');
 	await createAndView(page, { title: 'Pagar la luz', kind: 'No se repite', date: '2026-11-10' });
 	await createAndView(page, { title: 'Pagar agua', kind: 'No se repite', date: '2026-11-12' });
@@ -148,7 +148,7 @@ test('Flujo 1: atraso con fecha y distancia, sin color de alarma', async ({ page
 	await withoutOverdue(page);
 });
 
-test('Flujo 2: «Vuelve …» en las filas en espera', async ({ page }) => {
+test('Flow 2: «Vuelve …» en las filas en espera', async ({ page }) => {
 	await session(page, '2026-11-13T10:00:00', true);
 	await createAndView(page, { title: 'Regar', kind: 'Intervalo', every: '8', unit: 'horas' });
 	await createAndView(page, { title: 'Sacar la basura', kind: 'Días de la semana', days: ['jueves'] });
@@ -204,7 +204,7 @@ test('Flujo 2: «Vuelve …» en las filas en espera', async ({ page }) => {
 	});
 });
 
-test('Flujo 3: filas sin texto de fecha', async ({ page }) => {
+test('Flow 3: filas sin texto de fecha', async ({ page }) => {
 	await session(page, '2026-11-13T10:00:00');
 	await createAndView(page, { title: 'Barrer', kind: 'No se repite' });
 	await createAndView(page, { title: 'Pagar', kind: 'No se repite', date: '2026-11-13' });
@@ -254,7 +254,7 @@ test('Flujo 3: filas sin texto de fecha', async ({ page }) => {
 	await says(page, 'Pagar', 'Tocaba el viernes 13 de noviembre · hace 30 días');
 });
 
-test('Flujo 4: se actualiza solo y no cambia el orden', async ({ page }) => {
+test('Flow 4: se actualiza solo y no cambia el orden', async ({ page }) => {
 	await session(page, '2026-11-12T20:00:00', true);
 	await createAndView(page, { title: 'Pagar', kind: 'No se repite', date: '2026-11-10' });
 	await createAndView(page, { title: 'Barrer', kind: 'Días de la semana', days: ['sábado'] });
@@ -303,7 +303,7 @@ test('Flujo 4: se actualiza solo y no cambia el orden', async ({ page }) => {
 	});
 });
 
-test('Flujo 5: el cierre al completar', async ({ page }) => {
+test('Flow 5: el cierre al completar', async ({ page }) => {
 	await session(page, '2026-11-02T10:00:00', true);
 	await createAndView(page, { title: 'Regar', kind: 'Intervalo', every: '8', unit: 'horas' });
 	await createAndView(page, { title: 'Sacar la basura', kind: 'Días de la semana', days: ['jueves'] });

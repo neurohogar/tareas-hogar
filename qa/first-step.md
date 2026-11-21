@@ -1,135 +1,135 @@
-# QA: primer paso de la tarea
+# QA: first step of the task
 
-Verifica, solo por la interfaz:
+Verifies, through the interface only:
 
-- el campo **Primer paso** del panel de edición: una línea, sin texto de ejemplo, justo debajo del título (con su emoji) y antes de la nota; arranca vacío al crear y con el valor actual al editar; Enter guarda; se recortan los espacios; vacío o solo espacios deja la tarea sin primer paso; no tiene largo máximo y nunca rechaza un guardado;
-- que la fila de una tarea `pendiente` o `atrasada` con primer paso dice, en su propia línea debajo del título, `Primer paso: ` seguido del texto, completo (en varias líneas si hace falta), en el mismo tamaño y color que el horario y sin énfasis; y que tocarlo es tocar la fila;
-- que las filas `en espera` (completadas, pospuestas, por su horario o de calendario antes de su ocurrencia), las completadas y las pausadas no muestran el primer paso, y que la línea desaparece y vuelve sola con el estado de cada momento (completar, deshacer, posponer, pausar, reanudar, el paso del tiempo);
-- que el primer paso no tiene estado: completar, posponer, pausar, reanudar, deshacer y cambiar de tipo o de modo no lo borran ni lo cambian, una periódica que vuelve muestra el mismo, y no hay forma de marcarlo como hecho ni indicador de avance;
-- que no cambia el estado, el orden de la lista, y que el nombre de la tarea sigue siendo emoji y título;
-- que no se ve en el Historial ni en el aviso de deshacer;
-- **Cambios sin guardar** con el campo y el caso de dos dispositivos.
+- the **Primer paso** field of the edit panel: one line, without example text, right below the title (with its emoji) and before the note; it starts empty when creating and with the current value when editing; Enter saves; spaces are trimmed; empty or only spaces leaves the task without a first step; it has no maximum length and never rejects a save;
+- that the row of a `pending` or `overdue` task with a first step says, on its own line below the title, `Primer paso: ` followed by the text, in full (on several lines if needed), in the same size and color as the schedule and without emphasis; and that tapping it is tapping the row;
+- that `waiting` rows (completed, postponed, because of their schedule or calendar ones before their occurrence), completed ones and paused ones do not show the first step, and that the line disappears and comes back by itself with the status of each moment (completing, undoing, postponing, pausing, resuming, the passing of time);
+- that the first step has no status: completing, postponing, pausing, resuming, undoing and changing the kind or mode do not delete or change it, a recurring task that comes back shows the same one, and there is no way to mark it as done nor a progress indicator;
+- that it does not change the status or the order of the list, and that the name of the task is still emoji and title;
+- that it is not shown in the Historial or in the undo notice;
+- **Cambios sin guardar** with the field and the two-devices case.
 
-Cubre spec §4.1 (`primerPaso`, **Primer paso**), §6.1 (fila), §6.2 (campo **Primer paso**, orden de las secciones, **Cambios sin guardar**) y §7 (conflictos por campo).
+Covers spec §4.1 (`primerPaso`, **Primer paso**), §6.1 (row), §6.2 (**Primer paso** field, order of the sections, **Cambios sin guardar**) and §7 (conflicts by field).
 
-Fuera de alcance: las reglas de estado y de orden en sí (`qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/schedule.md`, `qa/pending-order.md`), que cubren los `.feature`; el contenido de `qa/emoji-and-note.md` más allá de su posición relativa al campo.
+Out of scope: the status and order rules themselves (`qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/schedule.md`, `qa/pending-order.md`), which the `.feature` files cover; the content of `qa/emoji-and-note.md` beyond its position relative to the field.
 
-## Entorno
+## Environment
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de cada flujo.
-- Cada flujo parte de un contexto de navegador nuevo, con sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de `qa/recurring-relative.md`).
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la app, en la hora local que indica cada flujo (zona `America/Argentina/Buenos_Aires`), detenido (`page.clock.pauseAt`).
-  - "A las X" y "Avanzar el reloj a X" significan adelantarlo hasta X (`page.clock.runFor` o `fastForward`) y esperar a que la pantalla se actualice sola, sin recargar.
-- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite** que indica el paso (controles de `qa/one-off.md`, `qa/recurring-relative.md` y `qa/recurring-calendar.md`), horario como en `qa/schedule.md`, escribir el **Primer paso** si el paso lo da y guardar.
-- "Posponer X con la opción O": tocar la fila X y elegir O entre las opciones de **Posponer** (`qa/postpone.md`). "Pausar X" y "Reanudar X": tocar la fila X y el botón **Pausar** o **Reanudar** del panel (`qa/pause.md`); solo las periódicas se pausan.
-- **Mostrar completadas** y **Mostrar pausadas** quedan apagados salvo que el flujo diga encenderlos.
-- **Dos dispositivos** (Flujo 8): dos contextos A y B con la misma cuenta y el mismo reloj simulado. "B sin conexión" es `browserContext.setOffline(true)`; "B vuelve a tener conexión", volverlo online y esperar a que las dos pantallas se actualicen solas.
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of each flow.
+- Each flow starts from a new browser context, signed in with the `qa@example.com` account of the Auth Emulator (Flow 1 of `qa/recurring-relative.md`).
+- Simulated browser clock (`page.clock`) installed **before** opening the app, at the local time that each flow indicates (zone `America/Argentina/Buenos_Aires`), stopped (`page.clock.pauseAt`).
+  - "At X" and "Advance the clock to X" mean advancing it to X (`page.clock.runFor` or `fastForward`) and waiting for the screen to update by itself, without reloading.
+- Creating a task: tap **+**, type the title, choose the **Se repite** option that the step indicates (controls of `qa/one-off.md`, `qa/recurring-relative.md` and `qa/recurring-calendar.md`), schedule as in `qa/schedule.md`, type the **Primer paso** if the step gives it and save.
+- "Postpone X with option O": tap row X and choose O among the **Posponer** options (`qa/postpone.md`). "Pause X" and "Resume X": tap row X and the **Pausar** or **Reanudar** button of the panel (`qa/pause.md`); only recurring tasks are paused.
+- **Mostrar completadas** and **Mostrar pausadas** stay off unless the flow says to turn them on.
+- **Two devices** (Flow 8): two contexts A and B with the same account and the same simulated clock. "B offline" is `browserContext.setOffline(true)`; "B is back online" means setting it online again and waiting for both screens to update by themselves.
 
-Semana de referencia: lunes 2026-11-09, martes 10, miércoles 11, jueves 12, viernes 13, sábado 14, domingo 15.
+Reference week: Monday 2026-11-09, Tuesday 10, Wednesday 11, Thursday 12, Friday 13, Saturday 14, Sunday 15.
 
-## Contrato observable
+## Observable contract
 
-- **Campo Primer paso**: en el panel (**Nueva tarea** y **Editar tarea**), sección **Tarea**, un campo de texto de una línea (rol `textbox`, etiqueta **Primer paso**) sin `placeholder`. En el orden de la sección, de arriba hacia abajo: el título con el botón de emoji, el campo **Primer paso**, la **Nota**. Al crear está vacío; al editar muestra el valor guardado. Enter dentro del campo guarda, como en el campo **Título**.
-- **Línea de la fila**: dentro de la fila de la tarea, un texto que empieza con `Primer paso: ` y sigue con el texto guardado, en su propia línea debajo del título. "La fila dice P" significa que ese texto es exactamente `Primer paso: P`. Una fila sin primer paso, o que no lo muestra, no contiene `Primer paso`.
-- **Estilo de la línea**: el mismo `color` y el mismo `font-size` computados que el texto de horario de la misma fila o de otra; `font-weight` normal, sin subrayado ni color propio; la fila no cambia de fondo. No tiene recorte (sin `text-overflow: ellipsis`, sin `overflow: hidden` ni `max-height` que corten): el texto completo es visible, en varias líneas si hace falta.
-- **Sin controles propios**: la línea no tiene botón, checkbox ni campo; el único checkbox de la fila es el de la tarea. Tocar la línea es tocar la fila: abre el panel **Editar tarea**.
-- **Aviso, Historial**: los de `qa/history-undo.md`; ninguno contiene `Primer paso` ni el texto del primer paso.
-- **Lista**: "La lista es A, B, C" significa exactamente esas filas, de arriba hacia abajo.
+- **Primer paso field**: in the panel (**Nueva tarea** and **Editar tarea**), **Tarea** section, a one-line text field (role `textbox`, label **Primer paso**) without `placeholder`. In the order of the section, from top to bottom: the title with the emoji button, the **Primer paso** field, the **Nota**. When creating it is empty; when editing it shows the saved value. Enter inside the field saves, as in the **Título** field.
+- **Row line**: inside the task row, a text that starts with `Primer paso: ` and continues with the saved text, on its own line below the title. "The row says P" means that this text is exactly `Primer paso: P`. A row without a first step, or that does not show it, does not contain `Primer paso`.
+- **Line style**: the same computed `color` and the same computed `font-size` as the schedule text of the same row or of another; normal `font-weight`, no underline or own color; the row does not change its background. It has no truncation (no `text-overflow: ellipsis`, no `overflow: hidden` or `max-height` that cut): the full text is visible, on several lines if needed.
+- **No controls of its own**: the line has no button, checkbox or field; the only checkbox of the row is that of the task. Tapping the line is tapping the row: it opens the **Editar tarea** panel.
+- **Notice, Historial**: those of `qa/history-undo.md`; neither contains `Primer paso` or the text of the first step.
+- **List**: "The list is A, B, C" means exactly those rows, from top to bottom.
 
-## Flujo 1: el campo en el panel y crear con primer paso
+## Flow 1: the field in the panel and creating with a first step
 
-Precondición: lista vacía, reloj en `2026-11-13T10:00:00` (viernes).
+Precondition: empty list, clock at `2026-11-13T10:00:00` (Friday).
 
-1. Tocar **+**. En el panel **Nueva tarea**, el campo **Primer paso** existe, está vacío y no tiene texto de ejemplo. En la sección **Tarea**, el orden vertical es: **Título** (con el botón de emoji), **Primer paso**, **Nota**.
-2. Escribir `Lavar` en **Título** y `Separar la ropa blanca` en **Primer paso**. Con el foco en **Primer paso**, apretar Enter: el panel guarda y se cierra. La fila de `Lavar` dice `Primer paso: Separar la ropa blanca`, debajo del título.
-3. Tocar **+**, escribir `Barrer` (**No se repite**, sin fecha límite) y guardar sin tocar **Primer paso**: la fila de `Barrer` no contiene `Primer paso`.
-4. Tocar **+**, elegir **Intervalo** cada `2` **días**, título `Regar`, **Primer paso** `Llenar la regadera`, y guardar: la fila dice `Primer paso: Llenar la regadera`. Repetir con **Días de la semana** y **martes** (`Basura`, `Atar la bolsa llena`): cada fila muestra su línea.
-5. Tocar la fila `Lavar`: el panel **Editar tarea** muestra **Primer paso** con `Separar la ropa blanca`. Tocar la fila `Barrer`: **Primer paso** está vacío. Recargar: las filas siguen igual.
+1. Tap **+**. In the **Nueva tarea** panel, the **Primer paso** field exists, is empty and has no example text. In the **Tarea** section, the vertical order is: **Título** (with the emoji button), **Primer paso**, **Nota**.
+2. Type `Lavar` in **Título** and `Separar la ropa blanca` in **Primer paso**. With the focus in **Primer paso**, press Enter: the panel saves and closes. The row of `Lavar` says `Primer paso: Separar la ropa blanca`, below the title.
+3. Tap **+**, type `Barrer` (**No se repite**, without a due date) and save without touching **Primer paso**: the row of `Barrer` does not contain `Primer paso`.
+4. Tap **+**, choose **Intervalo** every `2` **días**, title `Regar`, **Primer paso** `Llenar la regadera`, and save: the row says `Primer paso: Llenar la regadera`. Repeat with **Días de la semana** and **martes** (`Basura`, `Atar la bolsa llena`): each row shows its line.
+5. Tap the `Lavar` row: the **Editar tarea** panel shows **Primer paso** with `Separar la ropa blanca`. Tap the `Barrer` row: **Primer paso** is empty. Reload: the rows stay the same.
 
-## Flujo 2: editar, recortar, vaciar y texto largo
+## Flow 2: edit, trim, empty and long text
 
-Precondición: lista con `Lavar` (**No se repite**, sin fecha límite) con **Primer paso** `Separar la ropa blanca`, reloj en `2026-11-13T10:00:00`.
+Precondition: list with `Lavar` (**No se repite**, without a due date) with **Primer paso** `Separar la ropa blanca`, clock at `2026-11-13T10:00:00`.
 
-1. Abrir la fila, escribir en **Primer paso** `  Juntar las llaves  ` (con espacios al inicio y al final) y guardar: la fila dice `Primer paso: Juntar las llaves`. Reabrir: el campo tiene exactamente `Juntar las llaves`.
-2. Pegar en **Primer paso** un texto de dos líneas (`uno`, salto de línea, `dos`): el campo queda en una sola línea, sin salto de línea (el navegador aplana el pegado), y no hay forma de escribir un salto de línea con Enter (Enter guarda). Guardar: el texto de la fila no tiene salto de línea entre `uno` y `dos`. Reabrir: el campo sigue en una línea.
-3. Vaciar el campo y guardar: la fila ya no contiene `Primer paso`. Reabrir: **Primer paso** está vacío. Recargar: sigue sin línea.
-4. Escribir de nuevo `Separar la ropa blanca` y guardar. Abrir, escribir solo espacios en **Primer paso** y guardar: no hay error ni mensaje de rechazo; la fila ya no contiene `Primer paso` y reabrir muestra el campo vacío.
-5. Pegar en **Primer paso** un texto de 5000 caracteres (por ejemplo `a` repetida) y guardar: se acepta sin error ni advertencia de largo. Reabrir: tiene los 5000 caracteres.
-6. Escribir en **Primer paso** un texto largo con espacios, de unos 160 caracteres (`Abrir el cajón de abajo, sacar toda la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla con nada de color oscuro ni delicado`), y guardar. En un celular (390 × 844): la fila muestra todo el texto, en varias líneas, sin `…` ni corte; el texto visible de la línea es exactamente `Primer paso: ` más ese texto.
+1. Open the row, type in **Primer paso** `  Juntar las llaves  ` (with spaces at the start and at the end) and save: the row says `Primer paso: Juntar las llaves`. Reopen: the field has exactly `Juntar las llaves`.
+2. Paste into **Primer paso** a two-line text (`uno`, line break, `dos`): the field stays on a single line, without a line break (the browser flattens the paste), and there is no way to type a line break with Enter (Enter saves). Save: the text of the row has no line break between `uno` and `dos`. Reopen: the field is still on one line.
+3. Empty the field and save: the row no longer contains `Primer paso`. Reopen: **Primer paso** is empty. Reload: still without a line.
+4. Type `Separar la ropa blanca` again and save. Open, type only spaces in **Primer paso** and save: there is no error or rejection message; the row no longer contains `Primer paso` and reopening shows the empty field.
+5. Paste into **Primer paso** a text of 5000 characters (for example `a` repeated) and save: it is accepted without a length error or warning. Reopen: it has the 5000 characters.
+6. Type in **Primer paso** a long text with spaces, of about 160 characters (`Abrir el cajón de abajo, sacar toda la ropa blanca y separarla en dos pilas: la que va con agua caliente y la que no se mezcla con nada de color oscuro ni delicado`), and save. On a phone (390 × 844): the row shows all the text, on several lines, without `…` or cutting; the visible text of the line is exactly `Primer paso: ` plus that text.
 
-## Flujo 3: la línea en la fila (posición, estilo, toque)
+## Flow 3: the line on the row (position, style, tap)
 
-Precondición: lista vacía, reloj en `2026-11-13T10:00:00`. Crear `Pagar la luz` con **No se repite**, fecha límite `2026-11-10` y **Primer paso** `Buscar la factura`; y `Cambiar foco` con **No se repite**, sin fecha límite, horario **Desde** `08:00` **Hasta** `12:00` y **Primer paso** `Sacar la escalera`.
+Precondition: empty list, clock at `2026-11-13T10:00:00`. Create `Pagar la luz` with **No se repite**, due date `2026-11-10` and **Primer paso** `Buscar la factura`; and `Cambiar foco` with **No se repite**, without a due date, schedule **Desde** `08:00` **Hasta** `12:00` and **Primer paso** `Sacar la escalera`.
 
-1. **Pagar la luz** está `atrasada` y **Cambiar foco** `pendiente`: la fila de **Pagar la luz** dice `Primer paso: Buscar la factura`, y la de **Cambiar foco**, `Primer paso: Sacar la escalera`, cada una en su propia línea, debajo del título (la línea queda más abajo que el título en la pantalla).
-2. El texto de la línea de **Pagar la luz** tiene el mismo `color` y `font-size` que el texto de horario de **Cambiar foco**, no está en negrita ni subrayado y no es rojizo. La fila no cambió de fondo respecto de una fila sin primer paso.
-3. Las filas no tienen ningún campo ni botón nuevo: el único checkbox de la fila es el de la tarea, y no hay marca de «hecho» ni indicador de avance del primer paso.
-4. Tocar la línea `Primer paso: Sacar la escalera`: se abre el panel **Editar tarea** de **Cambiar foco** (igual que tocar el título). Cerrarlo sin cambios.
-5. Tocar el checkbox de **Cambiar foco**: completa la tarea; la línea no se marca ni cambia de ningún modo antes de desaparecer (ver Flujo 4).
+1. **Pagar la luz** is `overdue` and **Cambiar foco** `pending`: the row of **Pagar la luz** says `Primer paso: Buscar la factura`, and that of **Cambiar foco**, `Primer paso: Sacar la escalera`, each on its own line, below the title (the line is lower than the title on the screen).
+2. The text of the line of **Pagar la luz** has the same `color` and `font-size` as the schedule text of **Cambiar foco**, is not bold or underlined and is not reddish. The row did not change its background compared with a row without a first step.
+3. The rows have no new field or button: the only checkbox of the row is that of the task, and there is no «done» mark or progress indicator for the first step.
+4. Tap the line `Primer paso: Sacar la escalera`: the **Editar tarea** panel of **Cambiar foco** opens (the same as tapping the title). Close it without changes.
+5. Tap the checkbox of **Cambiar foco**: it completes the task; the line is not marked or changed in any way before disappearing (see Flow 4).
 
-## Flujo 4: dónde se ve y cuándo desaparece y vuelve
+## Flow 4: where it is shown and when it disappears and comes back
 
-Precondición: lista vacía, reloj detenido en `2026-11-13T10:00:00` (viernes). Encender **Mostrar completadas**.
+Precondition: empty list, clock stopped at `2026-11-13T10:00:00` (Friday). Turn on **Mostrar completadas**.
 
-1. Crear `Cambiar foco` con **No se repite**, sin fecha límite y **Primer paso** `Sacar la escalera`; `Pagar` con **No se repite**, fecha límite `2026-11-10` y **Primer paso** `Buscar la factura`; `Regar` con **Intervalo** cada `8` **horas** y **Primer paso** `Llenar la regadera`.
-2. `Pagar` (atrasada) y `Cambiar foco` (pendiente) muestran su línea; `Regar` (nunca completada: pendiente) también.
-3. Tocar el checkbox de **Regar**: queda `en espera`, completada, y su fila ya no contiene `Primer paso`. Avanzar el reloj a `2026-11-13T17:59:00`: sigue sin línea. Avanzar a `2026-11-13T18:00:00`: **Regar** vuelve a `pendiente` y su fila dice `Primer paso: Llenar la regadera`, igual que antes.
-4. Avanzar a `2026-11-14T02:00:00`: **Regar** está `atrasada` y sigue diciendo `Primer paso: Llenar la regadera`.
-5. Tocar el checkbox de **Cambiar foco** (puntual): aparece el aviso `Completaste «Cambiar foco»` sin ningún `Primer paso`. La fila (completada, con **Mostrar completadas**) no contiene `Primer paso`. Tocar **Deshacer** dentro de los 5 segundos: la fila vuelve a `pendiente` y dice `Primer paso: Sacar la escalera`.
-6. Posponer **Cambiar foco** con la opción **3 horas**: pasa a `en espera` y su fila no contiene `Primer paso`. Posponer **Pagar** con la opción **Hasta mañana**: tampoco. Avanzar el reloj hasta que venza la posposición de **Cambiar foco**: la línea vuelve sola con su texto; **Pagar** (atrasada de nuevo al vencer) también.
-7. Tocar la fila **Regar** y **Pausar**: la fila ya no se ve. Encender **Mostrar pausadas**: **Regar** se ve pausada (dice «Pausada») y no contiene `Primer paso`. Tocar la fila, **Reanudar**: **Regar** queda `pendiente` y la fila dice `Primer paso: Llenar la regadera`.
-8. Crear `Basura` con **Días de la semana** y **martes** y **Primer paso** `Atar la bolsa llena`, con el reloj en el viernes: está `en espera` hasta el martes 17 y no contiene `Primer paso`. Avanzar el reloj a `2026-11-17T09:00:00`: está `pendiente` y dice `Primer paso: Atar la bolsa llena`.
-9. Crear `Llamar` con **No se repite**, sin fecha límite, horario **Desde** `08:00` **Hasta** `09:00` y **Primer paso** `Buscar el número`: con el reloj en `2026-11-17T09:00:00` está fuera de su ventana (`en espera`) y no contiene `Primer paso`. Avanzar a `2026-11-18T08:00:00`: está `pendiente` y dice `Primer paso: Buscar el número`.
+1. Create `Cambiar foco` with **No se repite**, without a due date and **Primer paso** `Sacar la escalera`; `Pagar` with **No se repite**, due date `2026-11-10` and **Primer paso** `Buscar la factura`; `Regar` with **Intervalo** every `8` **horas** and **Primer paso** `Llenar la regadera`.
+2. `Pagar` (overdue) and `Cambiar foco` (pending) show their line; `Regar` (never completed: pending) too.
+3. Tap the checkbox of **Regar**: it becomes `waiting`, completed, and its row no longer contains `Primer paso`. Advance the clock to `2026-11-13T17:59:00`: still without a line. Advance to `2026-11-13T18:00:00`: **Regar** goes back to `pending` and its row says `Primer paso: Llenar la regadera`, the same as before.
+4. Advance to `2026-11-14T02:00:00`: **Regar** is `overdue` and still says `Primer paso: Llenar la regadera`.
+5. Tap the checkbox of **Cambiar foco** (one-off): the notice `Completaste «Cambiar foco»` appears without any `Primer paso`. The row (completed, with **Mostrar completadas**) does not contain `Primer paso`. Tap **Deshacer** within the 5 seconds: the row goes back to `pending` and says `Primer paso: Sacar la escalera`.
+6. Postpone **Cambiar foco** with the option **3 horas**: it becomes `waiting` and its row does not contain `Primer paso`. Postpone **Pagar** with the option **Hasta mañana**: neither. Advance the clock until the postponement of **Cambiar foco** expires: the line comes back by itself with its text; **Pagar** (overdue again when it expires) too.
+7. Tap the **Regar** row and **Pausar**: the row is no longer shown. Turn on **Mostrar pausadas**: **Regar** is shown paused (it says «Pausada») and does not contain `Primer paso`. Tap the row, **Reanudar**: **Regar** becomes `pending` and the row says `Primer paso: Llenar la regadera`.
+8. Create `Basura` with **Días de la semana** and **martes** and **Primer paso** `Atar la bolsa llena`, with the clock on Friday: it is `waiting` until Tuesday 17 and does not contain `Primer paso`. Advance the clock to `2026-11-17T09:00:00`: it is `pending` and says `Primer paso: Atar la bolsa llena`.
+9. Create `Llamar` with **No se repite**, without a due date, schedule **Desde** `08:00` **Hasta** `09:00` and **Primer paso** `Buscar el número`: with the clock at `2026-11-17T09:00:00` it is outside its window (`waiting`) and does not contain `Primer paso`. Advance to `2026-11-18T08:00:00`: it is `pending` and says `Primer paso: Buscar el número`.
 
-## Flujo 5: atrasada con el checkbox deshabilitado
+## Flow 5: overdue with the checkbox disabled
 
-Precondición: lista vacía, reloj detenido en `2026-11-09T09:00:00` (lunes).
+Precondition: empty list, clock stopped at `2026-11-09T09:00:00` (Monday).
 
-1. Crear `Lavar` con **No se repite**, fecha límite `2026-11-10`, horario **Desde** `08:00` **Hasta** `11:00` y **Primer paso** `Separar la ropa blanca`.
-2. Avanzar el reloj a `2026-11-11T07:00:00` (el día límite ya pasó y la ventana de hoy aún no abrió): **Lavar** está `atrasada`, con el checkbox deshabilitado, y su fila dice `Primer paso: Separar la ropa blanca`.
-3. Avanzar a `2026-11-11T08:00:00`: el checkbox queda habilitado y la fila sigue diciendo `Primer paso: Separar la ropa blanca`.
+1. Create `Lavar` with **No se repite**, due date `2026-11-10`, schedule **Desde** `08:00` **Hasta** `11:00` and **Primer paso** `Separar la ropa blanca`.
+2. Advance the clock to `2026-11-11T07:00:00` (the due day has passed and today's window has not opened yet): **Lavar** is `overdue`, with the checkbox disabled, and its row says `Primer paso: Separar la ropa blanca`.
+3. Advance to `2026-11-11T08:00:00`: the checkbox becomes enabled and the row still says `Primer paso: Separar la ropa blanca`.
 
-## Flujo 6: el primer paso no cambia con las acciones de la tarea
+## Flow 6: the first step does not change with the actions of the task
 
-Precondición: lista vacía, reloj en `2026-11-13T10:00:00`. **Mostrar completadas** y **Mostrar pausadas** encendidos.
+Precondition: empty list, clock at `2026-11-13T10:00:00`. **Mostrar completadas** and **Mostrar pausadas** turned on.
 
-1. Crear `Regar` con **Intervalo** cada `2` **días** y **Primer paso** `Llenar la regadera`. Tocar su checkbox. Abrir la fila: **Primer paso** sigue valiendo `Llenar la regadera`. Cerrar.
-2. Pausar **Regar** y abrir su fila: **Primer paso** vale `Llenar la regadera`. **Reanudar**: abrir la fila, sigue igual.
-3. Tocar el checkbox de **Regar** y tocar **Deshacer** en el aviso: abrir la fila, **Primer paso** sigue igual.
-4. En el panel de **Regar**, cambiar **Se repite** a **Días de la semana** con **martes** y guardar: reabrir, **Primer paso** sigue valiendo `Llenar la regadera`. Cambiar **Se repite** a **No se repite** y guardar: reabrir, sigue igual. Volver a **Intervalo** cada `2` **días** y guardar: sigue igual.
-5. Crear `Cambiar foco` con **No se repite** y **Primer paso** `Sacar la escalera`, posponerla con la opción **3 horas** y abrir la fila: **Primer paso** sigue valiendo `Sacar la escalera`.
-6. Recargar la página: ambos valores se mantienen. No existe en ninguna pantalla un control para marcar el primer paso como hecho.
-7. Crear una tarea sin primer paso (`Barrer`) y abrir su fila: **Primer paso** está vacío y la fila no contiene `Primer paso`, como antes de existir el campo.
+1. Create `Regar` with **Intervalo** every `2` **días** and **Primer paso** `Llenar la regadera`. Tap its checkbox. Open the row: **Primer paso** is still `Llenar la regadera`. Close.
+2. Pause **Regar** and open its row: **Primer paso** is `Llenar la regadera`. **Reanudar**: open the row, it is still the same.
+3. Tap the checkbox of **Regar** and tap **Deshacer** in the notice: open the row, **Primer paso** is still the same.
+4. In the **Regar** panel, change **Se repite** to **Días de la semana** with **martes** and save: reopen, **Primer paso** is still `Llenar la regadera`. Change **Se repite** to **No se repite** and save: reopen, still the same. Go back to **Intervalo** every `2` **días** and save: still the same.
+5. Create `Cambiar foco` with **No se repite** and **Primer paso** `Sacar la escalera`, postpone it with the option **3 horas** and open the row: **Primer paso** is still `Sacar la escalera`.
+6. Reload the page: both values are kept. There is no control on any screen to mark the first step as done.
+7. Create a task without a first step (`Barrer`) and open its row: **Primer paso** is empty and the row does not contain `Primer paso`, as before the field existed.
 
-## Flujo 7: lo que no cambia y lo que no lo muestra
+## Flow 7: what does not change and what does not show it
 
-Precondición: lista vacía, reloj detenido en `2026-11-13T10:00:00`.
+Precondition: empty list, clock stopped at `2026-11-13T10:00:00`.
 
-1. Crear `Barrer`, `Lavar` y `Planchar`, todas con **No se repite** y sin fecha límite. Anotar el orden de la lista y el texto de cada fila.
-2. Escribir en `Lavar` el **Primer paso** `Separar la ropa blanca` y guardar. El orden de la lista es el mismo que anotó; las filas de **Barrer** y **Planchar** son idénticas a antes. Repetir poniendo el primer paso en `Barrer` y quitándoselo a `Lavar`: el orden de la lista sigue siendo el mismo.
-3. Poner a `Lavar` el emoji `🧺` con el selector: el título de la fila dice `🧺 Lavar` y la línea de primer paso sigue en su propia línea debajo. El título no incluye el primer paso.
-4. Tocar el checkbox de **Lavar**: el aviso dice `Completaste «🧺 Lavar»`, sin `Primer paso`. Ir a **Historial**: la entrada dice `🧺 Lavar` con su hora, sin `Primer paso`.
+1. Create `Barrer`, `Lavar` and `Planchar`, all with **No se repite** and without a due date. Note the order of the list and the text of each row.
+2. Type in `Lavar` the **Primer paso** `Separar la ropa blanca` and save. The order of the list is the same as the one noted; the rows of **Barrer** and **Planchar** are identical to before. Repeat putting the first step on `Barrer` and removing it from `Lavar`: the order of the list is still the same.
+3. Give `Lavar` the emoji `🧺` with the picker: the title of the row says `🧺 Lavar` and the first-step line stays on its own line below. The title does not include the first step.
+4. Tap the checkbox of **Lavar**: the notice says `Completaste «🧺 Lavar»`, without `Primer paso`. Go to **Historial**: the entry says `🧺 Lavar` with its time, without `Primer paso`.
 
-## Flujo 8: cambios sin guardar con el campo
+## Flow 8: unsaved changes with the field
 
-Precondición: `Lavar` con **Primer paso** `Separar la ropa blanca` y `Barrer` sin primer paso, reloj en `2026-11-13T10:00:00`.
+Precondition: `Lavar` with **Primer paso** `Separar la ropa blanca` and `Barrer` without a first step, clock at `2026-11-13T10:00:00`.
 
-1. Abrir `Lavar`, cambiar **Primer paso** a `Juntar las llaves` y tocar la X del panel: aparece el aviso "Tenés cambios sin guardar". Elegir **Descartar**: la fila sigue diciendo `Primer paso: Separar la ropa blanca`.
-2. Abrir `Lavar`, cambiar **Primer paso** a `Juntar las llaves`, volver a escribir `Separar la ropa blanca` y tocar la X: el panel se cierra directo, sin aviso.
-3. Abrir `Lavar`, escribir `Separar la ropa blanca` con espacios al inicio y al final (el mismo valor) y tocar la X: se cierra directo, sin aviso.
-4. Abrir `Lavar`, vaciar **Primer paso** y tocar la X: aparece el aviso. **Descartar**. Repetir escribiendo solo espacios: aparece el aviso. **Descartar**.
-5. Abrir `Barrer`, escribir solo espacios en **Primer paso** y tocar la X: se cierra directo, sin aviso. Abrir `Barrer`, escribir `Barrer abajo` y tocar la X: aparece el aviso. **Descartar**.
-6. Tocar **+**, tocar la X: se cierra directo. Tocar **+**, escribir en **Primer paso** `Separar la ropa blanca` y tocar la X: aparece el aviso. **Descartar**.
+1. Open `Lavar`, change **Primer paso** to `Juntar las llaves` and tap the X of the panel: the notice "Tenés cambios sin guardar" appears. Choose **Descartar**: the row still says `Primer paso: Separar la ropa blanca`.
+2. Open `Lavar`, change **Primer paso** to `Juntar las llaves`, type `Separar la ropa blanca` again and tap the X: the panel closes directly, without a notice.
+3. Open `Lavar`, type `Separar la ropa blanca` with spaces at the start and at the end (the same value) and tap the X: it closes directly, without a notice.
+4. Open `Lavar`, empty **Primer paso** and tap the X: the notice appears. **Descartar**. Repeat typing only spaces: the notice appears. **Descartar**.
+5. Open `Barrer`, type only spaces in **Primer paso** and tap the X: it closes directly, without a notice. Open `Barrer`, type `Barrer abajo` and tap the X: the notice appears. **Descartar**.
+6. Tap **+**, tap the X: it closes directly. Tap **+**, type in **Primer paso** `Separar la ropa blanca` and tap the X: the notice appears. **Descartar**.
 
-## Flujo 9: dos dispositivos
+## Flow 9: two devices
 
-Precondición: lista vacía, reloj en `2026-11-13T10:00:00` en A y en B.
+Precondition: empty list, clock at `2026-11-13T10:00:00` on A and on B.
 
-1. En A, crear `Lavar` con **No se repite** y sin fecha límite. B la ve aparecer.
-2. B sin conexión. En B, escribir **Primer paso** `Separar la ropa blanca` y guardar. En A, cambiar **Título** a `Lavar a mano` y guardar.
-3. B vuelve a tener conexión: en A y en B la fila dice `Lavar a mano` y `Primer paso: Separar la ropa blanca` (los dos cambios se conservaron).
-4. B sin conexión. En B, cambiar **Primer paso** a `Juntar las llaves`. En A, cambiar **Nota** a `Usar guantes`. B vuelve a tener conexión: en A y en B la fila dice `Primer paso: Juntar las llaves` y la nota es `Usar guantes`.
-5. B sin conexión. En B, cambiar **Primer paso** a `Buscar el detergente`. En A, cambiar **Primer paso** a `Poner el agua a calentar`. B vuelve a tener conexión: en A y en B la fila dice `Primer paso: Buscar el detergente` (el último cambio en llegar es el de B).
-6. B sin conexión. En B, vaciar **Primer paso** y guardar. En A, cambiar **Primer paso** a `Sacar la escalera` y guardar. B vuelve a tener conexión: en A y en B la fila no contiene `Primer paso` (el último cambio en llegar es el de B, que lo quitó).
-7. B sin conexión. En B, escribir `Barrer abajo` en **Primer paso** y guardar. En A, vaciar **Primer paso** y guardar. B vuelve a tener conexión: en A y en B la fila dice `Primer paso: Barrer abajo` (el último cambio en llegar es el de B).
-8. B sin conexión. En B, escribir `Separar la ropa blanca` en **Primer paso** y guardar. En A, abrir la fila y guardar sin cambiar nada. B vuelve a tener conexión: en A y en B la fila dice `Primer paso: Separar la ropa blanca` (guardar sin cambios no pisó el cambio de B).
+1. On A, create `Lavar` with **No se repite** and without a due date. B sees it appear.
+2. B offline. On B, type **Primer paso** `Separar la ropa blanca` and save. On A, change **Título** to `Lavar a mano` and save.
+3. B is back online: on A and on B the row says `Lavar a mano` and `Primer paso: Separar la ropa blanca` (both changes were kept).
+4. B offline. On B, change **Primer paso** to `Juntar las llaves`. On A, change **Nota** to `Usar guantes`. B is back online: on A and on B the row says `Primer paso: Juntar las llaves` and the note is `Usar guantes`.
+5. B offline. On B, change **Primer paso** to `Buscar el detergente`. On A, change **Primer paso** to `Poner el agua a calentar`. B is back online: on A and on B the row says `Primer paso: Buscar el detergente` (the last change to arrive is that of B).
+6. B offline. On B, empty **Primer paso** and save. On A, change **Primer paso** to `Sacar la escalera` and save. B is back online: on A and on B the row does not contain `Primer paso` (the last change to arrive is that of B, which removed it).
+7. B offline. On B, type `Barrer abajo` in **Primer paso** and save. On A, empty **Primer paso** and save. B is back online: on A and on B the row says `Primer paso: Barrer abajo` (the last change to arrive is that of B).
+8. B offline. On B, type `Separar la ropa blanca` in **Primer paso** and save. On A, open the row and save without changing anything. B is back online: on A and on B the row says `Primer paso: Separar la ropa blanca` (saving without changes did not overwrite the change of B).

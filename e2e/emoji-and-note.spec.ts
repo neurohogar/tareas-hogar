@@ -84,7 +84,7 @@ async function recent(page: Page): Promise<string[]> {
 const sectionRecent = (page: Page) =>
   selectorEmoji(page).getByRole("heading", { name: "Recientes" });
 
-test("Flujo 1: elegir el emoji y verlo en la fila", async ({ page }) => {
+test("Flow 1: elegir el emoji y verlo en la fila", async ({ page }) => {
   await sessionWithClock(page, MONDAY);
   await create(page, {
     title: "Regar",
@@ -164,7 +164,7 @@ test("Flujo 1: elegir el emoji y verlo en la fila", async ({ page }) => {
   await viewPanel(page, "", "");
 });
 
-test("Flujo 2: quitar el emoji", async ({ page }) => {
+test("Flow 2: quitar el emoji", async ({ page }) => {
   await sessionWithClock(page, MONDAY);
   await create(page, {
     title: "Regar",
@@ -194,7 +194,7 @@ test("Flujo 2: quitar el emoji", async ({ page }) => {
   await expect(name(page, "Regar")).toBeVisible();
 });
 
-test("Flujo 3: catálogo, categorías y búsqueda en español", async ({
+test("Flow 3: catálogo, categorías y búsqueda en español", async ({
   page,
 }) => {
   await sessionWithClock(page, MONDAY);
@@ -262,7 +262,7 @@ test("Flujo 3: catálogo, categorías y búsqueda en español", async ({
   await viewPanel(page, "🧹", "");
 });
 
-test("Flujo 4: recientes", async ({ browser }) => {
+test("Flow 4: recientes", async ({ browser }) => {
   const { a, b, close: end } = await twoDevices(browser, MONDAY);
   await create(a, {
     title: "Regar",
@@ -347,7 +347,7 @@ test.describe("sin conexión", () => {
     return d;
   }
 
-  test("Flujo 5: el selector sin conexión", async ({ browser }) => {
+  test("Flow 5: el selector sin conexión", async ({ browser }) => {
     const { ctx, page } = await sessionPwa(browser);
     const external: string[] = [];
     ctx.on("request", (r) => {
@@ -397,7 +397,7 @@ test.describe("sin conexión", () => {
   });
 });
 
-test("Flujo 6: la nota, solo en el panel", async ({ page }) => {
+test("Flow 6: la nota, solo en el panel", async ({ page }) => {
   await sessionWithClock(page, MONDAY);
   await create(page, {
     title: "Regar",
@@ -444,7 +444,7 @@ const entry = (page: Page, text: string) =>
     .getByRole("listitem")
     .filter({ hasText: new RegExp(`^${text}\\s*\\d\\d:\\d\\d`) });
 
-test("Flujo 7: el emoji en Historial y en el aviso de deshacer", async ({
+test("Flow 7: el emoji en Historial y en el aviso de deshacer", async ({
   page,
 }) => {
   await sessionWithClock(page, "2026-07-13T07:50:00");
@@ -533,7 +533,7 @@ async function openIn(page: Page, emoji: string, note: string) {
 test.describe("dos dispositivos", () => {
   test.use({ serviceWorkers: "allow" });
 
-  test("Flujo 8: dos dispositivos, emoji y nota", async ({ browser }) => {
+  test("Flow 8: dos dispositivos, emoji y nota", async ({ browser }) => {
     const { a, b, ctxB, close: end } = await twoDevices(browser);
     await create(a, { title: "Regar", kind: "No se repite" });
     await waitStatus(b, "Regar", "pendiente");

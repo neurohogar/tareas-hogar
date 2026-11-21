@@ -7,7 +7,7 @@ test.beforeEach(async () => {
 	await cleanEmulators();
 });
 
-test('Flujo 1: entrar con Google', async ({ page }) => {
+test('Flow 1: entrar con Google', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByRole('button', { name: 'Entrar con Google' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Pendientes' })).toHaveCount(0);
@@ -20,7 +20,7 @@ test('Flujo 1: entrar con Google', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Entrar con Google' })).toHaveCount(0);
 });
 
-test('Flujo 2: validación al crear', async ({ page }) => {
+test('Flow 2: validación al crear', async ({ page }) => {
 	await sessionWithClock(page, START);
 	const panel = page.getByRole('dialog');
 	const save = page.getByRole('button', { name: 'Guardar' });
@@ -63,7 +63,7 @@ test('Flujo 2: validación al crear', async ({ page }) => {
 	await expect(page.getByRole('listitem')).toHaveCount(0);
 });
 
-test('Flujo 3 pasos 1-2: una tarea nunca completada no se atrasa', async ({ page }) => {
+test('Flow 3 pasos 1-2: una tarea nunca completada no se atrasa', async ({ page }) => {
 	const T = 'Regar plantas';
 	await sessionWithClock(page, START);
 	await createTask(page, T, '2', 'días');
@@ -73,7 +73,7 @@ test('Flujo 3 pasos 1-2: una tarea nunca completada no se atrasa', async ({ page
 	await waitStatus(page, T, 'pendiente');
 });
 
-test('Flujo 3 pasos 3-13: ciclo de estados de Regar plantas cada 2 días (contexto limpio)', async ({ page }) => {
+test('Flow 3 pasos 3-13: ciclo de estados de Regar plantas cada 2 días (contexto limpio)', async ({ page }) => {
 	const T = 'Regar plantas';
 	await sessionWithClock(page, START);
 	await turnOnCompleted(page);
@@ -105,7 +105,7 @@ test('Flujo 3 pasos 3-13: ciclo de estados de Regar plantas cada 2 días (contex
 	await waitStatus(page, T, 'pendiente');
 });
 
-test('Flujo 4: el checkbox en espera borra el completado de hoy; completar de nuevo reinicia el intervalo (horas)', async ({ page }) => {
+test('Flow 4: el checkbox en espera borra el completado de hoy; completar de nuevo reinicia el intervalo (horas)', async ({ page }) => {
 	const T = 'Ventilar';
 	await sessionWithClock(page, START);
 	await turnOnCompleted(page);
@@ -127,7 +127,7 @@ test('Flujo 4: el checkbox en espera borra el completado de hoy; completar de nu
 	await waitStatus(page, T, 'atrasada');
 });
 
-test('Flujo 5: persistencia entre sesiones', async ({ browser }) => {
+test('Flow 5: persistencia entre sesiones', async ({ browser }) => {
 	const T = 'Regar plantas';
 	const context = await browser.newContext();
 	const page = await context.newPage();
@@ -150,7 +150,7 @@ test('Flujo 5: persistencia entre sesiones', async ({ browser }) => {
 	await context.close();
 });
 
-test('Flujo 6: relojes desfasados (completado del futuro)', async ({ page }) => {
+test('Flow 6: relojes desfasados (completado del futuro)', async ({ page }) => {
 	await sessionWithClock(page, START);
 	await turnOnCompleted(page);
 	await createTask(page, 'Ventilar', '4', 'horas');
@@ -168,7 +168,7 @@ test('Flujo 6: relojes desfasados (completado del futuro)', async ({ page }) => 
 	await waitStatus(page, 'Ventilar', 'pendiente');
 });
 
-test('Flujo 7: completar en espera, con el último completado de ayer, reinicia el intervalo', async ({ page }) => {
+test('Flow 7: completar en espera, con el último completado de ayer, reinicia el intervalo', async ({ page }) => {
 	const T = 'Regar plantas';
 	await sessionWithClock(page, '2026-07-15T20:00:00');
 	await turnOnCompleted(page);

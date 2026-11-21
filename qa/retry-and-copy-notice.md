@@ -4,13 +4,13 @@ Verifies, through the interface only (except for the emulator reading that is in
 
 - that the cleanup of orphan completions (spec §7) is retried when the connection comes back and when the data changes, with no timers and with the app announcing and counting nothing;
 - that one failing attempt does not stop the others from being cleaned;
-- that the fields `etiquetas` and `esfuerzo` of a task, the `etiquetas` collection and the `anotaciones` collection, which may still be in the data, are not shown, not written and not deleted by the app (§7, **Datos que ya no se usan**), including after editing and deleting a task, and that the tab bar has only **Pendientes** and **Historial**.
+- that the fields `etiquetas` and `esfuerzo` of a task, the `etiquetas` collection and the `anotaciones` collection, which may still be in the data, are not shown, not written and not deleted by the app (§7, **Data no longer used**), including after editing and deleting a task, and that the tab bar has only **Pendientes** and **Historial**.
 
-Covers spec §6.2 (**Borrar tarea**) and §7 (**Borrado de tareas**, **Limpiezas y reintentos**, **Datos que ya no se usan**).
+Covers spec §6.2 (**Borrar tarea**) and §7 (**Deleting tasks**, **Cleanups and retries**, **Data no longer used**).
 
 Out of scope: which items are attempted and which stay to be cleaned (each item separately), covered by `features/cleanups-retry.feature`; the redirects of `/etiquetas` and `/anotaciones`, covered by `qa/navigation.md`.
 
-## Entorno
+## Environment
 
 - Firebase Emulator Suite (Auth + Firestore) with clean data at the start of each flow; session with `qa@example.com`.
 - Simulated browser clock (`page.clock`) installed **before** opening the app, in `America/Argentina/Buenos_Aires`; reference week: Wednesday 2026-07-15 (today). Steps that measure seconds use the paused clock (`page.clock.pauseAt`) and advance it with `page.clock.runFor`.
@@ -19,33 +19,33 @@ Out of scope: which items are attempted and which stay to be cleaned (each item 
 - **Auxiliary reading**: the interface does not show orphans, so their cleanup is only checked by reading the emulator (Firestore Emulator REST, `GET /v1/projects/<id>/databases/(default)/documents/users/<uid>/completados`, and the same with `tareas`, `etiquetas` and `anotaciones`).
 - **Phone**: 390 x 844.
 
-## Contrato observable
+## Observable contract
 
 - **Silent cleanups**: during the retries no text, counter, mark or strip other than "Sin conexión" appears (the connection strip is the usual one).
 - **Navigation bar**: a `navigation` region with two links, in this order: **Pendientes** and **Historial**.
 - **History**: an orphan completion is never shown in **Historial**.
 
-## Flujos
+## Flows
 
-### Flujo 1: retry of an orphan on reconnect
+### Flow 1: retry of an orphan on reconnect
 
 1. A and B with the same account, with the task `Regar` (relative, every 1 day). B opens the app.
 2. B offline. B completes `Regar` while offline; A deletes `Regar` (the task and its completions). When B has connection again, a completion whose task does not exist arrives.
-3. Cut B's connection during the attempt to clean it (see Entorno). The orphan completion is not shown in **Historial** of B nor of A, and the emulator still has it (auxiliary reading).
+3. Cut B's connection during the attempt to clean it (see Environment). The orphan completion is not shown in **Historial** of B nor of A, and the emulator still has it (auxiliary reading).
 4. B has connection again: without touching anything, the orphan completion disappears from the emulator (auxiliary reading). No text, counter or indicator is seen in B during the whole process, and **Historial** never showed it.
 5. Repeat 2 and 3 without reconnecting B but causing a data change: with B still offline, B completes another task `Pagar` (its data changes); the orphan is not cleaned while there is no connection. B has connection again: it is cleaned.
 
-### Flujo 2: one failure does not stop the others
+### Flow 2: one failure does not stop the others
 
-1. With three orphan completions of three deleted tasks (by the path of Flujo 1) and B offline during the first attempt, B has connection again: the three are cleaned (auxiliary reading), also if the connection was cut during the attempt of the first or the second one.
+1. With three orphan completions of three deleted tasks (by the path of Flow 1) and B offline during the first attempt, B has connection again: the three are cleaned (auxiliary reading), also if the connection was cut during the attempt of the first or the second one.
 2. At no moment do notices or pending counters appear, and **Historial** of B never showed any of them.
 
-### Flujo 3: no timers
+### Flow 3: no timers
 
-1. With an orphan completion that was left uncleaned because B was offline (Flujo 1, step 3), leave B with connection but without changing data, pause the clock and advance it 1 hour (`page.clock.runFor`): there is no retry by time (the emulator state does not change by the mere passing of simulated time).
+1. With an orphan completion that was left uncleaned because B was offline (Flow 1, step 3), leave B with connection but without changing data, pause the clock and advance it 1 hour (`page.clock.runFor`): there is no retry by time (the emulator state does not change by the mere passing of simulated time).
 2. Make the data change (A edits a task and B receives it): now it is retried and the orphan is cleaned (auxiliary reading).
 
-### Flujo 4: data that is no longer used
+### Flow 4: data that is no longer used
 
 Precondition: clock at `2026-07-15T08:00:00`, one device, session started. As in the auxiliary reading, the emulator is read and written through its REST (`PATCH` and `GET` on `/v1/projects/<id>/databases/(default)/documents/users/<uid>/...`); it is the only way to leave data from before this version.
 

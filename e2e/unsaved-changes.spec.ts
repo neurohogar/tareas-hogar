@@ -90,7 +90,7 @@ async function viewNoticeOfAction(page: Page, action: string) {
 
 // ---------------------------------------------------------------------------------------------
 
-test('Flujo 1: cerrar con cambios al editar', async ({ page }) => {
+test('Flow 1: cerrar con cambios al editar', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
 	await createWater(page);
 
@@ -167,7 +167,7 @@ test('Flujo 1: cerrar con cambios al editar', async ({ page }) => {
 	await expect(row(page, 'Regar plantas')).toBeVisible();
 });
 
-test('Flujo 2: qué cuenta como cambio', async ({ page, browser }) => {
+test('Flow 2: qué cuenta como cambio', async ({ page, browser }) => {
 	await sessionWithClock(page, TODAY);
 	await create(page, { title: 'Otra', kind: 'No se repite' });
 	await createWater(page, { schedules: [{ from: '08:00', to: '10:00' }, { from: '12:00', to: '14:00' }] });
@@ -277,7 +277,7 @@ async function changeTitleInB(browser: Browser, setOf: string, a: string) {
 	await ctx.close();
 }
 
-test('Flujo 3: crear con cambios sin guardar', async ({ page }) => {
+test('Flow 3: crear con cambios sin guardar', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
 	const fresh = () => tap(page, '+');
 
@@ -330,7 +330,7 @@ test('Flujo 3: crear con cambios sin guardar', async ({ page }) => {
 	await expect(row(page, 'Pagar')).toBeVisible();
 });
 
-test('Flujo 4: acciones con cambios', async ({ page }) => {
+test('Flow 4: acciones con cambios', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
 	await createWater(page);
 	const inActions = async () => {
@@ -528,7 +528,7 @@ async function tabOpenWhetherHas(page: Page, name: string) {
 	if ((await tabNamed(page, name).count()) > 0) await tabOpen(page, name);
 }
 
-test('Flujo 5: los avisos sobre el panel', async ({ page, context }) => {
+test('Flow 5: los avisos sobre el panel', async ({ page, context }) => {
 	await sessionWithClock(page, TODAY);
 	await createWater(page);
 
@@ -583,7 +583,7 @@ test('Flujo 5: los avisos sobre el panel', async ({ page, context }) => {
 	await panelClosed(page);
 });
 
-test('Flujo 6: botón Atrás', async ({ page }) => {
+test('Flow 6: botón Atrás', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
 	await createWater(page);
 	await complete(page, 'Regar');
@@ -748,7 +748,7 @@ test('Flujo 6: botón Atrás', async ({ page }) => {
 	expect(dialogs).toEqual([]);
 });
 
-test('Flujo 6 paso 10: Atrás en ancho', async ({ page }) => {
+test('Flow 6 paso 10: Atrás en ancho', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
 	await width(page);
 	await createWater(page);
@@ -786,7 +786,7 @@ test('Flujo 6 paso 10: Atrás en ancho', async ({ page }) => {
 	await panelClosed(page);
 });
 
-test('Flujo 7: recargar o cerrar la app', async ({ page }) => {
+test('Flow 7: recargar o cerrar la app', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
 	await createWater(page);
 
@@ -877,7 +877,7 @@ test('Flujo 7: recargar o cerrar la app', async ({ page }) => {
 	await closing;
 });
 
-test('Flujo 8: dos dispositivos con el panel abierto', async ({ browser }) => {
+test('Flow 8: dos dispositivos con el panel abierto', async ({ browser }) => {
 	test.setTimeout(240_000);
 	const { a, b, close: end } = await twoDevices(browser, TODAY);
 	try {
@@ -985,7 +985,7 @@ test('Flujo 8: dos dispositivos con el panel abierto', async ({ browser }) => {
 	}
 });
 
-test('Flujo 8 paso 7: el aviso de quitar posponer se cierra solo', async ({ page, browser }) => {
+test('Flow 8 paso 7: el aviso de quitar posponer se cierra solo', async ({ page, browser }) => {
 	await sessionWithClock(page, TODAY);
 	await createWater(page);
 	await openTask(page, 'Regar');
@@ -1016,7 +1016,7 @@ async function deleteInB(b: Page, name: string) {
 	await arrivesOnServer(b);
 }
 
-test('Flujo 9: Descartar no quita un emoji de Recientes', async ({ page }) => {
+test('Flow 9: Descartar no quita un emoji de Recientes', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
 
 	// 1

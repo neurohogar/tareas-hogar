@@ -1,146 +1,146 @@
-# QA: panel de edición en pestañas (celular)
+# QA: edit panel in tabs (phone)
 
-Verifica, solo por la interfaz, el panel **Nueva tarea** / **Editar tarea** en el celular (hasta 40rem de ancho, inclusive) y en pantallas anchas:
+Verifies, through the interface only, the **Nueva tarea** / **Editar tarea** panel on the phone (up to 40rem wide, inclusive) and on wide screens:
 
-- las pestañas **Tarea**, **Cuándo** y **Acciones**, su contenido y su orden; que siempre abre en **Tarea**; que **Acciones** no aparece al crear;
-- el panel a pantalla completa, con encabezado (título y **X**), barra de pestañas y barra de **Guardar** fijos, y el contenido que se desplaza desde arriba en cada pestaña;
-- que nada se pierde al cambiar de pestaña o de ancho, y que **Guardar** considera todas las secciones;
-- las marcas de error en las pestañas, el salto a la primera pestaña con error y el desplazamiento hasta el primer campo con error;
-- el teclado en pantalla: no se abre solo, oculta la barra de **Guardar** mientras está abierto y no cambia cómo se envía el formulario;
-- los iconos de pestañas y acciones, y los nombres accesibles de la **X** y del botón de elegir emoji;
-- lo que se ve sobre el panel: selector de emoji, confirmación de **Borrar tarea**, franja "Sin conexión" y aviso de deshacer;
-- el panel en pantallas anchas: secciones seguidas, sin pestañas.
+- the **Tarea**, **Cuándo** and **Acciones** tabs, their content and their order; that it always opens on **Tarea**; that **Acciones** does not appear when creating;
+- the full-screen panel, with a fixed header (title and **X**), tab bar and **Guardar** bar, and the content scrolling from the top in each tab;
+- that nothing is lost when changing tabs or width, and that **Guardar** considers all the sections;
+- the error marks on the tabs, the jump to the first tab with an error and the scroll to the first field with an error;
+- the on-screen keyboard: it does not open by itself, it hides the **Guardar** bar while it is open and it does not change how the form is submitted;
+- the tab and action icons, and the accessible names of the **X** and of the button to choose an emoji;
+- what is seen over the panel: emoji picker, **Borrar tarea** confirmation, "Sin conexión" strip and undo notice;
+- the panel on wide screens: sections one after another, with no tabs.
 
-Cubre spec §6.2 (Presentación del panel) y las reglas de campos y acciones de §6.2, §5.8, §5.9, §5.4 y §7 en cuanto a dónde se ven.
+Covers spec §6.2 (Panel presentation) and the field and action rules of §6.2, §5.8, §5.9, §5.4 and §7 as far as where they are seen.
 
-Fuera de alcance: las reglas de cada campo y acción (`qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/schedule.md`, `qa/emoji-and-note.md`, `qa/postpone.md`, `qa/pause.md`, `qa/edit-delete.md`), el aviso de cambios sin guardar y el botón Atrás de Android (`qa/unsaved-changes.md`), y la orientación vertical.
+Out of scope: the rules of each field and action (`qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/schedule.md`, `qa/emoji-and-note.md`, `qa/postpone.md`, `qa/pause.md`, `qa/edit-delete.md`), the unsaved-changes notice and the Android Back button (`qa/unsaved-changes.md`), and portrait orientation.
 
-## Entorno
+## Environment
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de cada flujo.
-- Cada flujo parte de un contexto de navegador nuevo, con sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de `qa/recurring-relative.md`).
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la app, detenido (`page.clock.pauseAt`), en la zona `America/Argentina/Buenos_Aires`. "Avanzar el reloj a X" lo adelanta hasta X y espera a que la pantalla se actualice sola.
-- **Celular**: viewport de 360x640 px (22.5rem) con emulación táctil. **Ancho**: 1024x768 px (64rem). Los cortes de 40rem son 640 px (celular) y 641 px (ancho); la fuente raíz es de 16 px.
-- **Teclado en pantalla abierto**: se emula reduciendo el alto del viewport visual (por ejemplo, a 640x300 px tras tocar un campo de texto en el celular); "cerrarlo" es volver al alto original. Es la única manera de verlo en el navegador de pruebas.
-- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite**, guardar.
-- Dos dispositivos (Flujo 8): dos contextos A y B con la misma cuenta y el mismo reloj.
-- **Mostrar completadas** y **Mostrar pausadas** quedan apagados.
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of each flow.
+- Each flow starts from a new browser context, with a session started with the account `qa@example.com` of the Auth Emulator (Flow 1 of `qa/recurring-relative.md`).
+- Simulated browser clock (`page.clock`) installed **before** opening the app, stopped (`page.clock.pauseAt`), in the `America/Argentina/Buenos_Aires` zone. "Advance the clock to X" moves it forward to X and waits for the screen to update by itself.
+- **Phone**: viewport of 360x640 px (22.5rem) with touch emulation. **Wide**: 1024x768 px (64rem). The 40rem breakpoints are 640 px (phone) and 641 px (wide); the root font is 16 px.
+- **On-screen keyboard open**: emulated by reducing the height of the visual viewport (for example, to 640x300 px after tapping a text field on the phone); "closing it" is going back to the original height. It is the only way to see it in the test browser.
+- Create a task: tap **+**, type the title, choose the **Se repite** option, save.
+- Two devices (Flow 8): two contexts A and B with the same account and the same clock.
+- **Mostrar completadas** and **Mostrar pausadas** stay off.
 
-Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16, viernes 17, sábado 18, domingo 19.
+Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17, Saturday 18, Sunday 19.
 
-## Contrato observable
+## Observable contract
 
-- **Panel**: el diálogo con nombre accesible **Nueva tarea** o **Editar tarea**. En el celular ocupa todo el viewport (su caja coincide con el viewport).
-- **Encabezado**: contiene el título del panel y un botón con nombre accesible **Cerrar** (la **X**, sin texto visible). Queda fijo: su posición no cambia al desplazar el contenido.
-- **Barra de pestañas** (solo en el celular): un `tablist` con una pestaña (`role=tab`) por sección, con nombres **Tarea**, **Cuándo** y **Acciones**, en ese orden; la elegida tiene `aria-selected="true"`. Queda fija bajo el encabezado. Cada pestaña lleva un icono (SVG) junto a su texto.
-- **Marca de error de una pestaña**: un indicador distinto del icono, dentro de la pestaña, presente mientras algún campo de esa sección muestra un error y ausente cuando no hay ninguno (nombre accesible: "con errores").
-- **Contenido**: lo que hay bajo la barra; en el celular se ve el de la pestaña elegida y se desplaza dentro del panel. Al elegir una pestaña, el contenido empieza arriba (desplazamiento 0).
-- **Barra de Guardar**: una barra pegada al borde inferior del panel con el botón **Guardar** (solo texto, sin icono). Visible en todas las pestañas y en pantallas anchas.
-- **Sección Tarea**, de arriba abajo: "Pausada" (si corresponde), "Pospuesta hasta HH:MM" o "Pospuesta hasta mañana HH:MM" (si corresponde), "Última vez: …" (solo al editar); el campo **Título** con el botón de emoji a su lado (nombre accesible **Elegir emoji** si no hay emoji, sin texto visible; si hay, el emoji) y **Quitar emoji** debajo; **Nota**.
-- **Sección Cuándo**: **Se repite** con sus cuatro opciones (**No se repite**, **Intervalo**, **Días de la semana**, **Días del mes**) en una grilla de 2 columnas por 2 filas, y los campos de la opción elegida (fecha límite, **Cada**, días); después **Solo en un horario** con sus ventanas, **Agregar horario** y **Quitar**.
-- **Sección Acciones** (solo al editar): las opciones de posponer **1 hora**, **3 horas** y **Hasta mañana** visibles, sin botón **Posponer** (o, si está pospuesta, **Quitar posponer**); **Pausar** o **Reanudar** (solo una periódica); y al final, separado del resto y en el color de error, **Borrar tarea**. Cada una lleva un icono junto a su texto.
-- **Pantallas anchas**: sin `tablist`; las tres secciones seguidas, cada una con su nombre (**Tarea**, **Cuándo**, **Acciones**) como título sin icono; **Acciones** solo al editar. El panel mide lo de siempre (no ocupa todo el viewport).
-- **Sin icono**: **Guardar**, **Agregar horario**, **Quitar**, **Quitar emoji**, los títulos de sección de pantallas anchas y los diálogos.
-- **Visible** es dentro del viewport, sin quedar tapado por otro elemento.
-- **Aviso** e **Historial**: los de `qa/history-undo.md`. **Franja "Sin conexión"**: la de `qa/pwa-offline.md`.
+- **Panel**: the dialog with accessible name **Nueva tarea** or **Editar tarea**. On the phone it takes the whole viewport (its box matches the viewport).
+- **Header**: contains the panel title and a button with accessible name **Cerrar** (the **X**, with no visible text). It stays fixed: its position does not change when the content scrolls.
+- **Tab bar** (phone only): a `tablist` with one tab (`role=tab`) per section, named **Tarea**, **Cuándo** and **Acciones**, in that order; the chosen one has `aria-selected="true"`. It stays fixed under the header. Each tab carries an icon (SVG) next to its text.
+- **Error mark of a tab**: an indicator distinct from the icon, inside the tab, present while any field of that section shows an error and absent when there is none (accessible name: "con errores").
+- **Content**: what is under the bar; on the phone the content of the chosen tab is seen and scrolls inside the panel. When a tab is chosen, the content starts at the top (scroll 0).
+- **Guardar bar**: a bar attached to the bottom edge of the panel with the **Guardar** button (text only, no icon). Visible in all tabs and on wide screens.
+- **Tarea section**, from top to bottom: "Pausada" (if applicable), "Pospuesta hasta HH:MM" or "Pospuesta hasta mañana HH:MM" (if applicable), "Última vez: …" (only when editing); the **Título** field with the emoji button beside it (accessible name **Elegir emoji** if there is no emoji, with no visible text; if there is one, the emoji) and **Quitar emoji** below; **Nota**.
+- **Cuándo section**: **Se repite** with its four options (**No se repite**, **Intervalo**, **Días de la semana**, **Días del mes**) in a grid of 2 columns by 2 rows, and the fields of the chosen option (due date, **Cada**, days); then **Solo en un horario** with its windows, **Agregar horario** and **Quitar**.
+- **Acciones section** (only when editing): the postpone options **1 hora**, **3 horas** and **Hasta mañana** visible, without a **Posponer** button (or, if postponed, **Quitar posponer**); **Pausar** or **Reanudar** (only a recurring task); and at the end, separated from the rest and in the error color, **Borrar tarea**. Each one carries an icon next to its text.
+- **Wide screens**: no `tablist`; the three sections one after another, each with its name (**Tarea**, **Cuándo**, **Acciones**) as a title with no icon; **Acciones** only when editing. The panel measures what it always did (it does not take the whole viewport).
+- **No icon**: **Guardar**, **Agregar horario**, **Quitar**, **Quitar emoji**, the section titles on wide screens and the dialogs.
+- **Visible** is inside the viewport, without being covered by another element.
+- **Notice** and **Historial**: those of `qa/history-undo.md`. **"Sin conexión" strip**: the one of `qa/pwa-offline.md`.
 
-## Flujo 1: crear en el celular
+## Flow 1: create on the phone
 
-Precondición: lista vacía, reloj en `2026-07-15T10:00:00`, viewport de celular.
+Precondition: empty list, clock at `2026-07-15T10:00:00`, phone viewport.
 
-1. Tocar **+**: el panel **Nueva tarea** ocupa todo el viewport. Ningún campo tiene el foco y el teclado no está abierto.
-2. La barra de pestañas tiene **Tarea** y **Cuándo**, en ese orden, y no tiene **Acciones**. La pestaña **Tarea** está elegida y se ve el título, el emoji y la nota; no se ve nada de **Cuándo**. **Guardar** está visible abajo.
-3. Tocar **Cuándo**: se ve **Se repite** con las cuatro opciones en 2 filas de 2, **No se repite** elegida (la opción con la que abre el panel al crear), con **Fecha límite** vacía y sin **Cada**, y **Solo en un horario**. **Guardar** sigue visible. Tocar de nuevo **Tarea**.
-4. Deslizar horizontalmente el contenido no cambia de pestaña.
-5. Escribir `Regar` en el título, tocar **Cuándo**, elegir **Intervalo** (se ven **Cada** y la unidad) con **Cada** `2` **días**, y tocar **Guardar**: el panel se cierra y la lista tiene **Regar**.
-6. Tocar **+** y luego **Cerrar** (la **X**): el panel se cierra sin crear nada.
+1. Tap **+**: the **Nueva tarea** panel takes the whole viewport. No field has focus and the keyboard is not open.
+2. The tab bar has **Tarea** and **Cuándo**, in that order, and does not have **Acciones**. The **Tarea** tab is chosen and the title, the emoji and the note are seen; nothing of **Cuándo** is seen. **Guardar** is visible at the bottom.
+3. Tap **Cuándo**: **Se repite** is seen with the four options in 2 rows of 2, **No se repite** chosen (the option the panel opens with when creating), with **Fecha límite** empty and no **Cada**, and **Solo en un horario**. **Guardar** is still visible. Tap **Tarea** again.
+4. Swiping the content horizontally does not change tab.
+5. Type `Regar` in the title, tap **Cuándo**, choose **Intervalo** (**Cada** and the unit are seen) with **Cada** `2` **días**, and tap **Guardar**: the panel closes and the list has **Regar**.
+6. Tap **+** and then **Cerrar** (the **X**): the panel closes without creating anything.
 
-## Flujo 2: editar y las tres pestañas
+## Flow 2: edit and the three tabs
 
-Precondición: lista vacía, reloj en `2026-07-15T10:00:00`, viewport de celular. Crear `Regar` con **Intervalo** cada `2` **horas**, emoji 🌱, nota `Las del balcón`, y completarla a las `2026-07-15T08:00:00` (para "Última vez"; a las 10:00 vuelve a estar pendiente, así ofrece posponer).
+Precondition: empty list, clock at `2026-07-15T10:00:00`, phone viewport. Create `Regar` with **Intervalo** every `2` **horas**, emoji 🌱, note `Las del balcón`, and complete it at `2026-07-15T08:00:00` (for "Última vez"; at 10:00 it is pending again, so it offers to postpone).
 
-1. Tocar la fila **Regar**: el panel **Editar tarea** abre en **Tarea** (aunque antes se haya cerrado estando en otra pestaña). La barra tiene **Tarea**, **Cuándo** y **Acciones**.
-2. En **Tarea**, de arriba abajo: "Última vez: hoy 08:00"; el título `Regar` con el emoji 🌱 al lado y **Quitar emoji** debajo; la nota. No hay "Pausada" ni "Pospuesta".
-3. Tocar **Cuándo**: **Intervalo** elegida (la de la tarea, no la inicial de crear), **Cada** `2` **horas**, y después **Solo en un horario** apagado.
-4. Tocar **Acciones**: las opciones **1 hora**, **3 horas** y **Hasta mañana** visibles (sin **Posponer**), **Pausar**, y al final, separado y en el color de error, **Borrar tarea**. Cada una con su icono; no hay **Quitar posponer** ni **Reanudar**.
-5. Tocar **1 hora**: el panel se cierra y **Regar** se ve pospuesta. Volver a abrirla: abre en **Tarea** y arriba dice "Pospuesta hasta 11:00"; en **Acciones** está **Quitar posponer** (en lugar de las tres opciones) y **Pausar**.
-6. Tocar **Quitar posponer**: el panel se cierra y la tarea deja de estar pospuesta.
-7. Abrirla, ir a **Acciones** y tocar **Pausar**: el panel se cierra. Abrirla (con **Mostrar pausadas** encendido): arriba de **Tarea** dice "Pausada"; **Acciones** tiene **Reanudar** y no tiene las opciones de posponer.
-8. Crear `Pagar` con **No se repite**: su panel, en **Acciones**, no tiene **Pausar** ni **Reanudar** pero sí las opciones de posponer y **Borrar tarea**. Una tarea completada o fuera de su horario conserva al menos **Borrar tarea** en **Acciones**.
+1. Tap the **Regar** row: the **Editar tarea** panel opens on **Tarea** (even if it was previously closed while on another tab). The bar has **Tarea**, **Cuándo** and **Acciones**.
+2. In **Tarea**, from top to bottom: "Última vez: hoy 08:00"; the title `Regar` with the emoji 🌱 beside it and **Quitar emoji** below; the note. There is no "Pausada" or "Pospuesta".
+3. Tap **Cuándo**: **Intervalo** chosen (the task's, not the initial one of creating), **Cada** `2` **horas**, and then **Solo en un horario** off.
+4. Tap **Acciones**: the options **1 hora**, **3 horas** and **Hasta mañana** visible (without **Posponer**), **Pausar**, and at the end, separated and in the error color, **Borrar tarea**. Each with its icon; there is no **Quitar posponer** or **Reanudar**.
+5. Tap **1 hora**: the panel closes and **Regar** is seen postponed. Open it again: it opens on **Tarea** and at the top it says "Pospuesta hasta 11:00"; in **Acciones** there is **Quitar posponer** (instead of the three options) and **Pausar**.
+6. Tap **Quitar posponer**: the panel closes and the task is no longer postponed.
+7. Open it, go to **Acciones** and tap **Pausar**: the panel closes. Open it (with **Mostrar pausadas** on): above **Tarea** it says "Pausada"; **Acciones** has **Reanudar** and does not have the postpone options.
+8. Create `Pagar` with **No se repite**: its panel, in **Acciones**, has neither **Pausar** nor **Reanudar** but does have the postpone options and **Borrar tarea**. A completed task or one outside its schedule keeps at least **Borrar tarea** in **Acciones**.
 
-## Flujo 3: pantalla completa y barras fijas
+## Flow 3: full screen and fixed bars
 
-Precondición: lista vacía, viewport de celular. Crear una tarea y abrirla en edición.
+Precondition: empty list, phone viewport. Create a task and open it for editing.
 
-1. El panel ocupa todo el viewport. Anotar la posición del encabezado, de la barra de pestañas y de **Guardar**.
-2. En **Tarea**, escribir una nota de 30 líneas, hasta que el contenido no entre. Desplazar el contenido hasta abajo: el encabezado, la barra de pestañas y **Guardar** están en la misma posición que en el paso 1 y ninguno queda tapado por el contenido.
-3. Tocar **Cuándo** y volver a **Tarea**: el contenido empieza arriba (desplazamiento 0) en cada pestaña, aunque antes se hubiera desplazado.
-4. En **Cuándo**, elegir **Días de la semana** con varias ventanas de horario (**Agregar horario** hasta 4) hasta que no entre: lo mismo, las tres barras fijas y el contenido se desplaza. Ningún control queda fuera del ancho (sin desplazamiento horizontal: `scrollWidth` = `clientWidth`), con 360 px y también con 320 px.
+1. The panel takes the whole viewport. Note the position of the header, the tab bar and **Guardar**.
+2. In **Tarea**, type a 30-line note, until the content does not fit. Scroll the content to the bottom: the header, the tab bar and **Guardar** are in the same position as in step 1 and none is covered by the content.
+3. Tap **Cuándo** and go back to **Tarea**: the content starts at the top (scroll 0) in each tab, even if it had been scrolled before.
+4. In **Cuándo**, choose **Días de la semana** with several schedule windows (**Agregar horario** up to 4) until it does not fit: the same, the three bars are fixed and the content scrolls. No control is left outside the width (no horizontal scroll: `scrollWidth` = `clientWidth`), at 360 px and also at 320 px.
 
-## Flujo 4: nada se pierde
+## Flow 4: nothing is lost
 
-Precondición: lista vacía, viewport de celular, panel **Nueva tarea**.
+Precondition: empty list, phone viewport, **Nueva tarea** panel.
 
-1. Escribir `Barrer` en el título y la nota `Con cuidado`; tocar **Cuándo**, elegir **Días de la semana** con lunes y jueves y un horario de `08:00` a `10:00`.
-2. Tocar **Tarea**: el título dice `Barrer`, la nota `Con cuidado`. Tocar **Cuándo**: lunes y jueves y el horario siguen.
-3. Cambiar el ancho del viewport a 1024 px: se ven seguidas las tres secciones con todo lo escrito. Volver a 360 px: el panel vuelve a las pestañas con lo mismo.
-4. Estando en **Cuándo**, tocar **Guardar**: se crea `Barrer` semanal con lunes y jueves, horario `08:00`-`10:00`, nota `Con cuidado`. Es un solo guardado con todo lo de las dos pestañas.
-5. Abrir `Barrer`, cambiar el título a `Barrer más` y tocar **Cerrar** y **Descartar** en el aviso: la lista sigue con `Barrer`. Abrirla, cambiar el título y tocar **Pausar** en **Acciones** (una semanal fuera de su día no ofrece posponer) y **Descartar y pausar** en el aviso: la tarea se pausa y el cambio del título no se guardó.
+1. Type `Barrer` in the title and the note `Con cuidado`; tap **Cuándo**, choose **Días de la semana** with Monday and Thursday and a schedule from `08:00` to `10:00`.
+2. Tap **Tarea**: the title says `Barrer`, the note `Con cuidado`. Tap **Cuándo**: Monday and Thursday and the schedule are still there.
+3. Change the viewport width to 1024 px: the three sections are seen one after another with everything typed. Go back to 360 px: the panel goes back to tabs with the same content.
+4. While on **Cuándo**, tap **Guardar**: `Barrer` is created weekly with Monday and Thursday, schedule `08:00`-`10:00`, note `Con cuidado`. It is a single save with everything from the two tabs.
+5. Open `Barrer`, change the title to `Barrer más` and tap **Cerrar** and **Descartar** in the notice: the list still has `Barrer`. Open it, change the title and tap **Pausar** in **Acciones** (a weekly task outside its day does not offer to postpone) and **Descartar y pausar** in the notice: the task is paused and the title change was not saved.
 
-## Flujo 5: errores
+## Flow 5: errors
 
-Precondición: lista vacía, viewport de celular.
+Precondition: empty list, phone viewport.
 
-1. Tocar **+**. Con el título vacío, tocar **Cuándo**, elegir **Intervalo**, dejar **Cada** vacío y activar **Solo en un horario** con `Desde` `10:00` y `Hasta` `09:00`. Tocar **Guardar**: el panel sigue abierto, salta a **Tarea** (la primera pestaña con error) y el contenido está en el campo **Título**, con su error a la vista. **Tarea** y **Cuándo** tienen la marca de error, distinta del icono.
-2. Escribir `Regar` en el título: la marca de **Tarea** desaparece en el acto (el error de Título se va); la de **Cuándo** sigue.
-3. Tocar **Guardar**: salta a **Cuándo** y el contenido está en el primer campo con error (**Cada**). Corregir **Cada** con `2` **días**: la marca de **Cuándo** sigue por el horario; arreglar el horario (`Hasta` `11:00`): la marca se va. Guardar: se crea.
-4. Con 1024 px de ancho, abrir **+**, dejar el título vacío y poner `Hasta` antes que `Desde`; tocar **Guardar**: no hay pestañas ni marcas, el panel sigue abierto y el contenido se desplaza hasta el campo **Título** con su error a la vista (aunque el horario también falle).
-5. Con 1024 px, abrir otra vez y dejar solo el horario inválido: se desplaza hasta el campo del horario.
+1. Tap **+**. With the title empty, tap **Cuándo**, choose **Intervalo**, leave **Cada** empty and turn on **Solo en un horario** with `Desde` `10:00` and `Hasta` `09:00`. Tap **Guardar**: the panel stays open, jumps to **Tarea** (the first tab with an error) and the content is at the **Título** field, with its error in view. **Tarea** and **Cuándo** have the error mark, distinct from the icon.
+2. Type `Regar` in the title: the **Tarea** mark disappears at once (the Título error goes away); the **Cuándo** one stays.
+3. Tap **Guardar**: it jumps to **Cuándo** and the content is at the first field with an error (**Cada**). Fix **Cada** with `2` **días**: the **Cuándo** mark stays because of the schedule; fix the schedule (`Hasta` `11:00`): the mark goes away. Save: it is created.
+4. With 1024 px of width, open **+**, leave the title empty and put `Hasta` before `Desde`; tap **Guardar**: there are no tabs or marks, the panel stays open and the content scrolls to the **Título** field with its error in view (even though the schedule also fails).
+5. With 1024 px, open again and leave only the invalid schedule: it scrolls to the schedule field.
 
-## Flujo 6: teclado en pantalla
+## Flow 6: on-screen keyboard
 
-Precondición: lista vacía, viewport de celular con emulación táctil.
+Precondition: empty list, phone viewport with touch emulation.
 
-1. Tocar **+**: el panel abre sin foco en ningún campo y la barra de **Guardar** está visible. Tocar el título y escribir `Regar`: con el teclado emulado como abierto, la barra de **Guardar** no se ve; el encabezado y la barra de pestañas siguen fijos.
-2. Con el teclado "abierto", tocar **Cuándo** (tocar la pestaña quita el foco del campo y el teclado; se emula tocando de nuevo un campo de texto, **Cada**, con el viewport achicado): la barra de **Guardar** sigue oculta (en cualquier pestaña). Cerrar el teclado (viewport al alto original) con el campo todavía enfocado: la barra de **Guardar** vuelve.
-3. Tocar **Cuándo**, activar **Solo en un horario**, y tocar el campo **Desde** (selector de hora): la barra de **Guardar** sigue visible.
-4. Con el viewport de 1024 px (compu), tocar el título: la barra de **Guardar** sigue visible con el campo enfocado.
-5. Celular, en **Tarea**: teclado abierto, dejar el título vacío y pulsar Enter en el título: intenta guardar, falla y salta a **Tarea** con el error en **Título**; la barra de **Guardar** sigue oculta mientras el teclado esté abierto. Con el título `Regar`, Enter en el título guarda y crea la tarea.
-6. En **Nota**, Enter agrega una línea y no guarda.
+1. Tap **+**: the panel opens with no focus on any field and the **Guardar** bar is visible. Tap the title and type `Regar`: with the keyboard emulated as open, the **Guardar** bar is not seen; the header and the tab bar stay fixed.
+2. With the keyboard "open", tap **Cuándo** (tapping the tab removes the focus from the field and the keyboard; it is emulated by tapping a text field again, **Cada**, with the viewport shrunk): the **Guardar** bar stays hidden (in any tab). Close the keyboard (viewport at the original height) with the field still focused: the **Guardar** bar comes back.
+3. Tap **Cuándo**, turn on **Solo en un horario**, and tap the **Desde** field (time picker): the **Guardar** bar is still visible.
+4. With the 1024 px viewport (computer), tap the title: the **Guardar** bar is still visible with the field focused.
+5. Phone, on **Tarea**: keyboard open, leave the title empty and press Enter in the title: it tries to save, fails and jumps to **Tarea** with the error in **Título**; the **Guardar** bar stays hidden while the keyboard is open. With the title `Regar`, Enter in the title saves and creates the task.
+6. In **Nota**, Enter adds a line and does not save.
 
-## Flujo 7: iconos y nombres accesibles
+## Flow 7: icons and accessible names
 
-Precondición: lista vacía, reloj en `2026-07-15T10:00:00`. Repetir en celular y en ancho. Crear `Regar` con **Intervalo** cada `2` **días**.
+Precondition: empty list, clock at `2026-07-15T10:00:00`. Repeat on phone and on wide. Create `Regar` with **Intervalo** every `2` **días**.
 
-1. Tocar **+**: en el celular, **Tarea** y **Cuándo** tienen icono junto a su texto. El botón de emoji (sin emoji) tiene nombre accesible **Elegir emoji** y no tiene texto visible; el de cerrar tiene nombre **Cerrar** y no tiene texto visible. **Guardar** no tiene icono. En ancho, los títulos **Tarea** y **Cuándo** no tienen icono.
-2. Abrir `Regar`: **Acciones** (celular) con icono; **1 hora**, **3 horas**, **Hasta mañana**, **Pausar** y **Borrar tarea** con icono, cada uno junto a su texto (en celular y en ancho). **Agregar horario** (con **Solo en un horario** encendido) y **Quitar** no tienen icono.
-3. Elegir un emoji: el botón muestra el emoji y **Quitar emoji** (sin icono) aparece debajo.
-4. Poner el navegador sin conexión (`setOffline(true)`), recargar y abrir `Regar`: los mismos iconos se ven (viajan con la app).
+1. Tap **+**: on the phone, **Tarea** and **Cuándo** have an icon next to their text. The emoji button (without an emoji) has accessible name **Elegir emoji** and has no visible text; the close one has name **Cerrar** and has no visible text. **Guardar** has no icon. On wide, the **Tarea** and **Cuándo** titles have no icon.
+2. Open `Regar`: **Acciones** (phone) with icon; **1 hora**, **3 horas**, **Hasta mañana**, **Pausar** and **Borrar tarea** with icon, each next to its text (on phone and on wide). **Agregar horario** (with **Solo en un horario** on) and **Quitar** have no icon.
+3. Choose an emoji: the button shows the emoji and **Quitar emoji** (no icon) appears below.
+4. Put the browser offline (`setOffline(true)`), reload and open `Regar`: the same icons are seen (they travel with the app).
 
-## Flujo 8: dos dispositivos con el panel abierto
+## Flow 8: two devices with the panel open
 
-Precondición: lista vacía, reloj en `2026-07-15T10:00:00` en A y B; A en celular. Crear `Regar` con **Intervalo** cada `2` **días** en A.
+Precondition: empty list, clock at `2026-07-15T10:00:00` on A and B; A on phone. Create `Regar` with **Intervalo** every `2` **días** on A.
 
-1. En A, abrir `Regar` y tocar **Acciones**: se ven las opciones de posponer y **Pausar**.
-2. En B, pausar `Regar`. En A, sin cerrar el panel, la sección **Acciones** pasa a mostrar **Reanudar** y deja de mostrar las opciones de posponer; el panel sigue en **Acciones**. En **Tarea**, arriba, dice "Pausada".
-3. En B, reanudarla y posponerla 3 horas. En A, **Acciones** muestra **Quitar posponer** y **Pausar**, y **Tarea** dice "Pospuesta hasta 13:00".
+1. On A, open `Regar` and tap **Acciones**: the postpone options and **Pausar** are seen.
+2. On B, pause `Regar`. On A, without closing the panel, the **Acciones** section changes to show **Reanudar** and stops showing the postpone options; the panel stays on **Acciones**. In **Tarea**, at the top, it says "Pausada".
+3. On B, resume it and postpone it 3 hours. On A, **Acciones** shows **Quitar posponer** and **Pausar**, and **Tarea** says "Pospuesta hasta 13:00".
 
-## Flujo 9: sobre el panel
+## Flow 9: over the panel
 
-Precondición: lista vacía, reloj en `2026-07-15T10:00:00`, viewport de celular. Crear `Regar` con **Intervalo** cada `2` **días**.
+Precondition: empty list, clock at `2026-07-15T10:00:00`, phone viewport. Create `Regar` with **Intervalo** every `2` **días**.
 
-1. Abrir `Regar`, ir a **Cuándo** y tocar el botón de emoji en **Tarea** (volver a **Tarea**): el selector de emoji se abre sobre el panel, con la búsqueda a la vista. Elegir 🌱: se cierra y el panel sigue en **Tarea** con 🌱.
-2. Ir a **Acciones** y tocar **Borrar tarea**: aparece la confirmación sobre el panel. Cancelar: se cierra la confirmación y el panel sigue en **Acciones**, la tarea intacta.
-3. Con el navegador sin conexión (`setOffline(true)`), la franja "Sin conexión" se ve sin tapar el encabezado, la barra de pestañas ni **Guardar**. Volver a tener conexión: la franja desaparece.
-4. Con conexión, completar `Regar` desde la lista (checkbox) y abrir su panel con el aviso todavía a la vista, o completar otra tarea con el panel de `Regar` abierto desde otro dispositivo: el aviso `Completaste «…»` se ve sobre la barra de **Guardar** sin tapar el encabezado ni las pestañas. Con el teclado "abierto" (Flujo 6) la barra de **Guardar** no está y el aviso se ve sobre el teclado.
-5. A los 5 segundos el aviso desaparece.
+1. Open `Regar`, go to **Cuándo** and tap the emoji button in **Tarea** (go back to **Tarea**): the emoji picker opens over the panel, with the search in view. Choose 🌱: it closes and the panel stays on **Tarea** with 🌱.
+2. Go to **Acciones** and tap **Borrar tarea**: the confirmation appears over the panel. Cancel: the confirmation closes and the panel stays on **Acciones**, the task intact.
+3. With the browser offline (`setOffline(true)`), the "Sin conexión" strip is seen without covering the header, the tab bar or **Guardar**. Get the connection back: the strip disappears.
+4. With a connection, complete `Regar` from the list (checkbox) and open its panel with the notice still in view, or complete another task with the `Regar` panel open from another device: the notice `Completaste «…»` is seen over the **Guardar** bar without covering the header or the tabs. With the keyboard "open" (Flow 6) the **Guardar** bar is not there and the notice is seen over the keyboard.
+5. After 5 seconds the notice disappears.
 
-## Flujo 10: el corte de 40rem y las pantallas anchas
+## Flow 10: the 40rem breakpoint and wide screens
 
-Precondición: lista vacía. Crear `Regar` con **Intervalo** cada `2` **días**.
+Precondition: empty list. Create `Regar` with **Intervalo** every `2` **días**.
 
-1. Viewport de 640 px: abrir `Regar`; hay barra de pestañas y el panel ocupa todo el viewport.
-2. Viewport de 641 px: no hay barra de pestañas; el panel no ocupa todo el viewport (tiene el ancho y la ubicación de siempre).
-3. Viewport de 1024 px: las secciones se ven seguidas, con los títulos **Tarea**, **Cuándo** y **Acciones** en ese orden, el contenido y orden del Flujo 2 en cada una, y **Acciones** al final antes de **Guardar**; **Guardar** en la barra fija abajo y **Cerrar** (la **X**) en el encabezado fijo. Desplazar el panel: el encabezado y **Guardar** no se mueven.
-4. Crear una tarea con 1024 px: el panel no tiene el título **Acciones**. Abrir `Regar`: lo tiene, con **Borrar tarea** al final en el color de error.
-5. Tocar **Guardar** sin cambios en `Regar`: no cambia nada y el panel se cierra.
+1. 640 px viewport: open `Regar`; there is a tab bar and the panel takes the whole viewport.
+2. 641 px viewport: there is no tab bar; the panel does not take the whole viewport (it has its usual width and position).
+3. 1024 px viewport: the sections are seen one after another, with the titles **Tarea**, **Cuándo** and **Acciones** in that order, the content and order of Flow 2 in each, and **Acciones** at the end before **Guardar**; **Guardar** in the fixed bar at the bottom and **Cerrar** (the **X**) in the fixed header. Scroll the panel: the header and **Guardar** do not move.
+4. Create a task at 1024 px: the panel does not have the **Acciones** title. Open `Regar`: it has it, with **Borrar tarea** at the end in the error color.
+5. Tap **Guardar** with no changes on `Regar`: nothing changes and the panel closes.

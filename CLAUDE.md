@@ -1,127 +1,129 @@
-# Tareas Hogar v3 — Constitución del proyecto
+# Tareas Hogar v3 — Project constitution
 
-PWA personal de tareas del hogar (TDAH-friendly). Qué construir: `docs/spec.md`. Por qué el proceso es así: `docs/research/uncle-bob-workflow.md`.
+Personal PWA for household tasks (ADHD-friendly). What to build: `docs/spec.md`. Why the process is this way: `docs/research/uncle-bob-workflow.md`.
 
-En este proyecto rige el **pipeline de 10 roles** de este archivo; reemplaza al protocolo Worker/Reviewer (`.harness_task_*`) del `AGENTS.md` global. Los gates deterministas cumplen la función del reviewer.
+Language policy: code, Gherkin, the spec, QA procedures and pipeline documents are written in neutral English. Only the text shown in the app is Spanish (see `docs/pipeline/english-migration.md`).
+
+In this project the **10-role pipeline** of this file applies; it replaces the Worker/Reviewer protocol (`.harness_task_*`) of the global `AGENTS.md`. The deterministic gates do the reviewer's job.
 
 ## Pipeline
 
-Cada feature atraviesa, en orden, diez subagentes de `.claude/agents/`:
+Every feature goes through ten subagents from `.claude/agents/`, in order:
 
-`analyst` ⇄ *(usuario)* → `spec-writer` → `gherkin-writer` → *(aprobación humana)* → `core` → `acceptance` → `ui` → `cleaner` → `architect` → `hardener` → `qa`
+`analyst` ⇄ *(user)* → `spec-writer` → `gherkin-writer` → *(human approval)* → `core` → `acceptance` → `ui` → `cleaner` → `architect` → `hardener` → `qa`
 
-Los tres roles de especificación (analyst, spec-writer, gherkin-writer) trabajan en el checkout principal; los siete de implementación se suceden en un único worktree compartido, cada uno sobre el commit del anterior. Cada rol deja un commit y reporta al orquestador. **Orquestar una feature** (crear worktrees, lanzar roles, merges, sync, fallas): leer `docs/pipeline/orchestration.md`.
+The three specification roles (analyst, spec-writer, gherkin-writer) work in the main checkout; the seven implementation roles run one after another in a single shared worktree, each on top of the previous one's commit. Each role leaves one commit and reports to the orchestrator. **To orchestrate a feature** (create worktrees, launch roles, merges, sync, failures): read `docs/pipeline/orchestration.md`.
 
-Un rol es dueño solo de lo que su archivo dice que posee; lo demás lo hace otro rol más adelante en la cadena.
+A role owns only what its file says it owns; the rest is done by another role later in the chain.
 
-Un rol sin trabajo en la feature se saltea sin lanzarlo (`bdd-pipeline skip <rol>`, reglas en `roles.skippable` de `bdd-pipeline.config.json`): queda un commit vacío `By <rol>.` con el motivo y su gate tiene que pasar igual. Lo decide la herramienta, nunca un rol ni el orquestador.
+A role with no work in the feature is skipped without launching it (`bdd-pipeline skip <role>`, rules in `roles.skippable` of `bdd-pipeline.config.json`): an empty commit `By <role>.` is left with the reason, and its gate must still pass. The tool decides this, never a role or the orchestrator.
 
-## Arquitectura
+## Architecture
 
-| Capa | Ruta | Contenido | Herramientas de test |
+| Layer | Path | Content | Test tools |
 |---|---|---|---|
-| Core | `src/lib/core/` | TypeScript puro: reglas de la §5 del spec, ordenamiento, modelos. Recibe "ahora" como parámetro. | Sí: unit, aceptación, cobertura, CRAP, DRY, mutación, property tests |
-| Adapters | `src/lib/adapters/` | Firebase (Auth, Firestore), reloj, IDs. Cáscaras finas que traducen. | No |
-| UI | `src/routes/`, `src/lib/ui/` | Componentes `.svelte`. Le preguntan al core y muestran el resultado. | No (los cubre la suite QA) |
+| Core | `src/lib/core/` | Pure TypeScript: the rules of §5 of the spec, ordering, models. Receives "now" as a parameter. | Yes: unit, acceptance, coverage, CRAP, DRY, mutation, property tests |
+| Adapters | `src/lib/adapters/` | Firebase (Auth, Firestore), clock, IDs. Thin shells that translate. | No |
+| UI | `src/routes/`, `src/lib/ui/` | `.svelte` components. They ask the core and show the result. | No (the QA suite covers them) |
 
-- Las dependencias apuntan hacia `core/`. `core/` importa solo de `core/`.
-- La UI y los adapters **preguntan al core**; cada regla del dominio existe en un solo lugar, el core.
-- Toda lógica que pueda vivir en `core/` vive ahí; los adapters y la UI quedan lo más chicos posible.
+- Dependencies point toward `core/`. `core/` imports only from `core/`.
+- The UI and the adapters **ask the core**; each domain rule exists in one place, the core.
+- All logic that can live in `core/` lives there; adapters and UI stay as small as possible.
 
-## Contrato de scripts (`package.json`)
+## Scripts contract (`package.json`)
 
-Los crean los roles que los necesitan; todos los roles los usan por nombre.
+They are created by the roles that need them; all roles use them by name.
 
-| Script | Hace |
+| Script | Does |
 |---|---|
-| `npm test` | Unit + aceptación generada (Vitest). Es el que corre `mutator`. |
-| `npm run test:unit` | Solo unit tests. |
-| `npm run acceptance` | Para cada `features/*.feature`: parsear a IR → generar → correr. |
-| `npm run acceptance:mutate -- features/<x>.feature [--level hard\|soft\|full]` | `gherkin-mutator` sobre un feature (ruta completa) con el runner adapter y el filtro de equivalentes del proyecto. |
-| `npm run coverage` | Vitest con cobertura LCOV. |
-| `npm run test:props` | Property tests (fast-check). Separados de `npm test`. |
-| `npm run check:arch` | Checks de dependencias e imports prohibidos. |
-| `npm run qa` | Scripts Playwright de la suite QA contra Firebase Emulator Suite. |
+| `npm test` | Unit + generated acceptance (Vitest). This is the one `mutator` runs. |
+| `npm run test:unit` | Unit tests only. |
+| `npm run acceptance` | For each `features/*.feature`: parse to IR → generate → run. |
+| `npm run acceptance:mutate -- features/<x>.feature [--level hard\|soft\|full]` | `gherkin-mutator` on one feature (full path) with the runner adapter and the project's equivalents filter. |
+| `npm run coverage` | Vitest with LCOV coverage. |
+| `npm run test:props` | Property tests (fast-check). Separate from `npm test`. |
+| `npm run check:arch` | Dependency and forbidden-import checks. |
+| `npm run qa` | The QA suite's Playwright scripts against the Firebase Emulator Suite. |
 
-## Herramientas de calidad
+## Quality tools
 
-Clonadas junto al repo en `~/Work/`. Usar estas, con estas invocaciones; un gate solo cuenta si lo midió la herramienta oficial.
+Cloned next to the repo in `~/Work/`. Use these, with these invocations; a gate only counts if the official tool measured it.
 
-| Gate | Comando (desde la raíz del worktree) | Pasa cuando |
+| Gate | Command (from the worktree root) | Passes when |
 |---|---|---|
-| CRAP | `~/Work/bdd-pipeline/bdd-pipeline gate cleaner` (corre crapper con la cobertura de los features implementados) | exit 0 (peor CRAP ≤ 10) |
-| DRY | `~/Work/vendor/dryer/dryer src/lib/core` | sin candidatos nuevos sin justificar |
-| Mutación (scan) | `~/Work/vendor/mutator/mutator --scan <archivo>` | — (pista de módulo con más de un trabajo) |
-| Mutación | `~/Work/vendor/mutator/mutator --max-workers 4 <archivo>` | exit 0 (ningún mutante sobrevive) |
+| CRAP | `~/Work/bdd-pipeline/bdd-pipeline gate cleaner` (runs crapper with the coverage of the implemented features) | exit 0 (worst CRAP ≤ 10) |
+| DRY | `~/Work/vendor/dryer/dryer src/lib/core` | no new candidates left unjustified |
+| Mutation (scan) | `~/Work/vendor/mutator/mutator --scan <file>` | — (hint for a module with more than one job) |
+| Mutation | `~/Work/vendor/mutator/mutator --max-workers 4 <file>` | exit 0 (no mutant survives) |
 | Gherkin parse | `bb --config ~/Work/vendor/Acceptance-Pipeline-Specification/bb.edn gherkin-parser <feature> ./tmp/<stem>.json` | exit 0 |
-| Gherkin DRY | `bb --config ~/Work/vendor/Acceptance-Pipeline-Specification/bb.edn gherkin-ir-dry-checker <ir> ./tmp/<stem>.dry.json` | reporte revisado |
-| Gherkin mutación | `npm run acceptance:mutate -- features/<x>.feature --level soft` | exit 0 |
+| Gherkin DRY | `bb --config ~/Work/vendor/Acceptance-Pipeline-Specification/bb.edn gherkin-ir-dry-checker <ir> ./tmp/<stem>.dry.json` | report reviewed |
+| Gherkin mutation | `npm run acceptance:mutate -- features/<x>.feature --level soft` | exit 0 |
 
-Filtro de equivalentes de Gherkin: `acceptance/oracle.ts` es un oráculo reescrito desde `docs/spec.md`, independiente del core y de los step handlers (lo hace cumplir `check:arch`). Cada regla nueva del spec que entra en un Then de clasificación se agrega al oráculo; un filtrado se justifica con la regla del spec que lo hace equivalente, nunca con lo que devuelve la implementación.
+Gherkin equivalents filter: `acceptance/oracle.ts` is an oracle rewritten from `docs/spec.md`, independent of the core and of the step handlers (`check:arch` enforces this). Each new spec rule that enters a classification Then is added to the oracle; a filtered case is justified by the spec rule that makes it equivalent, never by what the implementation returns.
 
-Especificaciones de APS (formato Gherkin, IR, generador, runner adapter): `~/Work/vendor/Acceptance-Pipeline-Specification/*.md`.
+APS specifications (Gherkin format, IR, generator, runner adapter): `~/Work/vendor/Acceptance-Pipeline-Specification/*.md`.
 
-Reglas de uso:
+Usage rules:
 
-- Una herramienta a la vez, en secuencia.
-- Mutación: un archivo por vez, siempre diferencial (el default). Los snapshots en `.metrics/` son el manifest: se commitean y solo los modifican las herramientas. La mutación del Gherkin guarda su manifest dentro del propio `.feature`: ese archivo se commitea después de mutarlo. El gate del hardener falla si a un feature del paquete le quedaban mutaciones por correr, porque eso indica que el manifest no está commiteado o quedó viejo.
+- One tool at a time, in sequence.
+- Mutation: one file at a time, always differential (the default). The snapshots in `.metrics/` are the manifest: they are committed and only the tools modify them. Gherkin mutation keeps its manifest inside the `.feature` itself: that file is committed after mutating it. The hardener gate fails if a feature of the package still had mutations to run, because that means the manifest is not committed or is stale.
 - Workers: `--max-workers 4` / `--workers 4`.
-- **CRAP**: un único `switch` que responde una sola pregunta puede quedar sobre 10. Funciones anidadas o de doble propósito sobre 10 se dividen, y cada función extraída es dueña de sus entradas (nada de pasarle booleanos que el llamador ya conocía).
-- Mutación del Gherkin: `--level soft` decide qué remutar solo por el contenido del `.feature`. Si cambian step handlers, el runtime de `acceptance/` o el filtro de equivalentes, se usa `--level full` solo en los features con al menos un paso atendido por un handler cambiado, o con un Then que pasa por una regla cambiada del oráculo; el resto queda en `--level soft`. El rol acceptance lista en su reporte qué handlers y reglas del oráculo cambió.
-- Un módulo con más de un trabajo se divide antes de mutarlo. Un módulo de un solo trabajo queda entero aunque tenga muchos sitios de mutación.
+- **CRAP**: a single `switch` that answers one question may stay above 10. Nested or dual-purpose functions above 10 are split, and each extracted function owns its inputs (do not pass booleans the caller already knew).
+- Gherkin mutation: `--level soft` decides what to re-mutate only by the content of the `.feature`. If step handlers, the `acceptance/` runtime or the equivalents filter change, use `--level full` only on the features with at least one step served by a changed handler, or with a Then that goes through a changed oracle rule; the rest stay on `--level soft`. The acceptance role lists in its report which handlers and oracle rules it changed.
+- A module with more than one job is split before mutating it. A module with a single job stays whole even if it has many mutation sites.
 
-## Gherkin (formato APS)
+## Gherkin (APS format)
 
-- Keywords en inglés (`Feature`, `Background`, `Scenario Outline`, `Examples`, `Given/When/Then/And`); texto de pasos en inglés.
-- Sin tags, `Rule`, doc strings ni data tables en pasos.
-- Todo valor que pueda variar va como `<parametro>` en una tabla `Examples`: solo esos valores se mutan.
-- Fechas y horas en ISO-8601 (`2026-07-15T08:00:00`), así el mutador las corre ± en el tiempo.
+- Keywords in English (`Feature`, `Background`, `Scenario Outline`, `Examples`, `Given/When/Then/And`); step text in English.
+- No tags, `Rule`, doc strings or data tables in steps.
+- Every value that can vary goes as a `<parameter>` in an `Examples` table: only those values are mutated.
+- Dates and times in ISO-8601 (`2026-07-15T08:00:00`), so the mutator shifts them forward and back in time.
 
 ## Git
 
-- Rama de integración: `v3`. Worktree compartido de implementación: `~/Work/tareas-hogar-worktrees/pipeline` en la rama `wt/pipeline`.
-- Trabajar solo en el worktree asignado en el prompt; mergear solo lo que el prompt indica (el core mergea `v3`; los demás roles no mergean).
-- Formato de commit:
+- Integration branch: `v3`. Shared implementation worktree: `~/Work/tareas-hogar-worktrees/pipeline` on branch `wt/pipeline`.
+- Work only in the worktree assigned in the prompt; merge only what the prompt says (core merges `v3`; the other roles do not merge).
+- Commit format:
 
   ```
-  <resumen en imperativo>
+  <summary in imperative>
 
-  By <rol>.
+  By <role>.
 
-  Co-Authored-By: Claude <Modelo> <noreply@anthropic.com>
-  (o Co-Authored-By: Google Gemini <Modelo> <noreply@google.com> en roles ejecutados con Gemini)
+  Co-Authored-By: Claude <Model> <noreply@anthropic.com>
+  (or Co-Authored-By: Google Gemini <Model> <noreply@google.com> in roles run with Gemini)
   ```
 
-  El trailer es para tracking de qué hizo la IA en este proyecto: va siempre, aunque otra regla general prohíba la atribución en commits. `<Modelo>` es el modelo con el que corre el rol (`Opus 5.5`, `Sonnet 5.5`, `Haiku 5.5`, `3.8 Flash`); el prompt de lanzamiento trae la línea exacta en `Firma:`.
+  The trailer is for tracking what the AI did in this project: it always goes in, even if another general rule forbids attribution in commits. `<Model>` is the model the role runs with (`Opus 5.5`, `Sonnet 5.5`, `Haiku 5.5`, `3.8 Flash`); the launch prompt carries the exact line under `Firma:`.
 
-- Después de un merge que trae cambios en `package-lock.json`, o en un worktree sin `node_modules`: `npm ci`.
-- Archivos temporales en `./tmp/` del worktree (ignorado por git).
-- Antes de reportar, todos los roles corren `~/Work/bdd-pipeline/bdd-pipeline gate <rol>` y lo dejan en `OK`. No uses `npm run acceptance` ni `npm run coverage` a secas como criterio: corren también los features de `pendientes.txt`, que fallan hasta que se implementan.
+- After a merge that brings changes in `package-lock.json`, or in a worktree without `node_modules`: `npm ci`.
+- Temporary files go in the worktree's `./tmp/` (ignored by git).
+- Before reporting, every role runs `~/Work/bdd-pipeline/bdd-pipeline gate <role>` and leaves it at `OK`. Do not use a bare `npm run acceptance` or `npm run coverage` as the criterion: they also run the features in `pendientes.txt`, which fail until they are implemented.
 
-## Gate del rol
+## Role gate
 
-`~/Work/bdd-pipeline/bdd-pipeline gate <rol>` (desde el worktree) corre exactamente lo que el rol tiene que dejar en verde: árbol limpio, último commit con `By <rol>.`, que core, acceptance y ui solo tocaron los archivos que les permite su sección del paquete (`docs/pipeline/paquetes/<feature>.md`), y los checks de su rol. Los roles de especificación no tienen tests: su gate verifica el paquete (L1 en el log; cada `S#` citado textual de `docs/spec.md`; para gherkin-writer, además, cada `S#` cubierto por un `.feature` que parsea y figura en `pendientes.txt`, y las superficies de core, acceptance y ui). Correrlo antes de reportar `DONE`. Al terminar un rol, el hook `SubagentStop` lo corre solo; si falla, el error vuelve al rol para que lo corrija. Si el gate ya pasó en ese commit, no repite sus pasos; borrar `tmp/gate-verde-<rol>` lo fuerza.
+`~/Work/bdd-pipeline/bdd-pipeline gate <role>` (from the worktree) runs exactly what the role has to leave green: clean tree, last commit with `By <role>.`, core, acceptance and ui touching only the files their section of the package allows (`docs/pipeline/paquetes/<feature>.md`), and the role's own checks. The specification roles have no tests: their gate verifies the package (L1 in the log; each `S#` quoted verbatim from `docs/spec.md`; for gherkin-writer, also each `S#` covered by a `.feature` that parses and is listed in `pendientes.txt`, and the core, acceptance and ui surfaces). Run it before reporting `DONE`. When a role finishes, the `SubagentStop` hook runs it automatically; if it fails, the error goes back to the role to fix. If the gate already passed on that commit, it does not repeat its steps; deleting `tmp/gate-verde-<role>` forces it.
 
-`docs/pipeline/pendientes.txt` lista los features ya especificados que todavía no se implementaron: el gate no los cuenta en la aceptación. El gherkin-writer agrega ahí los suyos; el rol acceptance quita los de la feature que conecta.
+`docs/pipeline/pendientes.txt` lists the features already specified that are not implemented yet: the gate does not count them in acceptance. The gherkin-writer adds its own there; the acceptance role removes those of the feature it connects.
 
-## Reporte al orquestador
+## Report to the orchestrator
 
-Cada rol termina con un mensaje corto:
+Every role ends with a short message:
 
 ```
 STATUS: DONE | BLOCKED | QUESTION
 COMMIT: <sha>
-GATES: <gate>=<resultado>, ...
-NOTES: <una a tres líneas; si BLOCKED/QUESTION, qué hace falta>
-LEARNINGS: <opcional: una línea por trampa que encontraste y que el próximo rol pisaría>
+GATES: <gate>=<result>, ...
+NOTES: <one to three lines; if BLOCKED/QUESTION, what is needed>
+LEARNINGS: <optional: one line per trap you found that the next role would step on>
 ```
 
-Escribí ese mismo texto en `tmp/reporte-<rol>.txt` del directorio donde trabajás, con ruta absoluta, antes de terminar: si te interrumpen, es lo que lee el orquestador. En un subagente el `cd` no persiste entre llamadas, y con una ruta relativa el archivo iría al checkout principal.
+Write that same text to `tmp/reporte-<role>.txt` of the directory where you work, with an absolute path, before finishing: if you are interrupted, it is what the orchestrator reads. In a subagent `cd` does not persist between calls, and with a relative path the file would go to the main checkout.
 
-Nada más: el detalle del trabajo va en el mensaje del commit, no en el reporte. Los datos que el rol siguiente necesita (firmas exportadas, pasos nuevos) van en `NOTES`.
+Nothing more: the detail of the work goes in the commit message, not in the report. The data the next role needs (exported signatures, new steps) goes in `NOTES`.
 
-## Aprendizajes
+## Learnings
 
-Las trampas que ya pisó cada rol viven en **Engram** (proyecto `tareas-hogar`), una memoria por rol con `topic_key` `pipeline/aprendizajes/<rol>`. El orquestador trae la tuya en el prompt de lanzamiento, bajo «Aprendizajes del rol»: leela antes de empezar. No hace falta buscarla.
+The traps each role already stepped on live in **Engram** (project `tareas-hogar`), one memory per role with `topic_key` `pipeline/aprendizajes/<role>`. The orchestrator brings yours in the launch prompt, under «Aprendizajes del rol» (the tool still prints that Spanish heading): read it before starting. There is no need to search for it.
 
-Los roles **no escriben** en Engram: reportan sus trampas en `LEARNINGS` y el orquestador las agrega. Si el prompt no los trae, seguí sin ellos y decilo en `NOTES`.
+Roles **do not write** to Engram: they report their traps in `LEARNINGS` and the orchestrator adds them. If the prompt does not bring them, continue without them and say so in `NOTES`.

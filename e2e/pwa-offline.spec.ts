@@ -61,7 +61,7 @@ async function historyEmptyIn(page: Page) {
 	await expect(page.getByText(EMPTY_HISTORY)).toBeVisible();
 }
 
-test('Flujo 1: PWA instalable', async ({ page, context }) => {
+test('Flow 1: PWA instalable', async ({ page, context }) => {
 	await page.addInitScript(() => {
 		window.addEventListener('beforeinstallprompt', (e) => {
 			e.preventDefault();
@@ -115,7 +115,7 @@ test('Flujo 1: PWA instalable', async ({ page, context }) => {
 	}).toPass();
 });
 
-test('Flujo 2: abrir sin conexión tras el primer login', async ({ browser }) => {
+test('Flow 2: abrir sin conexión tras el primer login', async ({ browser }) => {
 	const { ctx, page } = await sessionPwa(browser);
 	await oneOff(page, 'Regar');
 	await expect(row(page, 'Regar')).toBeVisible();
@@ -147,7 +147,7 @@ test('Flujo 2: abrir sin conexión tras el primer login', async ({ browser }) =>
 	await ctx.close();
 });
 
-test('Flujo 3: completar sin conexión y sincronizar', async ({ browser }) => {
+test('Flow 3: completar sin conexión y sincronizar', async ({ browser }) => {
 	const a = await sessionPwa(browser, true);
 	const b = await sessionPwa(browser, false);
 	await turnOnCompleted(a.page);
@@ -181,7 +181,7 @@ test('Flujo 3: completar sin conexión y sincronizar', async ({ browser }) => {
 	await b.ctx.close();
 });
 
-test('Flujo 4: crear, editar y borrar sin conexión', async ({ browser }) => {
+test('Flow 4: crear, editar y borrar sin conexión', async ({ browser }) => {
 	const a = await sessionPwa(browser, true);
 	const b = await sessionPwa(browser, false);
 	await a.ctx.setOffline(true);
@@ -218,7 +218,7 @@ test('Flujo 4: crear, editar y borrar sin conexión', async ({ browser }) => {
 	await b.ctx.close();
 });
 
-test('Flujo 5: la escritura pendiente sobrevive a una recarga', async ({ browser }) => {
+test('Flow 5: la escritura pendiente sobrevive a una recarga', async ({ browser }) => {
 	const a = await sessionPwa(browser, true);
 	const b = await sessionPwa(browser, false);
 	await a.ctx.setOffline(true);
@@ -268,7 +268,7 @@ test('Flujo 5: la escritura pendiente sobrevive a una recarga', async ({ browser
 	await b.ctx.close();
 });
 
-test('Flujo 6: varias pestañas del mismo dispositivo', async ({ browser }) => {
+test('Flow 6: varias pestañas del mismo dispositivo', async ({ browser }) => {
 	const a = await sessionPwa(browser, true);
 	const p1 = a.page;
 	const p2 = await a.ctx.newPage();
@@ -293,7 +293,7 @@ test('Flujo 6: varias pestañas del mismo dispositivo', async ({ browser }) => {
 	await b.ctx.close();
 });
 
-test('Flujo 7: ida y vuelta de conexión', async ({ browser }) => {
+test('Flow 7: ida y vuelta de conexión', async ({ browser }) => {
 	const a = await sessionPwa(browser, true);
 	const b = await sessionPwa(browser, false);
 	await oneOff(a.page, 'Regar');
@@ -332,7 +332,7 @@ test('Flujo 7: ida y vuelta de conexión', async ({ browser }) => {
 	await b.ctx.close();
 });
 
-test('Flujo 8: aviso "Sin conexión"', async ({ browser }) => {
+test('Flow 8: aviso "Sin conexión"', async ({ browser }) => {
 	const { ctx, page } = await sessionPwa(browser);
 	await expect(withoutConnection(page)).toHaveCount(0);
 
@@ -353,7 +353,7 @@ test('Flujo 8: aviso "Sin conexión"', async ({ browser }) => {
 	await ctx.close();
 });
 
-test('Flujo 9: abrir sin conexión sin haber iniciado sesión nunca', async ({ browser }) => {
+test('Flow 9: abrir sin conexión sin haber iniciado sesión nunca', async ({ browser }) => {
 	const ctx = await browser.newContext({ baseURL: 'http://127.0.0.1:4173', locale: 'es-AR' });
 	const page = await ctx.newPage();
 	await page.goto('/');
@@ -376,7 +376,7 @@ test('Flujo 9: abrir sin conexión sin haber iniciado sesión nunca', async ({ b
 
 // --- Flow 10: two builds served from the same origin (e2e/versions-support.ts) ---
 
-test('Flujo 10: versión nueva del service worker', async ({ browser }) => {
+test('Flow 10: versión nueva del service worker', async ({ browser }) => {
 	test.setTimeout(240_000);
 	const root = join(process.cwd(), 'tmp', 'pwa-versiones');
 	const v1 = join(root, 'v1');

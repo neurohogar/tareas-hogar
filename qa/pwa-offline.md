@@ -1,184 +1,183 @@
-# QA: PWA instalable y funcionamiento sin conexión
+# QA: installable PWA and offline operation
 
-Verifica, solo por la interfaz y por lo que el navegador expone de la PWA, que
-la app es instalable, que abre sin conexión después del primer login, que lo
-hecho sin conexión (crear, editar, completar, deshacer, borrar) se ve al
-instante, sobrevive a una recarga y sincroniza solo al reconectar, y que una
-escritura pendiente no se pierde si se recarga antes de que llegue al
-servidor. Cubre spec §2 (sin conexión y sync), §6.5 (abre directo, también sin
-conexión), §7 (caché persistente multi-pestaña, sync al reconectar), §8 (PWA:
-manifest + service worker) y §10 criterios 1, 4 y 6.
+Verifies, through the interface only and through what the browser exposes of the PWA,
+that the app is installable, that it opens offline after the first login, that
+what is done offline (create, edit, complete, undo, delete) is seen
+instantly, survives a reload and syncs by itself on reconnecting, and that a
+pending write is not lost if the page is reloaded before it reaches the
+server. Covers spec §2 (offline and sync), §6.5 (opens directly, also offline),
+§7 (persistent multi-tab cache, sync on reconnecting), §8 (PWA:
+manifest + service worker) and §10 criteria 1, 4 and 6.
 
-Fuera de alcance: las reglas de conflicto entre dispositivos (ya cubiertas en
-`qa/edit-delete.md`); cualquier indicador visual de "sin
-conexión" o "pendiente de sincronizar" (el spec no lo define: QA no lo exige ni
-lo prohíbe); qué pasa con una versión nueva del service worker; abrir sin
-conexión sin haber iniciado sesión nunca; el aspecto del ícono, el nombre y los
-colores del manifest (solo se verifica que existan y sean válidos); la
-instalación real en Android (se verifica que el navegador la considere
-instalable).
+Out of scope: the conflict rules between devices (already covered in
+`qa/edit-delete.md`); any visual indicator of "offline" or "pending sync"
+(the spec does not define it: QA neither requires nor forbids it); what happens with a new version of the
+service worker; opening offline without ever having signed in; the look of the icon, the name and the
+colors of the manifest (it is only verified that they exist and are valid); the real
+installation on Android (it is verified that the browser considers it
+installable).
 
-## Entorno
+## Environment
 
-Igual que `qa/edit-delete.md`:
+Same as `qa/edit-delete.md`:
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de
-  cada flujo.
-- Reloj simulado (`page.clock`) instalado **antes** de abrir la app, en
-  `2026-07-15T08:00:00` (zona `America/Argentina/Buenos_Aires`).
-- Sesión iniciada con `qa@example.com` (Flujo 1 de `qa/recurring-relative.md`).
-- "Sin conexión" significa `browserContext.setOffline(true)`; "reconectar",
-  `setOffline(false)` y esperar a que la pantalla se actualice sola.
-- Dos dispositivos: dos contextos independientes, A y B, con la misma cuenta.
-- **Mostrar completadas** queda apagado (su valor inicial), salvo en el
-  Flujo 3: una tarea completada no tiene fila en Pendientes.
-- La app se sirve como build de producción (`vite build` + preview), porque el
-  service worker solo se registra ahí. Para los flujos con recarga offline el
-  service worker ya tiene que estar activo y controlando la página antes de
-  cortar la conexión (esperar `navigator.serviceWorker.ready` y recargar una
-  vez con conexión).
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of
+  each flow.
+- Simulated clock (`page.clock`) installed **before** opening the app, at
+  `2026-07-15T08:00:00` (zone `America/Argentina/Buenos_Aires`).
+- Signed in with `qa@example.com` (Flow 1 of `qa/recurring-relative.md`).
+- "Offline" means `browserContext.setOffline(true)`; "reconnect" means
+  `setOffline(false)` and waiting for the screen to update by itself.
+- Two devices: two independent contexts, A and B, with the same account.
+- **Mostrar completadas** stays off (its initial value), except in
+  Flow 3: a completed task has no row in Pendientes.
+- The app is served as a production build (`vite build` + preview), because the
+  service worker is only registered there. For the flows with offline reload the
+  service worker must already be active and controlling the page before
+  cutting the connection (wait for `navigator.serviceWorker.ready` and reload
+  once with a connection).
 
-## Contrato observable
+## Observable contract
 
-- **Manifest**: el documento enlaza con `<link rel="manifest">` a un manifest
-  que se descarga y parsea como JSON con: `name` = "Tareas Hogar" y `short_name` = "Tareas",
-  `start_url` dentro del alcance de la app, `display` = `standalone`, y
-  `icons` con al menos un ícono de 192×192 y uno de 512×512, cada uno
-  descargable con tipo de imagen.
-- **Service worker**: `navigator.serviceWorker.getRegistration()` devuelve un
-  registro con un worker en estado `activated` cuyo alcance cubre la raíz de la
-  app, y la página queda controlada por él (`navigator.serviceWorker.controller`
-  no es nulo tras la recarga).
-- **Instalable**: el navegador dispara `beforeinstallprompt` (Chromium) con
-  manifest y service worker válidos, o equivalente si el motor no lo expone.
-- **Aviso de conexión**: texto visible "Sin conexión" mientras el contexto
-  está sin conexión; sin él con conexión. No hay contador de pendientes.
-- **Fila y pantallas**: el contrato de fila de `qa/recurring-relative.md`, el
-  de Historial de `qa/history-undo.md`.
+- **Manifest**: the document links with `<link rel="manifest">` to a manifest
+  that downloads and parses as JSON with: `name` = "Tareas Hogar" and `short_name` = "Tareas",
+  `start_url` inside the scope of the app, `display` = `standalone`, and
+  `icons` with at least one 192×192 icon and one 512×512 icon, each
+  downloadable with an image type.
+- **Service worker**: `navigator.serviceWorker.getRegistration()` returns a
+  registration with a worker in `activated` state whose scope covers the root of the
+  app, and the page is controlled by it (`navigator.serviceWorker.controller`
+  is not null after the reload).
+- **Installable**: the browser fires `beforeinstallprompt` (Chromium) with a valid
+  manifest and service worker, or an equivalent if the engine does not expose it.
+- **Connection notice**: visible text "Sin conexión" while the context
+  is offline; without it when online. There is no pending counter.
+- **Row and screens**: the row contract of `qa/recurring-relative.md`, the
+  Historial contract of `qa/history-undo.md`.
 
-## Flujo 1: PWA instalable
+## Flow 1: installable PWA
 
-1. Abrir la app con conexión (build de producción) y esperar a que el service
-   worker esté activo.
-2. Verificar el contrato de **Manifest** y de **Service worker**.
-3. Recargar y verificar que la página queda controlada por el service worker.
-4. Verificar que el navegador considera la app instalable.
+1. Open the app with a connection (production build) and wait for the service
+   worker to be active.
+2. Verify the **Manifest** and **Service worker** contract.
+3. Reload and verify that the page is controlled by the service worker.
+4. Verify that the browser considers the app installable.
 
-## Flujo 2: abrir sin conexión tras el primer login
+## Flow 2: open offline after the first login
 
-1. Con conexión: entrar con Google (`qa@example.com`), crear la tarea
-   puntual **Regar** y ver su fila en **Pendientes**. Esperar a que el service
-   worker controle la página.
-2. Poner el contexto sin conexión y recargar: la app abre directo en
-   **Pendientes**, sin pantalla de login y sin error de red, y muestra la fila
+1. With a connection: sign in with Google (`qa@example.com`), create the
+   one-off task **Regar** and see its row in **Pendientes**. Wait for the service
+   worker to control the page.
+2. Put the context offline and reload: the app opens directly on
+   **Pendientes**, without a login screen and without a network error, and shows the row
    **Regar**.
-3. Abrir `/historial` por URL directa y recargar, aún sin conexión: se ve el
-   Historial (vacío: "Todavía no completaste nada").
-4. Cerrar la página, abrir una pestaña nueva en la raíz, todavía sin conexión:
-   abre directo en **Pendientes** con **Regar**.
-5. Reconectar: no aparece pantalla de login ni cambia nada visible.
+3. Open `/historial` by direct URL and reload, still offline: the
+   Historial is shown (empty: "Todavía no completaste nada").
+4. Close the page, open a new tab at the root, still offline:
+   it opens directly on **Pendientes** with **Regar**.
+5. Reconnect: no login screen appears and nothing visible changes.
 
-## Flujo 3: completar sin conexión y sincronizar (criterio 4)
+## Flow 3: complete offline and sync (criterion 4)
 
-Precondición: A y B con sesión, tarea periódica **Regar** (Cada 1 día) creada
-desde A y visible en B, **Pendientes** en ambos, con **Mostrar completadas**
-encendido en ambos (`qa/show-completed.md`).
+Precondition: A and B signed in, recurring task **Regar** (Cada 1 día) created
+from A and visible on B, **Pendientes** on both, with **Mostrar completadas**
+on in both (`qa/show-completed.md`).
 
-1. A sin conexión.
-2. En A, completar **Regar**: pasa a en espera al instante (atenuada, con
-   barra, completada). En B, **Regar** sigue pendiente (sin atenuar).
-3. En A, abrir **Historial**: una entrada **Regar** `08:00` en **Hoy**.
-4. Recargar A (sigue sin conexión): **Regar** sigue en espera y la entrada
-   sigue en el Historial.
-5. A se reconecta: sin tocar nada, B muestra **Regar** en espera y, en su
-   Historial, la entrada **Regar** `08:00`. Una sola entrada.
+1. A offline.
+2. On A, complete **Regar**: it becomes waiting instantly (dimmed, with
+   bar, completed). On B, **Regar** is still pending (not dimmed).
+3. On A, open **Historial**: one entry **Regar** `08:00` in **Hoy**.
+4. Reload A (still offline): **Regar** is still waiting and the entry
+   is still in the Historial.
+5. A reconnects: without touching anything, B shows **Regar** waiting and, in its
+   Historial, the entry **Regar** `08:00`. A single entry.
 
-## Flujo 4: crear, editar y borrar sin conexión
+## Flow 4: create, edit and delete offline
 
-Precondición: A y B con sesión y listas vacías.
+Precondition: A and B signed in and empty lists.
 
-1. A sin conexión.
-2. En A, crear **Barrer** (puntual) y **Pagar** (puntual con fecha límite
-   `2026-07-20`): ambas aparecen al instante en A. B no las ve.
-3. En A, editar **Barrer** a título **Barrer patio**; el cambio se ve al
-   instante.
-4. En A, completar **Pagar** y luego **Deshacer** desde el aviso: **Pagar**
-   vuelve a pendiente.
-5. En A, borrar **Pagar** (confirmando): desaparece.
-6. Recargar A, aún sin conexión: solo **Barrer patio**; el Historial vacío.
-7. A se reconecta: B muestra **Barrer patio** y no **Pagar**; el Historial de
-   B está vacío.
+1. A offline.
+2. On A, create **Barrer** (one-off) and **Pagar** (one-off with due date
+   `2026-07-20`): both appear instantly on A. B does not see them.
+3. On A, edit **Barrer** to title **Barrer patio**; the change is seen
+   instantly.
+4. On A, complete **Pagar** and then **Deshacer** from the notice: **Pagar**
+   goes back to pending.
+5. On A, delete **Pagar** (confirming): it disappears.
+6. Reload A, still offline: only **Barrer patio**; the Historial empty.
+7. A reconnects: B shows **Barrer patio** and not **Pagar**; the Historial of
+   B is empty.
 
-## Flujo 5: la escritura pendiente sobrevive a una recarga
+## Flow 5: the pending write survives a reload
 
-Es la observación de QA de la feature anterior: recargar justo después de
-crear no debe perder la tarea.
+It is the QA observation of the previous feature: reloading right after
+creating must not lose the task.
 
-Precondición: A y B con sesión y listas vacías.
+Precondition: A and B signed in and empty lists.
 
-1. A sin conexión.
-2. En A, crear **Comprar pan** y, sin esperar, recargar A (todavía sin
-   conexión): **Comprar pan** sigue en **Pendientes**.
-3. En A, completar **Comprar pan** y recargar enseguida, aún sin conexión:
-   sigue completada (no está en Pendientes; en el Historial hay una entrada).
-4. Cerrar A y abrirla de nuevo en una pestaña nueva, aún sin conexión: mismo
-   estado.
-5. A se reconecta: B muestra **Comprar pan** completada en su Historial, una
-   sola entrada, sin duplicados.
-6. Variante con conexión: en A (con conexión) crear **Lavar** y recargar
-   inmediatamente, sin esperar. Tras recargar, **Lavar** está en A y también
-   aparece en B. Repetir con completar y recargar de inmediato.
+1. A offline.
+2. On A, create **Comprar pan** and, without waiting, reload A (still
+   offline): **Comprar pan** is still in **Pendientes**.
+3. On A, complete **Comprar pan** and reload immediately, still offline:
+   it is still completed (it is not in Pendientes; in the Historial there is one entry).
+4. Close A and open it again in a new tab, still offline: same
+   state.
+5. A reconnects: B shows **Comprar pan** completed in its Historial, a
+   single entry, without duplicates.
+6. Variant with a connection: on A (with a connection) create **Lavar** and reload
+   immediately, without waiting. After reloading, **Lavar** is on A and also
+   appears on B. Repeat with complete and reload immediately.
 
-## Flujo 6: varias pestañas del mismo dispositivo
+## Flow 6: several tabs of the same device
 
-Precondición: sesión iniciada, dos pestañas (P1 y P2) del mismo contexto.
+Precondition: signed in, two tabs (P1 and P2) of the same context.
 
-1. Ambas abren la app sin errores ni pantallas de "ya hay otra pestaña
-   abierta".
-2. Con conexión, crear **Regar** en P1: aparece en P2 sin recargar.
-3. Contexto sin conexión: crear **Barrer** en P1: P2 la muestra sin recargar
-   (caché compartida).
-4. Reconectar y abrir B (otro contexto): ve **Regar** y **Barrer**.
+1. Both open the app without errors or "there is already another tab
+   open" screens.
+2. With a connection, create **Regar** in P1: it appears in P2 without reloading.
+3. Context offline: create **Barrer** in P1: P2 shows it without reloading
+   (shared cache).
+4. Reconnect and open B (another context): it sees **Regar** and **Barrer**.
 
-## Flujo 7: ida y vuelta de conexión
+## Flow 7: connection round trip
 
-Precondición: A y B con sesión, **Regar** y **Barrer** puntuales visibles en
-ambos.
+Precondition: A and B signed in, one-off **Regar** and **Barrer** visible on
+both.
 
-1. A sin conexión; en B (con conexión) completar **Regar**.
-2. A no ve el cambio. Reconectar A: sin recargar, **Regar** pasa a completada
-   en A y sale de la lista (**Mostrar completadas** apagado).
-3. A sin conexión otra vez, completar **Barrer** y reconectar a los pocos
-   segundos: B lo ve sin recargar. Repetir el corte y la reconexión dos veces
-   más sin que la app muestre errores ni pierda los cambios.
+1. A offline; on B (with a connection) complete **Regar**.
+2. A does not see the change. Reconnect A: without reloading, **Regar** becomes completed
+   on A and leaves the list (**Mostrar completadas** off).
+3. A offline again, complete **Barrer** and reconnect after a few
+   seconds: B sees it without reloading. Repeat the cut and the reconnection twice
+   more without the app showing errors or losing the changes.
 
-## Flujo 8: aviso "Sin conexión"
+## Flow 8: "Sin conexión" notice
 
-Precondición: sesión iniciada, en **Pendientes**.
+Precondition: signed in, on **Pendientes**.
 
-1. Con conexión no se ve "Sin conexión".
-2. Poner el contexto sin conexión: aparece "Sin conexión" sin recargar.
-3. Crear **Regar** sin conexión: el aviso sigue siendo solo "Sin conexión"
-   (sin número ni texto de cambios pendientes).
-4. Recargar sin conexión: el aviso sigue visible.
-5. Reconectar: el aviso desaparece solo.
+1. With a connection "Sin conexión" is not shown.
+2. Put the context offline: "Sin conexión" appears without reloading.
+3. Create **Regar** offline: the notice is still only "Sin conexión"
+   (no number or text about pending changes).
+4. Reload offline: the notice is still visible.
+5. Reconnect: the notice disappears by itself.
 
-## Flujo 9: abrir sin conexión sin haber iniciado sesión nunca
+## Flow 9: open offline without ever having signed in
 
-Precondición: contexto nuevo, sin sesión previa. Se carga la app con
-conexión una vez (para que el service worker la guarde) sin iniciar sesión.
+Precondition: new context, no previous session. The app is loaded with a
+connection once (so that the service worker saves it) without signing in.
 
-1. Poner el contexto sin conexión y recargar.
-2. Se ve la pantalla de entrada con el mensaje "Necesitás conexión para
-   entrar la primera vez" y el botón **Entrar con Google** deshabilitado.
-3. Reconectar: el mensaje desaparece y el botón queda habilitado, sin
-   recargar.
+1. Put the context offline and reload.
+2. The entry screen is shown with the message "Necesitás conexión para
+   entrar la primera vez" and the **Entrar con Google** button disabled.
+3. Reconnect: the message disappears and the button becomes enabled, without
+   reloading.
 
-## Flujo 10: versión nueva del service worker
+## Flow 10: new version of the service worker
 
-1. Con la app instalada y controlada por el service worker, publicar un
-   build nuevo (distinto service worker).
-2. Abrir la app de nuevo: no se ve ningún aviso ni pregunta de actualización.
-3. Tras cerrar y volver a abrir la app, la página queda controlada por el
-   service worker nuevo (versión observable por el build servido) y los datos
-   y la sesión siguen intactos.
+1. With the app installed and controlled by the service worker, publish a
+   new build (different service worker).
+2. Open the app again: no update notice or question is shown.
+3. After closing and reopening the app, the page is controlled by the new
+   service worker (version observable by the build served) and the data
+   and the session are intact.

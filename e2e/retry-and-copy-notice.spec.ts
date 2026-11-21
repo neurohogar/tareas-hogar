@@ -79,7 +79,7 @@ const text = (fields: Record<string, any>, field: string) =>
   fields[field]?.stringValue as string | undefined;
 
 // ---------------------------------------------------------------------------
-// Flujos 1 to 3: the cleanups of orphan completions are retried
+// Flows 1 to 3: the cleanups of orphan completions are retried
 // ---------------------------------------------------------------------------
 
 const TODAY = "2026-07-15T08:00:00";
@@ -195,7 +195,7 @@ async function cutAttempt(d: Two, remaining = 1) {
   await staysDuring(6000, async () => (await orphanCount()) === remaining);
 }
 
-test("Flujo 1: retry of an orphan on reconnect", async ({ browser }) => {
+test("Flow 1: retry of an orphan on reconnect", async ({ browser }) => {
   test.setTimeout(240_000);
   const d = await withOrphans(browser, ["Regar", "Pagar"], 1, 1);
   try {
@@ -213,7 +213,7 @@ test("Flujo 1: retry of an orphan on reconnect", async ({ browser }) => {
   }
 });
 
-test("Flujo 1 (step 5): a data change offline does not clean; the connection back does", async ({
+test("Flow 1 (step 5): a data change offline does not clean; the connection back does", async ({
   browser,
 }) => {
   test.setTimeout(240_000);
@@ -234,11 +234,11 @@ test("Flujo 1 (step 5): a data change offline does not clean; the connection bac
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 2: one failure does not stop the others
+// Flow 2: one failure does not stop the others
 // ---------------------------------------------------------------------------
 
 for (const remaining of [3, 2]) {
-  test(`Flujo 2: one failure does not stop the others (the attempt is cut with ${remaining} on the server)`, async ({
+  test(`Flow 2: one failure does not stop the others (the attempt is cut with ${remaining} on the server)`, async ({
     browser,
   }) => {
     test.setTimeout(240_000);
@@ -257,10 +257,10 @@ for (const remaining of [3, 2]) {
 }
 
 // ---------------------------------------------------------------------------
-// Flujo 3: no timers
+// Flow 3: no timers
 // ---------------------------------------------------------------------------
 
-test("Flujo 3: no timers", async ({ browser }) => {
+test("Flow 3: no timers", async ({ browser }) => {
   test.setTimeout(300_000);
   const d = await withOrphans(browser, ["Regar", "Pagar"], 1, 1);
   try {
@@ -294,7 +294,7 @@ test("Flujo 3: no timers", async ({ browser }) => {
 });
 
 // ---------------------------------------------------------------------------
-// Flujo 4: data that is no longer used
+// Flow 4: data that is no longer used
 // ---------------------------------------------------------------------------
 
 async function writeInEmulator(
@@ -323,7 +323,7 @@ const oldLabels = (fields: Record<string, any>) =>
 
 const byId = (a: Doc, b: Doc) => a.id.localeCompare(b.id);
 
-test("Flujo 4: data that is no longer used", async ({ page }) => {
+test("Flow 4: data that is no longer used", async ({ page }) => {
   test.setTimeout(120_000);
   await sessionWithClock(page, TODAY);
   const uid = await emulatorUid();

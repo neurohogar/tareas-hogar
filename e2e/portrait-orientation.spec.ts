@@ -115,7 +115,7 @@ async function verifyManifest(page: Page) {
 	return manifest;
 }
 
-test('Flujo 1: el manifest declara la orientación vertical', async ({ browser }) => {
+test('Flow 1: el manifest declara la orientación vertical', async ({ browser }) => {
 	const { ctx, page } = await session(browser);
 	const same = await verifyManifest(page);
 
@@ -138,7 +138,7 @@ test('Flujo 1: el manifest declara la orientación vertical', async ({ browser }
 // Flow 2: no screen fixes the orientation on its own
 // ---------------------------------------------------------------------------
 
-test('Flujo 2: ninguna pantalla fija la orientación por su cuenta', async ({ browser }) => {
+test('Flow 2: ninguna pantalla fija la orientación por su cuenta', async ({ browser }) => {
 	const { ctx, page, annotations } = await session(browser);
 	await water(page);
 	await expect(row(page, 'Regar')).toBeVisible();
@@ -196,7 +196,7 @@ test('Flujo 2: ninguna pantalla fija la orientación por su cuenta', async ({ br
 // Flow 3: in a browser tab it keeps rotating
 // ---------------------------------------------------------------------------
 
-test('Flujo 3: en una pestaña del navegador sigue girando con el diseño ancho en horizontal', async ({ browser }) => {
+test('Flow 3: en una pestaña del navegador sigue girando con el diseño ancho en horizontal', async ({ browser }) => {
 	const { ctx, page, annotations } = await session(browser);
 	await water(page);
 
@@ -243,7 +243,7 @@ test('Flujo 3: en una pestaña del navegador sigue girando con el diseño ancho 
 // Flow 4: on the desktop nothing changes
 // ---------------------------------------------------------------------------
 
-test('Flujo 4: en la compu no cambia nada', async ({ browser }) => {
+test('Flow 4: en la compu no cambia nada', async ({ browser }) => {
 	const { ctx, page, annotations } = await session(browser, { viewport: COMPUTER, hasTouch: false });
 	await water(page);
 	await expect(row(page, 'Regar')).toBeVisible();
@@ -283,7 +283,7 @@ function twoBuilds() {
 	return { fresh, previous };
 }
 
-test('Flujo 5: la versión con la orientación vertical llega sola, sin avisos ni preguntas', async ({ browser }) => {
+test('Flow 5: la versión con la orientación vertical llega sola, sin avisos ni preguntas', async ({ browser }) => {
 	test.setTimeout(180_000);
 	const { fresh, previous } = twoBuilds();
 	const status = { dir: previous };

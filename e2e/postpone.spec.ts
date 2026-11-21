@@ -70,7 +70,7 @@ async function panelPostponed(page: Page, title: string, text: string) {
 const viewPostponed = (page: Page, title: string, bar: number, enabled = true) =>
 	waitStatus(page, title, 'en espera', bar, false, enabled);
 
-test('Flujo 1: posponer una atrasada 1 hora', async ({ page }) => {
+test('Flow 1: posponer una atrasada 1 hora', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T10:00:00');
 	await create(page, { title: 'Cambiar foco', kind: 'No se repite' });
 	await create(page, { title: 'Pagar la luz', kind: 'No se repite', date: '2026-07-14' });
@@ -106,7 +106,7 @@ test('Flujo 1: posponer una atrasada 1 hora', async ({ page }) => {
 	await panelWithoutPostpone(page, 'Pagar la luz');
 });
 
-test('Flujo 2: 3 horas y Hasta mañana, pasando la medianoche', async ({ page }) => {
+test('Flow 2: 3 horas y Hasta mañana, pasando la medianoche', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T22:00:00');
 	for (const title of ['Cambiar foco', 'Barrer', 'Regar plantas'])
 		await create(page, { title, kind: 'No se repite' });
@@ -137,7 +137,7 @@ test('Flujo 2: 3 horas y Hasta mañana, pasando la medianoche', async ({ page })
 	await listIs(page, ['Cambiar foco', 'Barrer', 'Regar plantas']);
 });
 
-test('Flujo 3: quitar posponer, completar, deshacer y editar', async ({ page }) => {
+test('Flow 3: quitar posponer, completar, deshacer y editar', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T10:00:00');
 	await create(page, { title: 'Pagar la luz', kind: 'No se repite', date: '2026-07-14' });
 	await postpone(page, 'Pagar la luz', '3 horas');
@@ -169,7 +169,7 @@ test('Flujo 3: quitar posponer, completar, deshacer y editar', async ({ page }) 
 	await waitStatus(page, 'Pagar el gas', 'atrasada', undefined, false);
 });
 
-test('Flujo 4: periódicas pospuestas', async ({ page }) => {
+test('Flow 4: periódicas pospuestas', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T08:00:00');
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '4', unit: 'horas' });
 	await create(page, { title: 'Barrer', kind: 'Intervalo', every: '4', unit: 'horas' });
@@ -207,7 +207,7 @@ test('Flujo 4: periódicas pospuestas', async ({ page }) => {
 	await waitStatus(page, 'Barrer', 'atrasada', undefined, false);
 });
 
-test('Flujo 5: posponer con horario', async ({ page }) => {
+test('Flow 5: posponer con horario', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T07:00:00');
 	await create(page, {
 		title: 'Ventilar',
@@ -239,7 +239,7 @@ test('Flujo 5: posponer con horario', async ({ page }) => {
 	await close(page);
 });
 
-test('Flujo 6: pausar y posponer', async ({ page }) => {
+test('Flow 6: pausar y posponer', async ({ page }) => {
 	await sessionWithClock(page, '2026-07-15T10:00:00');
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await openTask(page, 'Regar');
@@ -273,7 +273,7 @@ test('Flujo 6: pausar y posponer', async ({ page }) => {
 	await viewPostponed(page, 'Regar', 50);
 });
 
-test('Flujo 7: dos dispositivos', async ({ browser }) => {
+test('Flow 7: dos dispositivos', async ({ browser }) => {
 	const { a, b, ctxB, close: end } = await twoDevices(browser, '2026-07-15T10:00:00');
 	await create(a, { title: 'Pagar la luz', kind: 'No se repite' });
 	await expect(row(b, 'Pagar la luz')).toBeVisible();
@@ -303,7 +303,7 @@ test('Flujo 7: dos dispositivos', async ({ browser }) => {
 	await end();
 });
 
-test('Flujo 8: dos dispositivos con relojes desfasados', async ({ browser }) => {
+test('Flow 8: dos dispositivos con relojes desfasados', async ({ browser }) => {
 	const { a, b, close: end } = await twoDevices(browser, '2026-07-15T08:00:00');
 	await advance(a, '2026-07-15T08:05:00');
 	await create(a, { title: 'Pagar la luz', kind: 'No se repite' });

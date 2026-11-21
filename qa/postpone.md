@@ -1,127 +1,127 @@
-# QA: posponer una tarea
+# QA: postpone a task
 
-Verifica, solo por la interfaz:
+Verifies, through the interface only:
 
-- las opciones de **Posponer** del panel (en **Acciones**, sin botón intermedio): aparecen solo al editar una tarea `pendiente` o `atrasada` que no está pausada ni pospuesta, y son **1 hora**, **3 horas** y **Hasta mañana**; elegir una actúa en el momento (guarda y cierra el panel sin **Guardar**);
-- con la tarea pospuesta, el panel dice "Pospuesta hasta HH:MM" (o "Pospuesta hasta mañana HH:MM") y ofrece **Quitar posponer**, que también actúa en el momento;
-- que la pospuesta se ve `en espera` (atenuada, con la barra hacia el fin de la posposición), en el grupo `en espera` ordenada por cuándo vuelve, y que se ve con **Mostrar completadas** apagado;
-- que vuelve sola a su estado al vencer (`atrasada` en el acto si su atraso llegó), sin mover vencimientos ni fechas límite;
-- que se puede completar mientras está pospuesta (salvo fuera del horario) y que completar, deshacer o editar no quitan la posposición;
-- que una pausada no se puede posponer;
-- la posposición con dos dispositivos, también con relojes desfasados (S12).
+- the **Posponer** options of the panel (in **Acciones**, with no intermediate button): they appear only when editing a pending or overdue task that is neither paused nor postponed, and they are **1 hora**, **3 horas** and **Hasta mañana**; choosing one acts immediately (saves and closes the panel without **Guardar**);
+- with the task postponed, the panel says "Pospuesta hasta HH:MM" (or "Pospuesta hasta mañana HH:MM") and offers **Quitar posponer**, which also acts immediately;
+- that the postponed task looks waiting (dimmed, with the bar towards the end of the postponement), in the waiting group sorted by when it comes back, and that it is visible with **Mostrar completadas** off;
+- that it goes back to its state on its own when it expires (overdue right away if its overdue time has arrived), without moving deadlines or due dates;
+- that it can be completed while postponed (except outside the schedule) and that completing, undoing or editing do not remove the postponement;
+- that a paused task cannot be postponed;
+- postponement with two devices, also with clocks out of sync (S12).
 
-Cubre spec §4.1 (`pospuesta`), §5.9, §6.1 (orden, Mostrar completadas, checkbox), §6.2 (Posponer / Quitar posponer) y §7 (conflictos).
+Covers spec §4.1 (`pospuesta`), §5.9, §6.1 (order, Mostrar completadas, checkbox), §6.2 (Posponer / Quitar posponer) and §7 (conflicts).
 
-Fuera de alcance: los estados sin posponer (`qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/schedule.md`), el orden de las no pospuestas (`qa/pending-order.md`) y pausar (`qa/pause.md`).
+Out of scope: the statuses without postponement (`qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/schedule.md`), the order of non-postponed tasks (`qa/pending-order.md`) and pausing (`qa/pause.md`).
 
-## Entorno
+## Environment
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de cada flujo.
-- Cada flujo parte de un contexto de navegador nuevo (sin datos guardados en el dispositivo), con sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de `qa/recurring-relative.md`).
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la app, en la hora local que indica cada flujo (zona `America/Argentina/Buenos_Aires`), con el reloj detenido (`page.clock.pauseAt`).
-  - "A las X" significa adelantar el reloj simulado hasta X (`page.clock.runFor` o `fastForward`) antes del paso.
-  - "Avanzar el reloj a X" significa adelantarlo hasta X y esperar a que la pantalla se actualice sola (sin recargar).
-- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite** que indica el paso, con los controles de `qa/one-off.md`, `qa/recurring-relative.md` y `qa/recurring-calendar.md`; si el paso da un horario, cargarlo como en `qa/schedule.md`; guardar.
-- "Posponer X con la opción O": tocar la fila X y elegir O entre las opciones de **Posponer** (en **Acciones**, a la vista), sin tocar **Guardar**.
-- **Mostrar completadas** y **Mostrar pausadas** quedan apagados salvo que el flujo diga encenderlos.
-- **Dos dispositivos** (Flujo 7): dos contextos de navegador independientes, A y B, con la misma cuenta y el mismo reloj simulado. "B sin conexión" significa `browserContext.setOffline(true)` en B; "B vuelve a tener conexión", volverlo online y esperar a que las dos pantallas se actualicen solas.
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of each flow.
+- Each flow starts from a new browser context (no data saved on the device), signed in with the Auth Emulator account `qa@example.com` (Flow 1 of `qa/recurring-relative.md`).
+- Simulated browser clock (`page.clock`) installed **before** opening the app, at the local time each flow gives (zone `America/Argentina/Buenos_Aires`), with the clock stopped (`page.clock.pauseAt`).
+  - "At X" means advancing the simulated clock to X (`page.clock.runFor` or `fastForward`) before the step.
+  - "Advance the clock to X" means advancing it to X and waiting for the screen to update by itself (without reloading).
+- Create a task: tap **+**, type the title, choose the **Se repite** option the step gives, with the controls of `qa/one-off.md`, `qa/recurring-relative.md` and `qa/recurring-calendar.md`; if the step gives a schedule, enter it as in `qa/schedule.md`; save.
+- "Postpone X with option O": tap the row X and choose O among the **Posponer** options (in **Acciones**, in view), without tapping **Guardar**.
+- **Mostrar completadas** and **Mostrar pausadas** stay off unless the flow says to turn them on.
+- **Two devices** (Flow 7): two independent browser contexts, A and B, with the same account and the same simulated clock. "B offline" means `browserContext.setOffline(true)` on B; "B comes back online" means putting it back online and waiting for both screens to update by themselves.
 
-Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16, viernes 17, sábado 18, domingo 19.
+Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17, Saturday 18, Sunday 19.
 
-## Contrato observable
+## Observable contract
 
-- **Opciones de Posponer**: en el panel **Editar tarea**, un grupo con nombre accesible **Posponer** que muestra tres botones con nombre accesible **1 hora**, **3 horas** y **Hasta mañana** (sin botón **Posponer** intermedio). Elegir una cierra el panel y el cambio queda guardado: al volver a abrir la tarea, o al recargar, se mantiene. El panel **Nueva tarea** no tiene **Posponer**.
-- **Pospuesta en el panel**: el texto "Pospuesta hasta HH:MM" (hora en 24 h, sin segundos), con "mañana" antes de la hora si el fin de la posposición es del día siguiente al de ahora; un botón **Quitar posponer** y ningún grupo **Posponer**. Tocar **Quitar posponer** cierra el panel y el cambio queda guardado.
-- **Sin posponer**: el panel no tiene el texto "Pospuesta" ni el botón **Quitar posponer**.
-- **Fila pospuesta**: la fila `en espera` del contrato de `qa/recurring-relative.md`, siempre **no completada**: checkbox sin marcar, título en negrita, estilo atenuado, barra de progreso (`aria-valuenow` = porcentaje de la posposición transcurrida, redondeado al entero) y sin el indicador "Atrasada".
-- **Fila**: para las no pospuestas, el contrato de `qa/recurring-relative.md` y el de `qa/show-completed.md`.
-- **Checkbox deshabilitado**: `disabled` o `aria-disabled="true"`, y tocarlo no cambia nada (no hay aviso ni entrada nueva en el Historial).
-- **Lista**: "La lista es A, B, C" significa exactamente esas filas, de arriba hacia abajo.
-- **Aviso** e **Historial**: los de `qa/history-undo.md`.
+- **Posponer options**: in the **Editar tarea** panel, a group with accessible name **Posponer** that shows three buttons with accessible names **1 hora**, **3 horas** and **Hasta mañana** (no intermediate **Posponer** button). Choosing one closes the panel and the change is saved: when the task is opened again, or on reload, it is kept. The **Nueva tarea** panel has no **Posponer**.
+- **Postponed in the panel**: the text "Pospuesta hasta HH:MM" (24-hour time, no seconds), with "mañana" before the time if the end of the postponement falls on the day after now; a **Quitar posponer** button and no **Posponer** group. Tapping **Quitar posponer** closes the panel and the change is saved.
+- **Not postponed**: the panel has neither the text "Pospuesta" nor the **Quitar posponer** button.
+- **Postponed row**: the waiting row of the contract of `qa/recurring-relative.md`, always **not completed**: checkbox unchecked, bold title, dimmed style, progress bar (`aria-valuenow` = percentage of the postponement elapsed, rounded to the integer) and no "Atrasada" indicator.
+- **Row**: for non-postponed tasks, the contract of `qa/recurring-relative.md` and that of `qa/show-completed.md`.
+- **Disabled checkbox**: `disabled` or `aria-disabled="true"`, and tapping it changes nothing (no notice and no new entry in the Historial).
+- **List**: "The list is A, B, C" means exactly those rows, from top to bottom.
+- **Notice** and **Historial**: those of `qa/history-undo.md`.
 
-## Flujo 1: posponer una atrasada 1 hora
+## Flow 1: postpone an overdue task for 1 hour
 
-Precondición: lista vacía, reloj en `2026-07-15T10:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T10:00:00` (Wednesday).
 
-1. Crear `Cambiar foco` con **No se repite** y sin fecha límite, y `Pagar la luz` con **No se repite** y fecha límite `2026-07-14`. Tocar **+**: el panel **Nueva tarea** no tiene las opciones de **Posponer**. Cerrarlo.
-2. La lista es **Pagar la luz** (con "Atrasada"), **Cambiar foco**.
-3. Tocar la fila **Pagar la luz**: el panel tiene las opciones de **Posponer** (**1 hora**, **3 horas** y **Hasta mañana**, a la vista), no tiene **Quitar posponer** ni el texto "Pospuesta". Elegir **1 hora**, sin tocar **Guardar**: el panel se cierra.
-4. La lista es **Cambiar foco**, **Pagar la luz**. **Pagar la luz** se ve pospuesta: atenuada, sin "Atrasada", barra en 0, checkbox habilitado y sin marcar, título en negrita.
-5. Tocar la fila **Pagar la luz**: el panel dice "Pospuesta hasta 11:00", tiene **Quitar posponer** y no tiene las opciones de **Posponer**. Cerrar el panel.
-6. Avanzar el reloj a `2026-07-15T10:30:00`: la barra de **Pagar la luz** está en 50.
-7. Recargar: **Pagar la luz** sigue pospuesta, con la barra en 50.
-8. Avanzar el reloj a `2026-07-15T11:00:00`: **Pagar la luz** está `atrasada` (con "Atrasada", sin barra, no atenuada) y la lista es **Pagar la luz**, **Cambiar foco**. Tocar su fila: el panel tiene las opciones de **Posponer** y no dice "Pospuesta".
+1. Create `Cambiar foco` with **No se repite** and no due date, and `Pagar la luz` with **No se repite** and due date `2026-07-14`. Tap **+**: the **Nueva tarea** panel has no **Posponer** options. Close it.
+2. The list is **Pagar la luz** (with "Atrasada"), **Cambiar foco**.
+3. Tap the **Pagar la luz** row: the panel has the **Posponer** options (**1 hora**, **3 horas** and **Hasta mañana**, in view), has no **Quitar posponer** and no text "Pospuesta". Choose **1 hora**, without tapping **Guardar**: the panel closes.
+4. The list is **Cambiar foco**, **Pagar la luz**. **Pagar la luz** looks postponed: dimmed, without "Atrasada", bar at 0, checkbox enabled and unchecked, bold title.
+5. Tap the **Pagar la luz** row: the panel says "Pospuesta hasta 11:00", has **Quitar posponer** and does not have the **Posponer** options. Close the panel.
+6. Advance the clock to `2026-07-15T10:30:00`: the bar of **Pagar la luz** is at 50.
+7. Reload: **Pagar la luz** is still postponed, with the bar at 50.
+8. Advance the clock to `2026-07-15T11:00:00`: **Pagar la luz** is overdue (with "Atrasada", without a bar, not dimmed) and the list is **Pagar la luz**, **Cambiar foco**. Tap its row: the panel has the **Posponer** options and does not say "Pospuesta".
 
-## Flujo 2: 3 horas y Hasta mañana, pasando la medianoche
+## Flow 2: 3 horas and Hasta mañana, past midnight
 
-Precondición: lista vacía, reloj en `2026-07-15T22:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T22:00:00` (Wednesday).
 
-1. Crear `Cambiar foco`, `Barrer` y `Regar plantas`, las tres con **No se repite** y sin fecha límite. La lista es **Cambiar foco**, **Barrer**, **Regar plantas**.
-2. A las `2026-07-15T22:30:00`, posponer **Barrer** con la opción **Hasta mañana** y **Cambiar foco** con la opción **3 horas**.
-3. La lista es **Regar plantas**, **Cambiar foco**, **Barrer**: las pospuestas en espera, primero la que vuelve antes.
-4. Tocar la fila **Cambiar foco**: el panel dice "Pospuesta hasta mañana 01:30". Cerrarlo. Tocar la fila **Barrer**: dice "Pospuesta hasta mañana 07:00". Cerrarlo.
-5. Avanzar el reloj a `2026-07-16T00:00:00`: tocar la fila **Cambiar foco**: el panel dice "Pospuesta hasta 01:30" (ya sin "mañana"). Cerrarlo.
-6. Avanzar el reloj a `2026-07-16T01:30:00`: **Cambiar foco** está `pendiente` y la lista es **Cambiar foco**, **Regar plantas**, **Barrer**.
-7. A las `2026-07-16T02:00:00`, posponer **Regar plantas** con la opción **Hasta mañana**. Tocar su fila: el panel dice "Pospuesta hasta mañana 07:00" (el viernes 17, no hoy). Cerrarlo.
-8. Avanzar el reloj a `2026-07-16T07:00:00`: **Barrer** está `pendiente` y **Regar plantas** sigue pospuesta. La lista es **Cambiar foco**, **Barrer**, **Regar plantas**.
+1. Create `Cambiar foco`, `Barrer` and `Regar plantas`, all three with **No se repite** and no due date. The list is **Cambiar foco**, **Barrer**, **Regar plantas**.
+2. At `2026-07-15T22:30:00`, postpone **Barrer** with the option **Hasta mañana** and **Cambiar foco** with the option **3 horas**.
+3. The list is **Regar plantas**, **Cambiar foco**, **Barrer**: the postponed ones waiting, the one that comes back first going first.
+4. Tap the **Cambiar foco** row: the panel says "Pospuesta hasta mañana 01:30". Close it. Tap the **Barrer** row: it says "Pospuesta hasta mañana 07:00". Close it.
+5. Advance the clock to `2026-07-16T00:00:00`: tap the **Cambiar foco** row: the panel says "Pospuesta hasta 01:30" (now without "mañana"). Close it.
+6. Advance the clock to `2026-07-16T01:30:00`: **Cambiar foco** is pending and the list is **Cambiar foco**, **Regar plantas**, **Barrer**.
+7. At `2026-07-16T02:00:00`, postpone **Regar plantas** with the option **Hasta mañana**. Tap its row: the panel says "Pospuesta hasta mañana 07:00" (Friday 17, not today). Close it.
+8. Advance the clock to `2026-07-16T07:00:00`: **Barrer** is pending and **Regar plantas** is still postponed. The list is **Cambiar foco**, **Barrer**, **Regar plantas**.
 
-## Flujo 3: quitar posponer, completar, deshacer y editar
+## Flow 3: remove the postponement, complete, undo and edit
 
-Precondición: lista vacía, reloj en `2026-07-15T10:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T10:00:00` (Wednesday).
 
-1. Crear `Pagar la luz` con **No se repite** y fecha límite `2026-07-14`. Posponerla con la opción **3 horas**: está pospuesta.
-2. Tocar su fila y tocar **Quitar posponer**, sin tocar **Guardar**: el panel se cierra y **Pagar la luz** está `atrasada` en el acto. Tocar su fila: el panel tiene las opciones de **Posponer** y no dice "Pospuesta". Cerrarlo.
-3. A las `2026-07-15T10:05:00`, posponerla con la opción **3 horas**. A las `2026-07-15T10:30:00`, tocar su checkbox (está habilitado): aparece el aviso `Completaste «Pagar la luz»` y la fila desaparece de la lista.
-4. Tocar **Deshacer** en el aviso: **Pagar la luz** vuelve pospuesta (atenuada, sin "Atrasada"), con la barra en 14. Tocar su fila: el panel dice "Pospuesta hasta 13:05".
-5. En el mismo panel, cambiar el título a `Pagar el gas` y tocar **Guardar**. **Pagar el gas** sigue pospuesta; su panel sigue diciendo "Pospuesta hasta 13:05".
-6. Avanzar el reloj a `2026-07-15T13:05:00`: **Pagar el gas** está `atrasada`, con la clave de siempre (vencida desde el 15 a las 00:00).
+1. Create `Pagar la luz` with **No se repite** and due date `2026-07-14`. Postpone it with the option **3 horas**: it is postponed.
+2. Tap its row and tap **Quitar posponer**, without tapping **Guardar**: the panel closes and **Pagar la luz** is overdue right away. Tap its row: the panel has the **Posponer** options and does not say "Pospuesta". Close it.
+3. At `2026-07-15T10:05:00`, postpone it with the option **3 horas**. At `2026-07-15T10:30:00`, tap its checkbox (it is enabled): the notice `Completaste «Pagar la luz»` appears and the row disappears from the list.
+4. Tap **Deshacer** in the notice: **Pagar la luz** is postponed again (dimmed, without "Atrasada"), with the bar at 14. Tap its row: the panel says "Pospuesta hasta 13:05".
+5. In the same panel, change the title to `Pagar el gas` and tap **Guardar**. **Pagar el gas** is still postponed; its panel still says "Pospuesta hasta 13:05".
+6. Advance the clock to `2026-07-15T13:05:00`: **Pagar el gas** is overdue, with its usual key (overdue since the 15th at 00:00).
 
-## Flujo 4: periódicas pospuestas
+## Flow 4: postponed recurring tasks
 
-Precondición: lista vacía, reloj en `2026-07-15T08:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T08:00:00` (Wednesday).
 
-1. Crear `Regar` y `Barrer`, las dos con **Intervalo** cada `4` **horas**, y completar las dos: quedan `en espera`, completadas, y desaparecen de la lista.
-2. Avanzar el reloj a `2026-07-15T12:30:00`: las dos están `pendiente`. Posponer las dos con la opción **3 horas**.
-3. La lista (con **Mostrar completadas** apagado) es **Regar**, **Barrer**: empatan en el fin de la posposición y va primero la creada antes. Las dos se ven pospuestas: no completadas, checkbox sin marcar, barra en 0.
-4. A las `2026-07-15T13:00:00`, tocar el checkbox de **Regar**: aparece el aviso y queda `en espera`, completada (sale de la lista). El Historial tiene dos entradas de **Regar**, `08:00` y `13:00`.
-5. Encender **Mostrar completadas**. Tocar la fila **Regar**: el panel sigue teniendo **Quitar posponer** ("Pospuesta hasta 15:30"). Cerrarlo.
-6. Avanzar el reloj a `2026-07-15T15:30:00`: **Barrer** está `pendiente`. **Regar** sigue `en espera`, completada (vence a las 17:00).
-7. Avanzar el reloj a `2026-07-15T16:00:00`: **Barrer** está `atrasada` (la posposición no movió su vencimiento).
+1. Create `Regar` and `Barrer`, both with **Intervalo** every `4` **horas**, and complete both: they become waiting, completed, and disappear from the list.
+2. Advance the clock to `2026-07-15T12:30:00`: both are pending. Postpone both with the option **3 horas**.
+3. The list (with **Mostrar completadas** off) is **Regar**, **Barrer**: they tie on the end of the postponement and the one created first goes first. Both look postponed: not completed, checkbox unchecked, bar at 0.
+4. At `2026-07-15T13:00:00`, tap the checkbox of **Regar**: the notice appears and it becomes waiting, completed (it leaves the list). The Historial has two entries of **Regar**, `08:00` and `13:00`.
+5. Turn on **Mostrar completadas**. Tap the **Regar** row: the panel still has **Quitar posponer** ("Pospuesta hasta 15:30"). Close it.
+6. Advance the clock to `2026-07-15T15:30:00`: **Barrer** is pending. **Regar** is still waiting, completed (it expires at 17:00).
+7. Advance the clock to `2026-07-15T16:00:00`: **Barrer** is overdue (the postponement did not move its due time).
 
-## Flujo 5: posponer con horario
+## Flow 5: postpone with a schedule
 
-Precondición: lista vacía, reloj en `2026-07-15T07:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T07:00:00` (Wednesday).
 
-1. Crear `Ventilar` con **No se repite**, sin fecha límite y horario `08:00` a `11:00`. Está `en espera` hasta las 08:00. Tocar su fila: el panel no tiene las opciones de **Posponer**. Cerrarlo.
-2. Avanzar el reloj a `2026-07-15T09:00:00`: `pendiente`. Posponerla con la opción **3 horas**.
-3. Avanzar el reloj a `2026-07-15T09:30:00`: está pospuesta, con el checkbox habilitado.
-4. Avanzar el reloj a `2026-07-15T11:30:00`: sigue `en espera`, con el checkbox deshabilitado (fuera de la ventana). Tocarlo: no pasa nada.
-5. Avanzar el reloj a `2026-07-15T12:00:00`: sigue `en espera` por su horario (hasta las 08:00 de mañana); el panel no dice "Pospuesta" ni tiene las opciones de **Posponer**.
+1. Create `Ventilar` with **No se repite**, no due date and schedule `08:00` to `11:00`. It is waiting until 08:00. Tap its row: the panel does not have the **Posponer** options. Close it.
+2. Advance the clock to `2026-07-15T09:00:00`: pending. Postpone it with the option **3 horas**.
+3. Advance the clock to `2026-07-15T09:30:00`: it is postponed, with the checkbox enabled.
+4. Advance the clock to `2026-07-15T11:30:00`: it is still waiting, with the checkbox disabled (outside the window). Tap it: nothing happens.
+5. Advance the clock to `2026-07-15T12:00:00`: it is still waiting because of its schedule (until 08:00 tomorrow); the panel does not say "Pospuesta" and does not have the **Posponer** options.
 
-## Flujo 6: pausar y posponer
+## Flow 6: pause and postpone
 
-Precondición: lista vacía, reloj en `2026-07-15T10:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T10:00:00` (Wednesday).
 
-1. Crear `Regar` con **Intervalo** cada `2` **días** (`pendiente`). Tocar su fila: el panel tiene las opciones de **Posponer** y **Pausar**. Tocar **Pausar**.
-2. Encender **Mostrar pausadas**. Tocar la fila **Regar**: el panel dice "Pausada", tiene **Reanudar** y no tiene las opciones de **Posponer**. Tocar **Reanudar**: `pendiente`.
-3. Posponer **Regar** con la opción **3 horas**. Tocar su fila: el panel tiene **Quitar posponer** y **Pausar**. Tocar **Pausar**: **Regar** se ve pausada ("Pausada", sin barra).
-4. A las `2026-07-15T11:30:00`, reanudarla: queda pospuesta, con la barra en 50.
+1. Create `Regar` with **Intervalo** every `2` **días** (pending). Tap its row: the panel has the **Posponer** options and **Pausar**. Tap **Pausar**.
+2. Turn on **Mostrar pausadas**. Tap the **Regar** row: the panel says "Pausada", has **Reanudar** and does not have the **Posponer** options. Tap **Reanudar**: pending.
+3. Postpone **Regar** with the option **3 horas**. Tap its row: the panel has **Quitar posponer** and **Pausar**. Tap **Pausar**: **Regar** looks paused ("Pausada", without a bar).
+4. At `2026-07-15T11:30:00`, resume it: it becomes postponed, with the bar at 50.
 
-## Flujo 7: dos dispositivos
+## Flow 7: two devices
 
-Precondición: lista vacía, reloj en `2026-07-15T10:00:00` (miércoles) en A y en B.
+Precondition: empty list, clock at `2026-07-15T10:00:00` (Wednesday) on A and on B.
 
-1. En A, crear `Pagar la luz` con **No se repite** y sin fecha límite. B la ve.
-2. B sin conexión. En A, posponer **Pagar la luz** con la opción **3 horas**. En B (que no vio la posposición), cambiar el título a `Pagar el gas` y guardar.
-3. B vuelve a tener conexión. En A y en B, **Pagar el gas** está pospuesta y su panel dice "Pospuesta hasta 13:00".
-4. En A, tocar **Quitar posponer**. B la ve `pendiente`. B sin conexión. En A, a las `2026-07-15T10:10:00`, posponerla con la opción **3 horas**. En B, que no vio la posposición, a las `2026-07-15T10:15:00`, posponerla con la opción **1 hora**.
-5. B vuelve a tener conexión. En A y en B, el panel de **Pagar el gas** dice "Pospuesta hasta 11:15" (gana la última posposición entera).
+1. On A, create `Pagar la luz` with **No se repite** and no due date. B sees it.
+2. B offline. On A, postpone **Pagar la luz** with the option **3 horas**. On B (which did not see the postponement), change the title to `Pagar el gas` and save.
+3. B comes back online. On A and on B, **Pagar el gas** is postponed and its panel says "Pospuesta hasta 13:00".
+4. On A, tap **Quitar posponer**. B sees it pending. B offline. On A, at `2026-07-15T10:10:00`, postpone it with the option **3 horas**. On B, which did not see the postponement, at `2026-07-15T10:15:00`, postpone it with the option **1 hora**.
+5. B comes back online. On A and on B, the panel of **Pagar el gas** says "Pospuesta hasta 11:15" (the last whole postponement wins).
 
-## Flujo 8: dos dispositivos con relojes desfasados
+## Flow 8: two devices with clocks out of sync
 
-Precondición: lista vacía, reloj en `2026-07-15T08:05:00` (miércoles) en A y en `2026-07-15T08:00:00` en B (B va cinco minutos atrasado); ambos avanzan a la par.
+Precondition: empty list, clock at `2026-07-15T08:05:00` (Wednesday) on A and at `2026-07-15T08:00:00` on B (B is five minutes behind); both advance in step.
 
-1. En A, crear `Pagar la luz` con **No se repite** y sin fecha límite. B la ve `pendiente`.
-2. En A, posponer **Pagar la luz** con la opción **1 hora**. En A, su panel dice "Pospuesta hasta 09:05" y la barra está en 0.
-3. En B (cuyo reloj marca `08:00:00`, antes del inicio de la posposición), **Pagar la luz** está pospuesta: atenuada, sin "Atrasada", con la barra en 0 (vacía, no negativa), y su panel dice "Pospuesta hasta 09:05".
-4. Avanzar los dos relojes 30 minutos: en A la barra está en 50; en B (`08:30:00`) la barra está en 42 (la posposición empezó a las 08:05 en A).
+1. On A, create `Pagar la luz` with **No se repite** and no due date. B sees it pending.
+2. On A, postpone **Pagar la luz** with the option **1 hora**. On A, its panel says "Pospuesta hasta 09:05" and the bar is at 0.
+3. On B (whose clock reads `08:00:00`, before the start of the postponement), **Pagar la luz** is postponed: dimmed, without "Atrasada", with the bar at 0 (empty, not negative), and its panel says "Pospuesta hasta 09:05".
+4. Advance both clocks 30 minutes: on A the bar is at 50; on B (`08:30:00`) the bar is at 42 (the postponement started at 08:05 on A).

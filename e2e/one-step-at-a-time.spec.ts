@@ -189,7 +189,7 @@ async function historyDelete(page: Page, t: string) {
 	await expect(dialog).toHaveCount(0);
 }
 
-test('Flujo 1: los campos de pasos en el panel y crear', async ({ page }) => {
+test('Flow 1: los campos de pasos en el panel y crear', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	const y = async (l: Locator) => (await l.boundingBox())!.y;
 	const ascending = (ys: number[]) => {
@@ -289,7 +289,7 @@ test('Flujo 1: los campos de pasos en el panel y crear', async ({ page }) => {
 	await withoutLine(page, 'Planchar');
 });
 
-test('Flujo 2: editar, recortar, descartar, quitar y sin máximos', async ({ page }) => {
+test('Flow 2: editar, recortar, descartar, quitar y sin máximos', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '', firstStep: P1, steps: [P2, P3] });
 
@@ -395,7 +395,7 @@ test('Flujo 2: editar, recortar, descartar, quitar y sin máximos', async ({ pag
 	expect(await l.innerText()).not.toContain('…');
 });
 
-test('Flujo 3: avanzar y retroceder desde la fila', async ({ page }) => {
+test('Flow 3: avanzar y retroceder desde la fila', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	await create(page, { title: 'Barrer', kind: DOES_NOT_REPEAT, date: '', schedule: { from: '08:00', to: '12:00' } });
 	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '', firstStep: P1, steps: [P2, P3] });
@@ -462,7 +462,7 @@ test('Flujo 3: avanzar y retroceder desde la fila', async ({ page }) => {
 	expect((await style(f(page, 'Barrer'))).background).toBe(background);
 });
 
-test('Flujo 4: «Hecho» en el último paso completa la tarea', async ({ page }) => {
+test('Flow 4: «Hecho» en el último paso completa la tarea', async ({ page }) => {
 	await session(page, FRIDAY, true);
 	await withClock(page, async () => {
 		await createAndView(page, {
@@ -580,7 +580,7 @@ test('Flujo 4: «Hecho» en el último paso completa la tarea', async ({ page })
 	});
 });
 
-test('Flujo 5: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => {
+test('Flow 5: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => {
 	await session(page, FRIDAY, true);
 
 	// 1
@@ -774,7 +774,7 @@ test('Flujo 5: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => 
 	});
 });
 
-test('Flujo 6: editar los pasos y el avance', async ({ page }) => {
+test('Flow 6: editar los pasos y el avance', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	await showPaused(page).click();
 	await expect(showPaused(page)).toBeChecked();
@@ -862,7 +862,7 @@ test('Flujo 6: editar los pasos y el avance', async ({ page }) => {
 	await expect(page.getByRole('progressbar')).toHaveCount(0);
 });
 
-test('Flujo 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', async ({ page }) => {
+test('Flow 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	const texts = async (t: string[]) => Promise.all(t.map((x) => f(page, x).innerText()));
 
@@ -1041,7 +1041,7 @@ async function devices(browser: Browser) {
 	return d;
 }
 
-test('Flujo 8: dos dispositivos', async ({ browser }) => {
+test('Flow 8: dos dispositivos', async ({ browser }) => {
 	test.setTimeout(300_000);
 	const { a, b, ctxB, close: end } = await devices(browser);
 	const both = [a, b];

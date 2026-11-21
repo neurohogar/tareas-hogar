@@ -95,7 +95,7 @@ const links = async (page: Page, current: 'Pendientes' | 'Historial') => {
 	}
 };
 
-test('Flujo 1: navegación e historial vacío', async ({ page }) => {
+test('Flow 1: navegación e historial vacío', async ({ page }) => {
 	await session(page, TODAY);
 	await links(page, 'Pendientes');
 	await page.getByRole('navigation').getByRole('link', { name: 'Historial' }).click();
@@ -112,7 +112,7 @@ test('Flujo 1: navegación e historial vacío', async ({ page }) => {
 	await viewHistory(page, []);
 });
 
-test('Flujo 2: el aviso dura 5 segundos y Deshacer devuelve la tarea', async ({ page }) => {
+test('Flow 2: el aviso dura 5 segundos y Deshacer devuelve la tarea', async ({ page }) => {
 	await sessionStopped(page, TODAY);
 	await createAndView(page, { title: 'Regar', kind: 'Intervalo', every: '4', unit: 'horas' });
 	await createAndView(page, { title: 'Pagar la luz', kind: 'No se repite' });
@@ -162,7 +162,7 @@ test('Flujo 2: el aviso dura 5 segundos y Deshacer devuelve la tarea', async ({ 
 	});
 });
 
-test('Flujo 3: un aviso nuevo reemplaza al anterior', async ({ page }) => {
+test('Flow 3: un aviso nuevo reemplaza al anterior', async ({ page }) => {
 	await sessionStopped(page, TODAY);
 	await createAndView(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await createAndView(page, { title: 'Barrer', kind: 'Intervalo', every: '2', unit: 'días' });
@@ -197,7 +197,7 @@ test('Flujo 3: un aviso nuevo reemplaza al anterior', async ({ page }) => {
 	]);
 });
 
-test('Flujo 4: el aviso sigue visible al cambiar de pantalla', async ({ page }) => {
+test('Flow 4: el aviso sigue visible al cambiar de pantalla', async ({ page }) => {
 	await sessionStopped(page, TODAY);
 	await createAndView(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await stop(page, '2026-07-15T08:00:00');
@@ -216,7 +216,7 @@ test('Flujo 4: el aviso sigue visible al cambiar de pantalla', async ({ page }) 
 	await withClock(page, () => waitStatus(page, 'Regar', 'pendiente'));
 });
 
-test('Flujo 5: orden, grupos por día y hora', async ({ page }) => {
+test('Flow 5: orden, grupos por día y hora', async ({ page }) => {
 	await session(page, '2026-07-13T08:00:00');
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '1', unit: 'días' });
 	await create(page, { title: 'Sacar la basura', kind: 'Días de la semana', days: ['martes', 'jueves'] });
@@ -259,7 +259,7 @@ test('Flujo 5: orden, grupos por día y hora', async ({ page }) => {
 	await withClock(page, () => viewHistory(page, final));
 });
 
-test('Flujo 6: el año se muestra solo si no es el actual', async ({ page }) => {
+test('Flow 6: el año se muestra solo si no es el actual', async ({ page }) => {
 	await session(page, '2025-12-31T21:00:00');
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '1', unit: 'días' });
 	await advance(page, '2025-12-31T22:00:00');
@@ -272,7 +272,7 @@ test('Flujo 6: el año se muestra solo si no es el actual', async ({ page }) => 
 	await viewHistory(page, [['miércoles 31 de diciembre de 2025', [['Regar', '22:00']]]]);
 });
 
-test('Flujo 7: borrar desde el Historial recalcula el estado', async ({ page }) => {
+test('Flow 7: borrar desde el Historial recalcula el estado', async ({ page }) => {
 	await session(page, '2026-07-13T08:00:00');
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '4', unit: 'horas' });
 	await create(page, { title: 'Sacar la basura', kind: 'Días de la semana', days: ['martes', 'jueves'] });
@@ -338,7 +338,7 @@ test('Flujo 7: borrar desde el Historial recalcula el estado', async ({ page }) 
 	await waitStatus(page, 'Regar', 'pendiente');
 });
 
-test('Flujo 8: borrar un completado que no es el más reciente', async ({ page }) => {
+test('Flow 8: borrar un completado que no es el más reciente', async ({ page }) => {
 	await session(page, '2026-07-15T06:00:00');
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '4', unit: 'horas' });
 	await complete(page, 'Regar');
@@ -354,7 +354,7 @@ test('Flujo 8: borrar un completado que no es el más reciente', async ({ page }
 	await waitStatus(page, 'Regar', 'en espera', 50);
 });
 
-test('Flujo 9: el título que se ve es el actual', async ({ page }) => {
+test('Flow 9: el título que se ve es el actual', async ({ page }) => {
 	await session(page, '2026-07-14T09:00:00');
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '1', unit: 'días' });
 	await complete(page, 'Regar');
@@ -369,7 +369,7 @@ test('Flujo 9: el título que se ve es el actual', async ({ page }) => {
 	]);
 });
 
-test('Flujo 10: editar y borrar la tarea desde el Historial', async ({ page }) => {
+test('Flow 10: editar y borrar la tarea desde el Historial', async ({ page }) => {
 	await session(page, TODAY);
 	await create(page, { title: 'Pagar la luz', kind: 'No se repite' });
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
@@ -413,7 +413,7 @@ test('Flujo 10: editar y borrar la tarea desde el Historial', async ({ page }) =
 	await viewHistory(page, []);
 });
 
-test('Flujo 11: dos dispositivos completan sin conexión', async ({ browser }) => {
+test('Flow 11: dos dispositivos completan sin conexión', async ({ browser }) => {
 	const { a: A, b: B, ctxB, close: end } = await twoWithCompleted(browser, TODAY);
 	await create(A, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await waitStatus(B, 'Regar', 'pendiente');
@@ -438,7 +438,7 @@ test('Flujo 11: dos dispositivos completan sin conexión', async ({ browser }) =
 	await end();
 });
 
-test('Flujo 12: Deshacer cuando otro dispositivo ya borró la tarea', async ({ browser }) => {
+test('Flow 12: Deshacer cuando otro dispositivo ya borró la tarea', async ({ browser }) => {
 	const { a: A, b: B, close: end } = await twoWithCompleted(browser, '2026-07-15T09:50:00');
 	await create(A, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await waitStatus(B, 'Regar', 'pendiente');
@@ -463,7 +463,7 @@ test('Flujo 12: Deshacer cuando otro dispositivo ya borró la tarea', async ({ b
 	await end();
 });
 
-test('Flujo 13: completado huérfano', async ({ browser }) => {
+test('Flow 13: completado huérfano', async ({ browser }) => {
 	const { a: A, b: B, ctxB, close: end } = await twoWithCompleted(browser, TODAY);
 	await create(A, { title: 'Barrer', kind: 'Intervalo', every: '2', unit: 'días' });
 	await create(A, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
@@ -487,7 +487,7 @@ test('Flujo 13: completado huérfano', async ({ browser }) => {
 	await end();
 });
 
-test('Flujo 14: completado "del futuro"', async ({ browser }) => {
+test('Flow 14: completado "del futuro"', async ({ browser }) => {
 	const deviceA = await device(browser, '2026-07-15T12:00:00', true);
 	const deviceB = await device(browser, '2026-07-16T09:00:00', false);
 	const [A, B] = [deviceA.page, deviceB.page];

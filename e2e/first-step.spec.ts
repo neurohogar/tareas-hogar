@@ -133,7 +133,7 @@ async function go(page: Page, hour: string) {
 type New = Definition & { title: string };
 const DOES_NOT_REPEAT = 'No se repite' as const;
 
-test('Flujo 1: el campo en el panel y crear con primer paso', async ({ page }) => {
+test('Flow 1: el campo en el panel y crear con primer paso', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 
 	// 1
@@ -194,7 +194,7 @@ test('Flujo 1: el campo en el panel y crear con primer paso', async ({ page }) =
 	await says(page, 'Regar', 'Llenar la regadera');
 });
 
-test('Flujo 2: editar, recortar, vaciar y texto largo', async ({ page }) => {
+test('Flow 2: editar, recortar, vaciar y texto largo', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, firstStep: WASH });
 
@@ -261,7 +261,7 @@ test('Flujo 2: editar, recortar, vaciar y texto largo', async ({ page }) => {
 	expect(await l.innerText()).not.toContain('…');
 });
 
-test('Flujo 3: la línea en la fila (posición, estilo, toque)', async ({ page }) => {
+test('Flow 3: la línea en la fila (posición, estilo, toque)', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	await create(page, {
 		title: 'Pagar la luz',
@@ -321,7 +321,7 @@ test('Flujo 3: la línea en la fila (posición, estilo, toque)', async ({ page }
 	await expect(notice(page)).toContainText('Completaste «Cambiar foco»');
 });
 
-test('Flujo 4: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => {
+test('Flow 4: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => {
 	await session(page, FRIDAY, true);
 
 	// 1
@@ -444,7 +444,7 @@ test('Flujo 4: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => 
 	});
 });
 
-test('Flujo 5: atrasada con el checkbox deshabilitado', async ({ page }) => {
+test('Flow 5: atrasada con el checkbox deshabilitado', async ({ page }) => {
 	await session(page, '2026-11-09T09:00:00');
 
 	// 1
@@ -474,7 +474,7 @@ test('Flujo 5: atrasada con el checkbox deshabilitado', async ({ page }) => {
 	});
 });
 
-test('Flujo 6: el primer paso no cambia con las acciones de la tarea', async ({ page }) => {
+test('Flow 6: el primer paso no cambia con las acciones de la tarea', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	await turnOnCompleted(page);
 	await showPaused(page).click();
@@ -538,7 +538,7 @@ test('Flujo 6: el primer paso no cambia con las acciones de la tarea', async ({ 
 	await withoutLine(page, 'Barrer');
 });
 
-test('Flujo 7: lo que no cambia y lo que no lo muestra', async ({ page }) => {
+test('Flow 7: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	const titles = () =>
 		page
@@ -588,7 +588,7 @@ test('Flujo 7: lo que no cambia y lo que no lo muestra', async ({ page }) => {
 	await goA(page, 'Pendientes');
 });
 
-test('Flujo 8: cambios sin guardar con el campo', async ({ page }) => {
+test('Flow 8: cambios sin guardar con el campo', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, firstStep: WASH });
 	await create(page, { title: 'Barrer', kind: DOES_NOT_REPEAT });
@@ -662,7 +662,7 @@ async function devices(browser: Browser) {
 	return d;
 }
 
-test('Flujo 9: dos dispositivos', async ({ browser }) => {
+test('Flow 9: dos dispositivos', async ({ browser }) => {
 	const { a, b, ctxB, close: end } = await devices(browser);
 	const note = (p: Page) => p.getByLabel('Nota');
 

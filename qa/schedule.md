@@ -1,224 +1,224 @@
-# QA: horario (ventanas diarias para completar)
+# QA: schedule (daily windows for completing)
 
-Verifica, solo por la interfaz:
+Verifies, through the interface only:
 
-- el campo **Horario** del panel ("Solo en un horario", **Desde**, **Hasta**): crear, cambiar y quitar un horario en cualquier tipo de tarea, y sus dos errores;
-- el horario en la fila ("08:00–11:00");
-- los estados con horario: `en espera` hasta que abre la ventana, `pendiente` dentro de ella y `atrasada` cuando la ventana pasa sin completarse (o antes, si llega primero el atraso sin horario), también fuera de las ventanas;
-- el checkbox de la fila: deshabilitado fuera de la ventana cuando completaría, siempre habilitado cuando borraría; Deshacer en el aviso a cualquier hora;
-- Mostrar completadas: una periódica completada en espera por horario no se ve hasta que abre la ventana;
-- el orden por urgencia con horario;
-- la sincronización del horario como un solo campo;
-- que una tarea sin horario se comporta como siempre;
-- **varios horarios** (Flujos 11 a 15): **Agregar horario** y **Quitar** en el panel, sus dos errores, el texto "07:00–10:00 · 18:00–21:00" en la fila, y los estados y el checkbox con dos ventanas por día en calendario, puntual y relativa en días.
+- the **Horario** field of the panel ("Solo en un horario", **Desde**, **Hasta**): create, change and remove a schedule on any kind of task, and its two errors;
+- the schedule on the row ("08:00–11:00");
+- the statuses with a schedule: `waiting` until the window opens, `pending` inside it and `overdue` when the window passes without completing (or earlier, if the overdue point without a schedule comes first), also outside the windows;
+- the row checkbox: disabled outside the window when it would complete, always enabled when it would delete; «Deshacer» in the notice at any time;
+- «Mostrar completadas»: a recurring task completed and waiting because of its schedule is not shown until the window opens;
+- the order by urgency with a schedule;
+- the sync of the schedule as a single field;
+- that a task without a schedule behaves as always;
+- **several schedules** (Flows 11 to 15): **Agregar horario** and **Quitar** in the panel, its two errors, the text "07:00–10:00 · 18:00–21:00" on the row, and the statuses and the checkbox with two windows per day on calendar, one-off and relative-in-days recurrence.
 
-Cubre spec §4.1 (horario y varios horarios), §5.5, §5.6, §5.7, §6.1 (horario en la fila, checkbox fuera de la ventana, orden), §6.2 (campo Horario) y §7 (conflictos por campo).
+Covers spec §4.1 (schedule and several schedules), §5.5, §5.6, §5.7, §6.1 (schedule on the row, checkbox outside the window, order), §6.2 (Horario field) and §7 (conflicts by field).
 
-Fuera de alcance: los estados sin horario (`qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`), el Historial más allá de borrar un completado (`qa/history-undo.md`).
+Out of scope: the statuses without a schedule (`qa/one-off.md`, `qa/recurring-relative.md`, `qa/recurring-calendar.md`), the «Historial» beyond deleting a completion (`qa/history-undo.md`).
 
-## Entorno
+## Environment
 
-- Firebase Emulator Suite (Auth + Firestore) con datos limpios al inicio de cada flujo.
-- Cada flujo parte de un contexto de navegador nuevo (sin datos guardados en el dispositivo), con sesión iniciada con la cuenta `qa@example.com` del Auth Emulator (Flujo 1 de `qa/recurring-relative.md`).
-- Reloj simulado del navegador (`page.clock`) instalado **antes** de abrir la app, en la hora local que indica cada flujo (zona `America/Argentina/Buenos_Aires`).
-  - "A las X" significa adelantar el reloj simulado hasta X antes del paso.
-  - "Avanzar el reloj a X" significa adelantarlo hasta X y esperar a que la pantalla se actualice sola (sin recargar).
-  - Con "reloj detenido" (`page.clock.pauseAt`), el reloj se adelanta con `page.clock.runFor` o `fastForward` hasta la hora exacta, para que el tiempo no corra mientras QA actúa.
-- Crear una tarea: tocar **+**, escribir el título, elegir la opción de **Se repite** que indica el paso, con los controles de `qa/one-off.md`, `qa/recurring-relative.md` y `qa/recurring-calendar.md`; si el paso da un horario, encender **Solo en un horario** y escribir **Desde** y **Hasta**; guardar.
-- **Mostrar completadas** queda apagado salvo que el flujo diga encenderlo (`qa/show-completed.md`).
-- **Dos dispositivos** (Flujo 9): dos contextos de navegador independientes, A y B, con la misma cuenta y el mismo reloj simulado. "B sin conexión" significa `browserContext.setOffline(true)` en B; "B vuelve a tener conexión", volverlo online y esperar a que las dos pantallas se actualicen solas.
+- Firebase Emulator Suite (Auth + Firestore) with clean data at the start of each flow.
+- Each flow starts from a new browser context (no data saved on the device), signed in with the `qa@example.com` account of the Auth Emulator (Flow 1 of `qa/recurring-relative.md`).
+- Simulated browser clock (`page.clock`) installed **before** opening the app, at the local time that each flow indicates (zone `America/Argentina/Buenos_Aires`).
+  - "At X" means advancing the simulated clock to X before the step.
+  - "Advance the clock to X" means advancing it to X and waiting for the screen to update by itself (without reloading).
+  - With a "stopped clock" (`page.clock.pauseAt`), the clock is advanced with `page.clock.runFor` or `fastForward` to the exact time, so that time does not run while QA acts.
+- Creating a task: tap **+**, type the title, choose the **Se repite** option that the step indicates, with the controls of `qa/one-off.md`, `qa/recurring-relative.md` and `qa/recurring-calendar.md`; if the step gives a schedule, turn on **Solo en un horario** and type **Desde** and **Hasta**; save.
+- **Mostrar completadas** stays off unless the flow says to turn it on (`qa/show-completed.md`).
+- **Two devices** (Flow 9): two independent browser contexts, A and B, with the same account and the same simulated clock. "B offline" means `browserContext.setOffline(true)` on B; "B is back online" means setting it online again and waiting for both screens to update by themselves.
 
-Semana de referencia: lunes 2026-07-13, martes 14, miércoles 15, jueves 16, viernes 17, sábado 18.
+Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17, Saturday 18.
 
-## Contrato observable
+## Observable contract
 
-- **Campo Horario del panel**: un control con rol `checkbox` y nombre accesible "Solo en un horario". Encendido, muestra dos campos de hora (`input type="time"` o equivalente con rol accesible) con etiquetas **Desde** y **Hasta**; apagado, no se ven.
-  - Debajo de las filas Desde/Hasta, un botón con nombre accesible **Agregar horario** que agrega otra fila Desde/Hasta vacía. Con más de una fila, cada fila tiene un botón **Quitar** que la elimina; con una sola, no hay **Quitar**.
-  - Errores: el texto "La hora de fin tiene que ser posterior a la de inicio", "Completá las dos horas", "Los horarios no se pueden superponer" o "Con varios horarios, el intervalo tiene que ser en días", visible en el panel. Con un error, **Guardar** no cierra el panel ni guarda nada: al cerrar el panel sin guardar (con **Descartar** en el aviso), la lista y la fila no cambiaron.
-- **Horario en la fila**: el texto `HH:MM–HH:MM` (con guion `–`, U+2013) dentro de la fila de la tarea, en letra más chica que el título (`font-size` computado menor). Con varias ventanas, en orden por desde y separadas por ` · ` (espacio, punto medio U+00B7, espacio): `07:00–10:00 · 18:00–21:00`. Una tarea sin horario no tiene ese texto.
-- **Fila**: el contrato de `qa/recurring-relative.md` (checkbox, título, estilo atenuado, barra de progreso con `aria-valuenow`, indicador "Atrasada") y el de `qa/show-completed.md` (completada / no completada). Con horario, una puntual también puede estar `en espera` (atenuada, con barra, sin completados).
-- **Checkbox deshabilitado**: el checkbox de la fila tiene `disabled` o `aria-disabled="true"`; tocarlo no cambia nada (no hay aviso, la fila no cambia, el Historial no suma entradas). **Habilitado**: sin esos atributos.
-- **Aviso**: el de `qa/history-undo.md` (rol `status`, `Completaste «…»`, **Deshacer**, 5 segundos).
-- **Lista**: "La lista es A, B, C" significa exactamente esas filas, de arriba hacia abajo.
+- **Horario field of the panel**: a control with role `checkbox` and accessible name "Solo en un horario". When on, it shows two time fields (`input type="time"` or equivalent with an accessible role) with labels **Desde** and **Hasta**; when off, they are not shown.
+  - Below the Desde/Hasta rows, a button with accessible name **Agregar horario** that adds another empty Desde/Hasta row. With more than one row, each row has a **Quitar** button that removes it; with a single row, there is no **Quitar**.
+  - Errors: the text "La hora de fin tiene que ser posterior a la de inicio", "Completá las dos horas", "Los horarios no se pueden superponer" or "Con varios horarios, el intervalo tiene que ser en días", visible in the panel. With an error, **Guardar** does not close the panel and saves nothing: when closing the panel without saving (with **Descartar** in the notice), the list and the row did not change.
+- **Schedule on the row**: the text `HH:MM–HH:MM` (with en dash `–`, U+2013) inside the task row, in smaller type than the title (computed `font-size` smaller). With several windows, ordered by start and separated by ` · ` (space, middle dot U+00B7, space): `07:00–10:00 · 18:00–21:00`. A task without a schedule does not have that text.
+- **Row**: the contract of `qa/recurring-relative.md` (checkbox, title, dimmed style, progress bar with `aria-valuenow`, "Atrasada" indicator) and that of `qa/show-completed.md` (completed / not completed). With a schedule, a one-off task can also be `waiting` (dimmed, with a bar, without completions).
+- **Disabled checkbox**: the row checkbox has `disabled` or `aria-disabled="true"`; tapping it changes nothing (no notice, the row does not change, the «Historial» gets no entries). **Enabled**: without those attributes.
+- **Notice**: the one of `qa/history-undo.md` (role `status`, `Completaste «…»`, **Deshacer**, 5 seconds).
+- **List**: "The list is A, B, C" means exactly those rows, from top to bottom.
 
-## Flujo 1: crear, cambiar y quitar el horario
+## Flow 1: create, change and remove the schedule
 
-Precondición: lista vacía, reloj en `2026-07-15T06:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T06:00:00` (Wednesday).
 
-1. Tocar **+**. El check **Solo en un horario** se ve apagado y no hay campos **Desde** ni **Hasta**.
-2. Escribir el título `Regar`, elegir **No se repite**, encender **Solo en un horario**: aparecen **Desde** y **Hasta**. Escribir **Desde** `08:00` y **Hasta** `11:00`. Guardar.
-   - La fila **Regar** muestra `08:00–11:00`.
-3. Crear `Ventilar` con **Intervalo** cada `1` **días** y horario `20:00` a `22:30`: su fila muestra `20:00–22:30`.
-4. Crear `Sacar la basura` con **Días de la semana** `jueves` y horario `09:00` a `10:00`: su fila muestra `09:00–10:00`.
-5. Crear `Barrer` con **No se repite** y sin horario: su fila no muestra ningún horario.
-6. Tocar la fila **Regar**: el panel muestra **Solo en un horario** encendido, **Desde** `08:00` y **Hasta** `11:00`. Cambiar **Desde** a `07:30` y guardar: la fila muestra `07:30–11:00`.
-7. Tocar la fila **Regar**, cambiar **Se repite** a **Intervalo** cada `2` **días** y guardar: la fila sigue mostrando `07:30–11:00`.
-8. Tocar la fila **Regar**, apagar **Solo en un horario** y guardar: la fila no muestra ningún horario.
-9. Recargar: **Regar** sin horario, **Ventilar** `20:00–22:30`, **Sacar la basura** `09:00–10:00`, **Barrer** sin horario.
+1. Tap **+**. The **Solo en un horario** check is shown off and there are no **Desde** or **Hasta** fields.
+2. Type the title `Regar`, choose **No se repite**, turn on **Solo en un horario**: **Desde** and **Hasta** appear. Type **Desde** `08:00` and **Hasta** `11:00`. Save.
+   - The **Regar** row shows `08:00–11:00`.
+3. Create `Ventilar` with **Intervalo** every `1` **días** and schedule `20:00` to `22:30`: its row shows `20:00–22:30`.
+4. Create `Sacar la basura` with **Días de la semana** `jueves` and schedule `09:00` to `10:00`: its row shows `09:00–10:00`.
+5. Create `Barrer` with **No se repite** and without a schedule: its row shows no schedule.
+6. Tap the **Regar** row: the panel shows **Solo en un horario** on, **Desde** `08:00` and **Hasta** `11:00`. Change **Desde** to `07:30` and save: the row shows `07:30–11:00`.
+7. Tap the **Regar** row, change **Se repite** to **Intervalo** every `2` **días** and save: the row still shows `07:30–11:00`.
+8. Tap the **Regar** row, turn off **Solo en un horario** and save: the row shows no schedule.
+9. Reload: **Regar** without a schedule, **Ventilar** `20:00–22:30`, **Sacar la basura** `09:00–10:00`, **Barrer** without a schedule.
 
-## Flujo 2: errores del campo Horario
+## Flow 2: errors of the Horario field
 
-Precondición: lista vacía, reloj en `2026-07-15T06:00:00`. Crear `Regar` con **No se repite** y horario `08:00` a `11:00`.
+Precondition: empty list, clock at `2026-07-15T06:00:00`. Create `Regar` with **No se repite** and schedule `08:00` to `11:00`.
 
-1. Tocar **+**, escribir `Pagar la luz`, elegir **No se repite**, encender **Solo en un horario**, escribir **Desde** `11:00` y **Hasta** `08:00` y tocar **Guardar**.
-   - Se ve "La hora de fin tiene que ser posterior a la de inicio" y el panel sigue abierto.
-2. Cambiar **Hasta** a `11:00` (igual a **Desde**) y tocar **Guardar**: se ve el mismo error.
-3. Borrar **Hasta** (vacío) y tocar **Guardar**: se ve "Completá las dos horas".
-4. Escribir **Hasta** `12:00` y tocar **Guardar**: el panel se cierra y **Pagar la luz** muestra `11:00–12:00` (el error se muestra hasta el siguiente intento de guardar, como el de los demás campos del panel).
-5. Tocar la fila **Regar**, cambiar el título a `Regar plantas` y **Desde** a `11:30`, y tocar **Guardar**: se ve "La hora de fin tiene que ser posterior a la de inicio". Cerrar el panel sin guardar (y **Descartar** en el aviso "Tenés cambios sin guardar"): la fila sigue siendo **Regar** con `08:00–11:00` (la edición se rechaza entera).
-6. Tocar la fila **Regar**, vaciar **Desde** y tocar **Guardar**: se ve "Completá las dos horas". Cerrar sin guardar (y **Descartar** en el aviso "Tenés cambios sin guardar"): la fila sigue con `08:00–11:00`.
+1. Tap **+**, type `Pagar la luz`, choose **No se repite**, turn on **Solo en un horario**, type **Desde** `11:00` and **Hasta** `08:00` and tap **Guardar**.
+   - "La hora de fin tiene que ser posterior a la de inicio" is shown and the panel stays open.
+2. Change **Hasta** to `11:00` (equal to **Desde**) and tap **Guardar**: the same error is shown.
+3. Clear **Hasta** (empty) and tap **Guardar**: "Completá las dos horas" is shown.
+4. Type **Hasta** `12:00` and tap **Guardar**: the panel closes and **Pagar la luz** shows `11:00–12:00` (the error is shown until the next attempt to save, like that of the other fields of the panel).
+5. Tap the **Regar** row, change the title to `Regar plantas` and **Desde** to `11:30`, and tap **Guardar**: "La hora de fin tiene que ser posterior a la de inicio" is shown. Close the panel without saving (and **Descartar** in the "Tenés cambios sin guardar" notice): the row is still **Regar** with `08:00–11:00` (the edit is rejected as a whole).
+6. Tap the **Regar** row, empty **Desde** and tap **Guardar**: "Completá las dos horas" is shown. Close without saving (and **Descartar** in the "Tenés cambios sin guardar" notice): the row still shows `08:00–11:00`.
 
-## Flujo 3: puntual con horario, checkbox y Deshacer
+## Flow 3: one-off with a schedule, checkbox and «Deshacer»
 
-Precondición: lista vacía, reloj detenido en `2026-07-15T06:00:00` (miércoles).
+Precondition: empty list, clock stopped at `2026-07-15T06:00:00` (Wednesday).
 
-1. Crear `Regar` con **No se repite**, sin fecha límite, horario `08:00` a `11:00`.
-   - La fila está `en espera`: atenuada, con barra; el título en negrita y el checkbox sin marcar (no está completada); sin indicador de atraso.
-   - El checkbox está **deshabilitado**. Tocarlo: no aparece aviso y la fila no cambia.
-2. A las `07:00`: la barra marca `50` (1 h de las 2 h hasta las 08:00).
-3. A las `08:00:00`: la fila pasa a `pendiente` (sin atenuar, sin barra) y el checkbox está **habilitado**.
-4. A las `10:59:58`, tocar el checkbox: aparece `Completaste «Regar»` y la fila desaparece de la lista.
-5. A las `11:00:02` (la ventana ya cerró, el aviso sigue visible), tocar **Deshacer**: el aviso se cierra y **Regar** vuelve a la lista `en espera`, con la barra en `0` y el checkbox **deshabilitado** (hasta las 08:00 del jueves).
-6. A las `2026-07-15T21:30:00`: la barra marca `50`. Sigue sin indicador de atraso (una puntual sin fecha límite nunca se atrasa).
-7. A las `2026-07-16T08:00:00`: `pendiente` y checkbox habilitado.
+1. Create `Regar` with **No se repite**, without a due date, schedule `08:00` to `11:00`.
+   - The row is `waiting`: dimmed, with a bar; the title in bold and the checkbox unchecked (it is not completed); without an overdue indicator.
+   - The checkbox is **disabled**. Tap it: no notice appears and the row does not change.
+2. At `07:00`: the bar shows `50` (1 h of the 2 h until 08:00).
+3. At `08:00:00`: the row becomes `pending` (not dimmed, without a bar) and the checkbox is **enabled**.
+4. At `10:59:58`, tap the checkbox: `Completaste «Regar»` appears and the row disappears from the list.
+5. At `11:00:02` (the window has already closed, the notice is still visible), tap **Deshacer**: the notice closes and **Regar** goes back to the list as `waiting`, with the bar at `0` and the checkbox **disabled** (until 08:00 on Thursday).
+6. At `2026-07-15T21:30:00`: the bar shows `50`. Still no overdue indicator (a one-off task without a due date never becomes overdue).
+7. At `2026-07-16T08:00:00`: `pending` and checkbox enabled.
 
-## Flujo 4: puntual con fecha límite
+## Flow 4: one-off with a due date
 
-Precondición: lista vacía, reloj en `2026-07-15T06:00:00`.
+Precondition: empty list, clock at `2026-07-15T06:00:00`.
 
-1. Crear `Pagar la luz` con **No se repite**, Fecha límite `2026-07-16` y horario `08:00` a `11:00`. Está `en espera`, checkbox deshabilitado.
-2. Avanzar el reloj a `2026-07-16T10:59:00`: `pendiente`, checkbox habilitado.
-3. Avanzar el reloj a `2026-07-16T11:00:00`: `atrasada` (indicador "Atrasada", sin atenuar, sin barra) y checkbox **deshabilitado**.
-4. Avanzar el reloj a `2026-07-17T08:00:00`: sigue `atrasada`, ahora con el checkbox **habilitado**. Tocarlo: aparece `Completaste «Pagar la luz»` y la fila desaparece.
-5. Avanzar el reloj a `2026-07-17T12:00:00`. Crear `Pagar el gas` con Fecha límite `2026-07-17` y horario `08:00` a `11:00`: aparece `atrasada` en el acto (la ventana de su día límite ya cerró), con el checkbox deshabilitado.
+1. Create `Pagar la luz` with **No se repite**, Fecha límite `2026-07-16` and schedule `08:00` to `11:00`. It is `waiting`, checkbox disabled.
+2. Advance the clock to `2026-07-16T10:59:00`: `pending`, checkbox enabled.
+3. Advance the clock to `2026-07-16T11:00:00`: `overdue` ("Atrasada" indicator, not dimmed, without a bar) and checkbox **disabled**.
+4. Advance the clock to `2026-07-17T08:00:00`: still `overdue`, now with the checkbox **enabled**. Tap it: `Completaste «Pagar la luz»` appears and the row disappears.
+5. Advance the clock to `2026-07-17T12:00:00`. Create `Pagar el gas` with Fecha límite `2026-07-17` and schedule `08:00` to `11:00`: it appears `overdue` right away (the window of its due day has already closed), with the checkbox disabled.
 
-## Flujo 5: relativa con horario
+## Flow 5: relative with a schedule
 
-Precondición: lista vacía, reloj detenido en `2026-07-15T09:00:00` (miércoles). Tocar **Mostrar completadas** (queda marcado).
+Precondition: empty list, clock stopped at `2026-07-15T09:00:00` (Wednesday). Tap **Mostrar completadas** (it stays checked).
 
-1. Crear `Regar` con **Intervalo** cada `1` **días** y horario `08:00` a `11:00`. Está `pendiente` (nunca completada, creada dentro de la ventana), checkbox habilitado.
-2. Tocar el checkbox: la fila pasa a completada, `en espera`, con la barra en `0`.
-3. A las `15:00`: la barra marca `25` (vuelve el jueves a las 09:00). El checkbox (que borraría el completado de hoy) está **habilitado**.
-4. A las `2026-07-16T09:00:00`: `pendiente`. A las `2026-07-16T11:00:00`: `atrasada`, checkbox **deshabilitado**. A las `2026-07-16T20:00:00`: sigue `atrasada` y deshabilitado.
-5. A las `2026-07-17T08:00:00`: sigue `atrasada`, checkbox **habilitado**. Tocarlo: aparece el aviso y la fila pasa a completada, `en espera`.
-6. A las `2026-07-17T20:00:00`: barra en `50`.
+1. Create `Regar` with **Intervalo** every `1` **días** and schedule `08:00` to `11:00`. It is `pending` (never completed, created inside the window), checkbox enabled.
+2. Tap the checkbox: the row becomes completed, `waiting`, with the bar at `0`.
+3. At `15:00`: the bar shows `25` (it comes back on Thursday at 09:00). The checkbox (which would delete today's completion) is **enabled**.
+4. At `2026-07-16T09:00:00`: `pending`. At `2026-07-16T11:00:00`: `overdue`, checkbox **disabled**. At `2026-07-16T20:00:00`: still `overdue` and disabled.
+5. At `2026-07-17T08:00:00`: still `overdue`, checkbox **enabled**. Tap it: the notice appears and the row becomes completed, `waiting`.
+6. At `2026-07-17T20:00:00`: bar at `50`.
 
-## Flujo 6: atraso antes de que abra la ventana
+## Flow 6: overdue before the window opens
 
-Precondición: lista vacía, reloj detenido en `2026-07-15T10:00:00`.
+Precondition: empty list, clock stopped at `2026-07-15T10:00:00`.
 
-1. Crear `Remedio` con **Intervalo** cada `4` **horas** y horario `08:00` a `11:00`, y tocar su checkbox a las `10:00`. Tocar **Mostrar completadas**.
-2. A las `15:30`: `en espera`, barra en `25` (vuelve el jueves a las 08:00).
-3. A las `18:00`: `atrasada` (pasó V + intervalo, aunque la ventana no abrió), checkbox **deshabilitado**.
-4. A las `2026-07-16T08:00:00`: sigue `atrasada`, checkbox **habilitado**.
+1. Create `Remedio` with **Intervalo** every `4` **horas** and schedule `08:00` to `11:00`, and tap its checkbox at `10:00`. Tap **Mostrar completadas**.
+2. At `15:30`: `waiting`, bar at `25` (it comes back on Thursday at 08:00).
+3. At `18:00`: `overdue` (V + interval has passed, even though the window did not open), checkbox **disabled**.
+4. At `2026-07-16T08:00:00`: still `overdue`, checkbox **enabled**.
 
-## Flujo 7: calendario y Mostrar completadas
+## Flow 7: calendar and «Mostrar completadas»
 
-Precondición: lista vacía, reloj en `2026-07-14T07:00:00` (martes). Mostrar completadas apagado.
+Precondition: empty list, clock at `2026-07-14T07:00:00` (Tuesday). «Mostrar completadas» off.
 
-1. Crear `Sacar la basura` con **Días de la semana** `martes` y `jueves` y horario `08:00` a `11:00`. Está `en espera` sin completados (no completada): se ve, en negrita, checkbox sin marcar y **deshabilitado**.
-2. A las `08:00`: `pendiente`. Tocar el checkbox: la fila desaparece (completada).
-3. Avanzar el reloj a `2026-07-16T07:59:00` (jueves): la lista sigue vacía (la tarea sigue `en espera` y completada; sin horario ya estaría `pendiente` desde las 00:00).
-4. Tocar **Mostrar completadas**: se ve **Sacar la basura** completada, `en espera`. Su checkbox (que la completaría de nuevo: el completado es de un día anterior) está **deshabilitado**. Apagar **Mostrar completadas**.
-5. Avanzar el reloj a `2026-07-16T08:00:00`: **Sacar la basura** aparece `pendiente`.
-6. Avanzar el reloj a `2026-07-16T11:00:00`: `atrasada`, checkbox deshabilitado.
-7. Avanzar el reloj a `2026-07-17T09:00:00` (viernes): sigue `atrasada`, checkbox habilitado. Tocarlo: completada. En el **Historial**, el completado nuevo figura con la tarea **Sacar la basura** (§5.3: cubre el jueves; vuelve el martes siguiente).
-8. En el **Historial**, a las `2026-07-17T20:00:00` (fuera de la ventana), borrar ese completado: se borra y la tarea vuelve a la lista `atrasada`.
+1. Create `Sacar la basura` with **Días de la semana** `martes` and `jueves` and schedule `08:00` to `11:00`. It is `waiting` without completions (not completed): it is shown, in bold, checkbox unchecked and **disabled**.
+2. At `08:00`: `pending`. Tap the checkbox: the row disappears (completed).
+3. Advance the clock to `2026-07-16T07:59:00` (Thursday): the list is still empty (the task is still `waiting` and completed; without a schedule it would already be `pending` since 00:00).
+4. Tap **Mostrar completadas**: **Sacar la basura** is shown completed, `waiting`. Its checkbox (which would complete it again: the completion is from an earlier day) is **disabled**. Turn off **Mostrar completadas**.
+5. Advance the clock to `2026-07-16T08:00:00`: **Sacar la basura** appears `pending`.
+6. Advance the clock to `2026-07-16T11:00:00`: `overdue`, checkbox disabled.
+7. Advance the clock to `2026-07-17T09:00:00` (Friday): still `overdue`, checkbox enabled. Tap it: completed. In the **Historial**, the new completion appears with the task **Sacar la basura** (§5.3: it covers Thursday; it comes back the following Tuesday).
+8. In the **Historial**, at `2026-07-17T20:00:00` (outside the window), delete that completion: it is deleted and the task goes back to the list as `overdue`.
 
-## Flujo 8: orden con horario
+## Flow 8: order with a schedule
 
-Precondición: lista vacía, reloj en `2026-07-15T08:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T08:00:00` (Wednesday).
 
-1. A las `08:00`, crear `Cambiar sábanas` con **Días de la semana** `jueves` (sin horario) y `Sacar la basura` con **Días de la semana** `jueves` y horario `09:00` a `10:00`.
-2. A las `12:00`, crear `Cambiar foco` con **No se repite**, sin fecha límite, y horario `08:00` a `11:00`.
-3. A las `14:00`: las tres están `en espera` y la lista es **Cambiar sábanas**, **Cambiar foco**, **Sacar la basura** (vuelven el jueves a las 00:00, 08:00 y 09:00).
-4. Tocar **Cambiar foco**, cambiar el horario a `10:00` a `11:00` y guardar: la lista es **Cambiar sábanas**, **Sacar la basura**, **Cambiar foco**.
-5. Avanzar el reloj a `2026-07-16T09:30:00`: **Cambiar sábanas** y **Sacar la basura** están `pendiente` y **Cambiar foco** `en espera`. La lista es **Cambiar sábanas**, **Sacar la basura**, **Cambiar foco** (pendiente desde las 00:00 y desde las 09:00).
-6. Crear `Pagar la luz` con **No se repite**, Fecha límite `2026-07-17` y horario `08:00` a `11:00`, y `Barrer` con **No se repite**, sin fecha límite y horario `08:00` a `11:00`. Las dos están `pendiente` (dentro de su ventana).
-   - La lista es **Cambiar sábanas**, **Sacar la basura**, **Pagar la luz**, **Barrer**, **Cambiar foco**: una puntual con horario conserva su clave de orden (00:00 de su fecha límite; sin fecha límite, al final del grupo), no el momento en que abrió su ventana.
-7. Tocar **Pagar la luz**, cambiar la Fecha límite a `2026-07-16` y guardar: la lista es **Cambiar sábanas**, **Pagar la luz**, **Sacar la basura**, **Barrer**, **Cambiar foco** (las 00:00 del 16 empatan con **Cambiar sábanas**, que va primero por `creadaEn` más antigua; **Pagar la luz** pasa antes que **Sacar la basura**, pendiente desde las 09:00).
+1. At `08:00`, create `Cambiar sábanas` with **Días de la semana** `jueves` (without a schedule) and `Sacar la basura` with **Días de la semana** `jueves` and schedule `09:00` to `10:00`.
+2. At `12:00`, create `Cambiar foco` with **No se repite**, without a due date, and schedule `08:00` to `11:00`.
+3. At `14:00`: the three are `waiting` and the list is **Cambiar sábanas**, **Cambiar foco**, **Sacar la basura** (they come back on Thursday at 00:00, 08:00 and 09:00).
+4. Tap **Cambiar foco**, change the schedule to `10:00` to `11:00` and save: the list is **Cambiar sábanas**, **Sacar la basura**, **Cambiar foco**.
+5. Advance the clock to `2026-07-16T09:30:00`: **Cambiar sábanas** and **Sacar la basura** are `pending` and **Cambiar foco** is `waiting`. The list is **Cambiar sábanas**, **Sacar la basura**, **Cambiar foco** (pending since 00:00 and since 09:00).
+6. Create `Pagar la luz` with **No se repite**, Fecha límite `2026-07-17` and schedule `08:00` to `11:00`, and `Barrer` with **No se repite**, without a due date and schedule `08:00` to `11:00`. Both are `pending` (inside their window).
+   - The list is **Cambiar sábanas**, **Sacar la basura**, **Pagar la luz**, **Barrer**, **Cambiar foco**: a one-off task with a schedule keeps its order key (00:00 of its due date; without a due date, at the end of the group), not the moment its window opened.
+7. Tap **Pagar la luz**, change the Fecha límite to `2026-07-16` and save: the list is **Cambiar sábanas**, **Pagar la luz**, **Sacar la basura**, **Barrer**, **Cambiar foco** (00:00 of the 16th ties with **Cambiar sábanas**, which goes first because of its older `creadaEn`; **Pagar la luz** goes before **Sacar la basura**, pending since 09:00).
 
-## Flujo 9: dos dispositivos
+## Flow 9: two devices
 
-Precondición: lista vacía, reloj en `2026-07-15T06:00:00`. A y B abiertos. En A, crear `Regar` con **No se repite** y horario `08:00` a `11:00`; esperar a que B la muestre con `08:00–11:00`.
+Precondition: empty list, clock at `2026-07-15T06:00:00`. A and B open. On A, create `Regar` with **No se repite** and schedule `08:00` to `11:00`; wait for B to show it with `08:00–11:00`.
 
-1. Poner B sin conexión. En A, cambiar **Desde** de **Regar** a `07:00` y guardar. En B, cambiar **Hasta** de **Regar** a `12:00` y guardar.
-2. B vuelve a tener conexión: las dos pantallas muestran `08:00–12:00` (gana entero el último cambio; no queda `07:00–12:00`).
-3. Poner B sin conexión. En A, apagar **Solo en un horario** de **Regar** y guardar. En B, cambiar el título de **Regar** a `Regar plantas` y guardar.
-4. B vuelve a tener conexión: las dos pantallas muestran **Regar plantas** sin horario.
+1. Put B offline. On A, change **Desde** of **Regar** to `07:00` and save. On B, change **Hasta** of **Regar** to `12:00` and save.
+2. B is back online: both screens show `08:00–12:00` (the last change wins as a whole; `07:00–12:00` does not remain).
+3. Put B offline. On A, turn off **Solo en un horario** of **Regar** and save. On B, change the title of **Regar** to `Regar plantas` and save.
+4. B is back online: both screens show **Regar plantas** without a schedule.
 
-## Flujo 10: sin horario, todo sigue igual
+## Flow 10: without a schedule, everything stays the same
 
-Precondición: lista vacía, reloj en `2026-07-15T03:00:00`.
+Precondition: empty list, clock at `2026-07-15T03:00:00`.
 
-1. Crear `Barrer` con **No se repite**, sin fecha límite y sin horario: `pendiente`, sin texto de horario, checkbox **habilitado** a las 03:00.
-2. Crear `Regar` con **Intervalo** cada `1` **días** sin horario y tocar su checkbox a las `03:00`. Avanzar el reloj a `2026-07-16T03:00:00`: **Regar** está `pendiente` y su checkbox habilitado, a cualquier hora.
+1. Create `Barrer` with **No se repite**, without a due date and without a schedule: `pending`, without schedule text, checkbox **enabled** at 03:00.
+2. Create `Regar` with **Intervalo** every `1` **días** without a schedule and tap its checkbox at `03:00`. Advance the clock to `2026-07-16T03:00:00`: **Regar** is `pending` and its checkbox enabled, at any time.
 
-## Flujo 11: Agregar horario y Quitar
+## Flow 11: Agregar horario and Quitar
 
-Precondición: lista vacía, reloj en `2026-07-15T06:00:00` (miércoles).
+Precondition: empty list, clock at `2026-07-15T06:00:00` (Wednesday).
 
-1. Tocar **+**, escribir `Alimentar a los perros`, elegir **No se repite** y encender **Solo en un horario**: hay una fila **Desde**/**Hasta**, sin botón **Quitar**, y un botón **Agregar horario**.
-2. Escribir **Desde** `18:00` y **Hasta** `21:00`. Tocar **Agregar horario**: aparece una segunda fila vacía y cada fila tiene **Quitar**. Escribir en ella **Desde** `07:00` y **Hasta** `10:00`. Guardar.
-   - La fila **Alimentar a los perros** muestra `07:00–10:00 · 18:00–21:00` (ordenadas por desde, aunque se cargaron al revés).
-3. Tocar la fila: el panel muestra **Solo en un horario** encendido y dos filas, en orden: `07:00`–`10:00` y `18:00`–`21:00`.
-4. Tocar **Quitar** en la fila `07:00`–`10:00` y guardar: la fila de la tarea muestra `18:00–21:00`. Al abrir el panel, hay una sola fila, sin **Quitar**.
-5. Tocar **Agregar horario**, escribir `10:00` a `12:00` en la fila nueva y cambiar la otra a `08:00` a `10:00` (contiguas). Guardar: la fila muestra `08:00–10:00 · 10:00–12:00`.
-6. Tocar la fila, apagar **Solo en un horario** y guardar: la fila no muestra ningún horario.
-7. Crear `Remedio` con **Intervalo** cada `8` **horas** y una sola ventana `08:00` a `20:00`: se guarda y muestra `08:00–20:00`.
-8. Recargar: **Alimentar a los perros** sin horario, **Remedio** con `08:00–20:00`.
+1. Tap **+**, type `Alimentar a los perros`, choose **No se repite** and turn on **Solo en un horario**: there is one **Desde**/**Hasta** row, without a **Quitar** button, and an **Agregar horario** button.
+2. Type **Desde** `18:00` and **Hasta** `21:00`. Tap **Agregar horario**: a second empty row appears and each row has **Quitar**. Type in it **Desde** `07:00` and **Hasta** `10:00`. Save.
+   - The **Alimentar a los perros** row shows `07:00–10:00 · 18:00–21:00` (ordered by start, even though they were entered in reverse).
+3. Tap the row: the panel shows **Solo en un horario** on and two rows, in order: `07:00`–`10:00` and `18:00`–`21:00`.
+4. Tap **Quitar** on the `07:00`–`10:00` row and save: the task row shows `18:00–21:00`. When opening the panel, there is a single row, without **Quitar**.
+5. Tap **Agregar horario**, type `10:00` to `12:00` in the new row and change the other one to `08:00` to `10:00` (contiguous). Save: the row shows `08:00–10:00 · 10:00–12:00`.
+6. Tap the row, turn off **Solo en un horario** and save: the row shows no schedule.
+7. Create `Remedio` with **Intervalo** every `8` **horas** and a single window `08:00` to `20:00`: it is saved and shows `08:00–20:00`.
+8. Reload: **Alimentar a los perros** without a schedule, **Remedio** with `08:00–20:00`.
 
-## Flujo 12: errores de varios horarios
+## Flow 12: errors with several schedules
 
-Precondición: lista vacía, reloj en `2026-07-15T06:00:00`. Crear `Regar` con **No se repite** y horario `08:00` a `11:00`, y `Remedio` con **Intervalo** cada `8` **horas** y horario `08:00` a `11:00`.
+Precondition: empty list, clock at `2026-07-15T06:00:00`. Create `Regar` with **No se repite** and schedule `08:00` to `11:00`, and `Remedio` with **Intervalo** every `8` **horas** and schedule `08:00` to `11:00`.
 
-1. Tocar **+**, escribir `Perros`, elegir **No se repite**, encender **Solo en un horario**, escribir `08:00` a `11:00`, tocar **Agregar horario** y escribir `10:00` a `12:00`. Tocar **Guardar**: se ve "Los horarios no se pueden superponer" y el panel sigue abierto.
-2. Cambiar la segunda fila a `08:00` a `11:00` (igual a la primera) y tocar **Guardar**: el mismo error.
-3. Cambiar la segunda fila a `09:00` a `10:00` (dentro de la primera) y tocar **Guardar**: el mismo error.
-4. Vaciar **Hasta** de la segunda fila y tocar **Guardar**: se ve "Completá las dos horas".
-5. Escribir **Hasta** `08:00` en la segunda fila (desde `09:00`) y tocar **Guardar**: se ve "La hora de fin tiene que ser posterior a la de inicio".
-6. Cambiar la segunda fila a `18:00` a `21:00` y elegir **Intervalo** cada `8` **horas**. Tocar **Guardar**: se ve "Con varios horarios, el intervalo tiene que ser en días".
-7. Cambiar la unidad a **días** (cada `1`) y tocar **Guardar**: el panel se cierra y **Perros** muestra `08:00–11:00 · 18:00–21:00`.
-8. Tocar la fila **Regar**, cambiar el título a `Regar plantas`, tocar **Agregar horario** y escribir `10:59` a `12:00`. Tocar **Guardar**: se ve "Los horarios no se pueden superponer". Cerrar sin guardar (y **Descartar** en el aviso): la fila sigue siendo **Regar** con `08:00–11:00`.
-9. Tocar la fila **Remedio** (cada 8 horas), tocar **Agregar horario**, escribir `18:00` a `21:00` y tocar **Guardar**: se ve "Con varios horarios, el intervalo tiene que ser en días". Cerrar sin guardar (y **Descartar** en el aviso): **Remedio** sigue con `08:00–11:00`.
-10. Tocar la fila **Perros**, cambiar **Se repite** a **Intervalo** cada `8` **horas** y tocar **Guardar**: se ve el mismo error. Cerrar sin guardar (y **Descartar** en el aviso): **Perros** sigue cada 1 día con las dos ventanas.
+1. Tap **+**, type `Perros`, choose **No se repite**, turn on **Solo en un horario**, type `08:00` to `11:00`, tap **Agregar horario** and type `10:00` to `12:00`. Tap **Guardar**: "Los horarios no se pueden superponer" is shown and the panel stays open.
+2. Change the second row to `08:00` to `11:00` (equal to the first) and tap **Guardar**: the same error.
+3. Change the second row to `09:00` to `10:00` (inside the first) and tap **Guardar**: the same error.
+4. Empty **Hasta** of the second row and tap **Guardar**: "Completá las dos horas" is shown.
+5. Type **Hasta** `08:00` in the second row (from `09:00`) and tap **Guardar**: "La hora de fin tiene que ser posterior a la de inicio" is shown.
+6. Change the second row to `18:00` to `21:00` and choose **Intervalo** every `8` **horas**. Tap **Guardar**: "Con varios horarios, el intervalo tiene que ser en días" is shown.
+7. Change the unit to **días** (every `1`) and tap **Guardar**: the panel closes and **Perros** shows `08:00–11:00 · 18:00–21:00`.
+8. Tap the **Regar** row, change the title to `Regar plantas`, tap **Agregar horario** and type `10:59` to `12:00`. Tap **Guardar**: "Los horarios no se pueden superponer" is shown. Close without saving (and **Descartar** in the notice): the row is still **Regar** with `08:00–11:00`.
+9. Tap the **Remedio** row (every 8 hours), tap **Agregar horario**, type `18:00` to `21:00` and tap **Guardar**: "Con varios horarios, el intervalo tiene que ser en días" is shown. Close without saving (and **Descartar** in the notice): **Remedio** still has `08:00–11:00`.
+10. Tap the **Perros** row, change **Se repite** to **Intervalo** every `8` **horas** and tap **Guardar**: the same error is shown. Close without saving (and **Descartar** in the notice): **Perros** is still every 1 day with the two windows.
 
-## Flujo 13: calendario con dos ventanas
+## Flow 13: calendar with two windows
 
-Precondición: lista vacía, reloj detenido en `2026-07-15T06:00:00` (miércoles). Mostrar completadas apagado.
+Precondition: empty list, clock stopped at `2026-07-15T06:00:00` (Wednesday). «Mostrar completadas» off.
 
-1. Crear `Perros` con **Días de la semana** `miércoles` y `jueves` y horarios `07:00` a `10:00` y `18:00` a `21:00`. Está `en espera` sin completados: se ve, en negrita, checkbox sin marcar y **deshabilitado**.
-2. A las `06:30`: la barra marca `50`.
-3. A las `08:00`: `pendiente`, checkbox habilitado. Tocarlo: aparece `Completaste «Perros»` y la fila desaparece (completada).
-4. A las `13:00`: la lista sigue vacía. Tocar **Mostrar completadas**: **Perros** se ve completada, `en espera`, con la barra en `50` (vuelve a las 18:00) y el checkbox **habilitado** (borraría el completado de hoy). Apagar **Mostrar completadas**.
-5. A las `18:00`: **Perros** aparece `pendiente`, **no** completada (título en negrita, checkbox sin marcar), checkbox habilitado. Tocarlo: aparece el aviso y la fila desaparece.
-6. Tocar **Mostrar completadas**. A las `2026-07-16T05:00:00`: **Perros** completada, `en espera`, con el checkbox **deshabilitado** (lo completaría de nuevo y está fuera de las ventanas). Apagar **Mostrar completadas**.
-7. A las `2026-07-16T07:00:00`: `pendiente`. No completarla. A las `2026-07-16T10:00:00`: `atrasada` (indicador "Atrasada"), checkbox **deshabilitado**. A las `2026-07-16T12:00:00`: sigue igual.
-8. A las `2026-07-16T18:00:00`: sigue `atrasada`, checkbox **habilitado**. Tocarlo: la fila desaparece (cubre la tarde; la mañana se descarta).
-9. En el **Historial**: tres completados de **Perros** (miércoles 08:00, miércoles 18:00 y jueves 18:00).
-10. A las `2026-07-16T22:00:00`: la lista está vacía (la próxima es el miércoles siguiente a las 07:00). Tocar **Mostrar completadas**: **Perros** completada, `en espera`, con el checkbox **habilitado** (borraría el completado de hoy).
+1. Create `Perros` with **Días de la semana** `miércoles` and `jueves` and schedules `07:00` to `10:00` and `18:00` to `21:00`. It is `waiting` without completions: it is shown, in bold, checkbox unchecked and **disabled**.
+2. At `06:30`: the bar shows `50`.
+3. At `08:00`: `pending`, checkbox enabled. Tap it: `Completaste «Perros»` appears and the row disappears (completed).
+4. At `13:00`: the list is still empty. Tap **Mostrar completadas**: **Perros** is shown completed, `waiting`, with the bar at `50` (it comes back at 18:00) and the checkbox **enabled** (it would delete today's completion). Turn off **Mostrar completadas**.
+5. At `18:00`: **Perros** appears `pending`, **not** completed (title in bold, checkbox unchecked), checkbox enabled. Tap it: the notice appears and the row disappears.
+6. Tap **Mostrar completadas**. At `2026-07-16T05:00:00`: **Perros** completed, `waiting`, with the checkbox **disabled** (it would complete it again and it is outside the windows). Turn off **Mostrar completadas**.
+7. At `2026-07-16T07:00:00`: `pending`. Do not complete it. At `2026-07-16T10:00:00`: `overdue` ("Atrasada" indicator), checkbox **disabled**. At `2026-07-16T12:00:00`: still the same.
+8. At `2026-07-16T18:00:00`: still `overdue`, checkbox **enabled**. Tap it: the row disappears (it covers the afternoon; the morning is discarded).
+9. In the **Historial**: three completions of **Perros** (Wednesday 08:00, Wednesday 18:00 and Thursday 18:00).
+10. At `2026-07-16T22:00:00`: the list is empty (the next one is the following Wednesday at 07:00). Tap **Mostrar completadas**: **Perros** completed, `waiting`, with the checkbox **enabled** (it would delete today's completion).
 
-## Flujo 14: puntual con dos ventanas
+## Flow 14: one-off with two windows
 
-Precondición: lista vacía, reloj detenido en `2026-07-15T06:00:00` (miércoles).
+Precondition: empty list, clock stopped at `2026-07-15T06:00:00` (Wednesday).
 
-1. Crear `Comprar pan` con **No se repite**, sin fecha límite, horarios `07:00` a `10:00` y `18:00` a `21:00`; y `Pagar la luz` con **No se repite**, Fecha límite `2026-07-15`, los mismos horarios.
-   - Las dos `en espera`, checkbox deshabilitado.
-2. A las `07:00`: las dos `pendiente`, checkbox habilitado.
-3. A las `10:00`: las dos `en espera` (ninguna atrasada: **Pagar la luz** se atrasa recién al cierre de la última ventana de su día límite), checkbox deshabilitado. A las `14:00`: barra en `50` en las dos.
-4. A las `18:00`: las dos `pendiente`. Tocar el checkbox de **Comprar pan**: aparece el aviso y la fila desaparece.
-5. A las `21:00`: **Pagar la luz** `atrasada` (cerró la última ventana de su día límite), checkbox deshabilitado.
-6. A las `2026-07-16T08:00:00`: **Comprar pan** sigue sin estar en la lista (se completa una sola vez); **Pagar la luz** sigue `atrasada`, con el checkbox habilitado.
+1. Create `Comprar pan` with **No se repite**, without a due date, schedules `07:00` to `10:00` and `18:00` to `21:00`; and `Pagar la luz` with **No se repite**, Fecha límite `2026-07-15`, the same schedules.
+   - Both `waiting`, checkbox disabled.
+2. At `07:00`: both `pending`, checkbox enabled.
+3. At `10:00`: both `waiting` (neither overdue: **Pagar la luz** becomes overdue only when the last window of its due day closes), checkbox disabled. At `14:00`: bar at `50` on both.
+4. At `18:00`: both `pending`. Tap the checkbox of **Comprar pan**: the notice appears and the row disappears.
+5. At `21:00`: **Pagar la luz** `overdue` (the last window of its due day closed), checkbox disabled.
+6. At `2026-07-16T08:00:00`: **Comprar pan** is still not in the list (it is completed only once); **Pagar la luz** is still `overdue`, with the checkbox enabled.
 
-## Flujo 15: relativa cada 2 días con dos ventanas
+## Flow 15: relative every 2 days with two windows
 
-Precondición: lista vacía, reloj detenido en `2026-07-13T06:00:00` (lunes). Tocar **Mostrar completadas** (queda marcado).
+Precondition: empty list, clock stopped at `2026-07-13T06:00:00` (Monday). Tap **Mostrar completadas** (it stays checked).
 
-1. Crear `Perros` con **Intervalo** cada `2` **días** y horarios `07:00` a `10:00` y `18:00` a `21:00`. Está `en espera` (nunca completada), checkbox deshabilitado.
-2. A las `08:00`: `pendiente`. Tocar el checkbox: completada, `en espera`.
-3. A las `13:00`: barra en `50` (vuelve a las 18:00 del mismo lunes, no el miércoles). Checkbox habilitado (borraría el de hoy).
-4. A las `18:00`: `pendiente`, no completada (checkbox sin marcar). Tocarlo: completada, `en espera`.
-5. A las `2026-07-14T12:30:00` (martes): barra en `50` (vuelve el miércoles a las 07:00). A las `2026-07-14T19:00:00`: sigue `en espera` (el martes no le toca), con el checkbox **habilitado** (dentro de una ventana, la completaría de nuevo). No tocarlo.
-6. A las `2026-07-15T07:00:00`: `pendiente`. No completarla. A las `2026-07-15T10:00:00`: `atrasada`, checkbox deshabilitado.
-7. A las `2026-07-16T08:00:00` (jueves): sigue `atrasada`, checkbox habilitado. Tocarlo: completada, `en espera` (la secuencia sigue desde la mañana del jueves).
-8. A las `2026-07-16T13:00:00`: barra en `50`. A las `2026-07-16T18:00:00`: `pendiente`.
+1. Create `Perros` with **Intervalo** every `2` **días** and schedules `07:00` to `10:00` and `18:00` to `21:00`. It is `waiting` (never completed), checkbox disabled.
+2. At `08:00`: `pending`. Tap the checkbox: completed, `waiting`.
+3. At `13:00`: bar at `50` (it comes back at 18:00 the same Monday, not on Wednesday). Checkbox enabled (it would delete today's).
+4. At `18:00`: `pending`, not completed (checkbox unchecked). Tap it: completed, `waiting`.
+5. At `2026-07-14T12:30:00` (Tuesday): bar at `50` (it comes back on Wednesday at 07:00). At `2026-07-14T19:00:00`: still `waiting` (Tuesday is not its day), with the checkbox **enabled** (inside a window, it would complete it again). Do not tap it.
+6. At `2026-07-15T07:00:00`: `pending`. Do not complete it. At `2026-07-15T10:00:00`: `overdue`, checkbox disabled.
+7. At `2026-07-16T08:00:00` (Thursday): still `overdue`, checkbox enabled. Tap it: completed, `waiting` (the sequence continues from Thursday morning).
+8. At `2026-07-16T13:00:00`: bar at `50`. At `2026-07-16T18:00:00`: `pending`.

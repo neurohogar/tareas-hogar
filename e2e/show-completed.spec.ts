@@ -51,7 +51,7 @@ async function viewNotice(page: Page, title: string) {
 	await expect(notice(page).getByRole('button', { name: 'Deshacer' })).toBeVisible();
 }
 
-test('Flujo 1: apagado por defecto, encender y apagar', async ({ page }) => {
+test('Flow 1: apagado por defecto, encender y apagar', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
 	await create(page, { title: 'Cambiar foco', kind: 'No se repite' });
 	await advance(page, '2026-07-15T08:01:00');
@@ -91,7 +91,7 @@ test('Flujo 1: apagado por defecto, encender y apagar', async ({ page }) => {
 	expect(opFocus).toBeLessThan(opWater);
 });
 
-test('Flujo 2: orden de las completadas', async ({ page }) => {
+test('Flow 2: orden de las completadas', async ({ page }) => {
 	await sessionWithClock(page, TODAY);
 	await turnOnCompleted(page);
 	await create(page, { title: 'Pagar la luz', kind: 'No se repite' });
@@ -123,7 +123,7 @@ test('Flujo 2: orden de las completadas', async ({ page }) => {
 	await listIs(page, ['Ventilar', 'Lavar ropa', 'Pagar la luz', 'Barrer']);
 });
 
-test('Flujo 3: tocar el checkbox de una completada', async ({ page }) => {
+test('Flow 3: tocar el checkbox de una completada', async ({ page }) => {
 	await sessionStopped(page, TODAY);
 	await createAndView(page, { title: 'Pagar la luz', kind: 'No se repite', date: '2026-07-15' });
 	await createAndView(page, { title: 'Regar', kind: 'Intervalo', every: '4', unit: 'horas' });
@@ -202,7 +202,7 @@ test('Flujo 3: tocar el checkbox de una completada', async ({ page }) => {
 	});
 });
 
-test('Flujo 4: el valor se guarda en el dispositivo', async ({ browser }) => {
+test('Flow 4: el valor se guarda en el dispositivo', async ({ browser }) => {
 	const context = await browser.newContext();
 	const page = await context.newPage();
 	await sessionWithClock(page, TODAY);
@@ -235,7 +235,7 @@ test('Flujo 4: el valor se guarda en el dispositivo', async ({ browser }) => {
 	await context.close();
 });
 
-test('Flujo 5: el valor no se sincroniza entre dispositivos', async ({ browser }) => {
+test('Flow 5: el valor no se sincroniza entre dispositivos', async ({ browser }) => {
 	const { a, b, close: end } = await twoDevices(browser, TODAY);
 	await create(a, { title: 'Cambiar foco', kind: 'No se repite' });
 	await create(a, { title: 'Pagar la luz', kind: 'No se repite' });
@@ -260,7 +260,7 @@ test('Flujo 5: el valor no se sincroniza entre dispositivos', async ({ browser }
 	await end();
 });
 
-test('Flujo 6: dos completados de dos dispositivos', async ({ browser }) => {
+test('Flow 6: dos completados de dos dispositivos', async ({ browser }) => {
 	const { a, b, ctxB, close: end } = await twoDevices(browser, TODAY);
 	await turnOnCompleted(a);
 	await create(a, { title: 'Pagar la luz', kind: 'No se repite' });
@@ -298,7 +298,7 @@ test('Flujo 6: dos completados de dos dispositivos', async ({ browser }) => {
 	await end();
 });
 
-test('Flujo 7: periódica completada ayer: el checkbox la completa de nuevo', async ({ page }) => {
+test('Flow 7: periódica completada ayer: el checkbox la completa de nuevo', async ({ page }) => {
 	await sessionStopped(page, '2026-07-15T20:00:00');
 	await createAndView(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await stop(page, '2026-07-15T20:00:00');
@@ -335,7 +335,7 @@ test('Flujo 7: periódica completada ayer: el checkbox la completa de nuevo', as
 	await withClock(page, () => viewHistory(page, [['Ayer', [['Regar', '23:59']]]]));
 });
 
-test('Flujo 8: completado "del futuro"', async ({ browser }) => {
+test('Flow 8: completado "del futuro"', async ({ browser }) => {
 	const deviceA = await device(browser, '2026-07-15T12:00:00', true);
 	const deviceB = await device(browser, '2026-07-16T09:00:00', false);
 	const [A, B] = [deviceA.page, deviceB.page];
