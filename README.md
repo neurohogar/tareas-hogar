@@ -1,43 +1,55 @@
+<div align="center">
+
+<img src="static/icon.svg" alt="" width="96" height="96">
+
 # Tareas Hogar
 
-Installable web app (PWA) for household tasks, designed for adults with ADHD, autism and high abilities, including people who share a home.
+**A calm household task list for brains that forget, freeze or get overwhelmed.**
 
-The idea is simple: recurring tasks should not be forgotten, and the list should show first what needs doing now, with no noise and no guilt.
+An installable web app (PWA) designed with adults with ADHD, autism and high abilities in mind,<br>
+including people who share a home. Free, open source, offline-first.
 
-## What it does today
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-3e7059)](LICENSE)
+![PWA](https://img.shields.io/badge/PWA-offline--first-3e7059)
+![SvelteKit](https://img.shields.io/badge/SvelteKit-3-3e7059)
+![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-3e7059)
+![Tests](https://img.shields.io/badge/tests-2.6k%20passing-3e7059)
 
-- One-off and recurring tasks: every N days or hours, or on certain days of the week or month.
-- Clear statuses without guilt: pending, waiting, and for what is late a dated text («Tocaba hoy 10:00») instead of an alarm.
-- Schedules in which a task makes sense, postponing and pausing.
-- A **first step** and optional **further steps** (shown one at a time), so starting is cheaper than reading the title.
-- A **minimal version** of a task and a «Hice la mínima» action that counts as done and is kept in the history.
-- History of everything completed, with undo.
-- Two screens only (Pendientes and Historial), a mobile panel with tabs, and a warning before losing unsaved changes.
-- Works offline and syncs across devices. Sign-in is with Google. The installed app stays in portrait.
-- Atkinson Hyperlegible font and emoji are bundled, so everything looks the same everywhere.
+</div>
 
-The text the person sees is in Spanish; code, tests, Gherkin and documents are in English.
+<p align="center">
+  <img src="docs/screenshots/pending.png" alt="Pending list: an overdue task with a dated, guilt-free text, first steps and minimal versions on each row" width="260">
+  &nbsp;
+  <img src="docs/screenshots/panel.png" alt="Task panel with a first step, two more steps and a minimal version" width="260">
+  &nbsp;
+  <img src="docs/screenshots/history.png" alt="History grouped by day, with a completion marked as minimal" width="260">
+</p>
 
-What the app builds and why: [`docs/spec.md`](docs/spec.md).
+## Why
 
-## Timeline
+Most to-do apps assume that the hard part is remembering. For many people the hard part is **starting**, and the second hardest is **not feeling bad** about what slipped. Tareas Hogar is built around both:
 
-Dates are when the change was published on `v3`; the history before 2026-11-12 was squashed into a single public release.
+- **Recurring tasks do not get lost.** "When did I last clean the bathroom?" has an answer, and the task comes back on its own.
+- **The list shows what matters now**, first, with no noise: no counters, no red badges, no streaks to break.
+- **Starting is cheaper than reading the title.** Each task can show its first concrete step, and longer tasks advance one step at a time.
+- **Doing less still counts.** A task can have a minimal version («Solo el inodoro»); «Hice la mínima» marks it done and the history remembers it.
+- **No guilt.** A late task reads «Tocaba el lunes 13 20:00 · hace 2 días», a fact, not a warning.
 
-| Date | Change |
+## Features
+
+| | |
 |---|---|
-| Before 2026-11-12 | **Version 2**: one-off and recurring tasks, schedules, postpone and pause, history with undo, offline sync, bundled font and emoji, portrait orientation, mobile panel. |
-| 2026-11-12 | Public release (AGPL-3.0). Migration to SvelteKit 3 and Vite 8. The v3 plan is written from the research in `docs/research/v3/`, as ordered epics. |
-| 2026-11-13 | **Guilt-free status** (epic E2): late tasks read «Tocaba …» with a date, not «Atrasada»; under a minute reads «ahora». **First step** and **steps one at a time** (E3). |
-| 2026-11-15 | **Minimal version** and «Hice la mínima» (E4, first half); it appears in the history. First deploy of v3. |
-| 2026-11-16 | Decision: code, tests, Gherkin and documents move to English; only app text stays in Spanish. |
-| 2026-11-17 | **Labels and effort removed** (they were not used): spec, code, tests and the stored fields. |
-| 2026-11-18 | Deploy; the old label and effort fields are deleted from production data. English migration of code, comments and Gherkin begins. |
-| 2026-11-20 | **Annotations removed** (the «me sirvió / me molestó» note): the third tab is gone and `/anotaciones` redirects. Epics are now judged by what people report and by stored data. Deploy; the old data is deleted. |
-| 2026-11-20 | English migration finished: features, QA procedures, packages, spec and pipeline documents renamed and translated. |
-| 2026-11-22 | The `/historial` route becomes `/history`. Deploy. |
+| 🔁 **One-off and recurring tasks** | Every N days or hours, or on chosen days of the week or month. |
+| 🕗 **Schedules** | A task can only make sense in a time window (take out the trash 20:00–23:00). |
+| 👣 **First step and steps** | Shown on the row, one at a time, with «Hecho» to advance. |
+| 🪶 **Minimal version** | A small version of the task that also counts as done. |
+| ⏸️ **Postpone and pause** | Move a task out of the way without losing it or its rhythm. |
+| 📜 **History with undo** | Everything completed, grouped by day; any completion can be undone. |
+| 📶 **Offline-first** | Works without connection and syncs across devices when it comes back. |
+| 📱 **Installable** | Add it to the home screen; it stays in portrait like a native app. |
+| 🔤 **Readable everywhere** | Atkinson Hyperlegible and emoji are bundled, so it looks the same on every device. |
 
-What comes next is in [`docs/v3/plan.md`](docs/v3/plan.md): the second field of the minimal version, choosing a task for me, low-capacity days, and the later epics.
+The app is in Spanish. Code, tests, Gherkin scenarios and documents are in English. What the app does, rule by rule, is in [`docs/spec.md`](docs/spec.md).
 
 ## Evidence-based design
 
@@ -71,7 +83,7 @@ The development app uses the Firebase emulators, so no account is needed.
 
 ## How it is developed
 
-Each feature goes through a pipeline of ten roles (analysis, specification, Gherkin, implementation, cleanup, architecture, hardening and QA), with deterministic gates for coverage, complexity (CRAP), duplication and mutation. The detail is in [`CLAUDE.md`](CLAUDE.md) and [`docs/pipeline/`](docs/pipeline/).
+Every feature is specified before it is built, and every rule is tested by mutation. Each feature goes through a pipeline of ten roles (analysis, specification, Gherkin, implementation, cleanup, architecture, hardening and QA), with deterministic gates for coverage, complexity (CRAP), duplication and mutation. The detail is in [`CLAUDE.md`](CLAUDE.md) and [`docs/pipeline/`](docs/pipeline/).
 
 | Command | Does |
 |---|---|
@@ -81,6 +93,25 @@ Each feature goes through a pipeline of ten roles (analysis, specification, Gher
 | `npm run qa` | Playwright suite against the Firebase emulators |
 
 The quality tools come from [Acceptance Pipeline Specification](https://github.com/unclebob/Acceptance-Pipeline-Specification), [crapper](https://github.com/unclebob/crapper), [dryer](https://github.com/unclebob/dryer) and [mutator](https://github.com/unclebob/mutator). The pipeline orchestrator (`bdd-pipeline`) is not published yet, so for now the gates cannot be run outside the original environment. The tests and the QA suite can.
+
+## Timeline
+
+Dates are when the change was published on `v3`; the history before 2026-11-12 was squashed into a single public release.
+
+| Date | Change |
+|---|---|
+| Before 2026-11-12 | **Version 2**: one-off and recurring tasks, schedules, postpone and pause, history with undo, offline sync, bundled font and emoji, portrait orientation, mobile panel. |
+| 2026-11-12 | Public release (AGPL-3.0). Migration to SvelteKit 3 and Vite 8. The v3 plan is written from the research in `docs/research/v3/`, as ordered epics. |
+| 2026-11-13 | **Guilt-free status** (epic E2): late tasks read «Tocaba …» with a date, not «Atrasada»; under a minute reads «ahora». **First step** and **steps one at a time** (E3). |
+| 2026-11-15 | **Minimal version** and «Hice la mínima» (E4, first half); it appears in the history. First deploy of v3. |
+| 2026-11-16 | Decision: code, tests, Gherkin and documents move to English; only app text stays in Spanish. |
+| 2026-11-17 | **Labels and effort removed** (they were not used): spec, code, tests and the stored fields. |
+| 2026-11-18 | Deploy; the old label and effort fields are deleted from production data. English migration of code, comments and Gherkin begins. |
+| 2026-11-20 | **Annotations removed** (the «me sirvió / me molestó» note): the third tab is gone and `/anotaciones` redirects. Epics are now judged by what people report and by stored data. Deploy; the old data is deleted. |
+| 2026-11-20 | English migration finished: features, QA procedures, packages, spec and pipeline documents renamed and translated. |
+| 2026-11-22 | The `/historial` route becomes `/history`. Deploy. |
+
+What comes next is in [`docs/v3/plan.md`](docs/v3/plan.md): the second field of the minimal version, choosing a task for me, low-capacity days, and the later epics.
 
 ## License
 
