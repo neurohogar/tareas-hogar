@@ -99,7 +99,7 @@ test('Flow 1: navegación e historial vacío', async ({ page }) => {
 	await session(page, TODAY);
 	await links(page, 'Pendientes');
 	await page.getByRole('navigation').getByRole('link', { name: 'Historial' }).click();
-	await expect(page).toHaveURL(/\/historial$/);
+	await expect(page).toHaveURL(/\/history$/);
 	await viewHistory(page, []);
 	await links(page, 'Historial');
 	await page.reload();
@@ -108,7 +108,7 @@ test('Flow 1: navegación e historial vacío', async ({ page }) => {
 	await expect(page.getByRole('heading', { name: 'Pendientes', level: 1 })).toBeVisible();
 	await expect(page.getByRole('listitem')).toHaveCount(0);
 	await expect(page.getByRole('button', { name: '+' })).toBeVisible();
-	await page.goto('/historial');
+	await page.goto('/history');
 	await viewHistory(page, []);
 });
 

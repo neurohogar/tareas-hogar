@@ -180,7 +180,7 @@ test("Flow 9 paso 5: al abrir y al recargar, en las dos pantallas de destino", a
   await sessionWithTask(page);
   const targets = [
     { path: "/", heading: "Pendientes" },
-    { path: "/historial", heading: "Historial" },
+    { path: "/history", heading: "Historial" },
   ];
   for (const { path, heading } of targets) {
     await page.clock.pauseAt(new Date(Date.parse(HOUR) + 3_600_000 * (targets.findIndex((d) => d.path === path) + 1)));

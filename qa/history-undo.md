@@ -35,9 +35,9 @@ Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday
 
 - **Pendientes row and panel**: the contracts of `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/one-off.md`, `qa/edit-delete.md` and `qa/show-completed.md` (completed or not completed).
 - **Navigation**: a bar (role `navigation`) always visible, on both screens.
-  - It has two links, **Pendientes** (route `/`) and **Historial** (route `/historial`).
+  - It has two links, **Pendientes** (route `/`) and **Historial** (route `/history`).
   - The link of the current screen has `aria-current="page"` and the other does not.
-  - Opening `/historial` directly (or reloading there) shows the Historial.
+  - Opening `/history` directly (or reloading there) shows the Historial.
 - **Notice**: a region with role `status`.
   - It appears when tapping the checkbox of a non-completed task (on completing it). Its text includes the task title between angle quotes: `Completaste «Regar»`.
   - It has a **Deshacer** button.
@@ -59,10 +59,10 @@ Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday
 Precondition: empty list, clock at `2026-07-15T08:00:00`.
 
 1. On **Pendientes**, the navigation bar shows **Pendientes** with `aria-current="page"` and **Historial** without it.
-2. Tap **Historial**: the URL ends in `/historial`, the **Historial** heading and the text "Todavía no completaste nada" are seen. **Historial** has `aria-current="page"`.
+2. Tap **Historial**: the URL ends in `/history`, the **Historial** heading and the text "Todavía no completaste nada" are seen. **Historial** has `aria-current="page"`.
 3. Reload: it stays on the empty Historial.
 4. Tap **Pendientes**: it goes back to the list (empty, with **+**).
-5. Open `/historial` directly: the Historial is seen.
+5. Open `/history` directly: the Historial is seen.
 
 ## Flow 2: the notice lasts 5 seconds and Deshacer gives the task back
 

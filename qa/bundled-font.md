@@ -128,7 +128,7 @@ What is seen:
 
 When it appears:
 
-5. It appears on opening, on reloading and on opening with a new version, and on both destination screens (`/`, `/historial`).
+5. It appears on opening, on reloading and on opening with a new version, and on both destination screens (`/`, `/history`).
 6. With the app open, send it to the background and come back (open another tab and come back, with `visibilitychange`): it does not appear.
 7. Without a session, tap **Entrar con Google** and complete the sign-in: the app goes from the sign-in screen to the app without it appearing.
 

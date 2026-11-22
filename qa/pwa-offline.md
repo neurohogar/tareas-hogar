@@ -71,7 +71,7 @@ Same as `qa/edit-delete.md`:
 2. Put the context offline and reload: the app opens directly on
    **Pendientes**, without a login screen and without a network error, and shows the row
    **Regar**.
-3. Open `/historial` by direct URL and reload, still offline: the
+3. Open `/history` by direct URL and reload, still offline: the
    Historial is shown (empty: "Todavía no completaste nada").
 4. Close the page, open a new tab at the root, still offline:
    it opens directly on **Pendientes** with **Regar**.

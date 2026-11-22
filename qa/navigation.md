@@ -22,7 +22,7 @@ Same as `qa/history-undo.md`:
 
 ## Observable contract
 
-- **Navigation bar**: a `navigation` region, always visible, with exactly two links, in this order: **Pendientes** (`/`) and **Historial** (`/historial`). No counter or mark. The link of the current screen has `aria-current="page"` and the other does not.
+- **Navigation bar**: a `navigation` region, always visible, with exactly two links, in this order: **Pendientes** (`/`) and **Historial** (`/history`). No counter or mark. The link of the current screen has `aria-current="page"` and the other does not.
 - **Removed routes**: `/etiquetas` and `/anotaciones` show Pendientes, the address becomes `/`, no notice or message of a missing page appears, and the history entry of the removed route is replaced.
 - **Back**: the browser Back button (`page.goBack()`).
 - **Nothing of annotations**: no control with the accessible name **Anotar**, **Copiar**, **Editar texto** or **Me sirvió** / **Me molestó**, and no text «Anotación guardada», «Anotaciones copiadas», «No se pudo copiar» or «Todavía no hay anotaciones».
@@ -34,7 +34,7 @@ Same as `qa/history-undo.md`:
 Precondition: session started, clock at `2026-07-15T08:00:00`.
 
 1. On the phone, open `/`: the bar has **Pendientes** and **Historial** in that order, nothing else; **Pendientes** has `aria-current="page"` and **Historial** does not.
-2. Tap **Historial**: the address is `/historial`, **Historial** has `aria-current="page"` and **Pendientes** does not.
+2. Tap **Historial**: the address is `/history`, **Historial** has `aria-current="page"` and **Pendientes** does not.
 3. Tap **Pendientes**: back to `/`, with `aria-current` on **Pendientes**.
 4. Repeat 1 to 3 on the wide screen: the same two links in the same order.
 5. Create `Regar`, complete it and go back and forth between the tabs: the bar never gets a counter or a mark.
@@ -43,7 +43,7 @@ Precondition: session started, clock at `2026-07-15T08:00:00`.
 
 Precondition: session started, clock at `2026-07-15T08:00:00`, phone.
 
-1. Open `/historial`. Navigate directly to `/anotaciones` (`page.goto`): Pendientes is shown, the address is `/`, **Pendientes** has `aria-current="page"` and no notice or missing-page message appears.
+1. Open `/history`. Navigate directly to `/anotaciones` (`page.goto`): Pendientes is shown, the address is `/`, **Pendientes** has `aria-current="page"` and no notice or missing-page message appears.
 2. Tap **Back** (`page.goBack()`): the app goes back to Historial; `/anotaciones` does not reappear, nor an empty screen.
 3. In a new tab of the same context (session started), open `/anotaciones` as the first address: Pendientes is shown, the address is `/` and there is no notice.
 
@@ -51,7 +51,7 @@ Precondition: session started, clock at `2026-07-15T08:00:00`, phone.
 
 Precondition: as in Flow 2.
 
-1. Open `/historial`. Navigate directly to `/etiquetas`: Pendientes is shown, the address is `/`, **Pendientes** has `aria-current="page"` and no notice or missing-page message appears.
+1. Open `/history`. Navigate directly to `/etiquetas`: Pendientes is shown, the address is `/`, **Pendientes** has `aria-current="page"` and no notice or missing-page message appears.
 2. Tap **Back**: the app goes back to Historial; `/etiquetas` does not reappear, nor an empty screen.
 3. In a new tab of the same context, open `/etiquetas` as the first address: Pendientes is shown, the address is `/` and there is no notice.
 

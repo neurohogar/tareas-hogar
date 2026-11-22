@@ -53,7 +53,7 @@ puede tardar algunas aperturas").
 1. Open the app on **Portrait phone** and wait for the service worker to be
    active.
 2. Verify the **Manifest** contract.
-3. Open the same manifest from `/historial`, and from the
+3. Open the same manifest from `/history`, and from the
    sign-in screen without a session: it is the same document, with the same
    `orientation`.
 

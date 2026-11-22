@@ -64,7 +64,7 @@ test('Flow 1: two tabs', async ({ page }) => {
 		await page.goto('/');
 		await barIs(page, 'Pendientes');
 		await goA(page, 'Historial');
-		expect(path(page)).toBe('/historial');
+		expect(path(page)).toBe('/history');
 		await barIs(page, 'Historial');
 		await goA(page, 'Pendientes');
 		expect(path(page)).toBe('/');
@@ -88,7 +88,7 @@ for (const [flow, removed] of [
 		await page.setViewportSize(PHONE);
 
 		// Step 1.
-		await page.goto('/historial');
+		await page.goto('/history');
 		await expect(page.getByRole('heading', { name: 'Historial', level: 1 })).toBeVisible();
 		await page.goto(removed);
 		await pendingWithoutNotice(page);
@@ -96,7 +96,7 @@ for (const [flow, removed] of [
 		// Step 2: Atrás does not go back to the removed route.
 		await page.goBack();
 		await expect(page.getByRole('heading', { name: 'Historial', level: 1 })).toBeVisible();
-		expect(path(page)).toBe('/historial');
+		expect(path(page)).toBe('/history');
 		await expect(tab(page, 'Historial')).toHaveAttribute('aria-current', 'page');
 
 		// Step 3: as the first address of a new tab of the same context.

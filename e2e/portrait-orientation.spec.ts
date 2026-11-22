@@ -120,7 +120,7 @@ test('Flow 1: el manifest declara la orientación vertical', async ({ browser })
 	const same = await verifyManifest(page);
 
 	// From Historial: it is the same document.
-	await page.goto('/historial');
+	await page.goto('/history');
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 	expect(await verifyManifest(page)).toEqual(same);
 

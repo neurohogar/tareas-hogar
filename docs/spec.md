@@ -285,7 +285,7 @@ This section no longer exists; the numbering of the others is not shifted so tha
 
 The interface is in **Spanish** and the light or dark theme follows the system.
 
-**Navigation**: a fixed bar with two tabs, in this order: **Pendientes** (route `/`) and **Historial** (route `/historial`). The tab of the current screen is shown as selected. The routes `/etiquetas` and `/anotaciones` no longer exist: opening one of them (a bookmark, the browser history or reloading a tab that was there when the new version arrived) opens **Pendientes**, replacing that entry of the browser history and without a notice, so **Back** does not return to it.
+**Navigation**: a fixed bar with two tabs, in this order: **Pendientes** (route `/`) and **Historial** (route `/history`). The tab of the current screen is shown as selected. The routes `/etiquetas` and `/anotaciones` no longer exist: opening one of them (a bookmark, the browser history or reloading a tab that was there when the new version arrived) opens **Pendientes**, replacing that entry of the browser history and without a notice, so **Back** does not return to it.
 
 **Bundled font and emoji**: the app looks the same on all machines. All the text uses the **Atkinson Hyperlegible Next** font and every emoji is drawn with **Noto Color Emoji**; both travel with the app (§2, §7) and there is no option to change them.
 

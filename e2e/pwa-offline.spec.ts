@@ -127,7 +127,7 @@ test('Flow 2: abrir sin conexión tras el primer login', async ({ browser }) => 
 	await expect(page.getByRole('button', { name: 'Entrar con Google' })).toHaveCount(0);
 	await expect(row(page, 'Regar')).toBeVisible();
 
-	await page.goto('/historial');
+	await page.goto('/history');
 	await expect(page.getByRole('heading', { name: 'Historial', level: 1 })).toBeVisible();
 	await expect(page.getByText(EMPTY_HISTORY)).toBeVisible();
 	await page.reload();
