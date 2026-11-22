@@ -50,6 +50,21 @@ export const essentialSteps: StepDefinition[] = [
 			created(world, (id) => createRecurringCalendar({ title, ...daysOf(shapeOf('weekly on'), days), essential: checked(state) }, id, NOW))
 	},
 	{
+		// The title, the interval and the days do not matter to the mark: the scenario leaves them out.
+		pattern: /^I create a one-off task with a valid title and Esencial (\S+)$/,
+		run: (world, state) => created(world, (id) => createOneOff({ title: 'Tarea', essential: checked(state) }, id, NOW))
+	},
+	{
+		pattern: /^I create a relative recurring task with a valid title, a valid interval and Esencial (\S+)$/,
+		run: (world, state) =>
+			created(world, (id) => createRecurringRelative({ title: 'Tarea', every: 2, unit: 'dias', essential: checked(state) }, id, NOW))
+	},
+	{
+		pattern: /^I create a weekly recurring task with a valid title, valid days and Esencial (\S+)$/,
+		run: (world, state) =>
+			created(world, (id) => createRecurringCalendar({ title: 'Tarea', ...daysOf(shapeOf('weekly on'), 'martes, jueves'), essential: checked(state) }, id, NOW))
+	},
+	{
 		pattern: /^the task was marked essential$/,
 		run: (world) => markEssential(world, theTask(world))
 	},
@@ -74,6 +89,7 @@ export const essentialSteps: StepDefinition[] = [
 	{
 		pattern: new RegExp(`^I mark the task essential on ${P}$`),
 		run: (world, moment) => {
+			world.changeMoment = dateHour(moment);
 			editMe(world, withEssential('checked'), undefined, dateHour(moment));
 			expect(world.errors).toBeUndefined();
 		}

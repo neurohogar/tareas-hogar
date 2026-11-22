@@ -26,6 +26,10 @@ export interface Observes {
 	postponed?: boolean;
 	/** If a Then asserts what the panel says about the postponement (§6.2). */
 	panelText?: boolean;
+	/** If a Then asserts whether the task is paused by the minimal mode (§5.8). */
+	byMode?: boolean;
+	/** If a Then asserts the pause button and the pause text of the panel (§6.2). */
+	pausePanel?: boolean;
 }
 
 const HOUR_MS = 3_600_000;
@@ -89,6 +93,9 @@ export interface Situation {
 	coveredWithoutMoment?: boolean;
 	/** §5.8: a completion after resuming with a moment earlier than reanudadaEn: reanudadaEn is now, so it cannot happen. */
 	anachronistic?: boolean;
+	/** §5.8: the minimal mode is on, and the task is marked essential (§4.1). */
+	mode?: boolean;
+	essential?: boolean;
 	/** §6.2: the edit panel was opened; the pause button it offers is observed. */
 	panel?: boolean;
 	/** §5.9: the stored postponement. */
@@ -412,6 +419,32 @@ function resumeSituation(s: Situation, value: string): boolean {
 	return true;
 }
 
+/** §5.8: while the mode is on, a recurring task that is not essential is paused by the mode. */
+const pausedByMode = (s: Situation): boolean => Boolean(s.mode) && !s.essential && !s.oneOff;
+
+/**
+ * §5.8 (Turning it off): a Reanudar of every recurring task that is not essential and not paused by hand, at the moment of
+ * turning it off. The mode is on beforehand.
+ */
+function turnOff(s: Situation, value: string): boolean {
+	if (!s.mode || MOMENT(value) === undefined) return false;
+	const byMode = pausedByMode(s) && !s.paused;
+	s.mode = false;
+	if (!byMode) return true;
+	s.paused = true;
+	return resumeSituation(s, value);
+}
+
+/** §5.8 (Changing the mark with the mode on): checking Esencial is a Reanudar, unless paused by hand. */
+function markEssential(s: Situation, value: string): boolean {
+	if (MOMENT(value) === undefined) return false;
+	const byMode = pausedByMode(s) && !s.paused;
+	s.essential = true;
+	if (!byMode) return true;
+	s.paused = true;
+	return resumeSituation(s, value);
+}
+
 function declare(s: Situation, calendar: Calendar | undefined, created?: string): boolean {
 	s.calendar = calendar;
 	if (created !== undefined) s.created = MOMENT(created) === undefined ? undefined : new Date(MOMENT(created) as number);
@@ -579,6 +612,27 @@ const RULES: Rule[] = [
 	[/^the first step of the task is (.*)$/, () => undefined],
 	// §4.1 and §5: the minimal version has no state: it does not change the task's state.
 	[/^the minimal version of the task is (.*)$/, () => undefined],
+	// §4.1: the essential mark does not change the status (the minimal mode is off in these scenarios).
+	[/^the task was marked essential$/, (s) => void (s.essential = true)],
+	[/^the minimal mode is (on|off)$/, (s, [m]) => void (s.mode = m === 'on')],
+	// §4.1, §5.8: created with the Esencial check; the title and the days only have to be valid (the pause does not depend on them).
+	[
+		/^I create a relative recurring task with title (.+) every (\S+) (\S+) and Esencial (checked|unchecked)$/,
+		(s, [, c, u, state]) => void Object.assign(s, { every: c, unit: u, essential: state === 'checked' })
+	],
+	[
+		/^I create a weekly recurring task with title (.+) on (.+) and Esencial (checked|unchecked)$/,
+		(s, [, d, state]) => {
+			s.essential = state === 'checked';
+			return declare(s, weekdays(d));
+		}
+	],
+	// §5.8 (Changing the kind with the mode on): a one-off task that becomes recurring follows the rules of a recurring one.
+	[/^I edit the task to relative recurring every (\S+) (\S+)$/, (s, [c, u]) => void Object.assign(s, { oneOff: undefined, every: c, unit: u })],
+	[/^I turn the minimal mode off on (\S+)$/, (s, [t]) => turnOff(s, t)],
+	[/^(?:I turn the minimal mode on|another device turns the minimal mode on)$/, (s) => void (s.mode = true)],
+	[/^I mark the task essential on (\S+)$/, (s, [t]) => markEssential(s, t)],
+	[/^I unmark the task as essential$/, (s) => void (s.essential = false)],
 	[/^the task was completed on (\S+)$/, (s, [t]) => record(s, t)],
 	[/^I complete the task on (\S+)$/, (s, [t]) => complete(s, t)],
 	[/^I query the status on (\S+)$/, (s, [t]) => ((s.now = MOMENT(t)), s.now !== undefined)],
@@ -811,7 +865,7 @@ function classifyStatusOfSituation(s: Situation, observes: Observes): string | u
 export function postponeButton(s: Situation): string | undefined {
 	if (!intervalDeclaredValid(s)) return undefined;
 	if (postponementActive(s)) return 'Quitar posponer';
-	if (s.paused) return 'ninguno';
+	if (s.paused || pausedByMode(s)) return 'ninguno';
 	const status = statusPerItsRule(s, WITHOUT_PROGRESS);
 	if (status === undefined) return undefined;
 	return pendingOOverdue(status) ? 'Posponer' : 'ninguno';
@@ -830,12 +884,24 @@ function postponementText(s: Situation): string | undefined {
 	return dayStart(active.to).getTime() === addDays(today, 1).getTime() ? `Pospuesta hasta mañana ${hour}` : undefined;
 }
 
-/** §6.2: the panel's postpone button and, if a Then asserts it, what it says about the postponement. */
+/**
+ * §6.2 (Minimal mode in the panel): the pause button and the pause text. A one-off task has neither; paused by hand:
+ * «Pausada» and Reanudar; only by the mode: «Pausada por el modo mínimo» and no button; otherwise Pausar.
+ */
+function panelOfPause(s: Situation): string {
+	if (s.oneOff) return 'sin pausa';
+	if (s.paused) return 'Pausada, Reanudar';
+	return pausedByMode(s) ? 'Pausada por el modo mínimo, sin botón' : 'sin texto, Pausar';
+}
+
+/** §6.2: the panel's postpone button and, if a Then asserts it, what it says about the postponement and the pause. */
 function classifyPanelOfPostpone(s: Situation, observes: Observes): string | undefined {
 	const button = postponeButton(s);
-	if (!button || !observes.panelText) return button;
+	if (!button) return button;
+	const withPause = observes.pausePanel ? `${button}, ${panelOfPause(s)}` : button;
+	if (!observes.panelText) return withPause;
 	const text = postponementText(s);
-	return text && `${button}, ${text}`;
+	return text && `${withPause}, ${text}`;
 }
 
 /** §6.2: Posponer only acts if the panel offers it at that moment. Without creadaEn, the task was created before everything. */
@@ -876,6 +942,11 @@ function classifyPaused(s: Situation, observes: Observes): string | undefined {
 	return observes.onlyCheckbox ? 'checkbox disabled' : 'pausada, checkbox disabled';
 }
 
+/** §5.8: if a Then tells apart the pause by the mode from the pause by hand, the classification says which one it is. */
+function withByMode(s: Situation, observes: Observes, classification: string | undefined): string | undefined {
+	return classification && observes.byMode ? `${classification}, ${pausedByMode(s) ? 'por el modo' : 'a mano'}` : classification;
+}
+
 /** §5.3: with the queried state, the occurrence covered by the new completion, if a Then asserts it. */
 function withCovered(s: Situation, observes: Observes, classification: string): string | undefined {
 	if (!observes.covered || s.now === undefined) return classification;
@@ -891,7 +962,7 @@ export function classifySituation(s: Situation, observes: Observes): string | un
 	if (observes.postponed) return s.postponed && `pospuesta ${s.postponed.from} ${s.postponed.to}`;
 	if (s.postponePanel) return classifyPanelOfPostpone(s, observes);
 	if (s.panel) return pauseButton(s);
-	if (s.paused) return classifyPaused(s, observes);
+	if (s.paused || pausedByMode(s)) return withByMode(s, observes, classifyPaused(s, observes));
 	const status = classifyStatusOfSituation(s, observes);
 	const classification = status === undefined ? undefined : withCovered(s, observes, status);
 	if (classification === undefined) return undefined;
@@ -906,6 +977,8 @@ export function classifySituation(s: Situation, observes: Observes): string | un
 
 export interface OrderTask {
 	title: string;
+	/** §4.1: marked essential; with the minimal mode on, only these are in view (§6.1). */
+	essential?: boolean;
 	created: number;
 	/** One-off: its due date (day), if it has one. */
 	limit?: Date;
@@ -1042,7 +1115,34 @@ function withTitle(tasks: OrderTask[], title: string): OrderTask | undefined {
 	return tasks.find((t) => t.title === title);
 }
 
+/** The task of the scenario, when there is only one: the steps without a title act on it. */
+function theOnly(tasks: OrderTask[]): OrderTask | undefined {
+	return tasks.length === 1 ? tasks[0] : undefined;
+}
+
+function setEssential(task: OrderTask | undefined, essential: boolean): boolean {
+	if (task) task.essential = essential;
+	return task !== undefined;
+}
+
+function becomesOneOff(task: OrderTask | undefined): boolean {
+	if (task) task.oneOff = true;
+	return task !== undefined;
+}
+
 export const ORDER_RULES: OrderRule[] = [
+	// §5.8 (Changing the mark with the mode on): only a one-off task is modeled here (it is hidden or back as it was).
+	[/^I unmark the task as essential$/, (ts) => setEssential(theOnly(ts), false)],
+	[/^I mark the task essential on (\S+)$/, (ts, [m]) => MOMENT(m) !== undefined && theOnly(ts)?.oneOff === true && setEssential(theOnly(ts), true)],
+	// §5.8 (Changing the kind with the mode on): a non-essential recurring task that becomes one-off is hidden.
+	[/^I edit the task to one-off without a due date$/, (ts) => becomesOneOff(theOnly(ts))],
+	// §4.1 and §6.1: the essential mark does not change the list order, but with the mode on only the essential are in view.
+	[/^the task (\S+) was marked essential$/, (ts, [t]) => {
+			const task = withTitle(ts, t);
+			if (task) task.essential = true;
+			return task !== undefined;
+		}
+	],
 	// §4.1 and §6.1: the first step does not change the list order; the task has to exist.
 	[/^the first step of the task (\S+) is (.*)$/, (ts, [t]) => withTitle(ts, t) !== undefined],
 	// §4.1 and §6.1: the minimal version does not change the list order; the task has to exist.
@@ -1156,6 +1256,8 @@ export interface PendingView {
 	order: string;
 	completedList: string;
 	paused: string;
+	/** §6.1: the Modo mínimo line above the list; shown exactly while the mode is on. */
+	line?: string;
 }
 
 /**
@@ -1169,11 +1271,14 @@ export function pendingOrder(steps: StepOracle[], row: RowOracle): PendingView |
 	let anyMoment = false;
 	let showCompleted = false;
 	let showPaused = false;
+	let mode = false;
 	for (const step of steps) {
 		const text = resolve(step.text, row);
 		if (text === undefined) return undefined;
 		const query = /^I query Pendientes on (\S+)$/.exec(text);
-		if (query) now = nowOf(query[1]);
+		if (/^the minimal mode is (?:on|off)$/.test(text)) mode = text.endsWith('on');
+		else if (text === 'I turn the minimal mode on' || text === 'another device turns the minimal mode on') mode = true;
+		else if (query) now = nowOf(query[1]);
 		else if (text === 'I query Pendientes at any moment') anyMoment = true;
 		else if (text === SHOW_COMPLETED) showCompleted = true;
 		else if (text === SHOW_PAUSED) showPaused = true;
@@ -1182,10 +1287,13 @@ export function pendingOrder(steps: StepOracle[], row: RowOracle): PendingView |
 			if (!rule?.c || !rule.apply(tasks, rule.c.slice(1))) return undefined;
 		}
 	}
+	// §6.1: with the mode on, only the essential tasks are in view.
+	if (mode) tasks.splice(0, tasks.length, ...tasks.filter((t) => t.essential));
 	// A paused task does not depend on ahora: it goes last, by title (§6.1).
 	if (anyMoment && tasks.some((t) => !t.paused && (!t.oneOff || t.limit))) return undefined;
 	if (!anyMoment && now === undefined) return undefined;
-	return pendingView(tasks, now, showCompleted, showPaused);
+	const view = pendingView(tasks, now, showCompleted, showPaused);
+	return view && { ...view, line: mode ? 'shown' : 'not shown' };
 }
 
 /** The step that turns on the "Mostrar completadas" check (§6.1); without it, it is off. */

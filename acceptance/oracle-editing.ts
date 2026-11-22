@@ -74,6 +74,8 @@ interface Doc {
 	currentStep?: number;
 	/** §4.1 (Versión mínima): one line, trimmed; without the field, no minimal version. An independent field (§7). */
 	minimalVersion?: string;
+	/** §4.1 (Essential): `true` or without the field; an independent field (§7). */
+	essential?: boolean;
 	kind: 'puntual' | 'periodica';
 	limit?: Date;
 	recurrence?: Recurrence;
@@ -156,6 +158,7 @@ interface Data {
 	firstStep?: string;
 	steps?: string[];
 	minimalVersion?: string;
+	essential?: boolean;
 	kind: 'puntual' | 'periodica';
 	limit?: Date;
 	recurrence?: Recurrence;
@@ -181,7 +184,7 @@ function recurrenceKey(r: Recurrence | undefined): string {
 const scheduleKey = (h: TimeWindow[] | undefined) => (h === undefined ? '-' : h.map((v) => `${v.from}-${v.to}`).join(' '));
 
 const docKey = (d: Doc) =>
-	JSON.stringify([d.id, d.title, d.emoji, d.note, d.firstStep, d.steps, d.currentStep, d.minimalVersion, d.kind, d.limit?.getTime(), recurrenceKey(d.recurrence), scheduleKey(d.schedule), d.created, d.paused, d.resumed, d.postponed]);
+	JSON.stringify([d.id, d.title, d.emoji, d.note, d.firstStep, d.steps, d.currentStep, d.minimalVersion, d.essential, d.kind, d.limit?.getTime(), recurrenceKey(d.recurrence), scheduleKey(d.schedule), d.created, d.paused, d.resumed, d.postponed]);
 
 const moment = (value: string) => date(value) ?? undecided(`fecha y hora ${value}`);
 const dayOf = (value: string) => day(value) ?? undecided(`fecha ${value}`);
@@ -317,7 +320,7 @@ function dataOf(text: string, title: string): Data {
 
 /** The current values of a task, as the panel loads them when editing. */
 function docData(d: Doc): Data {
-	const fields = { title: d.title, emoji: d.emoji, note: d.note, firstStep: d.firstStep, steps: d.steps, minimalVersion: d.minimalVersion, schedule: d.schedule, timeWindowsWritten: d.schedule?.length ?? 0, reasons: [] };
+	const fields = { title: d.title, emoji: d.emoji, note: d.note, firstStep: d.firstStep, steps: d.steps, minimalVersion: d.minimalVersion, essential: d.essential, schedule: d.schedule, timeWindowsWritten: d.schedule?.length ?? 0, reasons: [] };
 	if (d.kind === 'puntual') return { ...fields, kind: 'puntual', limit: d.limit };
 	return { ...fields, kind: 'periodica', recurrence: d.recurrence };
 }
@@ -364,6 +367,7 @@ function create(m: OracleWorld, data: Data, created: number | undefined): void {
 			firstStep: data.firstStep,
 			steps: data.steps,
 			minimalVersion: data.minimalVersion,
+			essential: data.essential,
 			kind: data.kind,
 			limit: data.limit,
 			recurrence: data.recurrence,
@@ -390,6 +394,7 @@ function changeOf(base: Doc, updated: Data): Record<string, unknown> {
 	// §7: `pasos` is a single field replaced whole, only if it changed; the edit never writes `pasoActual`.
 	if (JSON.stringify(base.steps) !== JSON.stringify(updated.steps)) change.steps = updated.steps ?? null;
 	if (base.minimalVersion !== updated.minimalVersion) change.minimalVersion = updated.minimalVersion ?? null;
+	if (base.essential !== updated.essential) change.essential = updated.essential ?? null;
 	if (scheduleKey(base.schedule) !== scheduleKey(updated.schedule)) change.schedule = updated.schedule ?? null;
 	if (base.kind !== updated.kind) {
 		return { ...change, kind: updated.kind, limit: updated.limit ?? null, recurrence: updated.recurrence ?? null };
@@ -755,6 +760,11 @@ const CREATIONS: Step[] = [
 	[/^the first step of the task is (.*)$/, (m, [p]) => void (only(m).firstStep = p.trim() || undefined)],
 	[/^the first step of the task (\S+) is (.*)$/, (m, [t, p]) => void (withTitle(m, t).firstStep = p.trim() || undefined)],
 	// §4.1 (Versión mínima): an already stored one (not a change from this device); it is stored trimmed.
+	// §4.1 (Essential): the mark is true or absent; checking or unchecking it is an edit of that field alone (§7).
+	[/^the task was marked essential$/, (m) => void (only(m).essential = true)],
+	[/^the task (\S+) was marked essential$/, (m, [t]) => void (withTitle(m, t).essential = true)],
+	[/^I set Esencial to (checked|unchecked)$/, (m, [s]) => editMe(m, undefined, (base) => ({ ...docData(base), essential: s === 'checked' || undefined }))],
+	[/^another device, without seeing that change, sets Esencial to (checked|unchecked)$/, (m, [s]) => editsOther(m, (base) => ({ ...docData(base), essential: s === 'checked' || undefined }))],
 	[/^the minimal version of the task is (.*)$/, (m, [v]) => void (only(m).minimalVersion = v.trim() || undefined)],
 	[/^the minimal version of the task (\S+) is (.*)$/, (m, [t, v]) => void (withTitle(m, t).minimalVersion = v.trim() || undefined)],
 	// §4.1 (Pasos): the already stored steps (not a change from this device), with the first step and the extra steps.
@@ -1322,6 +1332,7 @@ const OBSERVATIONS: Observation[] = [
 	[/^a completion without a covered occurrence was recorded$/, (m) => String(fresh(m).covered === undefined && fresh(m).startCovered === undefined)],
 	[/^the recorded completion is from (\S+)$/, (m) => String(fresh(m).at)],
 	[/^Pendientes shows in order (.*)$/, (m) => m.order ?? undecided('sin consulta of Pendientes')],
+	[/^the stored essential mark is (\S+)$/, (m) => (only(m).essential === true ? 'true' : 'absent')],
 	[/^the task has title (.+)$/, (m) => theTask(m).title],
 	[/^the task is (?:one-off|recurring)$/, (m) => theTask(m).kind],
 	[/^its due date is (\S+)$/, (m) => (theTask(m).kind === 'puntual' ? day_(theTask(m).limit) : undecided('no is one-off'))],

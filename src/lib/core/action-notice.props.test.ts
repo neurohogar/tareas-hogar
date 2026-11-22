@@ -19,6 +19,7 @@ const pausing = (data: TaskData, moment: Date): NoticeAction => ({
 	task: RELATIVE,
 	completions: [],
 	now: moment,
+	minimalModeOn: false,
 	form: { data }
 });
 const staysRelative = (t: string): TaskData => ({ shape: 'relativa', title: t, every: 2, unit: 'dias' });

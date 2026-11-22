@@ -23,6 +23,7 @@ function onOrOff(value: string): boolean {
 /** §5.8 (Turning it off): active = false and the resume of every task it brings back, in a single batch. */
 function turnOff(world: World, now: Date): void {
 	rememberBeforeOfMyChange(world);
+	world.changeMoment = now;
 	for (const { taskId, change } of resumesOnTurningOff(tasksOf(world), now)) world.docs = applyChange(world.docs, taskId, change);
 	setMode(world, false);
 }
@@ -52,8 +53,11 @@ export const minimalModeSteps: StepDefinition[] = [
 		run: (world, not) => expect(pausedByMinimalMode(theTask(world), minimalOn(world))).toBe(not === undefined)
 	},
 	{
-		pattern: new RegExp(`^the task was resumed on ${P}$`),
-		run: (world, moment) => expect(theDoc(world).resumedAt).toEqual(dateHour(moment))
+		pattern: /^the task was resumed at that moment$/,
+		run: (world) => {
+			expect(world.changeMoment).toBeDefined();
+			expect(theDoc(world).resumedAt).toEqual(world.changeMoment);
+		}
 	},
 	{
 		pattern: /^the task has no resume moment$/,

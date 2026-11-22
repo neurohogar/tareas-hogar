@@ -20,6 +20,7 @@ function inNotice(action: PanelAction, task: Task, changes: Partial<NoticeAction
 		task,
 		completions: [],
 		now: NOW,
+		minimalModeOn: false,
 		form: { data: { ...taskData(task), title: `${task.title} nuevo` } },
 		...changes
 	};

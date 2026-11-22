@@ -12,6 +12,7 @@ import type { CommonData } from '../../src/lib/core/creation';
 import { createOneOff } from '../../src/lib/core/create-one-off';
 import { dataOnCreate, type TaskData } from '../../src/lib/core/task-data';
 import { applyChange, type TaskChange } from '../../src/lib/core/task-document';
+import { minimalModeOn } from '../../src/lib/core/minimal-mode';
 import type { TypedSchedule } from '../../src/lib/core/schedule';
 import { POSTPONE_OPTIONS } from '../../src/lib/core/postponement';
 import type { Task } from '../../src/lib/core/task';
@@ -55,7 +56,7 @@ function timeWindow(value: string): TypedSchedule[number] {
 function actionContext(world: World, changes: PanelChanges, taskOnOpen: Task, action: PanelAction): NoticeAction {
 	const task = tasksOf(world).find(({ id }) => id === taskOnOpen.id);
 	if (!task) throw new Error('The task of the panel no longer exists');
-	return { action, taskOnOpen, task, completions: world.completions, now: theMoment(changes), form: changes.form };
+	return { action, taskOnOpen, task, completions: world.completions, now: theMoment(changes), form: changes.form, minimalModeOn: minimalModeOn(world.minimalMode) };
 }
 
 /** What another device or the passage of time did while the panel was open (§6.2, §7). */
@@ -219,7 +220,7 @@ function saveFromClosing(world: World, changes: PanelChanges): void {
 	const { taskOnOpen, form } = changes;
 	const current = taskOnOpen && tasksOf(world).find(({ id }) => id === taskOnOpen.id);
 	if (current) {
-		const editing = editFromPanel(current, form, theMoment(changes));
+		const editing = editFromPanel(current, form, theMoment(changes), minimalModeOn(world.minimalMode));
 		if (!editing.ok) return failureSave(world, changes, editing.errors);
 		return act(world, current, editing.change);
 	}

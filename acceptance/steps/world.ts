@@ -41,6 +41,8 @@ export interface World extends Saved {
 	showPaused?: boolean;
 	/** The state of the minimal mode (§5.8, §7), a single value synced between devices; without the document, the mode is off. */
 	minimalMode?: MinimalModeDocument;
+	/** The moment of my last change of the mode or of the essential mark (§5.8), the one a resume takes as `reanudadaEn`. */
+	changeMoment?: Date;
 	/** The open edit panel (§6.2): the pause button it offers, the pause text it says and, if it was opened at a given moment, what it says about the postponement. */
 	panel?: { pause: 'pausar' | 'reanudar' | undefined; pauseText?: string; postponement?: { button: 'posponer' | 'quitar' | undefined; text: string | undefined }; changes: PanelChanges };
 	/** The undo notice (§5.4) is in view: it does not depend on the panel, it stays open even if the panel closes. */

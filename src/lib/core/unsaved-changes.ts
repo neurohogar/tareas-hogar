@@ -42,7 +42,7 @@ function emojiKey(emoji = '') {
 
 /** Two data with the same key are the same for Save. */
 function dataKey(data: TaskData): string {
-	return JSON.stringify([data.title.trim(), emojiKey(data.emoji), freeTextKey(data.note), normalizeSteps(data.firstStep, data.steps), freeTextKey(data.minimalVersion), data.essential === true, scheduleKey(data.schedule), repetitionKey(data)]);
+	return JSON.stringify([data.title.trim(), emojiKey(data.emoji), freeTextKey(data.note), normalizeSteps(data.firstStep, data.steps), freeTextKey(data.minimalVersion), Boolean(data.essential), scheduleKey(data.schedule), repetitionKey(data)]);
 }
 
 /**

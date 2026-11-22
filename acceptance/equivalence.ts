@@ -11,7 +11,7 @@
 // If any Then step verifies something else (values, progress, the recorded
 // completion), the mutation is never filtered.
 import type { Feature, Scenario } from './ir';
-import { classifyRow, elements, isChronologyImpossible, isScenarioOfFont, observeFont, pendingOrder, type RowOracle, type StepOracle, type PendingView } from './oracle';
+import { build, classifyRow, elements, isChronologyImpossible, isScenarioOfFont, observeFont, pendingOrder, type RowOracle, type StepOracle, type PendingView } from './oracle';
 import { isScenarioOfChanges, isScenarioOfPanel, observeChanges, observePanel } from './oracle-panel';
 import { isScenarioOfCleanups, observeCleanups } from './oracle-cleanups';
 import { isScenarioOfEditing, observeEditing } from './oracle-editing';
@@ -32,8 +32,15 @@ const CLASSIFICATION_THEN = [
 	// §5.8 and §6.2: the pause and the panel's pause button.
 	/^the task is (?:not )?paused$/,
 	/^the task has no status$/,
+	// §5.8: the pause by the minimal mode and the stored resume moment.
+	/^the task is (?:not )?paused by the minimal mode$/,
+	/^the task was resumed at that moment$/,
+	/^the task has no resume moment$/,
 	/^the edit panel offers <[A-Za-z0-9_]+>$/,
 	/^the edit panel does not offer pause$/,
+	// §6.2 (Minimal mode in the panel): what the panel says about the pause and its buttons.
+	/^the edit panel says (?:<[A-Za-z0-9_]+>|no pause text)$/,
+	/^the edit panel offers (?:Reanudar|Pausar|Borrar tarea)$/,
 	// §5.9 and §6.2: the stored postponement, and the panel's postpone button and text.
 	/^the task is postponed from <[A-Za-z0-9_]+> to <[A-Za-z0-9_]+>$/,
 	/^the task is not postponed$/,
@@ -83,7 +90,8 @@ const PENDING_THENS: [RegExp, keyof PendingView][] = [
 	[/^Pendientes shows no task$/, 'order'],
 	[/^Pendientes shows in order <([A-Za-z0-9_]+)>$/, 'order'],
 	[/^Pendientes shows as completed <([A-Za-z0-9_]+)>$/, 'completedList'],
-	[/^Pendientes shows as paused <([A-Za-z0-9_]+)>$/, 'paused']
+	[/^Pendientes shows as paused <([A-Za-z0-9_]+)>$/, 'paused'],
+	[/^the Modo mínimo line is <([A-Za-z0-9_]+)>$/, 'line']
 ];
 
 function pendingThen(text: string): { column?: string; part: keyof PendingView } | undefined {
@@ -180,6 +188,22 @@ function isEquivalentWhetherStaysFulfilling(observe: Observer, feature: Feature,
 	return plays(original) && plays({ ...original, [candidate.key]: candidate.mutated });
 }
 
+/** §4.1: the stored essential mark does not depend on the dates of the scenario. */
+const STORED_MARK = /^the stored essential mark is (?:true|absent|<[A-Za-z0-9_]+>)$/;
+
+/**
+ * A scenario whose only Then is the stored essential mark: a mutation is equivalent when the oracle still builds the
+ * situation (the steps stay possible) and no Then names the column; the mark is independent of the dates.
+ */
+function isEquivalentOfMark(feature: Feature, scenario: Scenario, candidate: Candidate): boolean | undefined {
+	const steps = stepsOf(feature, scenario);
+	if (!steps.some(({ inThen }) => inThen) || !steps.every(({ step, inThen }) => !inThen || STORED_MARK.test(step.text))) return undefined;
+	if (namesThen(feature, scenario, candidate.key)) return false;
+	const entries = steps.filter(({ inThen }) => !inThen).map(({ step }) => step);
+	const original = scenario.examples[candidate.example];
+	return build(entries, original) !== undefined && build(entries, { ...original, [candidate.key]: candidate.mutated }) !== undefined;
+}
+
 export function isEquivalent(feature: Feature, candidate: Candidate): boolean {
 	const scenario = feature.scenarios[candidate.scenario];
 	if (isScenarioOfCleanups(stepsOf(feature, scenario).map(({ step }) => step.text))) {
@@ -203,6 +227,8 @@ export function isEquivalent(feature: Feature, candidate: Candidate): boolean {
 	if (isScenarioOfEditing(stepsOf(feature, scenario).map(({ step }) => step.text))) {
 		return isEquivalentOfEditing(feature, scenario, candidate);
 	}
+	const ofMark = isEquivalentOfMark(feature, scenario, candidate);
+	if (ofMark !== undefined) return ofMark;
 	const ofOrder = isEquivalentOfOrder(feature, scenario, candidate);
 	if (ofOrder !== undefined) return ofOrder;
 	if (!onlyObservesClassification(feature, scenario) || namesThen(feature, scenario, candidate.key)) return false;
@@ -221,7 +247,9 @@ export function isEquivalent(feature: Feature, candidate: Candidate): boolean {
 	const covered = observesInThen(/^a completion was recorded that covers /);
 	const postponed = observesInThen(/^the task is postponed from /);
 	const panelText = observesInThen(/^the edit panel (?:shows|does not say it is postponed)/);
-	const observes = { progress, checkbox, covered, postponed, panelText, onlyAppearance: !status && !progress, onlyCheckbox: checkbox && !status && !progress && !appearance };
+	const byMode = observesInThen(/^the task is (?:not )?paused by the minimal mode$/);
+	const pausePanel = observesInThen(/^the edit panel says /);
+	const observes = { pausePanel, byMode, progress, checkbox, covered, postponed, panelText, onlyAppearance: !status && !progress, onlyCheckbox: checkbox && !status && !progress && !appearance };
 	const before = classifyRow(entries, original, observes);
 	return before !== undefined && before === classifyRow(entries, mutated, observes);
 }

@@ -23,8 +23,8 @@ export interface NoticeAction {
 	completions: readonly Completion[];
 	now: Date;
 	form: PanelForm;
-	/** Whether the minimal mode is on (§5.8); without it, the mode is off. */
-	minimalModeOn?: boolean;
+	/** Whether the minimal mode is on (§5.8). */
+	minimalModeOn: boolean;
 }
 
 type ActionConditions = Pick<NoticeAction, 'action' | 'completions' | 'now' | 'minimalModeOn'>;
