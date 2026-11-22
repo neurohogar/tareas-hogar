@@ -14,6 +14,7 @@ import { P, TITLE, dateHour, numeric, unit } from './values';
 import {
 	OTHER,
 	deleteSaved,
+	minimalOn,
 	theDoc,
 	theTask,
 	theTaskTitled,
@@ -40,7 +41,7 @@ interface Editor {
 
 /** `now`: the moment of saving, if the step gives it (turning a paused task into a one-off resumes it, §5.8). */
 export function editAndSave(world: World, task: Task, data: DataNew, now?: Date): void {
-	const result = edit(task, data(task), now);
+	const result = edit(task, data(task), now, minimalOn(world));
 	if (!result.ok) world.errors = result.errors;
 	else world.docs = applyChange(world.docs, task.id, result.change);
 }
@@ -96,10 +97,10 @@ const DEFINITIONS: { text: string; data: (title: string, ...values: string[]) =>
 	}
 ];
 
-/** Changing the kind in the panel leaves the emoji, note, steps, minimal version and schedule as they were. */
-function fieldsThatKeeps(task: Task): Pick<TaskData, 'emoji' | 'note' | 'firstStep' | 'steps' | 'minimalVersion' | 'schedule'> {
-	const { emoji, note, firstStep, steps, minimalVersion, schedule } = taskData(task);
-	return { ...(emoji && { emoji }), ...(note && { note }), ...(firstStep && { firstStep }), ...(steps && { steps }), ...(minimalVersion && { minimalVersion }), ...(schedule && { schedule }) };
+/** Changing the kind in the panel leaves the emoji, note, steps, minimal version, essential mark and schedule as they were. */
+function fieldsThatKeeps(task: Task): Pick<TaskData, 'emoji' | 'note' | 'firstStep' | 'steps' | 'minimalVersion' | 'essential' | 'schedule'> {
+	const { emoji, note, firstStep, steps, minimalVersion, essential, schedule } = taskData(task);
+	return { ...(emoji && { emoji }), ...(note && { note }), ...(firstStep && { firstStep }), ...(steps && { steps }), ...(minimalVersion && { minimalVersion }), ...(essential && { essential }), ...(schedule && { schedule }) };
 }
 
 const stepsOfEditA: StepDefinition[] = EDITORS.flatMap((editor) =>

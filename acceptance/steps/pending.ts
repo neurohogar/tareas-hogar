@@ -2,11 +2,11 @@ import { expect } from 'vitest';
 import { pendingRows } from '../../src/lib/core/pending';
 import { ANY_MOMENT } from './recurring-relative';
 import { P, dateHour, list } from './values';
-import { tasksOf, type RowQueried, type StepDefinition, type World } from './world';
+import { minimalOn, tasksOf, type RowQueried, type StepDefinition, type World } from './world';
 
 /** The rows of the list, with the Mostrar completadas and Mostrar pausadas checks (§6.1). */
 function rowsIn(world: World, now: Date): RowQueried[] {
-	const rows = pendingRows(tasksOf(world), world.completions, now, world.showCompleted, world.showPaused);
+	const rows = pendingRows(tasksOf(world), world.completions, now, world.showCompleted, world.showPaused, minimalOn(world));
 	return rows.map(({ task, completed, status, dateText, firstStepText: textOfFirstStep, stepButtons, minimal }) => ({
 		title: task.title,
 		completed,

@@ -9,6 +9,7 @@ import type { StepButtons } from '../../src/lib/core/current-step';
 import type { MinimalLine } from '../../src/lib/core/minimal-version';
 import type { HistoryGroup } from '../../src/lib/core/history';
 import { taskData } from '../../src/lib/core/task-data';
+import { minimalModeOn, type MinimalModeDocument } from '../../src/lib/core/minimal-mode';
 import type { Completion, Task } from '../../src/lib/core/task';
 
 /** What is stored: the task documents, and the completions. */
@@ -38,8 +39,10 @@ export interface World extends Saved {
 	showCompleted?: boolean;
 	/** The "Mostrar pausadas" check of this device (§6.1); without it, at its initial value. */
 	showPaused?: boolean;
-	/** The open edit panel (§6.2): the pause button it offers and, if it was opened at a given moment, what it says about the postponement. */
-	panel?: { pause: 'pausar' | 'reanudar' | undefined; postponement?: { button: 'posponer' | 'quitar' | undefined; text: string | undefined }; changes: PanelChanges };
+	/** The state of the minimal mode (§5.8, §7), a single value synced between devices; without the document, the mode is off. */
+	minimalMode?: MinimalModeDocument;
+	/** The open edit panel (§6.2): the pause button it offers, the pause text it says and, if it was opened at a given moment, what it says about the postponement. */
+	panel?: { pause: 'pausar' | 'reanudar' | undefined; pauseText?: string; postponement?: { button: 'posponer' | 'quitar' | undefined; text: string | undefined }; changes: PanelChanges };
 	/** The undo notice (§5.4) is in view: it does not depend on the panel, it stays open even if the panel closes. */
 	noticeOfUndoOpen?: boolean;
 	/** Back was already tapped with the panel open (§6.2). */
@@ -83,6 +86,8 @@ export interface AppOpening {
 	auth: number;
 	tasks: number;
 	completions: number;
+	/** When the first response of the state of the minimal mode arrives (§6.6); by default, at once. */
+	minimalMode: number;
 	atkinson: OpeningFont;
 	noto: OpeningFont;
 	remembered: boolean;
@@ -117,6 +122,9 @@ export interface RowQueried {
 	/** The «Mínima: …» line of the row and whether «Hice la mínima» is enabled (§6.1); without it, the row does not show it. */
 	minimal: MinimalLine | undefined;
 }
+
+/** Whether the minimal mode is on in this scenario. */
+export const minimalOn = (world: World): boolean => minimalModeOn(world.minimalMode);
 
 /** The subject of the other-device steps: it acts on what was stored before my last change. */
 export const OTHER = 'another device, without seeing that change,';

@@ -22,9 +22,11 @@ import { minimalVersionSteps } from './minimal-version';
 import { postponeSteps } from './postpone';
 import { oneOffSteps } from './one-off';
 import { rowTextSteps } from './row-text';
+import { essentialSteps } from './essential';
+import { minimalModeSteps } from './minimal-mode';
 import { lastTimeSteps } from './last-time';
 import type { StepDefinition } from './world';
 
 export { createWorld, type StepDefinition, type World } from './world';
 
-export const steps: StepDefinition[] = [...createSteps, ...recurringRelativeSteps, ...recurringCalendarSteps, ...oneOffSteps, ...pendingSteps, ...editingSteps, ...historySteps, ...undoSteps, ...emojiAndNoteSteps, ...recentEmojisSteps, ...checkboxSteps, ...scheduleSteps, ...lastTimeSteps, ...pauseSteps, ...postponeSteps, ...panelTabsSteps, ...unsavedChangesSteps, ...fontSteps, ...loadingScreenSteps, ...portraitOrientationSteps, ...cleanupsSteps, ...rowTextSteps, ...firstStepSteps, ...taskStepsSteps, ...minimalVersionSteps];
+export const steps: StepDefinition[] = [...createSteps, ...recurringRelativeSteps, ...recurringCalendarSteps, ...oneOffSteps, ...pendingSteps, ...editingSteps, ...historySteps, ...undoSteps, ...emojiAndNoteSteps, ...recentEmojisSteps, ...checkboxSteps, ...scheduleSteps, ...lastTimeSteps, ...pauseSteps, ...postponeSteps, ...panelTabsSteps, ...unsavedChangesSteps, ...fontSteps, ...loadingScreenSteps, ...portraitOrientationSteps, ...cleanupsSteps, ...rowTextSteps, ...firstStepSteps, ...taskStepsSteps, ...minimalVersionSteps, ...essentialSteps, ...minimalModeSteps];
