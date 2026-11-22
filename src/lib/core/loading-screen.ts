@@ -24,6 +24,8 @@ export interface WaitStatus {
 	auth: AuthResponse;
 	tasksResponded: boolean;
 	completionsResponded: boolean;
+	/** The first response of the minimal mode state (§7); without the field, it already responded. */
+	minimalModeResponded?: boolean;
 	atkinson: FontStatus;
 	noto: FontStatus;
 	online: boolean;
@@ -36,7 +38,7 @@ function fontMayStillArrive(font: FontStatus, online: boolean): boolean {
 }
 
 function dataResponded(status: WaitStatus): boolean {
-	return status.tasksResponded && status.completionsResponded;
+	return status.tasksResponded && status.completionsResponded && status.minimalModeResponded !== false;
 }
 
 function openingWithSessionReady(status: WaitStatus): boolean {

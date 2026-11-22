@@ -3,7 +3,9 @@
 import type { CreationErrors } from './creation';
 import { createFromData, type TaskData } from './task-data';
 import type { TaskChange } from './task-document';
-import { isPaused, resume } from './pause';
+import { isPaused, pausedByMinimalMode, resume } from './pause';
+import { resumeFromMinimalMode } from './minimal-mode';
+import { isEssential } from './essential';
 import type { Schedule, Recurrence, Task } from './task';
 
 export type EditingResult = { ok: true; change: TaskChange } | { ok: false; errors: CreationErrors };
@@ -62,6 +64,12 @@ function wholeFieldChange<T>(field: 'schedule' | 'steps', before: T | undefined,
 	return 'value' in change ? { [field]: change.value } : {};
 }
 
+/** Spec §4.1 and §7: the mark is written only if it changed; unchecking removes it. */
+function essentialChange(before: Task, after: Task): TaskChange {
+	if (isEssential(before) === isEssential(after)) return {};
+	return { essential: isEssential(after) ? true : null };
+}
+
 /** The fields in which the two tasks differ; currentStep is not edited in the panel (§6.2). */
 function changeBetween(before: Task, after: Task): TaskChange {
 	return {
@@ -72,6 +80,7 @@ function changeBetween(before: Task, after: Task): TaskChange {
 		...valueChange('firstStep', before.firstStep, after.firstStep),
 		...wholeFieldChange('steps', before.steps, after.steps, stepsKey),
 		...valueChange('minimalVersion', before.minimalVersion, after.minimalVersion),
+		...essentialChange(before, after),
 		...(before.kind === after.kind ? fieldsChange(before, after) : kindChange(after))
 	};
 }
@@ -85,13 +94,21 @@ function changeBetween(before: Task, after: Task): TaskChange {
  * that another device changed while the panel was open, and that I did not
  * touch, is not overwritten (§7, the last change per field wins).
  *
- * Spec §5.8: turning a paused recurring task into a one-off resumes it at `now` (the
- * moment of saving); without `now`, it does not resume it. Everything else leaves it paused.
+ * Spec §5.8: a paused task that the save leaves unpaused is resumed at `now` (the
+ * moment of saving): a paused recurring task turned into a one-off and, with
+ * `minimalModeOn`, a task of the mode marked essential and not paused by hand.
+ * Without `now`, it does not resume it. Everything else leaves it paused.
  */
-export function edit(task: Task, data: TaskData, now?: Date): EditingResult {
+export function edit(task: Task, data: TaskData, now?: Date, minimalModeOn = false): EditingResult {
 	const result = createFromData(data, task.id, task.createdAt);
 	if (!result.ok) return result;
 	const change = changeBetween(task, result.task);
-	const isResumed = now && isPaused(task) && result.task.kind === 'puntual';
-	return { ok: true, change: isResumed ? { ...change, ...resume(now) } : change };
+	if (!now || !comesBack(task, result.task, minimalModeOn)) return { ok: true, change };
+	return { ok: true, change: { ...change, ...(isPaused(task) ? resume(now) : resumeFromMinimalMode(now)) } };
+}
+
+/** Paused before the save and not after it: the manual pause stays only on a recurring task. */
+function comesBack(before: Task, after: Task, minimalModeOn: boolean): boolean {
+	const pausedAfter = after.kind === 'periodica' && (isPaused(before) || pausedByMinimalMode(after, minimalModeOn));
+	return isPaused(before, minimalModeOn) && !pausedAfter;
 }

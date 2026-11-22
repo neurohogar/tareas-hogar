@@ -6,6 +6,7 @@ import { createRecurringCalendar, type RecurringCalendarData } from './create-re
 import { createRecurringRelative, type RecurringRelativeData } from './create-recurring-relative';
 import { createOneOff, type OneOffData } from './create-one-off';
 import { isoDay } from './days';
+import { essentialField } from './essential';
 import type { Task } from './task';
 
 export type TaskData =
@@ -16,6 +17,11 @@ export type TaskData =
 /** Spec §6.2: the values the panel opens with when creating; "Se repite" comes as No se repite (one-off). */
 export const DATA_ON_CREATE: TaskData = { shape: 'puntual', title: '' };
 
+/** Spec §6.2 (Esencial): on create, the check starts checked only with the minimal mode on (as the panel opens). */
+export function dataOnCreate(minimalModeOn: boolean): TaskData {
+	return { ...DATA_ON_CREATE, ...essentialField(minimalModeOn) };
+}
+
 /** Validates the data with the rules of its shape (§4.1–§4.2) and, if valid, builds the task. */
 export function createFromData(data: TaskData, id: string, now: Date): CreationResult {
 	if (data.shape === 'puntual') return createOneOff(data, id, now);
@@ -25,8 +31,8 @@ export function createFromData(data: TaskData, id: string, now: Date): CreationR
 
 /** The current values of the task, as the panel loads them when editing: the inverse of createFromData. */
 export function taskData(task: Task): TaskData {
-	const { title, emoji, note, firstStep, steps, minimalVersion, schedule } = task;
-	const commons = { title, ...textFields({ emoji, note, firstStep, minimalVersion }), ...(steps && { steps: [...steps] }), ...(schedule && { schedule: schedule.map((timeWindow) => ({ ...timeWindow })) }) };
+	const { title, emoji, note, firstStep, steps, minimalVersion, essential, schedule } = task;
+	const commons = { title, ...textFields({ emoji, note, firstStep, minimalVersion }), ...essentialField(essential), ...(steps && { steps: [...steps] }), ...(schedule && { schedule: schedule.map((timeWindow) => ({ ...timeWindow })) }) };
 	if (task.kind === 'puntual')
 		return { shape: 'puntual', ...commons, ...(task.dueDate && { dueDate: isoDay(task.dueDate) }) };
 	const { recurrence } = task;

@@ -1,17 +1,38 @@
-// Spec §5.8 (Pause): only recurring tasks can be paused. A paused task has no
-// status; on resuming, it is evaluated as just created at resumedAt.
+// Spec §5.8 (Pause): only recurring tasks can be paused, by hand (paused) or by
+// the minimal mode. A paused task has no status; on resuming, it is evaluated as
+// just created at resumedAt.
 import type { TaskChange } from './task-document';
+import { isEssential } from './essential';
 import type { Completion, Task } from './task';
 
-/** Spec §5.8: only a recurring task can be paused. */
-export function isPaused(task: Task): boolean {
+/** Spec §5.8 (Paused by the minimal mode): with the mode on, every recurring task that is not essential. */
+export function pausedByMinimalMode(task: Task, minimalModeOn: boolean): boolean {
+	return minimalModeOn && task.kind === 'periodica' && !isEssential(task);
+}
+
+/** Spec §5.8: only a recurring task can be paused, by hand or, with `minimalModeOn`, by the minimal mode. */
+export function isPaused(task: Task, minimalModeOn = false): boolean {
+	return pausedByHand(task) || pausedByMinimalMode(task, minimalModeOn);
+}
+
+function pausedByHand(task: Task): boolean {
 	return task.kind === 'periodica' && task.paused === true;
 }
 
-/** Spec §6.2: the pause button when editing a recurring task; a one-off has none. */
-export function pauseAction(task: Task): 'pausar' | 'reanudar' | undefined {
+/**
+ * Spec §6.2: the pause button when editing a recurring task; a one-off has none. With the
+ * minimal mode on, a task it pauses has no Pausar, and Reanudar only if it is also paused by hand.
+ */
+export function pauseAction(task: Task, minimalModeOn = false): 'pausar' | 'reanudar' | undefined {
 	if (task.kind === 'puntual') return undefined;
-	return isPaused(task) ? 'reanudar' : 'pausar';
+	if (pausedByHand(task)) return 'reanudar';
+	return pausedByMinimalMode(task, minimalModeOn) ? undefined : 'pausar';
+}
+
+/** Spec §6.2 (Tarea): «Pausada» if paused by hand, else «Pausada por el modo mínimo» if the mode pauses it. */
+export function pauseText(task: Task, minimalModeOn = false): 'Pausada' | 'Pausada por el modo mínimo' | undefined {
+	if (pausedByHand(task)) return 'Pausada';
+	return pausedByMinimalMode(task, minimalModeOn) ? 'Pausada por el modo mínimo' : undefined;
 }
 
 /** Spec §5.8 and §7: pausing writes paused. */

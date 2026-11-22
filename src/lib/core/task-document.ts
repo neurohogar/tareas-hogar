@@ -4,6 +4,7 @@
 // used): a document can have old fields that the app neither reads nor writes.
 import { textFields } from './text-fields';
 import { savedSchedule } from './schedule';
+import { essentialField } from './essential';
 import type { Schedule, Postponement, Recurrence, Task, TimeWindow } from './task';
 
 /** The §4.1 fields that the current slice has, without requiring that they match the kind. */
@@ -16,6 +17,8 @@ export interface TaskDocument {
 	steps?: string[];
 	currentStep?: number;
 	minimalVersion?: string;
+	/** Spec §4.1 (Essential): any kind; stored only as true. */
+	essential?: boolean;
 	kind: Task['kind'];
 	createdAt: Date;
 	dueDate?: Date;
@@ -43,6 +46,8 @@ export interface TaskChange {
 	/** Another field, independent of steps (§7); null is step 1. */
 	currentStep?: number | null;
 	minimalVersion?: string | null;
+	/** Spec §4.1: checking writes true; unchecking removes the field. */
+	essential?: true | null;
 	kind?: Task['kind'];
 	dueDate?: Date | null;
 	recurrence?: Recurrence | null;
@@ -57,8 +62,8 @@ export interface TaskChange {
 
 /** The task the document describes: a field that does not match the kind, or that is no longer used (§7), is ignored. */
 export function taskFromDocument(doc: TaskDocument): Task {
-	const { id, title, emoji, note, firstStep, minimalVersion, kind, createdAt, dueDate, recurrence, schedule, postponed } = doc;
-	const commons = { id, title, ...textFields({ emoji, note, firstStep, minimalVersion }), ...stepsFields(doc), ...(schedule && { schedule: savedSchedule(schedule) }), ...(postponed && { postponed }) };
+	const { id, title, emoji, note, firstStep, minimalVersion, essential, kind, createdAt, dueDate, recurrence, schedule, postponed } = doc;
+	const commons = { id, title, ...textFields({ emoji, note, firstStep, minimalVersion }), ...essentialField(essential), ...stepsFields(doc), ...(schedule && { schedule: savedSchedule(schedule) }), ...(postponed && { postponed }) };
 	if (kind === 'puntual') return { ...commons, kind, ...(dueDate && { dueDate }), createdAt };
 	if (!recurrence) throw new Error(`The recurring task ${id} has no recurrence`);
 	return { ...commons, kind, recurrence, createdAt, ...pauseFields(doc) };

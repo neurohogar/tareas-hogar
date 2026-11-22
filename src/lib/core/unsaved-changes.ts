@@ -19,7 +19,7 @@ const TEST_MOMENT = new Date(0);
 
 /** The "Se repite" part as Save would store it; if invalid, as written. */
 function repetitionKey(data: TaskData) {
-	const onlyRepetition = { ...data, title: TEST_TITLE, emoji: undefined, note: undefined, firstStep: undefined, steps: undefined, minimalVersion: undefined, schedule: undefined };
+	const onlyRepetition = { ...data, title: TEST_TITLE, emoji: undefined, note: undefined, firstStep: undefined, steps: undefined, minimalVersion: undefined, essential: undefined, schedule: undefined };
 	const created = createFromData(onlyRepetition, TEST_ID, TEST_MOMENT);
 	return created.ok ? created.task : onlyRepetition;
 }
@@ -42,7 +42,7 @@ function emojiKey(emoji = '') {
 
 /** Two data with the same key are the same for Save. */
 function dataKey(data: TaskData): string {
-	return JSON.stringify([data.title.trim(), emojiKey(data.emoji), freeTextKey(data.note), normalizeSteps(data.firstStep, data.steps), freeTextKey(data.minimalVersion), scheduleKey(data.schedule), repetitionKey(data)]);
+	return JSON.stringify([data.title.trim(), emojiKey(data.emoji), freeTextKey(data.note), normalizeSteps(data.firstStep, data.steps), freeTextKey(data.minimalVersion), data.essential === true, scheduleKey(data.schedule), repetitionKey(data)]);
 }
 
 /**

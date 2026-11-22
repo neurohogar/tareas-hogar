@@ -2,15 +2,17 @@
 import { daysBetween } from './days';
 import { taskStatus } from './task-status';
 import { timeInText } from './dates-in-text';
-import { isPaused } from './pause';
+import { isPaused, pausedByMinimalMode } from './pause';
 import { pendingOrOverdue, activePostponement } from './active-postponement';
 import type { Completion, Task } from './task';
 
 /**
  * Spec §6.2 and §5.9: the panel button. Postponed, Quitar posponer (in any
  * status); otherwise, Posponer only to a pending or overdue task that is not paused.
+ * A task paused by the minimal mode has neither (§6.2, Minimal mode in the panel).
  */
-export function postponeAction(task: Task, completions: readonly Completion[], now: Date): 'posponer' | 'quitar' | undefined {
+export function postponeAction(task: Task, completions: readonly Completion[], now: Date, minimalModeOn = false): 'posponer' | 'quitar' | undefined {
+	if (pausedByMinimalMode(task, minimalModeOn)) return undefined;
 	if (activePostponement(task, now)) return 'quitar';
 	if (isPaused(task)) return undefined;
 	return pendingOrOverdue(taskStatus(task, completions, now)) ? 'posponer' : undefined;
