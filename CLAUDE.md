@@ -67,6 +67,7 @@ Usage rules:
 
 - One tool at a time, in sequence.
 - Mutation: one file at a time, always differential (the default). The snapshots in `.metrics/` are the manifest: they are committed and only the tools modify them. Gherkin mutation keeps its manifest inside the `.feature` itself: that file is committed after mutating it. The hardener gate fails if a feature of the package still had mutations to run, because that means the manifest is not committed or is stale.
+- The hardener gate reuses a core file that already passed mutation earlier in the same feature, while the file, the command, the config, the feature base and the gate are unchanged (`reuse` in `bdd-pipeline.config.json`; passes in `tmp/gate-pasos-hardener.json`). After a failure, the next gate run repeats only the failed and the changed files. Deleting that file forces every file to run.
 - Workers: `--max-workers 4` / `--workers 4`.
 - **CRAP**: a single `switch` that answers one question may stay above 10. Nested or dual-purpose functions above 10 are split, and each extracted function owns its inputs (do not pass booleans the caller already knew).
 - Gherkin mutation: `--level soft` decides what to re-mutate only by the content of the `.feature`. If step handlers, the `acceptance/` runtime or the equivalents filter change, use `--level full` only on the features with at least one step served by a changed handler, or with a Then that goes through a changed oracle rule; the rest stay on `--level soft`. The acceptance role lists in its report which handlers and oracle rules it changed.
