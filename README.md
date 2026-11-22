@@ -7,13 +7,37 @@ The idea is simple: recurring tasks should not be forgotten, and the list should
 ## What it does today
 
 - One-off and recurring tasks: every N days or hours, or on certain days of the week or month.
-- Clear statuses: pending, overdue and waiting, with a bar that shows how long until it comes back.
+- Clear statuses without guilt: pending, waiting, and for what is late a dated text («Tocaba hoy 10:00») instead of an alarm.
 - Schedules in which a task makes sense, postponing and pausing.
+- A **first step** and optional **further steps** (shown one at a time), so starting is cheaper than reading the title.
+- A **minimal version** of a task and a «Hice la mínima» action that counts as done and is kept in the history.
 - History of everything completed, with undo.
-- Works offline and syncs across devices. Sign-in is with Google.
+- Two screens only (Pendientes and Historial), a mobile panel with tabs, and a warning before losing unsaved changes.
+- Works offline and syncs across devices. Sign-in is with Google. The installed app stays in portrait.
 - Atkinson Hyperlegible font and emoji are bundled, so everything looks the same everywhere.
 
+The text the person sees is in Spanish; code, tests, Gherkin and documents are in English.
+
 What the app builds and why: [`docs/spec.md`](docs/spec.md).
+
+## Timeline
+
+Dates are when the change was published on `v3`; the history before 2026-11-12 was squashed into a single public release.
+
+| Date | Change |
+|---|---|
+| Before 2026-11-12 | **Version 2**: one-off and recurring tasks, schedules, postpone and pause, history with undo, offline sync, bundled font and emoji, portrait orientation, mobile panel. |
+| 2026-11-12 | Public release (AGPL-3.0). Migration to SvelteKit 3 and Vite 8. The v3 plan is written from the research in `docs/research/v3/`, as ordered epics. |
+| 2026-11-13 | **Guilt-free status** (epic E2): late tasks read «Tocaba …» with a date, not «Atrasada»; under a minute reads «ahora». **First step** and **steps one at a time** (E3). |
+| 2026-11-15 | **Minimal version** and «Hice la mínima» (E4, first half); it appears in the history. First deploy of v3. |
+| 2026-11-16 | Decision: code, tests, Gherkin and documents move to English; only app text stays in Spanish. |
+| 2026-11-17 | **Labels and effort removed** (they were not used): spec, code, tests and the stored fields. |
+| 2026-11-18 | Deploy; the old label and effort fields are deleted from production data. English migration of code, comments and Gherkin begins. |
+| 2026-11-20 | **Annotations removed** (the «me sirvió / me molestó» note): the third tab is gone and `/anotaciones` redirects. Epics are now judged by what people report and by stored data. Deploy; the old data is deleted. |
+| 2026-11-20 | English migration finished: features, QA procedures, packages, spec and pipeline documents renamed and translated. |
+| 2026-11-22 | The `/historial` route becomes `/history`. Deploy. |
+
+What comes next is in [`docs/v3/plan.md`](docs/v3/plan.md): the second field of the minimal version, choosing a task for me, low-capacity days, and the later epics.
 
 ## Evidence-based design
 
