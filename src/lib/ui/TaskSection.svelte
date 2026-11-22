@@ -10,12 +10,13 @@
 		presentation,
 		openSection,
 		values,
-		pause,
+		pauseText,
 		postponedText,
 		lastTime,
 		errors,
 		clearError,
 		emoji = $bindable(),
+		essential = $bindable(),
 		steps = $bindable(),
 		onOpenPicker
 	}: {
@@ -23,13 +24,15 @@
 		openSection: PanelSection;
 		/** The values the panel opened with; without them, it starts empty. */
 		values?: TaskData;
-		pause?: 'pausar' | 'reanudar';
+		pauseText?: string;
 		postponedText?: string;
 		lastTime?: string;
 		errors: CreationErrors;
 		/** A field's error lasts as long as its message: correcting it makes it go away. */
 		clearError: (field: keyof CreationErrors) => void;
 		emoji: string;
+		/** The Esencial check (§6.2). */
+		essential: boolean;
 		/** The extra steps (2, 3…), one per field (§6.2). */
 		steps: string[];
 		onOpenPicker: () => void;
@@ -43,8 +46,8 @@
 </script>
 
 <SectionFrame name="Tarea" {presentation} {openSection}>
-	{#if pause === 'reanudar'}
-		<p class="paused">Pausada</p>
+	{#if pauseText}
+		<p class="paused">{pauseText}</p>
 	{/if}
 	{#if postponedText}
 		<p class="paused">{postponedText}</p>
@@ -104,6 +107,11 @@
 		<label for="field-note">Nota</label>
 		<textarea id="field-note" name="note" rows="2" value={values?.note ?? ''}></textarea>
 	</div>
+
+	<label class="essential">
+		<input type="checkbox" name="essential" bind:checked={essential} />
+		Esencial
+	</label>
 </SectionFrame>
 
 <style>
@@ -146,6 +154,21 @@
 	.emoji-button.chosen {
 		padding: 0 0.5rem;
 		font-size: 1.5rem;
+	}
+
+	.essential {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-height: 44px;
+		cursor: pointer;
+	}
+
+	.essential input {
+		width: 1.2rem;
+		height: 1.2rem;
+		margin: 0;
+		accent-color: var(--accent);
 	}
 
 	.paused {

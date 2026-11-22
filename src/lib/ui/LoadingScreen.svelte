@@ -2,6 +2,8 @@
 	export interface CollectionsResponded {
 		tasks: boolean;
 		completions: boolean;
+		/** The first response of the minimal mode document (§6.6). */
+		minimalMode?: boolean;
 	}
 </script>
 
@@ -40,6 +42,7 @@
 		auth,
 		tasksResponded: data.tasks,
 		completionsResponded: data.completions,
+		minimalModeResponded: data.minimalMode,
 		atkinson: fonts.atkinson,
 		noto: fonts.noto,
 		online,

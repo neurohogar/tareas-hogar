@@ -11,6 +11,10 @@ export interface Session {
 	readonly completions: Completion[];
 	/** The current time; updates itself. */
 	readonly now: Date;
+	/** Whether the minimal mode is on (§5.8, §7); synced across devices. */
+	readonly minimalMode: boolean;
+	/** The menu item (§6.1): turns the mode on or off at once. */
+	toggleMinimalMode(): void;
 	/** Tapping the row checkbox (§6.1): completes the task (with the notice) or deletes its last completion. */
 	tapCheckbox(task: Task): void;
 	/** «Hice la mínima» of the row (§6.1): completes the task like the checkbox, remembering it was the minimal one. */
