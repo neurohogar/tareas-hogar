@@ -24,9 +24,8 @@
 	import { postponeAction, postponementText } from '#lib/core/postponement-in-panel.ts';
 	import { taskData } from '#lib/core/task-data.ts';
 	import type { PanelForm } from '#lib/core/unsaved-changes.ts';
-	import { createFromPanel } from '#lib/core/unsaved-changes-saved.ts';
-import { edit } from '#lib/core/editing.ts';
-import { minimalModeOn, resumesOnTurningOff, type MinimalModeDocument } from '#lib/core/minimal-mode.ts';
+	import { createFromPanel, editFromPanel } from '#lib/core/unsaved-changes-saved.ts';
+	import { minimalModeOn, resumesOnTurningOff, type MinimalModeDocument } from '#lib/core/minimal-mode.ts';
 	import { itemsToAttempt, retriesWith, attemptResult } from '#lib/core/cleanups.ts';
 	import type { TaskChange } from '#lib/core/task-document.ts';
 	import type { Completion, Task } from '#lib/core/task.ts';
@@ -187,7 +186,7 @@ import { minimalModeOn, resumesOnTurningOff, type MinimalModeDocument } from '#l
 	}
 
 	function saveEdit(task: Task, form: PanelForm) {
-		const result = edit(task, form.data, currentTime(), minimalMode);
+		const result = editFromPanel(task, form, currentTime(), minimalMode);
 		if (!result.ok) return result.errors;
 		edited = undefined;
 		void saveChange(uid, task.id, result.change);

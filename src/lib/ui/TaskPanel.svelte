@@ -68,9 +68,9 @@
 		onAct?: (change: TaskChange) => void;
 		/** Only when editing a recurring task (§6.2): the button the core offers. */
 		pause?: 'pausar' | 'reanudar';
-		/** Only when editing (§6.2): the button the core offers. */
 		/** Only when editing a task paused (§6.2): «Pausada» or «Pausada por el modo mínimo», built by the core. */
 		pauseText?: string;
+		/** Only when editing (§6.2): the button the core offers. */
 		postpone?: 'posponer' | 'quitar';
 		/** "Pospuesta hasta HH:MM" built by the core, if the task is postponed. */
 		postponedText?: string;
@@ -203,7 +203,8 @@
 			task: session.tasks.find(({ id }) => id === taskWhenOpened.id) ?? taskWhenOpened,
 			completions: session.completions,
 			now,
-			form
+			form,
+			minimalModeOn: session.minimalMode
 		};
 	}
 	const shownActionNotice = $derived(openAction ? actionNotice(noticeContext(openAction, session.now)) : undefined);

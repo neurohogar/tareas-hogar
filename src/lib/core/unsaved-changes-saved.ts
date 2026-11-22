@@ -5,9 +5,9 @@ import { createFromData } from './task-data';
 import { edit, type EditingResult } from './editing';
 import type { Task } from './task';
 
-/** Spec §6.2: Save when editing, from the panel or a notice; `now` is the moment of saving. */
-export function editFromPanel(task: Task, { data }: PanelForm, now: Date): EditingResult {
-	return edit(task, data, now);
+/** Spec §6.2: Save when editing, from the panel or a notice; `now` is the moment of saving (§5.8 for `minimalModeOn`). */
+export function editFromPanel(task: Task, { data }: PanelForm, now: Date, minimalModeOn = false): EditingResult {
+	return edit(task, data, now, minimalModeOn);
 }
 
 /** Spec §6.2: Save when creating, from the panel or the close notice. */
