@@ -1,0 +1,28 @@
+name: Bug report
+description: Something does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for reporting. You can write in English or Spanish (también se puede escribir en español)."
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Create a task…\n2. Tap…\n3. See…"
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: "Android 16, Chrome 141, installed app"
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or anything else

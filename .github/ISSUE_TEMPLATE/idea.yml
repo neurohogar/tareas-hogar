@@ -1,0 +1,24 @@
+name: Idea
+description: A problem in daily life the app could help with, or something that gets in the way.
+labels: [idea]
+body:
+  - type: markdown
+    attributes:
+      value: "Start from the problem, not from the feature. You can write in English or Spanish (también se puede escribir en español)."
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What happens in daily life? «I never remember to…», «When I open the app I freeze because…»
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What could help
+      description: Optional. An idea of how the app could help, if you have one.
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Optional. Anything that helps understand it (shared home, routines, what you tried).

@@ -9,6 +9,8 @@
 An installable web app (PWA) designed with adults with ADHD, autism and high abilities in mind,<br>
 including people who share a home. Free, open source, offline-first.
 
+**[Try it](https://tareas-hogar-reimon.web.app)** · [Leer en español](README.es.md) · [Run your own copy](#publish-your-own-copy)
+
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-3e7059)](LICENSE)
 ![PWA](https://img.shields.io/badge/PWA-offline--first-3e7059)
 ![SvelteKit](https://img.shields.io/badge/SvelteKit-3-3e7059)
@@ -48,6 +50,9 @@ Most to-do apps assume that the hard part is remembering. For many people the ha
 | 📶 **Offline-first** | Works without connection and syncs across devices when it comes back. |
 | 📱 **Installable** | Add it to the home screen; it stays in portrait like a native app. |
 | 🔤 **Readable everywhere** | Atkinson Hyperlegible and emoji are bundled, so it looks the same on every device. |
+
+> [!NOTE]
+> The **Try it** link is the author's personal instance: anyone can sign in with Google and only sees their own tasks, but there are no guarantees and data may be deleted. For real use, [deploy your own copy](#publish-your-own-copy); it takes a few minutes and a free Firebase project.
 
 The app is in Spanish. Code, tests, Gherkin scenarios and documents are in English. What the app does, rule by rule, is in [`docs/spec.md`](docs/spec.md).
 
@@ -112,6 +117,10 @@ Dates are when the change was published on `v3`; the history before 2026-11-12 w
 | 2026-11-22 | The `/historial` route becomes `/history`. Deploy. |
 
 What comes next is in [`docs/v3/plan.md`](docs/v3/plan.md): the second field of the minimal version, choosing a task for me, low-capacity days, and the later epics.
+
+## Contributing
+
+Issues are welcome: bugs, ideas, and especially reports of what helps or gets in the way in daily use. Pull requests are welcome too, after agreeing on them in an issue. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## License
 
