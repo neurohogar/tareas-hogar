@@ -89,6 +89,8 @@ Precedente: la migración a SvelteKit 3 (`docs/v3/backlog.md`), ya hecha en la r
 
 ### E5. Elegir por mí
 
+- **Estado.** Descartada sin implementarla (2026-11-22): la lista entera solo frena a la persona cuando hay muchas tareas, y no le pareció que valiera la pena. Ese caso queda para la E6. El texto de abajo queda como registro.
+
 - **Problema y persona.** TDAH y TEA. Frente a la lista entera, elegir es otro costo previo a empezar.
 - **Evidencia.** `tdah §1.3C` (moderada, población general); `tea §1` y `§2` (moderada: la propuesta tiene que ser determinista); `tea §8` (débil a moderada: una cosa por pantalla); `aacc H10` (débil).
 - **Qué propone.** Una entrada de un toque desde Pendientes que muestra una sola tarea: la primera del orden visible, su primer paso y el motivo. Tres salidas: hacerla, pasar a la siguiente del mismo orden o volver a la lista.
