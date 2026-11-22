@@ -1,3 +1,9 @@
 # Features already specified that are not implemented yet: the gate does not count them
 # in acceptance. The gherkin-writer adds its own here when committing them; the acceptance
 # role removes those of the feature it implements.
+essential-mark
+essential-unsaved-changes
+minimal-mode-pending
+minimal-mode-turning-off
+minimal-mode-panel
+minimal-mode-loading

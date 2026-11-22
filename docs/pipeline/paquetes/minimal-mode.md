@@ -79,11 +79,65 @@ First feature of epic E6 of `docs/v3/plan.md` («Días de baja capacidad y regre
 
 ## Artifacts
 
+- Gherkin: `features/essential-mark.feature` (S1, S2, S10, S18), `features/essential-unsaved-changes.feature` (S19), `features/minimal-mode-pending.feature` (S3, S4, S5, S6, S7, S8, S14, S15, S16, S17, S26, S27), `features/minimal-mode-turning-off.feature` (S9, S10, S11, S12, S13), `features/minimal-mode-panel.feature` (S20, S21, S22, S23, S24), `features/minimal-mode-loading.feature` (S25)
+- QA: `qa/minimal-mode.md` (S5, S13, S15, S18, S24, S25, S26, S27: what Gherkin cannot see: the menu and its check mark, the line, the star, no message, reload and no timer, the Historial, the loading screen with the real network, two devices)
+
 ## core
+
+- **Allowed edits**: `src/lib/core/task.ts`, `src/lib/core/task-document.ts`, `src/lib/core/task-data.ts`, `src/lib/core/creation.ts`, `src/lib/core/create-one-off.ts`, `src/lib/core/create-recurring-relative.ts`, `src/lib/core/create-recurring-calendar.ts`, `src/lib/core/editing.ts`, `src/lib/core/pause.ts`, `src/lib/core/pending.ts`, `src/lib/core/task-status.ts`, `src/lib/core/checkbox.ts`, `src/lib/core/postponement-in-panel.ts`, `src/lib/core/unsaved-changes.ts`, `src/lib/core/text-fields.ts`, `src/lib/core/loading-screen.ts`, `src/lib/core/*.test.ts` (all core tests: a change to an exported type can touch them) (new files: `src/lib/core/minimal-mode*.ts` and `src/lib/core/essential*.ts`)
+- **Rules**: S1–S3, S5–S12, S14, S16, S17, S19–S25 (S4, S13, S15 and S18 have no logic of their own: the ui shows them)
+- **Reuses**:
+  - `isPaused` (`pause.ts`) and the status entry point (`task-status.ts`): the pause by the mode enters there as a second cause, next to `paused`, so that no status, checkbox, postponement or panel rule reads the cause twice; a one-off task is never paused (§5.8).
+  - `pendingRows` (`pending.ts`) with the mode as one more input: the rows with the mode on are the essential ones, with the same order; `comparePaused` and the Mostrar completadas / Mostrar pausadas rules stay.
+  - `resume` and `asJustCreated` (`pause.ts`) and `TaskChange` / `applyChange` (`task-document.ts`): turning the mode off and marking Esencial with the mode on are a `resume(now)` of each task they bring back; the function that decides which tasks come back (recurring, not essential, not paused by hand) is new and pure, and returns the changes to write in a single batch.
+  - `pauseAction` (`pause.ts`), `postponementInPanel` (`postponement-in-panel.ts`) and the edit-to-one-off rule of `editing.ts` (resumes a paused recurring task) for the panel of §6.2 and the change of kind with the mode on.
+  - `createRecurring` / `create-recurring-calendar.ts`: the calendar creator copies the common fields one by one (it does not spread), so `essential` must be added there explicitly, like `minimalVersion`.
+  - `loadingScreenLeaves` and `WaitStatus` (`loading-screen.ts`): one more thing to wait for with a session (`minimalModeResponded`), with the same cap of 10 s.
+  - `unsaved-changes.ts`: `essential` enters the form key; on create the starting value comes from the mode at the moment the panel opens.
+- **Notes**:
+  - Stored names: the field is `essential` (in the Firestore document too) and the state document is `users/{uid}/settings/minimalMode` with `{ active: boolean }`; without the document, the mode is off. The core receives the mode as a boolean parameter.
+  - An edit writes `essential` only if it changed; unchecking removes the field (`TaskChange` carries `null` for removal, like `paused`).
+  - Atomicity (S27): the core returns the full list of `resumedAt` changes of turning the mode off, to write with `active: false` in one `writeBatch`; the core unit tests cover it (nothing returned for essential tasks, for tasks paused by hand or for one-off tasks).
+  - Edge not expressible in Gherkin: an overdue task always has at least 60 s of delay, so an edge of less than 60 s cannot be a scenario; the boundaries of the status with a `resumedAt` equal to the moment of the query go to the core unit tests.
+  - Signatures that `acceptance/` and the ui already use (`pendingRows`, `taskStatus`, `checkboxEnabled`, `pauseAction`, `applyChange`, `edit`, the creators, `loadingScreenLeaves`) stay compatible: only new optional parameters, because the core gate runs the acceptance already implemented.
+- **Gate**: `node scripts/gate.ts core`
 
 ## acceptance
 
+- **Allowed edits**: `acceptance/steps/*.ts` (the new minimal-mode.ts and essential.ts, index.ts and world.ts; the new field `essential` breaks the shared Then steps that compare a stored task with `toStrictEqual` / `toEqual`, so every handler of the steps directory that does it can need the field: create.ts, editing.ts, one-off.ts, recurring-relative.ts, recurring-calendar.ts, minimal-version.ts, first-step.ts, steps.ts, emoji-and-note.ts, undo.ts, history.ts, cleanups.ts, schedule.ts, checkbox.ts, postpone.ts, pause.ts, pending.ts, unsaved-changes.ts, loading-screen.ts), `acceptance/oracle.ts`, `acceptance/oracle-editing.ts`, `acceptance/oracle-history.ts`, `acceptance/oracle-cleanups.ts`, `acceptance/oracle-panel.ts`, `acceptance/oracle-loading-screen.ts`, `acceptance/oracle-date-text.ts`, `acceptance/equivalence.ts`, `docs/pipeline/pendientes.txt`
+- **Features to connect**: `features/essential-mark.feature`, `features/essential-unsaved-changes.feature`, `features/minimal-mode-pending.feature`, `features/minimal-mode-turning-off.feature`, `features/minimal-mode-panel.feature`, `features/minimal-mode-loading.feature`
+- **New steps**:
+  - `the minimal mode is on` / `the minimal mode is off` and `the minimal mode is <mode>` (the state already set; the three are the same step)
+  - `I turn the minimal mode on`, `I turn the minimal mode off on <moment>` and `another device turns the minimal mode on`
+  - `the task was marked essential` and `the task <title> was marked essential`
+  - `I mark the task essential on <moment>` and `I unmark the task as essential`
+  - `I set Esencial to <state>` and `another device, without seeing that change, sets Esencial to <state>` (state: checked or unchecked)
+  - `I create a one-off task with title <title> and Esencial <state>`, `I create a relative recurring task with title <title> every <every> <unit> and Esencial <state>` and `I create a weekly recurring task with title <title> on <days> and Esencial <state>` (with the mode as it is in the world: the creators do not default the mark, the panel does)
+  - `the stored essential mark is <mark>` (true or absent: the document has the field `essential` = true, or no field)
+  - `the task is paused by the minimal mode` and `the task is not paused by the minimal mode`
+  - `the task was resumed on <moment>` and `the task has no resume moment` (the stored `resumedAt`)
+  - `the Modo mínimo line is <line>` (shown or not shown) and `Pendientes shows no task` (already exists)
+  - `I open the panel to edit the essential task <title> with note <note>`, `I tap the Esencial check` and `the Esencial check is <state>`
+  - `the edit panel says <text>` and `the edit panel says no pause text`, `the edit panel offers Borrar tarea`
+  - `the minimal mode responds at <seconds> seconds`
+- **Notes**:
+  - The loading-screen scenarios that do not mention the mode have it respond immediately (default 0).
+  - `the edit panel offers <action>` already exists for Pausar and Reanudar; `the edit panel does not offer pause` and `the postpone button of the panel is ninguno` also exist.
+  - Tasks without `created on` are created at the same instant: an urgency tie is resolved by title (for example `Cena` before `Foco` in Minimal mode in Pendientes 6).
+  - No new `acceptance/oracle-*.ts` file: the list of `scripts/check-arch.ts` is manual; the oracle logic of the mode goes into the existing files.
+- **Gate**: `node scripts/gate.ts acceptance`
+
 ## ui
+
+- **Allowed edits**: `src/lib/ui/Pending.svelte`, `src/lib/ui/TaskRow.svelte`, `src/lib/ui/TaskPanel.svelte`, `src/lib/ui/TaskSection.svelte`, `src/lib/ui/ActionsSection.svelte`, `src/lib/ui/Session.svelte`, `src/lib/ui/session.ts`, `src/lib/ui/LoadingScreen.svelte`, `src/lib/ui/icons/Icon.svelte`, `src/lib/adapters/repository.ts`, `src/lib/adapters/minimal-mode*.ts`
+- **Visible behavior**: `qa/minimal-mode.md`
+- **Notes**:
+  - The Firestore rules need no change: `users/{uid}/{document=**}` already covers `users/{uid}/settings/minimalMode`; the ui role does not edit the rules file.
+  - The state is observed with a listener of the document (as tasks and completions) and written by the repository: turning it on writes `{ active: true }`; turning it off writes `{ active: false }` and the `reanudadaEn` of the tasks the core returns, in one `writeBatch`. Marking Esencial with the mode on writes the resume in the same `update` of the task.
+  - The ⋮ menu: button with accessible name «Menú»; one item «Modo mínimo» with role `menuitemcheckbox` (check mark and `aria-checked` when on); it acts on tap and closes. The line «Modo mínimo» is plain text above the list, secondary color, shown even with an empty list. The star of the row: outlined, title text color, accessible name «Esencial», role `img`, no action. The **Esencial** check goes at the end of **Tarea**, after the note, text only.
+  - The create panel reads the mode once, when it opens; the check is not changed if the mode changes with the panel open.
+  - The loading screen also waits for the first response of the mode document (§6.6).
+- **Gate**: `node scripts/gate.ts ui`
 
 ## cleaner · architect · hardener · qa
 
