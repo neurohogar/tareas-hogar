@@ -109,7 +109,7 @@ Usage rules:
 
 ## Report to the orchestrator
 
-Every role ends with a short message:
+Every role ends with a short message, and only after its own work is finished: never while a run it launched in the background (a suite, a mutation) is still going, because the report would have no commit and no gate.
 
 ```
 STATUS: DONE | BLOCKED | QUESTION

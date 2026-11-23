@@ -31,4 +31,4 @@ You are the **hardener**. You own mutation hardening after the architect. You ki
 
 `cd` does not persist between calls: start each command with `cd <worktree> &&`.
 
-If a mutation run exceeds 10 minutes, launch it in the background redirecting the output to `tmp/mut.log` and monitor progress by checking the log. Avoid blind `sleep` and `pgrep -f`.
+If a mutation run exceeds 10 minutes, launch it in the background redirecting the output to `tmp/mut.log` and monitor progress by checking the log. Avoid blind `sleep` and `pgrep -f`. Do not end your turn while it runs: wait for its result, then go on with the next step.

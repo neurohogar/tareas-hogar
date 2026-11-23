@@ -35,7 +35,7 @@ You are **QA**. You own the final, independent verification after the hardener.
 `cd` does not persist between calls: start each command with `cd <worktree> &&`.
 
 - **Single spec** (development): in the foreground with the direct Playwright command against the emulator.
-- **Full suite** (11 to 22 minutes): launch it in the background redirecting to `tmp/qa.log` and monitor progress periodically by inspecting the log. One run at a time. Avoid blind `sleep` and `pgrep -f`.
+- **Full suite** (11 to 22 minutes): launch it in the background redirecting to `tmp/qa.log` and monitor progress periodically by inspecting the log. One run at a time. Avoid blind `sleep` and `pgrep -f`. Do not end your turn while it runs: wait for its result, then commit and run the gate.
 
 ## Scope
 
