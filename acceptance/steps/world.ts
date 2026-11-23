@@ -1,6 +1,6 @@
 import type { PanelAction } from '../../src/lib/core/panel-action';
 import type { OnTop } from '../../src/lib/core/panel-back';
-import type { Notice } from '../../src/lib/core/notice';
+import type { SlotNotice } from '../../src/lib/core/notice';
 import type { PanelForm } from '../../src/lib/core/unsaved-changes';
 import type { CreationErrors } from '../../src/lib/core/creation';
 import { taskFromDocument, type TaskDocument } from '../../src/lib/core/task-document';
@@ -53,10 +53,10 @@ export interface World extends Saved {
 	checkboxTouched?: boolean;
 	/** What was deleted (tasks and completions), to name it after deletion. */
 	deleted: Saved;
-	/** The notice of this device's last completion. */
-	notice?: Notice;
+	/** The notice in the single slot of this device (§5.4): of its last completion or of its last block rescheduling. */
+	notice?: SlotNotice;
 	/** The notice that was in view at the last queried moment (notice: undefined if there was none). */
-	noticeQueried?: { notice?: Notice; now: Date };
+	noticeQueried?: { notice?: SlotNotice; now: Date };
 	/** The History at the last queried moment. */
 	history?: HistoryGroup[];
 	/** The text of "Última vez" at the last queried moment. */

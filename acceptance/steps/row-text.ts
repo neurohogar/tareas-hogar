@@ -2,15 +2,16 @@
 // return of the completion notice (§5.4).
 import { expect } from 'vitest';
 import { noticeReturn } from '../../src/lib/core/notice';
+import { queriedCompletionNotice } from './undo';
 import { P, TITLE } from './values';
 import { theTask, type World, type StepDefinition } from './world';
 
 /** The return the queried notice states, which has to be visible and name the task. */
 function completionReturn(world: World): string | undefined {
 	if (!world.noticeQueried) throw new Error('The notice was not queried');
-	const { notice, now } = world.noticeQueried;
+	const notice = queriedCompletionNotice(world);
 	expect(notice?.name).toBe(theTask(world).title);
-	return notice && noticeReturn(notice, now);
+	return notice && noticeReturn(notice, world.noticeQueried.now);
 }
 
 /** At each queried moment, the list has a single row and its date text is `text`. */

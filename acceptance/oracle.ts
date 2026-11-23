@@ -30,6 +30,10 @@ export interface Observes {
 	byMode?: boolean;
 	/** If a Then asserts the pause button and the pause text of the panel (§6.2). */
 	pausePanel?: boolean;
+	/** If a Then asserts whether the task has a stored resume moment (§5.8). */
+	resumeStored?: boolean;
+	/** If a Then asserts whether the «Reprogramar vencidas» item is enabled (§6.1). */
+	item?: boolean;
 }
 
 const HOUR_MS = 3_600_000;
@@ -96,6 +100,8 @@ export interface Situation {
 	/** §5.8: the minimal mode is on, and the task is marked essential (§4.1). */
 	mode?: boolean;
 	essential?: boolean;
+	/** §5.11: a block rescheduling was confirmed; only then the resume moment is told apart in the classification. */
+	blockReschedule?: boolean;
 	/** §6.2: the edit panel was opened; the pause button it offers is observed. */
 	panel?: boolean;
 	/** §5.9: the stored postponement. */
@@ -419,6 +425,22 @@ function resumeSituation(s: Situation, value: string): boolean {
 	return true;
 }
 
+/**
+ * §5.11: Reprogramar at `value` is a Reanudar (§5.8) of the task only if it is recurring, not paused (by hand or by the
+ * mode) and overdue at that moment (a postponed one is waiting); otherwise it stays as it is.
+ */
+function rescheduleSituation(s: Situation, value: string): boolean {
+	const moment = MOMENT(value);
+	if (moment === undefined) return false;
+	s.blockReschedule = true;
+	if (s.oneOff || s.paused || pausedByMode(s)) return true;
+	if (classifyStatusOfSituation({ ...s, now: moment }, WITHOUT_PROGRESS) !== 'atrasada') return true;
+	if (s.coveredWithoutMoment || s.completions.some((c) => c >= moment)) return false;
+	Object.assign(s, { resumed: moment, created: new Date(moment), completions: [], covered: [], withoutCovered: [] });
+	if (s.coveredWithHour) s.coveredWithHour = [];
+	return true;
+}
+
 /** §5.8: while the mode is on, a recurring task that is not essential is paused by the mode. */
 const pausedByMode = (s: Situation): boolean => Boolean(s.mode) && !s.essential && !s.oneOff;
 
@@ -665,6 +687,7 @@ const RULES: Rule[] = [
 	// §5.8 and §6.2: only a recurring task is paused (the panel's Pausar button); Reanudar only the paused one.
 	[/^(?:the task was paused|I pause the task)$/, (s) => !s.oneOff && !s.paused && void (s.paused = true)],
 	[/^I resume the task on (\S+)$/, (s, [t]) => resumeSituation(s, t)],
+	[/^I reschedule the overdue tasks on (\S+)$/, (s, [t]) => rescheduleSituation(s, t)],
 	[/^I open the task in the edit panel$/, (s) => void (s.panel = true)],
 	// §5.9 and §6.2: postponing acts at the moment; removing deletes the field.
 	[/^(?:I postpone the task|the task was postponed) with option (.+) on (\S+)$/, (s, [o, m]) => postponeSituation(s, o, m)],
@@ -959,6 +982,21 @@ function withCovered(s: Situation, observes: Observes, classification: string): 
  * value of `pospuesta` (§4.1), if that is what a Then asserts.
  */
 export function classifySituation(s: Situation, observes: Observes): string | undefined {
+	if (observes.item) return itemOfReschedule(s);
+	const classification = classifyBeforeResume(s, observes);
+	if (classification === undefined || !observes.resumeStored || !s.blockReschedule) return classification;
+	return `${classification}, ${s.resumed === undefined ? 'sin reanudar' : 'reanudada'}`;
+}
+
+/** §6.1 (Reprogramar vencidas): enabled exactly when the task is a recurring one in view that is overdue at the queried moment. */
+function itemOfReschedule(s: Situation): string | undefined {
+	if (s.now === undefined) return undefined;
+	if (s.oneOff || s.paused || pausedByMode(s)) return 'ítem deshabilitado';
+	const status = classifyStatusOfSituation(s, WITHOUT_PROGRESS);
+	return status === undefined ? undefined : status === 'atrasada' ? 'ítem habilitado' : 'ítem deshabilitado';
+}
+
+function classifyBeforeResume(s: Situation, observes: Observes): string | undefined {
 	if (observes.postponed) return s.postponed && `pospuesta ${s.postponed.from} ${s.postponed.to}`;
 	if (s.postponePanel) return classifyPanelOfPostpone(s, observes);
 	if (s.panel) return pauseButton(s);

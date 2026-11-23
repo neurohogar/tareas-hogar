@@ -36,6 +36,8 @@ const CLASSIFICATION_THEN = [
 	/^the task is (?:not )?paused by the minimal mode$/,
 	/^the task was resumed at that moment$/,
 	/^the task has no resume moment$/,
+	// §5.11 and §6.1: the item of the block rescheduling.
+	/^the Reprogramar vencidas item is (?:enabled|disabled|<[A-Za-z0-9_]+>)$/,
 	/^the edit panel offers <[A-Za-z0-9_]+>$/,
 	/^the edit panel does not offer pause$/,
 	// §6.2 (Minimal mode in the panel): what the panel says about the pause and its buttons.
@@ -249,7 +251,9 @@ export function isEquivalent(feature: Feature, candidate: Candidate): boolean {
 	const panelText = observesInThen(/^the edit panel (?:shows|does not say it is postponed)/);
 	const byMode = observesInThen(/^the task is (?:not )?paused by the minimal mode$/);
 	const pausePanel = observesInThen(/^the edit panel says /);
-	const observes = { pausePanel, byMode, progress, checkbox, covered, postponed, panelText, onlyAppearance: !status && !progress, onlyCheckbox: checkbox && !status && !progress && !appearance };
+	const resumeStored = observesInThen(/^the task (?:was resumed at that moment|has no resume moment)$/);
+	const item = observesInThen(/^the Reprogramar vencidas item is /);
+	const observes = { pausePanel, resumeStored, item, byMode, progress, checkbox, covered, postponed, panelText, onlyAppearance: !status && !progress, onlyCheckbox: checkbox && !status && !progress && !appearance };
 	const before = classifyRow(entries, original, observes);
 	return before !== undefined && before === classifyRow(entries, mutated, observes);
 }
