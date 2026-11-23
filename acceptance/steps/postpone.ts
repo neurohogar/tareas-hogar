@@ -1,13 +1,13 @@
 // Postpone and remove postponement (spec §5.9, §6.2, §7): the button of the edit
 // panel acts immediately, without Guardar.
 import { expect } from 'vitest';
-import { pauseAction } from '../../src/lib/core/pause';
+import { pauseAction, pauseText } from '../../src/lib/core/pause';
 import { postponeAction, postponementText } from '../../src/lib/core/postponement-in-panel';
 import { POSTPONE_OPTIONS, postpone, removePostpone, type PostponeOption } from '../../src/lib/core/postponement';
 import type { Task } from '../../src/lib/core/task';
 import { thePanel, saveChange } from './pause';
 import { P, TITLE, dateHour } from './values';
-import { OTHER, changesOnEdit, theDoc, theTask, theTaskTitled, thatSawOther, rememberBeforeOfMyChange, type Saved, type StepDefinition, type World } from './world';
+import { OTHER, changesOnEdit, minimalOn, theDoc, theTask, theTaskTitled, thatSawOther, rememberBeforeOfMyChange, type Saved, type StepDefinition, type World } from './world';
 
 function option(text: string): PostponeOption {
 	const chosen = POSTPONE_OPTIONS.find(({ option }) => option === text);
@@ -25,7 +25,7 @@ function button(text: string): 'posponer' | 'quitar' | undefined {
 /** I tap Posponer in the panel and pick the option: the panel, with what the person postponing sees, has to offer it (§6.2). */
 function postponeViewing(world: World, view: Saved, task: Task, chosen: string, moment: string): void {
 	const now = dateHour(moment);
-	expect(postponeAction(task, view.completions, now)).toBe('posponer');
+	expect(postponeAction(task, view.completions, now, minimalOn(world))).toBe('posponer');
 	saveChange(world, task, postpone(option(chosen), now));
 }
 
@@ -81,8 +81,9 @@ export const postponeSteps: StepDefinition[] = [
 			// A task is not opened before having been postponed: the scenario would be impossible.
 			if (task.postponed && now < task.postponed.from) throw new Error(`The panel opens on ${moment}, before the task was postponed`);
 			world.panel = {
-				pause: pauseAction(task),
-				postponement: { button: postponeAction(task, world.completions, now), text: postponementText(task, now) },
+				pause: pauseAction(task, minimalOn(world)),
+				pauseText: pauseText(task, minimalOn(world)),
+				postponement: { button: postponeAction(task, world.completions, now, minimalOn(world)), text: postponementText(task, now) },
 				changes: changesOnEdit(task, now)
 			};
 		}

@@ -3,6 +3,7 @@ import { readSchedule, type ScheduleError, type TypedSchedule, type ScheduleRead
 import { textFields } from './text-fields';
 import { trimText } from './free-text';
 import { normalizeSteps } from './steps';
+import { essentialField } from './essential';
 import type { Recurrence, Task, RecurringTask } from './task';
 
 /** One reason for rejection per validation rule (spec §4.1 and §4.2). */
@@ -31,7 +32,7 @@ const scheduleFields = (reading: ScheduleReading) => (reading.ok && reading.sche
 const freeTextFields = (note: string, minimalVersion: string) => textFields({ note: trimText(note), minimalVersion: trimText(minimalVersion) });
 
 /** What distinguishes a kind of task, without the common part (id, title, createdAt). */
-type KindData<T extends Task> = Omit<T, 'id' | 'title' | 'emoji' | 'note' | 'firstStep' | 'steps' | 'minimalVersion' | 'schedule' | 'createdAt'>;
+type KindData<T extends Task> = Omit<T, 'id' | 'title' | 'emoji' | 'note' | 'firstStep' | 'steps' | 'minimalVersion' | 'essential' | 'schedule' | 'createdAt'>;
 
 export type CreationResult<T extends Task = Task> =
 	| { ok: true; task: T }
@@ -50,6 +51,8 @@ export interface CommonData {
 	steps?: readonly string[];
 	/** As written: trimText trims it (§4.1, Versión mínima). */
 	minimalVersion?: string;
+	/** The Esencial check (§4.1, §6.2); unchecked or absent, the task is not essential. */
+	essential?: boolean;
 	/** As written; without it, the task has no schedule. readSchedule validates it (§4.1). */
 	schedule?: TypedSchedule;
 }
@@ -66,7 +69,7 @@ interface High extends CommonData {
  * task with what `kindData` builds.
  */
 export function createTask<T extends Task>(
-	{ title, emoji = '', note = '', firstStep, steps, minimalVersion = '', schedule, id, now }: High,
+	{ title, emoji = '', note = '', firstStep, steps, minimalVersion = '', essential, schedule, id, now }: High,
 	kindErrors: KindErrors,
 	kindData: () => KindData<T>
 ): CreationResult<T> {
@@ -80,7 +83,7 @@ export function createTask<T extends Task>(
 		...(!scheduleRead.ok && { schedule: scheduleRead.error })
 	};
 	if (Object.keys(errors).length > 0) return { ok: false, errors };
-	const fields = { ...emojiFields(reading), ...freeTextFields(note, minimalVersion), ...normalizeSteps(firstStep, steps), ...scheduleFields(scheduleRead) };
+	const fields = { ...emojiFields(reading), ...freeTextFields(note, minimalVersion), ...normalizeSteps(firstStep, steps), ...essentialField(essential), ...scheduleFields(scheduleRead) };
 	// TypeScript does not rebuild T from Omit<T, …> and the omitted keys.
 	return { ok: true, task: { id, title: savedValue, ...fields, ...kindData(), createdAt: now } as T };
 }

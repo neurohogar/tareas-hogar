@@ -22,6 +22,7 @@ import type { Deletion } from '#lib/core/deletion.ts';
 import { textFields } from '#lib/core/text-fields.ts';
 import { dayFromIso, isoDay } from '#lib/core/days.ts';
 import { taskFromDocument, type TaskChange } from '#lib/core/task-document.ts';
+import type { MinimalModeDocument, TaskResume } from '#lib/core/minimal-mode.ts';
 import { occurrenceFromText, occurrenceInText } from '#lib/core/occurrence-in-text.ts';
 import type { Completion, Weekday, Recurrence, Schedule, Task, Unit, TimeWindow } from '#lib/core/task.ts';
 import { db } from './firebase';
@@ -61,6 +62,8 @@ interface TaskDoc {
 	 */
 	horario?: TimeWindowDoc[] | TimeWindowDoc;
 	creadaEn: Timestamp;
+	/** Only written as true; without the field, the task is not essential (§4.1). */
+	essential?: true;
 	/** Without the field, it is not paused (§5.8). */
 	pausada?: boolean;
 	/** Last time it was resumed (§5.8). */
@@ -122,6 +125,7 @@ function taskToDoc(task: Task): TaskDoc {
 		...(task.steps && { pasos: [...task.steps] }),
 		...(task.currentStep !== undefined && { pasoActual: task.currentStep }),
 		...(task.schedule && { horario: copySchedule(task.schedule) }),
+		...(task.essential === true && { essential: true as const }),
 		creadaEn: createdAt
 	};
 	if (task.kind === 'periodica') return { ...common, tipo: 'periodica', recurrencia: recurrenceToDoc(task.recurrence) };
@@ -143,6 +147,7 @@ function taskFromSnapshot(snapshot: QueryDocumentSnapshot<DocumentData>): Task {
 		...(data.fechaLimite && { dueDate: dayFromIso(data.fechaLimite) }),
 		...(data.recurrencia && { recurrence: recurrenceFromDoc(data.recurrencia) }),
 		...(data.horario && { schedule: readScheduleDoc(data.horario) }),
+		...(data.essential === true && { essential: true }),
 		...(data.pausada && { paused: data.pausada }),
 		...(data.reanudadaEn && { resumedAt: data.reanudadaEn.toDate() }),
 		...(data.pospuesta && { postponed: { from: data.pospuesta.desde.toDate(), to: data.pospuesta.hasta.toDate() } })
@@ -150,7 +155,7 @@ function taskFromSnapshot(snapshot: QueryDocumentSnapshot<DocumentData>): Task {
 }
 
 /** The fields of the change as updateDoc writes them: null removes the field. */
-function changeFields({ title, emoji, note, firstStep, minimalVersion, steps, currentStep, kind, dueDate, recurrence, schedule, paused, resumedAt, postponed }: TaskChange): DocumentData {
+function changeFields({ title, emoji, note, firstStep, minimalVersion, steps, currentStep, kind, dueDate, recurrence, schedule, essential, paused, resumedAt, postponed }: TaskChange): DocumentData {
 	const fields: DocumentData = {};
 	if (title !== undefined) fields.titulo = title;
 	if (emoji !== undefined) fields.emoji = emoji === null ? deleteField() : emoji;
@@ -165,6 +170,7 @@ function changeFields({ title, emoji, note, firstStep, minimalVersion, steps, cu
 	if (recurrence !== undefined) fields.recurrencia = recurrence === null ? deleteField() : recurrenceToDoc(recurrence);
 	// update replaces the whole field: the windows are written together (§7).
 	if (schedule !== undefined) fields.horario = schedule === null ? deleteField() : copySchedule(schedule);
+	if (essential !== undefined) fields.essential = essential === null ? deleteField() : essential;
 	// pausada and reanudadaEn travel together in the same update (§7).
 	if (paused !== undefined) fields.pausada = paused === null ? deleteField() : paused;
 	if (resumedAt !== undefined) fields.reanudadaEn = Timestamp.fromDate(resumedAt);
@@ -269,4 +275,25 @@ export async function cleanOrphanCompletions(uid: string, orphans: readonly Comp
  */
 export async function deleteCompletion(uid: string, completionId: string): Promise<void> {
 	await deleteDoc(completionRef(uid, completionId));
+}
+
+const minimalModeRef = (uid: string) => doc(db, 'users', uid, 'settings', 'minimalMode');
+
+/** Spec §7: the state of the minimal mode; `undefined` while the document does not exist (the mode is off). */
+export function observeMinimalMode(uid: string, onChange: (state: MinimalModeDocument | undefined) => void): Unsubscribe {
+	return onSnapshot(minimalModeRef(uid), (snapshot) => {
+		const data = snapshot.data();
+		onChange(data ? { active: data.active === true } : undefined);
+	});
+}
+
+/**
+ * Spec §7: turns the mode on or off. Turning it off carries the resumes of the tasks that come back
+ * (from the core), written together with `active` in a single writeBatch.
+ */
+export async function saveMinimalMode(uid: string, active: boolean, resumes: readonly TaskResume[] = []): Promise<void> {
+	const batch = writeBatch(db);
+	batch.set(minimalModeRef(uid), { active });
+	for (const { taskId, change } of resumes) batch.update(taskRef(uid, taskId), changeFields(change));
+	await batch.commit();
 }

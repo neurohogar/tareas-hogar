@@ -144,6 +144,8 @@ interface Form {
 	/** The windows as typed; '' is an empty row. */
 	schedules: string[];
 	emoji: string;
+	/** §4.1 (Essential), §6.2: the Esencial check. */
+	essential: boolean;
 }
 
 interface TaskSaved {
@@ -156,6 +158,8 @@ interface TaskSaved {
 }
 
 interface ChangesWorld {
+	/** §5.8: the minimal mode is on; a new task starts essential with it on (§6.2). */
+	minimalMode?: boolean;
 	task?: TaskSaved;
 	onOpen?: Form;
 	written?: Form;
@@ -170,7 +174,7 @@ interface ChangesWorld {
 	choseEmoji: boolean;
 }
 
-const FORM_ON_CREATE: Form = { title: '', note: '', firstStep: '', steps: [], minimalVersion: '', repeats: 'No se repite', schedules: [], emoji: '' };
+const FORM_ON_CREATE: Form = { title: '', note: '', firstStep: '', steps: [], minimalVersion: '', repeats: 'No se repite', schedules: [], emoji: '', essential: false };
 const OF_TOP = ['nada', 'el aviso de cierre', 'el aviso de acción', 'la confirmación de Borrar tarea', 'el selector de emoji'];
 /** §6.2 Back: what does not count as something open on top of the panel. */
 const DOES_NOT_COUNT_AS_OPEN = ['nada'];
@@ -191,7 +195,7 @@ const stepsSaved = (f: Form) => [f.firstStep, ...f.steps].map((step) => step.tri
 
 /** §6.2: Save trims the title, the note, the steps and the minimal version and sorts the windows. */
 const formKey = (f: Form) =>
-	JSON.stringify([f.title.trim(), f.note.trim(), stepsSaved(f), f.minimalVersion.trim(), f.repeats, schedulesKey(f.schedules), f.emoji]);
+	JSON.stringify([f.title.trim(), f.note.trim(), stepsSaved(f), f.minimalVersion.trim(), f.repeats, schedulesKey(f.schedules), f.emoji, f.essential]);
 
 /** §6.2: what Save would change. */
 function hasChanges(m: ChangesWorld): boolean {
@@ -387,6 +391,11 @@ const theTaskOfOther = (m: ChangesWorld) => m.task ?? undecided('otro dispositiv
 
 const CHANGES_STEPS: [RegExp, (m: ChangesWorld, ...groups: string[]) => void][] = [
 	[/^I open the panel to edit the task (.+) with note (.+)$/, (m, title, note) => openForEdit(m, { title, note })],
+	[/^I open the panel to edit the essential task (.+) with note (.+)$/, (m, title, note) => openForEdit(m, { title, note, essential: true })],
+	[/^I tap the Esencial check$/, (m) => void (theWritten(m).essential = !theWritten(m).essential)],
+	[/^the minimal mode is on$/, (m) => void (m.minimalMode = true)],
+	// §6.2: if the mode changes with the panel open, the check does not change.
+	[/^another device turns the minimal mode on$/, (m) => void (m.minimalMode = true)],
 	[/^I open the panel to edit the task (.+) with minimal version (.+)$/, (m, title, minimalVersion) => openForEdit(m, { title, minimalVersion })],
 	[/^I open the panel to edit the task (.+) with first step (.+)$/, (m, title, firstStep) => openForEdit(m, { title, firstStep })],
 	[
@@ -409,7 +418,7 @@ const CHANGES_STEPS: [RegExp, (m: ChangesWorld, ...groups: string[]) => void][] 
 		/^I open the panel to create a task$/,
 		(m) => {
 			m.mode = 'crear';
-			openWith(m, FORM_ON_CREATE);
+			openWith(m, { ...FORM_ON_CREATE, essential: m.minimalMode === true });
 		}
 	],
 	[
@@ -509,6 +518,7 @@ const thePostponed = ({ postponed }: TaskSaved) => (postponed ? `${postponed.fro
 /** What each Then observes and asserts. */
 const CHANGES_THENS: [RegExp, (m: ChangesWorld, ...groups: string[]) => [string, string]][] = [
 	[/^what stays open is (.+)$/, (m, opened) => [m.written ? (OPEN_ON_TOP[m.onTop] ?? 'el panel') : 'nada', opened]],
+	[/^the Esencial check is (checked|unchecked)$/, (m, state) => [theWritten(m).essential ? 'checked' : 'unchecked', state]],
 	[/^the notice says (.+)$/, (m, message) => [theNoticeOpen(m).message, message]],
 	[/^the notice offers (.+)$/, (m, buttons) => [theNoticeOpen(m).buttons.join(', '), elements(buttons)?.join(', ') ?? undecided('botones')]],
 	[/^the field (.+) still has (.+)$/, (m, field, value) => [(FIELD_WRITTEN[field] ?? undecided(`campo ${field}`))(theWritten(m)), value]],

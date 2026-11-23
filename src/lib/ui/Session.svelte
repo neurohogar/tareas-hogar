@@ -8,6 +8,8 @@
 		saveChange,
 		saveCompletion,
 		saveTask,
+		saveMinimalMode,
+		observeMinimalMode,
 		cleanOrphanCompletions,
 		observeCompletions,
 		observeTasks
@@ -18,11 +20,12 @@
 	import { complete } from '#lib/core/completions.ts';
 	import { doTheMinimal as doTheMinimalFromCore } from '#lib/core/minimal-version.ts';
 	import { doneAction, changeOnDeleteCompletion, changeOnComplete, previousStepChange } from '#lib/core/current-step.ts';
-	import { pauseAction } from '#lib/core/pause.ts';
+	import { pauseAction, pauseText } from '#lib/core/pause.ts';
 	import { postponeAction, postponementText } from '#lib/core/postponement-in-panel.ts';
 	import { taskData } from '#lib/core/task-data.ts';
 	import type { PanelForm } from '#lib/core/unsaved-changes.ts';
 	import { createFromPanel, editFromPanel } from '#lib/core/unsaved-changes-saved.ts';
+	import { minimalModeOn, resumesOnTurningOff, type MinimalModeDocument } from '#lib/core/minimal-mode.ts';
 	import { itemsToAttempt, retriesWith, attemptResult } from '#lib/core/cleanups.ts';
 	import type { TaskChange } from '#lib/core/task-document.ts';
 	import type { Completion, Task } from '#lib/core/task.ts';
@@ -46,6 +49,10 @@
 	/** Until the collections have answered, a missing task does not mean it was deleted. */
 	let tasksLoaded = $state(false);
 	let completionsLoaded = $state(false);
+	/** The first response of the mode document (§6.6); without a document, the mode is off. */
+	let minimalModeDoc = $state.raw<MinimalModeDocument | undefined>(undefined);
+	let minimalModeLoaded = $state(false);
+	const minimalMode = $derived(minimalModeOn(minimalModeDoc));
 	let now = $state(currentTime());
 	/** The notice of this device's last completion; it follows the change of screen. */
 	let notice = $state.raw<Notice | undefined>(undefined);
@@ -70,6 +77,10 @@
 				completions = currentItems;
 				completionsLoaded = true;
 			}),
+			observeMinimalMode(uid, (state) => {
+				minimalModeDoc = state;
+				minimalModeLoaded = true;
+			}),
 			observeClock((current) => (now = current))
 		];
 		return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
@@ -77,7 +88,7 @@
 
 	// Spec §6.6: the loading screen waits for the first response of each collection.
 	$effect(() => {
-		onCollectionsResponded({ tasks: tasksLoaded, completions: completionsLoaded });
+		onCollectionsResponded({ tasks: tasksLoaded, completions: completionsLoaded, minimalMode: minimalModeLoaded });
 	});
 
 	/** Changes when the connection returns: the cleanup effects read it to retry. */
@@ -175,7 +186,7 @@
 	}
 
 	function saveEdit(task: Task, form: PanelForm) {
-		const result = editFromPanel(task, form, currentTime());
+		const result = editFromPanel(task, form, currentTime(), minimalMode);
 		if (!result.ok) return result.errors;
 		edited = undefined;
 		void saveChange(uid, task.id, result.change);
@@ -185,6 +196,12 @@
 	function act(task: Task, change: TaskChange) {
 		edited = undefined;
 		void saveChange(uid, task.id, change);
+	}
+
+	/** Spec §6.1 and §7: turning it off brings back, in the same batch, what the core says; turning it on writes only the state. */
+	function toggleMinimalMode() {
+		const turningOff = minimalMode;
+		void saveMinimalMode(uid, !turningOff, turningOff ? resumesOnTurningOff(tasks, currentTime()) : []);
 	}
 
 	function deleteEdited(task: Task) {
@@ -202,6 +219,10 @@
 		get now() {
 			return now;
 		},
+		get minimalMode() {
+			return minimalMode;
+		},
+		toggleMinimalMode,
 		tapCheckbox,
 		tapDone,
 		doTheMinimal,
@@ -235,8 +256,9 @@
 			onClose={() => (edited = undefined)}
 			onDelete={() => deleteEdited(openedTask)}
 			onAct={(change) => act(openedTask, change)}
-			pause={pauseAction(active)}
-			postpone={postponeAction(active, completions, now)}
+			pause={pauseAction(active, minimalMode)}
+			pauseText={pauseText(active, minimalMode)}
+			postpone={postponeAction(active, completions, now, minimalMode)}
 			postponedText={postponementText(active, now)}
 		/>
 	{/key}

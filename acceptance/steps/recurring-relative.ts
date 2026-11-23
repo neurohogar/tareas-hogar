@@ -8,6 +8,7 @@ import type { Completion, Task } from '../../src/lib/core/task';
 import { SCENARIO_BEFORE, createInWorld } from './create';
 import { P, TITLE, dateHour, numeric, unit } from './values';
 import {
+	minimalOn,
 	theTask,
 	theTaskTitled,
 	newId,
@@ -50,7 +51,7 @@ export function completeMe(world: World, moment: Date, task: Task, completes: Co
 
 function queryStatus(world: World, moments: Date[]): void {
 	world.statusMoments = moments;
-	world.statuses = moments.map((now) => taskStatus(theTask(world), world.completions, now));
+	world.statuses = moments.map((now) => taskStatus(theTask(world), world.completions, now, minimalOn(world)));
 }
 
 function onlyStatus(world: World) {

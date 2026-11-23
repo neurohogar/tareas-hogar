@@ -5,6 +5,7 @@
 	import { actionNotice, discardAndAct, saveAndAct, type NoticeAction } from '#lib/core/action-notice.ts';
 	import { changeOfAction, whatTheActionDoes, type PanelAction } from '#lib/core/panel-action.ts';
 	import { whatBackDoes, type OnTop } from '#lib/core/panel-back.ts';
+	import { essentialField } from '#lib/core/essential.ts';
 	import { hasChanges, type PanelForm } from '#lib/core/unsaved-changes.ts';
 	import { onClosePanel, CLOSE_NOTICE, type NoticeButton } from '#lib/core/unsaved-changes-notice.ts';
 	import type { TaskChange } from '#lib/core/task-document.ts';
@@ -47,6 +48,7 @@
 		onDelete,
 		onAct,
 		pause,
+		pauseText,
 		postpone,
 		postponedText
 	}: {
@@ -66,6 +68,8 @@
 		onAct?: (change: TaskChange) => void;
 		/** Only when editing a recurring task (§6.2): the button the core offers. */
 		pause?: 'pausar' | 'reanudar';
+		/** Only when editing a task paused (§6.2): «Pausada» or «Pausada por el modo mínimo», built by the core. */
+		pauseText?: string;
 		/** Only when editing (§6.2): the button the core offers. */
 		postpone?: 'posponer' | 'quitar';
 		/** "Pospuesta hasta HH:MM" built by the core, if the task is postponed. */
@@ -86,6 +90,8 @@
 	let monthDays = $state<number[]>(values?.shape === 'calendario' ? [...values.monthDays] : []);
 	let errors = $state<CreationErrors>({});
 	let confirmingDelete = $state(false);
+	/** The Esencial check: starts as the data it opens with (when creating, per the mode at that moment). */
+	let essential = $state(values?.essential === true);
 	let emoji = $state(untrack(() => initial?.emoji ?? ''));
 	/** "Solo en un horario": off, the task has no schedule (§6.2). */
 	let withSchedule = $state(values?.schedule !== undefined);
@@ -123,7 +129,7 @@
 		const firstStep = String(fields.get('firstStep') ?? '');
 		const minimalVersion = String(fields.get('minimalVersion') ?? '');
 		const schedule = withSchedule ? windowRows.map(({ from, to }) => ({ from, to })) : undefined;
-		const common = { title: String(fields.get('title') ?? ''), emoji, note, firstStep, minimalVersion, steps: [...steps], schedule };
+		const common = { title: String(fields.get('title') ?? ''), emoji, note, firstStep, minimalVersion, steps: [...steps], schedule, ...essentialField(essential) };
 		if (repetition === 'puntual') {
 			const dateField = form.elements.namedItem('dueDate') as HTMLInputElement;
 			return { shape: 'puntual', ...common, dueDate: dueDateOf(dateField) };
@@ -197,7 +203,8 @@
 			task: session.tasks.find(({ id }) => id === taskWhenOpened.id) ?? taskWhenOpened,
 			completions: session.completions,
 			now,
-			form
+			form,
+			minimalModeOn: session.minimalMode
 		};
 	}
 	const shownActionNotice = $derived(openAction ? actionNotice(noticeContext(openAction, session.now)) : undefined);
@@ -306,12 +313,13 @@
 				{presentation}
 				{openSection}
 				{values}
-				{pause}
+				{pauseText}
 				{postponedText}
 				{lastTime}
 				{errors}
 				{clearError}
 				bind:emoji
+				bind:essential
 				bind:steps
 				onOpenPicker={openPicker}
 			/>

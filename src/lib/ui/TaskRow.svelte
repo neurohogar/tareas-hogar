@@ -4,6 +4,8 @@
 	import { taskName } from '#lib/core/task-name.ts';
 	import type { StepButtons } from '#lib/core/current-step.ts';
 	import type { MinimalLine } from '#lib/core/minimal-version.ts';
+	import { isEssential } from '#lib/core/essential.ts';
+	import Icon from './icons/Icon.svelte';
 	import type { Task } from '#lib/core/task.ts';
 
 	let {
@@ -58,6 +60,10 @@
 	<div class="content">
 		<!-- The button covers the whole row outside the checkbox: tapping it opens the edit. -->
 		<button type="button" class="title" onclick={onOpen}>{name}</button>
+		{#if isEssential(task)}
+			<!-- Not a control: it lets the tap through to the button that covers the row. -->
+			<span class="star" role="img" aria-label="Esencial"><Icon name="star" /></span>
+		{/if}
 		{#if firstStepText}
 			<div class="step-line">
 				<p class="first-step">{firstStepText}</p>
@@ -201,6 +207,21 @@
 
 	.waiting .title,
 	.paused .title {
+		color: var(--text-muted);
+	}
+
+	.star {
+		display: inline-flex;
+		margin-left: -0.5rem;
+		pointer-events: none;
+	}
+
+	.completed .star {
+		opacity: 0.6;
+	}
+
+	.waiting .star,
+	.paused .star {
 		color: var(--text-muted);
 	}
 

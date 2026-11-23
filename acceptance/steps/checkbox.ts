@@ -8,14 +8,14 @@ import { pendingRows } from '../../src/lib/core/pending';
 import { deleteCompletion } from './undo';
 import { completeMe } from './recurring-relative';
 import { P, dateHour } from './values';
-import { theTask, rememberBeforeOfMyChange, type StepDefinition, type World } from './world';
+import { minimalOn, theTask, rememberBeforeOfMyChange, type StepDefinition, type World } from './world';
 
 function tapCheckbox(world: World, moment: Date): void {
 	const task = theTask(world);
 	world.checkboxTouched = true;
 	// Without a prior query, what is asserted afterwards belongs to the moment of the tap.
 	if (world.statusMoments.length === 0) world.statusMoments = [moment];
-	const action = checkboxAction(task, world.completions, moment);
+	const action = checkboxAction(task, world.completions, moment, minimalOn(world));
 	if (action.kind === 'none') return;
 	if (action.kind === 'complete') return completeMe(world, moment, task);
 	rememberBeforeOfMyChange(world);
@@ -46,14 +46,14 @@ export const checkboxSteps: StepDefinition[] = [
 		pattern: /^the task appears in Pendientes$/,
 		run: (world) =>
 			inEveryMomentQueried(world, (now) =>
-				expect(pendingRows([theTask(world)], world.completions, now, world.showCompleted, world.showPaused)).toHaveLength(1)
+				expect(pendingRows([theTask(world)], world.completions, now, world.showCompleted, world.showPaused, minimalOn(world))).toHaveLength(1)
 			)
 	},
 	{
 		pattern: /^the task checkbox is (enabled|disabled)$/,
 		run: (world, as) =>
 			inEveryMomentQueried(world, (now) =>
-				expect(checkboxEnabled(theTask(world), world.completions, now)).toBe(as === 'enabled')
+				expect(checkboxEnabled(theTask(world), world.completions, now, minimalOn(world))).toBe(as === 'enabled')
 			)
 	},
 	{
@@ -61,14 +61,14 @@ export const checkboxSteps: StepDefinition[] = [
 		pattern: /^the task has no status$/,
 		run: (world) =>
 			inEveryMomentQueried(world, (now) =>
-				expect(['pendiente', 'atrasada', 'en espera']).not.toContain(taskStatus(theTask(world), world.completions, now).kind)
+				expect(['pendiente', 'atrasada', 'en espera']).not.toContain(taskStatus(theTask(world), world.completions, now, minimalOn(world)).kind)
 			)
 	},
 	{
 		pattern: /^the task does not appear in Pendientes$/,
 		run: (world) =>
 			inEveryMomentQueried(world, (now) =>
-				expect(pendingRows([theTask(world)], world.completions, now, world.showCompleted, world.showPaused)).toEqual([])
+				expect(pendingRows([theTask(world)], world.completions, now, world.showCompleted, world.showPaused, minimalOn(world))).toEqual([])
 			)
 	}
 ];

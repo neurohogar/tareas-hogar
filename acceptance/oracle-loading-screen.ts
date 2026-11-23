@@ -24,6 +24,8 @@ interface Opening {
 	loses: number;
 	auth?: number;
 	data: number[];
+	/** When the first response of the state of the minimal mode arrives (§6.6); without a step, at once. */
+	mode: number;
 	atkinson: Font;
 	noto: Font;
 	remembered?: boolean;
@@ -47,6 +49,7 @@ const READERS: [RegExp, (a: Opening, ...captures: string[]) => void][] = [
 	[/^Auth responds immediately$/, (a) => void (a.auth = 0)],
 	[/^Auth responds at (.+) seconds$/, (a, s) => void (a.auth = numeric(s))],
 	[/^the (?:tasks|completions) respond at (.+) seconds$/, (a, s) => void a.data.push(numeric(s))],
+	[/^the minimal mode responds at (.+) seconds$/, (a, s) => void (a.mode = numeric(s))],
 	[/^the data responds at (.+) seconds$/, (a, s) => void a.data.push(numeric(s))],
 	[/^(Atkinson|Noto) is ready at (.+) seconds$/, (a, name, s) => void (fontOf(a, name).arrives = numeric(s))],
 	[/^(Atkinson|Noto) fails at (.+) seconds$/, (a, name, s) => void (fontOf(a, name).failure = numeric(s))],
@@ -57,7 +60,7 @@ const READERS: [RegExp, (a: Opening, ...captures: string[]) => void][] = [
 ];
 
 function readOpening(entries: StepOracle[], row: RowOracle): Opening | undefined {
-	const opening: Opening = { loses: Infinity, data: [], atkinson: {}, noto: {} };
+	const opening: Opening = { loses: Infinity, data: [], mode: 0, atkinson: {}, noto: {} };
 	for (const step of entries) {
 		const text = withValues(step.text, row);
 		const reader = READERS.find(([pattern]) => pattern.test(text));
@@ -88,12 +91,12 @@ function waitEnd(font: Font, a: Opening): number {
 /** §6.6: a new version that changes the font set treats it as not stored and waits for it again once. */
 const rememberedOnOpen = (a: Opening) => Boolean(a.remembered) && !a.versionChange;
 
-/** §6.6: with a session it awaits the data and both fonts, except Noto after a cap; without a session, only Atkinson. */
+/** §6.6: with a session it awaits the data, the minimal mode (§7) and both fonts, except Noto after a cap; without a session, only Atkinson. */
 function waits(a: Opening): number[] {
 	const atkinson = waitEnd(a.atkinson, a);
 	if (!a.session) return [atkinson];
 	const noto = rememberedOnOpen(a) ? [] : [waitEnd(a.noto, a)];
-	return [...(a.data.length > 0 ? a.data : [Infinity]), atkinson, ...noto];
+	return [...(a.data.length > 0 ? a.data : [Infinity]), a.mode, atkinson, ...noto];
 }
 
 /** §6.6: the minimum always applies; the cap cuts what is awaited but not the Auth wait. */

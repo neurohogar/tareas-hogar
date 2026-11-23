@@ -9,16 +9,16 @@ const DATA: TaskData = { shape: 'puntual', title: 'Pagar luz' };
 
 describe('editFromPanel (spec §6.2): Save with what is written in the panel', () => {
 	it('stores only what changed', () => {
-		expect(editFromPanel(PAY, { data: DATA }, NOW)).toEqual({ ok: true, change: { title: 'Pagar luz' } });
+		expect(editFromPanel(PAY, { data: DATA }, NOW, false)).toEqual({ ok: true, change: { title: 'Pagar luz' } });
 	});
 
 	it('with an invalid field it fails with its error', () => {
-		expect(editFromPanel(PAY, { data: { shape: 'puntual', title: '' } }, NOW)).toEqual({ ok: false, errors: { title: 'vacio' } });
+		expect(editFromPanel(PAY, { data: { shape: 'puntual', title: '' } }, NOW, false)).toEqual({ ok: false, errors: { title: 'vacio' } });
 	});
 
 	it('passes the now: turning a paused one into a one-off resumes it (§5.8)', () => {
 		const paused: Task = { id: 't', title: 'Pagar luz', kind: 'periodica', recurrence: { mode: 'relativo', every: 2, unit: 'dias' }, paused: true, createdAt: NOW };
-		const result = editFromPanel(paused, { data: DATA }, NOW);
+		const result = editFromPanel(paused, { data: DATA }, NOW, false);
 		expect(result.ok && result.change.resumedAt).toEqual(NOW);
 	});
 });

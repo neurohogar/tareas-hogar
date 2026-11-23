@@ -10,8 +10,9 @@ import { createFromPanel, editFromPanel } from '../../src/lib/core/unsaved-chang
 import { hasChanges, type PanelForm } from '../../src/lib/core/unsaved-changes';
 import type { CommonData } from '../../src/lib/core/creation';
 import { createOneOff } from '../../src/lib/core/create-one-off';
-import { DATA_ON_CREATE, type TaskData } from '../../src/lib/core/task-data';
+import { dataOnCreate, type TaskData } from '../../src/lib/core/task-data';
 import { applyChange, type TaskChange } from '../../src/lib/core/task-document';
+import { minimalModeOn } from '../../src/lib/core/minimal-mode';
 import type { TypedSchedule } from '../../src/lib/core/schedule';
 import { POSTPONE_OPTIONS } from '../../src/lib/core/postponement';
 import type { Task } from '../../src/lib/core/task';
@@ -20,6 +21,7 @@ import { P, dateHour, list } from './values';
 import {
 	changesOnCreate,
 	changesOnEdit,
+	minimalOn,
 	theTask,
 	newId,
 	rememberBeforeOfMyChange,
@@ -54,7 +56,7 @@ function timeWindow(value: string): TypedSchedule[number] {
 function actionContext(world: World, changes: PanelChanges, taskOnOpen: Task, action: PanelAction): NoticeAction {
 	const task = tasksOf(world).find(({ id }) => id === taskOnOpen.id);
 	if (!task) throw new Error('The task of the panel no longer exists');
-	return { action, taskOnOpen, task, completions: world.completions, now: theMoment(changes), form: changes.form };
+	return { action, taskOnOpen, task, completions: world.completions, now: theMoment(changes), form: changes.form, minimalModeOn: minimalModeOn(world.minimalMode) };
 }
 
 /** What another device or the passage of time did while the panel was open (§6.2, §7). */
@@ -137,7 +139,7 @@ function changeSteps(world: World, change: (steps: readonly string[], form: Pane
 	changes.form = { ...form, data: { ...form.data, steps: change(form.data.steps ?? [], form) } };
 }
 
-const commonOf = ({ title, emoji, note, firstStep, steps, minimalVersion, schedule }: TaskData): CommonData => ({ title, emoji, note, firstStep, steps, minimalVersion, schedule });
+const commonOf = ({ title, emoji, note, firstStep, steps, minimalVersion, essential, schedule }: TaskData): CommonData => ({ title, emoji, note, firstStep, steps, minimalVersion, essential, schedule });
 
 /** The fields of each "Se repite" option: those of the task if it has that shape; otherwise, as when creating (§6.2). */
 const REPEATS: Record<string, { shape: TaskData['shape']; empty: Partial<TaskData> }> = {
@@ -218,7 +220,7 @@ function saveFromClosing(world: World, changes: PanelChanges): void {
 	const { taskOnOpen, form } = changes;
 	const current = taskOnOpen && tasksOf(world).find(({ id }) => id === taskOnOpen.id);
 	if (current) {
-		const editing = editFromPanel(current, form, theMoment(changes));
+		const editing = editFromPanel(current, form, theMoment(changes), minimalModeOn(world.minimalMode));
 		if (!editing.ok) return failureSave(world, changes, editing.errors);
 		return act(world, current, editing.change);
 	}
@@ -290,6 +292,22 @@ export const unsavedChangesSteps: StepDefinition[] = [
 		run: (world, title, note) => openForEdit(world, { title, note })
 	},
 	{
+		pattern: new RegExp(`^I open the panel to edit the essential task ${P} with note ${P}$`),
+		run: (world, title, note) => openForEdit(world, { title, note, essential: true })
+	},
+	{
+		pattern: /^I tap the Esencial check$/,
+		run: (world) => {
+			const changes = thePanelOpen(world);
+			const { data } = changes.form;
+			changes.form = { ...changes.form, data: { ...data, essential: data.essential === true ? undefined : true } };
+		}
+	},
+	{
+		pattern: /^the Esencial check is (checked|unchecked)$/,
+		run: (world, state) => expect(thePanelOpen(world).form.data.essential === true ? 'checked' : 'unchecked').toBe(state)
+	},
+	{
 		pattern: new RegExp(`^I open the panel to edit the task ${P} with minimal version ${P}$`),
 		run: (world, title, minimalVersion) => openForEdit(world, { title, minimalVersion })
 	},
@@ -321,7 +339,8 @@ export const unsavedChangesSteps: StepDefinition[] = [
 	{
 		pattern: /^I open the panel to create a task$/,
 		run: (world) => {
-			world.panel = { pause: undefined, changes: changesOnCreate(DATA_ON_CREATE) };
+			// §6.2 (Esencial): the check starts checked only with the mode on at the moment the panel opens.
+			world.panel = { pause: undefined, changes: changesOnCreate(dataOnCreate(minimalOn(world))) };
 		}
 	},
 	{

@@ -36,6 +36,7 @@ function opening(world: World): AppOpening {
 		auth: NEVER,
 		tasks: NEVER,
 		completions: NEVER,
+		minimalMode: 0,
 		atkinson: fontNew(),
 		noto: fontNew(),
 		remembered: false,
@@ -60,6 +61,7 @@ function statusIn(a: AppOpening, instant: number): WaitStatus {
 		auth: instant >= a.auth ? sessionAnswered : 'waiting',
 		tasksResponded: instant >= a.tasks,
 		completionsResponded: instant >= a.completions,
+		minimalModeResponded: instant >= a.minimalMode,
 		atkinson: fontStatus(a.atkinson, a.withoutConnection, instant),
 		noto: fontStatus(a.noto, a.withoutConnection, instant),
 		online: !a.withoutConnection && instant < a.losesConnection,
@@ -69,7 +71,7 @@ function statusIn(a: AppOpening, instant: number): WaitStatus {
 
 /** The instants at which the answer can change: startup, the minimum, the cap and each declared event. */
 function instants(a: AppOpening): number[] {
-	const events = [a.auth, a.tasks, a.completions, a.losesConnection, a.atkinson.arrives, a.atkinson.failure, a.noto.arrives, a.noto.failure];
+	const events = [a.auth, a.tasks, a.completions, a.minimalMode, a.losesConnection, a.atkinson.arrives, a.atkinson.failure, a.noto.arrives, a.noto.failure];
 	const all = [0, SCREEN_MINIMUM_IN_SECONDS, SCREEN_LIMIT_IN_SECONDS, ...events].filter((t) => t >= 0 && t !== NEVER);
 	return [...new Set(all)].sort((x, y) => x - y);
 }
@@ -115,6 +117,12 @@ export const loadingScreenSteps: StepDefinition[] = [
 		pattern: new RegExp(`^the (tasks|completions) respond at ${P} seconds$`),
 		run: (world, collection, moment) => {
 			opening(world)[collection as 'tasks' | 'completions'] = seconds(moment);
+		}
+	},
+	{
+		pattern: new RegExp(`^the minimal mode responds at ${P} seconds$`),
+		run: (world, moment) => {
+			opening(world).minimalMode = seconds(moment);
 		}
 	},
 	{

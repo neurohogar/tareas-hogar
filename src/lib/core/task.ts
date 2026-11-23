@@ -62,6 +62,8 @@ export interface RecurringTask {
 	currentStep?: number;
 	/** Spec §4.1 (Minimal version): a line, already trimmed; without the field, the task has no minimal version. */
 	minimalVersion?: string;
+	/** Spec §4.1 (Essential): stored only as true; without the field, the task is not essential. */
+	essential?: boolean;
 	kind: 'periodica';
 	recurrence: Recurrence;
 	/** Spec §4.1 and §5.5: without the field, it can be completed at any hour. */
@@ -90,6 +92,8 @@ export interface OneOffTask {
 	currentStep?: number;
 	/** Spec §4.1 (Minimal version): a line, already trimmed; without the field, the task has no minimal version. */
 	minimalVersion?: string;
+	/** Spec §4.1 (Essential): stored only as true; without the field, the task is not essential. */
+	essential?: boolean;
 	kind: 'puntual';
 	dueDate?: Date;
 	/** Spec §4.1 and §5.5: without the field, it can be completed at any hour. */

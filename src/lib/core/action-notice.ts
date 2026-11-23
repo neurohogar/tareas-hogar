@@ -23,19 +23,21 @@ export interface NoticeAction {
 	completions: readonly Completion[];
 	now: Date;
 	form: PanelForm;
+	/** Whether the minimal mode is on (§5.8). */
+	minimalModeOn: boolean;
 }
 
-type ActionConditions = Pick<NoticeAction, 'action' | 'completions' | 'now'>;
+type ActionConditions = Pick<NoticeAction, 'action' | 'completions' | 'now' | 'minimalModeOn'>;
 
 /** Spec §5.8, §5.9 and §6.2: the task meets the conditions under which the panel shows the action. */
-function isShown({ action, completions, now }: ActionConditions, task: Task): boolean {
-	if (action === 'pausar' || action === 'reanudar') return pauseAction(task) === action;
-	return postponeAction(task, completions, now) === (action === 'quitar posponer' ? 'quitar' : 'posponer');
+function isShown({ action, completions, now, minimalModeOn }: ActionConditions, task: Task): boolean {
+	if (action === 'pausar' || action === 'reanudar') return pauseAction(task, minimalModeOn) === action;
+	return postponeAction(task, completions, now, minimalModeOn) === (action === 'quitar posponer' ? 'quitar' : 'posponer');
 }
 
 /** What Guardar would do with what is written, measured against the task as opened. */
-function saveTyped({ taskOnOpen, form, now }: NoticeAction): EditingResult {
-	return editFromPanel(taskOnOpen, form, now);
+function saveTyped({ taskOnOpen, form, now, minimalModeOn }: NoticeAction): EditingResult {
+	return editFromPanel(taskOnOpen, form, now, minimalModeOn);
 }
 
 /** The task as of now with the change, as the server would apply it (§7). */

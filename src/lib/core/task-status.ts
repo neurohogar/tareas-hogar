@@ -19,26 +19,27 @@ function statusWithoutSchedule(task: Task, ofTheTask: readonly Completion[], now
 /**
  * Derived status of a task (spec §3) from all the completions
  * of the user: it picks those of the task and applies the rule of its kind and its
- * recurrence; with a schedule, that of §5.5–§5.7. A paused one has no status and a
+ * recurrence; with a schedule, that of §5.5–§5.7. A paused one (by hand or, with
+ * `minimalModeOn`, by the minimal mode) has no status and a
  * resumed one is evaluated as just created at resumedAt (§5.8). On that status
  * the postponement is applied (§5.9). It is the only entry point of the status.
  */
-export function taskStatus(saved: Task, completions: readonly Completion[], now: Date): Status {
-	return withPostponement(statusByItsRule(saved, completions, now), saved, now);
+export function taskStatus(saved: Task, completions: readonly Completion[], now: Date, minimalModeOn = false): Status {
+	return withPostponement(statusByItsRule(saved, completions, now, minimalModeOn), saved, now);
 }
 
 /**
  * Spec §5.9: the postponement that has the task waiting; none if it is not
  * postponed or if it is waiting by its own rule (nothing changes there).
  */
-export function waitForPostponement(saved: Task, completions: readonly Completion[], now: Date): Postponement | undefined {
+export function waitForPostponement(saved: Task, completions: readonly Completion[], now: Date, minimalModeOn = false): Postponement | undefined {
 	const active = activePostponement(saved, now);
-	return active && pendingOrOverdue(statusByItsRule(saved, completions, now)) ? active : undefined;
+	return active && pendingOrOverdue(statusByItsRule(saved, completions, now, minimalModeOn)) ? active : undefined;
 }
 
-/** The status of §5.1–§5.8, without the postponement. */
-function statusByItsRule(saved: Task, completions: readonly Completion[], now: Date): Status {
-	if (isPaused(saved)) return { kind: 'pausada' };
+/** The status of §5.1–§5.8, without the postponement; paused by hand or by the minimal mode, none. */
+function statusByItsRule(saved: Task, completions: readonly Completion[], now: Date, minimalModeOn: boolean): Status {
+	if (isPaused(saved, minimalModeOn)) return { kind: 'pausada' };
 	const { task, owns: ofTheTask } = asJustCreated(saved, completionsOfTask(completions, saved.id));
 	const { schedule } = task;
 	if (!schedule) return statusWithoutSchedule(task, ofTheTask, now);
