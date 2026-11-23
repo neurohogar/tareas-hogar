@@ -27,7 +27,7 @@ Done when `git worktree list` shows the `pipeline` worktree on `wt/pipeline`.
 1. **analyst** — write the package path (`docs/pipeline/paquetes/<feature>.md`) in `tmp/paquete-actual` of the main checkout, with a clean tree (the gate of the specification roles requires its own commit and a clean tree), and launch it with the user's request verbatim. If it reports `QUESTION`, ask the user each question in `NOTES`, **one at a time**, with the selection interface and the options as they are; write each answer verbatim in `## Decisions` of the package (`Dn (date, user): «…»`) and relaunch the analyst. Repeat until `DONE`.
 2. **spec-writer** — launch it with the package. If it reports `QUESTION`, same as above and relaunch it.
 3. **gherkin-writer** — launch it with the package. If it reports `QUESTION`, same as above; if the answer changes a rule, it goes back to the spec-writer.
-4. **Approval** — show the user the new `.feature` files and the QA procedure (paths + scenario summary). If they ask for changes to rules, it goes back to the spec-writer; if only to scenarios, to the gherkin-writer. Continue only with explicit approval.
+4. **Approval** — show the user the new `.feature` files and the QA procedure (paths + scenario summary). If they ask for changes to rules, it goes back to the spec-writer; if only to scenarios, to the gherkin-writer. Continue only with explicit approval. When core is launched, start specifying the next feature in the main checkout (see «Two features at once»): if the user already named it, right away; if not, ask for it now, not at the close.
 
 Different features can be specified in parallel if their spec-writers touch different sections of `docs/spec.md` (the orchestrator checks this with the sections each package names); if they overlap, they go in sequence.
 
@@ -35,9 +35,22 @@ Different features can be specified in parallel if their spec-writers touch diff
 6. **Sync** — at qa's `DONE`:
    - In the main checkout: `git merge --ff-only wt/pipeline` (if `v3` advanced with other commits, `git merge --no-edit wt/pipeline`).
    - In the shared worktree: `git merge --ff-only v3`.
-7. **Close** — report to the user: scenarios covered, final gates (from the qa and hardener reports), commits. Ask about the next feature.
+7. **Close** — report to the user: scenarios covered, final gates (from the qa and hardener reports), commits. If the next feature is already specified and approved, start its chain (step 5); if it is still being specified, keep following it; if there is none, ask about the next feature.
 
 A feature is finished when `v3` contains qa's commit and the shared worktree is at the same commit as `v3`.
+
+## Two features at once
+
+While the worktree runs the chain of a feature (N), the main checkout specifies the next one (N+1): the user answers the analyst's questions and approves N+1 while N is being implemented, and N+1's core starts as soon as N syncs.
+
+- **At most two**: N in the worktree, N+1 in the main checkout. A third waits.
+- **Only if they do not collide**: N+1's package must name spec sections and features different from N's (the same check as specifying in parallel). If N+1 has to change a `.feature` or `qa/` file that N's package lists (N's hardener rewrites their manifests), N+1 stops after the analyst until N syncs.
+- **Following both**: N+1's roles come from `~/Work/bdd-pipeline/bdd-pipeline next --especificacion` (prompt, `ESTIMADO:` and `SEGUIR:`), which reads only the main checkout's package; N's from `~/Work/bdd-pipeline/bdd-pipeline next`, as usual. Two `Monitor`s can be armed at once: each line to the user names its feature.
+- **One specification role at a time in the main checkout**: its `tmp/paquete-actual` holds N+1. A spec rework of N goes first: wait for the report of N+1's current role, write N's package in that file, do the rework («Spec rework in the middle of the chain»), and write N+1's back.
+- **Questions to the user**: one at a time, each with its feature's name; the ones that stop N's chain go before N+1's.
+- **Merges**: `v3` has N+1's commits, so every merge of `wt/pipeline` into `v3` is `git merge --no-edit wt/pipeline`, never `--ff-only`. It runs in the main checkout only between two specification roles (after one's verified report, before launching the next), never while one is working there. A conflict in `docs/pipeline/pendientes.txt` is resolved by keeping N+1's new lines and dropping the ones N's acceptance removed; any other conflict, stop and tell the user.
+- **N+1's chain**: only after N's sync and with N+1 approved. `bdd-pipeline next --especificacion` says when it is ready: write N+1's package in `tmp/paquete-actual` of the worktree and continue with step 5.
+- **State**: `pipeline/estado` in Engram lists both features with their phases.
 
 ## Launch template
 
@@ -78,7 +91,7 @@ A role that stops (interrupted, killed or out of retries) can leave its gate or 
 
 When a later role needs a change in `features/` or `qa/` (they belong to the gherkin-writer; if a rule changes, to the spec-writer):
 
-1. In the main checkout: `git merge --ff-only wt/pipeline`. This way the gherkin-writer edits on top of the mutation manifests and that role's changes, without conflicts.
+1. In the main checkout: `git merge --ff-only wt/pipeline` (`git merge --no-edit wt/pipeline` while another feature is being specified there). This way the gherkin-writer edits on top of the mutation manifests and that role's changes, without conflicts.
 2. Launch (or continue) the gherkin-writer (or the spec-writer, if a rule changes) with the change, verbatim.
 3. If the change only touches `features/`/`qa/` and the existing step handlers cover it, relaunch the role that asked for it with `git merge --no-edit v3`. If it requires changing step handlers or code, the work re-enters through core (or through acceptance, if only handlers change) and goes through the chain from there.
 
