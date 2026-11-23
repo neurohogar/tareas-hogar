@@ -20,7 +20,7 @@ The **Completadas** and **Pausadas** checks leave the top of **Pendientes** and 
 - **S14** (§6.1): «Tapping the checkbox of an uncompleted task completes it. Tapping the checkbox of a completed task (always recurring: a completed one-off task has no row in **Pendientes**):»
 - **S15** (§6.1): «Whose most recent completion is from today or later (local day of `completadoEn`; later only with clocks out of sync, §5.2): it deletes it (like **Deshacer**, §5.4) and the task returns to the status that applies.»
 - **S16** (§6.2): «A task with completions that becomes calendar takes `P` according to §5.3 (the completions without `ocurrenciaCubierta` contribute the day of their `completadoEn`).»
-- **S17** (§6.2): «»
+- **S17** (§6.2): «A completed one-off task has no row in **Pendientes**, with **Mostrar completadas** on or off (§6.1); if it is edited (for example, from the history) and becomes recurring, it is governed by the recurring rules with those completions.»
 - **S18** (§6.3): «It does not show the orphan completions (§7) or those of deleted tasks (§6.2).»
 
 ## Decisions
