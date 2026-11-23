@@ -25,20 +25,20 @@ Answers from the user and decisions from the orchestrator that the spec already 
 - **Allowed edits**: `src/lib/core/<file>.ts`, `src/lib/core/*.test.ts` (all core tests: a change to an exported type can touch them) (new files: with a narrow glob such as `src/lib/core/<topic>*.ts`, never the whole directory)
 - **Rules**: S1, S2, …
 - **Reuses**: <existing core functions the feature must use, if any; the gherkin-writer names them when the spec relies on rules already implemented>
-- **Gate**: `node scripts/gate.ts core`
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate core`
 
 ## acceptance
 
 - **Allowed edits**: `acceptance/steps/<file>.ts`, `acceptance/oracle*.ts`, `acceptance/equivalence.ts`, `docs/pipeline/pendientes.txt`
 - **Features to connect**: `features/<a>.feature`, `features/<b>.feature`
 - **New steps**: <text of each new step form>
-- **Gate**: `node scripts/gate.ts acceptance`
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate acceptance`
 
 ## ui
 
 - **Allowed edits**: `src/lib/ui/<Component>.svelte`, `src/lib/adapters/<file>.ts`, `src/routes/…`
 - **Visible behavior**: `qa/<feature>.md`
-- **Gate**: `node scripts/gate.ts ui`
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate ui`
 
 ## cleaner · architect · hardener · qa
 
