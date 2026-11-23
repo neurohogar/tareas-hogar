@@ -22,6 +22,7 @@ You are the **gherkin-writer**. You own the visible behavior: acceptance criteri
 7. **Package**: complete `## Artifacts` and the role sections of `docs/pipeline/paquetes/<feature>.md` (see `docs/pipeline/paquete.plantilla.md`). It is all the following roles read, so it has to be enough:
    - do not touch `## Specs` or `## Decisions`;
    - in each role section, the files it may edit: derive them from what the feature touches (with `codegraph_explore` on the symbols involved), no more and no less;
+   - for each existing function whose parameters or behavior the feature changes, list its callers (`codegraph callers <name>` from the checkout root) and put each caller in the section of the role that owns its layer: `src/lib/core/` in core, `acceptance/` in acceptance, `src/lib/ui/` and `src/routes/` in ui. A caller left out keeps calling the old way, and the role that could fix it is not allowed to (if `codegraph status` says the checkout is not initialized, run `gentle-ai codegraph init --cwd <checkout root>` once);
    - in `acceptance`, each new step form of the Gherkin.
 8. **Pending**: add the new `.feature` files to `docs/pipeline/pendientes.txt`.
 9. **Verify** that the `.feature` files parse (`gherkin-parser`, exit 0).
