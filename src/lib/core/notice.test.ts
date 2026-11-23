@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { noticeOnComplete, visibleNotice, completionToUndo, msUntilDue, noticeReturn } from './notice';
+import { noticeOnComplete, visibleNotice, completionToUndo, msUntilDue, noticeReturn, noticeText, noticeOnReschedule, rescheduleToUndo } from './notice';
 import { complete } from './completions';
 import type { Completion, Task } from './task';
 
@@ -95,5 +95,46 @@ describe('completionToUndo', () => {
 
 	it('without a notice there is nothing to undo', () => {
 		expect(completionToUndo(undefined, completedAt)).toBeUndefined();
+	});
+});
+
+describe('the rescheduling notice (spec §5.4, §5.11)', () => {
+	const at = new Date(2026, 6, 16, 10, 0, 0);
+	const later = (ms: number) => new Date(at.getTime() + ms);
+	const regar: Task = { id: 'r', title: 'Regar', kind: 'periodica', recurrence: { mode: 'relativo', every: 2, unit: 'dias' }, createdAt: new Date(2026, 6, 1) };
+	const barrer: Task = { ...regar, id: 'b', title: 'Barrer' };
+	const undo = [
+		{ taskId: 'b', change: { resumedAt: new Date(2026, 6, 5) } },
+		{ taskId: 'r', change: { resumedAt: null } }
+	];
+	const rescheduled = noticeOnReschedule(at, undo);
+
+	it('says «Tareas reprogramadas», with no count and no return line', () => {
+		expect(noticeText(rescheduled)).toBe('Tareas reprogramadas');
+		expect(noticeReturn(rescheduled, at)).toBeUndefined();
+	});
+
+	it('lasts 5 seconds from the moment of confirming', () => {
+		expect(visibleNotice(rescheduled, at)).toBe(rescheduled);
+		expect(visibleNotice(rescheduled, later(4_999))).toBe(rescheduled);
+		expect(visibleNotice(rescheduled, later(5_000))).toBeUndefined();
+		expect(visibleNotice(rescheduled, later(-1))).toBeUndefined();
+		expect(msUntilDue(rescheduled, later(1_000))).toBe(4_000);
+	});
+
+	it('Deshacer writes back each previous resumedAt, only of the tasks that still exist', () => {
+		expect(rescheduleToUndo(rescheduled, later(4_999), [regar, barrer])).toStrictEqual(undo);
+		expect(rescheduleToUndo(rescheduled, at, [regar])).toStrictEqual([undo[1]]);
+		expect(rescheduleToUndo(rescheduled, at, [])).toStrictEqual([]);
+	});
+
+	it('expired, there is nothing to undo', () => {
+		expect(rescheduleToUndo(rescheduled, later(5_000), [regar, barrer])).toBeUndefined();
+		expect(rescheduleToUndo(undefined, at, [regar])).toBeUndefined();
+	});
+
+	it('it does not undo a completion, and the completion notice does not undo a rescheduling', () => {
+		expect(completionToUndo(rescheduled, at)).toBeUndefined();
+		expect(rescheduleToUndo(notice, completedAt, [water])).toBeUndefined();
 	});
 });

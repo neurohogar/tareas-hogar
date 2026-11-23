@@ -55,7 +55,8 @@ export interface TaskChange {
 	schedule?: Schedule | null;
 	/** Pausing and resuming write them together (§7). */
 	paused?: true | null;
-	resumedAt?: Date;
+	/** Undoing a block rescheduling (§5.11) removes it with null if the task had none. */
+	resumedAt?: Date | null;
 	/** A single field: from and to are written together (§7). */
 	postponed?: Postponement | null;
 }
