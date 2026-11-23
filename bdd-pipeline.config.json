@@ -86,7 +86,8 @@
 			"acceptance"
 		],
 		"equivalenceModule": "acceptance/equivalence.ts",
-		"mutationWorkDir": "tmp/acceptance-mutation"
+		"mutationWorkDir": "tmp/acceptance-mutation",
+		"mutationRunner": "in-process"
 	},
 	"gate": {
 		"manifests": [
