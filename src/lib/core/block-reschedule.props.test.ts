@@ -185,7 +185,7 @@ describe("block rescheduling: properties (spec §5.11)", () => {
         fc.integer({ min: 0, max: 7 }),
         (list, when, now, drop) => {
           const completions = completionsOf(list, when);
-          const { notice } = confirmReschedule(list, completions, now);
+          const { notice } = confirmReschedule(list, completions, now, false);
           const remaining = list.filter((_, i) => i !== drop);
           const undo = rescheduleToUndo(notice, now, remaining) ?? [];
           expect(
@@ -209,9 +209,9 @@ describe("block rescheduling: properties (spec §5.11)", () => {
         const completions = completionsOf(list, when);
         const once = applyResumes(
           list,
-          confirmReschedule(list, completions, now).changes,
+          confirmReschedule(list, completions, now, false).changes,
         );
-        expect(confirmReschedule(once, completions, now).changes).toEqual([]);
+        expect(confirmReschedule(once, completions, now, false).changes).toEqual([]);
       }),
     );
   });

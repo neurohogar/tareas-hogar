@@ -21,16 +21,16 @@ const ids = (tasks: readonly Task[]) => tasks.map(({ id }) => id);
 describe('tasksToReschedule (spec §5.11 Which tasks)', () => {
 	it('every overdue recurring task in view, in the order of Pendientes', () => {
 		expect(taskStatus(SWEEP, COMPLETIONS, NOW).kind).toBe('atrasada');
-		expect(ids(tasksToReschedule([WATER, SWEEP], COMPLETIONS, NOW))).toEqual(['b', 'r']);
+		expect(ids(tasksToReschedule([WATER, SWEEP], COMPLETIONS, NOW, false))).toEqual(['b', 'r']);
 	});
 
 	it('a calendar task overdue is rescheduled too', () => {
-		expect(ids(tasksToReschedule([TRASH], [], NOW))).toEqual(['k']);
+		expect(ids(tasksToReschedule([TRASH], [], NOW, false))).toEqual(['k']);
 	});
 
 	it('an overdue one-off is left out', () => {
 		expect(taskStatus(PAY, [], NOW).kind).toBe('atrasada');
-		expect(tasksToReschedule([PAY, WATER], COMPLETIONS, NOW)).toEqual([WATER]);
+		expect(tasksToReschedule([PAY, WATER], COMPLETIONS, NOW, false)).toEqual([WATER]);
 	});
 
 	it('a paused, a postponed, a pending and a waiting recurring task are left out', () => {
@@ -38,12 +38,12 @@ describe('tasksToReschedule (spec §5.11 Which tasks)', () => {
 		const postponed = { ...WATER, postponed: { from: new Date(2026, 6, 16, 9, 0, 0), to: new Date(2026, 6, 16, 12, 0, 0) } };
 		const pending: Completion = { id: 'c', taskId: 'r', completedAt: new Date(2026, 6, 14, 9, 0, 0) };
 		const waiting: Completion = { id: 'c', taskId: 'r', completedAt: new Date(2026, 6, 16, 9, 0, 0) };
-		expect(tasksToReschedule([paused], COMPLETIONS, NOW)).toEqual([]);
-		expect(tasksToReschedule([postponed], COMPLETIONS, NOW)).toEqual([]);
+		expect(tasksToReschedule([paused], COMPLETIONS, NOW, false)).toEqual([]);
+		expect(tasksToReschedule([postponed], COMPLETIONS, NOW, false)).toEqual([]);
 		expect(taskStatus(WATER, [pending], NOW).kind).toBe('pendiente');
-		expect(tasksToReschedule([WATER], [pending], NOW)).toEqual([]);
+		expect(tasksToReschedule([WATER], [pending], NOW, false)).toEqual([]);
 		expect(taskStatus(WATER, [waiting], NOW).kind).toBe('en espera');
-		expect(tasksToReschedule([WATER], [waiting], NOW)).toEqual([]);
+		expect(tasksToReschedule([WATER], [waiting], NOW, false)).toEqual([]);
 	});
 
 	it('with the minimal mode on, only the essential overdue ones (the ones in view)', () => {
@@ -55,17 +55,17 @@ describe('tasksToReschedule (spec §5.11 Which tasks)', () => {
 
 	it('it follows the clock: a task overdue for less than a minute is already in', () => {
 		const windowed: RecurringTask = { ...TRASH, schedule: [{ from: '08:00', to: '09:00' }], createdAt: new Date(2026, 6, 16, 7, 0, 0) };
-		expect(tasksToReschedule([windowed], [], new Date(2026, 6, 16, 8, 59, 59))).toEqual([]);
-		expect(tasksToReschedule([windowed], [], new Date(2026, 6, 16, 9, 0, 0))).toEqual([windowed]);
-		expect(tasksToReschedule([windowed], [], new Date(2026, 6, 16, 9, 0, 30))).toEqual([windowed]);
+		expect(tasksToReschedule([windowed], [], new Date(2026, 6, 16, 8, 59, 59), false)).toEqual([]);
+		expect(tasksToReschedule([windowed], [], new Date(2026, 6, 16, 9, 0, 0), false)).toEqual([windowed]);
+		expect(tasksToReschedule([windowed], [], new Date(2026, 6, 16, 9, 0, 30), false)).toEqual([windowed]);
 	});
 });
 
 describe('rescheduleEnabled (spec §6.1 Reprogramar vencidas)', () => {
 	it('enabled exactly when there is an overdue recurring task in view', () => {
-		expect(rescheduleEnabled([WATER], COMPLETIONS, NOW)).toBe(true);
-		expect(rescheduleEnabled([], [], NOW)).toBe(false);
-		expect(rescheduleEnabled([PAY], [], NOW)).toBe(false);
+		expect(rescheduleEnabled([WATER], COMPLETIONS, NOW, false)).toBe(true);
+		expect(rescheduleEnabled([], [], NOW, false)).toBe(false);
+		expect(rescheduleEnabled([PAY], [], NOW, false)).toBe(false);
 		expect(rescheduleEnabled([WATER], COMPLETIONS, NOW, true)).toBe(false);
 		expect(rescheduleEnabled([{ ...WATER, essential: true }], COMPLETIONS, NOW, true)).toBe(true);
 	});
@@ -73,7 +73,7 @@ describe('rescheduleEnabled (spec §6.1 Reprogramar vencidas)', () => {
 
 describe('confirmReschedule (spec §5.11 What it does, Only reanudadaEn; §7)', () => {
 	it('a single batch: one change per task, in the order of Pendientes, that writes only resumedAt = now', () => {
-		const { changes } = confirmReschedule([WATER, PAY, SWEEP], COMPLETIONS, NOW);
+		const { changes } = confirmReschedule([WATER, PAY, SWEEP], COMPLETIONS, NOW, false);
 		expect(changes).toStrictEqual([
 			{ taskId: 'b', change: { resumedAt: NOW } },
 			{ taskId: 'r', change: { resumedAt: NOW } }
@@ -82,7 +82,7 @@ describe('confirmReschedule (spec §5.11 What it does, Only reanudadaEn; §7)', 
 
 	it('the example of §5.11: the relative task is pending at once, with reanudadaEn the moment of confirming', () => {
 		const doc: TaskDocument = { ...WATER };
-		const [{ taskId, change }] = confirmReschedule([WATER], COMPLETIONS, NOW).changes;
+		const [{ taskId, change }] = confirmReschedule([WATER], COMPLETIONS, NOW, false).changes;
 		const [after] = applyChange([doc], taskId, change);
 		expect(after).toStrictEqual({ ...doc, resumedAt: NOW });
 		expect(taskStatus(taskFromDocument(after), COMPLETIONS, NOW).kind).toBe('pendiente');
@@ -91,24 +91,24 @@ describe('confirmReschedule (spec §5.11 What it does, Only reanudadaEn; §7)', 
 	it('a calendar task is waiting if today is not one of its days, and pending if it is', () => {
 		const thursdays: RecurringTask = { ...TRASH, recurrence: { mode: 'calendario', weekdays: ['martes'] } };
 		const friday = new Date(2026, 6, 17, 10, 0, 0);
-		const resumed = (task: RecurringTask, now: Date) => taskStatus({ ...task, ...confirmReschedule([task], [], now).changes[0].change } as Task, [], now).kind;
+		const resumed = (task: RecurringTask, now: Date) => taskStatus({ ...task, ...confirmReschedule([task], [], now, false).changes[0].change } as Task, [], now).kind;
 		expect(resumed(thursdays, friday)).toBe('en espera');
 		expect(resumed(TRASH, NOW)).toBe('pendiente');
 	});
 
 	it('nothing to reschedule: an empty batch', () => {
-		expect(confirmReschedule([PAY], [], NOW).changes).toEqual([]);
+		expect(confirmReschedule([PAY], [], NOW, false).changes).toEqual([]);
 	});
 
 	it('the notice starts at the moment of confirming', () => {
-		expect(confirmReschedule([WATER], COMPLETIONS, NOW).notice.rescheduledAt).toBe(NOW);
+		expect(confirmReschedule([WATER], COMPLETIONS, NOW, false).notice.rescheduledAt).toBe(NOW);
 	});
 });
 
 describe('the undo of the notice (spec §5.11 Undo)', () => {
 	it('per task, the resumedAt the rescheduling replaced, or null to remove it', () => {
 		const earlier = new Date(2026, 6, 1, 8, 30, 0);
-		const { notice } = confirmReschedule([WATER, { ...SWEEP, resumedAt: earlier }], COMPLETIONS, NOW);
+		const { notice } = confirmReschedule([WATER, { ...SWEEP, resumedAt: earlier }], COMPLETIONS, NOW, false);
 		expect(notice.undo).toStrictEqual([
 			{ taskId: 'b', change: { resumedAt: earlier } },
 			{ taskId: 'r', change: { resumedAt: null } }
@@ -117,7 +117,7 @@ describe('the undo of the notice (spec §5.11 Undo)', () => {
 
 	it('applying it leaves the document as it was before', () => {
 		const doc: TaskDocument = { ...WATER };
-		const { changes, notice } = confirmReschedule([WATER], COMPLETIONS, NOW);
+		const { changes, notice } = confirmReschedule([WATER], COMPLETIONS, NOW, false);
 		const rescheduled = applyChange([doc], changes[0].taskId, changes[0].change);
 		expect(applyChange(rescheduled, notice.undo[0].taskId, notice.undo[0].change)).toStrictEqual([doc]);
 	});

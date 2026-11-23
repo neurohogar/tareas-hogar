@@ -144,6 +144,15 @@ interface OracleWorld extends Saved {
 	noticeText?: string;
 	/** The moment the notice was last queried. */
 	noticeIn?: number;
+	/** §5.11: the last rescheduling still offered by the single notice slot, with the value each task had before it. */
+	rescheduled?: { at: number; previous: { id: number; resumed?: number }[] };
+	/** What was stored right before the last rescheduling, and the moment of confirming it. */
+	beforeReschedule?: Saved;
+	rescheduledAt?: number;
+	/** §6.1: the minimal mode is on (it only matters to the block rescheduling here). */
+	mode?: boolean;
+	/** The titles the preview of the block rescheduling listed at the last queried moment, in its order. */
+	preview?: string[];
 	history?: string;
 	/** What "Última vez" showed at the last queried moment (§6.2). */
 	lastTime?: string;
@@ -531,6 +540,8 @@ function completeMe(m: OracleWorld, task: Doc, at: number, minimal = false): voi
 	m.before = copy(m);
 	m.updated = complete(m, task, m.completions, at, undefined, minimal);
 	m.notice = { title: nameOf(task), completion: m.updated };
+	// §5.4: the completion notice replaces the rescheduling one, which loses its Deshacer.
+	m.rescheduled = undefined;
 	// §4.1 (Pasos: Completar): completing, by the checkbox or by «Hecho», returns the task to step 1.
 	goOnStep(m, task.id, 1);
 }
@@ -552,9 +563,22 @@ function theCompletionOf(m: OracleWorld, at: number): Completion {
  */
 function tapUndo(m: OracleWorld, now: number): void {
 	m.before = copy(m);
+	if (m.rescheduled && noticeSees(m.rescheduled.at, now)) return undoReschedule(m, m.rescheduled);
 	if (!m.notice || !noticeSees(m.notice.completion.at, now)) return;
 	undoCompletion(m, m.notice.completion.id);
 	m.notice = undefined;
+}
+
+/**
+ * §5.11 (Undo): each rescheduled task that still exists gets back the reanudadaEn the rescheduling replaced (or loses the
+ * field), and nothing else changes; a deleted task is not revived. The notice closes.
+ */
+function undoReschedule(m: OracleWorld, { previous }: NonNullable<OracleWorld['rescheduled']>): void {
+	m.docs = m.docs.map((d) => {
+		const replaced = previous.find(({ id }) => id === d.id);
+		return replaced ? { ...d, resumed: replaced.resumed } : d;
+	});
+	m.rescheduled = undefined;
 }
 
 /**
@@ -572,12 +596,14 @@ function undoCompletion(m: OracleWorld, id: number): void {
 
 /** What the notice shows at that moment: the task and the completion it offers to undo, or none. */
 function queryNotice(m: OracleWorld, now: number): string {
+	if (m.rescheduled && noticeSees(m.rescheduled.at, now)) return 'reprogramadas';
 	const visible = m.notice && noticeSees(m.notice.completion.at, now) ? m.notice : undefined;
 	return visible ? JSON.stringify([visible.title, visible.completion.at]) : 'sin aviso';
 }
 
 /** §5.4: «Completaste «nombre»», with « · mínima» if the completion was the minimal one. */
 function noticeText(m: OracleWorld, now: number): string {
+	if (m.rescheduled && noticeSees(m.rescheduled.at, now)) return 'Tareas reprogramadas';
 	const visible = m.notice && noticeSees(m.notice.completion.at, now) ? m.notice : undefined;
 	return visible ? `Completaste «${visible.title}»${visible.completion.minimal ? ' · mínima' : ''}` : 'sin aviso';
 }
@@ -656,7 +682,8 @@ function orderTask(m: OracleWorld, d: Doc): OrderTask | undefined {
 		covered: [] as Date[],
 		coveredWithHour: startsCovered(own),
 		schedule: d.schedule,
-		postponed: d.postponed
+		postponed: d.postponed,
+		resumed: d.kind === 'periodica' ? d.resumed : undefined
 	};
 	if (d.kind === 'puntual') return { ...base, oneOff: true, limit: d.limit };
 	const r = d.recurrence ?? undecided('periódica sin recurrencia');
@@ -673,6 +700,52 @@ function orderIn(m: OracleWorld, now: number | undefined): string {
 	if (now === undefined && tasks.some((t) => !t.oneOff || t.limit)) undecided('Pendientes en cualquier momento');
 	return sortPending(tasks, now, m.showCompleted) ?? undecided('orden');
 }
+
+// ---- Block rescheduling (§5.11, §6.1) ----
+
+/**
+ * §5.11 (Which tasks) and §6.1: every recurring task overdue at that moment and in view (with the minimal mode on, the
+ * essential ones; paused ones have no status, a postponed one is waiting), in the order of Pendientes.
+ */
+function tasksInPreview(m: OracleWorld, now: number): Doc[] {
+	const overdue = m.docs.filter((d) => {
+		const task = derived(d);
+		return task.kind === 'periodica' && !task.paused && (!m.mode || task.essential === true) && rowStatus(m, task, now) === 'atrasada';
+	});
+	if (overdue.length < 2) return overdue;
+	const order = sortPending(overdue.flatMap((d) => orderTask(m, d) ?? []), now) ?? undecided('orden de la vista previa');
+	return order.split(', ').map((title) => overdue.find((d) => d.title === title) ?? undecided('título de la vista previa'));
+}
+
+/** §5.11: Reprogramar at that moment is a Reanudar of each task of the preview (reanudadaEn = that moment) and opens the notice. */
+function reschedule(m: OracleWorld, at: number): void {
+	const tasks = tasksInPreview(m, at);
+	if (tasks.length === 0) return;
+	m.beforeReschedule = copy(m);
+	m.before = copy(m);
+	m.docs = m.docs.map((d) => (tasks.some((t) => t.id === d.id) ? { ...d, resumed: at } : d));
+	m.rescheduledAt = at;
+	// §5.4: the rescheduling notice replaces the completion one.
+	m.notice = undefined;
+	m.rescheduled = { at, previous: tasks.map(({ id, resumed }) => ({ id, resumed })) };
+}
+
+const RESCHEDULINGS: Step[] = [
+	[/^the minimal mode is on$/, (m) => void (m.mode = true)],
+	[/^I reschedule the overdue tasks on (\S+)$/, (m, [t]) => reschedule(m, moment(t))],
+	// §5.11: Cancelar closes the preview and changes nothing.
+	[/^I tap Cancelar in the preview on (\S+)$/, (m, [t]) => void ((m.preview = undefined), moment(t))],
+	[/^I query the preview on (\S+)$/, (m, [t]) => void (m.preview = tasksInPreview(m, moment(t)).map(({ title }) => title))],
+	// An already stored reanudadaEn (not a change from this device).
+	[/^the task was resumed earlier on (\S+)$/, (m, [t]) => void (only(m).resumed = moment(t))],
+	[/^the task (\S+) was resumed earlier on (\S+)$/, (m, [title, t]) => void (withTitle(m, title).resumed = moment(t))]
+];
+
+/** While the minimal mode is on this oracle only decides what the block rescheduling shows and writes. */
+const OF_RESCHEDULING = /^(?:the preview lists |the Reprogramar button is |the task (?:\S+ )?(?:was resumed at that moment|has no resume moment|resume moment is )|only the resume moment )/;
+
+/** What the stored reanudadaEn of a task is, as the Then sees it. */
+const resumeIs = (d: Doc, named: string) => String(d.resumed === moment(named));
 
 // ---- The row's checkbox (§6.1) ----
 
@@ -1232,7 +1305,7 @@ const QUERIES: Step[] = [
 	[/^Mostrar pausadas is on$/, () => undefined]
 ];
 
-const STEPS: Step[] = [...CREATIONS, ...COMPLETIONS, ...PAUSES, ...POSTPONEMENTS, ...EDITS, ...DELETED, ...UNDOS, ...QUERIES];
+const STEPS: Step[] = [...RESCHEDULINGS, ...CREATIONS, ...COMPLETIONS, ...PAUSES, ...POSTPONEMENTS, ...EDITS, ...DELETED, ...UNDOS, ...QUERIES];
 
 // ---- What each Then observes ----
 
@@ -1367,6 +1440,28 @@ const OBSERVATIONS: Observation[] = [
 	[/^the Hice la mínima button of the task is (?:enabled|disabled)$/, (m) => theRowOfMinimal(m).button()],
 	[/^the last completion of the task was (?:the minimal one|whole)$/, (m) => String(theMoreRecent(completionsOf(m, only(m).id)).minimal === true)],
 	[/^the task has two completions, one whole and one minimal$/, (m) => JSON.stringify(completionsOf(m, only(m).id).map((c) => c.minimal === true).sort())],
+	[/^the preview lists (?:no task|.*)$/, (m) => (m.preview ?? undecided('sin consulta de la vista previa')).join(', ')],
+	[/^the Reprogramar button is (?:enabled|disabled)$/, (m) => String((m.preview ?? undecided('sin consulta de la vista previa')).length > 0)],
+	[/^the notice offers to undo the rescheduling$/, (m) => String(m.noticeSeen === 'reprogramadas' && m.noticeText === 'Tareas reprogramadas')],
+	[/^the task was resumed at that moment$/, (m) => String(only(m).resumed !== undefined && only(m).resumed === m.rescheduledAt)],
+	[/^the task (\S+) was resumed at that moment$/, (m, [t]) => String(withTitle(m, t).resumed !== undefined && withTitle(m, t).resumed === m.rescheduledAt)],
+	[/^the task has no resume moment$/, (m) => String(only(m).resumed === undefined)],
+	[/^the task (\S+) has no resume moment$/, (m, [t]) => String(withTitle(m, t).resumed === undefined)],
+	[/^the task resume moment is (\S+)$/, (m, [e]) => resumeIs(only(m), e)],
+	[/^the task (\S+) resume moment is (\S+)$/, (m, [t, e]) => resumeIs(withTitle(m, t), e)],
+	[
+		/^only the resume moment of the task changed$/,
+		(m) => {
+			const before = m.beforeReschedule ?? undecided('no hubo reprogramación');
+			const key = (d: Doc) => docKey({ ...d, resumed: undefined });
+			return String(
+				m.docs.length === before.docs.length &&
+					m.docs.every((d) => key(d) === key(before.docs.find(({ id }) => id === d.id) ?? undecided('tarea nueva'))) &&
+					only(m).resumed === m.rescheduledAt &&
+					JSON.stringify(m.completions) === JSON.stringify(before.completions)
+			);
+		}
+	],
 	[/^the completion notice says (.*)$/, (m) => m.noticeText ?? undecided('sin consulta del aviso')],
 	[/^the task has a first step of (\S+) characters$/, (m) => String(only(m).firstStep?.length)],
 	[/^the task note has two lines: .*$/, (m) => JSON.stringify(only(m).note?.split('\n'))],
@@ -1421,7 +1516,7 @@ const OBSERVATIONS: Observation[] = [
 
 /** This oracle's own steps: scenarios that edit, delete or concurrently modify. */
 const IS_OF_EDITING =
-	/^(?:I edit |in a single edit I edit |I clear step |the steps of the task |the current step of the task is |I tap Hecho |I tap Paso anterior$|the task row (?:shows the buttons |shows no step buttons$)|the Hecho button of the task is |I choose |I remove the emoji$|I remove the schedule$|I remove the first step$|the first step of the task |the minimal version of the task |I remove the minimal version$|I tap Hice la mínima |the task row (?:shows the minimal one |shows no minimal one$)|the Hice la mínima button |I set |I delete |I tap Deshacer |I tap the task checkbox |I query the notice |I query the Historial |I query the last time |another device, without seeing that change,)/;
+	/^(?:I edit |in a single edit I edit |I clear step |the steps of the task |the current step of the task is |I tap Hecho |I tap Paso anterior$|the task row (?:shows the buttons |shows no step buttons$)|the Hecho button of the task is |I choose |I remove the emoji$|I remove the schedule$|I remove the first step$|the first step of the task |the minimal version of the task |I remove the minimal version$|I tap Hice la mínima |the task row (?:shows the minimal one |shows no minimal one$)|the Hice la mínima button |I set |I delete |I tap Deshacer |I tap the task checkbox |I query the notice |I query the Historial |I query the last time |another device, without seeing that change,|I query the preview |I tap Cancelar in the preview |the task \S+ (?:was resumed at that moment|has no resume moment)$|only the resume moment |the notice offers to undo the rescheduling$)/;
 
 export const isScenarioOfEditing = (texts: string[]) => texts.some((text) => IS_OF_EDITING.test(text));
 
@@ -1438,6 +1533,7 @@ function observe(entries: StepOracle[], thens: StepOracle[], row: RowOracle): st
 	const m: OracleWorld = { docs: [], completions: [], next: 1, deletedDocs: [], deletedCompletions: [] };
 	run(entries, row, m);
 	const texts = thens.map((step) => resolve(step.text, row) ?? undecided(`columna faltante en ${step.text}`));
+	if (m.mode && !texts.every((text) => OF_RESCHEDULING.test(text))) undecided('modo mínimo');
 	// Without a decided order, only the Thens of the steps row can be observed.
 	if (m.orderUndecided && !texts.every((text) => OF_ROW_OF_STEPS.test(text))) undecided('orden de Pendientes');
 	return texts.map((text) => {

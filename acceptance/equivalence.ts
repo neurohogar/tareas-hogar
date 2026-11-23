@@ -124,7 +124,7 @@ function isEquivalentOfOrder(feature: Feature, scenario: Scenario, candidate: Ca
 }
 
 /** Thens that the editing oracle verifies against the value they name: if that value changes, what is observed changes. */
-const THEN_THAT_VERIFIES_THAT_NAMES = /^the task (?:\S+ )?keeps a single completion, from <[A-Za-z0-9_]+>$/;
+const THEN_THAT_VERIFIES_THAT_NAMES = /^the task (?:\S+ )?(?:keeps a single completion, from|resume moment is) <[A-Za-z0-9_]+>$/;
 
 /**
  * A column that is only named by verified Thens and that an input step also gives arrives mutated on both sides:
