@@ -41,15 +41,52 @@ Second feature of epic E6 of `docs/v3/plan.md` («Low-capacity days and return w
 
 ## Artifacts
 
+- Gherkin: `features/block-reschedule.feature` (S2, S3, S4), `features/block-reschedule-preview.feature` (S2, S8, S9), `features/block-reschedule-undo.feature` (S5, S7). S1, S6, S8, S9 (texts and rows of the preview), S10 (offline) and S7 (visible across screens) are also verified in the QA suite; the single `writeBatch` of S10 and the delay of under 60 seconds (an overdue task is always at least one minute late, so it cannot be written as Gherkin) are verified in the core unit tests.
+- QA: `qa/block-reschedule.md` (S1, S6, S7, S8, S9, S10); `qa/minimal-mode.md` was updated (the menu now has two items).
+
 ## core
+
+- **Allowed edits**: `src/lib/core/block-reschedule*.ts` (new: the selection of the overdue recurring tasks in view, in the order of Pendientes, the item enabled or disabled, the writes of confirming and of undoing), `src/lib/core/notice.ts` (the rescheduling notice in the single slot of §5.4: «Tareas reprogramadas», 5 seconds, replaced by the completion notice and the other way round, the undo of one or the other), `src/lib/core/task-document.ts` (`TaskChange.resumedAt` must accept `null` to remove the field on undo), `src/lib/core/*.test.ts` (all core tests: a change to an exported type can touch them; among them `src/lib/core/minimal-version.test.ts` and `src/lib/core/minimal-version.props.test.ts`, which import `notice.ts`)
+- **Rules**: S2, S3, S4, S5, S7, S9, S10
+- **Reuses**: `resumeFromMinimalMode(now)` and `resume(now)` (§5.8: only `reanudadaEn` is the rescheduling write), `pendingRows` and `compareByUrgency` (what is in view and the order, also with the minimal mode), `taskStatus`, `isPaused`, `pausedByMinimalMode`, `applyChange`, `noticeOnComplete`
+- **Note**: the item is enabled exactly when the rows `atrasada` of recurring tasks in view are not empty; the preview is that same list evaluated at "now" (it follows the clock). The confirming moment is the "now" of every resume. Undo writes back, per task that still exists, the previous `resumedAt` or `null`. A delay of under 60 seconds cannot be reached from the Gherkin (an overdue task is always at least a minute late: the shortest window lasts a minute and becomes overdue at its close; a relative task without a schedule, at least one hour): cover those edges with core unit tests.
+- **Callers to update if the signature or behavior changes** (`codegraph callers`): `visibleNotice`, `msUntilDue`, `completionToUndo`, `noticeOnComplete`, `noticeText`, `noticeReturn` are called in core only from tests (`src/lib/core/notice.test.ts`, `src/lib/core/minimal-version.test.ts`, `src/lib/core/minimal-version.props.test.ts`); the callers of the other layers are listed in the acceptance and ui sections.
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate core`
 
 ## acceptance
 
+- **Allowed edits**: `acceptance/steps/block-reschedule.ts` (new), `acceptance/steps/index.ts`, `acceptance/steps/world.ts`, `acceptance/steps/undo.ts`, `acceptance/steps/minimal-version.ts`, `acceptance/steps/row-text.ts`, `acceptance/steps/recurring-relative.ts`, `acceptance/oracle*.ts` (existing and new ones, for example `acceptance/oracle-block-reschedule.ts`), `acceptance/equivalence.ts`, `scripts/check-arch.ts` (its manual list of oracle files, only if a new `acceptance/oracle-*.ts` is created), `docs/pipeline/pendientes.txt`
+- **Features to connect**: `features/block-reschedule.feature`, `features/block-reschedule-preview.feature`, `features/block-reschedule-undo.feature`
+- **Callers of the notice functions** (`codegraph callers`, if the notice type or its functions change): `acceptance/steps/undo.ts` (`visibleNotice`, `completionToUndo`), `acceptance/steps/minimal-version.ts` (`noticeText`), `acceptance/steps/row-text.ts` (`noticeReturn`), `acceptance/steps/recurring-relative.ts` (`noticeOnComplete`), `acceptance/steps/world.ts` (the type `Notice`), and in the oracle `acceptance/oracle-history.ts` (`noticeSees`) and `acceptance/oracle-editing.ts` (the notice of the world: «I tap Deshacer in the notice», «I query the notice», «there is no notice» now also serve the rescheduling notice). The existing steps of other features that now also apply: `I tap Deshacer in the notice on <m>`, `I query the notice on <m>`, `there is no notice`, `I complete the task <T> on <m>` (replaces the rescheduling notice), `the task <T> keeps a single completion, from <m>`, `no completion remains of <T>`, `I query Pendientes on <m>`, `I query Pendientes at any moment`, `no task remains`, `I query the last time on <m>`, `the last time shows <text>`, `the task is paused by the minimal mode`.
+- **New steps**:
+  - `I reschedule the overdue tasks on <moment>` (taps Reprogramar in the preview; the moment is the "now" of the resumes and opens the notice)
+  - `I tap Cancelar in the preview on <moment>`
+  - `I query the preview on <moment>`
+  - `the preview lists <titles>` (titles separated by ", ", from top to bottom, in the order of Pendientes)
+  - `the preview lists no task`
+  - `the Reprogramar button is enabled` / `the Reprogramar button is disabled`
+  - `the Reprogramar vencidas item is enabled` / `the Reprogramar vencidas item is disabled` (after `I query Pendientes on <moment>` or `at any moment`)
+  - `the notice offers to undo the rescheduling` (the visible notice is «Tareas reprogramadas» with Deshacer)
+  - `the task was resumed earlier on <moment>` (a stored `reanudadaEn` already set before any other date) and `the task <Title> was resumed earlier on <moment>`
+  - `the task resume moment is <moment>` and `the task <Title> resume moment is <moment>` (assert the stored `reanudadaEn`)
+  - `the task <Title> was resumed at that moment`
+  - `the task <Title> has no resume moment`
+  - `only the resume moment of the task changed` (the stored task equals the one from before the rescheduling except `reanudadaEn`)
+  - Existing steps reused as they are: `the task was resumed at that moment`, `the task has no resume moment`, `the task <Title> was marked essential`, `the task <Title> was completed on <m>`, `the task was postponed with option <o> on <m>`, `another device, without seeing that change, completes the task <T> on <m>` / `deletes the task` / `pauses the task`.
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate acceptance`
+
 ## ui
+
+- **Allowed edits**: `src/lib/ui/Pending.svelte` (the second item of the menu and the opening of the preview), `src/lib/ui/Reschedule*.svelte` (new: the preview), `src/lib/ui/Session.svelte` (the single notice slot, the confirming and the undo of the rescheduling), `src/lib/ui/UndoNotice.svelte`, `src/lib/ui/styles.css`, `src/lib/adapters/repository.ts` (the write of `resumedAt: null` as `deleteField()`, and the single `writeBatch` of the rescheduling and of its undo)
+- **Callers to update if the signature or behavior changes** (`codegraph callers`): `src/lib/ui/Session.svelte` (`visibleNotice`, `msUntilDue`, `completionToUndo`, `noticeOnComplete`, `noticeText`, `noticeReturn`, `Notice`; `undo` and `completeTask` there), `src/lib/adapters/repository.ts` (`changeFields` for `TaskChange.resumedAt`; `saveMinimalMode` as the model of a `writeBatch` of many tasks)
+- **Visible behavior**: `qa/block-reschedule.md`, `qa/minimal-mode.md` (the menu with two items)
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate ui`
 
 ## cleaner · architect · hardener · qa
 
 They work on everything the feature changed (`git diff <feature base>`, recorded in `tmp/base-de-feature`); they need no section of their own unless the gherkin-writer leaves a note for them here.
+
+Note for qa: `e2e/block-reschedule.spec.ts` from `qa/block-reschedule.md`, and `e2e/minimal-mode.spec.ts` must follow the change of `qa/minimal-mode.md` (the menu has two items; Flow 2 step 1).
 
 ## Log
 
