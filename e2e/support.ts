@@ -302,6 +302,7 @@ export async function setDays(page: Page, days: string[]) {
 /** Spanish terms with which each emoji is found in the picker's search. */
 const SEARCH: Record<string, string> = {
   "🌱": "planta",
+  "💧": "gota",
   "🔥": "fuego",
   "🧹": "escoba",
   "🌿": "hierba",

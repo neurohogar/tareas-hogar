@@ -221,9 +221,13 @@ test('Flow 2: the menu, the mode and the line', async ({ page }) => {
 	await menuButton(page).click();
 	await expect(menu(page)).toBeVisible();
 	await expect(menu(page).getByRole('menuitemcheckbox')).toHaveCount(1);
-	await expect(menu(page).getByRole('menuitem')).toHaveCount(0);
+	// The second item, Reprogramar vencidas, is below Modo mínimo (qa/block-reschedule.md); nothing else.
+	await expect(menu(page).getByRole('menuitem')).toHaveCount(1);
+	await expect(menu(page).getByRole('menuitem')).toHaveText(/Reprogramar vencidas/);
 	await expect(modeItem(page)).toHaveAttribute('aria-checked', 'false');
 	await expect(menu(page).getByRole('button')).toHaveCount(0);
+	const [top, below] = [await modeItem(page).boundingBox(), await menu(page).getByRole('menuitem').boundingBox()];
+	expect(below!.y).toBeGreaterThan(top!.y);
 	await page.getByRole('heading', { name: 'Pendientes' }).click();
 	await expect(menu(page)).toHaveCount(0);
 	await expect(line(page)).toHaveCount(0);

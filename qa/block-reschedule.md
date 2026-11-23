@@ -22,7 +22,7 @@ Out of scope: the statuses, the texts and the order of the rows (`qa/recurring-r
   - "At X" means moving the simulated clock to X before the step.
   - "Advance the clock to X" means moving it to X and waiting for the screen to update by itself (without reloading).
 - Create a task: tap **+**, type the title, choose the **Se repite** option the step gives, with the controls of `qa/one-off.md`, `qa/recurring-relative.md` and `qa/recurring-calendar.md`; save. "Complete" a task means tapping its checkbox. "Essential" means checking **Esencial** before saving.
-- **Mostrar completadas** and **Mostrar pausadas** stay off unless the flow says to turn them on.
+- **Mostrar pausadas** stays off unless the flow says to turn it on. **Mostrar completadas** is turned on at the start of every flow, so that the completed `en espera` recurring tasks are in view (§6.1).
 - **Two devices** (Flows 5 and 6): two independent browser contexts, A and B, with the same account and the same simulated clock. "B offline" means `browserContext.setOffline(true)` on B; "B comes back online" means putting it back online and waiting for both screens to update by themselves.
 
 Reference dates: Wednesday 2026-07-08, Thursday 9, Friday 10, Tuesday 14, Wednesday 15, Thursday 16, Friday 17.
@@ -41,9 +41,9 @@ Precondition: empty list, clock stopped at `2026-07-08T09:00:00` (Wednesday), mo
 
 1. Tap **Menú**: a menu with two items, **Modo mínimo** and, below it, **Reprogramar vencidas**, dimmed (no task). Tap **Reprogramar vencidas**: nothing happens, the menu stays open and no preview opens. Tap outside: the menu closes. Open it again: it looks exactly the same.
 2. Create `Pagar` (**No se repite**, due date `2026-07-10`). Advance the clock to `2026-07-11T10:00:00`: `Pagar` is overdue with its «Tocaba …». Open the menu: **Reprogramar vencidas** is still dimmed (the only overdue task is a one-off); tap it: nothing happens and the menu stays open.
-3. Create `Regar` (**Intervalo** every `2` **días**) and complete it. Advance to `2026-07-12T10:00:00`: `Regar` is `en espera`; the item is dimmed. Advance to `2026-07-14T10:00:00`: `Regar` is overdue with its «Tocaba …». Open the menu: **Reprogramar vencidas** is enabled, with the same look as **Modo mínimo**. Tap outside to close.
+3. Create `Regar` (**Intervalo** every `2` **días**) and complete it. Advance to `2026-07-12T10:00:00`: `Regar` is `en espera`; the item is dimmed. Advance to `2026-07-15T10:00:00` (the overdue time of a relative task is a whole interval after it comes back, §5.2): `Regar` is overdue with its «Tocaba …». Open the menu: **Reprogramar vencidas** is enabled, with the same look as **Modo mínimo**. Tap outside to close.
 4. Pause `Regar` (row, **Pausar**): open the menu, the item is dimmed again. Tap **Reanudar** on `Regar`: it is pending, not overdue, and the item stays dimmed.
-5. Create `Basura` (**Días de la semana** `martes`) at `2026-07-14T10:00:00`: it is pending. Advance to `2026-07-14T23:59:59` and open the menu: the item is dimmed. Advance the clock to `2026-07-15T00:00:00` without reloading: `Basura` becomes overdue and the item becomes enabled by itself, with the menu still open.
+5. Create `Basura` (**Días de la semana** `miércoles`) at `2026-07-15T10:00:00`: it is pending. Advance to `2026-07-15T23:59:59` and open the menu: the item is dimmed. Advance the clock to `2026-07-16T00:00:00` without reloading: `Basura` becomes overdue and the item becomes enabled by itself, with the menu still open.
 
 ## Flow 2: preview, confirming and what is left untouched
 
@@ -66,7 +66,7 @@ Precondition: empty list, clock stopped at `2026-07-08T09:00:00`; `Regar` (**Int
 
 1. Open the menu, **Reprogramar vencidas**, **Reprogramar** at `2026-07-16T10:00:00`: the notice «Tareas reprogramadas» appears. At `2026-07-16T10:00:04` it is still there. At `2026-07-16T10:00:05` it is gone, and `Regar` is still pending.
 2. **Reprogramar** at `2026-07-16T10:00:00` and tap **Deshacer** at `2026-07-16T10:00:03`: the notice closes at once, with no message, and `Regar` is overdue again with the same «Tocaba …» as before.
-3. **Reprogramar** at `2026-07-16T10:00:00`; at `2026-07-16T10:00:02` tap the checkbox of `Cena`: a single notice, `Completaste «Cena»`, with **Deshacer**; the rescheduling notice is gone. At `2026-07-16T10:00:03` tap **Deshacer**: `Cena` is not completed again and `Regar` is still pending (the rescheduling can no longer be undone).
+3. **Reprogramar** at `2026-07-16T10:00:00`; at `2026-07-16T10:00:02` tap the checkbox of `Cena`: a single notice, `Completaste «Cena»`, with **Deshacer**; the rescheduling notice is gone. At `2026-07-16T10:00:03` tap **Deshacer**: `Cena` is pending and not completed (the completion is undone) and `Regar` is still pending (the rescheduling can no longer be undone).
 4. Complete `Cena` at `2026-07-16T09:59:58` and tap **Reprogramar** at `2026-07-16T10:00:00`: the notice is «Tareas reprogramadas», not «Completaste …». At `2026-07-16T10:00:02` tap **Deshacer**: `Regar` is overdue again and `Cena` stays completed.
 5. **Reprogramar** at `2026-07-16T10:00:00`, then tap the **Historial** link at `2026-07-16T10:00:01`: the notice is still on screen. Go back to **Pendientes** at `2026-07-16T10:00:03`: it is still there. At `2026-07-16T10:00:05` it is gone.
 
@@ -83,10 +83,10 @@ Precondition: empty list, clock stopped at `2026-07-08T09:00:00`, mode off.
 
 Precondition: two devices, A and B, empty list, clock stopped at `2026-07-08T09:00:00`. Create `Regar` and `Basura` (both **Intervalo** every `2` **días**) and complete both. Advance to `2026-07-14T09:00:00` and create `Mesa` (**Días de la semana** `jueves`). Advance to `2026-07-16T10:00:00`: `Regar` and `Basura` are overdue and `Mesa` is pending.
 
-1. On A open the preview: `Basura`, `Regar` (the same overdue instant, so the tie goes by title).
+1. On A open the preview: `Basura`, `Regar` (the oldest overdue first: complete `Basura` before `Regar` in the precondition so that the order does not depend on the milliseconds of the simulated clock).
 2. On B complete `Basura`: on A, without reloading, `Basura` leaves the preview and **Reprogramar** stays enabled. On B delete `Regar` (its panel, **Borrar tarea**, confirming): on A `Regar` leaves the preview and the list is empty: **Reprogramar** is dimmed and tapping it does nothing; only **Cancelar** closes it.
 3. Tap **Cancelar** on A. Undo the completion of `Basura` on B (**Historial**, **Borrar**): `Basura` is overdue again. Open the preview on A: it lists `Basura`. Leave it open and advance the clock of A and B to `2026-07-16T23:59:59`, then to `2026-07-17T00:00:00` without reloading: `Mesa` (its Thursday passed) enters the open preview by itself.
-4. Tap **Reprogramar** on A: it acts on every task in the preview at that moment (`Basura` and `Mesa`), with no further question, and the notice appears.
+4. Tap **Reprogramar** on A: it acts on every task in the preview at that moment (`Basura` and `Mesa`), with no further question, and the notice appears. `Basura` is pending and `Mesa` (a calendar task whose day is not today, Friday 17) is `en espera`, both with no «Tocaba …».
 
 ## Flow 6: two devices and offline
 
@@ -101,6 +101,6 @@ Precondition: two devices, A and B, empty list, clock at `2026-07-08T09:00:00`; 
 
 Precondition: empty list, clock stopped at `2026-07-08T09:00:00`; `Regar` and `Basura` (both **Intervalo** every `2` **días**) created and completed; `Pagar` (**No se repite**, due date `2026-07-10`) created.
 
-1. Advance the clock to `2026-08-20T10:00:00` (a long absence) and reload: the three are overdue. No preview, notice, banner, badge or text offering to reschedule, and no text about what piled up or how many tasks are overdue, appears anywhere (**Pendientes**, **Historial**, the menu). The only way to the rescheduling is the **⋮** menu.
+1. Advance the clock to `2026-08-20T10:00:00` (a long absence; no reload, because with the simulated clock six weeks ahead the sign-in token refresh never ends): the three are overdue. No preview, notice, banner, badge or text offering to reschedule, and no text about what piled up or how many tasks are overdue, appears anywhere (**Pendientes**, **Historial**, the menu). The only way to the rescheduling is the **⋮** menu.
 2. Open the menu and tap **Reprogramar vencidas**: the preview lists `Basura` and `Regar` and shows no count. Tap **Reprogramar**: the notice says only «Tareas reprogramadas» (no number, no names, no congratulation); the list has no message either.
 3. Tap **Deshacer**: the notice closes with no message. At no moment is a count or a summary shown.
