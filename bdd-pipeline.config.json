@@ -142,13 +142,15 @@
 				"skipPending": true,
 				"name": "acceptance:mutate {{file}}",
 				"command": "npm run acceptance:mutate --silent -- {{file}} --level soft",
-				"check": "nothingLeftToMutate"
+				"check": "nothingLeftToMutate",
+				"reuse": true
 			},
 			"acceptance:mutate:paquete": {
 				"kind": "perPackageFeature",
 				"name": "acceptance:mutate {{file}} (del paquete)",
 				"command": "npm run acceptance:mutate --silent -- {{file}} --level soft",
-				"check": "nothingLeftToMutate"
+				"check": "nothingLeftToMutate",
+				"reuse": true
 			},
 			"gherkin-parser": {
 				"kind": "perPackageFeature",
