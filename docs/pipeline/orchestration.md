@@ -64,13 +64,15 @@ The user must see progress without asking. While a role runs in the foreground, 
 2. **Follow**: launch a `Monitor` with the `SEGUIR:` line from `pipeline.ts` and `timeout_ms: 1800000`. If it expires, re-arm it with the same line plus `--continuar`, which keeps the role's time and what was noted meanwhile.
 3. **Launch** the role with `Agent` and `run_in_background: true` (or `delegate_task` if it runs on a different provider from the orchestrator's in T3 Code). The `SubagentStop` hook works the same: it returns the gate errors to the role.
 4. **Notify**: for each `Monitor` event, one short line to the user with the phase and the time against the estimate. If a summary says there has been no news for 15 minutes or more, investigate (processes and `tmp/progreso.log`) and say so.
-5. **Close**: when the role's notification arrives, stop the `Monitor` with `TaskStop`, verify the `DONE` and say how long it took against the estimate.
+5. **Close**: when the role's notification arrives, verify the `DONE` first and only then stop the `Monitor` with `TaskStop`; say how long it took against the estimate. While the gate has not given `OK` or `FALLA` for the role's commit, the `Monitor` stays armed: it is the only thing that reports a gate that keeps running after the role stopped.
 
 The analyst does not go through `pipeline.ts`: its `SEGUIR` is `node scripts/progreso.ts analyst`, and its prompt carries the line `Progreso:` with `~/Work/tareas-hogar/tmp/progreso.log`.
 
 Meanwhile, the orchestrator ends its turn and does not wait with `sleep`: events wake it up.
 
 If the role is interrupted before its report arrives, read `tmp/reporte-<role>.txt` from where it works. It counts only if its `COMMIT` is `HEAD`; only then run the gate.
+
+A role that stops (interrupted, killed or out of retries) can leave its gate or a long run still going in the background, and that run notifies nobody when it ends. Before deciding what comes next, check with `pgrep -fa "[b]dd-pipeline gate"` whether one is alive. If it is, keep the `Monitor` armed until `tmp/progreso.log` shows `gate: OK` or a failure, and read the result in the log the run writes (for example `tmp/gate.log`); never wait for a notification that will not come.
 
 ## Spec rework in the middle of the chain
 
