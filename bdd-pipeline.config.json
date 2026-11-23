@@ -99,7 +99,7 @@
 		"trailer": "^Co-Authored-By: (Claude .+ <noreply@anthropic\\.com>|Google Gemini .+ <noreply@google\\.com>)$",
 		"failureLines": 60,
 		"vars": {
-			"testCommand": "~/Work/bdd-pipeline/bdd-pipeline generate --silent && npx vitest run --project unit --project acceptance src/ tests/hardening/ {{implementedTests}}",
+			"testCommand": "npx vitest run --no-isolate --project unit --project acceptance src/ tests/hardening/ {{implementedTests}}",
 			"coverageCommand": "{{testCommand}} --coverage"
 		},
 		"steps": {
@@ -122,7 +122,7 @@
 				"command": "npm run test:props --silent"
 			},
 			"crapper": {
-				"command": "{{tools.crapper}} --threshold 10 --coverage-command '{{coverageCommand}}' src/lib/core"
+				"command": "~/Work/bdd-pipeline/bdd-pipeline generate --silent && {{tools.crapper}} --threshold 10 --coverage-command '{{coverageCommand}}' src/lib/core"
 			},
 			"dryer": {
 				"command": "{{tools.dryer}} src/lib/core"
@@ -132,7 +132,7 @@
 				"match": "^src/lib/core/[^/]+\\.ts$",
 				"exclude": "\\.test\\.ts$",
 				"name": "mutator {{file}}",
-				"command": "{{tools.mutator}} --scan {{file}} | grep '^Scan: 0 mutation sites' || {{tools.mutator}} --max-workers 4 --coverage-command '{{coverageCommand}}' --test-command '{{testCommand}}' {{file}}",
+				"command": "~/Work/bdd-pipeline/bdd-pipeline generate --silent && { {{tools.mutator}} --scan {{file}} | grep '^Scan: 0 mutation sites' || {{tools.mutator}} --max-workers 4 --coverage-command '{{coverageCommand}}' --test-command '{{testCommand}}' {{file}}; }",
 				"check": "mutantsMeasured",
 				"reuse": true
 			},
