@@ -100,7 +100,7 @@ Precedent: the migration to SvelteKit 3 (`docs/v3/backlog.md`), already done on 
 
 ### E6. Low-capacity days and return without debt
 
-- **Status.** Partial. Implemented the "essential" mark and the minimal mode (feature `minimal-mode`): it is turned on by hand from the ⋮ menu of «Pendientes», shows only the essential tasks and pauses the rest; turning it off brings them back as if newly created. Pending: the block rescheduling, in another feature.
+- **Status.** Implemented in two features. `minimal-mode`: the "essential" mark and the minimal mode, turned on by hand from the ⋮ menu of «Pendientes»; it shows only the essential tasks and pauses the rest, and turning it off brings them back as if newly created. `block-reschedule`: «Reprogramar vencidas» in the same menu reschedules every overdue recurring task as if newly created, with a name-only preview and a 5-second «Deshacer»; overdue one-off tasks are left out and keep their «Tocaba».
 
 - **Problem and persona.** Autism and ADHD. There are days, or weeks, when almost nothing is possible; on coming back, the accumulated list is the pre-start overwhelm at its worst.
 - **Evidence.** `tea §4` (moderate for the phenomenon, weak for what helps); `hogar B2` (strong in general: abandonment is the norm and the return has to be designed); `aacc H5` (strong); `aacc H3` (moderate); `aacc H8` (weak). **Hypothesis** in the mechanism.
@@ -174,7 +174,7 @@ Precedent: the migration to SvelteKit 3 (`docs/v3/backlog.md`), already done on 
 | E3 | First step in view | M | Moderate, indirect |
 | E4 | Minimal version (closed) | M | Strong for the problem, inferred for the remedy |
 | E5 | Choose for me (discarded) | S to M | Moderate |
-| E6 | Low capacity and return without debt (partial) | M to L | Moderate; hypothesis in the mechanism |
+| E6 | Low capacity and return without debt (implemented) | M to L | Moderate; hypothesis in the mechanism |
 | E7 | Start without commitment | L | Moderate, indirect |
 | E8 | "When… then" plans | M | Hypothesis |
 | E9 | Sensory settings and density | S to M | Hypothesis |

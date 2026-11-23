@@ -116,7 +116,7 @@ Las fechas son las de publicación del cambio en `v3`; la historia anterior al 2
 | 2026-11-20 | Termina la migración al inglés: features, procedimientos de QA, paquetes, spec y documentos del pipeline renombrados y traducidos. |
 | 2026-11-22 | La ruta `/historial` pasa a ser `/history`. Despliegue. |
 
-Lo que viene está en [`docs/v3/plan.md`](docs/v3/plan.md): la reprogramación en bloque para volver después de una ausencia, empezar una tarea sin comprometerse a terminarla y las épicas siguientes.
+Lo que viene está en [`docs/v3/plan.md`](docs/v3/plan.md): empezar una tarea sin comprometerse a terminarla y las épicas siguientes.
 
 ## Contribuir
 
