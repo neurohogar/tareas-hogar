@@ -233,6 +233,8 @@ export interface Definition {
   days?: string[];
   emoji?: string;
   note?: string;
+  /** Esencial check of the panel (`true` checks it, `false` unchecks it). */
+  essential?: boolean;
   /** First step: the panel's Primer paso field (`""` empties it). */
   firstStep?: string;
   /** More steps: for each one, Agregar paso and type into the next Paso N field. */
@@ -336,6 +338,8 @@ export async function completePanel(page: Page, d: Definition) {
   if (d.title !== undefined) await page.getByLabel("Título").fill(d.title);
   if (d.emoji !== undefined) await chooseEmoji(page, d.emoji);
   if (d.note !== undefined) await page.getByLabel("Nota").fill(d.note);
+  if (d.essential !== undefined)
+    await page.getByRole("checkbox", { name: "Esencial" }).setChecked(d.essential);
   if (d.firstStep !== undefined)
     await page.getByRole("textbox", { name: "Primer paso", exact: true }).fill(d.firstStep);
   for (const text of d.steps ?? []) {
