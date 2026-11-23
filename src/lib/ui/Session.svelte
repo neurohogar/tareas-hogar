@@ -9,12 +9,14 @@
 		saveCompletion,
 		saveTask,
 		saveMinimalMode,
+		saveResumes,
 		observeMinimalMode,
 		cleanOrphanCompletions,
 		observeCompletions,
 		observeTasks
 	} from '#lib/adapters/repository.ts';
-	import { noticeOnComplete, visibleNotice, completionToUndo, msUntilDue, noticeReturn, noticeText, type Notice } from '#lib/core/notice.ts';
+	import { noticeOnComplete, visibleNotice, completionToUndo, rescheduleToUndo, msUntilDue, noticeReturn, noticeText, type SlotNotice } from '#lib/core/notice.ts';
+	import { confirmReschedule } from '#lib/core/block-reschedule.ts';
 	import { deletion, orphanCompletions, taskExists } from '#lib/core/deletion.ts';
 	import { checkboxAction } from '#lib/core/checkbox.ts';
 	import { complete } from '#lib/core/completions.ts';
@@ -55,7 +57,7 @@
 	const minimalMode = $derived(minimalModeOn(minimalModeDoc));
 	let now = $state(currentTime());
 	/** The notice of this device's last completion; it follows the change of screen. */
-	let notice = $state.raw<Notice | undefined>(undefined);
+	let notice = $state.raw<SlotNotice | undefined>(undefined);
 	const displayedNotice = $derived(visibleNotice(notice, now));
 	/**
 	 * The task open in the edit panel, as it was when opened: the edit
@@ -174,6 +176,12 @@
 	}
 
 	function undo() {
+		const resumes = rescheduleToUndo(notice, currentTime(), tasks);
+		if (resumes) {
+			notice = undefined;
+			void saveResumes(uid, resumes);
+			return;
+		}
 		const completion = completionToUndo(notice, currentTime());
 		notice = undefined;
 		if (completion) deleteAndRestoreStep(completion);
@@ -204,6 +212,15 @@
 		void saveMinimalMode(uid, !turningOff, turningOff ? resumesOnTurningOff(tasks, currentTime()) : []);
 	}
 
+	/** Spec §5.11 and §7: reschedules what the core says at this moment, in a single batch, and shows the notice of §5.4. */
+	function reschedule() {
+		now = currentTime();
+		const { changes, notice: rescheduled } = confirmReschedule(tasks, completions, now, minimalMode);
+		if (changes.length === 0) return;
+		notice = rescheduled;
+		void saveResumes(uid, changes);
+	}
+
 	function deleteEdited(task: Task) {
 		edited = undefined;
 		void deleteTask(uid, deletion(task.id, completions));
@@ -223,6 +240,7 @@
 			return minimalMode;
 		},
 		toggleMinimalMode,
+		reschedule,
 		tapCheckbox,
 		tapDone,
 		doTheMinimal,

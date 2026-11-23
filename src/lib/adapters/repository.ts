@@ -173,7 +173,7 @@ function changeFields({ title, emoji, note, firstStep, minimalVersion, steps, cu
 	if (essential !== undefined) fields.essential = essential === null ? deleteField() : essential;
 	// pausada and reanudadaEn travel together in the same update (§7).
 	if (paused !== undefined) fields.pausada = paused === null ? deleteField() : paused;
-	if (resumedAt !== undefined) fields.reanudadaEn = Timestamp.fromDate(resumedAt);
+	if (resumedAt !== undefined) fields.reanudadaEn = resumedAt === null ? deleteField() : Timestamp.fromDate(resumedAt);
 	// pospuesta is written whole: desde and hasta together (§7).
 	if (postponed !== undefined) {
 		fields.pospuesta = postponed === null ? deleteField() : { desde: Timestamp.fromDate(postponed.from), hasta: Timestamp.fromDate(postponed.to) };
@@ -294,6 +294,17 @@ export function observeMinimalMode(uid: string, onChange: (state: MinimalModeDoc
 export async function saveMinimalMode(uid: string, active: boolean, resumes: readonly TaskResume[] = []): Promise<void> {
 	const batch = writeBatch(db);
 	batch.set(minimalModeRef(uid), { active });
+	for (const { taskId, change } of resumes) batch.update(taskRef(uid, taskId), changeFields(change));
+	await batch.commit();
+}
+
+/**
+ * Spec §7: the block rescheduling of overdue recurring tasks, and its undo, written in a single
+ * writeBatch (the changes come from the core: only `reanudadaEn`).
+ */
+export async function saveResumes(uid: string, resumes: readonly TaskResume[]): Promise<void> {
+	if (resumes.length === 0) return;
+	const batch = writeBatch(db);
 	for (const { taskId, change } of resumes) batch.update(taskRef(uid, taskId), changeFields(change));
 	await batch.commit();
 }

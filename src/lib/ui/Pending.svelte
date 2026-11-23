@@ -4,18 +4,30 @@
 	import { checkboxEnabled } from '#lib/core/checkbox.ts';
 	import type { PanelForm } from '#lib/core/unsaved-changes.ts';
 	import { pendingRows } from '#lib/core/pending.ts';
+	import { rescheduleEnabled } from '#lib/core/block-reschedule.ts';
 	import { dataOnCreate } from '#lib/core/task-data.ts';
 	import Icon from './icons/Icon.svelte';
 	import TaskRow from './TaskRow.svelte';
 	import TaskPanel from './TaskPanel.svelte';
+	import ReschedulePreview from './ReschedulePreview.svelte';
 	import { useSession } from './session';
 
 	const session = useSession();
 	let creating = $state(false);
 	let menuOpen = $state(false);
+	let previewing = $state(false);
 	let showCompleted = $state(readShowCompleted());
 	let showPaused = $state(readShowPaused());
 	const rows = $derived(pendingRows(session.tasks, session.completions, session.now, showCompleted, showPaused, session.minimalMode));
+
+	const canReschedule = $derived(rescheduleEnabled(session.tasks, session.completions, session.now, session.minimalMode));
+
+	/** Disabled: it does nothing and the menu stays open (§6.1). */
+	function openPreview() {
+		if (!canReschedule) return;
+		menuOpen = false;
+		previewing = true;
+	}
 
 	function toggleMinimalMode() {
 		menuOpen = false;
@@ -47,6 +59,9 @@
 				<div class="menu-list" role="menu">
 					<button type="button" role="menuitemcheckbox" aria-checked={session.minimalMode} class="menu-item" onclick={toggleMinimalMode}>
 						<span class="check" aria-hidden="true">{session.minimalMode ? '✓' : ''}</span>Modo mínimo
+					</button>
+					<button type="button" role="menuitem" class="menu-item" class:disabled={!canReschedule} aria-disabled={!canReschedule ? 'true' : undefined} onclick={openPreview}>
+						<span class="check" aria-hidden="true"></span>Reprogramar vencidas
 					</button>
 				</div>
 			{/if}
@@ -86,6 +101,10 @@
 	</ul>
 	<button type="button" class="new" title="Nueva tarea" onclick={() => (creating = true)}>+</button>
 </section>
+
+{#if previewing}
+	<ReschedulePreview onClose={() => (previewing = false)} />
+{/if}
 
 {#if creating}
 	<TaskPanel header="Nueva tarea" initial={dataOnCreate(session.minimalMode)} onSave={saveNew} onClose={() => (creating = false)} />
@@ -145,6 +164,11 @@
 		font: inherit;
 		text-align: left;
 		cursor: pointer;
+	}
+
+	.menu-item.disabled {
+		opacity: 0.5;
+		cursor: default;
 	}
 
 	.check {

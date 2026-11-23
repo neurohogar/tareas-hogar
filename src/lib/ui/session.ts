@@ -15,6 +15,8 @@ export interface Session {
 	readonly minimalMode: boolean;
 	/** The menu item (§6.1): turns the mode on or off at once. */
 	toggleMinimalMode(): void;
+	/** Confirming the block rescheduling (§5.11): writes what the core says and shows its notice. */
+	reschedule(): void;
 	/** Tapping the row checkbox (§6.1): completes the task (with the notice) or deletes its last completion. */
 	tapCheckbox(task: Task): void;
 	/** «Hice la mínima» of the row (§6.1): completes the task like the checkbox, remembering it was the minimal one. */
