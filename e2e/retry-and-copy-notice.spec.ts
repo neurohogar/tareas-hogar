@@ -12,6 +12,7 @@ import {
   cleanEmulators,
   arrivesOnServer,
   sessionWithClock,
+  workerUids,
 } from "./support";
 
 const PROJECT = "demo-tareas-hogar";
@@ -40,19 +41,8 @@ const ROOT = `http://127.0.0.1:8080/v1/projects/${PROJECT}/databases/(default)/d
 const AUTHORIZED = { Authorization: "Bearer owner" };
 
 async function emulatorUid(): Promise<string> {
-  const response = await fetch(
-    `http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/${PROJECT}/accounts:query`,
-    {
-      method: "POST",
-      headers: { ...AUTHORIZED, "Content-Type": "application/json" },
-      body: "{}",
-    },
-  );
-  const body = (await response.json()) as {
-    userInfo?: { localId: string }[];
-  };
-  const uid = body.userInfo?.[0]?.localId;
-  if (!uid) throw new Error("the Auth emulator has no user");
+  const [uid] = await workerUids();
+  if (!uid) throw new Error("this worker has no user in the Auth emulator");
   return uid;
 }
 

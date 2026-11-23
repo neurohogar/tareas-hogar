@@ -7,39 +7,63 @@ import {
 } from "@playwright/test";
 
 const PROJECT = "demo-tareas-hogar";
+const AUTH_API = `http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/${PROJECT}`;
+const AS_OWNER = { Authorization: "Bearer owner", "Content-Type": "application/json" };
 
-/** Clean data: empties the emulator's Auth and Firestore. */
-export async function cleanEmulators(): Promise<void> {
-  await fetch(
-    `http://127.0.0.1:9099/emulator/v1/projects/${PROJECT}/accounts`,
-    { method: "DELETE" },
-  );
-  await fetch(
-    `http://127.0.0.1:8080/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-    {
-      method: "DELETE",
-    },
-  );
+/**
+ * Each Playwright worker signs in with its own account. The app keeps every user's data under
+ * users/{uid} (spec §7), so workers running in parallel never see each other's tasks.
+ */
+export const QA_EMAIL = `qa-w${process.env.TEST_PARALLEL_INDEX ?? "0"}@example.com`;
+
+/** The uids of this worker's accounts in the Auth Emulator (none before its first sign-in). */
+export async function workerUids(): Promise<string[]> {
+  const r = await fetch(`${AUTH_API}/accounts:lookup`, {
+    method: "POST",
+    headers: AS_OWNER,
+    body: JSON.stringify({ email: [QA_EMAIL] }),
+  });
+  if (!r.ok) throw new Error(`accounts:lookup ${r.status}: ${await r.text()}`);
+  const { users } = (await r.json()) as { users?: { localId: string }[] };
+  return (users ?? []).map((u) => u.localId);
 }
 
-/** Flow 1 steps 1-4: opens the app without a clock and signs in with qa@example.com. */
+/** Clean data: removes this worker's accounts and their data; other workers' data stays. */
+export async function cleanEmulators(): Promise<void> {
+  for (const uid of await workerUids()) {
+    const data = await fetch(
+      `http://127.0.0.1:8080/emulator/v1/projects/${PROJECT}/databases/(default)/documents/users/${uid}`,
+      { method: "DELETE" },
+    );
+    if (!data.ok) throw new Error(`deleting users/${uid}: ${data.status}`);
+    const account = await fetch(`${AUTH_API}/accounts:delete`, {
+      method: "POST",
+      headers: AS_OWNER,
+      body: JSON.stringify({ localId: uid }),
+    });
+    if (!account.ok) throw new Error(`accounts:delete ${account.status}: ${await account.text()}`);
+  }
+}
+
+/** Flow 1 steps 1-4: opens the app without a clock and signs in with the worker's account. */
 export async function enter(page: Page): Promise<void> {
   await page.goto("/");
   await completeEntry(page);
 }
 
-/** Flow 1 steps 2-4: with the sign-in screen in view, signs in with qa@example.com. */
+/** Flow 1 steps 2-4: with the sign-in screen in view, signs in with the worker's account (QA_EMAIL). */
 export async function completeEntry(page: Page): Promise<void> {
   const popup = page.waitForEvent("popup");
   await page.getByRole("button", { name: "Entrar con Google" }).click();
   const emulator = await popup;
   await emulator.waitForLoadState();
   await emulator.getByText("Add new account").click();
-  await emulator.getByLabel("Email").fill("qa@example.com");
+  // Auto-generate also fills a random email: it goes first, so the account keeps the worker's.
   await emulator
     .getByRole("button", { name: /Auto-generate/ })
     .click()
     .catch(() => {});
+  await emulator.getByLabel("Email").fill(QA_EMAIL);
   await emulator.getByRole("button", { name: /Sign in with Google/ }).click();
   await expect(page.getByRole("heading", { name: "Pendientes" })).toBeVisible();
 }
@@ -208,7 +232,8 @@ export async function enterAsSecondDevice(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Entrar con Google" }).click();
   const emulator = await popup;
   await emulator.waitForLoadState();
-  await emulator.locator(".js-reuse-account").first().click();
+  // The emulator lists every worker's accounts: reuse this worker's.
+  await emulator.locator(".js-reuse-account").filter({ hasText: QA_EMAIL }).click();
   await expect(page.getByRole("heading", { name: "Pendientes" })).toBeVisible();
 }
 

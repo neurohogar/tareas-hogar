@@ -6,6 +6,7 @@ import {
   type Page,
   type Route,
 } from "@playwright/test";
+import { workerUids } from "./support";
 
 // Helpers for the qa/bundled-font.md procedure (loading screen, Flows 5, 8 and 9).
 
@@ -231,16 +232,11 @@ const PROJECT = "demo-tareas-hogar";
 const DOCS = `http://127.0.0.1:8080/v1/projects/${PROJECT}/databases/(default)/documents`;
 const AS_ADMIN = { Authorization: "Bearer owner", "Content-Type": "application/json" };
 
-/** The uid of the only account in the Auth Emulator. */
+/** The uid of this worker's account in the Auth Emulator. */
 export async function accountUid(): Promise<string> {
-  const r = await fetch(
-    `http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/${PROJECT}/accounts:query`,
-    { method: "POST", headers: AS_ADMIN, body: "{}" },
-  );
-  const response = await r.text();
-  const { userInfo } = JSON.parse(response) as { userInfo?: { localId: string }[] };
-  if (userInfo === undefined) throw new Error(`no accounts: ${response}`);
-  return userInfo[0].localId;
+  const [uid] = await workerUids();
+  if (uid === undefined) throw new Error("this worker has no account in the Auth emulator");
+  return uid;
 }
 
 export interface DocRest {

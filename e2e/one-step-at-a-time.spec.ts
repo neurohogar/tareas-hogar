@@ -1020,7 +1020,9 @@ test('Flow 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', asy
 	// 11: Lavar is unchecked to get its buttons; Hecho and Paso anterior open nothing.
 	await f(page, L).getByRole('checkbox').click();
 	await expect(done(page, L)).toBeVisible();
-	if ((await previous(page, L).count()) > 0) await previous(page, L).click();
+	// Decided by the row's line, which waits for it to render; a bare count() could run before Paso anterior shows.
+	await expect(line(page, L)).toHaveCount(1);
+	if (!(await line(page, L).innerText()).startsWith('Primer paso')) await previous(page, L).click();
 	await says(page, L, P1, true);
 	await done(page, L).click();
 	await says(page, L, P2);

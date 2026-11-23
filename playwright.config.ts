@@ -3,7 +3,9 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
 	testDir: 'e2e',
 	fullyParallel: false,
-	workers: 1,
+	// Each worker signs in with its own account (e2e/support.ts, QA_EMAIL) and cleans only its data,
+	// so spec files run in parallel against the one emulator. QA_WORKERS overrides it.
+	workers: Number(process.env.QA_WORKERS ?? 3),
 	timeout: 60_000,
 	expect: { timeout: 20_000 },
 	reporter: [['list']],
@@ -15,7 +17,7 @@ export default defineConfig({
 	// which runs after all the others.
 	projects: [
 		{ name: 'ui', testIgnore: /pwa-offline|panel-mobile-offline|bundled-font-offline|portrait-orientation/ },
-		{ name: 'pwa', testMatch: /panel-mobile-offline|pwa-offline|bundled-font-offline|portrait-orientation/, dependencies: ['ui'] }
+		{ name: 'pwa', testMatch: /panel-mobile-offline|pwa-offline|bundled-font-offline|portrait-orientation/, dependencies: ['ui'], workers: 1 }
 	],
 	webServer: {
 		command: 'npm run build:qa && npx vite preview --mode qa --host 127.0.0.1 --port 4173 --strictPort',
