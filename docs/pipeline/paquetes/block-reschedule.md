@@ -41,7 +41,7 @@ Second feature of epic E6 of `docs/v3/plan.md` («Low-capacity days and return w
 
 ## Artifacts
 
-- Gherkin: `features/block-reschedule.feature` (S2, S3, S4), `features/block-reschedule-preview.feature` (S2, S8, S9), `features/block-reschedule-undo.feature` (S5, S7). S1, S6, S8, S9 (texts and rows of the preview), S10 (offline) and S7 (visible across screens) are also verified in the QA suite; the single `writeBatch` of S10 and the delay of under 60 seconds (an overdue task is always at least one minute late, so it cannot be written as Gherkin) are verified in the core unit tests.
+- Gherkin: `features/block-reschedule.feature` (S1, S2, S3, S4, S10), `features/block-reschedule-preview.feature` (S2, S8, S9), `features/block-reschedule-undo.feature` (S5, S6, S7). S1 (nothing is offered), S6 (no summary), S8, S9 (texts and rows of the preview), S10 (offline) and S7 (visible across screens) are verified in the QA suite, not in these features; the single `writeBatch` of S10 and the delay of under 60 seconds (an overdue task is always at least one minute late, so it cannot be written as Gherkin) are verified in the core unit tests.
 - QA: `qa/block-reschedule.md` (S1, S6, S7, S8, S9, S10); `qa/minimal-mode.md` was updated (the menu now has two items).
 
 ## core
