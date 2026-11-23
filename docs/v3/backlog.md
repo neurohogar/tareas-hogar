@@ -1,19 +1,19 @@
-# Backlog de la v3
+# v3 backlog
 
-Trabajo ya decidido para la v3 que no sale de la investigación de `docs/research/v3/`. El plan de funcionalidades lo tiene que incluir y ordenar junto con lo demás.
+Work already decided for v3 that does not come from the research in `docs/research/v3/`. The feature plan has to include it and order it together with the rest.
 
-## Técnico
+## Technical
 
-### Migrar a SvelteKit 3
+### Migrate to SvelteKit 3
 
-- **Estado:** hecha (rama `chore/sveltekit-3`). Además de las versiones, SvelteKit 3 obligó a: pasar la config de `svelte.config.js` al plugin `sveltekit(...)` de `vite.config.ts`; cambiar `$lib` por `#lib` (subpath import de `package.json`, con extensión); reemplazar `$service-worker` por `$app/manifest`, `$app/env` y `$app/paths`, con el service worker en `src/service-worker/` y su propio `tsconfig.json`. Vite 8 minifica los strings con backticks, y el helper de QA `e2e/versiones-apoyo.ts` ya no asume comillas dobles. Audit: quedan solo los 4 avisos de `deepmerge`.
-- **Por qué:** `npm audit` reporta 6 avisos bajos que solo se corrigen en SvelteKit 3:
-  - SvelteKit: [GHSA-pfhg-q3qv-9q6r](https://github.com/advisories/GHSA-pfhg-q3qv-9q6r) (redirección con formularios `use:enhance`) y [GHSA-27mw-82g8-phjj](https://github.com/advisories/GHSA-27mw-82g8-phjj) (XSS en páginas prerenderizadas). Afecta a `kit`, `adapter-static`, `vite-plugin-svelte` y `vite-plugin-svelte-inspector`.
-  - `cookie` < 0.7.0: [GHSA-pxg6-pf52-xh8x](https://github.com/advisories/GHSA-pxg6-pf52-xh8x), que llega a través de SvelteKit 2.
-- **Exposición hoy:** ninguna conocida. La app no usa `use:enhance`, tiene `prerender = false` y es estática, sin servidor que use `cookie`. El objetivo es dejar las dependencias al día y el audit limpio.
-- **Qué implica:** SvelteKit 3.2.0 exige como peers Vite 8, TypeScript 6 y `@sveltejs/vite-plugin-svelte` 7, y `@sveltejs/adapter-static` pasa a la 4. Hay que verificar que Vitest y el resto del tooling (`acceptance/`, `bdd-pipeline`, mutación) funcionen con Vite 8.
-- **Cómo:** con `npm install` de versiones concretas, nunca con `npm audit fix --force`, que en este repo bajó firebase a la 9 y `adapter-static` a la 0.0.17. Validar con `npm test`, `npm run check`, `npm run check:arch`, `npm run test:props` y la suite QA completa.
-- **Riesgo:** alto, por ser un cambio de dependencias y de entorno de build.
-- **Lo que no resuelve:** `deepmerge` ([GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4)) no tiene versión corregida y lo sigue usando `vite-plugin-svelte` 7. Se ejecuta solo al compilar, sobre la configuración del propio proyecto. Queda aceptado hasta que exista un arreglo.
+- **Status:** done (branch `chore/sveltekit-3`). Besides the versions, SvelteKit 3 required: moving the config from `svelte.config.js` to the `sveltekit(...)` plugin in `vite.config.ts`; changing `$lib` to `#lib` (a `package.json` subpath import, with extension); replacing `$service-worker` with `$app/manifest`, `$app/env` and `$app/paths`, with the service worker in `src/service-worker/` and its own `tsconfig.json`. Vite 8 minifies strings with backticks, and the QA helper `e2e/versions-support.ts` no longer assumes double quotes. Audit: only the 4 `deepmerge` advisories remain.
+- **Why:** `npm audit` reports 6 low advisories that are only fixed in SvelteKit 3:
+  - SvelteKit: [GHSA-pfhg-q3qv-9q6r](https://github.com/advisories/GHSA-pfhg-q3qv-9q6r) (redirect with `use:enhance` forms) and [GHSA-27mw-82g8-phjj](https://github.com/advisories/GHSA-27mw-82g8-phjj) (XSS in prerendered pages). It affects `kit`, `adapter-static`, `vite-plugin-svelte` and `vite-plugin-svelte-inspector`.
+  - `cookie` < 0.7.0: [GHSA-pxg6-pf52-xh8x](https://github.com/advisories/GHSA-pxg6-pf52-xh8x), which comes through SvelteKit 2.
+- **Exposure today:** none known. The app does not use `use:enhance`, has `prerender = false` and is static, with no server that uses `cookie`. The goal is to keep dependencies up to date and the audit clean.
+- **What it involves:** SvelteKit 3.2.0 requires Vite 8, TypeScript 6 and `@sveltejs/vite-plugin-svelte` 7 as peers, and `@sveltejs/adapter-static` moves to 4. Vitest and the rest of the tooling (`acceptance/`, `bdd-pipeline`, mutation) have to be checked to work with Vite 8.
+- **How:** with `npm install` of concrete versions, never with `npm audit fix --force`, which in this repo downgraded firebase to 9 and `adapter-static` to 0.0.17. Validate with `npm test`, `npm run check`, `npm run check:arch`, `npm run test:props` and the full QA suite.
+- **Risk:** high, because it is a change of dependencies and of the build environment.
+- **What it does not solve:** `deepmerge` ([GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4)) has no fixed version and is still used by `vite-plugin-svelte` 7. It only runs at build time, over the project's own configuration. It is accepted until a fix exists.
 
-Contexto: `@grpc/grpc-js` ya está forzado a 1.14.7 con un `override` (commit `9aad1b7`), porque ninguna versión de firebase, ni la 13.3.0, pide una versión corregida.
+Context: `@grpc/grpc-js` is already forced to 1.14.7 with an `override` (commit `9aad1b7`), because no firebase version, not even 13.3.0, asks for a fixed version.

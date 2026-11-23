@@ -100,7 +100,7 @@ Decisions taken after layer D (2026-11-18): internal string-union values that th
 
 ## Phase 4 rules (2026-11-20): prose documents
 
-Applies to `docs/spec.md`, `qa/*.md`, `docs/pipeline/paquetes/*.md`, `.claude/agents/*.md`, `CLAUDE.md`, `README.md` and `docs/pipeline/*.md`. `docs/research/` and `docs/v3/` are the author's working notes and stay as they are (to be decided later).
+Applies to `docs/spec.md`, `qa/*.md`, `docs/pipeline/paquetes/*.md`, `.claude/agents/*.md`, `CLAUDE.md`, `README.md` and `docs/pipeline/*.md`. `docs/research/` stays in Spanish as research data. `docs/v3/` was translated on 2026-11-23 with these same rules (user: «el proyecto debería estar completamente en ingles salvo los datos de research y los textos de las interfaces q vea el usuario» (translation: «the project should be entirely in English except the research data and the interface texts the user sees»)).
 
 - **Renames done.** Features, QA procedures and packages already have English file names (commit `1717af2`); every `features/…`, `qa/…` and `paquetes/…` path reference was updated mechanically. Prose still has to name them by the new names.
 - **Keep what the person sees, in Spanish and exactly as is.** Button, tab, screen, field and section names, notices, placeholders, error messages and any other text rendered by the app stay in Spanish, inside quotes or `«»`, character for character (`«Pendientes»`, `«Mostrar completadas»`, `«Pausar»`). Write the sentence around them in English (`the «Pendientes» screen`, `the «Deshacer» button`). The in-app text is found in `src/` and `e2e/`: when unsure, grep it there.

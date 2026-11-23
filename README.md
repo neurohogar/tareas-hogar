@@ -116,7 +116,7 @@ Dates are when the change was published on `v3`; the history before 2026-11-12 w
 | 2026-11-20 | English migration finished: features, QA procedures, packages, spec and pipeline documents renamed and translated. |
 | 2026-11-22 | The `/historial` route becomes `/history`. Deploy. |
 
-What comes next is in [`docs/v3/plan.md`](docs/v3/plan.md): the second field of the minimal version, choosing a task for me, low-capacity days, and the later epics.
+What comes next is in [`docs/v3/plan.md`](docs/v3/plan.md): the block rescheduling to come back after an absence, starting a task without committing to finish it, and the later epics.
 
 ## Contributing
 
