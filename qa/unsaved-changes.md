@@ -23,6 +23,8 @@ That of `qa/panel-mobile.md` (Firebase Emulator Suite, session `qa@example.com`,
 - **Back**: `page.goBack()`, which is what the Android Back button does. "Forward" is `page.goForward()`.
 - **Browser confirmation**: Playwright's `beforeunload` dialog (`page.on("dialog")`, type `beforeunload`); it fires on reloading with `page.reload()` or closing the page with `page.close({ runBeforeUnload: true })`, after having touched the page. "Accepting it" is continuing (reloading or closing); "cancelling it" is staying.
 
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
+
 ## Observable contract
 
 - **Notice**: a dialog (`alertdialog`) with accessible name **Tenés cambios sin guardar**, over the panel. It has three buttons, in this order. In the close notice: **Seguir editando**, **Descartar**, **Guardar**. In an action notice: **Seguir editando**, **Descartar y <acción>**, **Guardar y <acción>**, with `<acción>` in lowercase: pausar, reanudar, posponer 1 hora, posponer 3 horas, posponer hasta mañana or quitar posponer.

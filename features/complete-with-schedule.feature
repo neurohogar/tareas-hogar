@@ -7,9 +7,9 @@
 # Completing is only possible inside the window [from, to): if tapping the
 # checkbox would complete the task and it is now outside its window, the checkbox
 # is disabled and tapping it does nothing. If tapping it would delete a completion
-# (completed one-off, or completed recurring whose most recent completion
-# is from today or later), it is always enabled. Undo in the notice
-# can also be done at any time.
+# (completed recurring whose most recent completion is from today or later), it
+# is always enabled. A completed one-off task has no row, so no checkbox. Undo in
+# the notice can also be done at any time.
 # Once overdue, it stays overdue outside the windows, but it can only be
 # completed inside one. The completion is governed by §5.2/§5.3 as usual.
 # A task waiting because of its schedule that has completions is completed: with
@@ -173,24 +173,6 @@ Feature: Complete with schedule
     Examples:
       | every | unit   | completed           | from  | to    | tap                 |
       | 3    | dias   | 2026-07-14T09:00:00 | 08:00 | 11:00 | 2026-07-15T09:00:00 |
-
-  # Complete with schedule 11
-  # A completed one-off, outside the window: the checkbox would delete its
-  # completion, so it is enabled: tapping it deletes it and the task goes back to
-  # waiting until the next window.
-  Scenario Outline: Complete with schedule 11
-    Given Mostrar completadas is on
-    And a one-off task without a due date created on <created>
-    And the task was completed on <completed>
-    And the task can be completed from <from> to <to>
-    When I tap the task checkbox on <tap>
-    And I query the status on <now>
-    Then the task has no completions
-    And the status is en espera
-
-    Examples:
-      | created             | completed           | from  | to    | tap                 | now                 |
-      | 2026-07-15T06:00:00 | 2026-07-15T09:00:00 | 08:00 | 11:00 | 2026-07-15T20:00:00 | 2026-07-15T20:00:01 |
 
   # Complete with schedule 12
   # A recurring task completed today, outside the window: the checkbox would delete

@@ -20,9 +20,11 @@ undo, history, editing and deletion.
 - Auth Emulator account: `qa@example.com`.
 - Create a relative task: tap **+**, type the title, choose **Intervalo** in **Se repite** (the creation panel opens with **No se repite**), set **Cada** and the unit, and save.
 - From Flow 2, at the start of each flow (after signing in), tap the
-  **Mostrar completadas** check to turn it on: a waiting recurring task with
-  completions is completed and only has a row with the check on
+  **Completadas** item of the **⋮** menu to turn it on: a waiting recurring task
+  with completions is completed and only has a row with the item on
   (`qa/show-completed.md`).
+
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
 
 ## Observable contract of the Pendientes row
 

@@ -23,12 +23,14 @@ Same as `qa/recurring-relative.md`:
   by itself (without reloading), unless the step says "reload".
 - Signed in with the Auth Emulator account `qa@example.com` (Flow 1 of
   `qa/recurring-relative.md`).
-- At the start of each flow, tap the **Mostrar completadas** check to
+- At the start of each flow, tap the **Completadas** item of the **⋮** menu to
   turn it on: a waiting recurring task with completions is completed and only
-  has a row with the check on (`qa/show-completed.md`).
+  has a row with the item on (`qa/show-completed.md`).
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16,
 Friday 17, Saturday 18, Sunday 19, Monday 20, Tuesday 21.
+
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
 
 ## Observable contract of the Pendientes row
 

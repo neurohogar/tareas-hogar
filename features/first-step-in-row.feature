@@ -181,10 +181,10 @@ Feature: First step in the row
       | 2    | dias   | 2026-11-10T09:00:00 | Llenar la regadera | 2026-11-14T09:00:00 |
 
   # First step in the row 14
-  # On completing a one-off task (with Mostrar completadas) the line disappears.
+  # On completing a recurring task (with Mostrar completadas) the line disappears.
   Scenario Outline: First step in the row 14
     Given Mostrar completadas is on
-    And a one-off task without a due date
+    And a relative recurring task never completed
     And the first step of the task is <first_step>
     When I tap the task checkbox on <tap>
     And I query Pendientes on <now>

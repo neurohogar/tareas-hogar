@@ -27,6 +27,8 @@ Out of scope: the status and order rules themselves (`qa/one-off.md`, `qa/recurr
 
 Reference week: Monday 2026-11-09, Tuesday 10, Wednesday 11, Thursday 12, Friday 13, Saturday 14, Sunday 15.
 
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
+
 ## Observable contract
 
 - **Primer paso field**: in the panel (**Nueva tarea** and **Editar tarea**), **Tarea** section, a one-line text field (role `textbox`, label **Primer paso**) without `placeholder`. In the order of the section, from top to bottom: the title with the emoji button, the **Primer paso** field, the **Nota**. When creating it is empty; when editing it shows the saved value. Enter inside the field saves, as in the **Título** field.
@@ -75,7 +77,7 @@ Precondition: empty list, clock stopped at `2026-11-13T10:00:00` (Friday). Turn 
 2. `Pagar` (overdue) and `Cambiar foco` (pending) show their line; `Regar` (never completed: pending) too.
 3. Tap the checkbox of **Regar**: it becomes `waiting`, completed, and its row no longer contains `Primer paso`. Advance the clock to `2026-11-13T17:59:00`: still without a line. Advance to `2026-11-13T18:00:00`: **Regar** goes back to `pending` and its row says `Primer paso: Llenar la regadera`, the same as before.
 4. Advance to `2026-11-14T02:00:00`: **Regar** is `overdue` and still says `Primer paso: Llenar la regadera`.
-5. Tap the checkbox of **Cambiar foco** (one-off): the notice `Completaste «Cambiar foco»` appears without any `Primer paso`. The row (completed, with **Mostrar completadas**) does not contain `Primer paso`. Tap **Deshacer** within the 5 seconds: the row goes back to `pending` and says `Primer paso: Sacar la escalera`.
+5. Tap the checkbox of **Cambiar foco** (one-off): the notice `Completaste «Cambiar foco»` appears without any `Primer paso`. Its row disappears (a completed one-off task has no row, with **Mostrar completadas** on or off). Tap **Deshacer** within the 5 seconds: the row goes back to `pending` and says `Primer paso: Sacar la escalera`.
 6. Postpone **Cambiar foco** with the option **3 horas**: it becomes `waiting` and its row does not contain `Primer paso`. Postpone **Pagar** with the option **Hasta mañana**: neither. Advance the clock until the postponement of **Cambiar foco** expires: the line comes back by itself with its text; **Pagar** (overdue again when it expires) too.
 7. Tap the **Regar** row and **Pausar**: the row is no longer shown. Turn on **Mostrar pausadas**: **Regar** is shown paused (it says «Pausada») and does not contain `Primer paso`. Tap the row, **Reanudar**: **Regar** becomes `pending` and the row says `Primer paso: Llenar la regadera`.
 8. Create `Basura` with **Días de la semana** and **martes** and **Primer paso** `Atar la bolsa llena`, with the clock on Friday: it is `waiting` until Tuesday 17 and does not contain `Primer paso`. Advance the clock to `2026-11-17T09:00:00`: it is `pending` and says `Primer paso: Atar la bolsa llena`.

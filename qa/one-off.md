@@ -28,6 +28,8 @@ Same as `qa/recurring-calendar.md`:
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16,
 Friday 17.
 
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
+
 ## Observable contract of the Pendientes row
 
 The same as `qa/recurring-relative.md`. A one-off task is never waiting:
@@ -39,8 +41,8 @@ The same as `qa/recurring-relative.md`. A one-off task is never waiting:
 | completed | — the row is not in Pendientes — | | | |
 
 Throughout this document **Mostrar completadas** stays off (its initial
-value); with the check on, the completed task is shown struck through at the end
-(`qa/show-completed.md`).
+value); with the item on, a completed one-off task is still not shown: it has no
+row in **Pendientes** (`qa/show-completed.md`).
 
 The row of a one-off task does not show the due date: QA verifies it through the
 status it takes as time passes.

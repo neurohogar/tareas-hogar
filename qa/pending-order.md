@@ -10,7 +10,7 @@ All flows use **Mostrar completadas** off (its initial value): completed tasks
 (one-off tasks with a completion and waiting recurring tasks with a
 completion) have no row. So the visible waiting group only has calendar
 recurring tasks that have not reached their first occurrence yet. The place of
-completed tasks with the check on is verified in `qa/show-completed.md`.
+completed recurring tasks with the **Completadas** item on is verified in `qa/show-completed.md` (a completed one-off task never has a row).
 
 Out of scope: editing, deleting, history and undo.
 
@@ -38,6 +38,8 @@ Same as `qa/one-off.md`:
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16,
 Friday 17.
+
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
 
 ## Observable contract
 

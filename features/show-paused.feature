@@ -9,8 +9,8 @@
 #     shown), by title in Spanish alphabetical order (case- and accent-insensitive,
 #     ñ after n), regardless of their urgency or their createdAt.
 #   A paused task is not completed: it does not go with the completed ones.
-# That the value is saved on the device and survives a reload, and that the
-# row is dimmed with "Pausada" instead of the status indicator, are
+# That the value is saved on the device and survives a reload, that it is an on/off
+# item of the ⋮ menu, and that the row is dimmed with "Pausada" instead of the status indicator, are
 # verified in the QA suite.
 # Each task is named by its title (one word). "Pendientes shows in
 # order" gives the titles from top to bottom and the list has no other
@@ -69,7 +69,7 @@ Feature: Mostrar pausadas
   Scenario Outline: Mostrar pausadas 3
     Given Mostrar completadas is on
     And a one-off task Foco without a due date
-    And a one-off task Pagar without a due date
+    And a relative recurring task Pagar every <every> <unit>
     And the task Pagar was completed on <completed_pay>
     And a relative recurring task Barrer every <every> <unit>
     And the task Barrer was completed on <completed_sweep>
@@ -89,7 +89,7 @@ Feature: Mostrar pausadas
     Given Mostrar completadas is on
     And Mostrar pausadas is on
     And a one-off task Foco without a due date
-    And a one-off task Pagar without a due date
+    And a relative recurring task Pagar every <every> <unit>
     And the task Pagar was completed on <completed_pay>
     And a relative recurring task Barrer every <every> <unit>
     And the task Barrer was completed on <completed_sweep>

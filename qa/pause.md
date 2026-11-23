@@ -4,7 +4,7 @@ Verifies, through the interface only:
 
 - the **Pausar** / **Reanudar** button in the panel: it appears only when editing a recurring task, acts immediately (saves and closes the panel without **Guardar**) and, with the task paused, the panel says "Pausada";
 - that a paused task is not shown in Pendientes with **Mostrar pausadas** off, and that it does not become overdue while paused;
-- the **Mostrar pausadas** check: paused tasks go last (after the completed ones), by title, dimmed, with "Pausada" in place of the status indicator and the checkbox disabled; the value is saved on the device and is not synced;
+- the **Pausadas** item of the **⋮** menu: paused tasks go last (after the completed ones), by title, dimmed, with "Pausada" in place of the status indicator and the checkbox disabled; the value is saved on the device and is not synced;
 - resuming: a relative task becomes pending; a calendar task becomes pending if today is one of its days and, if not, waiting until the next occurrence; with a schedule, a window that already closed when resuming does not leave it overdue;
 - that completions from before the pause stay in the Historial and in "Última vez", but do not count for the status after resuming;
 - changing a paused recurring task to one-off resumes it;
@@ -28,11 +28,13 @@ Out of scope: the urgency order of non-paused tasks (`qa/pending-order.md`), the
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17, Saturday 18, Sunday 19.
 
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
+
 ## Observable contract
 
 - **Pause button of the panel**: in the **Editar tarea** panel of a recurring task, a button with accessible name **Pausar** or, if the task is paused, **Reanudar**; with **Reanudar**, the panel shows the text "Pausada". Tapping it closes the panel and the change is saved: when the task is opened again, or on reload, it is kept. The **Nueva tarea** panel and the panel of a one-off task have neither button.
-- **Mostrar pausadas check**: a control with role `checkbox` and accessible name "Mostrar pausadas", next to "Mostrar completadas". Checked = on.
-- **Paused row** (only with the check on): the row checkbox disabled (`disabled` or `aria-disabled="true"`, and tapping it changes nothing: no notice and no new entry in the Historial); the row dimmed (effective opacity less than 1 and less than that of a pending row); the text "Pausada" inside the row; no "Atrasada" indicator and no progress bar.
+- **Pausadas item**: an element with role `menuitemcheckbox` and accessible name "Pausadas" in the menu of the button «Menú», below "Completadas" (`qa/menu-toggles.md`). `aria-checked="true"` and check mark = on. Nothing outside the menu shows its value.
+- **Paused row** (only with the item on): the row checkbox disabled (`disabled` or `aria-disabled="true"`, and tapping it changes nothing: no notice and no new entry in the Historial); the row dimmed (effective opacity less than 1 and less than that of a pending row); the text "Pausada" inside the row; no "Atrasada" indicator and no progress bar.
 - **Row**: for non-paused tasks, the contract of `qa/recurring-relative.md` (checkbox, title, dimmed style, progress bar with `aria-valuenow`, "Atrasada" indicator) and that of `qa/show-completed.md`.
 - **List**: "The list is A, B, C" means exactly those rows, from top to bottom.
 - **Última vez** and **Historial**: those of `qa/last-time.md` and `qa/history-undo.md`.
@@ -45,10 +47,10 @@ Precondition: empty list, clock at `2026-07-14T09:00:00` (Tuesday).
 2. Tap the checkbox of **Regar**: it becomes waiting, completed, and its row disappears. The list is **Cambiar foco**.
 3. Tap the **Cambiar foco** row: the panel has neither **Pausar** nor **Reanudar**. Close it.
 4. Turn on **Mostrar completadas**. Tap the **Regar** row: the panel has **Pausar** and says `Última vez: hoy 09:00`. Tap **Pausar**, without tapping **Guardar**: the panel closes. The list is **Cambiar foco**: **Regar** is no longer visible, not even with the completed ones.
-5. Tap the **Mostrar pausadas** check: the list is **Cambiar foco**, **Regar**. **Regar** looks paused: dimmed, with "Pausada", without a bar and with the checkbox disabled. Tap its checkbox: nothing happens (no notice; the Historial still has a single entry).
+5. Tap the **Pausadas** item of the **⋮** menu: the list is **Cambiar foco**, **Regar**. **Regar** looks paused: dimmed, with "Pausada", without a bar and with the checkbox disabled. Tap its checkbox: nothing happens (no notice; the Historial still has a single entry).
 6. Tap the **Regar** row: the panel says "Pausada", has **Reanudar** and does not have **Pausar**, and still says `Última vez: hoy 09:00`. Close the panel.
 7. Advance the clock to `2026-07-20T10:00:00` (Monday; without the pause, **Regar** would be overdue since the 18th): **Regar** is still paused, without "Atrasada".
-8. Reload: **Mostrar pausadas** and **Mostrar completadas** are still checked; **Regar** is still paused.
+8. Reload: **Pausadas** and **Completadas** still have their check mark in the menu; **Regar** is still paused.
 9. Tap the **Regar** row and tap **Reanudar**: the panel closes. **Regar** is pending (bold, checkbox enabled and unchecked, without "Atrasada" or "Pausada") and the list is **Regar**, **Cambiar foco**.
 10. Tap the **Regar** row: the panel has **Pausar** and says `Última vez: hace 6 días`. Close the panel. The Historial has the entry **Regar** `09:00` of Tuesday 14 July.
 11. Advance the clock to `2026-07-25T10:00:00`: **Regar** is still pending, without "Atrasada" (never completed since it was resumed).
@@ -91,13 +93,13 @@ Precondition: empty list, clock stopped at `2026-07-10T09:00:00` (Friday). **Mos
 
 Precondition: empty list, clock at `2026-07-15T08:00:00` (Wednesday).
 
-1. Create, in this order: `Ñandú` with **Intervalo** every `1` **días**; `Nube` with **Intervalo** every `1` **días**; `Árbol` with **Días de la semana** `lunes`; `Pagar la luz` with **No se repite** and no due date; `Cambiar foco` with **No se repite** and no due date.
+1. Create, in this order: `Ñandú` with **Intervalo** every `1` **días**; `Nube` with **Intervalo** every `1` **días**; `Árbol` with **Días de la semana** `lunes`; `Pagar la luz` with **Intervalo** every `2` **días**; `Cambiar foco` with **No se repite** and no due date.
 2. Complete **Pagar la luz**. Pause **Ñandú**, **Nube** and **Árbol**. The list is **Cambiar foco**.
 3. Turn on **Mostrar pausadas**: the list is **Cambiar foco**, **Árbol**, **Nube**, **Ñandú** (paused ones last, by title: Á sorts with A, ñ after n; not by when they were created).
 4. Turn on **Mostrar completadas**: the list is **Cambiar foco**, **Pagar la luz**, **Árbol**, **Nube**, **Ñandú**: the paused ones after the completed one. **Pagar la luz** looks completed (struck through, checkbox checked); the three paused ones have "Pausada" and the checkbox disabled.
 5. Turn off **Mostrar completadas**: the list is **Cambiar foco**, **Árbol**, **Nube**, **Ñandú**.
-6. Reload: **Mostrar pausadas** is still checked and the list is the same. Close the tab and open the app again in the same context: the check is still checked.
-7. Turn off **Mostrar pausadas**: the list is **Cambiar foco**. Reload: it is still unchecked.
+6. Reload: **Pausadas** still has its check mark and the list is the same. Close the tab and open the app again in the same context: the check mark is still there.
+7. Turn off **Pausadas**: the list is **Cambiar foco**. Reload: it is still off.
 
 ## Flow 6: change a paused recurring task to one-off
 
@@ -105,9 +107,9 @@ Precondition: empty list, clock at `2026-07-10T09:00:00` (Friday). **Mostrar com
 
 1. Create `Regar` with **Intervalo** every `2` **días** and complete it. Pause it: the list is empty.
 2. At `2026-07-15T10:00:00`, turn on **Mostrar pausadas**, tap the **Regar** row, change **Se repite** to **No se repite** (no due date) and save.
-   - **Regar** looks completed (struck through, checkbox checked), without "Pausada": it has the completion of the 10th.
-   - Tap its row: the panel has neither **Pausar** nor **Reanudar**.
-3. Change it to **Intervalo** every `2` **días** and save: **Regar** is pending (not "Atrasada"; the completion of the 10th is from before the resume), and the panel has **Pausar**.
+   - **Regar** has no row: it is now a completed one-off task (it has the completion of the 10th) and a completed one-off task is never shown, so it is not seen paused either.
+   - In the **Historial**, tap its entry: the panel has neither **Pausar** nor **Reanudar**.
+3. From the **Historial**, change it to **Intervalo** every `2` **días** and save: **Regar** is pending (not "Atrasada"; the completion of the 10th is from before the resume), and the panel has **Pausar**.
 
 ## Flow 7: two devices
 
@@ -118,5 +120,5 @@ Precondition: empty list, clock at `2026-07-14T08:00:00` (Tuesday) on A and on B
 3. B comes back online. On A and on B, **Regar** is paused (with "Pausada" and the checkbox disabled); the Historial of both has the entry **Regar** `09:00`.
 4. B offline. On A, at `2026-07-15T10:00:00`, resume **Regar**: on A it is pending (B's completion does not count, it is from before the resume). On B, which did not see the resume, change the title to `Regar plantas` and save.
 5. B comes back online. On A and on B, the task is called **Regar plantas**, is pending and not paused.
-6. On A, turn off **Mostrar pausadas**: on B it is still checked, also after reloading B.
+6. On A, turn off **Pausadas**: on B it is still on (check mark in its menu), also after reloading B.
 7. B offline. On A, pause **Regar plantas**. On B, change the title to `Regar` and save. B comes back online: on A and on B the task is called **Regar** and is paused (A does not show it; B does, with "Pausada").

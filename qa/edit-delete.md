@@ -37,12 +37,15 @@ Same as `qa/one-off.md`:
   putting context B offline (`browserContext.setOffline(true)`), and "B gets
   the connection back", putting it online again and waiting for the two
   screens to update by themselves.
-- At the start of each flow, tap the **Mostrar completadas** check to turn it
-  on (on A and on B in the two-device flows): the completed tasks are seen
-  struck through at the end of the list (`qa/show-completed.md`).
+- At the start of each flow, tap the **Completadas** item of the **⋮** menu to turn it
+  on (on A and on B in the two-device flows): the completed recurring tasks are
+  seen struck through at the end of the list; a completed one-off task never
+  has a row (`qa/show-completed.md`).
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16,
 Friday 17, Saturday 18, Sunday 19, Monday 20.
+
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
 
 ## Observable contract
 
@@ -203,14 +206,13 @@ Precondition: empty list, clock at `2026-07-13T10:00:00` (Monday).
    `pendiente` (recurring task never completed).
 9. Edit **Limpiar horno** to **No se repite** with Fecha límite `2026-07-13`:
    it becomes `atrasada`.
-10. Edit **Barrer** to **No se repite** with no due date: **Barrer** becomes
-    completed (it already had a completion), struck through, at the end of the
-    list.
+10. Edit **Barrer** to **No se repite** with no due date: **Barrer** becomes a
+    completed one-off task (it already had a completion) and its row
+    disappears; it is reached only from the **Historial**.
 11. Reload: the list is **Limpiar horno** (`atrasada`), **Renovar DNI**
-    (`pendiente`), **Regar** (`en espera`, completed) and **Barrer**
-    (completed): the completed ones at the end, from the most recently
-    completed to the oldest.
-12. Turn off the **Mostrar completadas** check: the list is **Limpiar horno**,
+    (`pendiente`) and **Regar** (`en espera`, completed, at the end).
+    **Barrer** has no row.
+12. Turn off the **Completadas** item of the **⋮** menu: the list is **Limpiar horno**,
     **Renovar DNI**.
 
 ## Flow 8: editing changes the order

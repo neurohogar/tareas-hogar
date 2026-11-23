@@ -23,13 +23,15 @@ Same as `qa/edit-delete.md`:
   - "Advance the clock to X" means advancing it to X and waiting for the screen to update by itself (without reloading), unless the step says "reload".
   - The steps that measure seconds of the notice use the stopped clock (`page.clock.pauseAt`) and advance it with `page.clock.runFor` or `fastForward` to the exact time, so that time does not run while QA acts.
 - Session started with the account `qa@example.com` of the Auth Emulator (Flow 1 of `qa/recurring-relative.md`).
-- At the start of each flow, tap the **Mostrar completadas** check to turn it on (on A and on B in the two-device flows): the completed tasks (a one-off with a completion, a recurring task waiting with a completion) are seen struck through at the end of the list, after the non-completed ones (`qa/show-completed.md`). A completed recurring task that is waiting has its checkbox checked: tapping it on the same day as its most recent completion deletes it; on a later day, it completes it again.
+- At the start of each flow, tap the **Completadas** item of the **⋮** menu to turn it on (on A and on B in the two-device flows): the completed tasks (a one-off with a completion, a recurring task waiting with a completion) are seen struck through at the end of the list, after the non-completed ones (`qa/show-completed.md`). A completed recurring task that is waiting has its checkbox checked: tapping it on the same day as its most recent completion deletes it; on a later day, it completes it again.
 - Create a task: tap **+**, type the title, choose the **Se repite** option the step indicates and save, with the controls of `qa/one-off.md` and `qa/recurring-calendar.md`.
 - **Two devices** (Flows 11 to 14): two independent browser contexts, A and B, with the same account.
   - "B offline" means putting context B offline (`browserContext.setOffline(true)`).
   - "B gets the connection back" means putting it online again and waiting for the two screens to update by themselves.
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17.
+
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
 
 ## Observable contract
 
@@ -72,7 +74,7 @@ Precondition: empty list, clock stopped at `2026-07-15T08:00:00`.
 2. At `08:00:00`, tap the **Regar** checkbox: it becomes `en espera` and the notice `Completaste «Regar»` appears with **Deshacer**.
 3. At `08:00:04`, the notice is still visible.
 4. At `08:00:05`, the notice is gone. **Regar** is still `en espera`.
-5. At `08:01:00`, tap the **Pagar la luz** checkbox: it becomes completed (struck through, at the end) and the notice says `Completaste «Pagar la luz»`.
+5. At `08:01:00`, tap the **Pagar la luz** checkbox: its row disappears (a completed one-off task is never shown in **Pendientes**) and the notice says `Completaste «Pagar la luz»`.
 6. At `08:01:03`, tap **Deshacer**: the notice closes and **Pagar la luz** goes back to non-completed, `pendiente`.
 7. Tap **Historial**: a single group, **Hoy**, with a single entry: **Regar** `08:00`.
 8. Go back to **Pendientes**. At `12:00:00`, **Regar** is `pendiente` again; tap its checkbox: the notice `Completaste «Regar»` appears. At `12:00:02`, tap **Deshacer**.

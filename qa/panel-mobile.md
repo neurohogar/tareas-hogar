@@ -28,6 +28,8 @@ Out of scope: the rules of each field and action (`qa/one-off.md`, `qa/recurring
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17, Saturday 18, Sunday 19.
 
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
+
 ## Observable contract
 
 - **Panel**: the dialog with accessible name **Nueva tarea** or **Editar tarea**. On the phone it takes the whole viewport (its box matches the viewport).

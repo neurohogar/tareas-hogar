@@ -30,6 +30,8 @@ Out of scope: the statuses without a schedule (`qa/one-off.md`, `qa/recurring-re
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17, Saturday 18.
 
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
+
 ## Observable contract
 
 - **Horario field of the panel**: a control with role `checkbox` and accessible name "Solo en un horario". When on, it shows two time fields (`input type="time"` or equivalent with an accessible role) with labels **Desde** and **Hasta**; when off, they are not shown.
@@ -94,7 +96,7 @@ Precondition: empty list, clock at `2026-07-15T06:00:00`.
 
 ## Flow 5: relative with a schedule
 
-Precondition: empty list, clock stopped at `2026-07-15T09:00:00` (Wednesday). Tap **Mostrar completadas** (it stays checked).
+Precondition: empty list, clock stopped at `2026-07-15T09:00:00` (Wednesday). Tap **Completadas** in the **⋮** menu (it stays checked).
 
 1. Create `Regar` with **Intervalo** every `1` **días** and schedule `08:00` to `11:00`. It is `pending` (never completed, created inside the window), checkbox enabled.
 2. Tap the checkbox: the row becomes completed, `waiting`, with the bar at `0`.
@@ -107,7 +109,7 @@ Precondition: empty list, clock stopped at `2026-07-15T09:00:00` (Wednesday). Ta
 
 Precondition: empty list, clock stopped at `2026-07-15T10:00:00`.
 
-1. Create `Remedio` with **Intervalo** every `4` **horas** and schedule `08:00` to `11:00`, and tap its checkbox at `10:00`. Tap **Mostrar completadas**.
+1. Create `Remedio` with **Intervalo** every `4` **horas** and schedule `08:00` to `11:00`, and tap its checkbox at `10:00`. Tap **Completadas** in the **⋮** menu.
 2. At `15:30`: `waiting`, bar at `25` (it comes back on Thursday at 08:00).
 3. At `18:00`: `overdue` (V + interval has passed, even though the window did not open), checkbox **disabled**.
 4. At `2026-07-16T08:00:00`: still `overdue`, checkbox **enabled**.
@@ -119,7 +121,7 @@ Precondition: empty list, clock at `2026-07-14T07:00:00` (Tuesday). «Mostrar co
 1. Create `Sacar la basura` with **Días de la semana** `martes` and `jueves` and schedule `08:00` to `11:00`. It is `waiting` without completions (not completed): it is shown, in bold, checkbox unchecked and **disabled**.
 2. At `08:00`: `pending`. Tap the checkbox: the row disappears (completed).
 3. Advance the clock to `2026-07-16T07:59:00` (Thursday): the list is still empty (the task is still `waiting` and completed; without a schedule it would already be `pending` since 00:00).
-4. Tap **Mostrar completadas**: **Sacar la basura** is shown completed, `waiting`. Its checkbox (which would complete it again: the completion is from an earlier day) is **disabled**. Turn off **Mostrar completadas**.
+4. Tap **Completadas** in the **⋮** menu: **Sacar la basura** is shown completed, `waiting`. Its checkbox (which would complete it again: the completion is from an earlier day) is **disabled**. Turn off **Mostrar completadas**.
 5. Advance the clock to `2026-07-16T08:00:00`: **Sacar la basura** appears `pending`.
 6. Advance the clock to `2026-07-16T11:00:00`: `overdue`, checkbox disabled.
 7. Advance the clock to `2026-07-17T09:00:00` (Friday): still `overdue`, checkbox enabled. Tap it: completed. In the **Historial**, the new completion appears with the task **Sacar la basura** (§5.3: it covers Thursday; it comes back the following Tuesday).
@@ -190,13 +192,13 @@ Precondition: empty list, clock stopped at `2026-07-15T06:00:00` (Wednesday). «
 1. Create `Perros` with **Días de la semana** `miércoles` and `jueves` and schedules `07:00` to `10:00` and `18:00` to `21:00`. It is `waiting` without completions: it is shown, in bold, checkbox unchecked and **disabled**.
 2. At `06:30`: the bar shows `50`.
 3. At `08:00`: `pending`, checkbox enabled. Tap it: `Completaste «Perros»` appears and the row disappears (completed).
-4. At `13:00`: the list is still empty. Tap **Mostrar completadas**: **Perros** is shown completed, `waiting`, with the bar at `50` (it comes back at 18:00) and the checkbox **enabled** (it would delete today's completion). Turn off **Mostrar completadas**.
+4. At `13:00`: the list is still empty. Tap **Completadas** in the **⋮** menu: **Perros** is shown completed, `waiting`, with the bar at `50` (it comes back at 18:00) and the checkbox **enabled** (it would delete today's completion). Turn off **Mostrar completadas**.
 5. At `18:00`: **Perros** appears `pending`, **not** completed (title in bold, checkbox unchecked), checkbox enabled. Tap it: the notice appears and the row disappears.
-6. Tap **Mostrar completadas**. At `2026-07-16T05:00:00`: **Perros** completed, `waiting`, with the checkbox **disabled** (it would complete it again and it is outside the windows). Turn off **Mostrar completadas**.
+6. Tap **Completadas** in the **⋮** menu. At `2026-07-16T05:00:00`: **Perros** completed, `waiting`, with the checkbox **disabled** (it would complete it again and it is outside the windows). Turn off **Mostrar completadas**.
 7. At `2026-07-16T07:00:00`: `pending`. Do not complete it. At `2026-07-16T10:00:00`: `overdue` ("Atrasada" indicator), checkbox **disabled**. At `2026-07-16T12:00:00`: still the same.
 8. At `2026-07-16T18:00:00`: still `overdue`, checkbox **enabled**. Tap it: the row disappears (it covers the afternoon; the morning is discarded).
 9. In the **Historial**: three completions of **Perros** (Wednesday 08:00, Wednesday 18:00 and Thursday 18:00).
-10. At `2026-07-16T22:00:00`: the list is empty (the next one is the following Wednesday at 07:00). Tap **Mostrar completadas**: **Perros** completed, `waiting`, with the checkbox **enabled** (it would delete today's completion).
+10. At `2026-07-16T22:00:00`: the list is empty (the next one is the following Wednesday at 07:00). Tap **Completadas** in the **⋮** menu: **Perros** completed, `waiting`, with the checkbox **enabled** (it would delete today's completion).
 
 ## Flow 14: one-off with two windows
 
@@ -212,7 +214,7 @@ Precondition: empty list, clock stopped at `2026-07-15T06:00:00` (Wednesday).
 
 ## Flow 15: relative every 2 days with two windows
 
-Precondition: empty list, clock stopped at `2026-07-13T06:00:00` (Monday). Tap **Mostrar completadas** (it stays checked).
+Precondition: empty list, clock stopped at `2026-07-13T06:00:00` (Monday). Tap **Completadas** in the **⋮** menu (it stays checked).
 
 1. Create `Perros` with **Intervalo** every `2` **días** and schedules `07:00` to `10:00` and `18:00` to `21:00`. It is `waiting` (never completed), checkbox disabled.
 2. At `08:00`: `pending`. Tap the checkbox: completed, `waiting`.

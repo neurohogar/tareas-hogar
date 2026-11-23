@@ -4,7 +4,7 @@ Verifies, through the interface only:
 
 - the **Esencial** check of the panel (in **Tarea**, after the note, text only), its starting value when creating and editing, and that it counts for unsaved changes;
 - the small star of the essential tasks in every kind of row;
-- the **⋮** button («Menú») in the header of **Pendientes**, its item **Modo mínimo** with the check mark when the mode is on, that it acts at once and without any message (the second item, **Reprogramar vencidas**, is in `qa/block-reschedule.md`);
+- the **⋮** button («Menú») in the header of **Pendientes**, its four items in the order **Modo mínimo**, **Completadas**, **Pausadas**, **Reprogramar vencidas**, the check mark of the three on/off items when on, that each acts at once and without any message (the items **Completadas** and **Pausadas** are in `qa/menu-toggles.md`, the last item, **Reprogramar vencidas**, in `qa/block-reschedule.md`);
 - the line «Modo mínimo» above the list, also with an empty list;
 - which rows are in view with the mode on (only the essential ones), with **Mostrar completadas** and **Mostrar pausadas**, and that the **Historial** does not change;
 - the return without debt when the mode is turned off, and that the mode never turns itself on or off and survives reloading;
@@ -24,7 +24,7 @@ Out of scope: the statuses, the order and the texts of the rows without the mode
   - "Advance the clock to X" means advancing it to X and waiting for the screen to update by itself (without reloading).
   - With a "stopped clock" (`page.clock.pauseAt`), the clock is advanced with `page.clock.runFor` or `fastForward` to the exact time, so that time does not run while QA acts.
 - Create a task: tap **+**, type the title, choose the **Se repite** option the step gives, with the controls of `qa/one-off.md`, `qa/recurring-relative.md` and `qa/recurring-calendar.md`; save. "Essential" in a step means: check **Esencial** before saving.
-- **Mostrar completadas** and **Mostrar pausadas** stay off unless the flow says to turn them on.
+- **Mostrar completadas** and **Mostrar pausadas** (the items **Completadas** and **Pausadas** of the **⋮** menu) stay off unless the flow says to turn them on. A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off.
 - **Two devices** (Flow 8): two independent browser contexts, A and B, with the same account and the same simulated clock. "B offline" means `browserContext.setOffline(true)` on B; "B comes back online" means putting it back online and waiting for both screens to update by themselves.
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17, Saturday 18, Sunday 19, Monday 20.
@@ -33,7 +33,7 @@ Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday
 
 - **Esencial check**: in the **Tarea** section of the panel, after the **Nota** field and as the last control of the section, a control with role `checkbox` and accessible name «Esencial», with the visible text «Esencial» and no icon. Checked = essential.
 - **Star of the row**: right after the title, on the same line, an element with accessible name «Esencial» (role `img`), drawn as an outlined star with the color of the title text (computed `color` equal to that of the title); it is not a control: tapping it opens the panel like tapping the row. It appears in every kind of row (pending, overdue, waiting, completed, paused) of an essential task, with the mode on or off, and in no row of a non-essential task.
-- **Menu button**: in the header of **Pendientes**, a button with accessible name «Menú» (`aria-haspopup`), small, which opens a menu. The menu has two items: **Modo mínimo**, with role `menuitemcheckbox` (with the mode on it shows a check mark and `aria-checked="true"`; off, no mark and `aria-checked="false"`) and, below it, **Reprogramar vencidas** (`qa/block-reschedule.md`). Tapping **Modo mínimo** turns the mode on or off at once, with no confirmation, and closes the menu. The menu has no other item. The check boxes **Mostrar completadas** and **Mostrar pausadas** stay where they are.
+- **Menu button**: in the header of **Pendientes**, a button with accessible name «Menú» (`aria-haspopup`), small, which opens a menu. The menu has four items, in this order: **Modo mínimo**, **Completadas** and **Pausadas** (the three with role `menuitemcheckbox`: when on they show a check mark and `aria-checked="true"`; off, no mark and `aria-checked="false"`) and **Reprogramar vencidas** (`qa/block-reschedule.md`). Tapping **Modo mínimo** turns the mode on or off at once, with no confirmation, and closes the menu; **Completadas** and **Pausadas** behave the same way for **Mostrar completadas** and **Mostrar pausadas** (`qa/menu-toggles.md`). The menu has no other item. There are no check boxes **Mostrar completadas** and **Mostrar pausadas** outside the menu.
 - **Line «Modo mínimo»**: with the mode on and the menu closed, a text «Modo mínimo» above the list, in secondary text (computed `color` different from the title text), with no icon, no number and no role of control; tapping it does nothing. With the mode off, that text is not on the screen (with the menu closed).
 - **No message**: turning the mode on or off shows no notice, toast, dialog, count or text about how many tasks were paused or came back, and no congratulation.
 - **Rows, notices, panel**: those of `qa/pause.md`. A paused row has the text «Pausada» and a disabled checkbox. In the panel, the pause text at the top of **Tarea** is «Pausada» or «Pausada por el modo mínimo».
@@ -47,7 +47,7 @@ Precondition: empty list, clock at `2026-07-14T09:00:00` (Tuesday), mode off.
 1. Tap **+**: the **Nueva tarea** panel has the **Esencial** check, unchecked, after the **Nota** field and with no icon. Type `Pagar la luz` and save with **No se repite** and no due date: the row has no star.
 2. Create `Regar` (**Intervalo** every `2` **días**), essential: its row has the star, right after the title, with the accessible name «Esencial». Tap the star: the panel of **Regar** opens, with **Esencial** checked. Close the panel.
 3. Tap the **Pagar la luz** row, check **Esencial**, tap the X: the notice of unsaved changes appears. Choose to keep editing, uncheck **Esencial** and tap the X: the panel closes with no notice. Open it again, check **Esencial** and save: the row has the star. The list order is the same as before checking.
-4. Create `Basura` with **Días de la semana** `martes` and `jueves`, essential. Turn on **Mostrar completadas**, tap the checkbox of **Basura** and that of **Pagar la luz**: both look completed (waiting and completed) and keep the star. Pause **Regar** (row, **Pausar**) and turn on **Mostrar pausadas**: its paused row keeps the star. Every row with a star is an essential task; no row without one is.
+4. Create `Basura` with **Días de la semana** `martes` and `jueves`, essential. Turn on **Mostrar completadas**, tap the checkbox of **Basura**: it looks completed (waiting and completed) and keeps the star. Tap the checkbox of **Pagar la luz**: it has no row (a completed one-off task is never in the list). Pause **Regar** (row, **Pausar**) and turn on **Mostrar pausadas**: its paused row keeps the star. Every row with a star is an essential task; no row without one is.
 5. Open the **Regar** panel, uncheck **Esencial** and save: its row loses the star.
 6. Reload: the stars are in the same rows. With the mode off, press **Enter** in the **Título** field of the panel of `Pagar la luz` after unchecking **Esencial**: the panel saves and closes, and the star is gone.
 
@@ -55,9 +55,9 @@ Precondition: empty list, clock at `2026-07-14T09:00:00` (Tuesday), mode off.
 
 Precondition: empty list, clock at `2026-07-14T09:00:00`, mode off.
 
-1. In the header of **Pendientes** there is a **Menú** button. Tap it: a menu opens with two items, **Modo mínimo**, without a check mark, and below it **Reprogramar vencidas** (`qa/block-reschedule.md`). Nothing else is in the menu. Tap outside it: it closes and nothing changed.
+1. In the header of **Pendientes** there is a **Menú** button. Tap it: a menu opens with four items, in this order: **Modo mínimo**, **Completadas**, **Pausadas** (the three without a check mark) and **Reprogramar vencidas** (`qa/block-reschedule.md`). Nothing else is in the menu. Tap outside it: it closes and nothing changed.
 2. With the list empty, open the menu and tap **Modo mínimo**: the menu closes at once, with no confirmation or message, and the line «Modo mínimo» is above the empty list (the mode can be turned on with no essential task). The list has no rows.
-3. Tap the line: nothing happens. Open the menu: the item **Modo mínimo** has the check mark. Tap it: the menu closes, the line is gone and nothing else appears (no count, no message). **Mostrar completadas** and **Mostrar pausadas** are still next to each other, outside the menu.
+3. Tap the line: nothing happens. Open the menu: the item **Modo mínimo** has the check mark. Tap it: the menu closes, the line is gone and nothing else appears (no count, no message). Nothing outside the menu shows the value of **Completadas** or **Pausadas**.
 4. Create `Foco` (**No se repite**, no due date), essential. Turn the mode on: the line is shown above the list `Foco`. Reload: the line is still shown and the list is `Foco`. Close the tab and open the app again in the same context: the same.
 5. Advance the clock to `2026-07-30T09:00:00`: the mode is still on (no timer, no end date) and the line is still shown. Turn it off: the line is gone.
 
@@ -88,7 +88,7 @@ Precondition: empty list, clock stopped at `2026-07-10T09:00:00` (Friday), mode 
 
 Precondition: empty list, clock at `2026-07-15T09:00:00`, mode off.
 
-1. Create `Regar`, `Limpiar` (both **Intervalo** every `2` **días**), `Pagar` (**No se repite**, due date `2026-07-14`) and `Basura` (**Días de la semana** `miércoles`); complete all four (with **Mostrar completadas** on to reach the completed rows). Pause `Limpiar` by hand (its row, **Pausar**). Turn the mode on.
+1. Create `Regar`, `Limpiar` (both **Intervalo** every `2` **días**), `Pagar` (**No se repite**, due date `2026-07-14`) and `Basura` (**Días de la semana** `miércoles`); complete all four (with **Mostrar completadas** on to reach the completed recurring rows; `Pagar` has no row once completed). Pause `Limpiar` by hand (its row, **Pausar**). Turn the mode on.
 2. Open the **Historial** and tap the entry of `Regar`: the **Editar tarea** panel opens. At the top of **Tarea** it says «Pausada por el modo mínimo», then **Última vez**. **Acciones** has **Borrar tarea** and has no **Pausar**, **Reanudar**, **Posponer** or **Quitar posponer**. **Esencial** is unchecked. Close it.
 3. Tap the entry of `Pagar` (one-off): the usual panel, with no text of pause and no **Pausar** or **Reanudar**. Close it.
 4. Tap the entry of `Limpiar`: the panel says «Pausada» (not the text of the mode) and has **Reanudar**, with no **Pausar** and no **Posponer**. Tap **Reanudar**: the panel closes. Open it again from the **Historial**: it now says «Pausada por el modo mínimo», without **Pausar** or **Reanudar**.
@@ -102,9 +102,10 @@ Precondition: empty list, clock stopped at `2026-07-15T09:00:00`, mode off.
 2. Tap `Foco`, uncheck **Esencial** and save: `Foco` leaves the list at once (hidden); the list is empty with the line «Modo mínimo».
 3. Tap the **Regar** row, uncheck **Esencial** and save: `Regar` leaves the list (paused by the mode). The list is empty.
 4. Open the **Historial**, tap the entry of `Regar`: the panel says «Pausada por el modo mínimo». Check **Esencial** and save, at `2026-07-20T10:00:00`: `Regar` is back in the list, pending (bold, no «Atrasada», no «Tocaba …»), even though it was completed on the 15th.
-5. Tap the entry of `Cena` in the **Historial**, check **Esencial** and save: `Cena` is back in the list as it was.
-6. With `Regar` essential, change **Se repite** to **No se repite** and save: it stays in view (it is essential). Uncheck **Esencial** and save: it leaves the list (hidden). From the **Historial** open it, change **Se repite** to **Intervalo** every `2` **días** and save: it is paused by the mode (not in the list; the panel says «Pausada por el modo mínimo»).
-7. Tap **+**: the **Esencial** check is checked and the form is as it was opened: tap the X and the panel closes with no notice. Open **+** again, uncheck **Esencial**, tap the X: the notice of unsaved changes appears. Keep editing, type `Barrer` with **Intervalo** every `2` **días** and save unchecked: `Barrer` is not in the list (paused by the mode). Tap **+**, type `Foco 2`, **No se repite**, save with the check as it starts: `Foco 2` is in the list with the star.
+5. Tap the entry of `Cena` in the **Historial**, check **Esencial** and save: `Cena` is still not in the list (it is a completed one-off task).
+6. Create `Lavar` (**Intervalo** every `2` **días**, essential): it is in the list. Change **Se repite** to **No se repite** and save: it stays in view (it is essential). Uncheck **Esencial** and save: it leaves the list (hidden).
+7. Open the **Historial** and tap the entry of `Regar` (essential, completed on the 15th): change **Se repite** to **No se repite** and save: `Regar` is a completed one-off task and it is not in the list, although it is essential. From the **Historial** open it again, change **Se repite** to **Intervalo** every `2` **días** and save: it is in the list, pending. Uncheck **Esencial** and save: it is paused by the mode (not in the list; the panel says «Pausada por el modo mínimo»).
+8. Tap **+**: the **Esencial** check is checked and the form is as it was opened: tap the X and the panel closes with no notice. Open **+** again, uncheck **Esencial**, tap the X: the notice of unsaved changes appears. Keep editing, type `Barrer` with **Intervalo** every `2` **días** and save unchecked: `Barrer` is not in the list (paused by the mode). Tap **+**, type `Foco 2`, **No se repite**, save with the check as it starts: `Foco 2` is in the list with the star.
 
 ## Flow 7: the loading screen
 

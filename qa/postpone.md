@@ -28,6 +28,8 @@ Out of scope: the statuses without postponement (`qa/one-off.md`, `qa/recurring-
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17, Saturday 18, Sunday 19.
 
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
+
 ## Observable contract
 
 - **Posponer options**: in the **Editar tarea** panel, a group with accessible name **Posponer** that shows three buttons with accessible names **1 hora**, **3 horas** and **Hasta mañana** (no intermediate **Posponer** button). Choosing one closes the panel and the change is saved: when the task is opened again, or on reload, it is kept. The **Nueva tarea** panel has no **Posponer**.

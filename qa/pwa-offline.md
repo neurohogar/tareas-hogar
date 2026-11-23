@@ -37,6 +37,8 @@ Same as `qa/edit-delete.md`:
   cutting the connection (wait for `navigator.serviceWorker.ready` and reload
   once with a connection).
 
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
+
 ## Observable contract
 
 - **Manifest**: the document links with `<link rel="manifest">` to a manifest

@@ -2,7 +2,7 @@
 
 Verifies, through the interface only:
 
-- the second item **Reprogramar vencidas** of the **⋮** menu of **Pendientes**: its place below **Modo mínimo**, that it is disabled (dimmed, tapping does nothing and the menu stays open) when there is no overdue recurring task in view, and that the menu always looks the same;
+- the last item **Reprogramar vencidas** of the **⋮** menu of **Pendientes**: its place below **Modo mínimo**, **Completadas** and **Pausadas**, that it is disabled (dimmed, tapping does nothing and the menu stays open) when there is no overdue recurring task in view, and that the menu always looks the same;
 - the preview (title, line, rows with only emoji and title, **Reprogramar** and **Cancelar**), the tasks it lists and the order, and that it follows the data and the clock while it is open;
 - confirming: the overdue recurring tasks come back as newly created, their «Tocaba …» goes away and does not come back, and the one-off, waiting, pending, postponed and paused tasks are not touched;
 - that the **Historial** and «Última vez» do not change;
@@ -27,9 +27,11 @@ Out of scope: the statuses, the texts and the order of the rows (`qa/recurring-r
 
 Reference dates: Wednesday 2026-07-08, Thursday 9, Friday 10, Tuesday 14, Wednesday 15, Thursday 16, Friday 17.
 
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
+
 ## Observable contract
 
-- **Menu**: the **Menú** button of `qa/minimal-mode.md`. The menu has two items, in this order: **Modo mínimo** (role `menuitemcheckbox`) and **Reprogramar vencidas** (role `menuitem`). It has no other item. The menu looks the same whatever the tasks are.
+- **Menu**: the **Menú** button of `qa/minimal-mode.md`. The menu has four items, in this order: **Modo mínimo**, **Completadas** and **Pausadas** (role `menuitemcheckbox`, always enabled, `qa/menu-toggles.md`) and **Reprogramar vencidas** (role `menuitem`, the last one). It has no other item. The menu looks the same whatever the tasks are.
 - **Disabled item**: **Reprogramar vencidas** is disabled when there is no overdue recurring task in view: `aria-disabled="true"` (or the `disabled` attribute) and shown dimmed (computed `opacity` lower than that of **Modo mínimo**). Tapping it does nothing: the menu stays open and no preview opens. Enabled, it has no `aria-disabled` and the same look as **Modo mínimo**.
 - **Preview**: a dialog (role `dialog`) with accessible name «Reprogramar vencidas», opened by tapping the enabled item (the menu closes first). It has, in this order: the title «Reprogramar vencidas», the line «Vuelven como recién creadas, desde ahora.», a list (role `list`) with one row (role `listitem`) per task and the buttons **Reprogramar** and **Cancelar**. A row shows only the emoji (if the task has one) and the title: no «Tocaba …», no date, no checkbox, no star, no count and no other text. The rows are in the order of **Pendientes**. The preview has no count anywhere (no «3 tareas», no number of tasks). **Reprogramar** is disabled (`aria-disabled="true"` or `disabled`) while the list has no row; **Cancelar** is always enabled.
 - **Notice**: the region with role `status` of `qa/history-undo.md` (at most one on screen), with the text «Tareas reprogramadas» and a **Deshacer** button, and no other text: no count, no names, no «Completaste …», no congratulation. It is seen from the moment of **Reprogramar** until 4.999 s later and is not seen from 5 s; it stays when changing between **Pendientes** and **Historial**. **Deshacer** closes it.
@@ -39,7 +41,7 @@ Reference dates: Wednesday 2026-07-08, Thursday 9, Friday 10, Tuesday 14, Wednes
 
 Precondition: empty list, clock stopped at `2026-07-08T09:00:00` (Wednesday), mode off.
 
-1. Tap **Menú**: a menu with two items, **Modo mínimo** and, below it, **Reprogramar vencidas**, dimmed (no task). Tap **Reprogramar vencidas**: nothing happens, the menu stays open and no preview opens. Tap outside: the menu closes. Open it again: it looks exactly the same.
+1. Tap **Menú**: a menu with four items, **Modo mínimo**, **Completadas**, **Pausadas** and, last, **Reprogramar vencidas**, dimmed (no task); the first three are enabled. Tap **Reprogramar vencidas**: nothing happens, the menu stays open and no preview opens. Tap outside: the menu closes. Open it again: it looks exactly the same.
 2. Create `Pagar` (**No se repite**, due date `2026-07-10`). Advance the clock to `2026-07-11T10:00:00`: `Pagar` is overdue with its «Tocaba …». Open the menu: **Reprogramar vencidas** is still dimmed (the only overdue task is a one-off); tap it: nothing happens and the menu stays open.
 3. Create `Regar` (**Intervalo** every `2` **días**) and complete it. Advance to `2026-07-12T10:00:00`: `Regar` is `en espera`; the item is dimmed. Advance to `2026-07-15T10:00:00` (the overdue time of a relative task is a whole interval after it comes back, §5.2): `Regar` is overdue with its «Tocaba …». Open the menu: **Reprogramar vencidas** is enabled, with the same look as **Modo mínimo**. Tap outside to close.
 4. Pause `Regar` (row, **Pausar**): open the menu, the item is dimmed again. Tap **Reanudar** on `Regar`: it is pending, not overdue, and the item stays dimmed.
@@ -67,7 +69,7 @@ Precondition: empty list, clock stopped at `2026-07-08T09:00:00`; `Regar` (**Int
 1. Open the menu, **Reprogramar vencidas**, **Reprogramar** at `2026-07-16T10:00:00`: the notice «Tareas reprogramadas» appears. At `2026-07-16T10:00:04` it is still there. At `2026-07-16T10:00:05` it is gone, and `Regar` is still pending.
 2. **Reprogramar** at `2026-07-16T10:00:00` and tap **Deshacer** at `2026-07-16T10:00:03`: the notice closes at once, with no message, and `Regar` is overdue again with the same «Tocaba …» as before.
 3. **Reprogramar** at `2026-07-16T10:00:00`; at `2026-07-16T10:00:02` tap the checkbox of `Cena`: a single notice, `Completaste «Cena»`, with **Deshacer**; the rescheduling notice is gone. At `2026-07-16T10:00:03` tap **Deshacer**: `Cena` is pending and not completed (the completion is undone) and `Regar` is still pending (the rescheduling can no longer be undone).
-4. Complete `Cena` at `2026-07-16T09:59:58` and tap **Reprogramar** at `2026-07-16T10:00:00`: the notice is «Tareas reprogramadas», not «Completaste …». At `2026-07-16T10:00:02` tap **Deshacer**: `Regar` is overdue again and `Cena` stays completed.
+4. Complete `Cena` at `2026-07-16T09:59:58` and tap **Reprogramar** at `2026-07-16T10:00:00`: the notice is «Tareas reprogramadas», not «Completaste …». At `2026-07-16T10:00:02` tap **Deshacer**: `Regar` is overdue again and `Cena` stays completed (it has no row).
 5. **Reprogramar** at `2026-07-16T10:00:00`, then tap the **Historial** link at `2026-07-16T10:00:01`: the notice is still on screen. Go back to **Pendientes** at `2026-07-16T10:00:03`: it is still there. At `2026-07-16T10:00:05` it is gone.
 
 ## Flow 4: the minimal mode

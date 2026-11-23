@@ -20,12 +20,14 @@ Same as `qa/history-undo.md`:
   - "At X" means advancing the simulated clock to X before the step.
   - "Advance the clock to X" means advancing it to X and waiting for the screen to update by itself (without reloading), unless the step says "reload".
 - Signed in with the Auth Emulator account `qa@example.com` (Flow 1 of `qa/recurring-relative.md`).
-- At the start of each flow, tap the **Mostrar completadas** check to turn it on (on A and on B in the two-device flows), so that completed tasks have a row (`qa/show-completed.md`).
+- At the start of each flow, tap the **Completadas** item of the **⋮** menu to turn it on (on A and on B in the two-device flows), so that completed recurring tasks have a row; a completed one-off task never has one (`qa/show-completed.md`).
 - Create a task: tap **+**, type the title, choose the **Se repite** option the step gives and save, with the controls of `qa/one-off.md` and `qa/recurring-calendar.md`.
 - "Open the panel of X" means tapping the row of X in Pendientes outside the checkbox (for example, on the title).
 - **Two devices** (Flows 5 and 6): two independent browser contexts, A and B, with the same account. Each has its own simulated clock, with the time the flow gives.
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17.
+
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
 
 ## Observable contract
 
@@ -74,7 +76,7 @@ Precondition: empty list, clock at `2026-07-14T10:00:00` (Tuesday).
 Precondition: empty list, clock at `2026-07-15T08:00:00` (Wednesday).
 
 1. Create `Pagar la luz` with **No se repite** and no due date. At `2026-07-15T08:20:00`, complete it.
-2. Turn off **Mostrar completadas**: **Pagar la luz** has no row.
+2. **Pagar la luz** has no row, although **Completadas** is on (a completed one-off task is never shown in **Pendientes**).
 3. In the Historial, tap the title of the entry **Pagar la luz**: **Editar tarea** opens and the panel says `hoy 08:20`.
 4. Without closing the panel, choose **Intervalo** every `4` **horas** and save. Tap the entry again: the panel still says `hoy 08:20`.
 

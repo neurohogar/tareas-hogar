@@ -27,6 +27,8 @@ Out of scope: the status and order rules themselves (`qa/one-off.md`, `qa/recurr
 
 Reference week: Monday 2026-11-09, Tuesday 10, Wednesday 11, Thursday 12, Friday 13, Saturday 14, Sunday 15.
 
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
+
 ## Observable contract
 
 - **Panel fields**: in the **Tarea** section (**Nueva tarea** and **Editar tarea**), from top to bottom: the title with the emoji button (and **Quitar emoji** below), **Primer paso**, a one-line text field (role `textbox`, without `placeholder`) for each additional step, with the label **Paso 2**, **Paso 3**… and its **Quitar** button, the **Agregar paso** button, the **Nota**. **Agregar paso** adds an empty field at the end (with the label of the next number) and gives it the focus. **Quitar** removes that field and the ones below renumber their labels. The panel does not show or choose the step the task is on.
@@ -82,7 +84,7 @@ Precondition: clock at `2026-11-13T10:00:00`, **Mostrar completadas** turned on.
 1. On `Regar`, tap **Hecho**: the row says `Paso: Regar los helechos`. Tap **Hecho** again: the notice `Completaste «Regar»` appears with **Deshacer** and the «Vuelve …» line (the same as when tapping its checkbox). The row becomes `waiting` (completed), without a step line or buttons. The notice does not contain `Paso`.
 2. Tap **Deshacer** within the 5 seconds: `Regar` goes back to `pending` at the last step: it says `Paso: Regar los helechos` with **Paso anterior** and **Hecho**.
 3. Tap **Paso anterior**, tap **Hecho** again and **Hecho** once more (completes): wait for the notice to pass. Go to **Historial** and delete the completion: `Regar` goes back to `pending` and says `Paso: Regar los helechos`.
-4. On `Cambiar foco`, tap **Hecho** and **Hecho** (completes), and then the checkbox of the completed row (it unchecks it): the row goes back to `pending` at the last step.
+4. On `Cambiar foco`, tap **Hecho** and **Hecho** (completes): its row disappears (a completed one-off task has no row). Wait for the notice to pass, go to **Historial** and delete the completion (confirming): the row goes back to `pending` at the last step.
 5. Set the time to `2026-11-13T10:00:00` right before tapping the checkbox (with the clock paused, time runs a few ms per assertion, and if it is not set, advancing to `2026-11-15T10:00:00` does not make the interval expire). Tap the checkbox of `Regar` while at step 1 (without using **Hecho**): it completes anyway, with the same notice. Advance the clock to `2026-11-15T10:00:00`: `Regar` goes back to `pending` and says `Primer paso: Llenar la regadera` with **Hecho** and without **Paso anterior** (the task that comes back starts from step 1). Repeat: tap **Hecho** (step 2), set the time to `2026-11-15T10:00:00` right before tapping the checkbox, complete with it and advance to `2026-11-17T10:00:00`: when it comes back, it also starts from step 1.
 6. Tap **Deshacer** in the notice of a completion made with the checkbox at step 2 of `Regar`: `Regar` goes back to saying `Paso: Regar los helechos` (the step it was on).
 7. «Hecho» at the last step with the checkbox disabled: see Flow 5.
@@ -120,13 +122,13 @@ Precondition: empty list, clock stopped at `2026-11-13T10:00:00`.
 2. Type in `Lavar` a **Primer paso** and two more steps and save; tap **Hecho** on the row. The order of the list is the same as the one noted; the rows of **Barrer** and **Planchar** are identical to before. Repeat with `Barrer` and remove them from `Lavar`: the order does not change.
 3. Give `Lavar` the emoji `🧺`: the title says `🧺 Lavar` and the step line goes on its own line below. The title does not include any step.
 4. Tap **Hecho** until `Lavar` is completed: the notice says `Completaste «🧺 Lavar»` without any step. In **Historial** the entry says `🧺 Lavar` with its time, without any step.
-5. **Cambios sin guardar**: turn on **Mostrar completadas**, open `Lavar` (completed) and remove **Paso 3** from it so that it has **Primer paso** and **Paso 2**; save (`Lavar` with **Primer paso** `Separar la ropa blanca` and **Paso 2** `Poner el lavarropas`): open, change **Paso 2** to `Juntar las llaves` and tap the X: the notice «Tenés cambios sin guardar» appears; **Descartar**: the row did not change.
+5. **Cambios sin guardar**: open `Lavar` (completed) from the **Historial** and remove **Paso 3** from it so that it has **Primer paso** and **Paso 2**; save (`Lavar` with **Primer paso** `Separar la ropa blanca` and **Paso 2** `Poner el lavarropas`): open, change **Paso 2** to `Juntar las llaves` and tap the X: the notice «Tenés cambios sin guardar» appears; **Descartar**: nothing changed.
 6. Open, change **Paso 2** and type `Poner el lavarropas` again, and tap the X: it closes directly. Type it with spaces at the start and at the end: it closes directly.
 7. Open, empty **Paso 2**: notice; **Descartar**. Repeat with only spaces: notice; **Descartar**.
 8. Open, tap **Agregar paso** and tap the X without typing: it closes directly. Repeat typing `Tender la ropa`: notice; **Descartar**. Repeat typing only spaces: it closes directly.
 9. Open, tap **Quitar** on **Paso 2**: notice; **Descartar**. Tap **Agregar paso** and **Quitar** of the field just added: it closes directly.
 10. Tap **+**, tap **Agregar paso** and the X: it closes directly. Tap **+**, **Agregar paso**, type `Poner el lavarropas` and the X: notice; **Descartar**.
-11. Uncheck the checkbox of `Lavar` (it goes back to `pending` at the last step). With the panel of `Lavar` closed, tap **Hecho** and **Paso anterior** on the row: **Cambios sin guardar** does not appear and the panel does not open.
+11. Delete the `Lavar` entry from the **Historial** (confirming): it goes back to `pending` at the last step. With the panel of `Lavar` closed, tap **Hecho** and **Paso anterior** on the row: **Cambios sin guardar** does not appear and the panel does not open.
 
 ## Flow 8: two devices
 

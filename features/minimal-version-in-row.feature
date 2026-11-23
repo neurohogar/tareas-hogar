@@ -203,11 +203,11 @@ Feature: Minimal version in the row
       | 2    | dias   | 2026-11-10T09:00:00 | Solo los helechos | 2026-11-14T09:00:00 |
 
   # Minimal version in the row 14
-  # When a one-off is fully completed (with Mostrar completadas) the line
+  # When a recurring task is fully completed (with Mostrar completadas) the line
   # disappears.
   Scenario Outline: Minimal version in the row 14
     Given Mostrar completadas is on
-    And a one-off task without a due date
+    And a relative recurring task never completed
     And the minimal version of the task is <minimal>
     When I tap the task checkbox on <tap>
     And I query Pendientes on <now>

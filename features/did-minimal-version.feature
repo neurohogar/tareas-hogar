@@ -166,10 +166,11 @@ Feature: Hice la mínima
       | 2    | dias   | 2026-11-09T09:00:00 | 2026-11-10T09:00:00 | 2026-11-11T12:00:00 |
 
   # Hice la mínima 11
-  # The checkbox of a one-off completed with the minimal one deletes that completion.
+  # The checkbox of a recurring task completed today with the minimal one deletes that
+  # completion.
   Scenario Outline: Hice la mínima 11
     Given Mostrar completadas is on
-    And a one-off task without a due date
+    And a relative recurring task every <every> <unit>
     And the task was completed on <completed> with the minimal one
     When I tap the task checkbox on <tap>
     And I query the status on <now>
@@ -177,15 +178,15 @@ Feature: Hice la mínima
     And the status is pendiente
 
     Examples:
-      | completed           | tap                 | now                 |
-      | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | 2026-11-13T10:00:01 |
+      | every | unit   | completed           | tap                 | now                 |
+      | 2    | dias   | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | 2026-11-13T10:00:01 |
 
   # Hice la mínima 12
   # The checkbox of a completed task deletes the most recent completion, whether whole
   # or the minimal one: here the most recent is the minimal one and the whole one remains.
   Scenario Outline: Hice la mínima 12
     Given Mostrar completadas is on
-    And a one-off task without a due date
+    And a relative recurring task every <every> <unit>
     And the task was completed on <first>
     And the task was completed on <second> with the minimal one
     When I tap the task checkbox on <tap>
@@ -193,14 +194,14 @@ Feature: Hice la mínima
     And the last completion of the task was whole
 
     Examples:
-      | first               | second              | tap                 |
-      | 2026-11-13T08:00:00 | 2026-11-13T08:05:00 | 2026-11-13T10:00:00 |
+      | every | unit   | first               | second              | tap                 |
+      | 2    | dias   | 2026-11-13T08:00:00 | 2026-11-13T08:05:00 | 2026-11-13T10:00:00 |
 
   # Hice la mínima 13
   # Here the most recent is the whole one and the minimal one remains.
   Scenario Outline: Hice la mínima 13
     Given Mostrar completadas is on
-    And a one-off task without a due date
+    And a relative recurring task every <every> <unit>
     And the task was completed on <first> with the minimal one
     And the task was completed on <second>
     When I tap the task checkbox on <tap>
@@ -208,8 +209,8 @@ Feature: Hice la mínima
     And the last completion of the task was the minimal one
 
     Examples:
-      | first               | second              | tap                 |
-      | 2026-11-13T08:00:00 | 2026-11-13T08:05:00 | 2026-11-13T10:00:00 |
+      | every | unit   | first               | second              | tap                 |
+      | 2    | dias   | 2026-11-13T08:00:00 | 2026-11-13T08:05:00 | 2026-11-13T10:00:00 |
 
   # Hice la mínima 14
   # The checkbox of a recurring task completed on a previous day with the minimal one completes
@@ -345,17 +346,17 @@ Feature: Hice la mínima
 
   # Hice la mínima 23
   # A completion of the minimal one counts for Mostrar completadas: on, the
-  # one-off is shown as completed.
+  # recurring task is shown as completed.
   Scenario Outline: Hice la mínima 23
     Given Mostrar completadas is on
-    And a one-off task <title> without a due date
+    And a relative recurring task <title> every <every> <unit>
     And the task <title> was completed on <completed> with the minimal one
     When I query Pendientes on <now>
     Then Pendientes shows as completed <completed_list>
 
     Examples:
-      | title  | completed           | now                 | completed_list |
-      | Pagar  | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | Pagar       |
+      | title  | every | unit   | completed           | now                 | completed_list |
+      | Regar  | 2    | dias   | 2026-11-13T08:00:00 | 2026-11-13T10:00:00 | Regar       |
 
   # Hice la mínima 24
   # With Mostrar completadas off, the one-off completed with the minimal one is not

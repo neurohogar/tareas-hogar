@@ -323,7 +323,7 @@ Feature: Steps in the row
   # «Hecho» on the last step completes the task: the line disappears.
   Scenario Outline: Steps in the row 21
     Given Mostrar completadas is on
-    And a one-off task without a due date
+    And a relative recurring task never completed
     And the steps of the task are <steps>
     And the current step of the task is <current>
     When I tap Hecho on <tap>

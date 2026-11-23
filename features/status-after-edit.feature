@@ -439,3 +439,19 @@ Feature: Status after editing
       | due_date   | every | unit   | completed           | due_date_new | now                 | order        |
       | 2026-07-14 | 4    | horas  | 2026-07-15T06:00:00 | 2026-07-20   | 2026-07-15T12:00:00 | Regar, Pagar |
       | 2026-07-20 | 4    | horas  | 2026-07-15T06:00:00 | 2026-07-14   | 2026-07-15T12:00:00 | Pagar, Regar |
+
+  # Status after editing 30
+  # With Mostrar completadas on, a recurring task with completions that becomes
+  # one-off is a completed one-off task: it does not appear in Pendientes either,
+  # with or without a due date.
+  Scenario Outline: Status after editing 30
+    Given Mostrar completadas is on
+    And a relative recurring task every <every> <unit>
+    And the task was completed on <completed>
+    When I edit the task to one-off with due date <due_date>
+    And I query the status at any moment
+    Then the task does not appear in Pendientes
+
+    Examples:
+      | every | unit   | completed           | due_date   |
+      | 2    | dias   | 2026-07-15T08:00:00 | 2026-07-20 |

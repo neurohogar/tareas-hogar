@@ -4,7 +4,7 @@ Verifies, through the interface only:
 
 - that the row of an overdue task says since when it was due, as a fact with a date and a distance («Tocaba el martes 10 · hace 3 días»), in the same color and size as the schedule, and that it no longer says «Atrasada»;
 - that the row of a waiting task (a recurring task completed with **Mostrar completadas**, a calendar task before its occurrence, one with a schedule outside the window, a postponed one) says when it comes back («Vuelve el jueves 19 · en 6 días») in addition to its progress bar, without naming the postponement;
-- that pending rows, paused rows and completed one-off rows show no date or distance text;
+- that pending rows and paused rows show no date or distance text, and that a completed one-off task has no row;
 - that the texts update by themselves as time passes (midnight, hour, minute) and that the status and the order of the list do not change;
 - that the completion notice says, below «Completaste …», when the task comes back (a recurring task), and that a one-off task shows only «Completaste …».
 
@@ -26,6 +26,8 @@ Out of scope: the statuses and the order (`qa/one-off.md`, `qa/recurring-relativ
 - **Mostrar completadas** and **Mostrar pausadas** stay off unless the flow says to turn them on.
 
 Reference week: Monday 2026-11-09, Tuesday 10, Wednesday 11, Thursday 12, Friday 13, Saturday 14, Sunday 15.
+
+**Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
 
 ## Observable contract
 
@@ -68,7 +70,7 @@ Precondition: empty list, clock at `2026-11-13T10:00:00` (Friday).
 
 1. Create `Barrer` with **No se repite** and no due date, `Pagar` with **No se repite** and due date `2026-11-13`, and `Regar` with **Intervalo** every `2` **días** (without completing it). All three are pending: none of their rows contains `Tocaba`, `Vuelve` or a distance.
 2. Advance the clock to `2026-12-13T10:00:00`: **Barrer** and **Regar** are still pending, with no date text (they never become overdue); **Pagar** became overdue and says `Tocaba el viernes 13 de noviembre · hace 30 días`.
-3. Turn on **Mostrar completadas** and tap the checkbox of **Barrer**: its row becomes completed (struck through, checkbox checked) and shows no date or distance text.
+3. Turn on **Mostrar completadas** and tap the checkbox of **Barrer**: its row disappears (a completed one-off task is never shown, with the item on or off).
 4. Tap the row of **Regar** (a recurring task) and choose **Pausar** (`qa/pause.md`; a one-off task such as **Pagar** does not offer **Pausar**). Turn on **Mostrar pausadas**: the row of **Regar** says «Pausada» and does not contain `Tocaba` or `Vuelve`. **Pagar** is still overdue and its row says `Tocaba el viernes 13 de noviembre · hace 30 días`.
 5. Turn off **Mostrar pausadas**: **Regar** disappears; **Pagar** stays in the list with its `Tocaba …` text.
 

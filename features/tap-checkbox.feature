@@ -4,19 +4,20 @@
 # acceptance-mutation-manifest-end
 
 # Spec §6.1 (row checkbox), with §5.1–§5.4. Tapping the checkbox of a
-# task that is not completed completes it (as in §4.4). Tapping the checkbox of a
-# completed one:
-#   one-off: deletes its most recent completion (the one with the greatest completadoEn),
-#     like Deshacer;
-#   recurring whose most recent completion is from today or later (local day
-#     of completadoEn; later with skewed clocks): deletes it the same way;
-#   recurring whose most recent completion is from an earlier day: completes
+# task that is not completed completes it (as in §4.4). A completed one-off task
+# has no row in Pendientes, so it has no checkbox to tap: it is un-completed only
+# with Deshacer or from the Historial. Tapping the checkbox of a completed
+# recurring task:
+#   whose most recent completion is from today or later (local day
+#     of completadoEn; later with skewed clocks): deletes it (the one with the
+#     greatest completadoEn), like Deshacer;
+#   whose most recent completion is from an earlier day: completes
 #     it again (relative: restarts the interval; calendar: covers
 #     the next occurrence).
 # When deleting, the task returns to the status that corresponds to the remaining
 # completions; it can still be completed if it has another one and is still waiting.
 # A task is completed if it is one-off with at least one completion, or
-# recurring and waiting with at least one completion. Completed tasks only
+# recurring and waiting with at least one completion. Completed recurring tasks only
 # have a row with Mostrar completadas on. The day starts at 00:00.
 # "I tap the task checkbox on ..." taps the checkbox of the only
 # task in the scenario at that time. That no notice appears when deleting a
@@ -57,56 +58,6 @@ Feature: Tap the checkbox
       | every | unit   | previous            | tap                 | now                 | progress |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T13:00:00 | 2026-07-15T14:00:00 | 0.25     |
       | 4    | horas  | 2026-07-15T08:00:00 | 2026-07-15T16:00:00 | 2026-07-15T18:00:00 | 0.5      |
-
-  # Tap the checkbox 3
-  # A completed one-off: tapping the checkbox deletes its completion and it returns to
-  # pending until the end of the due day.
-  Scenario Outline: Tap the checkbox 3
-    Given Mostrar completadas is on
-    And a one-off task with due date <due_date>
-    And the task was completed on <completed>
-    When I tap the task checkbox on <tap>
-    And I query the status on <now>
-    Then the task has no completions
-    And the status is pendiente
-
-    Examples:
-      | due_date   | completed           | tap                 | now                 |
-      | 2026-07-15 | 2026-07-14T10:00:00 | 2026-07-15T23:59:00 | 2026-07-15T23:59:59 |
-
-  # Tap the checkbox 4
-  # A completed one-off returns as overdue if the due day has already passed.
-  Scenario Outline: Tap the checkbox 4
-    Given Mostrar completadas is on
-    And a one-off task with due date <due_date>
-    And the task was completed on <completed>
-    When I tap the task checkbox on <tap>
-    And I query the status on <now>
-    Then the task has no completions
-    And the status is atrasada
-
-    Examples:
-      | due_date   | completed           | tap                 | now                 |
-      | 2026-07-15 | 2026-07-14T10:00:00 | 2026-07-16T00:00:00 | 2026-07-16T00:00:01 |
-
-  # Tap the checkbox 5
-  # A one-off with two completions (two offline devices): tapping the
-  # checkbox deletes only the most recent one, regardless of the order in which they were
-  # recorded (row 2); with the other one, it is still completed.
-  Scenario Outline: Tap the checkbox 5
-    Given Mostrar completadas is on
-    And a one-off task without a due date
-    And the task was completed on <first>
-    And the task was completed on <second>
-    When I tap the task checkbox on <tap>
-    And I query the status at any moment
-    Then the task keeps a single completion, from <remains>
-    And the task is completed
-
-    Examples:
-      | first               | second              | tap                 | remains             |
-      | 2026-07-14T10:00:00 | 2026-07-14T10:05:00 | 2026-07-15T08:00:00 | 2026-07-14T10:00:00 |
-      | 2026-07-14T10:05:00 | 2026-07-14T10:00:00 | 2026-07-15T08:00:00 | 2026-07-14T10:00:00 |
 
   # Tap the checkbox 6
   # A waiting relative with two completions: tapping the checkbox deletes the

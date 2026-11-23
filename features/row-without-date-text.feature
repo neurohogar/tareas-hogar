@@ -6,8 +6,8 @@
 # Spec §6.1 (date and distance text), with §5.1–§5.5 and §5.8. Only the
 # overdue rows («Tocaba …») and waiting rows («Vuelve …») carry date and
 # distance text. Pending rows, paused rows (even if they would be overdue or
-# waiting without the pause) and completed one-off tasks show none: no
-# «Tocaba», «Vuelve» or date or distance.
+# waiting without the pause) show none: no «Tocaba», «Vuelve» or date or
+# distance. A completed one-off task has no row in Pendientes.
 # "the task row shows no date text" asserts that the list has a
 # single row and that it has no date or distance text. A one-off task without a
 # due date is never overdue, so it never carries «Tocaba». When the
@@ -90,36 +90,6 @@ Feature: Row without date text
       | days    | created             | from  | to    | now                 |
       | viernes | 2026-11-12T08:00:00 | 09:00 | 11:00 | 2026-11-13T09:00:00 |
       | viernes | 2026-11-12T08:00:00 | 09:00 | 11:00 | 2026-11-13T10:59:59 |
-
-  # Row without date text 7
-  # Completed one-off task (with Mostrar completadas): no return text, because
-  # it does not come back.
-  Scenario Outline: Row without date text 7
-    Given Mostrar completadas is on
-    And a one-off task without a due date
-    And the task was completed on <completed>
-    When I query Pendientes on <now>
-    Then the task row shows no date text
-
-    Examples:
-      | completed           | now                 |
-      | 2026-11-12T09:00:00 | 2026-11-13T10:00:00 |
-      | 2026-11-13T09:30:00 | 2026-11-13T10:00:00 |
-
-  # Row without date text 8
-  # Completed one-off task with a schedule, which outside the window is waiting until
-  # the next one: it stays completed and without return text.
-  Scenario Outline: Row without date text 8
-    Given Mostrar completadas is on
-    And a one-off task without a due date created on <created>
-    And the task can be completed from <from> to <to>
-    And the task was completed on <completed>
-    When I query Pendientes on <now>
-    Then the task row shows no date text
-
-    Examples:
-      | created             | from  | to    | completed           | now                 |
-      | 2026-11-13T06:00:00 | 08:00 | 11:00 | 2026-11-13T09:00:00 | 2026-11-13T12:00:00 |
 
   # Row without date text 9
   # Paused task that without the pause would be overdue: says «Pausada», without «Tocaba».
