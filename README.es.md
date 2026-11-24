@@ -115,6 +115,7 @@ Las fechas son las de publicación del cambio en `v3`; la historia anterior al 2
 | 2026-11-20 | **Se quitan las anotaciones** (la nota «me sirvió / me molestó»): desaparece la tercera pestaña y `/anotaciones` redirige. Las épicas se juzgan ahora por lo que la gente cuenta y por los datos guardados. Despliegue; se borran los datos viejos. |
 | 2026-11-20 | Termina la migración al inglés: features, procedimientos de QA, paquetes, spec y documentos del pipeline renombrados y traducidos. |
 | 2026-11-22 | La ruta `/historial` pasa a ser `/history`. Despliegue. |
+| 2026-11-24 | **Reprogramación en bloque** (E6, segunda mitad): «Reprogramar vencidas» en el menú ⋮ reprograma de una vez todas las tareas periódicas vencidas, con vista previa y un deshacer de 5 segundos. **«Completadas» y «Pausadas»** pasan de checks sobre la lista al menú ⋮, y una tarea puntual completada ya no tiene fila en «Pendientes» (se llega desde el historial). Despliegue. |
 
 Lo que viene está en [`docs/v3/plan.md`](docs/v3/plan.md): empezar una tarea sin comprometerse a terminarla y las épicas siguientes.
 

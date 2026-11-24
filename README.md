@@ -115,6 +115,7 @@ Dates are when the change was published on `v3`; the history before 2026-11-12 w
 | 2026-11-20 | **Annotations removed** (the «me sirvió / me molestó» note): the third tab is gone and `/anotaciones` redirects. Epics are now judged by what people report and by stored data. Deploy; the old data is deleted. |
 | 2026-11-20 | English migration finished: features, QA procedures, packages, spec and pipeline documents renamed and translated. |
 | 2026-11-22 | The `/historial` route becomes `/history`. Deploy. |
+| 2026-11-24 | **Block rescheduling** (E6, second half): «Reprogramar vencidas» in the ⋮ menu reschedules every overdue recurring task at once, with a preview and a 5-second undo. **«Completadas» and «Pausadas»** move from checks above the list into the ⋮ menu, and a completed one-off task no longer has a row in «Pendientes» (it is reached from the history). Deploy. |
 
 What comes next is in [`docs/v3/plan.md`](docs/v3/plan.md): starting a task without committing to finish it, and the later epics.
 
