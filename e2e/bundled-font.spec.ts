@@ -7,6 +7,9 @@ import {
 } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import {
+  closeMenu,
+  openMenu,
+  openTab,
   openTask,
   openSelector,
   close,
@@ -89,8 +92,6 @@ const blockEmoji = (ctx: BrowserContext | Page) =>
 // Flow 1
 // ---------------------------------------------------------------------------
 
-const bar = (page: Page) => page.getByRole("navigation");
-
 const combinations = [
   {
     name: "Celular claro",
@@ -166,10 +167,11 @@ for (const c of combinations) {
       f.getByRole("button", { name: /Regar$/ }),
       ([a, n, o]) => a >= 5 && n === 1 && o === 0,
     );
-    await withAtkinson(
-      page,
-      bar(page).getByRole("link", { name: "Pendientes" }),
-    );
+    // The Menú button is an icon without text: the font is seen on the items of its menu.
+    await openMenu(page);
+    for (const name of ["Historial", "Modo mínimo", "Completadas"])
+      await withAtkinson(page, page.getByRole("menu").getByText(name, { exact: true }));
+    await closeMenu(page);
     await withAtkinson(
       page,
       page.getByRole("heading", { name: "Pendientes", level: 1 }),
@@ -181,7 +183,8 @@ for (const c of combinations) {
       page,
       page.getByRole("heading", { name: "Historial", level: 1 }),
     );
-    await withAtkinson(page, bar(page));
+    // Volver is an arrow icon without text: it is there, to the left of the title.
+    await expect(page.getByRole("button", { name: "Volver", exact: true })).toBeVisible();
     await goA(page, "Pendientes");
 
     // Step 4: the panel.
@@ -339,26 +342,26 @@ async function hierarchy(page: Page) {
         size: parseFloat(c.fontSize),
         weight: parseFloat(c.fontWeight),
         color: c.color,
-        mark: c.boxShadow,
+        mark: c.borderBottomColor,
       };
     });
   const titleRow = await style(row(page, "Regar").getByRole("button").first());
-  const chosen = await style(
-    bar(page).getByRole("link", { name: "Pendientes" }),
-  );
-  const other = await style(bar(page).getByRole("link", { name: "Historial" }));
-  await expect(
-    bar(page).getByRole("link", { name: "Pendientes" }),
-  ).toHaveAttribute("aria-current", "page");
-  await expect(
-    bar(page).getByRole("link", { name: "Historial" }),
-  ).not.toHaveAttribute("aria-current", "page");
+  // The panel tabs (phone layout): the chosen one is highlighted.
+  const initial = page.viewportSize()!;
+  await page.setViewportSize({ width: 360, height: 640 });
   await openTask(page, "Regar");
+  const panel = page.getByRole("dialog");
+  const chosen = await style(panel.getByRole("tab", { name: /^Tarea/ }));
+  const other = await style(panel.getByRole("tab", { name: /^Cuándo/ }));
+  await expect(panel.getByRole("tab", { name: /^Tarea/ })).toHaveAttribute("aria-selected", "true");
+  await expect(panel.getByRole("tab", { name: /^Cuándo/ })).toHaveAttribute("aria-selected", "false");
+  await openTab(page, "Tarea");
   const note = await style(page.getByLabel("Nota"));
   const heading = await style(
     page.getByRole("dialog").getByRole("heading", { name: "Editar tarea" }),
   );
   await close(page);
+  await page.setViewportSize(initial);
   return { titleRow, note, heading, chosen, other };
 }
 
@@ -392,8 +395,8 @@ function hierarchyKeeps(j: Awaited<ReturnType<typeof hierarchy>>) {
   // The selected tab is highlighted with weight, color and a mark the others do not have.
   expect(j.chosen.weight).toBeGreaterThan(j.other.weight);
   expect(j.chosen.color).not.toBe(j.other.color);
-  expect(j.chosen.mark).not.toBe("none");
-  expect(j.other.mark).toBe("none");
+  expect(j.chosen.mark).not.toBe(j.other.mark);
+  expect(j.other.mark).toBe("rgba(0, 0, 0, 0)");
 }
 
 test("Flow 3: sin cambios de diseño y horas de ancho fijo", async ({
@@ -411,7 +414,7 @@ test("Flow 3: sin cambios de diseño y horas de ancho fijo", async ({
   const probes = (p: Page) => ({
     title: row(p, "Regar").getByRole("button").first(),
     button: p.getByRole("button", { name: "+" }),
-    tabName: bar(p).getByRole("link", { name: "Pendientes" }),
+    menuButton: p.getByRole("button", { name: "Menú" }),
   });
   // With the font blocked: system.
   const before: Record<string, Measure> = {};

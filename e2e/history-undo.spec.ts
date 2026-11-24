@@ -18,6 +18,7 @@ import {
 	waitStatus,
 	row,
 	goA,
+	openHistory,
 	cleanEmulators,
 	arrivesOnServer,
 	sessionWithClock,
@@ -86,25 +87,24 @@ async function deleteEntry(page: Page, title: string, hour: string, heading: str
 const order = (page: Page, titles: string[]) =>
 	expect(page.getByRole('listitem')).toHaveText(titles.map((t) => new RegExp(`^\\s*${t}\\s`)));
 
-const links = async (page: Page, current: 'Pendientes' | 'Historial') => {
-	await expect(page.getByRole('navigation')).toBeVisible();
-	for (const n of ['Pendientes', 'Historial'] as const) {
-		const l = page.getByRole('navigation').getByRole('link', { name: n });
-		if (n === current) await expect(l).toHaveAttribute('aria-current', 'page');
-		else await expect(l).not.toHaveAttribute('aria-current', /.*/);
-	}
+/** No navigation bar: no region and no links named after the screens. */
+const noBar = async (page: Page) => {
+	await expect(page.getByRole('navigation')).toHaveCount(0);
+	await expect(page.getByRole('link', { name: /^(Pendientes|Historial)$/ })).toHaveCount(0);
 };
 
 test('Flow 1: navegación e historial vacío', async ({ page }) => {
 	await session(page, TODAY);
-	await links(page, 'Pendientes');
-	await page.getByRole('navigation').getByRole('link', { name: 'Historial' }).click();
+	await noBar(page);
+	await openHistory(page);
 	await expect(page).toHaveURL(/\/history$/);
 	await viewHistory(page, []);
-	await links(page, 'Historial');
+	await noBar(page);
+	await expect(page.getByRole('button', { name: 'Volver', exact: true })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Menú' })).toHaveCount(0);
 	await page.reload();
 	await viewHistory(page, []);
-	await page.getByRole('navigation').getByRole('link', { name: 'Pendientes' }).click();
+	await page.getByRole('button', { name: 'Volver', exact: true }).click();
 	await expect(page.getByRole('heading', { name: 'Pendientes', level: 1 })).toBeVisible();
 	await expect(page.getByRole('listitem')).toHaveCount(0);
 	await expect(page.getByRole('button', { name: '+' })).toBeVisible();

@@ -966,7 +966,7 @@ test('Flow 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', asy
 		await expect(panel(page)).toHaveCount(0);
 		await expect(unsavedChangesNotice(page)).toHaveCount(0);
 	};
-	await page.getByRole('navigation').getByRole('link', { name: 'Pendientes' }).waitFor();
+	await page.getByRole('heading', { name: 'Historial', level: 1 }).waitFor();
 
 	// 5
 	await openRow(page, L);

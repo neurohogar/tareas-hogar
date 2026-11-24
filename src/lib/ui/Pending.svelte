@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { saveShowCompleted, readShowCompleted } from '#lib/adapters/show-completed.ts';
 	import { saveShowPaused, readShowPaused } from '#lib/adapters/show-paused.ts';
 	import { checkboxEnabled } from '#lib/core/checkbox.ts';
@@ -10,7 +11,7 @@
 	import TaskRow from './TaskRow.svelte';
 	import TaskPanel from './TaskPanel.svelte';
 	import ReschedulePreview from './ReschedulePreview.svelte';
-	import { useSession } from './session';
+	import { markOpenedFromApp, useSession } from './session';
 
 	const session = useSession();
 	let creating = $state(false);
@@ -27,6 +28,12 @@
 		if (!canReschedule) return;
 		menuOpen = false;
 		previewing = true;
+	}
+
+	function openHistory() {
+		menuOpen = false;
+		markOpenedFromApp();
+		void goto('/history');
 	}
 
 	function toggleMinimalMode() {
@@ -69,6 +76,9 @@
 			</button>
 			{#if menuOpen}
 				<div class="menu-list" role="menu">
+					<button type="button" role="menuitem" class="menu-item" onclick={openHistory}>
+						<span class="check" aria-hidden="true"></span>Historial
+					</button>
 					<button type="button" role="menuitemcheckbox" aria-checked={session.minimalMode} class="menu-item" onclick={toggleMinimalMode}>
 						<span class="check" aria-hidden="true">{session.minimalMode ? '✓' : ''}</span>Modo mínimo
 					</button>
@@ -198,7 +208,7 @@
 	.new {
 		position: fixed;
 		right: 1.25rem;
-		bottom: calc(var(--navigation-height) + 1.25rem);
+		bottom: 1.25rem;
 		width: 56px;
 		height: 56px;
 		border: 0;

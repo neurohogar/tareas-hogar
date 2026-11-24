@@ -376,7 +376,7 @@
 	.panel {
 		position: fixed;
 		inset: 0;
-		/* Above the navigation bar (z-index 1), whatever the DOM order. */
+		/* Above the menu and the rows (z-index 1), whatever the DOM order. */
 		z-index: 2;
 		display: grid;
 		place-items: end center;

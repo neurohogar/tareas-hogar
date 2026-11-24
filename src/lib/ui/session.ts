@@ -42,3 +42,17 @@ export function shareSession(session: Session): void {
 export function useSession(): Session {
 	return getContext<Session>(KEY);
 }
+
+/**
+ * Whether the Historial was opened from inside the app (the menu item), so
+ * there is an entry of Pendientes behind it; opened directly there is none.
+ */
+let openedFromApp = false;
+
+export function markOpenedFromApp(): void {
+	openedFromApp = true;
+}
+
+export function hasEntryBehind(): boolean {
+	return openedFromApp;
+}

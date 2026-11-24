@@ -44,8 +44,8 @@ Out of scope: the phone keyboard and the native calendars and lists of a field (
 ## Flow 1: the whole app with the font
 
 1. Create the task «Regar» with emoji 🌱 and note «Año 2026 ✈».
-2. On **Pendientes**, the «Regar» row and the **Menú** button are drawn with Atkinson; the 🌱 with Noto.
-3. Go to **Historial**: the titles, the buttons, the **Volver** button, the fields and the tab bar are drawn with Atkinson.
+2. On **Pendientes**, the «Regar» row and the items of the **Menú** (an icon button, without text) are drawn with Atkinson; the 🌱 with Noto.
+3. Go to **Historial**: the titles and the buttons are drawn with Atkinson; the **Volver** button (an arrow, without text) is seen to the left of the title.
 4. Open the «Regar» panel: title, note, buttons (**Guardar**, **Pausar** or **Posponer** as applicable), the tabs and the fields are drawn with Atkinson; the ✈ in the note is drawn with Noto.
 5. Open the emoji picker: its Recientes and all the emoji it shows are drawn with Noto; the picker's titles and buttons, with Atkinson.
 6. Tap the «Regar» checkbox: the undo notice («Completaste «🌱 Regar»») is drawn with Atkinson and the 🌱 with Noto.

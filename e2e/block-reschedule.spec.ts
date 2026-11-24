@@ -52,7 +52,7 @@ async function at(page: Page, hour: string) {
 async function openMenu(page: Page) {
 	await menuButton(page).click();
 	await expect(menu(page)).toBeVisible();
-	await expect(page.getByRole('menuitem')).toHaveCount(1);
+	await expect(page.getByRole('menuitem')).toHaveCount(2);
 	await expect(page.getByRole('menuitemcheckbox')).toHaveCount(3);
 }
 
@@ -167,7 +167,7 @@ test('Flow 1: the menu item and when it is disabled', async ({ page }) => {
 	// Step 1.
 	await openMenu(page);
 	await expect(page.getByRole('menu').getByRole('menuitemcheckbox')).toHaveText([/Modo mínimo/, /Completadas/, /Pausadas/]);
-	await expect(page.getByRole('menu').locator('[role^="menuitem"]')).toHaveText([/Modo mínimo/, /Completadas/, /Pausadas/, /Reprogramar vencidas/]);
+	await expect(page.getByRole('menu').locator('[role^="menuitem"]')).toHaveText([/Historial/, /Modo mínimo/, /Completadas/, /Pausadas/, /Reprogramar vencidas/]);
 	for (const name of ['Modo mínimo', 'Completadas', 'Pausadas'])
 		await expect(page.getByRole('menuitemcheckbox', { name })).toBeEnabled();
 	const below = (await item(page).boundingBox())!.y;

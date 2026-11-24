@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
+  openHistory,
   openTask,
   turnOnCompleted,
   remove,
@@ -24,10 +25,8 @@ test.beforeEach(async () => {
 type ScreenName = "Pendientes" | "Historial";
 
 async function go(page: Page, screenName: ScreenName) {
-  await page
-    .getByRole("navigation")
-    .getByRole("link", { name: screenName, exact: true })
-    .click();
+  if (screenName === "Historial") await openHistory(page);
+  else await page.getByRole("button", { name: "Volver", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: screenName, level: 1 }),
   ).toBeVisible();
@@ -360,10 +359,7 @@ test("Flow 4: data that is no longer used", async ({ page }) => {
   await expect(page.getByRole("group", { name: "Filtrar por etiqueta" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Solo rápidas" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Anotar" })).toHaveCount(0);
-  await expect(page.getByRole("navigation").getByRole("link")).toHaveText([
-    "Pendientes",
-    "Historial",
-  ]);
+  await expect(page.getByRole("navigation")).toHaveCount(0);
   await silence(page);
 
   // Step 3: the panel does not have the fields; saving the title does not touch the old fields.

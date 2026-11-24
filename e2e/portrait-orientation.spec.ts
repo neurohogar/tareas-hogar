@@ -222,7 +222,7 @@ test('Flow 3: en una pestaña del navegador sigue girando con el diseño ancho e
 	await close(page);
 	for (const tab of ['Pendientes', 'Historial'] as const) {
 		await goA(page, tab);
-		await expect(page.getByRole('navigation')).toBeVisible();
+		await expect(page.getByRole('navigation')).toHaveCount(0);
 		await withoutOverflowHorizontal(page);
 		await withoutRequestOfRotate(page);
 	}

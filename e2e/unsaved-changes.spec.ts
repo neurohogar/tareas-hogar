@@ -712,8 +712,10 @@ test('Flow 6: botón Atrás', async ({ page }) => {
 	await goA(page, 'Historial');
 	await goA(page, 'Pendientes');
 	await create(page, { title: 'Otra', kind: 'No se repite' });
+	// Volver behaves like Back and leaves no entry behind: open Pendientes again by its address, so the Historial is the entry before it.
 	await goA(page, 'Historial');
-	await goA(page, 'Pendientes');
+	await page.goto('/');
+	await expect(page.getByRole('heading', { name: 'Pendientes', level: 1 })).toBeVisible();
 	for (const as of ['X', 'Guardar', 'Acción'] as const) {
 		await openTask(page, 'Otra');
 		if (as === 'X') await tap(page, 'Cerrar');

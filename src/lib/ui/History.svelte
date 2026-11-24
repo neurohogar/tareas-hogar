@@ -1,13 +1,20 @@
 <script lang="ts">
 	import { history, type HistoryEntry } from '#lib/core/history.ts';
 	import { taskName } from '#lib/core/task-name.ts';
-	import { useSession } from './session';
+	import { goto } from '$app/navigation';
+	import { hasEntryBehind, useSession } from './session';
 
 	const session = useSession();
 	const groups = $derived(history(session.tasks, session.completions, session.now));
 
 	/** The entry whose Borrar awaits confirmation, with its day's header, when tapped. */
 	let toDelete = $state.raw<{ entry: HistoryEntry; header: string } | undefined>(undefined);
+
+	/** Like Back: returns to the entry of Pendientes, or replaces this one if opened directly. */
+	function back() {
+		if (hasEntryBehind()) window.history.back();
+		else void goto('/', { replaceState: true });
+	}
 
 	function deleteCompletion(entry: HistoryEntry) {
 		toDelete = undefined;
@@ -16,7 +23,14 @@
 </script>
 
 <section>
-	<h1>Historial</h1>
+	<header class="header">
+		<button type="button" class="back" aria-label="Volver" onclick={back}>
+			<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+				<path d="M19 12H5M12 19l-7-7 7-7" />
+			</svg>
+		</button>
+		<h1>Historial</h1>
+	</header>
 	{#each groups as { header, entries } (header)}
 		<h2>{header}</h2>
 		<ul class="list">
@@ -48,9 +62,30 @@
 {/if}
 
 <style>
+	.header {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		margin: 0.5rem 0 1rem;
+	}
+
 	h1 {
 		font-size: 1.4rem;
-		margin: 0.5rem 0 1rem;
+		margin: 0;
+	}
+
+	.back {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 44px;
+		min-height: 44px;
+		padding: 0;
+		border: 1px solid transparent;
+		border-radius: 0.4rem;
+		background: transparent;
+		color: var(--text);
+		cursor: pointer;
 	}
 
 	h2 {
@@ -113,7 +148,7 @@
 	.backdrop {
 		position: fixed;
 		inset: 0;
-		/* Above the navigation bar (z-index 1), whatever the DOM order. */
+		/* Above the menu and the rows (z-index 1), whatever the DOM order. */
 		z-index: 2;
 		display: grid;
 		place-items: center;

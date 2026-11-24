@@ -35,7 +35,6 @@
 	import { onlineState } from './online.svelte.ts';
 	import UndoNotice from './UndoNotice.svelte';
 	import NoConnectionStrip from './NoConnectionStrip.svelte';
-	import Navigation from './Navigation.svelte';
 	import TaskPanel from './TaskPanel.svelte';
 	import type { CollectionsResponded } from './LoadingScreen.svelte';
 	import { shareSession } from './session';
@@ -252,7 +251,6 @@
 </script>
 
 <NoConnectionStrip />
-<Navigation />
 
 {@render children()}
 
