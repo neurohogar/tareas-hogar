@@ -25,6 +25,25 @@ import { isEssential } from './essential';
  */
 export type PendingRow = { task: Task; dateText?: string; firstStepText?: string; stepButtons?: StepButtons; minimal?: MinimalLine } & InPending;
 
+type PendingPartition = { notCompleted: RowToOrder[]; completedItems: CompletedRow[]; pausedItems: Task[] };
+
+/** Splits the tasks into not completed, completed recurring and paused ones (§6.1). */
+function partitionTasks(tasks: readonly Task[], completions: readonly Completion[], now: Date): PendingPartition {
+	const notCompleted: RowToOrder[] = [];
+	const completedItems: CompletedRow[] = [];
+	const pausedItems: Task[] = [];
+	for (const task of tasks) {
+		const { owns } = asJustCreated(task, completionsOfTask(completions, task.id));
+		const inPending = classifyInPending(task, completions, now);
+		if (inPending.status.kind === 'pausada') pausedItems.push(task);
+		else if (inPending.completed) {
+			if (task.kind === 'periodica') completedItems.push({ task, status: inPending.status, lastCompletedAt: lastCompletedAt(owns) });
+		}
+		else notCompleted.push({ task, status: inPending.status, instant: urgencyInstant(task, completions, inPending.status, now) });
+	}
+	return { notCompleted, completedItems, pausedItems };
+}
+
 /**
  * Spec §6.1: the rows of the Pending list. First the non-completed ones,
  * ordered by urgency; with Mostrar completadas on, then the completed recurring
@@ -41,18 +60,7 @@ export function pendingRows(
 	showPaused = false,
 	minimalModeOn = false
 ): PendingRow[] {
-	const notCompleted: RowToOrder[] = [];
-	const completedItems: CompletedRow[] = [];
-	const pausedItems: Task[] = [];
-	for (const task of minimalModeOn ? tasks.filter(isEssential) : tasks) {
-		const { owns } = asJustCreated(task, completionsOfTask(completions, task.id));
-		const inPending = classifyInPending(task, completions, now);
-		if (inPending.status.kind === 'pausada') pausedItems.push(task);
-		else if (inPending.completed) {
-			if (task.kind === 'periodica') completedItems.push({ task, status: inPending.status, lastCompletedAt: lastCompletedAt(owns) });
-		}
-		else notCompleted.push({ task, status: inPending.status, instant: urgencyInstant(task, completions, inPending.status, now) });
-	}
+	const { notCompleted, completedItems, pausedItems } = partitionTasks(minimalModeOn ? tasks.filter(isEssential) : tasks, completions, now);
 	const withText = (task: Task, status: PendingRow['status']) => dateText(task, completions, status, now);
 	const withStep = (task: Task, status: PendingRow['status']) => {
 		const text = stepText(task, status);
