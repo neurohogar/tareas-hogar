@@ -156,13 +156,13 @@ describe('minimalLine: the row offers the minimal version (spec §6.1)', () => {
 
 describe('pendingRows with the minimal version (spec §6.1)', () => {
 	it('the pending row carries it, the completed one does not', () => {
-		const completion: Completion = { id: 'c1', taskId: ONE_OFF.id, completedAt: CREATED };
+		const completion: Completion = { id: 'c1', taskId: RELATIVE.id, completedAt: new Date(2026, 10, 13, 9, 0, 0) };
 		const other: OneOffTask = { ...ONE_OFF, id: 't9', title: 'Cocina' };
-		const rows = pendingRows([ONE_OFF, other], [completion], NOW, true);
+		const rows = pendingRows([RELATIVE, other], [completion], NOW, true);
 
 		expect(rows.map(({ task, minimal }) => [task.id, minimal?.text])).toStrictEqual([
 			['t9', `Mínima: ${MINIMAL}`],
-			['t1', undefined]
+			['t2', undefined]
 		]);
 	});
 
@@ -239,11 +239,14 @@ describe('doTheMinimal (spec §6.1, §4.4)', () => {
 });
 
 describe('checkbox of a task completed with the minimal version (spec §5.4, §6.1)', () => {
-	it('deletes the most recent completion, full or minimal', () => {
-		const whole: Completion = { id: 'c1', taskId: ONE_OFF.id, completedAt: CREATED };
-		const minimum: Completion = { id: 'c2', taskId: ONE_OFF.id, completedAt: new Date(2026, 10, 2), wasMinimal: true };
+	it('of a recurring task it deletes the most recent completion, full or minimal', () => {
+		const whole: Completion = { id: 'c1', taskId: RELATIVE.id, completedAt: new Date(2026, 10, 12, 9, 0, 0) };
+		const minimum: Completion = { id: 'c2', taskId: RELATIVE.id, completedAt: new Date(2026, 10, 13, 9, 0, 0), wasMinimal: true };
+		const wholeToday: Completion = { ...whole, completedAt: minimum.completedAt };
+		const minimumBefore: Completion = { ...minimum, completedAt: whole.completedAt };
 
-		expect(checkboxAction(ONE_OFF, [whole, minimum], NOW)).toStrictEqual({ kind: 'remove', completion: minimum });
+		expect(checkboxAction(RELATIVE, [whole, minimum], NOW)).toStrictEqual({ kind: 'remove', completion: minimum });
+		expect(checkboxAction(RELATIVE, [wholeToday, minimumBefore], NOW)).toStrictEqual({ kind: 'remove', completion: wholeToday });
 	});
 
 	it('a recurring task completed with the minimal version a previous day is completed again, in full', () => {

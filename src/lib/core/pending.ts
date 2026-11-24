@@ -16,7 +16,7 @@ import { minimalLine, type MinimalLine } from './minimal-version';
 import { isEssential } from './essential';
 
 /**
- * A Pending row; if it is completed, it is shown struck through and with the checkbox
+ * A Pending row; if it is completed (always recurring), it is shown struck through and with the checkbox
  * checked. dateText: «Tocaba …» or «Vuelve …», if the row carries it (§6.1).
  * firstStepText: the line of the step the task is on, «Primer paso: …» or
  * «Paso: …», and stepButtons, those of a task with two steps or more; both,
@@ -27,8 +27,9 @@ export type PendingRow = { task: Task; dateText?: string; firstStepText?: string
 
 /**
  * Spec §6.1: the rows of the Pending list. First the non-completed ones,
- * ordered by urgency; with Mostrar completadas on, then the
- * completed ones, from the one with the most recent completedAt to the oldest; with
+ * ordered by urgency; with Mostrar completadas on, then the completed recurring
+ * ones, from the one with the most recent completedAt to the oldest (a completed
+ * one-off is never a row, on or off, §5.1); with
  * Mostrar pausadas on, at the end the paused ones (§5.8), by title. With the
  * minimal mode on, only the essential tasks, with the same rules (§6.1).
  */
@@ -47,7 +48,9 @@ export function pendingRows(
 		const { owns } = asJustCreated(task, completionsOfTask(completions, task.id));
 		const inPending = classifyInPending(task, completions, now);
 		if (inPending.status.kind === 'pausada') pausedItems.push(task);
-		else if (inPending.completed) completedItems.push({ task, status: inPending.status, lastCompletedAt: lastCompletedAt(owns) });
+		else if (inPending.completed) {
+			if (task.kind === 'periodica') completedItems.push({ task, status: inPending.status, lastCompletedAt: lastCompletedAt(owns) });
+		}
 		else notCompleted.push({ task, status: inPending.status, instant: urgencyInstant(task, completions, inPending.status, now) });
 	}
 	const withText = (task: Task, status: PendingRow['status']) => dateText(task, completions, status, now);

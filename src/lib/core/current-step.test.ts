@@ -96,8 +96,9 @@ describe('doneAction (spec §4.1 and §6.1)', () => {
 		expect(doneAction(withSchedule, [], NOW)).toStrictEqual({ kind: 'advance', change: { currentStep: 2 } });
 	});
 
-	it('on the last step of a completed one it does not complete again', () => {
-		expect(doneAction(atStep(3), [completionOf('t1', CREATED)], NOW)).toStrictEqual({ kind: 'none' });
+	it('on the last step of a completed one (always recurring) it does not complete again', () => {
+		const lastStep: RecurringTask = { ...RELATIVE, currentStep: 2 };
+		expect(doneAction(lastStep, [completionOf('t2', new Date(2026, 6, 15, 7, 0, 0))], NOW)).toStrictEqual({ kind: 'none' });
 	});
 
 	it('a single-step task has no «Hecho»', () => {

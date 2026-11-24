@@ -65,11 +65,11 @@ describe('pendingRows (properties)', () => {
 		);
 	});
 
-	it('a one-off with any completion is never a row', () => {
+	it('a one-off with any completion is never a row, with Mostrar completadas on or off (§5.1, §6.1)', () => {
 		fc.assert(
-			fc.property(tasks, completions, instant, (list, doneOnes, now) => {
+			fc.property(tasks, completions, instant, fc.boolean(), (list, doneOnes, now, showCompleted) => {
 				const doneItems = new Set(doneOnes.map(({ taskId }) => taskId));
-				for (const { task } of pendingRows(list, doneOnes, now))
+				for (const { task } of pendingRows(list, doneOnes, now, showCompleted, true))
 					expect(task.kind === 'puntual' && doneItems.has(task.id)).toBe(false);
 			})
 		);
@@ -104,11 +104,12 @@ describe('pendingRows (properties)', () => {
 		);
 	});
 
-	it('with Mostrar completadas on, each task is a row exactly once', () => {
+	it('with Mostrar completadas on, each task is a row exactly once, except the completed one-offs (§6.1)', () => {
 		fc.assert(
 			fc.property(tasks, completions, instant, (list, doneOnes, now) => {
 				const ids = pendingRows(list, doneOnes, now, true).map(({ task }) => task.id);
-				expect([...ids].sort()).toEqual(list.map(({ id }) => id).sort());
+				const inView = list.filter((task) => task.kind === 'periodica' || !isCompleted(task, doneOnes, now));
+				expect([...ids].sort()).toEqual(inView.map(({ id }) => id).sort());
 			})
 		);
 	});
@@ -119,7 +120,7 @@ describe('pendingRows (properties)', () => {
 				const without = pendingRows(list, doneOnes, now);
 				const having = pendingRows(list, doneOnes, now, true);
 				expect(having.slice(0, without.length)).toEqual(without);
-				expect(having.slice(without.length).every(({ completed }) => completed)).toBe(true);
+				expect(having.slice(without.length).every(({ completed, task }) => completed && task.kind === 'periodica')).toBe(true);
 			})
 		);
 	});

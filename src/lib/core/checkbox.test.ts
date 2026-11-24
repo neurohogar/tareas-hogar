@@ -29,12 +29,6 @@ describe('checkboxAction (spec §6.1)', () => {
 		expect(checkboxAction(relative, [previous], new Date(2026, 6, 15, 8, 0, 0))).toEqual({ kind: 'complete' });
 	});
 
-	it('a completed one-off deletes its most recent completion, even if from another day', () => {
-		const oldOne = completion('c1', 'p', new Date(2026, 6, 10, 9, 0, 0));
-		const recent = completion('c2', 'p', new Date(2026, 6, 12, 9, 0, 0));
-		expect(checkboxAction(oneOff, [recent, oldOne], new Date(2026, 6, 15, 8, 0, 0))).toEqual({ kind: 'remove', completion: recent });
-	});
-
 	it('a recurring task completed today deletes the most recent completion', () => {
 		const yesterday = completion('c1', 'r', new Date(2026, 6, 13, 9, 0, 0));
 		const today = completion('c2', 'r', new Date(2026, 6, 15, 0, 0, 0));
@@ -87,9 +81,9 @@ describe('checkbox with a schedule (spec §5.5, §6.1)', () => {
 	});
 
 	it('what it would delete is enabled at any hour', () => {
-		const doneItem = completion('c1', 'p', new Date(2026, 6, 15, 9, 0, 0));
-		expect(checkboxAction(withSchedule(oneOff), [doneItem], new Date(2026, 6, 15, 20, 0, 0))).toEqual({ kind: 'remove', completion: doneItem });
-		expect(checkboxEnabled(withSchedule(oneOff), [doneItem], new Date(2026, 6, 15, 20, 0, 0))).toBe(true);
+		const doneItem = completion('c1', 'r', new Date(2026, 6, 15, 9, 0, 0));
+		expect(checkboxAction(withSchedule(relative), [doneItem], new Date(2026, 6, 15, 20, 0, 0))).toEqual({ kind: 'remove', completion: doneItem });
+		expect(checkboxEnabled(withSchedule(relative), [doneItem], new Date(2026, 6, 15, 20, 0, 0))).toBe(true);
 	});
 
 	it('without a schedule, it is always enabled', () => {

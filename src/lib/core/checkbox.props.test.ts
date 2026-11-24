@@ -50,10 +50,11 @@ describe('checkboxAction (properties)', () => {
 		);
 	});
 
-	it('a completed one-off always deletes', () => {
+	it('a completed recurring task whose last completion is from today or later deletes it', () => {
 		fc.assert(
-			fc.property(oneOff, completions, instant, (t, doneOnes, now) => {
-				fc.pre(completionsOfTask(doneOnes, t.id).length > 0);
+			fc.property(fc.oneof(recurring(relative), recurring(calendar)), completions, instant, (t, doneOnes, now) => {
+				const owns = completionsOfTask(doneOnes, t.id);
+				fc.pre(isCompleted(t, doneOnes, now) && lastCompletedAt(owns) >= startOfDay(now).getTime());
 				expect(checkboxAction(t, doneOnes, now).kind).toBe('remove');
 			})
 		);

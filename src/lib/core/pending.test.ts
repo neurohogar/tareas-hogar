@@ -7,6 +7,7 @@ const NOW = new Date(2026, 6, 15, 8, 0, 0);
 interface Data {
 	title?: string;
 	createdAt?: Date;
+	every?: number;
 }
 const oneOff = (id: string, dueDate?: Date, { title = id, createdAt = CREATED }: Data = {}): Task => ({
 	id,
@@ -15,11 +16,11 @@ const oneOff = (id: string, dueDate?: Date, { title = id, createdAt = CREATED }:
 	createdAt,
 	...(dueDate && { dueDate })
 });
-const relative = (id: string, { title = id, createdAt = CREATED }: Data = {}): Task => ({
+const relative = (id: string, { title = id, createdAt = CREATED, every = 1 }: Data = {}): Task => ({
 	id,
 	title,
 	kind: 'periodica',
-	recurrence: { mode: 'relativo', every: 1, unit: 'dias' },
+	recurrence: { mode: 'relativo', every, unit: 'dias' },
 	createdAt
 });
 /** Weekly created today at 07:00, before its first occurrence: waiting without completions. */
@@ -88,21 +89,31 @@ describe('pendingRows (spec §6.1)', () => {
 	});
 
 	describe('Mostrar completadas on', () => {
-		it('the completed ones go after the non-completed ones, even if those are waiting', () => {
-			const completed = oneOff('hecha');
-			expect(withCompleted([completed, weekly('s', 'sábado')], [completionOf('hecha')])).toEqual([
+		it('the completed recurring ones go after the non-completed ones, even if those are waiting', () => {
+			expect(withCompleted([relative('hecha'), weekly('s', 'sábado')], [completionOf('hecha')])).toEqual([
 				['s', false],
 				['hecha', true]
 			]);
 		});
 
-		it('the completed ones go from the one with the most recent completedAt to the oldest, regardless of kind', () => {
+		it('never adds a completed one-off (§5.1, §6.1), only the completed recurring ones', () => {
+			const completions = [completionOf('puntual', new Date(2026, 6, 15, 7, 30, 0)), completionOf('r')];
+			expect(pendingRows([oneOff('puntual'), relative('r')], completions, NOW, true).map(({ task }) => task.id)).toEqual(['r']);
+			expect(pendingRows([oneOff('puntual')], completions, NOW, true, true)).toEqual([]);
+		});
+
+		it('a completed one-off stays out also with the minimal mode on', () => {
+			const essential: Task = { ...oneOff('puntual'), essential: true };
+			expect(pendingRows([essential], [completionOf('puntual')], NOW, true, false, true)).toEqual([]);
+		});
+
+		it('the completed ones go from the one with the most recent completedAt to the oldest', () => {
 			const completions = [
 				completionOf('vieja', new Date(2026, 6, 13, 9, 0, 0)),
 				completionOf('r', new Date(2026, 6, 15, 7, 0, 0)),
 				completionOf('nueva', new Date(2026, 6, 15, 7, 30, 0))
 			];
-			expect(withCompleted([oneOff('vieja'), relative('r'), oneOff('nueva')], completions)).toEqual([
+			expect(withCompleted([relative('vieja', { every: 7 }), relative('r'), relative('nueva', { every: 7 })], completions)).toEqual([
 				['nueva', true],
 				['r', true],
 				['vieja', true]
@@ -115,8 +126,9 @@ describe('pendingRows (spec §6.1)', () => {
 				{ id: 'c2', taskId: 'dos', completedAt: new Date(2026, 6, 10, 7, 0, 0) },
 				completionOf('una', new Date(2026, 6, 14, 7, 0, 0))
 			];
-			expect(ids([oneOff('una'), oneOff('dos')], completions, NOW)).toEqual([]);
-			expect(withCompleted([oneOff('una'), oneOff('dos')], completions)).toEqual([
+			const weeklyOnes = [relative('una', { every: 7 }), relative('dos', { every: 7 })];
+			expect(ids(weeklyOnes, completions, NOW)).toEqual([]);
+			expect(withCompleted(weeklyOnes, completions)).toEqual([
 				['dos', true],
 				['una', true]
 			]);
@@ -125,10 +137,10 @@ describe('pendingRows (spec §6.1)', () => {
 		it('if completedAt ties: oldest createdAt, then title in Spanish, then id', () => {
 			const moment = new Date(2026, 6, 15, 7, 0, 0);
 			const tasks = [
-				oneOff('t3', undefined, { title: 'Ñandú' }),
-				oneOff('t2', undefined, { title: 'Nube' }),
-				oneOff('t1', undefined, { title: 'nube' }),
-				oneOff('t0', undefined, { title: 'Zeta', createdAt: new Date(2020, 0, 1) })
+				relative('t3', { title: 'Ñandú' }),
+				relative('t2', { title: 'Nube' }),
+				relative('t1', { title: 'nube' }),
+				relative('t0', { title: 'Zeta', createdAt: new Date(2020, 0, 1) })
 			];
 			const completions = tasks.map(({ id }) => ({ id: `c-${id}`, taskId: id, completedAt: moment }));
 			expect(withCompleted(tasks, completions).map(([id]) => id)).toEqual(['t0', 't1', 't2', 't3']);
