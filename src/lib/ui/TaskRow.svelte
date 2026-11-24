@@ -107,7 +107,9 @@
 </li>
 
 <style>
+	/* Own stacking context: the buttons' z-index stays inside the row and never paints over the ⋮ menu. */
 	.row {
+		isolation: isolate;
 		display: flex;
 		align-items: center;
 		gap: 0.25rem;
