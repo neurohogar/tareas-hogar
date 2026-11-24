@@ -1,4 +1,4 @@
-// The "Mostrar completadas" check of Pendientes (spec §6.1): a local
+// The "Completadas" item of the Pendientes menu (spec §6.1): a local
 // device preference, kept in the browser's local storage (not synced).
 // If it is not available, it holds for the session, from the initial value.
 

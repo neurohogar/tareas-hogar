@@ -34,6 +34,18 @@
 		session.toggleMinimalMode();
 	}
 
+	function toggleShowCompleted() {
+		menuOpen = false;
+		showCompleted = !showCompleted;
+		saveShowCompleted(showCompleted);
+	}
+
+	function toggleShowPaused() {
+		menuOpen = false;
+		showPaused = !showPaused;
+		saveShowPaused(showPaused);
+	}
+
 	/** Escape or a tap outside closes the menu without changing anything. */
 	function closeOnOutside(event: Event) {
 		if (menuOpen && !(event.target as Element).closest('.menu')) menuOpen = false;
@@ -60,6 +72,12 @@
 					<button type="button" role="menuitemcheckbox" aria-checked={session.minimalMode} class="menu-item" onclick={toggleMinimalMode}>
 						<span class="check" aria-hidden="true">{session.minimalMode ? '✓' : ''}</span>Modo mínimo
 					</button>
+					<button type="button" role="menuitemcheckbox" aria-checked={showCompleted} class="menu-item" onclick={toggleShowCompleted}>
+						<span class="check" aria-hidden="true">{showCompleted ? '✓' : ''}</span>Completadas
+					</button>
+					<button type="button" role="menuitemcheckbox" aria-checked={showPaused} class="menu-item" onclick={toggleShowPaused}>
+						<span class="check" aria-hidden="true">{showPaused ? '✓' : ''}</span>Pausadas
+					</button>
 					<button type="button" role="menuitem" class="menu-item" class:disabled={!canReschedule} aria-disabled={!canReschedule ? 'true' : undefined} onclick={openPreview}>
 						<span class="check" aria-hidden="true"></span>Reprogramar vencidas
 					</button>
@@ -70,16 +88,6 @@
 	{#if session.minimalMode}
 		<p class="mode-line">Modo mínimo</p>
 	{/if}
-	<div class="controls">
-		<label class="show-completed">
-			<input type="checkbox" bind:checked={showCompleted} onchange={(event) => saveShowCompleted(event.currentTarget.checked)} />
-			Completadas
-		</label>
-		<label class="show-completed">
-			<input type="checkbox" bind:checked={showPaused} onchange={(event) => saveShowPaused(event.currentTarget.checked)} />
-			Pausadas
-		</label>
-	</div>
 	<ul class="list">
 		{#each rows as { task, status, completed, dateText, firstStepText, stepButtons, minimal } (task.id)}
 			<TaskRow
@@ -179,30 +187,6 @@
 	.mode-line {
 		margin: 0 0 0.5rem;
 		color: var(--text-muted);
-	}
-
-	.controls {
-		display: flex;
-		gap: 0.5rem;
-		align-items: center;
-		flex-wrap: wrap;
-		margin-bottom: 0.5rem;
-	}
-
-	.show-completed {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		min-height: 48px;
-		color: var(--text-muted);
-		cursor: pointer;
-	}
-
-	.show-completed input {
-		width: 1.2rem;
-		height: 1.2rem;
-		margin: 0;
-		accent-color: var(--accent);
 	}
 
 	.list {
