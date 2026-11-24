@@ -1,8 +1,22 @@
 <script lang="ts">
 	let { text, returnText, onUndo }: { text: string; returnText?: string; onUndo: () => void } = $props();
+	let el: HTMLElement | undefined = $state();
+
+	// Expose the real height so the content reserves space below its last row.
+	$effect(() => {
+		if (!el) return;
+		const root = document.documentElement.style;
+		const observer = new ResizeObserver(() => root.setProperty('--notice-height', `${el!.offsetHeight}px`));
+		observer.observe(el);
+		root.setProperty('--notice-height', `${el.offsetHeight}px`);
+		return () => {
+			observer.disconnect();
+			root.removeProperty('--notice-height');
+		};
+	});
 </script>
 
-<div class="notice" role="status">
+<div class="notice" role="status" bind:this={el}>
 	<div class="texts">
 		<span>{text}</span>
 		{#if returnText}
