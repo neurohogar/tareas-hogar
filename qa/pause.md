@@ -30,6 +30,8 @@ Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday
 
 **Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
 
+**Navigation.** There is no navigation bar (`qa/navigation.md`): to go to **Historial**, open the **Menú** (**⋮**) of **Pendientes** and tap the item **Historial**; to go back to **Pendientes**, tap **Volver** in the header of the **Historial**. Opening `/history` directly still shows the Historial.
+
 ## Observable contract
 
 - **Pause button of the panel**: in the **Editar tarea** panel of a recurring task, a button with accessible name **Pausar** or, if the task is paused, **Reanudar**; with **Reanudar**, the panel shows the text "Pausada". Tapping it closes the panel and the change is saved: when the task is opened again, or on reload, it is kept. The **Nueva tarea** panel and the panel of a one-off task have neither button.

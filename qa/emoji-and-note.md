@@ -22,6 +22,8 @@ notice). For "offline", `browserContext.setOffline(true)` is used as in
 worker active. Recents are saved per browser: each flow starts from a
 new context (no recents) unless it says otherwise.
 
+**Navigation.** There is no navigation bar (`qa/navigation.md`): to go to **Historial**, open the **Menú** (**⋮**) of **Pendientes** and tap the item **Historial**; to go back to **Pendientes**, tap **Volver** in the header of the **Historial**. Opening `/history` directly still shows the Historial.
+
 ## Observable contract
 
 - **Panel**: in addition to what is in `qa/edit-delete.md`, it has the

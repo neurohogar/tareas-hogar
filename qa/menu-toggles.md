@@ -2,7 +2,7 @@
 
 Verifies, through the interface only:
 
-- that the **⋮** menu («Menú») of **Pendientes** has four items, in this order: **Modo mínimo**, **Completadas**, **Pausadas**, **Reprogramar vencidas**, with no other item;
+- that the **⋮** menu («Menú») of **Pendientes** has five items, in this order: **Historial**, **Modo mínimo**, **Completadas**, **Pausadas**, **Reprogramar vencidas**, with no other item;
 - that **Completadas** (**Mostrar completadas**) and **Pausadas** (**Mostrar pausadas**) are on/off items like **Modo mínimo**: a check mark when on, tapping one acts at that moment, without confirmation, and closes the menu;
 - that the three on/off items are always enabled, also with the minimal mode on and with nothing to show, and that the menu always looks the same;
 - that nothing outside the menu shows the value of **Completadas** or **Pausadas** (there are no checks above the list);
@@ -28,10 +28,12 @@ As in `qa/minimal-mode.md`:
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17, Saturday 18, Sunday 19.
 
+**Navigation.** There is no navigation bar (`qa/navigation.md`): to go to **Historial**, open the **Menú** (**⋮**) of **Pendientes** and tap the item **Historial**; to go back to **Pendientes**, tap **Volver** in the header of the **Historial**. Opening `/history` directly still shows the Historial.
+
 ## Observable contract
 
 - **Menu button**: in the header of **Pendientes**, a button with accessible name «Menú» (`aria-haspopup`). Tapping it opens the menu; tapping outside it closes it with no change.
-- **Menu items**: elements with role `menuitemcheckbox` for **Modo mínimo**, **Completadas** and **Pausadas** (in this order), and an item **Reprogramar vencidas** below them (`qa/block-reschedule.md`).
+- **Menu items**: an item **Historial** first (role `menuitem`: no check mark, always enabled; tapping it closes the menu and opens the **Historial**, `qa/history-undo.md`), then elements with role `menuitemcheckbox` for **Modo mínimo**, **Completadas** and **Pausadas** (in this order), and an item **Reprogramar vencidas** below them (`qa/block-reschedule.md`).
   - On: a check mark and `aria-checked="true"`. Off: no mark and `aria-checked="false"`.
   - The three on/off items are never disabled (no `disabled`, no `aria-disabled="true"`).
 - **Tapping an on/off item**: it turns its value on or off at once, closes the menu, and shows no confirmation, notice, dialog, toast or text.
@@ -43,7 +45,7 @@ Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday
 
 Precondition: empty list, clock at `2026-07-15T08:00:00` (Wednesday), mode off.
 
-1. In **Pendientes** there are no check boxes above the list. Tap **Menú**: a menu opens with four items, in this order: **Modo mínimo**, **Completadas**, **Pausadas** and **Reprogramar vencidas**. The first three have no check mark (`aria-checked="false"`) and are enabled. Nothing else is in the menu. Tap outside it: it closes and nothing changed.
+1. In **Pendientes** there are no check boxes above the list. Tap **Menú**: a menu opens with five items, in this order: **Historial**, **Modo mínimo**, **Completadas**, **Pausadas** and **Reprogramar vencidas**. **Historial** has no check mark and the next three have no check mark (`aria-checked="false"`) and are enabled. Nothing else is in the menu. Tap outside it: it closes and nothing changed.
 2. Create `Cambiar foco` (**No se repite**, no due date), `Regar` (**Intervalo** every `2` **días**) and `Sacar la basura` (**Días de la semana** `sábado`). At `08:05`, tap the **Regar** checkbox: its row disappears.
 3. Open the menu and tap **Completadas**: the menu closes at once, with no confirmation or message. The list is **Cambiar foco**, **Sacar la basura**, **Regar** (the completed recurring task, struck through, at the end). Nothing above the list or in the header shows that **Completadas** is on.
 4. Open the menu: **Completadas** has the check mark (`aria-checked="true"`); **Modo mínimo** and **Pausadas** do not. Tap **Completadas**: the menu closes and **Regar** has no row again.
@@ -93,4 +95,4 @@ Precondition: empty list, clock stopped at `2026-07-15T08:00:00`. **Completadas*
 Precondition: empty list, clock at `2026-07-15T08:00:00`, phone viewport (`390x844`).
 
 1. Create `Tarea uno`, `Tarea dos` and `Tarea tres` (**No se repite**, no due date), each with the first step `Primero` and one more step `Segundo`. Each row has a **Hecho** button.
-2. Tap **Menú**: the menu opens with its four items. For each item, the element seen at a point of the item (at its left, not at its center, which falls to the right of the row buttons) belongs to the menu: no row, and no button of a row (**Hecho**), is painted over the menu and the list is not seen through it.
+2. Tap **Menú**: the menu opens with its five items. For each item, the element seen at a point of the item (at its left, not at its center, which falls to the right of the row buttons) belongs to the menu: no row, and no button of a row (**Hecho**), is painted over the menu and the list is not seen through it.

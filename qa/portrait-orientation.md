@@ -34,6 +34,8 @@ puede tardar algunas aperturas").
   call, and register the `orientationchange` listeners and the
   `screen.orientation` `change` listeners, without changing what they do.
 
+**Navigation.** There is no navigation bar (`qa/navigation.md`): to go to **Historial**, open the **Menú** (**⋮**) of **Pendientes** and tap the item **Historial**; to go back to **Pendientes**, tap **Volver** in the header of the **Historial**. Opening `/history` directly still shows the Historial.
+
 ## Observable contract
 
 - **Manifest**: the document links with `<link rel="manifest">` to a manifest

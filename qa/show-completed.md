@@ -29,6 +29,8 @@ As in `qa/history-undo.md`, except for the **Completadas** item of the **⋮** m
 
 Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday 17, Saturday 18.
 
+**Navigation.** There is no navigation bar (`qa/navigation.md`): to go to **Historial**, open the **Menú** (**⋮**) of **Pendientes** and tap the item **Historial**; to go back to **Pendientes**, tap **Volver** in the header of the **Historial**. Opening `/history` directly still shows the Historial.
+
 ## Observable contract
 
 - **Completadas item**: an element with role `menuitemcheckbox` and accessible name "Completadas" in the menu of the button «Menú». It is different from the row checkboxes (each row's has a name that includes the task title). Nothing outside the menu shows its value.

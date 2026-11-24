@@ -32,6 +32,8 @@ Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday
 
 **Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
 
+**Navigation.** There is no navigation bar (`qa/navigation.md`): to go to **Historial**, open the **Menú** (**⋮**) of **Pendientes** and tap the item **Historial**; to go back to **Pendientes**, tap **Volver** in the header of the **Historial**. Opening `/history` directly still shows the Historial.
+
 ## Observable contract
 
 - **Horario field of the panel**: a control with role `checkbox` and accessible name "Solo en un horario". When on, it shows two time fields (`input type="time"` or equivalent with an accessible role) with labels **Desde** and **Hasta**; when off, they are not shown.

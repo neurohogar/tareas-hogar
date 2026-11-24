@@ -55,13 +55,42 @@ No `.feature` depends on the bar (`features/history.feature` queries the core; `
 
 ## Artifacts
 
+- Gherkin: no new or edited `.feature` file (S1, S2, S3, S4, S5, S6, S7 are verified in `qa/navigation.md`; the feature only changes the way into a screen and the layout, and no rule of the core or of an existing feature changes). No scenario can be written without inventing rules: what is verified is the menu item, the **Volver** button, the browser history entries and the position at the bottom edge.
+- QA: `qa/navigation.md` (rewritten: S1, S2, S3, S4, S5, S6, S7; Flow 1 the menu item, **Volver**, **Back** and **Forward**; Flow 2 the address opened directly; Flow 3 minimal mode, the notice and the covered **Volver**; Flow 4 the bottom edge and the scroll; Flows 5 to 7 the removed routes and annotations), `qa/menu-toggles.md`, `qa/minimal-mode.md`, `qa/block-reschedule.md` (the menu has five items, **Historial** first, S2), `qa/history-undo.md` (S1, S2, S4, S6: the navigation contract and Flow 1 without the bar), `qa/retry-and-copy-notice.md` and `qa/bundled-font.md` (they named the bar), and a **Navigation.** paragraph, already written by the gherkin-writer, in `qa/edit-delete.md`, `qa/emoji-and-note.md`, `qa/first-step.md`, `qa/guilt-free-status.md`, `qa/last-time.md`, `qa/minimal-version.md`, `qa/one-off.md`, `qa/one-step-at-a-time.md`, `qa/panel-mobile.md`, `qa/pause.md`, `qa/pending-order.md`, `qa/portrait-orientation.md`, `qa/postpone.md`, `qa/pwa-offline.md`, `qa/recurring-calendar.md`, `qa/recurring-relative.md`, `qa/schedule.md`, `qa/show-completed.md`, `qa/unsaved-changes.md` (they go to the Historial by the menu and come back with **Volver**).
+- No `.feature` is added, so `docs/pipeline/pendientes.txt` does not change.
+- Existing e2e that depend on the bar (they belong to qa, which runs last; ui and the earlier roles do not touch `e2e/`):
+  - helper `goA` of `e2e/support.ts` (the only place that navigates with the bar; it must open **Menú**, tap the item **Historial** to go to the Historial and tap **Volver** to go back to Pendientes, then wait for the heading and `page.clock.runFor(100)` as today) and the 21 specs that call it: `e2e/block-reschedule.spec.ts`, `e2e/bundled-font.spec.ts`, `e2e/emoji-and-note.spec.ts`, `e2e/first-step.spec.ts`, `e2e/history-undo.spec.ts`, `e2e/last-time.spec.ts`, `e2e/menu-toggles.spec.ts`, `e2e/minimal-mode.spec.ts`, `e2e/minimal-version.spec.ts`, `e2e/navigation-on-top.spec.ts`, `e2e/navigation.spec.ts`, `e2e/one-step-at-a-time.spec.ts`, `e2e/panel-mobile.spec.ts`, `e2e/pause.spec.ts`, `e2e/portrait-orientation.spec.ts`, `e2e/postpone.spec.ts`, `e2e/pwa-offline.spec.ts`, `e2e/retry-and-copy-notice.spec.ts`, `e2e/schedule.spec.ts`, `e2e/show-completed.spec.ts`, `e2e/unsaved-changes.spec.ts`;
+  - specs that use `getByRole('navigation')` directly: `e2e/bundled-font.spec.ts` (`bar`), `e2e/history-undo.spec.ts`, `e2e/navigation-on-top.spec.ts`, `e2e/navigation.spec.ts`, `e2e/one-step-at-a-time.spec.ts` (waits for the **Pendientes** link), `e2e/portrait-orientation.spec.ts`, `e2e/recurring-relative.spec.ts` (clicks the links), `e2e/retry-and-copy-notice.spec.ts` (two places);
+  - `e2e/navigation-on-top.spec.ts` (rows and entries do not cover the bar) becomes the check that the last row or entry is not covered by the **+** button, the notice or the strip at the bottom edge (qa Flow 4); `e2e/navigation.spec.ts` follows `qa/navigation.md`; `e2e/menu-toggles.spec.ts`, `e2e/minimal-mode.spec.ts` and `e2e/block-reschedule.spec.ts` count five menu items and must not index them from the top.
+
 ## core
+
+- **Allowed edits**: nothing. The feature has no domain rule: it changes the way into a screen, a button and the layout.
+- **Rules**: none.
+- **Reuses**: nothing.
+- **Notes**: the `By core.` commit is empty (`git commit --allow-empty`).
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate core`
 
 ## acceptance
 
+- **Allowed edits**: nothing. No `.feature` depends on the bar (`features/history.feature` queries the core; `features/panel-back.feature` only names the screen in a comment) and no step or oracle of `acceptance/` mentions it.
+- **Features to connect**: none.
+- **New steps**: none.
+- **Notes**: the `By acceptance.` commit is empty (`git commit --allow-empty`); the acceptance gate must still pass.
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate acceptance`
+
 ## ui
 
+- **Allowed edits**: `src/lib/ui/Pending.svelte` (the item «Historial», first in the menu, role `menuitem`, always enabled, closes the menu and opens the Historial adding a history entry; the **+** button drops to the bottom edge: its `bottom` uses `--navigation-height`), `src/lib/ui/History.svelte` (the header with the **Volver** arrow, accessible name «Volver», to the left of the title, scrolling with the content; it behaves like **Back**, and replaces the entry when the Historial was opened directly; covered by the panel and the dialog; the last entry not covered by the notice or the strip; the z-index comment «Above the navigation bar»), `src/lib/ui/Session.svelte` (it stops rendering `Navigation`; if the item needs a shared action it is added to the object passed to `shareSession`), `src/lib/ui/session.ts` (the `Session` interface: a new action such as opening the Historial is a caller of the shared interface), `src/lib/ui/Navigation.svelte` (to delete), `src/lib/ui/UndoNotice.svelte` (its `bottom` uses `--navigation-height`: it sits at the bottom edge, and `--notice-base` of the panel keeps working), `src/lib/ui/TaskPanel.svelte` (only the z-index comment «Above the navigation bar» and `--notice-base`), `src/lib/ui/NoConnectionStrip.svelte` (only if the strip must not cover the last entry), `src/lib/ui/styles.css` (`--navigation-height` goes away; the bottom padding of the content is measured from the bottom edge, so that the **+** button does not cover the last row), `src/routes/history/+page.svelte`, `src/routes/+layout.svelte`, `src/routes/+page.svelte`, `src/routes/etiquetas/+page.svelte`, `src/routes/anotaciones/+page.svelte` (only if the return from a direct entry or the replacement of the removed routes needs it; today they redirect to `/` replacing the entry)
+- **Callers** (`git grep` of `Navigation` and `--navigation-height`): `Navigation` is used by `src/lib/ui/Session.svelte` only; `--navigation-height` by `src/lib/ui/Navigation.svelte`, `src/lib/ui/Pending.svelte`, `src/lib/ui/UndoNotice.svelte` and `src/lib/ui/styles.css`; the comment «Above the navigation bar» in `src/lib/ui/History.svelte` and `src/lib/ui/TaskPanel.svelte`. `useSession` is the caller of the `Session` interface in `Pending.svelte` and `History.svelte`.
+- **Visible behavior**: `qa/navigation.md` (main), `qa/menu-toggles.md`, `qa/minimal-mode.md`, `qa/block-reschedule.md` (five items) and `qa/history-undo.md`
+- **Gate**: `~/Work/bdd-pipeline/bdd-pipeline gate ui`
+
 ## cleaner · architect · hardener · qa
+
+They work on everything the feature changed (`git diff <feature base>`, recorded in `tmp/base-de-feature`).
+
+Note for qa: edit `e2e/support.ts` (`goA` in one place, see `## Artifacts`) and the 21 specs and 8 direct uses of the `navigation` role listed there so that they follow the edited `qa/*.md`; rewrite `e2e/navigation.spec.ts` and `e2e/navigation-on-top.spec.ts` after `qa/navigation.md`. The menu of `Pendientes` now has **Historial** as its first item: specs that count or index the items must be updated. Opening `/history` by address keeps working (`e2e/bundled-font.spec.ts`, `e2e/portrait-orientation.spec.ts`, `e2e/pwa-offline.spec.ts`, `e2e/history-undo.spec.ts`).
 
 ## Log
 

@@ -30,6 +30,8 @@ Reference week: Monday 2026-11-09, Tuesday 10, Wednesday 11, Thursday 12, Friday
 
 **Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
 
+**Navigation.** There is no navigation bar (`qa/navigation.md`): to go to **Historial**, open the **Menú** (**⋮**) of **Pendientes** and tap the item **Historial**; to go back to **Pendientes**, tap **Volver** in the header of the **Historial**. Opening `/history` directly still shows the Historial.
+
 ## Observable contract
 
 - **Panel field**: in the **Tarea** section (**Nueva tarea** and **Editar tarea**), a one-line text field (role `textbox`, label **Versión mínima**, without `placeholder`), after **Agregar paso** and before the **Nota**. It starts empty when creating and with the saved value when editing.

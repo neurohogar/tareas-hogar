@@ -31,6 +31,8 @@ Out of scope: the phone keyboard and the native calendars and lists of a field (
 - **Delay data**: the request to Firestore (or to Auth) is held until it is released.
 - Create a task: tap **+**, type the title (and choose the emoji with the picker if the step says so), save.
 
+**Navigation.** There is no navigation bar (`qa/navigation.md`): to go to **Historial**, open the **Menú** (**⋮**) of **Pendientes** and tap the item **Historial**; to go back to **Pendientes**, tap **Volver** in the header of the **Historial**. Opening `/history` directly still shows the Historial.
+
 ## Observable contract
 
 - **Font that draws a text**: the one the browser reports for the node (CDP `CSS.getPlatformFontsForNode`, family name). Atkinson is "Atkinson Hyperlegible Next"; the emoji set, "Noto Color Emoji"; "the system font" and "the device emoji" are any other.
@@ -42,8 +44,8 @@ Out of scope: the phone keyboard and the native calendars and lists of a field (
 ## Flow 1: the whole app with the font
 
 1. Create the task «Regar» with emoji 🌱 and note «Año 2026 ✈».
-2. On **Pendientes**, the «Regar» row and the **Pendientes** tab are drawn with Atkinson; the 🌱 with Noto.
-3. Go to **Historial**: the titles, the buttons, the fields and the tab bar are drawn with Atkinson.
+2. On **Pendientes**, the «Regar» row and the **Menú** button are drawn with Atkinson; the 🌱 with Noto.
+3. Go to **Historial**: the titles, the buttons, the **Volver** button, the fields and the tab bar are drawn with Atkinson.
 4. Open the «Regar» panel: title, note, buttons (**Guardar**, **Pausar** or **Posponer** as applicable), the tabs and the fields are drawn with Atkinson; the ✈ in the note is drawn with Noto.
 5. Open the emoji picker: its Recientes and all the emoji it shows are drawn with Noto; the picker's titles and buttons, with Atkinson.
 6. Tap the «Regar» checkbox: the undo notice («Completaste «🌱 Regar»») is drawn with Atkinson and the 🌱 with Noto.

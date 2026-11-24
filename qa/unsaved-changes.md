@@ -25,6 +25,8 @@ That of `qa/panel-mobile.md` (Firebase Emulator Suite, session `qa@example.com`,
 
 **Switches.** **Mostrar completadas** and **Mostrar pausadas** are the items **Completadas** and **Pausadas** of the **⋮** menu (`qa/menu-toggles.md`), not checks above the list: to turn one on or off, open the **Menú** and tap the item (the menu closes). A completed one-off task never has a row in **Pendientes**, with **Completadas** on or off: it is reached from the **Historial**.
 
+**Navigation.** There is no navigation bar (`qa/navigation.md`): to go to **Historial**, open the **Menú** (**⋮**) of **Pendientes** and tap the item **Historial**; to go back to **Pendientes**, tap **Volver** in the header of the **Historial**. Opening `/history` directly still shows the Historial.
+
 ## Observable contract
 
 - **Notice**: a dialog (`alertdialog`) with accessible name **Tenés cambios sin guardar**, over the panel. It has three buttons, in this order. In the close notice: **Seguir editando**, **Descartar**, **Guardar**. In an action notice: **Seguir editando**, **Descartar y <acción>**, **Guardar y <acción>**, with `<acción>` in lowercase: pausar, reanudar, posponer 1 hora, posponer 3 horas, posponer hasta mañana or quitar posponer.

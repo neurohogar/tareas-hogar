@@ -2,7 +2,7 @@
 
 Verifies, through the interface only:
 
-- the navigation between **Pendientes** and **Historial**;
+- the navigation between **Pendientes** and **Historial** (the **Historial** item of the **⋮** menu and the **Volver** button);
 - the notice with **Deshacer** on completing: it lasts 5 seconds (with the simulated clock), a new one replaces the previous one and it stays visible when changing screen;
 - the Historial: order, groups by day with "Hoy", "Ayer" or the date, time, current title and empty text;
 - deleting a completion from the Historial, with confirmation, and the recalculated status in Pendientes;
@@ -36,9 +36,9 @@ Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday
 ## Observable contract
 
 - **Pendientes row and panel**: the contracts of `qa/recurring-relative.md`, `qa/recurring-calendar.md`, `qa/one-off.md`, `qa/edit-delete.md` and `qa/show-completed.md` (completed or not completed).
-- **Navigation**: a bar (role `navigation`) always visible, on both screens.
-  - It has two links, **Pendientes** (route `/`) and **Historial** (route `/history`).
-  - The link of the current screen has `aria-current="page"` and the other does not.
+- **Navigation**: there is no navigation bar (no `navigation` region, no link **Pendientes** or **Historial**).
+  - The **Historial** is opened with the first item of the **Menú** (**⋮**) of **Pendientes**, named **Historial** (role `menuitem`); the menu closes and the address is `/history`.
+  - The **Historial** header has a button **Volver** (an arrow) to the left of the heading **Historial**; tapping it shows **Pendientes** at `/`.
   - Opening `/history` directly (or reloading there) shows the Historial.
 - **Notice**: a region with role `status`.
   - It appears when tapping the checkbox of a non-completed task (on completing it). Its text includes the task title between angle quotes: `Completaste «Regar»`.
@@ -60,10 +60,10 @@ Reference week: Monday 2026-07-13, Tuesday 14, Wednesday 15, Thursday 16, Friday
 
 Precondition: empty list, clock at `2026-07-15T08:00:00`.
 
-1. On **Pendientes**, the navigation bar shows **Pendientes** with `aria-current="page"` and **Historial** without it.
-2. Tap **Historial**: the URL ends in `/history`, the **Historial** heading and the text "Todavía no completaste nada" are seen. **Historial** has `aria-current="page"`.
+1. On **Pendientes** there is no navigation bar. Open the **Menú**: its first item is **Historial**.
+2. Tap **Historial**: the menu closes, the URL ends in `/history`, the **Historial** heading, the button **Volver** and the text "Todavía no completaste nada" are seen. There is no navigation bar.
 3. Reload: it stays on the empty Historial.
-4. Tap **Pendientes**: it goes back to the list (empty, with **+**).
+4. Tap **Volver**: it goes back to the list (empty, with **+**), at `/`.
 5. Open `/history` directly: the Historial is seen.
 
 ## Flow 2: the notice lasts 5 seconds and Deshacer gives the task back
@@ -99,9 +99,9 @@ Precondition: empty list, clock stopped at `2026-07-15T08:00:00`.
 
 1. Create `Regar` with **Intervalo** every `2` **días**.
 2. At `08:00:00`, complete **Regar**: the notice appears.
-3. At `08:00:01`, tap **Historial**: the notice is still visible and the Historial shows **Hoy**, **Regar** `08:00`.
+3. At `08:00:01`, open the **Historial** from the menu: the notice is still visible and the Historial shows **Hoy**, **Regar** `08:00`.
 4. At `08:00:02`, tap **Deshacer**: the notice closes, the entry disappears and "Todavía no completaste nada" is seen.
-5. Tap **Pendientes**: **Regar** is `pendiente` (never completed).
+5. Tap **Volver**: **Regar** is `pendiente` (never completed).
 
 ## Flow 5: order, groups by day and time
 
@@ -115,7 +115,7 @@ Precondition: empty list, clock at `2026-07-13T08:00:00` (Monday).
 3. At `2026-07-14T21:30:00`, complete **Sacar la basura**.
 4. At `2026-07-15T08:05:00`, complete **Regar**.
 5. At `2026-07-15T10:00:00`, complete **Pagar la luz**.
-6. At `2026-07-15T12:00:00`, tap **Historial**. The following are seen, in this order:
+6. At `2026-07-15T12:00:00`, open the **Historial** from the menu. The following are seen, in this order:
    - **Hoy**: **Pagar la luz** `10:00`, **Regar** `08:05`;
    - **Ayer**: **Sacar la basura** `21:30`;
    - **lunes 13 de julio**: **Regar** `09:00`.
