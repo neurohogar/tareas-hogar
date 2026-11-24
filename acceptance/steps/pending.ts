@@ -4,7 +4,7 @@ import { ANY_MOMENT } from './recurring-relative';
 import { P, dateHour, list } from './values';
 import { minimalOn, tasksOf, type RowQueried, type StepDefinition, type World } from './world';
 
-/** The rows of the list, with the Mostrar completadas and Mostrar pausadas checks (§6.1). */
+/** The rows of the list, with the Mostrar completadas and Mostrar pausadas items of the menu (§6.1); a completed one-off task is never a row. */
 function rowsIn(world: World, now: Date): RowQueried[] {
 	const rows = pendingRows(tasksOf(world), world.completions, now, world.showCompleted, world.showPaused, minimalOn(world));
 	return rows.map(({ task, completed, status, dateText, firstStepText: textOfFirstStep, stepButtons, minimal }) => ({

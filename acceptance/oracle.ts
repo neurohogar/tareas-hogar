@@ -938,8 +938,8 @@ function postponeSituation(s: Situation, option: string, value: string): boolean
 }
 
 /**
- * §6.1 and §5.5: the checkbox that would delete (completed one-off, or completed recurring task whose last completion is from today
- * or later) is enabled; the one that would complete, only within the schedule's window.
+ * §6.1 and §5.5: the checkbox that would delete (a completed recurring task whose last completion is from today or later; a completed
+ * one-off task has no row, §5.1) is enabled; the one that would complete, only within the schedule's window.
  */
 function checkboxOf(s: Situation, classification: string): string | undefined {
 	if (s.now === undefined) return undefined;
@@ -947,7 +947,7 @@ function checkboxOf(s: Situation, classification: string): string | undefined {
 	// §5.9: a postponed task is not completed.
 	const inWaitOwn = classification.startsWith('en espera') && !inWaitByPostponement(s);
 	const completed = classification === 'no aparece en Pendientes' || isCompleted(Boolean(s.oneOff), inWaitOwn, withCompletions);
-	const wouldDelete = completed && (Boolean(s.oneOff) || Math.max(...s.completions) >= dayStart(s.now).getTime());
+	const wouldDelete = completed && (Math.max(...s.completions) >= dayStart(s.now).getTime());
 	return wouldDelete || !s.schedule || insideOfTimeWindow(s.schedule, s.now) ? 'enabled' : 'disabled';
 }
 
