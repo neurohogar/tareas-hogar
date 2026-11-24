@@ -134,7 +134,7 @@ for (const [name, size] of [
 		await goA(page, 'Pendientes');
 
 		// Step 3: in the panel of a task and in the creation panel.
-		await create(page, { title: 'Regar', kind: 'No se repite' });
+		await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 		await openTask(page, 'Regar');
 		await nothingOfAnnotations(page);
 		await page.getByRole('button', { name: 'Cerrar' }).click();

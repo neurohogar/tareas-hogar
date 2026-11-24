@@ -16,7 +16,7 @@ import {
 	cleanEmulators,
 	arrivesOnServer,
 	selectorEmoji,
-	sessionWithClock
+	sessionWithClock, toggleShowPaused
 } from './support';
 
 // qa/unsaved-changes.md: close and action notices, Back button, reload and two devices.
@@ -40,7 +40,6 @@ const tabNamed = (page: Page, name: string) => page.getByRole('tab', { name: new
 const panelClosed = (page: Page) => expect(page.getByRole('dialog')).toHaveCount(0);
 const panelOpen = (page: Page) => expect(page.getByRole('dialog').first()).toBeVisible();
 const withoutNotice = (page: Page) => expect(notice(page)).toHaveCount(0);
-const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
 const every = (page: Page) => page.getByRole('spinbutton', { name: 'Cada' });
 const width = (page: Page) => page.setViewportSize({ width: 1024, height: 768 });
 
@@ -337,8 +336,7 @@ test('Flow 4: acciones con cambios', async ({ page }) => {
 		await goATab(page, 'Acciones');
 		await tabOpenWhetherHas(page, 'Acciones');
 	};
-	await showPaused(page).click();
-	await expect(showPaused(page)).toBeChecked();
+	await toggleShowPaused(page, true);
 
 	// 1
 	await openTask(page, 'Regar');
@@ -347,9 +345,9 @@ test('Flow 4: acciones con cambios', async ({ page }) => {
 	await panelClosed(page);
 	await withoutNotice(page);
 	await expect(row(page, 'Regar').getByText('Pausada')).toBeVisible();
-	await showPaused(page).click();
+	await toggleShowPaused(page, false);
 	await expect(row(page, 'Regar')).toHaveCount(0);
-	await showPaused(page).click();
+	await toggleShowPaused(page, true);
 	await openTask(page, 'Regar');
 	await inActions();
 	await tap(page, 'Reanudar');
@@ -736,8 +734,8 @@ test('Flow 6: botón Atrás', async ({ page }) => {
 	}
 
 	// 11
-	await openTask(page, 'Pagar');
-	await title(page).fill('Pagar luz');
+	await openTask(page, 'Regar');
+	await title(page).fill('Regar luz');
 	const dialogs: string[] = [];
 	page.on('dialog', (d) => {
 		dialogs.push(d.type());
@@ -956,8 +954,7 @@ test('Flow 8: dos dispositivos con el panel abierto', async ({ browser }) => {
 		await goATab(a, 'Acciones');
 		await tap(a, 'Reanudar');
 		await viewNoticeOfAction(a, 'reanudar');
-		await showPaused(b).click();
-		await expect(showPaused(b)).toBeChecked();
+		await toggleShowPaused(b, true);
 		await openTask(b, 'Regar');
 		await goATab(b, 'Acciones');
 		await tap(b, 'Reanudar');

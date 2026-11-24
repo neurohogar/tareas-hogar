@@ -192,20 +192,61 @@ export async function waitStatus(
   }
 }
 
-export const showCompleted = (page: Page) =>
-  page.getByRole("checkbox", { name: "Completadas" });
+export const menuButton = (page: Page) => page.getByRole("button", { name: "Menú" });
+export const menu = (page: Page) => page.getByRole("menu");
 
-/** Taps the Mostrar completadas checkbox and verifies it ended up `encendido`. */
-export async function toggleShowCompleted(
-  page: Page,
-  on: boolean,
-): Promise<void> {
-  await showCompleted(page).click();
-  if (on) await expect(showCompleted(page)).toBeChecked();
-  else await expect(showCompleted(page)).not.toBeChecked();
+/** Opens the ⋮ menu (if it is closed) and waits for it to be seen. */
+export async function openMenu(page: Page): Promise<void> {
+  if ((await menuButton(page).getAttribute("aria-expanded")) !== "true")
+    await menuButton(page).click();
+  await expect(menu(page)).toBeVisible();
 }
 
-/** Turns on Mostrar completadas (off by default) and verifies it is checked. */
+/** Closes the menu without changing anything (Escape). */
+export async function closeMenu(page: Page): Promise<void> {
+  await page.keyboard.press("Escape");
+  await expect(menu(page)).toHaveCount(0);
+}
+
+/** On/off item of the menu (the menu must be open). */
+export const menuSwitch = (page: Page, name: string) =>
+  page.getByRole("menuitemcheckbox", { name });
+
+/** Item "Completadas" (Mostrar completadas) of the menu: the menu must be open. */
+export const showCompleted = (page: Page) => menuSwitch(page, "Completadas");
+
+/** Item "Pausadas" (Mostrar pausadas) of the menu: the menu must be open. */
+export const showPaused = (page: Page) => menuSwitch(page, "Pausadas");
+
+/** Opens the menu, checks the item's value (aria-checked) and closes the menu. */
+export async function expectSwitch(page: Page, name: string, on: boolean): Promise<void> {
+  await openMenu(page);
+  await expect(menuSwitch(page, name)).toHaveAttribute("aria-checked", String(on));
+  await closeMenu(page);
+}
+
+/** Opens the menu, taps the item (it closes the menu) and verifies it ended up `on`. */
+export async function toggleSwitch(page: Page, name: string, on: boolean): Promise<void> {
+  await openMenu(page);
+  await menuSwitch(page, name).click();
+  await expect(menu(page)).toHaveCount(0);
+  await expectSwitch(page, name, on);
+}
+
+export const expectShowCompleted = (page: Page, on: boolean) =>
+  expectSwitch(page, "Completadas", on);
+export const expectShowPaused = (page: Page, on: boolean) =>
+  expectSwitch(page, "Pausadas", on);
+
+/** Taps the Completadas item of the menu and verifies it ended up `on`. */
+export const toggleShowCompleted = (page: Page, on: boolean) =>
+  toggleSwitch(page, "Completadas", on);
+
+/** Taps the Pausadas item of the menu and verifies it ended up `on`. */
+export const toggleShowPaused = (page: Page, on: boolean) =>
+  toggleSwitch(page, "Pausadas", on);
+
+/** Turns on Mostrar completadas (off by default) and verifies it is on. */
 export const turnOnCompleted = (page: Page) =>
   toggleShowCompleted(page, true);
 

@@ -14,7 +14,7 @@ import {
 	cleanEmulators,
 	arrivesOnServer,
 	sessionWithClock,
-	type Definition
+	type Definition, toggleShowPaused
 } from './support';
 
 // qa/minimal-version.md: the panel field, the line and the «Hice la mínima» button of the row, completing with the minimal version,
@@ -45,7 +45,6 @@ const notice = (page: Page) => page.getByRole('status').filter({ hasText: 'Compl
 const undo = (page: Page) => notice(page).getByRole('button', { name: 'Deshacer' });
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 const minimal = (page: Page) => page.getByRole('textbox', { name: 'Versión mínima', exact: true });
-const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
 const panel = (page: Page) => page.getByRole('dialog');
 const unsavedChangesNotice = (page: Page) => page.getByRole('alertdialog', { name: 'Tenés cambios sin guardar' });
 const titles = (page: Page) =>
@@ -363,8 +362,7 @@ test('Flow 2: la línea y el botón en la fila', async ({ page }) => {
 
 	// 6
 	await turnOnCompleted(page);
-	await showPaused(page).click();
-	await expect(showPaused(page)).toBeChecked();
+	await toggleShowPaused(page, true);
 	await create(page, { title: 'Cambiar foco', kind: DOES_NOT_REPEAT, date: '', minimalVersion: 'Solo la lámpara' });
 	await create(page, { title: 'Pagar', kind: DOES_NOT_REPEAT, date: '2026-11-10', minimalVersion: 'Solo la luz' });
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '8', unit: 'horas', minimalVersion: 'Solo los helechos' });
@@ -402,9 +400,10 @@ test('Flow 2: la línea y el botón en la fila', async ({ page }) => {
 
 	// 10
 	await check(page, 'Cambiar foco').click();
-	await expect(check(page, 'Cambiar foco')).toBeChecked();
-	await withoutMinimal(page, 'Cambiar foco');
-	await check(page, 'Cambiar foco').click();
+	await expect(notice(page)).toContainText('Completaste «Cambiar foco»');
+	await expect(f(page, 'Cambiar foco')).toHaveCount(0);
+	await undo(page).click();
+	await expect(notice(page)).toHaveCount(0);
 	await expect(check(page, 'Cambiar foco')).not.toBeChecked();
 	await says(page, 'Cambiar foco', 'Solo la lámpara');
 
@@ -498,12 +497,12 @@ test('Flow 3: hacer la mínima, aviso, regreso y deshacer', async ({ page, brows
 	await expect(notice(page)).toContainText('Completaste «Limpiar» · mínima');
 	await expect(notice(page)).not.toContainText('Vuelve');
 	await passesNotice(page);
-	await expect(check(page, 'Limpiar')).toBeChecked();
-	expect(await f(page, 'Limpiar').getByRole('button', { name: 'Limpiar', exact: true }).evaluate((e) => getComputedStyle(e).textDecorationLine)).toContain('line-through');
-	expect((await titles(page)).at(-1)).toBe('Limpiar');
+	await expect(f(page, 'Limpiar')).toHaveCount(0);
 
 	// 5
-	await check(page, 'Limpiar').click();
+	await goA(page, 'Historial');
+	await historyDelete(page, 'Limpiar');
+	await goA(page, 'Pendientes');
 	await expect(check(page, 'Limpiar')).not.toBeChecked();
 	await expect(notice(page)).toHaveCount(0);
 	await says(page, 'Limpiar', 'Solo el inodoro');
@@ -533,14 +532,16 @@ test('Flow 3: hacer la mínima, aviso, regreso y deshacer', async ({ page, brows
 	await setTime(page, '2026-11-13T09:30:00');
 	await page.clock.runFor(1000);
 	await waitStatus(page, R, 'en espera');
-	await expect(check(page, 'Limpiar')).toBeChecked();
-	await check(page, 'Limpiar').click();
+	await expect(f(page, 'Limpiar')).toHaveCount(0);
+	await goA(page, 'Historial');
+	await historyDelete(page, 'Limpiar');
+	await goA(page, 'Pendientes');
 	await expect(check(page, 'Limpiar')).not.toBeChecked();
 	await setTime(page, '2026-11-13T09:30:00');
 	await check(page, 'Limpiar').click();
-	await expect(check(page, 'Limpiar')).toBeChecked();
-	await expect.poll(() => titles(page)).toEqual(['Limpiar', R]);
-	for (const t of ['Limpiar', R]) {
+	await expect(f(page, 'Limpiar')).toHaveCount(0);
+	await expect.poll(() => titles(page)).toEqual([R]);
+	for (const t of [R]) {
 		const title = f(page, t).getByRole('button', { name: t, exact: true });
 		expect(await title.evaluate((e) => getComputedStyle(e).textDecorationLine)).toContain('line-through');
 	}
@@ -582,7 +583,7 @@ test('Flow 3: hacer la mínima, aviso, regreso y deshacer', async ({ page, brows
 
 test('Flow 4: con pasos, en cualquier paso', async ({ page }) => {
 	await session(page, FRIDAY, true);
-	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '', firstStep: P1, steps: [P2, P3], minimalVersion: 'Solo lo blanco' });
+	await create(page, { title: 'Lavar', kind: 'Intervalo', every: '2', unit: 'días', firstStep: P1, steps: [P2, P3], minimalVersion: 'Solo lo blanco' });
 	const step = (t: string) => expect(stepLine(page, 'Lavar')).toHaveText(t);
 	const withoutLines = async () => {
 		await expect(f(page, 'Lavar')).toBeVisible();
@@ -756,9 +757,11 @@ test('Flow 5: Historial y Borrar', async ({ page }) => {
 	await expect(entry('Plantas')).toHaveText(/^Plantas\s*\d\d:\d\d\s*Mínima\s*Borrar$/);
 
 	// 5
-	await goA(page, 'Pendientes');
-	await writeMinimal(page, 'Pagar', 'Solo el brote');
 	await goA(page, 'Historial');
+	await entry('Pagar').getByRole('button', { name: 'Pagar', exact: true }).click();
+	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();
+	await minimal(page).fill('Solo el brote');
+	await save(page);
 	await expect(entry('Pagar')).toHaveText(/^Pagar\s*10:\d\d\s*Borrar$/);
 });
 
@@ -879,8 +882,7 @@ async function devices(browser: Browser) {
 	const d = await twoDevices(browser, FRIDAY);
 	for (const p of [d.a, d.b]) {
 		await turnOnCompleted(p);
-		await showPaused(p).click();
-		await expect(showPaused(p)).toBeChecked();
+		await toggleShowPaused(p, true);
 	}
 	return d;
 }

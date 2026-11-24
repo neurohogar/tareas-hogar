@@ -12,7 +12,7 @@ import {
   cleanEmulators,
   arrivesOnServer,
   sessionWithClock,
-  workerUids,
+  workerUids, goA
 } from "./support";
 
 const PROJECT = "demo-tareas-hogar";
@@ -393,6 +393,7 @@ test("Flow 4: data that is no longer used", async ({ page }) => {
   await turnOnCompleted(page);
   await complete(page, "Regar plantas");
   await waitA(async () => (await completionsCount()) === 1);
+  await goA(page, "Historial");
   await remove(page, "Regar plantas");
   await waitA(async () => !(await taskInServer("Regar plantas")));
   await waitA(async () => (await completionsCount()) === 0);

@@ -98,7 +98,7 @@ Precondition: empty list, clock at `2026-11-13T10:00:00`. **Mostrar completadas*
 1. Create `Regar` with **Intervalo** every `2` **días** and **Primer paso** `Llenar la regadera`. Tap its checkbox. Open the row: **Primer paso** is still `Llenar la regadera`. Close.
 2. Pause **Regar** and open its row: **Primer paso** is `Llenar la regadera`. **Reanudar**: open the row, it is still the same.
 3. Tap the checkbox of **Regar** and tap **Deshacer** in the notice: open the row, **Primer paso** is still the same.
-4. In the **Regar** panel, change **Se repite** to **Días de la semana** with **martes** and save: reopen, **Primer paso** is still `Llenar la regadera`. Change **Se repite** to **No se repite** and save: reopen, still the same. Go back to **Intervalo** every `2` **días** and save: still the same.
+4. In the **Regar** panel, change **Se repite** to **Días de la semana** with **martes** and save: reopen, **Primer paso** is still `Llenar la regadera`. Change **Se repite** to **No se repite** and save (it is now a completed one-off task: it has no row, so reopen it from the **Historial**): still the same. Go back to **Intervalo** every `2` **días** and save: still the same.
 5. Create `Cambiar foco` with **No se repite** and **Primer paso** `Sacar la escalera`, postpone it with the option **3 horas** and open the row: **Primer paso** is still `Sacar la escalera`.
 6. Reload the page: both values are kept. There is no control on any screen to mark the first step as done.
 7. Create a task without a first step (`Barrer`) and open its row: **Primer paso** is empty and the row does not contain `Primer paso`, as before the field existed.

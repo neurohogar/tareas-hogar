@@ -61,7 +61,7 @@ Precondition: session started, clock at `2026-07-15T08:00:00`, phone and then wi
 
 1. Without a session, open the app: the entry screen has no **Anotar** button. While the loading screen is shown (Auth response of the emulator delayed) there is no **Anotar** button either.
 2. With a session, in Pendientes and in Historial: no **Anotar** button and no control from the list of **Nothing of annotations**.
-3. Create `Regar`, open its panel (edit) and the creation panel (**+**): no **Anotar** button in either.
+3. Create `Regar` (**Intervalo** every `2` **días**: a completed one-off task would have no row to open), open its panel (edit) and the creation panel (**+**): no **Anotar** button in either.
 4. Complete `Regar`: the undo notice shows `Completaste «Regar»` with **Deshacer**, and no annotation text appears with it.
 5. Open the emoji picker from the panel and tap **Back**: the picker closes without choosing and the panel stays open. Tap **Back** again: the panel closes (no box of any kind opens in between).
 6. At no moment, after using the app for a simulated week (advancing the clock, completing and opening screens), does a notice, reminder, counter or mark about annotations appear.

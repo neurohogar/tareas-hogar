@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { advance, complete, createTask, discard, waitStatus, row, cleanEmulators, showCompleted, sessionWithClock } from './support';
+import { advance, complete, createTask, discard, waitStatus, row, cleanEmulators, expectShowCompleted, sessionWithClock } from './support';
 
 const MONDAY = '2026-07-13T08:00:00';
 const LIGHT = 'Pagar la luz';
@@ -183,7 +183,7 @@ test('Flow 7: las periódicas se siguen creando con el nuevo selector', async ({
 	await createTask(page, 'Ventilar', '4', 'horas');
 	await waitStatus(page, 'Ventilar', 'pendiente');
 	await complete(page, 'Ventilar');
-	await expect(showCompleted(page)).not.toBeChecked();
+	await expectShowCompleted(page, false);
 	await expect(row(page, 'Ventilar')).toHaveCount(0);
 
 	const junk = 'Sacar la basura';

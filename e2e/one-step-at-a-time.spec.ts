@@ -3,6 +3,7 @@ import {
 	openTab,
 	advance,
 	settle,
+	row,
 	close,
 	completePanel,
 	withClock,
@@ -19,7 +20,7 @@ import {
 	goBack,
 	sessionWithClock,
 	viewHistory,
-	type Definition
+	type Definition, toggleShowPaused
 } from './support';
 
 // qa/one-step-at-a-time.md: the panel's step fields, the row's line and buttons, Hecho on the last step,
@@ -50,7 +51,6 @@ const step = (page: Page, n: number) => page.getByRole('textbox', { name: `Paso 
 const fieldsStep = (page: Page) => page.getByRole('textbox', { name: /^Paso \d+$/ });
 const remove = (page: Page, n: number) =>
 	step(page, n).locator('..').getByRole('button', { name: 'Quitar', exact: true });
-const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
 const panel = (page: Page) => page.getByRole('dialog');
 const unsavedChangesNotice = (page: Page) => page.getByRole('alertdialog', { name: 'Tenés cambios sin guardar' });
 const titles = (page: Page) =>
@@ -84,8 +84,13 @@ async function withoutLine(page: Page, t: string) {
 	await expect(previous(page, t)).toHaveCount(0);
 }
 
+/** A completed one-off task has no row: while this is on, tasks are opened from their entry in the Historial. */
+let fromHistory = false;
+
 async function openRow(page: Page, t: string) {
-	await f(page, t).getByRole('button', { name: t, exact: true }).click();
+	if (fromHistory)
+		await page.getByRole('listitem').getByRole('button', { name: t, exact: true }).first().click();
+	else await f(page, t).getByRole('button', { name: t, exact: true }).click();
 	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();
 	await openTab(page, 'Tarea');
 }
@@ -528,10 +533,13 @@ test('Flow 4: «Hecho» en el último paso completa la tarea', async ({ page }) 
 	await done(page, 'Cambiar foco').click();
 	await withClock(page, async () => {
 		await expect(notice(page)).toContainText('Completaste «Cambiar foco»');
-		await expect(f(page, 'Cambiar foco').getByRole('checkbox')).toBeChecked();
-		await withoutLine(page, 'Cambiar foco');
+		await expect(row(page, 'Cambiar foco')).toHaveCount(0);
 	});
-	await f(page, 'Cambiar foco').getByRole('checkbox').click();
+	await page.clock.runFor(6000);
+	await withClock(page, () => expect(notice(page)).toHaveCount(0));
+	await goA(page, 'Historial');
+	await withClock(page, () => historyDelete(page, 'Cambiar foco'));
+	await goA(page, 'Pendientes');
 	await settle(page);
 	await withClock(page, async () => {
 		await waitStatus(page, 'Cambiar foco', 'pendiente');
@@ -637,7 +645,7 @@ test('Flow 5: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => {
 	await f(page, 'Cambiar foco').getByRole('checkbox').click();
 	await withClock(page, async () => {
 		await expect(notice(page)).toContainText('Completaste «Cambiar foco»');
-		await withoutLine(page, 'Cambiar foco');
+		await expect(row(page, 'Cambiar foco')).toHaveCount(0);
 	});
 	await notice(page).getByRole('button', { name: 'Deshacer' }).click();
 	await settle(page);
@@ -682,8 +690,7 @@ test('Flow 5: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => {
 	// 5
 	await pause(page, 'Regar');
 	await withClock(page, () => expect(f(page, 'Regar')).toHaveCount(0));
-	await showPaused(page).click();
-	await expect(showPaused(page)).toBeChecked();
+	await toggleShowPaused(page, true);
 	await withClock(page, async () => {
 		await expect(f(page, 'Regar').getByText('Pausada')).toBeVisible();
 		await withoutLine(page, 'Regar');
@@ -776,8 +783,7 @@ test('Flow 5: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => {
 
 test('Flow 6: editar los pasos y el avance', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
-	await showPaused(page).click();
-	await expect(showPaused(page)).toBeChecked();
+	await toggleShowPaused(page, true);
 	await create(page, { title: 'Lavar', kind: DOES_NOT_REPEAT, date: '', firstStep: P1, steps: [P2, P3] });
 	await done(page, 'Lavar').click();
 	await says(page, 'Lavar', P2);
@@ -863,6 +869,7 @@ test('Flow 6: editar los pasos y el avance', async ({ page }) => {
 });
 
 test('Flow 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', async ({ page }) => {
+	fromHistory = false;
 	await sessionWithClock(page, FRIDAY);
 	const texts = async (t: string[]) => Promise.all(t.map((x) => f(page, x).innerText()));
 
@@ -939,9 +946,9 @@ test('Flow 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', asy
 	for (const p of [P1, P2, P3]) await expect(page.locator('body')).not.toContainText(p);
 	await goA(page, 'Pendientes');
 
-	// 5 onward: Mostrar completadas on; Lavar with Primer paso and Paso 2 (Paso 3 is removed).
-	await turnOnCompleted(page);
-	await expect(f(page, '🧺 Lavar')).toBeVisible();
+	// 5 onward: Lavar is a completed one-off task (no row): it is opened from the Historial.
+	await goA(page, 'Historial');
+	fromHistory = true;
 	const L = '🧺 Lavar';
 	await openRow(page, L);
 	await remove(page, 3).click();
@@ -960,13 +967,12 @@ test('Flow 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', asy
 		await expect(unsavedChangesNotice(page)).toHaveCount(0);
 	};
 	await page.getByRole('navigation').getByRole('link', { name: 'Pendientes' }).waitFor();
-	const rowText = await f(page, L).innerText();
 
 	// 5
 	await openRow(page, L);
 	await step(page, 2).fill('Juntar las llaves');
 	await asksNoticeAndDiscards();
-	expect(await f(page, L).innerText()).toBe(rowText);
+	await expect(row(page, L)).toHaveCount(1);
 	await panelHas(page, L, P1, [P2]);
 
 	// 6
@@ -1008,6 +1014,8 @@ test('Flow 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', asy
 	await panelHas(page, L, P1, [P2]);
 
 	// 10
+	fromHistory = false;
+	await goA(page, 'Pendientes');
 	await button(page, '+').click();
 	await expect(page.getByRole('heading', { name: 'Nueva tarea' })).toBeVisible();
 	await button(page, 'Agregar paso').click();
@@ -1017,8 +1025,10 @@ test('Flow 7: lo que no cambia, lo que no lo muestra y Cambios sin guardar', asy
 	await addStep(page, 2, P2);
 	await asksNoticeAndDiscards();
 
-	// 11: Lavar is unchecked to get its buttons; Hecho and Paso anterior open nothing.
-	await f(page, L).getByRole('checkbox').click();
+	// 11: the entry of Lavar is deleted to get its buttons; Hecho and Paso anterior open nothing.
+	await goA(page, 'Historial');
+	await historyDelete(page, L);
+	await goA(page, 'Pendientes');
 	await expect(done(page, L)).toBeVisible();
 	// Decided by the row's line, which waits for it to render; a bare count() could run before Paso anterior shows.
 	await expect(line(page, L)).toHaveCount(1);
@@ -1037,8 +1047,7 @@ async function devices(browser: Browser) {
 	const d = await twoDevices(browser, FRIDAY);
 	for (const p of [d.a, d.b]) {
 		await turnOnCompleted(p);
-		await showPaused(p).click();
-		await expect(showPaused(p)).toBeChecked();
+		await toggleShowPaused(p, true);
 	}
 	return d;
 }

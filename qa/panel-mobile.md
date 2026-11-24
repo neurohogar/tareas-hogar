@@ -68,7 +68,7 @@ Precondition: empty list, clock at `2026-07-15T10:00:00`, phone viewport. Create
 5. Tap **1 hora**: the panel closes and **Regar** is seen postponed. Open it again: it opens on **Tarea** and at the top it says "Pospuesta hasta 11:00"; in **Acciones** there is **Quitar posponer** (instead of the three options) and **Pausar**.
 6. Tap **Quitar posponer**: the panel closes and the task is no longer postponed.
 7. Open it, go to **Acciones** and tap **Pausar**: the panel closes. Open it (with **Mostrar pausadas** on): above **Tarea** it says "Pausada"; **Acciones** has **Reanudar** and does not have the postpone options.
-8. Create `Pagar` with **No se repite**: its panel, in **Acciones**, has neither **Pausar** nor **Reanudar** but does have the postpone options and **Borrar tarea**. A completed task or one outside its schedule keeps at least **Borrar tarea** in **Acciones**.
+8. Create `Pagar` with **No se repite**: its panel, in **Acciones**, has neither **Pausar** nor **Reanudar** but does have the postpone options and **Borrar tarea**. A completed task or one outside its schedule keeps at least **Borrar tarea** in **Acciones** (a completed one-off task has no row: open it from the **Historial**).
 
 ## Flow 3: full screen and fixed bars
 

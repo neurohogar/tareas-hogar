@@ -14,12 +14,13 @@ import {
 	turnOnCompleted,
 	waitStatus,
 	goA,
+	row,
 	cleanEmulators,
 	arrivesOnServer,
 	goBack,
 	sessionWithClock,
 	viewHistory,
-	type Definition
+	type Definition, toggleShowPaused
 } from './support';
 
 // qa/first-step.md: the panel's Primer paso field, its line in the row, when it is shown and unsaved changes.
@@ -40,7 +41,6 @@ const line = (page: Page, title: string) => f(page, title).getByText(/^Primer pa
 const notice = (page: Page) => page.getByRole('status').filter({ hasText: 'Completaste' });
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 const field = (page: Page) => page.getByRole('textbox', { name: 'Primer paso', exact: true });
-const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
 const panel = (page: Page) => page.getByRole('dialog');
 const unsavedChangesNotice = (page: Page) => page.getByRole('alertdialog', { name: 'Tenés cambios sin guardar' });
 
@@ -79,6 +79,17 @@ async function holdsInPanel(page: Page, title: string, value: string) {
 	await openRow(page, title);
 	await expect(field(page)).toHaveValue(value);
 	await close(page);
+}
+
+/** Like `holdsInPanel`, for a completed one-off task (it has no row): from its entry in the Historial. */
+async function holdsFromHistory(page: Page, title: string, value: string) {
+	await goA(page, 'Historial');
+	await page.getByRole('listitem').getByRole('button', { name: title, exact: true }).first().click();
+	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();
+	await openTab(page, 'Tarea');
+	await expect(field(page)).toHaveValue(value);
+	await close(page);
+	await goA(page, 'Pendientes');
 }
 
 async function paste(page: Page, text: string) {
@@ -368,8 +379,7 @@ test('Flow 4: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => {
 	await withClock(page, async () => {
 		await expect(notice(page)).toContainText('Completaste «Cambiar foco»');
 		await expect(notice(page)).not.toContainText('Primer paso');
-		await expect(f(page, 'Cambiar foco').getByRole('checkbox')).toBeChecked();
-		await withoutLine(page, 'Cambiar foco');
+		await expect(row(page, 'Cambiar foco')).toHaveCount(0);
 	});
 	await notice(page).getByRole('button', { name: 'Deshacer' }).click();
 	await settle(page);
@@ -399,8 +409,7 @@ test('Flow 4: dónde se ve y cuándo desaparece y vuelve', async ({ page }) => {
 	// 7
 	await pause(page, 'Regar');
 	await withClock(page, () => expect(f(page, 'Regar')).toHaveCount(0));
-	await showPaused(page).click();
-	await expect(showPaused(page)).toBeChecked();
+	await toggleShowPaused(page, true);
 	await withClock(page, async () => {
 		await expect(f(page, 'Regar').getByText('Pausada')).toBeVisible();
 		await withoutLine(page, 'Regar');
@@ -477,8 +486,7 @@ test('Flow 5: atrasada con el checkbox deshabilitado', async ({ page }) => {
 test('Flow 6: el primer paso no cambia con las acciones de la tarea', async ({ page }) => {
 	await sessionWithClock(page, FRIDAY);
 	await turnOnCompleted(page);
-	await showPaused(page).click();
-	await expect(showPaused(page)).toBeChecked();
+	await toggleShowPaused(page, true);
 	const WATER = 'Llenar la regadera';
 
 	// 1
@@ -511,10 +519,14 @@ test('Flow 6: el primer paso no cambia con las acciones de la tarea', async ({ p
 	await openRow(page, 'Regar');
 	await completePanel(page, { kind: DOES_NOT_REPEAT });
 	await save(page);
-	await holdsInPanel(page, 'Regar', WATER);
-	await openRow(page, 'Regar');
+	await expect(f(page, 'Regar')).toHaveCount(0);
+	await holdsFromHistory(page, 'Regar', WATER);
+	await goA(page, 'Historial');
+	await page.getByRole('listitem').getByRole('button', { name: 'Regar', exact: true }).first().click();
+	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();
 	await completePanel(page, { kind: 'Intervalo', every: '2', unit: 'días' });
 	await save(page);
+	await goA(page, 'Pendientes');
 	await holdsInPanel(page, 'Regar', WATER);
 
 	// 5
@@ -656,8 +668,7 @@ async function devices(browser: Browser) {
 	await turnOnCompleted(d.a);
 	await turnOnCompleted(d.b);
 	for (const p of [d.a, d.b]) {
-		await showPaused(p).click();
-		await expect(showPaused(p)).toBeChecked();
+		await toggleShowPaused(p, true);
 	}
 	return d;
 }

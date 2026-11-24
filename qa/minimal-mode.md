@@ -49,7 +49,7 @@ Precondition: empty list, clock at `2026-07-14T09:00:00` (Tuesday), mode off.
 3. Tap the **Pagar la luz** row, check **Esencial**, tap the X: the notice of unsaved changes appears. Choose to keep editing, uncheck **Esencial** and tap the X: the panel closes with no notice. Open it again, check **Esencial** and save: the row has the star. The list order is the same as before checking.
 4. Create `Basura` with **Días de la semana** `martes` and `jueves`, essential. Turn on **Mostrar completadas**, tap the checkbox of **Basura**: it looks completed (waiting and completed) and keeps the star. Tap the checkbox of **Pagar la luz**: it has no row (a completed one-off task is never in the list). Pause **Regar** (row, **Pausar**) and turn on **Mostrar pausadas**: its paused row keeps the star. Every row with a star is an essential task; no row without one is.
 5. Open the **Regar** panel, uncheck **Esencial** and save: its row loses the star.
-6. Reload: the stars are in the same rows. With the mode off, press **Enter** in the **Título** field of the panel of `Pagar la luz` after unchecking **Esencial**: the panel saves and closes, and the star is gone.
+6. Reload: the stars are in the same rows (`Pagar la luz`, completed one-off, has no row). With the mode off, press **Enter** in the **Título** field of the panel of `Basura` after unchecking **Esencial**: the panel saves and closes, and the star is gone.
 
 ## Flow 2: the menu, the mode and the line
 

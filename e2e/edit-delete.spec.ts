@@ -242,14 +242,14 @@ test('Flow 7: cambiar de tipo y de modo', async ({ page }) => {
 	await edit(page, 'Limpiar horno', { kind: 'No se repite', date: '2026-07-13' });
 	await waitStatus(page, 'Limpiar horno', 'atrasada');
 	await edit(page, 'Barrer', { kind: 'No se repite' });
-	await waitStatus(page, 'Barrer', 'pendiente', undefined, true);
+	await expect(row(page, 'Barrer')).toHaveCount(0);
 
 	await page.reload();
-	await listIs(page, ['Limpiar horno', 'Renovar DNI', 'Regar', 'Barrer']);
+	await listIs(page, ['Limpiar horno', 'Renovar DNI', 'Regar']);
 	await waitStatus(page, 'Limpiar horno', 'atrasada');
 	await waitStatus(page, 'Renovar DNI', 'pendiente');
 	await waitStatus(page, 'Regar', 'en espera');
-	await waitStatus(page, 'Barrer', 'pendiente', undefined, true);
+	await expect(row(page, 'Barrer')).toHaveCount(0);
 
 	await toggleShowCompleted(page, false);
 	await listIs(page, ['Limpiar horno', 'Renovar DNI']);

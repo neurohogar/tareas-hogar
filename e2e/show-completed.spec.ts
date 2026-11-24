@@ -16,7 +16,9 @@ import {
 	cleanEmulators,
 	listIs,
 	arrivesOnServer,
-	showCompleted,
+	expectShowCompleted,
+	openTask,
+	close,
 	opacityEffective,
 	sessionWithClock,
 	rowTitle,
@@ -58,7 +60,7 @@ test('Flow 1: apagado por defecto, encender y apagar', async ({ page }) => {
 	await create(page, { title: 'Regar plantas', kind: 'Intervalo', every: '2', unit: 'días' });
 	await advance(page, '2026-07-15T08:02:00');
 	await create(page, { title: 'Sacar la basura', kind: 'Días de la semana', days: ['sábado'] });
-	await expect(showCompleted(page)).not.toBeChecked();
+	await expectShowCompleted(page, false);
 	await listIs(page, ['Regar plantas', 'Cambiar foco', 'Sacar la basura']);
 	await waitStatus(page, 'Regar plantas', 'pendiente');
 	await waitStatus(page, 'Cambiar foco', 'pendiente');
@@ -73,9 +75,9 @@ test('Flow 1: apagado por defecto, encender y apagar', async ({ page }) => {
 	await listIs(page, ['Sacar la basura']);
 
 	await toggleShowCompleted(page, true);
-	await listIs(page, ['Sacar la basura', 'Regar plantas', 'Cambiar foco']);
+	await listIs(page, ['Sacar la basura', 'Regar plantas']);
+	await expect(row(page, 'Cambiar foco')).toHaveCount(0);
 	await waitStatus(page, 'Regar plantas', 'en espera', 0);
-	await waitStatus(page, 'Cambiar foco', 'pendiente', undefined, true);
 	await waitStatus(page, 'Sacar la basura', 'en espera', undefined, false);
 
 	await toggleShowCompleted(page, false);
@@ -84,11 +86,7 @@ test('Flow 1: apagado por defecto, encender y apagar', async ({ page }) => {
 	await toggleShowCompleted(page, true);
 	await advance(page, '2026-07-17T08:06:00');
 	await waitStatus(page, 'Regar plantas', 'pendiente');
-	await listIs(page, ['Regar plantas', 'Sacar la basura', 'Cambiar foco']);
-	await waitStatus(page, 'Cambiar foco', 'pendiente', undefined, true);
-	const opWater = await opacityEffective(rowTitle(row(page, 'Regar plantas')));
-	const opFocus = await opacityEffective(rowTitle(row(page, 'Cambiar foco')));
-	expect(opFocus).toBeLessThan(opWater);
+	await listIs(page, ['Regar plantas', 'Sacar la basura']);
 });
 
 test('Flow 2: orden de las completadas', async ({ page }) => {
@@ -98,7 +96,7 @@ test('Flow 2: orden de las completadas', async ({ page }) => {
 	await advance(page, '2026-07-15T08:01:00');
 	await create(page, { title: 'Ventilar', kind: 'Intervalo', every: '4', unit: 'horas' });
 	await advance(page, '2026-07-15T08:02:00');
-	await create(page, { title: 'Barrer', kind: 'No se repite' });
+	await create(page, { title: 'Barrer', kind: 'Intervalo', every: '2', unit: 'días' });
 	await advance(page, '2026-07-15T08:03:00');
 	await create(page, { title: 'Lavar ropa', kind: 'No se repite' });
 
@@ -108,44 +106,26 @@ test('Flow 2: orden de las completadas', async ({ page }) => {
 	await complete(page, 'Ventilar');
 	await advance(page, '2026-07-15T10:00:00');
 	await complete(page, 'Pagar la luz');
-	await listIs(page, ['Lavar ropa', 'Pagar la luz', 'Ventilar', 'Barrer']);
+	await listIs(page, ['Lavar ropa', 'Ventilar', 'Barrer']);
+	await expect(row(page, 'Pagar la luz')).toHaveCount(0);
 	await waitStatus(page, 'Lavar ropa', 'pendiente');
-	await waitStatus(page, 'Pagar la luz', 'pendiente', undefined, true);
 	await waitStatus(page, 'Ventilar', 'en espera');
-	await waitStatus(page, 'Barrer', 'pendiente', undefined, true);
+	await waitStatus(page, 'Barrer', 'en espera');
 
 	await advance(page, '2026-07-15T13:30:00');
 	await waitStatus(page, 'Ventilar', 'pendiente');
-	await listIs(page, ['Ventilar', 'Lavar ropa', 'Pagar la luz', 'Barrer']);
+	await listIs(page, ['Ventilar', 'Lavar ropa', 'Barrer']);
 
 	await page.reload();
-	await expect(showCompleted(page)).toBeChecked();
-	await listIs(page, ['Ventilar', 'Lavar ropa', 'Pagar la luz', 'Barrer']);
+	await expectShowCompleted(page, true);
+	await listIs(page, ['Ventilar', 'Lavar ropa', 'Barrer']);
 });
 
-test('Flow 3: tocar el checkbox de una completada', async ({ page }) => {
+test('Flow 3: tocar el checkbox de una periódica completada', async ({ page }) => {
 	await sessionStopped(page, TODAY);
-	await createAndView(page, { title: 'Pagar la luz', kind: 'No se repite', date: '2026-07-15' });
 	await createAndView(page, { title: 'Regar', kind: 'Intervalo', every: '4', unit: 'horas' });
-	await listIs(page, ['Pagar la luz', 'Regar']);
+	await listIs(page, ['Regar']);
 	await stop(page, TODAY);
-
-	await complete(page, 'Pagar la luz');
-	await viewNotice(page, 'Pagar la luz');
-	await withClock(page, () => listIs(page, ['Regar', 'Pagar la luz']));
-	await waitStatus(page, 'Pagar la luz', 'pendiente', undefined, true);
-
-	await go(page, '2026-07-15T08:00:10');
-	await expect(notice(page)).toHaveCount(0);
-	await complete(page, 'Pagar la luz');
-	await withClock(page, async () => {
-		await listIs(page, ['Pagar la luz', 'Regar']);
-		await waitStatus(page, 'Pagar la luz', 'pendiente');
-	});
-	await expect(notice(page)).toHaveCount(0);
-	await goA(page, 'Historial');
-	await withClock(page, () => viewHistory(page, []));
-	await goA(page, 'Pendientes');
 
 	await go(page, '2026-07-15T08:01:00');
 	await complete(page, 'Regar');
@@ -184,40 +164,81 @@ test('Flow 3: tocar el checkbox de una completada', async ({ page }) => {
 	await withClock(page, () => viewHistory(page, [['Hoy', [['Regar', '08:02']]]]));
 	await goA(page, 'Pendientes');
 
-	await go(page, '2026-07-16T00:00:00');
-	await withClock(page, async () => {
-		await waitStatus(page, 'Pagar la luz', 'atrasada');
-		await waitStatus(page, 'Regar', 'atrasada');
-	});
-	await complete(page, 'Pagar la luz');
-	await withClock(page, () => waitStatus(page, 'Pagar la luz', 'pendiente', undefined, true));
-	await complete(page, 'Pagar la luz');
-	await withClock(page, () => waitStatus(page, 'Pagar la luz', 'atrasada'));
-
-	await page.reload();
-	await withClock(page, async () => {
-		await listIs(page, ['Regar', 'Pagar la luz']);
-		await waitStatus(page, 'Regar', 'atrasada');
-		await waitStatus(page, 'Pagar la luz', 'atrasada');
-	});
 });
 
-test('Flow 4: el valor se guarda en el dispositivo', async ({ browser }) => {
+test('Flow 4: una puntual completada no tiene fila', async ({ page }) => {
+	await sessionStopped(page, TODAY);
+	await createAndView(page, { title: 'Pagar la luz', kind: 'No se repite', date: '2026-07-15' });
+	await createAndView(page, { title: 'Cambiar foco', kind: 'No se repite' });
+	await listIs(page, ['Pagar la luz', 'Cambiar foco']);
+	await stop(page, TODAY);
+
+	await complete(page, 'Pagar la luz');
+	await viewNotice(page, 'Pagar la luz');
+	await withClock(page, async () => {
+		await listIs(page, ['Cambiar foco']);
+		await expect(row(page, 'Pagar la luz')).toHaveCount(0);
+	});
+
+	await go(page, '2026-07-15T08:00:02');
+	await notice(page).getByRole('button', { name: 'Deshacer' }).click();
+	await expect(notice(page)).toHaveCount(0);
+	await settle(page);
+	await withClock(page, async () => {
+		await listIs(page, ['Pagar la luz', 'Cambiar foco']);
+		await waitStatus(page, 'Pagar la luz', 'pendiente');
+	});
+
+	await go(page, '2026-07-15T08:00:10');
+	await complete(page, 'Pagar la luz');
+	await go(page, '2026-07-15T08:00:20');
+	await expect(notice(page)).toHaveCount(0);
+	await withClock(page, async () => {
+		await listIs(page, ['Cambiar foco']);
+		await expect(row(page, 'Pagar la luz')).toHaveCount(0);
+	});
+	await expectShowCompleted(page, true);
+	await goA(page, 'Historial');
+	await withClock(page, () => viewHistory(page, [['Hoy', [['Pagar la luz', '08:00']]]]));
+
+	await openTask(page, 'Pagar la luz');
+	await close(page);
+	await expect(page.getByRole('heading', { name: 'Historial', level: 1 })).toBeVisible();
+
+	await page.getByRole('listitem').filter({ hasText: 'Pagar la luz' }).getByRole('button', { name: 'Borrar', exact: true }).click();
+	await page.getByRole('alertdialog').getByRole('button', { name: 'Borrar', exact: true }).click();
+	await expect(page.getByRole('alertdialog')).toHaveCount(0);
+	await withClock(page, () => viewHistory(page, []));
+	await goA(page, 'Pendientes');
+	await withClock(page, async () => {
+		await listIs(page, ['Pagar la luz', 'Cambiar foco']);
+		await waitStatus(page, 'Pagar la luz', 'pendiente');
+	});
+
+	await complete(page, 'Pagar la luz');
+	await go(page, '2026-07-15T08:00:30');
+	await toggleShowCompleted(page, false);
+	await withClock(page, () => listIs(page, ['Cambiar foco']));
+	await toggleShowCompleted(page, true);
+	await withClock(page, () => listIs(page, ['Cambiar foco']));
+});
+
+test('Flow 5: el valor se guarda en el dispositivo', async ({ browser }) => {
 	const context = await browser.newContext();
 	const page = await context.newPage();
 	await sessionWithClock(page, TODAY);
 	await create(page, { title: 'Cambiar foco', kind: 'No se repite' });
-	await create(page, { title: 'Pagar la luz', kind: 'No se repite' });
-	await complete(page, 'Cambiar foco');
-	await listIs(page, ['Pagar la luz']);
+	await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
+	await complete(page, 'Regar');
+	await listIs(page, ['Cambiar foco']);
 
 	await toggleShowCompleted(page, true);
-	await listIs(page, ['Pagar la luz', 'Cambiar foco']);
-	await waitStatus(page, 'Cambiar foco', 'pendiente', undefined, true);
+	await listIs(page, ['Cambiar foco', 'Regar']);
+	await waitStatus(page, 'Regar', 'en espera', 0);
 
 	await page.reload();
-	await expect(showCompleted(page)).toBeChecked();
-	await listIs(page, ['Pagar la luz', 'Cambiar foco']);
+	await expectShowCompleted(page, true);
+	await listIs(page, ['Cambiar foco', 'Regar']);
 
 	await page.close();
 	const fresh = await context.newPage();
@@ -225,80 +246,80 @@ test('Flow 4: el valor se guarda en el dispositivo', async ({ browser }) => {
 	await fresh.goto('/');
 	await expect(fresh.getByRole('heading', { name: 'Pendientes' })).toBeVisible();
 	await expect(fresh.getByRole('button', { name: 'Entrar con Google' })).toHaveCount(0);
-	await expect(showCompleted(fresh)).toBeChecked();
-	await listIs(fresh, ['Pagar la luz', 'Cambiar foco']);
+	await expectShowCompleted(fresh, true);
+	await listIs(fresh, ['Cambiar foco', 'Regar']);
 
 	await toggleShowCompleted(fresh, false);
 	await fresh.reload();
-	await expect(showCompleted(fresh)).not.toBeChecked();
-	await listIs(fresh, ['Pagar la luz']);
+	await expectShowCompleted(fresh, false);
+	await listIs(fresh, ['Cambiar foco']);
 	await context.close();
 });
 
-test('Flow 5: el valor no se sincroniza entre dispositivos', async ({ browser }) => {
+test('Flow 6: el valor no se sincroniza entre dispositivos', async ({ browser }) => {
 	const { a, b, close: end } = await twoDevices(browser, TODAY);
 	await create(a, { title: 'Cambiar foco', kind: 'No se repite' });
-	await create(a, { title: 'Pagar la luz', kind: 'No se repite' });
-	await complete(a, 'Cambiar foco');
-	await listIs(b, ['Pagar la luz']);
+	await create(a, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
+	await complete(a, 'Regar');
+	await listIs(b, ['Cambiar foco']);
 
 	await toggleShowCompleted(a, true);
-	await listIs(a, ['Pagar la luz', 'Cambiar foco']);
-	await expect(showCompleted(b)).not.toBeChecked();
-	await listIs(b, ['Pagar la luz']);
+	await listIs(a, ['Cambiar foco', 'Regar']);
+	await expectShowCompleted(b, false);
+	await listIs(b, ['Cambiar foco']);
 	await b.reload();
-	await expect(showCompleted(b)).not.toBeChecked();
-	await listIs(b, ['Pagar la luz']);
+	await expectShowCompleted(b, false);
+	await listIs(b, ['Cambiar foco']);
 
 	await toggleShowCompleted(b, true);
-	await listIs(b, ['Pagar la luz', 'Cambiar foco']);
-	await waitStatus(b, 'Cambiar foco', 'pendiente', undefined, true);
+	await listIs(b, ['Cambiar foco', 'Regar']);
+	await waitStatus(b, 'Regar', 'en espera', 0);
 	await toggleShowCompleted(a, false);
-	await listIs(a, ['Pagar la luz']);
-	await expect(showCompleted(b)).toBeChecked();
-	await listIs(b, ['Pagar la luz', 'Cambiar foco']);
+	await listIs(a, ['Cambiar foco']);
+	await expectShowCompleted(b, true);
+	await listIs(b, ['Cambiar foco', 'Regar']);
 	await end();
 });
 
-test('Flow 6: dos completados de dos dispositivos', async ({ browser }) => {
+test('Flow 7: dos completados de dos dispositivos', async ({ browser }) => {
 	const { a, b, ctxB, close: end } = await twoDevices(browser, TODAY);
 	await turnOnCompleted(a);
-	await create(a, { title: 'Pagar la luz', kind: 'No se repite' });
-	await expect(row(b, 'Pagar la luz')).toBeVisible();
+	await create(a, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
+	await expect(row(b, 'Regar')).toBeVisible();
 
 	await ctxB.setOffline(true);
-	await complete(a, 'Pagar la luz');
-	await waitStatus(a, 'Pagar la luz', 'pendiente', undefined, true);
+	await complete(a, 'Regar');
+	await waitStatus(a, 'Regar', 'en espera');
 	await arrivesOnServer(a);
 	await advance(a, '2026-07-15T08:05:00');
 	await advance(b, '2026-07-15T08:05:00');
-	await complete(b, 'Pagar la luz');
-	await expect(row(b, 'Pagar la luz')).toHaveCount(0);
+	await complete(b, 'Regar');
+	await expect(row(b, 'Regar')).toHaveCount(0);
 	await ctxB.setOffline(false);
 	await arrivesOnServer(b);
 
 	await goA(a, 'Historial');
-	await viewHistory(a, [['Hoy', [['Pagar la luz', '08:05'], ['Pagar la luz', '08:00']]]]);
+	await viewHistory(a, [['Hoy', [['Regar', '08:05'], ['Regar', '08:00']]]]);
 	await goA(a, 'Pendientes');
-	await waitStatus(a, 'Pagar la luz', 'pendiente', undefined, true);
+	await waitStatus(a, 'Regar', 'en espera');
 
-	await complete(a, 'Pagar la luz');
-	await waitStatus(a, 'Pagar la luz', 'pendiente', undefined, true);
+	await complete(a, 'Regar');
+	await waitStatus(a, 'Regar', 'en espera');
 	await goA(a, 'Historial');
-	await viewHistory(a, [['Hoy', [['Pagar la luz', '08:00']]]]);
+	await viewHistory(a, [['Hoy', [['Regar', '08:00']]]]);
 	await goA(b, 'Historial');
-	await viewHistory(b, [['Hoy', [['Pagar la luz', '08:00']]]]);
+	await viewHistory(b, [['Hoy', [['Regar', '08:00']]]]);
 
 	await goA(a, 'Pendientes');
-	await complete(a, 'Pagar la luz');
-	await waitStatus(a, 'Pagar la luz', 'pendiente');
+	await complete(a, 'Regar');
+	await waitStatus(a, 'Regar', 'pendiente');
 	await goA(a, 'Historial');
 	await viewHistory(a, []);
 	await viewHistory(b, []);
 	await end();
 });
 
-test('Flow 7: periódica completada ayer: el checkbox la completa de nuevo', async ({ page }) => {
+test('Flow 8: periódica completada ayer: el checkbox la completa de nuevo', async ({ page }) => {
 	await sessionStopped(page, '2026-07-15T20:00:00');
 	await createAndView(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await stop(page, '2026-07-15T20:00:00');
@@ -335,7 +356,7 @@ test('Flow 7: periódica completada ayer: el checkbox la completa de nuevo', asy
 	await withClock(page, () => viewHistory(page, [['Ayer', [['Regar', '23:59']]]]));
 });
 
-test('Flow 8: completado "del futuro"', async ({ browser }) => {
+test('Flow 9: completado "del futuro"', async ({ browser }) => {
 	const deviceA = await device(browser, '2026-07-15T12:00:00', true);
 	const deviceB = await device(browser, '2026-07-16T09:00:00', false);
 	const [A, B] = [deviceA.page, deviceB.page];

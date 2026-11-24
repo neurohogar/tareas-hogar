@@ -13,7 +13,7 @@ import {
 	row,
 	cleanEmulators,
 	listIs,
-	sessionWithClock
+	sessionWithClock, toggleShowPaused
 } from './support';
 
 test.beforeEach(async () => {
@@ -21,7 +21,6 @@ test.beforeEach(async () => {
 });
 
 const notice = (page: Page) => page.getByRole('status').filter({ hasText: 'Completaste' });
-const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 const textOf = (page: Page, title: string) => row(page, title).getByText(/^(Tocaba|Vuelve) /);
 
@@ -232,15 +231,13 @@ test('Flow 3: filas sin texto de fecha', async ({ page }) => {
 	await withClock(page, async () => {
 		await turnOnCompleted(page);
 		await complete(page, 'Barrer');
-		await waitStatus(page, 'Barrer', 'pendiente', undefined, true);
-		await withoutText(page, 'Barrer');
+		await expect(row(page, 'Barrer')).toHaveCount(0);
 	});
 
 	// 4
 	await withClock(page, async () => {
 		await pause(page, 'Regar');
-		await showPaused(page).click();
-		await expect(showPaused(page)).toBeChecked();
+		await toggleShowPaused(page, true);
 		const f = row(page, 'Regar');
 		await expect(f.getByText('Pausada')).toHaveCount(1);
 		await expect(f.getByText(/Tocaba|Vuelve/)).toHaveCount(0);
@@ -248,8 +245,7 @@ test('Flow 3: filas sin texto de fecha', async ({ page }) => {
 	});
 
 	// 5
-	await showPaused(page).click();
-	await expect(showPaused(page)).not.toBeChecked();
+	await toggleShowPaused(page, false);
 	await expect(row(page, 'Regar')).toHaveCount(0);
 	await says(page, 'Pagar', 'Tocaba el viernes 13 de noviembre · hace 30 días');
 });

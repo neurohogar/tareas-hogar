@@ -17,7 +17,7 @@ import {
 	sessionWithClock,
 	toggleShowCompleted,
 	twoDevices,
-	waitStatus
+	waitStatus, toggleShowPaused
 } from './support';
 import { DATA, otherDeviceWithSession, retain, screenName } from './screen-support';
 
@@ -36,7 +36,6 @@ const modeItem = (page: Page) => page.getByRole('menuitemcheckbox', { name: 'Mod
 const line = (page: Page) => page.getByText('Modo mínimo', { exact: true });
 const essentialCheck = (page: Page) => page.getByRole('checkbox', { name: 'Esencial' });
 const star = (page: Page, title: string) => row(page, title).getByRole('img', { name: 'Esencial' });
-const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
 const buttonNamed = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 const dialog = (page: Page) => page.getByRole('dialog');
 
@@ -60,9 +59,7 @@ async function setMode(page: Page, on: boolean, checkMessage = true) {
 }
 
 async function togglePaused(page: Page, on: boolean) {
-	await showPaused(page).click();
-	if (on) await expect(showPaused(page)).toBeChecked();
-	else await expect(showPaused(page)).not.toBeChecked();
+	await toggleShowPaused(page, on);
 }
 
 /** Opens the task and taps Pausar: the panel closes by itself. */
@@ -180,16 +177,15 @@ test('Flow 1: the Esencial check and the star', async ({ page }) => {
 	await complete(page, 'Basura');
 	await complete(page, 'Pagar la luz');
 	await waitStatus(page, 'Basura', 'en espera');
-	await waitStatus(page, 'Pagar la luz', 'pendiente', undefined, true);
+	await expect(row(page, 'Pagar la luz')).toHaveCount(0);
 	await expect(star(page, 'Basura')).toHaveCount(1);
-	await expect(star(page, 'Pagar la luz')).toHaveCount(1);
 	await pause(page, 'Regar');
 	await togglePaused(page, true);
 	await viewPaused(page, 'Regar');
 	await expect(star(page, 'Regar')).toHaveCount(1);
 	const allRows = page.getByRole('listitem').filter({ has: page.getByRole('checkbox') });
-	await expect(allRows).toHaveCount(3);
-	await expect(page.getByRole('img', { name: 'Esencial' })).toHaveCount(3);
+	await expect(allRows).toHaveCount(2);
+	await expect(page.getByRole('img', { name: 'Esencial' })).toHaveCount(2);
 
 	// Step 5.
 	await edit(page, 'Regar', { essential: false });
@@ -199,13 +195,13 @@ test('Flow 1: the Esencial check and the star', async ({ page }) => {
 	await page.reload();
 	await expect(row(page, 'Basura')).toBeVisible();
 	await expect(star(page, 'Basura')).toHaveCount(1);
-	await expect(star(page, 'Pagar la luz')).toHaveCount(1);
+	await expect(row(page, 'Pagar la luz')).toHaveCount(0);
 	await expect(star(page, 'Regar')).toHaveCount(0);
-	await openTask(page, 'Pagar la luz');
+	await openTask(page, 'Basura');
 	await essentialCheck(page).uncheck();
 	await page.getByLabel('Título').press('Enter');
 	await expect(dialog(page)).toHaveCount(0);
-	await expect(star(page, 'Pagar la luz')).toHaveCount(0);
+	await expect(star(page, 'Basura')).toHaveCount(0);
 });
 
 // ---------------------------------------------------------------------------
@@ -220,13 +216,18 @@ test('Flow 2: the menu, the mode and the line', async ({ page }) => {
 	await expect(menuButton(page)).toHaveAttribute('aria-haspopup', 'menu');
 	await menuButton(page).click();
 	await expect(menu(page)).toBeVisible();
-	await expect(menu(page).getByRole('menuitemcheckbox')).toHaveCount(1);
-	// The second item, Reprogramar vencidas, is below Modo mínimo (qa/block-reschedule.md); nothing else.
+	await expect(menu(page).getByRole('menuitemcheckbox')).toHaveCount(3);
+	await expect(menu(page).getByRole('menuitemcheckbox')).toHaveText([/Modo mínimo/, /Completadas/, /Pausadas/]);
+	for (const m of await menu(page).getByRole('menuitemcheckbox').all()) await expect(m).toHaveAttribute('aria-checked', 'false');
+	// The last item, Reprogramar vencidas, is below Pausadas (qa/block-reschedule.md); nothing else.
 	await expect(menu(page).getByRole('menuitem')).toHaveCount(1);
 	await expect(menu(page).getByRole('menuitem')).toHaveText(/Reprogramar vencidas/);
 	await expect(modeItem(page)).toHaveAttribute('aria-checked', 'false');
 	await expect(menu(page).getByRole('button')).toHaveCount(0);
-	const [top, below] = [await modeItem(page).boundingBox(), await menu(page).getByRole('menuitem').boundingBox()];
+	const [top, below] = [
+		await menu(page).getByRole('menuitemcheckbox', { name: 'Pausadas' }).boundingBox(),
+		await menu(page).getByRole('menuitem').boundingBox()
+	];
 	expect(below!.y).toBeGreaterThan(top!.y);
 	await page.getByRole('heading', { name: 'Pendientes' }).click();
 	await expect(menu(page)).toHaveCount(0);
@@ -253,8 +254,8 @@ test('Flow 2: the menu, the mode and the line', async ({ page }) => {
 	await expect(menu(page)).toHaveCount(0);
 	await expect(line(page)).toHaveCount(0);
 	await noMessage(page);
-	await expect(page.getByRole('checkbox', { name: 'Completadas' })).toBeVisible();
-	await expect(showPaused(page)).toBeVisible();
+	await expect(page.getByRole('checkbox', { name: /completadas|pausadas/i })).toHaveCount(0);
+	await expect(page.getByText(/^(Mostrar )?(completadas|pausadas)$/i)).toHaveCount(0);
 
 	// Step 4.
 	await create(page, { title: 'Foco', kind: 'No se repite', essential: true });
@@ -510,25 +511,37 @@ test('Flow 6: changing the Esencial mark or the kind with the mode on', async ({
 	await save(page);
 	await goA(page, 'Pendientes');
 	await toggleShowCompleted(page, true);
-	await waitStatus(page, 'Cena', 'pendiente', undefined, true);
-	await expect(star(page, 'Cena')).toHaveCount(1);
+	await expect(row(page, 'Cena')).toHaveCount(0);
+	await toggleShowCompleted(page, false);
+	await expect(row(page, 'Cena')).toHaveCount(0);
 
 	// Step 6.
-	await edit(page, 'Regar', { kind: 'No se repite' });
-	await expect(row(page, 'Regar')).toBeVisible();
-	await edit(page, 'Regar', { essential: false });
+	await create(page, { title: 'Lavar', kind: 'Intervalo', every: '2', unit: 'días', essential: true });
+	await expect(row(page, 'Lavar')).toBeVisible();
+	await edit(page, 'Lavar', { kind: 'No se repite' });
+	await expect(row(page, 'Lavar')).toBeVisible();
+	await edit(page, 'Lavar', { essential: false });
+	await expect(row(page, 'Lavar')).toHaveCount(0);
+
+	// Step 7 (qa step 7).
+	await openEntry(page, 'Regar');
+	await completePanel(page, { kind: 'No se repite' });
+	await save(page);
+	await goA(page, 'Pendientes');
 	await expect(row(page, 'Regar')).toHaveCount(0);
 	await openEntry(page, 'Regar');
 	await completePanel(page, { kind: 'Intervalo', every: '2', unit: 'días' });
 	await save(page);
 	await goA(page, 'Pendientes');
+	await waitStatus(page, 'Regar', 'pendiente', undefined, false);
+	await edit(page, 'Regar', { essential: false });
 	await expect(row(page, 'Regar')).toHaveCount(0);
 	await openEntry(page, 'Regar');
 	await expect(textInPanel(page, 'Pausada por el modo mínimo')).toBeVisible();
 	await close(page);
 	await goA(page, 'Pendientes');
 
-	// Step 7.
+	// Step 8.
 	await page.getByRole('button', { name: '+' }).click();
 	await expect(essentialCheck(page)).toBeChecked();
 	await close(page);

@@ -130,8 +130,8 @@ test('Flow 2: el aviso dura 5 segundos y Deshacer devuelve la tarea', async ({ p
 
 	await a(page, '2026-07-15T08:01:00');
 	await complete(page, 'Pagar la luz');
-	await withClock(page, () => waitStatus(page, 'Pagar la luz', 'pendiente', undefined, true));
-	await order(page, ['Pagar la luz', 'Regar']);
+	await withClock(page, () => expect(row(page, 'Pagar la luz')).toHaveCount(0));
+	await order(page, ['Regar']);
 	await viewNotice(page, 'Pagar la luz');
 	await a(page, '2026-07-15T08:01:03');
 	await undo(page);
@@ -189,7 +189,7 @@ test('Flow 3: un aviso nuevo reemplaza al anterior', async ({ page }) => {
 	await expect(notice(page)).toHaveCount(0);
 	await settle(page);
 	await withClock(page, () => waitStatus(page, 'Cambiar foco', 'pendiente'));
-	await waitStatus(page, 'Pagar la luz', 'pendiente', undefined, true);
+	await expect(row(page, 'Pagar la luz')).toHaveCount(0);
 
 	await goA(page, 'Historial');
 	await viewHistory(page, [
@@ -281,7 +281,7 @@ test('Flow 7: borrar desde el Historial recalcula el estado', async ({ page }) =
 	await complete(page, 'Sacar la basura');
 	await complete(page, 'Pagar la luz');
 	await waitStatus(page, 'Sacar la basura', 'en espera');
-	await waitStatus(page, 'Pagar la luz', 'pendiente', undefined, true);
+	await expect(row(page, 'Pagar la luz')).toHaveCount(0);
 	await advance(page, '2026-07-15T04:00:00');
 	await complete(page, 'Regar');
 	await advance(page, '2026-07-15T09:00:00');
@@ -375,7 +375,7 @@ test('Flow 10: editar y borrar la tarea desde el Historial', async ({ page }) =>
 	await create(page, { title: 'Regar', kind: 'Intervalo', every: '2', unit: 'días' });
 	await complete(page, 'Pagar la luz');
 	await complete(page, 'Regar');
-	await waitStatus(page, 'Pagar la luz', 'pendiente', undefined, true);
+	await expect(row(page, 'Pagar la luz')).toHaveCount(0);
 	await waitStatus(page, 'Regar', 'en espera');
 	await advance(page, '2026-07-15T10:00:00');
 	await goA(page, 'Historial');

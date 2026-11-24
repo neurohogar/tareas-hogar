@@ -16,7 +16,7 @@ import {
 	cleanEmulators,
 	listIs,
 	arrivesOnServer,
-	sessionWithClock
+	sessionWithClock, toggleShowPaused, expectShowPaused, expectShowCompleted, completePanel
 } from './support';
 
 test.beforeEach(async () => {
@@ -26,12 +26,9 @@ test.beforeEach(async () => {
 const notice = (page: Page) => page.getByRole('status').filter({ hasText: 'Completaste' });
 const buttonPause = (page: Page) => page.getByRole('button', { name: 'Pausar', exact: true });
 const buttonResume = (page: Page) => page.getByRole('button', { name: 'Reanudar', exact: true });
-const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
 
 async function togglePaused(page: Page, on: boolean) {
-	await showPaused(page).click();
-	if (on) await expect(showPaused(page)).toBeChecked();
-	else await expect(showPaused(page)).not.toBeChecked();
+	await toggleShowPaused(page, on);
 }
 
 /** Opens the task and taps Pausar: the panel closes by itself, without Guardar. */
@@ -128,8 +125,8 @@ test('Flow 1: pausar y reanudar una relativa', async ({ page }) => {
 	await viewPaused(page, 'Regar');
 
 	await page.reload();
-	await expect(showPaused(page)).toBeChecked();
-	await expect(page.getByRole('checkbox', { name: 'Completadas' })).toBeChecked();
+	await expectShowPaused(page, true);
+	await expectShowCompleted(page, true);
 	await viewPaused(page, 'Regar');
 
 	await resume(page, 'Regar');
@@ -257,7 +254,7 @@ test('Flow 5: Mostrar pausadas y orden', async ({ page }) => {
 	await create(page, { title: 'Ñandú', kind: 'Intervalo', every: '1', unit: 'días' });
 	await create(page, { title: 'Nube', kind: 'Intervalo', every: '1', unit: 'días' });
 	await create(page, { title: 'Árbol', kind: 'Días de la semana', days: ['lunes'] });
-	await create(page, { title: 'Pagar la luz', kind: 'No se repite' });
+	await create(page, { title: 'Pagar la luz', kind: 'Intervalo', every: '2', unit: 'días' });
 	await create(page, { title: 'Cambiar foco', kind: 'No se repite' });
 
 	await complete(page, 'Pagar la luz');
@@ -271,26 +268,26 @@ test('Flow 5: Mostrar pausadas y orden', async ({ page }) => {
 
 	await toggleShowCompleted(page, true);
 	await listIs(page, ['Cambiar foco', 'Pagar la luz', 'Árbol', 'Nube', 'Ñandú']);
-	await waitStatus(page, 'Pagar la luz', 'pendiente', undefined, true);
+	await waitStatus(page, 'Pagar la luz', 'en espera');
 	for (const t of ['Árbol', 'Nube', 'Ñandú']) await viewPaused(page, t);
 
 	await toggleShowCompleted(page, false);
 	await listIs(page, ['Cambiar foco', 'Árbol', 'Nube', 'Ñandú']);
 
 	await page.reload();
-	await expect(showPaused(page)).toBeChecked();
+	await expectShowPaused(page, true);
 	await listIs(page, ['Cambiar foco', 'Árbol', 'Nube', 'Ñandú']);
 	const context = page.context();
 	const other = await context.newPage();
 	await other.goto('/');
 	await expect(other.getByRole('heading', { name: 'Pendientes' })).toBeVisible();
-	await expect(showPaused(other)).toBeChecked();
+	await expectShowPaused(other, true);
 	await other.close();
 
 	await togglePaused(page, false);
 	await listIs(page, ['Cambiar foco']);
 	await page.reload();
-	await expect(showPaused(page)).not.toBeChecked();
+	await expectShowPaused(page, false);
 	await listIs(page, ['Cambiar foco']);
 });
 
@@ -305,14 +302,18 @@ test('Flow 6: pasar una periódica pausada a puntual', async ({ page }) => {
 	await advance(page, '2026-07-15T10:00:00');
 	await togglePaused(page, true);
 	await edit(page, 'Regar', { kind: 'No se repite' });
-	await waitStatus(page, 'Regar', 'pendiente', undefined, true);
-	await notPaused(page, 'Regar');
+	await expect(row(page, 'Regar')).toHaveCount(0);
+	await goA(page, 'Historial');
 	await openTask(page, 'Regar');
 	await expect(buttonPause(page)).toHaveCount(0);
 	await expect(buttonResume(page)).toHaveCount(0);
 	await close(page);
 
-	await edit(page, 'Regar', { kind: 'Intervalo', every: '2', unit: 'días' });
+	await openTask(page, 'Regar');
+	await completePanel(page, { kind: 'Intervalo', every: '2', unit: 'días' });
+	await page.getByRole('button', { name: 'Guardar' }).click();
+	await expect(page.getByRole('dialog')).toHaveCount(0);
+	await goA(page, 'Pendientes');
 	await waitStatus(page, 'Regar', 'pendiente', undefined, false);
 	await openTask(page, 'Regar');
 	await expect(buttonPause(page)).toBeVisible();
@@ -358,9 +359,9 @@ test('Flow 7: dos dispositivos', async ({ browser }) => {
 	}
 
 	await togglePaused(a, false);
-	await expect(showPaused(b)).toBeChecked();
+	await expectShowPaused(b, true);
 	await b.reload();
-	await expect(showPaused(b)).toBeChecked();
+	await expectShowPaused(b, true);
 
 	await ctxB.setOffline(true);
 	await pause(a, 'Regar plantas');

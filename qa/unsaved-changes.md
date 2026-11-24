@@ -116,7 +116,7 @@ Precondition: empty list, phone. Create `Regar` (reference panel) and complete i
 8. Open `Regar` (without changes), tap the title (on-screen keyboard open, viewport shrunk) and tap Back: the first Back only closes the keyboard (viewport at the original height) and the panel stays exactly the same; the second Back closes the panel. Repeat with the title changed: the first Back only closes the keyboard and the second opens the close notice.
 9. With the panel closed: open `Regar` and tap **Cerrar**; tap Back: it leaves the screen (same as before this feature), without an extra Back that does nothing. Do the same closing with **Guardar** and with an action (**1 hora**). After closing the panel, tap Forward (`page.goForward()`): it does not reopen the panel.
 10. On wide (1024 px), repeat 1, 3 and 4: Back does the same.
-11. With unsaved changes, tap Back: the browser does not show its confirmation (no `beforeunload` dialog).
+11. With unsaved changes (open `Regar`, change its title), tap Back: the browser does not show its confirmation (no `beforeunload` dialog).
 
 ## Flow 7: reload or close the app
 

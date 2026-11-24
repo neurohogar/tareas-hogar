@@ -16,7 +16,7 @@ import {
 	arrivesOnServer,
 	selectorEmoji,
 	sessionWithClock,
-	onlyInSchedule
+	onlyInSchedule, toggleShowPaused, toggleShowCompleted, goA
 } from './support';
 
 // qa/panel-mobile.md: the edit panel in tabs. Phone: 360x640 with touch emulation.
@@ -164,7 +164,7 @@ test('Flow 2: editar y las tres pestañas', async ({ page }) => {
 	await page.clock.setSystemTime(new Date('2026-07-15T08:00:00'));
 	await complete(page, 'Regar');
 	await page.clock.setSystemTime(new Date(HOUR));
-	await page.getByRole('checkbox', { name: 'Completadas' }).check();
+	await toggleShowCompleted(page, true);
 
 	// 1
 	await openTask(page, 'Regar');
@@ -247,7 +247,7 @@ test('Flow 2: editar y las tres pestañas', async ({ page }) => {
 	await tab(page, 'Acciones').click();
 	await page.getByRole('button', { name: 'Pausar', exact: true }).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
-	await page.getByRole('checkbox', { name: 'Pausadas' }).check();
+	await toggleShowPaused(page, true);
 	await openTask(page, 'Regar');
 	await expect(panel(page).getByText('Pausada')).toBeVisible();
 	await tab(page, 'Acciones').click();
@@ -265,6 +265,8 @@ test('Flow 2: editar y las tres pestañas', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Borrar tarea' })).toBeVisible();
 	await close(page);
 	await complete(page, 'Pagar');
+	await expect(row(page, 'Pagar')).toHaveCount(0);
+	await goA(page, 'Historial');
 	await openTask(page, 'Pagar');
 	await expect(tab(page, 'Acciones')).toBeVisible();
 	await tab(page, 'Acciones').click();
@@ -337,7 +339,7 @@ test('Problema original: sin desborde lateral ni Guardar fuera de pantalla', asy
 	await tab(page, 'Acciones').click();
 	await page.getByRole('button', { name: 'Pausar', exact: true }).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
-	await page.getByRole('checkbox', { name: 'Pausadas' }).check();
+	await toggleShowPaused(page, true);
 
 	for (const [width, height] of [
 		[360, 640],
@@ -419,7 +421,7 @@ test('Flow 4: nada se pierde', async ({ page }) => {
 	await page.getByRole('button', { name: 'Pausar', exact: true }).click();
 	await page.getByRole('alertdialog', { name: 'Tenés cambios sin guardar' }).getByRole('button', { name: 'Descartar y pausar' }).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
-	await page.getByRole('checkbox', { name: 'Pausadas' }).check();
+	await toggleShowPaused(page, true);
 	await expect(page.getByText('Barrer más')).toHaveCount(0);
 	await expect(row(page, 'Barrer')).toBeVisible();
 });
@@ -646,7 +648,7 @@ test('Flow 8: dos dispositivos con el panel abierto', async ({ browser }) => {
 	await tab(a, 'Acciones').click();
 
 	// 3
-	await b.getByRole('checkbox', { name: 'Pausadas' }).check();
+	await toggleShowPaused(b, true);
 	await openTask(b, 'Regar');
 	await tab(b, 'Acciones').click();
 	await b.getByRole('button', { name: 'Reanudar' }).click();

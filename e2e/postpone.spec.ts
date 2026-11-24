@@ -14,7 +14,7 @@ import {
 	cleanEmulators,
 	listIs,
 	arrivesOnServer,
-	sessionWithClock
+	sessionWithClock, toggleShowPaused
 } from './support';
 
 test.beforeEach(async () => {
@@ -26,7 +26,6 @@ const button = (page: Page, name: string) => page.getByRole('button', { name, ex
 /** The Posponer options, in view in the panel (no intermediate button). */
 const buttonPostpone = (page: Page) => page.getByRole('group', { name: 'Posponer' });
 const buttonRemove = (page: Page) => button(page, 'Quitar posponer');
-const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
 const panel = (page: Page) => page.getByRole('dialog');
 
 type Option = '1 hora' | '3 horas' | 'Hasta mañana';
@@ -248,8 +247,7 @@ test('Flow 6: pausar y posponer', async ({ page }) => {
 	await button(page, 'Pausar').click();
 	await expect(panel(page)).toHaveCount(0);
 
-	await showPaused(page).click();
-	await expect(showPaused(page)).toBeChecked();
+	await toggleShowPaused(page, true);
 	await openTask(page, 'Regar');
 	await expect(panel(page).getByText('Pausada')).toBeVisible();
 	await expect(buttonPostpone(page)).toHaveCount(0);

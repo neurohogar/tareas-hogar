@@ -18,7 +18,7 @@ import {
 	settle,
 	stop,
 	waitStatus,
-	withClock
+	withClock, toggleShowPaused
 } from './support';
 
 test.beforeEach(async () => {
@@ -39,7 +39,6 @@ const previewButton = (page: Page, name: 'Reprogramar' | 'Cancelar') =>
 const previewRows = (page: Page) => preview(page).getByRole('listitem');
 const notice = (page: Page) => page.getByRole('status').filter({ hasNotText: 'Sin conexión' });
 const undo = (page: Page) => notice(page).getByRole('button', { name: 'Deshacer' }).click();
-const showPaused = (page: Page) => page.getByRole('checkbox', { name: 'Pausadas' });
 const line = (page: Page) => page.getByText('Modo mínimo', { exact: true });
 const tasks = (page: Page) => page.getByRole('listitem').filter({ has: page.getByRole('checkbox') });
 
@@ -54,7 +53,7 @@ async function openMenu(page: Page) {
 	await menuButton(page).click();
 	await expect(menu(page)).toBeVisible();
 	await expect(page.getByRole('menuitem')).toHaveCount(1);
-	await expect(page.getByRole('menuitemcheckbox')).toHaveCount(1);
+	await expect(page.getByRole('menuitemcheckbox')).toHaveCount(3);
 }
 
 async function closeMenu(page: Page) {
@@ -167,9 +166,12 @@ test('Flow 1: the menu item and when it is disabled', async ({ page }) => {
 
 	// Step 1.
 	await openMenu(page);
-	await expect(page.getByRole('menu').getByRole('menuitemcheckbox')).toHaveText(/Modo mínimo/);
+	await expect(page.getByRole('menu').getByRole('menuitemcheckbox')).toHaveText([/Modo mínimo/, /Completadas/, /Pausadas/]);
+	await expect(page.getByRole('menu').locator('[role^="menuitem"]')).toHaveText([/Modo mínimo/, /Completadas/, /Pausadas/, /Reprogramar vencidas/]);
+	for (const name of ['Modo mínimo', 'Completadas', 'Pausadas'])
+		await expect(page.getByRole('menuitemcheckbox', { name })).toBeEnabled();
 	const below = (await item(page).boundingBox())!.y;
-	expect(below).toBeGreaterThan((await modeItem(page).boundingBox())!.y);
+	expect(below).toBeGreaterThan((await page.getByRole('menuitemcheckbox', { name: 'Pausadas' }).boundingBox())!.y);
 	await viewDimmed(page);
 	const looks = await menu(page).innerHTML();
 	await tapDimmed(page);
@@ -210,8 +212,7 @@ test('Flow 1: the menu item and when it is disabled', async ({ page }) => {
 	await openMenu(page);
 	await viewDimmed(page);
 	await closeMenu(page);
-	await showPaused(page).click();
-	await expect(showPaused(page)).toBeChecked();
+	await toggleShowPaused(page, true);
 	await openTask(page, 'Regar');
 	await page.getByRole('button', { name: 'Reanudar', exact: true }).click();
 	await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -311,9 +312,9 @@ test('Flow 2: preview, confirming and what is left untouched', async ({ page }) 
 	await waiting(page, 'Barrer');
 	await waitStatus(page, 'Luego', 'en espera', undefined, false);
 	await expect(row(page, 'Dormida')).toHaveCount(0);
-	await showPaused(page).click();
+	await toggleShowPaused(page, true);
 	await expect(row(page, 'Dormida').getByText('Pausada')).toHaveCount(1);
-	await showPaused(page).click();
+	await toggleShowPaused(page, false);
 	await expect(row(page, 'Dormida')).toHaveCount(0);
 
 	// Step 7.
@@ -414,7 +415,7 @@ test('Flow 3 step 4: the rescheduling notice replaces the completion one', async
 	await noNotice(page);
 	await settle(page);
 	await withClock(page, () => overdue(page, 'Regar'));
-	await withClock(page, () => waitStatus(page, 'Cena', 'pendiente', undefined, true));
+	await withClock(page, () => expect(row(page, 'Cena')).toHaveCount(0));
 });
 
 test('Flow 3 step 5: the notice stays across screens', async ({ page }) => {

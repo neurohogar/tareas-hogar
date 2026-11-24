@@ -57,7 +57,7 @@ Precondition: empty list, clock at `2026-07-15T08:00:00`, mode off.
 1. With the list empty, open the menu: **Completadas** and **Pausadas** are enabled. Tap **Completadas**: the menu closes and the list is still empty. Open it: the check mark is there. Tap **Completadas** again to turn it off.
 2. Create `Foco` (**No se repite**, no due date, essential) and `Regar` (**Intervalo** every `2` **días**, not essential). Tap **Menú** and **Modo mínimo**: the line «Modo mínimo» is above the list `Foco`.
 3. Open the menu: **Completadas** and **Pausadas** are enabled (the menu looks the same as with the mode off, apart from the check mark of **Modo mínimo**). Tap **Completadas**, then open the menu and tap **Pausadas**: each closes the menu, shows no message and the line «Modo mínimo» stays. The list is still `Foco`: `Regar` is non-essential and paused by the mode, and never shown.
-4. Turn the mode off: the list is `Foco`, `Regar`, and the check marks of **Completadas** and **Pausadas** are still there when the menu is opened.
+4. Turn the mode off: the list is `Regar`, `Foco`, and the check marks of **Completadas** and **Pausadas** are still there when the menu is opened.
 
 ## Flow 3: the value is saved on the device
 

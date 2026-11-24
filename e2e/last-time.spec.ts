@@ -5,7 +5,7 @@ import {
 	close,
 	complete,
 	completePanel,
-	toggleShowCompleted,
+	expectShowCompleted,
 	create,
 	device,
 	turnOnCompleted,
@@ -153,8 +153,7 @@ test('Flow 4: una puntual completada, abierta desde el Historial', async ({ page
 	await create(page, { title: 'Pagar la luz', kind: 'No se repite' });
 	await advance(page, '2026-07-15T08:20:00');
 	await complete(page, 'Pagar la luz');
-	await expect(row(page, 'Pagar la luz').getByRole('checkbox')).toBeChecked();
-	await toggleShowCompleted(page, false);
+	await expectShowCompleted(page, true);
 	await expect(row(page, 'Pagar la luz')).toHaveCount(0);
 
 	await goA(page, 'Historial');
