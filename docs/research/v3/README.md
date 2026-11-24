@@ -10,6 +10,7 @@ Base de evidencia para diseñar la v3 de Tareas Hogar a partir de investigación
 | [`tea.md`](tea.md) | Autismo en adultos: inercia, incertidumbre, burnout, evitación de demandas, interocepción | 17 |
 | [`aacc-2e.md`](aacc-2e.md) | Altas capacidades y doble excepcionalidad (2e) en adultos | 20 |
 | [`hogar-compartido-y-apps.md`](hogar-compartido-y-apps.md) | Reparto de tareas y carga mental entre dos adultos; análisis de apps existentes | 45 |
+| [`sintesis-curso-tdah.md`](sintesis-curso-tdah.md) | Síntesis temática de las afirmaciones de un curso de formación sobre TDAH y funciones ejecutivas (fuente secundaria, sin interpretaciones propias) | 34 afirmaciones |
 
 Cada hallazgo tiene la afirmación, la fuerza de la evidencia (fuerte, moderada, débil, anecdótica o de comunidad), las URLs y su implicación para la app, incluido lo que conviene evitar.
 
@@ -27,6 +28,7 @@ Cada hallazgo tiene la afirmación, la fuerza de la evidencia (fuerte, moderada,
 ## Límites conocidos
 
 - **Fuentes leídas solo por resumen:** varias páginas bloquearon la lectura automática (PubMed, NICE, Springer, Sagepub, Nature). En esos casos se usaron resúmenes de Europe PMC, Crossref o Semantic Scholar, y cada documento lo indica. Ejemplos: Safren 2010, Solanto 2010, NICE NG87, el metaanálisis de intenciones de implementación de 2024 (en `tdah.md`). `aacc-2e.md` dejó afuera Stricker 2020 porque no se pudo leer.
+- **`sintesis-curso-tdah.md` es de otra naturaleza:** recoge afirmaciones de un curso (fuente secundaria), leído el 2026-11-24 sin buscar en la web, y no pasó por la regla de «ninguna afirmación sin una URL efectivamente leída». Las fuentes que el curso cita no se verificaron, y cada afirmación indica si el curso cita fuente.
 - **Reddit no fue accesible:** la opinión de usuarios de apps sale de reseñas de tiendas, agregadores de reseñas y blogs.
 - **Huecos de la literatura:**
   - No se encontró ningún estudio revisado por pares sobre parejas u hogares donde las dos personas son neurodivergentes.
