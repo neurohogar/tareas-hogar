@@ -220,13 +220,15 @@ test('Flow 2: the menu, the mode and the line', async ({ page }) => {
 	await expect(menu(page).getByRole('menuitemcheckbox')).toHaveText([/Modo mínimo/, /Completadas/, /Pausadas/]);
 	for (const m of await menu(page).getByRole('menuitemcheckbox').all()) await expect(m).toHaveAttribute('aria-checked', 'false');
 	// The last item, Reprogramar vencidas, is below Pausadas (qa/block-reschedule.md); nothing else.
-	await expect(menu(page).getByRole('menuitem')).toHaveCount(1);
-	await expect(menu(page).getByRole('menuitem')).toHaveText(/Reprogramar vencidas/);
+	await expect(menu(page).getByRole('menuitem')).toHaveCount(2);
+	await expect(menu(page).getByRole('menuitem')).toHaveText([/Historial/, /Reprogramar vencidas/]);
+	await expect(menu(page).locator('[role^="menuitem"]')).toHaveText([/Historial/, /Modo mínimo/, /Completadas/, /Pausadas/, /Reprogramar vencidas/]);
+	await expect(menu(page).getByRole('menuitem', { name: 'Historial', exact: true })).toBeEnabled();
 	await expect(modeItem(page)).toHaveAttribute('aria-checked', 'false');
 	await expect(menu(page).getByRole('button')).toHaveCount(0);
 	const [top, below] = [
 		await menu(page).getByRole('menuitemcheckbox', { name: 'Pausadas' }).boundingBox(),
-		await menu(page).getByRole('menuitem').boundingBox()
+		await menu(page).getByRole('menuitem', { name: 'Reprogramar vencidas' }).boundingBox()
 	];
 	expect(below!.y).toBeGreaterThan(top!.y);
 	await page.getByRole('heading', { name: 'Pendientes' }).click();

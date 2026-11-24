@@ -572,12 +572,23 @@ export async function createAndView(
 
 export type Tab = "Pendientes" | "Historial";
 
-/** Taps a tab; the SvelteKit router needs the simulated clock to run (100 ms). */
+/** Opens the Historial from the ⋮ menu of Pendientes (no navigation bar). */
+export async function openHistory(page: Page) {
+  await openMenu(page);
+  await page.getByRole("menuitem", { name: "Historial", exact: true }).click();
+  await expect(menu(page)).toHaveCount(0);
+}
+
+/** Goes to a screen: «Historial» through the menu item, «Pendientes» with the «Volver» button; the router needs the simulated clock to run (100 ms). */
 export async function goA(page: Page, tab: Tab) {
-  await page
-    .getByRole("navigation")
-    .getByRole("link", { name: tab })
-    .click();
+  // Already there (the bar used to make this a harmless tap): nothing to do.
+  const there =
+    tab === "Historial"
+      ? page.getByRole("button", { name: "Volver", exact: true })
+      : menuButton(page);
+  if ((await there.count()) > 0) return;
+  if (tab === "Historial") await openHistory(page);
+  else await page.getByRole("button", { name: "Volver", exact: true }).click();
   await page.clock.runFor(100);
   await expect(
     page.getByRole("heading", { name: tab, level: 1 }),

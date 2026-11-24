@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { advance, createTask, discard, turnOnCompleted, enter, waitStatus, row, cleanEmulators, goBack, sessionWithClock } from './support';
+import { openHistory, advance, createTask, discard, turnOnCompleted, enter, waitStatus, row, cleanEmulators, goBack, sessionWithClock } from './support';
 
 const START = '2026-07-15T08:00:00';
 
@@ -181,12 +181,12 @@ test('Flow 7: completar en espera, con el último completado de ayer, reinicia e
 	await row(page, T).getByRole('checkbox').click();
 	await expect(page.getByRole('status')).toContainText('Completaste «Regar plantas»');
 	await waitStatus(page, T, 'en espera', 0);
-	await page.getByRole('navigation').getByRole('link', { name: 'Historial' }).click();
+	await openHistory(page);
 	await expect(page.getByRole('heading', { name: 'Historial', level: 1 })).toBeVisible();
 	await expect(page.getByRole('listitem').filter({ hasText: 'Regar plantas' })).toHaveCount(2);
 	await expect(page.getByRole('heading', { name: 'Hoy' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Ayer' })).toBeVisible();
-	await page.getByRole('navigation').getByRole('link', { name: 'Pendientes' }).click();
+	await page.getByRole('button', { name: 'Volver', exact: true }).click();
 	await expect(page.getByRole('heading', { name: 'Pendientes', level: 1 })).toBeVisible();
 	await advance(page, '2026-07-17T20:00:00');
 	await waitStatus(page, T, 'en espera', 92);

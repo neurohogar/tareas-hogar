@@ -79,10 +79,14 @@ test('Flow 1: the menu and its items', async ({ page }) => {
 	await expect(page.getByRole('checkbox', { name: /completadas|pausadas/i })).toHaveCount(0);
 	await menuButton(page).click();
 	await expect(menu(page)).toBeVisible();
-	await expect(items(page)).toHaveCount(4);
-	await expect(items(page)).toHaveText([/Modo mínimo/, /Completadas/, /Pausadas/, /Reprogramar vencidas/]);
+	await expect(items(page)).toHaveCount(5);
+	await expect(items(page)).toHaveText([/Historial/, /Modo mínimo/, /Completadas/, /Pausadas/, /Reprogramar vencidas/]);
 	await expect(menu(page).getByRole('menuitemcheckbox')).toHaveText([/Modo mínimo/, /Completadas/, /Pausadas/]);
-	await expect(menu(page).getByRole('menuitem')).toHaveText([/Reprogramar vencidas/]);
+	await expect(menu(page).getByRole('menuitem')).toHaveText([/Historial/, /Reprogramar vencidas/]);
+	const history = menu(page).getByRole('menuitem', { name: 'Historial', exact: true });
+	await expect(history).toBeEnabled();
+	await expect(history).not.toHaveAttribute('aria-disabled', 'true');
+	await expect(history).not.toHaveAttribute('aria-checked', /.*/);
 	for (const name of ['Modo mínimo', 'Completadas', 'Pausadas']) {
 		await expect(menuSwitch(page, name)).toHaveAttribute('aria-checked', 'false');
 		await expect(menuSwitch(page, name)).toBeEnabled();
@@ -167,7 +171,7 @@ test('Flow 2: always enabled, also with the mode on and with nothing to show', a
 
 	// Step 3.
 	await openMenu(page);
-	await expect(items(page)).toHaveCount(4);
+	await expect(items(page)).toHaveCount(5);
 	await expect(menuSwitch(page, 'Completadas')).toBeEnabled();
 	await expect(menuSwitch(page, 'Pausadas')).toBeEnabled();
 	await expect(menuSwitch(page, 'Completadas')).not.toHaveAttribute('aria-disabled', 'true');
@@ -356,8 +360,8 @@ test('Flow 6: the open menu is opaque over the rows on a phone', async ({ page }
 
 	// Step 2.
 	await openMenu(page);
-	await expect(items(page)).toHaveCount(4);
-	for (let i = 0; i < 4; i++) {
+	await expect(items(page)).toHaveCount(5);
+	for (let i = 0; i < 5; i++) {
 		const hit = await items(page)
 			.nth(i)
 			.evaluate((el) => {
