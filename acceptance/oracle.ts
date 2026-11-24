@@ -1410,7 +1410,8 @@ export function pendingView(
 		return isCompleted(e.oneOff, !e.oneOff && urgency?.group === 2 && !urgency.byPostponement, withCompletions(e));
 	};
 	const notCompleted = notCompletedByUrgency(active.filter((t) => !completed(t)), moment);
-	const completedList = showCompleted ? completedByRecent(active.filter(completed)) : [];
+	// §6.1: a completed one-off task is never a row, with Mostrar completadas on or off.
+	const completedList = showCompleted ? completedByRecent(active.filter((t) => completed(t) && !evaluated(t)?.oneOff)) : [];
 	const paused = showPaused ? pausedByTitle(tasks.filter((t) => t.paused)) : [];
 	if (!notCompleted || !completedList || !paused) return undefined;
 	const titles = (ts: OrderTask[]) => ts.map((t) => t.title).join(', ');
