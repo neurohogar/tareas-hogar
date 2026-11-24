@@ -87,3 +87,10 @@ Precondition: empty list, clock stopped at `2026-07-15T08:00:00`. **Completadas*
 4. Turn **Completadas** off and on again: **Pagar la luz** has no row either time; **Regar** appears only with the item on.
 5. Open the **Historial** and tap the entry of **Pagar la luz**: **Editar tarea** opens. Close it. Tap **Borrar** on that entry and confirm: **Pagar la luz** is back in **Pendientes**, `pendiente`, in bold, with the checkbox unchecked.
 6. Create `Planchar` with **Intervalo** every `2` **días** and complete it (**Completadas** on: it is seen completed). Open its row, change **Se repite** to **No se repite** and save: the row disappears at once (it is now a completed one-off task) and it is not shown with **Completadas** off or on. Open the **Historial** and tap its entry: its panel opens.
+
+## Flow 6: the open menu is opaque over the rows on a phone
+
+Precondition: empty list, clock at `2026-07-15T08:00:00`, phone viewport (`390x844`).
+
+1. Create `Tarea uno`, `Tarea dos` and `Tarea tres` (**No se repite**, no due date), each with the first step `Primero` and one more step `Segundo`. Each row has a **Hecho** button.
+2. Tap **Menú**: the menu opens with its four items. For each item, the element seen at a point of the item (at its left, not at its center, which falls to the right of the row buttons) belongs to the menu: no row, and no button of a row (**Hecho**), is painted over the menu and the list is not seen through it.

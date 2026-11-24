@@ -343,3 +343,28 @@ test('Flow 5: a completed one-off task never has a row', async ({ page }) => {
 	await withClock(page, () => openTask(page, 'Planchar'));
 	await expect(page.getByRole('heading', { name: 'Editar tarea' })).toBeVisible();
 });
+
+test('Flow 6: the open menu is opaque over the rows on a phone', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await sessionWithClock(page, TODAY);
+
+	// Step 1.
+	for (const title of ['Tarea uno', 'Tarea dos', 'Tarea tres']) {
+		await create(page, { title, kind: 'No se repite', firstStep: 'Primero', steps: ['Segundo'] });
+	}
+	await expect(page.getByRole('button', { name: 'Hecho', exact: true })).toHaveCount(3);
+
+	// Step 2.
+	await openMenu(page);
+	await expect(items(page)).toHaveCount(4);
+	for (let i = 0; i < 4; i++) {
+		const hit = await items(page)
+			.nth(i)
+			.evaluate((el) => {
+				const r = el.getBoundingClientRect();
+				const top = document.elementFromPoint(r.x + 50, r.y + r.height / 2);
+				return !!top && !!top.closest('.menu-list');
+			});
+		expect(hit, `item ${i + 1} of the menu is covered by a row`).toBe(true);
+	}
+});
