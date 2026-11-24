@@ -17,7 +17,7 @@
 		position: fixed;
 		left: 1rem;
 		right: calc(56px + 2.5rem);
-		bottom: var(--notice-base, calc(var(--navigation-height) + 1.25rem));
+		bottom: var(--notice-base, 1.25rem);
 		z-index: 20;
 		display: flex;
 		align-items: center;

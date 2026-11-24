@@ -9,7 +9,6 @@
 	--error: #a2453a;
 	--border: #d9d6cf;
 	--control-border: #9c978e;
-	--navigation-height: 56px;
 	font-family: 'Atkinson Hyperlegible Next', 'Noto Color Emoji', system-ui, sans-serif;
 }
 
@@ -35,7 +34,7 @@ body {
 main {
 	max-width: 40rem;
 	margin: 0 auto;
-	padding: 1rem 1rem calc(var(--navigation-height) + 6rem);
+	padding: 1rem 1rem 6rem;
 }
 
 button {
